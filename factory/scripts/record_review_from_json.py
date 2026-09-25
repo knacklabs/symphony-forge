@@ -15,7 +15,6 @@ from factory_lib import (
     validate_review_document,
 )
 from forge_cli.events import append_event
-from forge_cli.quickfix import lite_diff_base
 from forge_cli.readiness import review_passed
 from forge_cli.review_brief import declared_contracts
 from forge_cli.stages import (
@@ -257,8 +256,7 @@ if lite_review:
     supplied_binding = [field in payload for field in binding_fields]
     if any(supplied_binding):
         opening_sha = active_window.get("base_sha")
-        lite_base = (lite_diff_base(root, opening_sha)
-                     if isinstance(opening_sha, str) and opening_sha else "")
+        lite_base = opening_sha if isinstance(opening_sha, str) else ""
         if (not all(supplied_binding) or not isinstance(lite_base, str)
                 or not lite_base or payload.get("review_base_sha") != lite_base):
             raise SystemExit("Lite review base does not match the open window's diff base")

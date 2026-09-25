@@ -1259,7 +1259,8 @@ def _contract_blocker(contract: dict, verdict: dict) -> dict:
     }
 
 
-def product_only_tip(worktree: Path, base_sha: str) -> str:
+def product_only_tip(worktree: Path, base_sha: str,
+                     scope: set[str] | None = None) -> str:
     """Commit a review tip in the detached worktree with every harness
     bookkeeping path (`.factory/`, `plans/`, `docs/decisions/`, the context
     ledger) put back to the task base, and return its sha.
@@ -1271,12 +1272,13 @@ def product_only_tip(worktree: Path, base_sha: str) -> str:
     contract was recorded `partial` (fail-closed -> blocking), and the task-proof
     gate refused a task whose product review was clean (observed 2026-09-04,
     issue #171). With the bookkeeping at the base, the bundle is the product
-    delta only. The base is untouched and stays an ancestor of the new tip."""
+    delta only. Lite also restores paths outside its committed scope. The base
+    is untouched and stays an ancestor of the new tip."""
     prefixes = review_excluded_prefixes(worktree)
     changed = [
         p for p in _require_git(worktree, "listing the review diff", "diff",
                                 "--name-only", f"{base_sha}..HEAD").splitlines()
-        if p.strip() and p.startswith(prefixes)
+        if p.strip() and (p.startswith(prefixes) if scope is None else p not in scope)
     ]
     if not changed:
         return _require_git(worktree, "resolving the review tip", "rev-parse", "HEAD")
@@ -1997,7 +1999,8 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
                 skill: str | None = None) -> None:
     """Review the committed diff of one open Lite window and record its lenses."""
     from .quickfix import (
-        LITE, _lite_dirty_product_files, lite_diff_base, load_active, profile_of,
+        LITE, _lite_dirty_product_files, _lite_manifest, load_active,
+        profile_of,
     )
 
     window = load_active(base)
@@ -2012,13 +2015,10 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
     if _git(base, "merge-base", "--is-ancestor", opening_sha, tip_sha).returncode != 0:
         fail(f"Lite base {opening_sha[:12]} is not an ancestor of HEAD")
-    base_sha = lite_diff_base(base, opening_sha)
+    base_sha = opening_sha
     excluded = review_excluded_prefixes(base)
-    scope = sorted(
-        path for path in _require_git(
-            base, "listing the Lite diff", "diff", "--name-only", f"{base_sha}..{tip_sha}",
-        ).splitlines()
-        if path.strip() and not path.startswith(excluded)
+    scope = _lite_manifest(
+        base, opening_sha, harness_source=window.get("harness_source"),
     )
     if not scope:
         fail(f"no product paths changed between {base_sha[:12]} and HEAD — nothing to review")
@@ -2055,7 +2055,7 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
         _require_git(base, "creating the Lite review worktree", "worktree", "add",
                      "--detach", str(worktree), tip_sha)
         worktree_created = True
-        review_tip = product_only_tip(worktree, base_sha)
+        review_tip = product_only_tip(worktree, base_sha, set(scope))
         _write_detached(worktree, [(REVIEW_DATASET_REL, context), (prompt_rel, prompt)])
         codex_bin = None
         if readable:
@@ -2077,7 +2077,10 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
         if (helper_after != helper_before or helper_file_after != helper_file_before
                 or head_sha(base) != tip_sha or _lite_dirty_product_files(base)
                 or product_delta_digest(base, base_sha) != delta_id
-                or lite_diff_base(base, opening_sha) != base_sha
+                or _lite_manifest(
+                    base, opening_sha,
+                    harness_source=current_window.get("harness_source"),
+                ) != scope
                 or current_window.get("id") != window["id"]
                 or current_window.get("base_sha") != opening_sha
                 or (base / REVIEW_DATASET_REL).read_bytes() != context):

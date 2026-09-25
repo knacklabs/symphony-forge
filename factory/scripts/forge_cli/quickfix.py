@@ -11,7 +11,7 @@ from pathlib import Path
 
 from factory_lib import (
     _active_story_key, append_ledger_record, clean_git_env, dump_json,
-    default_trunk_branch, evidence_path, head_sha, load_json,
+    evidence_path, head_sha, load_json,
     load_review_artifacts, now_iso, read_ledger_records, repo_root,
 )
 
@@ -363,17 +363,14 @@ def _lite_manifest(
     base: Path, base_sha: str, *, harness_source: bool | None = None,
 ) -> list[str]:
     """Return committed product paths changed since the lite window opened."""
-    base_sha = lite_diff_base(base, base_sha)
-    paths = _git_paths(
-        base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"],
-    )
+    paths = lite_committed_paths(base, base_sha)
     marker = ".factory/harness-source.json"
     if marker in paths:
         fail(
             "the harness-source marker cannot change inside a Lite window; "
             "change it through a task"
         )
-    symlink_paths = _lite_symlink_paths(base, base_sha)
+    symlink_paths = _lite_symlink_paths(base, base_sha) & set(paths)
     return _lite_product_files(
         base,
         [*paths, *symlink_paths],
@@ -382,40 +379,12 @@ def _lite_manifest(
     )
 
 
-def lite_diff_base(base: Path, opening_sha: str) -> str:
-    """Exclude default-branch commits merged after the Lite window opened."""
-    branch = default_trunk_branch(base)
-    tip_sha = head_sha(base)
-    candidates = []
-    for ref in (f"origin/{branch}", branch):
-        resolved = subprocess.run(
-            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
-            cwd=base, capture_output=True, text=True, env=clean_git_env(),
-        )
-        if resolved.returncode != 0:
-            continue
-        common = subprocess.run(
-            ["git", "merge-base", "HEAD", resolved.stdout.strip()],
-            cwd=base, capture_output=True, text=True, env=clean_git_env(),
-        )
-        if common.returncode != 0:
-            continue
-        merged_sha = common.stdout.strip()
-        if merged_sha == tip_sha:
-            continue
-        ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", opening_sha, merged_sha],
-            cwd=base, capture_output=True, env=clean_git_env(),
-        )
-        if ancestor.returncode == 0 and merged_sha not in candidates:
-            candidates.append(merged_sha)
-    for candidate in candidates:
-        if all(subprocess.run(
-            ["git", "merge-base", "--is-ancestor", other, candidate],
-            cwd=base, capture_output=True, env=clean_git_env(),
-        ).returncode == 0 for other in candidates):
-            return candidate
-    return opening_sha
+def lite_committed_paths(base: Path, opening_sha: str) -> list[str]:
+    """Paths committed on the window's first-parent line, excluding merges."""
+    return sorted(set(_git_paths(
+        base, ["git", "log", "--first-parent", "--no-merges", "--name-only",
+               "--format=", "-z", f"{opening_sha}..HEAD", "--"],
+    )))
 
 
 def _lite_symlink_paths(

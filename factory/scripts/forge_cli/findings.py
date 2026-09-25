@@ -46,7 +46,7 @@ def repeated_finding_files(base: Path, story: str, task_id: str, *,
         }
 
     if lite:
-        from .quickfix import LITE, closed_windows, lite_diff_base, load_active, profile_of
+        from .quickfix import LITE, closed_windows, load_active, profile_of
 
         window = load_active(base)
         head = head_sha(base) or ""
@@ -54,7 +54,7 @@ def repeated_finding_files(base: Path, story: str, task_id: str, *,
         if (not window or profile_of(window) != LITE or not head or not opening_sha
                 or head == opening_sha or not _git_is_ancestor(base, opening_sha, head)):
             return []
-        window_base = lite_diff_base(base, opening_sha)
+        window_base = opening_sha
         delta = product_delta_digest(base, window_base, head)
         current = {aspect: load_json(evidence_path(
             base, _active_story_key(base) or None, f"reviews/{aspect}.json",
