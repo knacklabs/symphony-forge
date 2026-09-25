@@ -20713,8 +20713,7 @@ def test_review_consumers_include_complete_approved_inputs(
         "Prefix every finding title with exactly one matching token",
         "target task's complete Plan contracts and Reviewer focus",
         f'in `{review_mod.REVIEW_DATASET_REL}`',
-        f'listed under the target task\'s "Plan contracts" in '
-        f"{review_mod.REVIEW_DATASET_REL}",
+        "write one terse full line per target plan contract",
     ))
     assert 'listed under "Plan contracts" below' not in combined
     assert task_section not in combined
@@ -20786,9 +20785,11 @@ def test_review_consumers_include_complete_approved_inputs(
         return ""
 
     def inspect_skill(_skill, worktree, _base_sha, prompt_rel, _json_out,
-                      _engine, _max_priority, ledger_root=None, return_raw=False):
+                      _engine, _max_priority, ledger_root=None, return_raw=False,
+                      contracts=None):
         assert ledger_root == repo
         assert return_raw is True
+        assert contracts == first["plan_contracts"]
         prompt_bytes = (worktree / prompt_rel).read_bytes()
         copied_dataset = (worktree / review_mod.REVIEW_DATASET_REL).read_bytes()
         seen.append((prompt_rel, prompt_bytes, copied_dataset))
@@ -21068,6 +21069,13 @@ def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
     _native_review_fixture(repo, tmp_path, reusable_proof=True)
     _write_complete_automated(repo)
     import forge_cli.review as review_mod
+    import forge_cli.stages as stages_mod
+
+    # This test checks proof routing; host tool probes may be nonreusable.
+    original_identity = stages_mod.proof_identity
+    def reusable_identity(*args, **kwargs):
+        return {**original_identity(*args, **kwargs), "reusable": True}
+    monkeypatch.setattr(stages_mod, "proof_identity", reusable_identity)
 
     safe_helper = tmp_path / "autoreview"
     safe_helper.write_text("safe helper\n")
@@ -21159,6 +21167,7 @@ def test_review_codex_engine_pins_sol_high(tmp_path, monkeypatch):
 
     def popen(argv, **kwargs):
         calls.append((argv, kwargs))
+        Path(argv[argv.index("--json-output") + 1]).write_text("{}")
         return Process()
 
     monkeypatch.setattr(review_mod, "_record_codex_run", lambda *_args: "run")

@@ -254,12 +254,13 @@ def diagnose_refusal(problem: str, parsed: dict | None = None,
         return (f"Your previous pass was refused: {quoted}. Write the six marker "
                 "lines exactly once each, in the order quality, performance, "
                 "security, each pair with its own non-empty assessment between "
-                "them, and no VERDICT line in overall_explanation.")
+                "them. Put any requested terse VERDICT lines inside the quality "
+                "assessment.")
     if "verdict" in text:
         return (f"Your previous pass was refused: {quoted}. Every plan contract "
-                "needs exactly one finding titled `[quality] VERDICT <id>: "
-                "implemented|partial|missing`; no VERDICT under any other lens tag "
-                "and none in overall_explanation.")
+                "needs a terse VERDICT line inside the quality assessment or "
+                "one finding titled `[quality] VERDICT <id>: "
+                "implemented|partial|missing`; no VERDICT under any other lens tag.")
     if "lens title tag" in text or "invalid" in text or "duplicate" in text:
         return (f"Your previous pass was refused: {quoted}. Every finding needs "
                 "exactly one of [quality] , [performance] , [security] at the start "
@@ -433,6 +434,8 @@ def _group_result(item: dict, validate) -> tuple[str, object, bytes, object]:
     if not problem and item["returncode"] == 2:
         certifying_problem = _refusal(validate, parsed)
         if certifying_problem:
+            if "needs exact full-line" in certifying_problem:
+                return certifying_problem, parsed, raw, None
             scope_problem = _refusal(_scope_only_rejected_findings, parsed)
             if scope_problem:
                 problem = ("the review tool exit 2 was not a valid scope-only "
@@ -514,7 +517,9 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
             owners.setdefault(unicodedata.normalize("NFC", path), []).append(group)
 
     def schedule(targets: dict[str, dict], group: dict) -> None:
-        if group["attempts"] >= MAX_GROUP_RETRIES + 1:
+        limit = (2 if "needs exact full-line" in group["retry_cause"]
+                 else MAX_GROUP_RETRIES + 1)
+        if group["attempts"] >= limit:
             fail(f"{group['label']} cannot reassess routed scope leads: its three-attempt "
                  "maximum is exhausted")
         targets[group["label"]] = group
@@ -574,7 +579,9 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                     group["retry_cause"] = ""
                     group["retry_parsed"] = None
                 continue
-            if group["attempts"] > MAX_GROUP_RETRIES:
+            limit = (2 if "needs exact full-line" in problem
+                     else MAX_GROUP_RETRIES + 1)
+            if group["attempts"] >= limit:
                 fail(f"{label} was refused {group['attempts']} times; last cause: "
                      f"{problem}. Its attempts are kept under {log_dir.as_posix()} "
                      f"({label}.attempt*.log and .json); read them, fix the cause, "

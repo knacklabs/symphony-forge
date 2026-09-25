@@ -209,7 +209,23 @@ def _built(repo: Path, tmp_path: Path) -> None:
 
 def _review_task(repo: Path, *args, **kwargs):
     """Run review against proof recorded under the test's final environment."""
+    from forge_cli.stages import (
+        product_tree_snapshot, proof_identity, protected_authority_snapshot, task_for,
+    )
     bind_task_proof_receipts(repo, "T1")
+    task = task_for(repo, "T1")
+    product_tree = product_tree_snapshot(repo)
+    memo = {}
+    kwargs["proof_context"] = {
+        "product_tree": product_tree,
+        "authority_tree": protected_authority_snapshot(repo),
+        "proofs": {
+            kind: {**proof_identity(repo, task, kind, product_tree=product_tree,
+                                    tool_probe_memo=memo),
+                   "status": "passed", "executed": True}
+            for kind in ("verify", "tests")
+        },
+    }
     return review_task(repo, *args, **kwargs)
 
 
@@ -773,7 +789,7 @@ def test_final_union_refuses_a_contract_omitted_by_every_group(
     assert outcome["blocking"] == 1 and outcome["stamped"] is False
 
 
-def test_a_group_refused_three_times_stops_the_review_and_keeps_its_attempts(
+def test_a_group_missing_markers_twice_stops_the_review_and_keeps_its_attempts(
         repo, tmp_path, monkeypatch, capsys):
     _built(repo, tmp_path)
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
@@ -782,12 +798,12 @@ def test_a_group_refused_three_times_stops_the_review_and_keeps_its_attempts(
     with pytest.raises(SystemExit):
         _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
-    assert "group-1 was refused 3 times; last cause: combined review pass needs" in printed
+    assert "group-1 was refused 2 times; last cause: combined review pass needs" in printed
     assert "read them, fix the cause, rerun the review" in printed
     seen = _seen(tmp_path)
     assert {name for name in seen if name.startswith("group-1")} == {
-        "group-1.attempt1", "group-1.attempt2", "group-1.attempt3"}
-    assert seen["group-1.attempt3"]["prompts"][1].startswith("RETRY 3:")
+        "group-1.attempt1", "group-1.attempt2"}
+    assert seen["group-1.attempt2"]["prompts"][1].startswith("RETRY 2:")
     assert not (repo / ".factory/stories/ENG-1/tasks/T1/reviews/selected.json").exists()
     assert git(repo, "worktree", "list").count("\n") == 0
 

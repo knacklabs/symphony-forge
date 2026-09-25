@@ -159,12 +159,8 @@ VERDICT <contract-id>: implemented|partial|missing — <file:line evidence>
 Every listed contract must get a line. Do not rename contract ids.
 """
 
-# A verdict as a finding RECORD: the combined review's summary box is capped at
-# 3,000 characters by the helper's schema, and one VERDICT line per contract
-# inside it overflowed on WF-1A T1 (3,027 characters, cut mid-word before the
-# security end marker; the hour-long run was refused). A record has its own
-# 2,000-character body and there is no limit on how many records a pass
-# carries, so the box no longer grows with the plan (decision 0077).
+# Large contract sets use finding records because the helper caps the combined
+# overall_explanation at 3,000 characters (decision 0077).
 VERDICT_RECORD = re.compile(
     r"^VERDICT\s+(?P<id>[A-Za-z0-9._:-]+)\s*:\s*"
     r"(?P<verdict>implemented|partial|missing)\s*$",
@@ -173,7 +169,7 @@ VERDICT_RECORD = re.compile(
 VERDICT_RECORD_FORMAT = """\
 CONTRACT VERDICTS (mandatory, machine-parsed). For EVERY plan contract
 listed under the target task's "Plan contracts" in {dataset}, add one finding
-RECORD, never a line in overall_explanation:
+RECORD:
 
 - title: exactly `[quality] VERDICT <contract-id>: implemented|partial|missing`
 - body: the file:line you read and one sentence of evidence (the tree is
@@ -182,7 +178,7 @@ RECORD, never a line in overall_explanation:
 
 Every listed contract must get a record, in every pass. Do not rename contract
 ids. A verdict record is not a defect: it is lifted out of the findings before
-they are counted. Keep overall_explanation to the three short assessments.
+they are counted.
 """
 
 # What a finding states, and what is not one. On WF-1 T5 eleven of the first
@@ -383,8 +379,6 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
         if isinstance(contract, dict) and isinstance(contract.get("id"), str)
     ]
-    # The box holds markers and three short assessments only; verdicts are
-    # records (VERDICT_RECORD_FORMAT), so this never depends on len(contracts).
     minimum = [
         "BEGIN FORGE ASSESSMENT quality", "quality assessment",
         "END FORGE ASSESSMENT quality",
@@ -395,10 +389,21 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
     if len("\n".join(minimum)) > 3000:
         fail("combined review boilerplate cannot fit the helper's 3000-character "
              "overall_explanation limit")
+    terse_verdicts = len("\n".join(minimum)) + 80 * len(contracts) + 500 <= 3000
+    verdict_format = (
+        "CONTRACT VERDICTS (mandatory, machine-parsed). In the quality "
+        "assessment, write one terse full line per target plan contract: "
+        "VERDICT <contract-id>: implemented|partial|missing — path:line. "
+        "Use the exact ids in the reviewer dataset. Keep longer evidence in "
+        "finding records only. A clean patch still needs these verdict lines."
+        if terse_verdicts else
+        VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL)
+    )
+    verdict_carrier = "line" if terse_verdicts else "record"
     chunk_verdict_rule = (
-        "In a chunked run, each quality pass emits a VERDICT record only for "
+        f"In a chunked run, each quality pass emits a VERDICT {verdict_carrier} only for "
         "contracts it can judge from that pass's evidence. If a contract's "
-        "evidence is absent from this chunk, omit its record; do not call it "
+        f"evidence is absent from this chunk, omit its {verdict_carrier}; do not call it "
         "partial or missing solely because this chunk lacks its files. "
         "A genuine observed defect remains partial or missing. Across all passes "
         "every target contract must have an implemented verdict; an unverdicted "
@@ -425,12 +430,12 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
         "BEGIN FORGE ASSESSMENT security", "<security assessment>",
         "END FORGE ASSESSMENT security", "",
         "Keep each assessment short, a few sentences: overall_explanation is capped "
-        "at 3000 characters in total and holds ONLY these three assessments. Never "
-        "write VERDICT lines in it; a verdict is a finding record.", "",
+        "at 3000 characters in total and holds these three assessments and "
+        "the requested terse verdict lines when they fit.", "",
         "Prefix every finding title with exactly one matching token: [quality] , "
         "[performance] , or [security] .", "", FINDING_FORM, "", TEST_AUDIT_RULE,
         LENS_FOCUS["quality"],
-        VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL),
+        verdict_format,
         chunk_verdict_rule, "",
         LENS_FOCUS["performance"],
         LENS_FOCUS["security"], LEFTOVER_INSTRUCTION, "",
@@ -477,7 +482,10 @@ def _pass_sections(report: dict, *, allow_missing: bool = False) -> tuple[dict[s
     if missing:
         if allow_missing:
             return None
-        fail(f"combined review needs one non-empty assessment for {missing[0]}")
+        lens = missing[0]
+        begin, end = next((begin, end) for name, begin, end in SECTION_MARKERS
+                          if name == lens)
+        fail(f"combined review pass needs exact full-line {begin} and {end} markers")
     return sections, lines
 
 
@@ -1400,7 +1408,8 @@ def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
 def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                json_out: Path, engine: str, max_priority: str,
                ledger_root: Path | None = None, *, return_raw: bool = False,
-               codex_bin: str | None = None):
+               codex_bin: str | None = None,
+               contracts: list[dict] | None = None):
     argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority,
                        codex_bin)
     # The ledger goes to the REPO's control dir: the review worktree is removed
@@ -1454,6 +1463,19 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                           flush=True)
                     continue
                 _pass_sections(missing[0])
+            if contracts and not any(
+                    VERDICT_LINE.search(wrapper["provider_report"]["overall_explanation"])
+                    or any(_is_verdict_record(finding) for finding in
+                           wrapper["provider_report"]["findings"])
+                    for _label, wrapper in passes):
+                if attempt == 0:
+                    first_findings = [copy.deepcopy(finding)
+                                      for _label, wrapper in passes
+                                      for finding in wrapper["findings"]]
+                    print("reviewer omitted the contract verdicts; retrying review pass once",
+                          flush=True)
+                    continue
+                fail("the reviewer ignored the verdict contract; rerun")
             if first_findings:
                 target = (parsed["pass_reports"][0]["report"]
                           if "pass_reports" in parsed else parsed)
@@ -2615,6 +2637,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             result = _run_skill(
                 skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
                 engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
+                contracts=task.get("plan_contracts") if not args.lens else None,
                 **({"codex_bin": codex_bin} if codex_bin else {}),
             )
             if args.lens:

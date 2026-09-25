@@ -16,6 +16,7 @@ import json
 import copy
 import hashlib
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -421,6 +422,65 @@ def test_attributed_duplicate_projects_highest_priority_across_passes():
     assert quality["non_blocking_findings"] == []
 
 
+def test_clean_combined_pass_records_eight_terse_contract_verdicts():
+    from forge_cli.review import _combined_prompt
+
+    task = {"id": "T1", "plan_contracts": [
+        {"id": f"C{i}", "statement": "works", "source": "plan"}
+        for i in range(1, 9)
+    ]}
+    prompt = _combined_prompt(task).decode()
+    assert "one terse full line per target plan contract" in prompt
+    assert "A clean patch still needs these verdict lines" in prompt
+    quality = "\n".join(
+        f"VERDICT C{i}: implemented — src/a.py:{i}" for i in range(1, 9)
+    )
+    provider = _provider_report(_combined_explanation(quality, "fast", "safe"), [])
+    artifacts = _project_combined_report(
+        task, _processed(provider, review_status="scoped-clean"), ["src/a.py"],
+        "a" * 40, "b" * 40, [], [], {}, (),
+    )
+    assert {row["contract_id"]: row["verdict"] for row in
+            artifacts["quality"]["contract_verdicts"]} == {
+                f"C{i}": "implemented" for i in range(1, 9)
+            }
+    assert artifacts["quality"]["blocking_findings"] == []
+
+
+def test_clean_combined_pass_without_verdicts_retries_once_then_refuses(
+        tmp_path, monkeypatch, capsys):
+    import forge_cli.review as review_mod
+
+    report = _processed(_provider_report(
+        _combined_explanation("clear", "fast", "safe"), []),
+        review_status="scoped-clean")
+    attempts = []
+
+    class Process:
+        pid = 7
+        returncode = 0
+
+        def wait(self):
+            return 0
+
+    def popen(argv, **kwargs):
+        attempts.append(argv)
+        Path(argv[argv.index("--json-output") + 1]).write_text(json.dumps(report))
+        return Process()
+
+    monkeypatch.setattr(review_mod, "_record_codex_run", lambda *_args: "run")
+    monkeypatch.setattr(review_mod, "_stamp_codex_run", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(review_mod, "_close_codex_run", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(review_mod.subprocess, "Popen", popen)
+    with pytest.raises(SystemExit):
+        review_mod._run_skill(
+            tmp_path / "helper", tmp_path, "base", "brief.combined.md",
+            tmp_path / "result.json", "claude", "P3", contracts=[{"id": "C1"}],
+        )
+    assert len(attempts) == 2
+    assert "the reviewer ignored the verdict contract; rerun" in capsys.readouterr().out
+
+
 def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts():
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-C1", "statement": "works", "source": "plan"},
@@ -471,7 +531,7 @@ def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdi
 
 def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output(capsys):
     from forge_cli.review import _combined_prompt
-    assert b"a verdict is a finding record" in _combined_prompt({})
+    assert b"A clean patch still needs these verdict lines" in _combined_prompt({})
     provider = _provider_report("preface\n" + _combined_explanation(
             "VERDICT C1: implemented — src/a.py:1", "measured", "bounded",
         ).replace(
@@ -992,10 +1052,10 @@ def test_chunked_quality_prompt_omits_unobserved_verdicts_and_aggregation_fails_
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-AC1"}, {"id": "T1-AC2"}, {"id": "T1-AC3"}]}
     prompt = _combined_prompt(task).decode("utf-8")
-    assert "If a contract's evidence is absent from this chunk, omit its record" in prompt
+    assert "evidence is absent from this chunk, omit its line" in prompt
     assert "do not call it partial or missing solely because this chunk lacks" in prompt
     assert "In a one-pass run, verdict every contract" in prompt
-    assert "never a line in overall_explanation" in prompt
+    assert "In the quality assessment" in prompt
     reviewed = {"overall_explanation": "preserved passes", "findings": [],
                 "pass_reports": [
                     {"report": {"overall_explanation":
