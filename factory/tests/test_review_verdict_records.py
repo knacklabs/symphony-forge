@@ -19,7 +19,7 @@ from test_gates import HARNESS  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli.review import (  # noqa: E402
-    VERDICT_RECORD, _combined_prompt, _project_combined_report,
+    VERDICT_RECORD, _combined_prompt, _pass_sections, _project_combined_report,
 )
 
 TASK = {"id": "T5", "user_facing": False, "plan_contracts": [
@@ -95,6 +95,39 @@ def test_verdict_records_fill_contract_verdicts_and_never_count_as_findings():
     assert not any("VERDICT" in f.get("summary", "") for f in quality["non_blocking_findings"])
     for lens in ("performance", "security"):
         assert lenses[lens]["blocking_findings"] == []
+
+
+def test_unmarked_assessment_preserves_findings_and_their_lens_scores():
+    explanation = "The approval queue omits later pages. Other lenses found no issue."
+    lenses = _project(_report([
+        _finding("[quality] VERDICT C1: implemented", "src/work.py:1 filters the queue"),
+        _finding("[quality] VERDICT C2: implemented", "src/api.py:3 authorises history"),
+        _finding("[quality] Paginate the approval queue", "Later pages cannot be reached",
+                 priority="P1", category="bug"),
+        _finding("[performance] Avoid repeated scans", "Each page request scans the queue",
+                 priority="P2", category="bug"),
+    ], explanation=explanation))
+    assert lenses["quality"]["summary"].endswith(explanation)
+    assert [f["summary"].split(" (")[0] for f in lenses["quality"]["blocking_findings"]] == [
+        "Paginate the approval queue"]
+    assert [f["summary"].split(" (")[0] for f in lenses["performance"]["non_blocking_findings"]] == [
+        "Avoid repeated scans"]
+    assert lenses["quality"]["score"] < lenses["performance"]["score"]
+    assert lenses["performance"]["score"] < lenses["security"]["score"]
+
+
+def test_reordered_and_repeated_markers_take_the_first_complete_block():
+    explanation = (
+        "BEGIN FORGE ASSESSMENT security\nSecurity first.\nEND FORGE ASSESSMENT security\n"
+        "BEGIN FORGE ASSESSMENT quality\nFirst quality.\nEND FORGE ASSESSMENT quality\n"
+        "BEGIN FORGE ASSESSMENT quality\nSecond quality.\nEND FORGE ASSESSMENT quality"
+    )
+    sections, _ = _pass_sections({"overall_explanation": explanation})
+    assert sections == {
+        "quality": "First quality.",
+        "performance": explanation,
+        "security": "Security first.",
+    }
 
 
 def test_a_legacy_verdict_line_in_the_summary_still_reads_and_the_worst_wins():

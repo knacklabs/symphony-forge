@@ -417,8 +417,8 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
         "absent. Report any real contradiction between the product tree and the rendered "
         "evidence.", "",
         "Assess quality, performance, and security in one provider pass. In every "
-        "provider pass, overall_explanation must contain these exact full-line "
-        "markers once, in this order, with a non-empty assessment between each pair:",
+        "provider pass, put each assessment between these exact full-line "
+        "markers when possible:",
         "", "BEGIN FORGE ASSESSMENT quality", "<quality assessment>",
         "END FORGE ASSESSMENT quality", "BEGIN FORGE ASSESSMENT performance",
         "<performance assessment>", "END FORGE ASSESSMENT performance",
@@ -445,27 +445,31 @@ def _pass_sections(report: dict) -> tuple[dict[str, str], list[str]]:
     if not isinstance(explanation, str) or len(explanation) > 3000:
         fail("combined review pass needs overall_explanation within 3000 characters")
     lines = explanation.splitlines()
-    positions: list[int] = []
+    markers = {marker for _, begin, end in SECTION_MARKERS for marker in (begin, end)}
+    positions: dict[str, tuple[int, int]] = {}
     sections: dict[str, str] = {}
     for lens, begin, end in SECTION_MARKERS:
-        if lines.count(begin) != 1 or lines.count(end) != 1:
-            fail(f"combined review pass needs exact full-line {begin} and {end} markers")
-        start, stop = lines.index(begin), lines.index(end)
-        if stop <= start + 1:
-            fail(f"combined review {lens} assessment is empty")
-        body = "\n".join(lines[start + 1:stop]).strip()
-        if not body:
-            fail(f"combined review {lens} assessment is empty")
-        positions.extend((start, stop))
-        sections[lens] = body
-    if positions != sorted(positions):
-        fail("combined review lens sections are not in quality, performance, security order")
-    qs, qe, ps, pe, ss, se = positions
-    non_quality = (lines[:qs], lines[qe + 1:ps], lines[ps + 1:pe],
-                   lines[pe + 1:ss], lines[ss + 1:se], lines[se + 1:])
-    if any(VERDICT_LINE.search("\n".join(span)) for span in non_quality):
-        fail("combined review VERDICT lines must appear only in the quality assessment")
-    if len(set(sections.values())) != len(LENSES):
+        for start, line in enumerate(lines):
+            if line != begin:
+                continue
+            stop = next((i for i in range(start + 1, len(lines)) if lines[i] == end), None)
+            if stop is None:
+                continue
+            body = "\n".join(lines[start + 1:stop]).strip()
+            if body and not any(line in markers for line in lines[start + 1:stop]):
+                positions[lens] = (start, stop)
+                sections[lens] = body
+                break
+        if lens not in sections:
+            sections[lens] = explanation.strip() or "no separate assessment"
+    spans = sorted(positions.values())
+    if any(left[1] >= right[0] for left, right in zip(spans, spans[1:])):
+        fail("combined review lens sections overlap")
+    if "quality" in positions:
+        start, stop = positions["quality"]
+        if VERDICT_LINE.search("\n".join([*lines[:start], *lines[stop + 1:]])):
+            fail("combined review VERDICT lines must appear only in the quality assessment")
+    if len({sections[lens] for lens in positions}) != len(positions):
         fail("combined review copied one lens assessment into another lens")
     return sections, lines
 
