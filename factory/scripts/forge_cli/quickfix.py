@@ -11,8 +11,8 @@ from pathlib import Path
 
 from factory_lib import (
     _active_story_key, append_ledger_record, clean_git_env, dump_json,
-    evidence_path, head_sha, load_json, load_review_artifacts, now_iso,
-    read_ledger_records, repo_root,
+    default_trunk_branch, evidence_path, head_sha, load_json,
+    load_review_artifacts, now_iso, read_ledger_records, repo_root,
 )
 
 from .common import fail
@@ -363,6 +363,7 @@ def _lite_manifest(
     base: Path, base_sha: str, *, harness_source: bool | None = None,
 ) -> list[str]:
     """Return committed product paths changed since the lite window opened."""
+    base_sha = lite_diff_base(base, base_sha)
     paths = _git_paths(
         base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"],
     )
@@ -379,6 +380,33 @@ def _lite_manifest(
         harness_source=harness_source,
         symlink_paths=symlink_paths,
     )
+
+
+def lite_diff_base(base: Path, opening_sha: str) -> str:
+    """Exclude default-branch commits merged after the Lite window opened."""
+    branch = default_trunk_branch(base)
+    for ref in (f"origin/{branch}", branch):
+        resolved = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
+            cwd=base, capture_output=True, text=True, env=clean_git_env(),
+        )
+        if resolved.returncode == 0:
+            main_sha = resolved.stdout.strip()
+            break
+    else:
+        return opening_sha
+    common = subprocess.run(
+        ["git", "merge-base", "HEAD", main_sha],
+        cwd=base, capture_output=True, text=True, env=clean_git_env(),
+    )
+    if common.returncode != 0:
+        return opening_sha
+    merged_sha = common.stdout.strip()
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", opening_sha, merged_sha],
+        cwd=base, capture_output=True, env=clean_git_env(),
+    )
+    return merged_sha if ancestor.returncode == 0 else opening_sha
 
 
 def _lite_symlink_paths(

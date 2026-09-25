@@ -15,6 +15,7 @@ from factory_lib import (
     validate_review_document,
 )
 from forge_cli.events import append_event
+from forge_cli.quickfix import lite_diff_base
 from forge_cli.readiness import review_passed
 from forge_cli.review_brief import declared_contracts
 from forge_cli.stages import (
@@ -255,10 +256,12 @@ if lite_review:
     binding_fields = ("review_base_sha", "branch_diff_digest", "commit")
     supplied_binding = [field in payload for field in binding_fields]
     if any(supplied_binding):
-        lite_base = active_window.get("base_sha")
+        opening_sha = active_window.get("base_sha")
+        lite_base = (lite_diff_base(root, opening_sha)
+                     if isinstance(opening_sha, str) and opening_sha else "")
         if (not all(supplied_binding) or not isinstance(lite_base, str)
                 or not lite_base or payload.get("review_base_sha") != lite_base):
-            raise SystemExit("Lite review base does not match the open window's base_sha")
+            raise SystemExit("Lite review base does not match the open window's diff base")
         if payload.get("commit") != head_sha(root):
             raise SystemExit("Lite review commit is not current HEAD")
         if payload.get("branch_diff_digest") != product_delta_digest(root, lite_base):

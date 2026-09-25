@@ -9556,6 +9556,37 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
     assert code != 0 and "invalid choice" in out
 
 
+def test_mode_done_counts_only_lite_files_after_merging_main(repo):
+    git(repo, "checkout", "-q", "-b", "lite-fix")
+    active = open_lite(repo)
+    source = repo / "src"
+    source.mkdir()
+    (source / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix")
+
+    git(repo, "checkout", "-q", "main")
+    source.mkdir()
+    for number in range(5):
+        (source / f"main_{number}.py").write_text(f"main = {number}\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "main product changes")
+    git(repo, "update-ref", "refs/remotes/origin/main", head(repo))
+    git(repo, "checkout", "-q", "lite-fix")
+    git(repo, "merge", "--no-ff", "main", "-m", "merge main")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["base_sha"] == active["base_sha"]
+    assert done[0]["files"] == ["src/own.py"]
+
+
 def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
     # CFS-1 layout: reviews live under the story dir and .factory/reviews never
     # exists. Lite close must clean the scoped gate reviews and not crash on the

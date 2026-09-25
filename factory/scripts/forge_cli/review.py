@@ -1996,20 +1996,23 @@ def cmd_review(args: argparse.Namespace) -> None:
 def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
                 skill: str | None = None) -> None:
     """Review the committed diff of one open Lite window and record its lenses."""
-    from .quickfix import LITE, _lite_dirty_product_files, load_active, profile_of
+    from .quickfix import (
+        LITE, _lite_dirty_product_files, lite_diff_base, load_active, profile_of,
+    )
 
     window = load_active(base)
     if not window or profile_of(window) != LITE:
         fail("no Lite window is open")
-    base_sha = window.get("base_sha")
-    if not isinstance(base_sha, str) or not base_sha:
+    opening_sha = window.get("base_sha")
+    if not isinstance(opening_sha, str) or not opening_sha:
         fail("open Lite window has no recorded base_sha")
     if _lite_dirty_product_files(base):
         fail("commit the Lite changes first; the review covers committed changes only")
 
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
-    if _git(base, "merge-base", "--is-ancestor", base_sha, tip_sha).returncode != 0:
-        fail(f"Lite base {base_sha[:12]} is not an ancestor of HEAD")
+    if _git(base, "merge-base", "--is-ancestor", opening_sha, tip_sha).returncode != 0:
+        fail(f"Lite base {opening_sha[:12]} is not an ancestor of HEAD")
+    base_sha = lite_diff_base(base, opening_sha)
     excluded = review_excluded_prefixes(base)
     scope = sorted(
         path for path in _require_git(
@@ -2074,8 +2077,9 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
         if (helper_after != helper_before or helper_file_after != helper_file_before
                 or head_sha(base) != tip_sha or _lite_dirty_product_files(base)
                 or product_delta_digest(base, base_sha) != delta_id
+                or lite_diff_base(base, opening_sha) != base_sha
                 or current_window.get("id") != window["id"]
-                or current_window.get("base_sha") != base_sha
+                or current_window.get("base_sha") != opening_sha
                 or (base / REVIEW_DATASET_REL).read_bytes() != context):
             fail("Lite review inputs changed during the review; nothing was recorded")
 
