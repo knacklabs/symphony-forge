@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0254-41da",
+  "profile": "lite",
+  "reason": "PR 259: title line broke reviewed-meaning identity (123 tests)",
+  "started_at": "2026-09-25T10:48:06+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "bf3f4d16f9de6ae66830dd7e6f28fb16f1293819"
+}
