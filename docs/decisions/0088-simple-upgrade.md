@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-24
 stories: []
+superseded_by: 0093-lean-forge-rebuild
 ---
 
 # Upgrade: refuse work in flight, archive old review files, reset on failure
