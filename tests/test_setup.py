@@ -247,11 +247,15 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0
-    # forge can't launch: the one on PATH names an interpreter that doesn't exist.
+    # forge can't launch: the only forge on PATH names an interpreter that doesn't exist. Every
+    # other one comes off PATH, because dash (Ubuntu's sh) skips a forge it can't start and runs
+    # the next one.
     broken = tmp_path / "broken"
     broken.mkdir()
     _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
-    env = {**os.environ, "PATH": f"{broken}{os.pathsep}{os.environ['PATH']}"}
+    path = [folder for folder in os.environ["PATH"].split(os.pathsep)
+            if not (Path(folder) / "forge").is_file()]
+    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path])}
     tools = {"PreToolUse": ("Bash", {"command": "ls"}),
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 
