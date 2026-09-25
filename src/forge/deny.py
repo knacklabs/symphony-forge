@@ -85,6 +85,9 @@ def _rule(program: str, args: list[str]) -> str | None:
             "f" in short or "--force" in args):
         return "destructive"
     if program == "git":
+        # -c core.hooksPath=... (or --config-env) turns every git hook off, like --no-verify.
+        if any("hookspath" in a.lower() for a in args):
+            return "no_verify"
         sub, rest = _subcommand(args)
         short = _short(rest)
         if sub == "commit" and "n" in short:  # -n is commit's short --no-verify

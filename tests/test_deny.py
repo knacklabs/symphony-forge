@@ -31,6 +31,8 @@ BLOCKED = {
     "git commit --no-verify -m 'Fix it'": HOOKS,
     "git push --no-verify origin fix/a": HOOKS,
     "git add -A && git commit -nm 'Fix it'": HOOKS,
+    "git -c core.hooksPath=/dev/null push origin HEAD:main": HOOKS,
+    "git -c core.hooksPath=/tmp commit -m 'Fix it'": HOOKS,
     "gh pr merge 12 --squash": MERGE,
 }
 ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
