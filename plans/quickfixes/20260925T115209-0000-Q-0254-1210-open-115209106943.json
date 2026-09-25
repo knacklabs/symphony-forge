@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0254-1210",
+  "profile": "lite",
+  "reason": "PR 261 CI failures + reviewer verdicts on clean patches",
+  "started_at": "2026-09-25T11:52:09+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "9232e6d7fe2b967b6831a8bc03a7f939166cba3b"
+}
