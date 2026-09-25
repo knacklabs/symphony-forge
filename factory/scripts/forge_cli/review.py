@@ -210,6 +210,7 @@ LENS_TAGS = tuple(f"[{lens}] " for lens in LENSES)
 REPORT_FIELDS = {
     "findings", "overall_correctness", "overall_explanation", "overall_confidence",
 }
+OPTIONAL_REPORT_FIELDS = {"review_completion"}
 FINDING_FIELDS = {
     "title", "body", "priority", "confidence", "category", "code_location",
     "source_attribution",
@@ -488,8 +489,19 @@ def _normalized_helper_path(value: object) -> str:
     return result
 
 
-def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
-    if not isinstance(finding, dict) or set(finding) != FINDING_FIELDS:
+def _consumed_finding(finding: dict) -> dict:
+    consumed = {key: finding[key] for key in FINDING_FIELDS if key in finding}
+    consumed["code_location"] = {
+        key: finding["code_location"][key] for key in ("file_path", "line")}
+    if isinstance(consumed.get("source_attribution"), dict):
+        consumed["source_attribution"] = {
+            key: consumed["source_attribution"][key] for key in ATTRIBUTION_FIELDS}
+    return consumed
+
+
+def _validate_helper_finding(finding: object) -> dict:
+    if (not isinstance(finding, dict)
+            or not FINDING_FIELDS - {"source_attribution"} <= set(finding)):
         fail("combined review finding has invalid fields")
     if (not isinstance(finding.get("title"), str) or not finding["title"] or
             len(finding["title"]) > 140):
@@ -506,16 +518,14 @@ def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
             {"bug", "security", "regression", "test_gap", "maintainability"}):
         fail("combined review finding has invalid category")
     location = finding.get("code_location")
-    if (not isinstance(location, dict) or set(location) != {"file_path", "line"}
+    if (not isinstance(location, dict) or not {"file_path", "line"} <= set(location)
             or not isinstance(location.get("line"), int)
             or isinstance(location["line"], bool) or location["line"] < 1):
         fail("combined review finding has invalid code_location")
     _normalized_helper_path(location.get("file_path"))
     attribution = finding.get("source_attribution")
-    if accepted and attribution is not None:
-        fail("combined review accepted findings require null source_attribution")
     if attribution is not None and (
-            not isinstance(attribution, dict) or set(attribution) != ATTRIBUTION_FIELDS
+            not isinstance(attribution, dict) or not ATTRIBUTION_FIELDS <= set(attribution)
             or not all(isinstance(attribution.get(field), str)
                        for field in ATTRIBUTION_FIELDS - {"column"})
             or attribution["target"] not in {"index", "working_tree"}
@@ -527,8 +537,14 @@ def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
 
 
 def _validate_provider_report(report: object) -> dict:
-    if not isinstance(report, dict) or set(report) != REPORT_FIELDS:
+    if not isinstance(report, dict) or not REPORT_FIELDS <= set(report):
         fail("combined review report has invalid fields")
+    if "review_completion" in report:
+        if (not isinstance(report["review_completion"], str)
+                or report["review_completion"] not in {"complete", "incomplete"}):
+            fail("combined review report has invalid review_completion")
+        if report["review_completion"] == "incomplete":
+            fail("the reviewer marked its assessment incomplete; rerun the review")
     if (not isinstance(report.get("overall_correctness"), str) or
             report["overall_correctness"] not in {"patch is correct", "patch is incorrect"}):
         fail("combined review report has invalid overall_correctness")
@@ -541,45 +557,26 @@ def _validate_provider_report(report: object) -> dict:
     if not isinstance(findings, list):
         fail("combined review report findings must be a list")
     for finding in findings:
-        _validate_helper_finding(finding, accepted=False)
+        _validate_helper_finding(finding)
     return report
 
 
 def _validate_processed_report(report: object, required: set[str]) -> dict:
-    allowed = REPORT_FIELDS | required | REPORT_METADATA_FIELDS
-    if (not isinstance(report, dict) or not REPORT_FIELDS | required <= set(report)
-            or set(report) - allowed):
+    if not isinstance(report, dict) or not REPORT_FIELDS | required <= set(report):
         fail("combined review helper wrapper has invalid fields")
-    _validate_provider_report({field: report[field] for field in REPORT_FIELDS})
+    _validate_provider_report({
+        field: report[field]
+        for field in REPORT_FIELDS | (OPTIONAL_REPORT_FIELDS & set(report))
+    })
     if "provider_report" in report:
         _validate_provider_report(report["provider_report"])
     for finding in report["findings"]:
-        _validate_helper_finding(finding, accepted=True)
+        _validate_helper_finding(finding)
     sample = {"overall_correctness": "patch is correct", "overall_explanation": "ok",
               "overall_confidence": 1}
     for field in ("scope_rejected_findings", "priority_filtered_findings"):
         if field in report:
             _validate_provider_report({**sample, "findings": report[field]})
-    if "attribution_rejected_findings" in report:
-        rejected = report["attribution_rejected_findings"]
-        if not isinstance(rejected, list):
-            fail("combined review attribution metadata must be a list")
-        if not all(isinstance(finding, dict) and
-                   set(finding) == FINDING_FIELDS | {"attribution_rejection_reason"} and
-                   isinstance(finding["attribution_rejection_reason"], str) and
-                   finding["attribution_rejection_reason"] for finding in rejected):
-            fail("combined review attribution metadata is invalid")
-        _validate_provider_report({**sample, "findings": [
-            {key: value for key, value in finding.items()
-             if key != "attribution_rejection_reason"} for finding in rejected]})
-    missing = report.get("missing_required_findings")
-    if "missing_required_findings" in report and (not isinstance(missing, list) or not all(
-            isinstance(item, str) and item for item in missing)):
-        fail("combined review missing-required metadata is invalid")
-    available = report.get("available_source_records")
-    if "available_source_records" in report and (not isinstance(available, list) or not all(
-            isinstance(item, str) for item in available)):
-        fail("combined review available-source metadata is invalid")
     return report
 
 
@@ -633,9 +630,9 @@ def _validate_certifying_wrapper(report: dict) -> None:
     # once, in the reviewer's order: nothing dropped, nothing invented.
     kept, aside = list(report["findings"]), list(set_aside)
     for finding in normalized:
-        if kept and kept[0] == finding:
+        if kept and _consumed_finding(kept[0]) == _consumed_finding(finding):
             kept.pop(0)
-        elif aside and aside[0] == finding:
+        elif aside and _consumed_finding(aside[0]) == _consumed_finding(finding):
             aside.pop(0)
         else:
             fail("combined review accepted findings do not match its raw provider report")
@@ -662,6 +659,9 @@ def _validate_review_status(report: dict) -> None:
 def _actual_passes(report: object) -> list[tuple[str, dict]]:
     if not isinstance(report, dict):
         fail("combined review helper wrapper has invalid fields")
+    if (report.get("review_status") == "incomplete"
+            and not report.get("scope_rejected_findings")):
+        fail("the reviewer marked its assessment incomplete; rerun the review")
     if "pass_reports" not in report:
         processed = _validate_processed_report(report, {"provider_report", "review_status"})
         _validate_provider_report(processed["provider_report"])
@@ -688,13 +688,23 @@ def _actual_passes(report: object) -> list[tuple[str, dict]]:
     passes: list[tuple[str, dict]] = []
     for index, entry in enumerate(entries, 1):
         expected = f"chunk {index}/{total}"
-        if (not isinstance(entry, dict) or set(entry) != {"label", "report"}
+        if (not isinstance(entry, dict) or not {"label", "report"} <= set(entry)
                 or entry.get("label") != expected or not isinstance(entry.get("report"), dict)):
             fail(f"combined review pass order must be {expected}")
         wrapper = _validate_processed_report(entry["report"], {"provider_report"})
         _validate_provider_report(wrapper["provider_report"])
         _validate_certifying_wrapper(wrapper)
         passes.append((expected, wrapper))
+    if "provider_report" in report:
+        aggregate_provider = _validate_provider_report(report["provider_report"])
+        pass_provider = passes[0][1]["provider_report"]
+        if (total != 1 or any(aggregate_provider[field] != pass_provider[field]
+                              for field in REPORT_FIELDS - {"findings"})
+                or [_consumed_finding(f) for f in aggregate_provider["findings"]] !=
+                   [_consumed_finding(f) for f in pass_provider["findings"]]
+                or any(report[field] != passes[0][1][field]
+                       for field in REPORT_FIELDS - {"findings"})):
+            fail("combined review aggregate provider report does not match its pass")
     expected_correctness = ("patch is incorrect" if report["findings"] or any(
         item["overall_correctness"] == "patch is incorrect" for _, item in passes)
         else "patch is correct")
@@ -715,10 +725,10 @@ def _scope_only_rejected_findings(report: object) -> tuple[list[dict], list[dict
     def normalized(findings: list[dict], *, accepted: bool) -> list[dict]:
         values = []
         for finding in copy.deepcopy(findings):
-            _validate_helper_finding(finding, accepted=accepted)
+            _validate_helper_finding(finding)
             finding["code_location"]["file_path"] = _normalized_helper_path(
                 finding["code_location"]["file_path"])
-            values.append(finding)
+            values.append(_consumed_finding(finding))
         return values
 
     def ordered(findings: list[dict]) -> list[str]:
@@ -772,7 +782,7 @@ def _scope_only_rejected_findings(report: object) -> tuple[list[dict], list[dict
     refused: list[dict] = []
     for index, entry in enumerate(entries, 1):
         expected = f"chunk {index}/{len(entries)}"
-        if (not isinstance(entry, dict) or set(entry) != {"label", "report"}
+        if (not isinstance(entry, dict) or not {"label", "report"} <= set(entry)
                 or entry.get("label") != expected):
             fail(f"combined review pass order must be {expected}")
         processed = _validate_processed_report(entry.get("report"), {"provider_report"})
@@ -787,20 +797,10 @@ def _scope_only_rejected_findings(report: object) -> tuple[list[dict], list[dict
     return retained, refused
 
 
-def _helper_bounded_field(text: str, limit: int) -> str:
-    if len(text) <= limit:
-        return text
-    suffix = "\n\n[truncated]"
-    return text[:max(0, limit - len(suffix))] + suffix
-
-
 def _tagged_finding(finding: dict) -> tuple[
     str, dict, tuple[str, int, int, str], tuple[str, int, str, str]
 ]:
-    if not isinstance(finding, dict):
-        fail("combined review findings must be objects")
-    if "source_attribution" not in finding or finding["source_attribution"] is not None:
-        fail("combined review plain-source findings require null source_attribution")
+    _validate_helper_finding(finding)
     title = finding.get("title")
     matches = [lens for lens, tag in zip(LENSES, LENS_TAGS)
                if isinstance(title, str) and title.startswith(tag)]
@@ -815,7 +815,7 @@ def _tagged_finding(finding: dict) -> tuple[
             tag in clean_title.casefold() for tag in known_tags):
         fail("every combined review finding needs exactly one lens title tag")
     location = finding.get("code_location")
-    if not isinstance(location, dict) or set(location) != {"file_path", "line"}:
+    if not isinstance(location, dict) or not {"file_path", "line"} <= set(location):
         fail("combined review finding needs one exact file_path and line")
     raw_path, line = location.get("file_path"), location.get("line")
     if (not isinstance(raw_path, str) or not raw_path or "\\" in raw_path
@@ -828,7 +828,7 @@ def _tagged_finding(finding: dict) -> tuple[
     normalized_title = display_title.casefold()
     tagged_title = " ".join(
         unicodedata.normalize("NFC", title).split()).casefold()
-    projected = copy.deepcopy(finding)
+    projected = copy.deepcopy(_consumed_finding(finding))
     projected["title"] = display_title
     projected["code_location"] = {"file_path": normalized_path, "line": line}
     return (
@@ -849,16 +849,15 @@ def _project_combined_report(
     pass_findings: list[dict[str, list[dict]]] = []
     fingerprint_lenses: dict[tuple[str, int, int, str], str] = {}
     retained: list[tuple[str, dict]] = []
-    retained_raw: list[dict] = []
     projected_fingerprints: set[tuple[str, int, int, str]] = set()
-    seen_merge_keys: set[tuple[str, int, str, str]] = set()
+    projected_findings: dict[tuple[str, int, int, str], dict] = {}
     verdict_lines: list[str] = []
-    for label, provider in passes:
+    for _label, provider in passes:
         if not isinstance(provider.get("findings", []), list):
             fail("combined review pass findings must be a list")
         by_lens: dict[str, list[dict]] = {lens: [] for lens in LENSES}
         for finding in provider.get("findings", []):
-            lens, clean, fingerprint, merge_key = _tagged_finding(finding)
+            lens, clean, fingerprint, _merge_key = _tagged_finding(finding)
             prior_lens = fingerprint_lenses.setdefault(fingerprint, lens)
             if prior_lens != lens:
                 fail("combined review contains a cross-lens duplicate normalized finding")
@@ -880,14 +879,10 @@ def _project_combined_report(
                 else:
                     retained.append((lens, clean))
                     by_lens[lens].append(clean)
-            if merge_key not in seen_merge_keys:
-                seen_merge_keys.add(merge_key)
-                merged = copy.deepcopy(finding)
-                if "pass_reports" in report:
-                    merged["body"] = _helper_bounded_field(
-                        f"{label}:\n\n{merged['body']}", 2000,
-                    )
-                retained_raw.append(merged)
+                    projected_findings[fingerprint] = clean
+            elif fingerprint in projected_findings:
+                projected_findings[fingerprint]["priority"] = min(
+                    projected_findings[fingerprint]["priority"], clean["priority"])
         for finding in set_aside_verdict_records(provider):
             # A verdict record the helper set aside as outside its diff scope:
             # forge's to count. It is never a finding, so it joins the verdict
@@ -906,13 +901,6 @@ def _project_combined_report(
                 f"VERDICT {record['id']}: {record['verdict'].lower()} — "
                 + (body if at in body else f"{at} {body}"))
         pass_findings.append(by_lens)
-    findings = report.get("findings", [])
-    if not isinstance(findings, list):
-        fail("combined review findings must be a list")
-    for finding in findings:
-        _tagged_finding(finding)
-    if findings != retained_raw:
-        fail("combined review merged findings do not match its ordered provider passes")
     projected: dict[str, list[dict]] = {lens: [] for lens in LENSES}
     for lens, clean in retained:
         projected[lens].append(clean)

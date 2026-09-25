@@ -578,15 +578,13 @@ def _autoreview_dir(home: Path) -> Path:
 
 
 AUTOREVIEW_UPSTREAM = "https://github.com/openclaw/agent-skills.git"
+AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"  # 0.2.0
 AUTOREVIEW_SHA_FILE = ".upstream-sha"
 
 
 def _autoreview_upstream_sha() -> str:
-    """HEAD of the autoreview upstream; "" when offline or unreachable (then
-    the copy is never called stale — no network, no verdict)."""
-    code, out = run_quiet(["git", "ls-remote", AUTOREVIEW_UPSTREAM, "HEAD"])
-    first = out.split()[0] if code == 0 and out.split() else ""
-    return first if re.fullmatch(r"[0-9a-f]{40}", first) else ""
+    """Tested Autoreview release used by doctor and --fix."""
+    return AUTOREVIEW_PIN
 
 
 def _autoreview_installed_sha(target: Path) -> str:
@@ -597,14 +595,12 @@ def _autoreview_installed_sha(target: Path) -> str:
 
 
 def _autoreview_status(home: Path, upstream_sha: str) -> tuple[bool, str]:
-    """(ok, detail) for the doctor row: missing, stale against upstream, or
-    installed. A copy with no recorded sha (installed before refreshes
-    existed) counts as stale whenever upstream is reachable."""
+    """(ok, detail) for the doctor row: missing, mismatched pin, or installed."""
     target = _autoreview_dir(home)
     if not target.is_dir():
         return False, "not installed"
     if upstream_sha and _autoreview_installed_sha(target) != upstream_sha:
-        return False, f"stale (upstream {upstream_sha})"
+        return False, f"stale (expected {upstream_sha})"
     return True, str(target)
 
 
@@ -652,21 +648,29 @@ def _autoreview_install(home: Path, upstream_sha: str) -> bool:
     claude_copy = home / ".claude" / "skills" / "autoreview"
     if claude_copy.is_dir():
         targets.append(claude_copy)
+    if upstream_sha != AUTOREVIEW_PIN:
+        return False
     with tempfile.TemporaryDirectory() as tmp:
         code, _ = run_quiet([
             "git", "clone", "--depth", "1", AUTOREVIEW_UPSTREAM, tmp,
         ])
+        if code != 0:
+            return False
+        code, _ = run_quiet(["git", "-C", tmp, "fetch", "--depth", "1",
+                             "origin", AUTOREVIEW_PIN])
+        if code != 0:
+            return False
+        code, _ = run_quiet(["git", "-C", tmp, "checkout", "--detach",
+                             AUTOREVIEW_PIN])
         src = Path(tmp) / "skills" / "autoreview"
         if code != 0 or not src.is_dir():
             return False
-        code, cloned = run_quiet(["git", "-C", tmp, "rev-parse", "HEAD"])
-        sha = cloned.strip() if code == 0 and re.fullmatch(
-            r"[0-9a-f]{40}", cloned.strip()) else upstream_sha
         for target in targets:
             _autoreview_backup_if_modified(target)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(src, target, dirs_exist_ok=True)
-            (target / AUTOREVIEW_SHA_FILE).write_text(sha + "\n", encoding="utf-8")
+            (target / AUTOREVIEW_SHA_FILE).write_text(
+                AUTOREVIEW_PIN + "\n", encoding="utf-8")
             (target / AUTOREVIEW_DIGEST_FILE).write_text(
                 _autoreview_tree_digest(target) + "\n", encoding="utf-8")
     return True
