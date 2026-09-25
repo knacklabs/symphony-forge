@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0252-9945",
+  "profile": "lite",
+  "reason": "CI hangs fail fast and name the hung test",
+  "started_at": "2026-09-25T09:18:47+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "87c73a0c13bf46dfd1bb5533709212f5644245eb"
+}
