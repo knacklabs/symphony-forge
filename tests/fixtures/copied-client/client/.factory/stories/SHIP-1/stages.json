@@ -1,0 +1,13 @@
+{
+  "issue": "SHIP-1",
+  "stages": [
+    {
+      "id": "SHIP-1-T1",
+      "status": "done"
+    },
+    {
+      "id": "SHIP-1-T2",
+      "status": "pending"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "story": "SEARCH-1",
+  "tasks": [
+    {
+      "id": "SEARCH-1-T1",
+      "title": "The search box",
+      "objective": "A search box on every page.",
+      "acceptance_criteria": [
+        "searching a product's name lists it first."
+      ],
+      "write_scope": [
+        "src/search.js"
+      ],
+      "required_tests": [
+        {
+          "path": "test/search.test.js"
+        }
+      ]
+    }
+  ]
+}
