@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,15 +35,24 @@ jobs:
         if: steps.repo_kind.outputs.is_harness == 'true'
         with:
           node-version: '22'
-      # Each test owns its own temp repo; shard by test id across runners, then
-      # distribute the selected tests across processes within each runner.
+      - uses: actions/cache/restore@v4
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        with:
+          path: .test_durations
+          key: test-durations-${{ github.sha }}
+          restore-keys: test-durations-
+      # Each test owns its own temp repo; balance runners by recorded duration,
+      # then distribute each runner's selected tests across local processes.
       - name: Gate regression tests
         if: steps.repo_kind.outputs.is_harness == 'true'
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           SHARD: ${{ matrix.shard }}
         run: |
-          python3 -m pip install --quiet pytest pytest-xdist pytest-shard psutil
+          python3 -m pip install --quiet pytest pytest-xdist pytest-split psutil
+          if [[ ! -f .test_durations ]]; then
+            cp factory/tests/.test_durations .test_durations
+          fi
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
             mapfile -d '' -t changes < <(git diff --name-status -z "$PR_BASE_SHA" HEAD)
             changed_files=()
@@ -73,14 +82,51 @@ jobs:
               done
             done
             if ((${#matching_tests[@]})); then
-              # A small matched set can leave a shard empty (pytest exit 5).
-              python3 -m pytest "${matching_tests[@]}" -q -n auto --dist worksteal --shard-id=$((SHARD-1)) --num-shards=4 || test "$?" -eq 5
+              if ((SHARD == 1)); then
+                python3 -m pytest "${matching_tests[@]}" -q -n auto --dist worksteal --junitxml=test-results.xml
+              else
+                echo "Markdown-only subset runs on shard 1."
+              fi
             else
               echo "No factory tests mention the changed Markdown files; skipping gate regression tests."
             fi
           else
-            python3 -m pytest factory/tests -q -n auto --dist worksteal --shard-id=$((SHARD-1)) --num-shards=4
+            python3 -m pytest factory/tests -q -n auto --dist worksteal --splits 6 --group "$SHARD" --splitting-algorithm least_duration --durations-path .test_durations --junitxml=test-results.xml
           fi
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.repo_kind.outputs.is_harness == 'true'
+        with:
+          name: gate-junit-${{ matrix.shard }}
+          path: test-results.xml
+          if-no-files-found: ignore
+
+  save-test-durations:
+    needs: gate-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Identify harness vs vendored client
+        id: repo_kind
+        run: |
+          if [ -f constitution/VENDORED_FROM ]; then
+            echo "is_harness=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_harness=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@v4
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        with:
+          pattern: gate-junit-*
+          path: junit
+      - name: Convert shard results to durations
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        run: python3 factory/scripts/junit_to_durations.py .test_durations junit/*/test-results.xml
+      - uses: actions/cache/save@v4
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        with:
+          path: .test_durations
+          key: test-durations-${{ github.sha }}
 
   scaffold-check:
     needs: gate-tests
