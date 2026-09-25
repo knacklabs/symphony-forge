@@ -1107,7 +1107,7 @@
         "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating myclaw; then the old tree is deleted"
       ],
       "order": 52,
-      "status": "pending",
+      "status": "active",
       "epic": "symphony-forge",
       "skill": "backend",
       "kind": "refactor",
@@ -1189,5 +1189,5 @@
       ]
     }
   ],
-  "updated_at": "2026-09-25T14:32:30+00:00"
+  "updated_at": "2026-09-25T14:33:24+00:00"
 }
