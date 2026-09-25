@@ -346,6 +346,64 @@ def test_review_completion_is_optional_in_provider_and_helper_reports(capsys):
     assert "combined review report has invalid review_completion" in capsys.readouterr().out
 
 
+def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
+    provider = _provider_report(_combined_explanation("clear", "fast", "safe"), [])
+    wrapper = {
+        **copy.deepcopy(provider), "provider_report": copy.deepcopy(provider),
+        "pass_reports": [{"label": "chunk 1/1", "report": _processed(provider)}],
+        "review_status": "scoped-clean",
+    }
+    assert _actual_passes(wrapper) == [("chunk 1/1", wrapper["pass_reports"][0]["report"])]
+    with_completion = copy.deepcopy(wrapper)
+    with_completion["provider_report"]["review_completion"] = "complete"
+    with_completion["pass_reports"][0]["report"]["provider_report"]["review_completion"] = "complete"
+    assert len(_actual_passes(with_completion)) == 1
+
+    for invalid in (
+        {**wrapper, "unexpected": True},
+        {**wrapper, "pass_reports": [{"label": "", "report": _processed(provider)}]},
+        {**wrapper, "pass_reports": [{"label": "chunk 1/1", "report": {}}]},
+        {**wrapper, "pass_reports": [{"label": "chunk 1/1",
+                                      "report": {**_processed(provider), "unexpected": True}}]},
+        {**wrapper, "overall_explanation": "altered after the pass"},
+    ):
+        with pytest.raises(SystemExit):
+            _actual_passes(invalid)
+        capsys.readouterr()
+
+
+def test_mixed_source_helper_claim_variants_match_preserved_pass():
+    attribution = {"target": "index", "record_id": "r", "source_id": "s",
+                   "side": "present", "column": 1, "excerpt": "x"}
+    raw = _combined_finding("security", "Validate source", "src/a.py", 4)
+    raw["source_attribution"] = attribution
+    provider = _provider_report(_combined_explanation("clear", "fast", "risk"), [raw])
+    merged = copy.deepcopy(raw)
+    merged["claim_variants"] = [{"body": "evidence", "observations": [{
+        "pass": "chunk 1/1", "title": raw["title"], "priority": "P2",
+        "confidence": 0.9,
+    }]}]
+    wrapper = {
+        **copy.deepcopy(provider), "findings": [merged],
+        "provider_report": copy.deepcopy(provider),
+        "pass_reports": [{"label": "chunk 1/1", "report": _processed(provider)}],
+        "review_status": "findings",
+    }
+    assert _project_combined_report(
+        {"id": "T1", "plan_contracts": []}, wrapper, ["src/a.py"],
+        "a" * 40, "b" * 40, [], [], {}, (),
+    )["security"]["non_blocking_findings"]
+
+    for variant in (
+        {"body": "evidence", "observations": []},
+        {"body": "evidence", "observations": [{"pass": "chunk 1/1"}]},
+    ):
+        invalid = copy.deepcopy(wrapper)
+        invalid["findings"][0]["claim_variants"] = [variant]
+        with pytest.raises(SystemExit):
+            _actual_passes(invalid)
+
+
 def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts():
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-C1", "statement": "works", "source": "plan"},
@@ -568,8 +626,7 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
                      "pass_reports": [_pass("chunk 1/1", clean)]}
     assert len(_actual_passes(chunked_clean)) == 1
     chunked_provider = {**chunked_clean, "provider_report": clean}
-    with pytest.raises(SystemExit):
-        _actual_passes(chunked_provider)
+    assert len(_actual_passes(chunked_provider)) == 1
 
     finding = _combined_finding("quality", "Normalized", "src/a.py", 3)
     raw = copy.deepcopy(finding)

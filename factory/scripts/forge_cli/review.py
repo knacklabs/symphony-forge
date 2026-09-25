@@ -489,8 +489,10 @@ def _normalized_helper_path(value: object) -> str:
     return result
 
 
-def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
-    if not isinstance(finding, dict) or set(finding) != FINDING_FIELDS:
+def _validate_helper_finding(finding: object, *, merged: bool = False) -> dict:
+    allowed = FINDING_FIELDS | ({"claim_variants"} if merged else set())
+    if (not isinstance(finding, dict) or not FINDING_FIELDS <= set(finding)
+            or set(finding) - allowed):
         fail("combined review finding has invalid fields")
     if (not isinstance(finding.get("title"), str) or not finding["title"] or
             len(finding["title"]) > 140):
@@ -513,8 +515,6 @@ def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
         fail("combined review finding has invalid code_location")
     _normalized_helper_path(location.get("file_path"))
     attribution = finding.get("source_attribution")
-    if accepted and attribution is not None:
-        fail("combined review accepted findings require null source_attribution")
     if attribution is not None and (
             not isinstance(attribution, dict) or set(attribution) != ATTRIBUTION_FIELDS
             or not all(isinstance(attribution.get(field), str)
@@ -524,10 +524,32 @@ def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
             or not isinstance(attribution.get("column"), int)
             or isinstance(attribution["column"], bool) or attribution["column"] < 1):
         fail("combined review finding has invalid source_attribution")
+    if "claim_variants" in finding:
+        variants = finding["claim_variants"]
+        if not isinstance(variants, list) or not variants:
+            fail("combined review finding has invalid claim_variants")
+        for variant in variants:
+            if (not isinstance(variant, dict) or set(variant) != {"body", "observations"}
+                    or not isinstance(variant["body"], str) or not variant["body"]
+                    or len(variant["body"]) > 2000
+                    or not isinstance(variant["observations"], list)
+                    or not variant["observations"]):
+                fail("combined review finding has invalid claim_variants")
+            for observation in variant["observations"]:
+                if (not isinstance(observation, dict)
+                        or set(observation) != {"pass", "title", "priority", "confidence"}
+                        or not isinstance(observation["pass"], str)
+                        or not observation["pass"]
+                        or not isinstance(observation["title"], str)
+                        or not observation["title"]
+                        or len(observation["title"]) > 140
+                        or observation["priority"] not in {"P0", "P1", "P2", "P3"}
+                        or not _valid_confidence(observation["confidence"])):
+                    fail("combined review finding has invalid claim_variants")
     return finding
 
 
-def _validate_provider_report(report: object) -> dict:
+def _validate_provider_report(report: object, *, merged: bool = False) -> dict:
     if (not isinstance(report, dict) or not REPORT_FIELDS <= set(report)
             or set(report) - REPORT_FIELDS - OPTIONAL_REPORT_FIELDS):
         fail("combined review report has invalid fields")
@@ -549,23 +571,25 @@ def _validate_provider_report(report: object) -> dict:
     if not isinstance(findings, list):
         fail("combined review report findings must be a list")
     for finding in findings:
-        _validate_helper_finding(finding, accepted=False)
+        _validate_helper_finding(finding, merged=merged)
     return report
 
 
 def _validate_processed_report(report: object, required: set[str]) -> dict:
-    allowed = REPORT_FIELDS | OPTIONAL_REPORT_FIELDS | required | REPORT_METADATA_FIELDS
+    allowed = (REPORT_FIELDS | OPTIONAL_REPORT_FIELDS | required
+               | REPORT_METADATA_FIELDS
+               | ({"provider_report"} if "pass_reports" in required else set()))
     if (not isinstance(report, dict) or not REPORT_FIELDS | required <= set(report)
             or set(report) - allowed):
         fail("combined review helper wrapper has invalid fields")
     _validate_provider_report({
         field: report[field]
         for field in REPORT_FIELDS | (OPTIONAL_REPORT_FIELDS & set(report))
-    })
+    }, merged="pass_reports" in report)
     if "provider_report" in report:
         _validate_provider_report(report["provider_report"])
     for finding in report["findings"]:
-        _validate_helper_finding(finding, accepted=True)
+        _validate_helper_finding(finding, merged="pass_reports" in report)
     sample = {"overall_correctness": "patch is correct", "overall_explanation": "ok",
               "overall_confidence": 1}
     for field in ("scope_rejected_findings", "priority_filtered_findings"):
@@ -706,6 +730,11 @@ def _actual_passes(report: object) -> list[tuple[str, dict]]:
         _validate_provider_report(wrapper["provider_report"])
         _validate_certifying_wrapper(wrapper)
         passes.append((expected, wrapper))
+    if "provider_report" in report and (total != 1 or
+            report["provider_report"] != passes[0][1]["provider_report"] or
+            any(report[field] != passes[0][1][field]
+                for field in REPORT_FIELDS - {"findings"})):
+        fail("combined review aggregate provider report does not match its pass")
     expected_correctness = ("patch is incorrect" if report["findings"] or any(
         item["overall_correctness"] == "patch is incorrect" for _, item in passes)
         else "patch is correct")
@@ -726,7 +755,7 @@ def _scope_only_rejected_findings(report: object) -> tuple[list[dict], list[dict
     def normalized(findings: list[dict], *, accepted: bool) -> list[dict]:
         values = []
         for finding in copy.deepcopy(findings):
-            _validate_helper_finding(finding, accepted=accepted)
+            _validate_helper_finding(finding, merged=accepted and "claim_variants" in finding)
             finding["code_location"]["file_path"] = _normalized_helper_path(
                 finding["code_location"]["file_path"])
             values.append(finding)
@@ -808,10 +837,7 @@ def _helper_bounded_field(text: str, limit: int) -> str:
 def _tagged_finding(finding: dict) -> tuple[
     str, dict, tuple[str, int, int, str], tuple[str, int, str, str]
 ]:
-    if not isinstance(finding, dict):
-        fail("combined review findings must be objects")
-    if "source_attribution" not in finding or finding["source_attribution"] is not None:
-        fail("combined review plain-source findings require null source_attribution")
+    _validate_helper_finding(finding, merged="claim_variants" in finding)
     title = finding.get("title")
     matches = [lens for lens, tag in zip(LENSES, LENS_TAGS)
                if isinstance(title, str) and title.startswith(tag)]
@@ -863,6 +889,7 @@ def _project_combined_report(
     retained_raw: list[dict] = []
     projected_fingerprints: set[tuple[str, int, int, str]] = set()
     seen_merge_keys: set[tuple[str, int, str, str]] = set()
+    mixed_expected: dict[tuple, dict] = {}
     verdict_lines: list[str] = []
     for label, provider in passes:
         if not isinstance(provider.get("findings", []), list):
@@ -891,7 +918,29 @@ def _project_combined_report(
                 else:
                     retained.append((lens, clean))
                     by_lens[lens].append(clean)
-            if merge_key not in seen_merge_keys:
+            attribution = finding.get("source_attribution")
+            if attribution:
+                location = finding["code_location"]
+                key = (location["file_path"], location["line"], finding["category"],
+                       *(attribution[field] for field in (
+                           "target", "record_id", "source_id", "side", "column", "excerpt")))
+                if key not in mixed_expected:
+                    mixed_expected[key] = copy.deepcopy(finding)
+                    mixed_expected[key]["claim_variants"] = []
+                    retained_raw.append(mixed_expected[key])
+                merged = mixed_expected[key]
+                variant = next((item for item in merged["claim_variants"]
+                                if item["body"] == finding["body"]), None)
+                if variant is None:
+                    variant = {"body": finding["body"], "observations": []}
+                    merged["claim_variants"].append(variant)
+                variant["observations"].append({
+                    "pass": label, "title": finding["title"],
+                    "priority": finding["priority"], "confidence": finding["confidence"],
+                })
+                merged["priority"] = min(merged["priority"], finding["priority"])
+                merged["confidence"] = min(merged["confidence"], finding["confidence"])
+            elif merge_key not in seen_merge_keys:
                 seen_merge_keys.add(merge_key)
                 merged = copy.deepcopy(finding)
                 if "pass_reports" in report:

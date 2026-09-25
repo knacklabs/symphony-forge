@@ -20716,7 +20716,7 @@ def test_review_consumers_include_complete_approved_inputs(
     invalid_attribution["source_attribution"] = {"record_id": "mixed"}
     with pytest.raises(SystemExit):
         review_mod._tagged_finding(invalid_attribution)
-    assert "null source_attribution" in capsys.readouterr().out
+    assert "invalid source_attribution" in capsys.readouterr().out
 
     def refuse_detached_link(kind):
         review_case = tmp_path / f"review-{kind}"
