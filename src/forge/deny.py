@@ -1,11 +1,16 @@
 """The deny hook, run before every shell command on both hosts. It blocks destructive commands,
-skipped git hooks and merges. Exit code 2 blocks the command and shows the refusal to the agent."""
+skipped git hooks and merges. Exit code 2 blocks the command and shows the refusal to the agent.
+
+The command is split into words the way the shell would, so every spelling of an option counts
+(`rm -fr`, `rm -r -f`, `rm --recursive --force`) and quoted text such as a commit message doesn't.
+"""
 from __future__ import annotations
 
 import argparse
 import json
-import re
+import shlex
 import sys
+from collections.abc import Iterator
 
 from forge.repo import refuse
 
@@ -20,15 +25,8 @@ REFUSALS = {
               "forge close <item>, then ask the human to merge"),
 }
 
-RULES = {
-    # Carried over unchanged from the old hook's denylist (factory/scripts/pre_tool_use.py).
-    "destructive": [r"\brm\s+-rf\b", r"\bgit\s+reset\s+--hard\b", r"\bgit\s+push\s+--force\b",
-                    r"\bterraform\s+destroy\b", r"\bkubectl\s+delete\b"],
-    # -n is git commit's short --no-verify.
-    # ponytail: a commit message holding " -n" is blocked too; reword it.
-    "no_verify": [r"--no-verify\b", r"\bgit\s+commit\b[^;&|\n]*\s-[A-Za-z]*n"],
-    "merge": [r"\bgh\s+pr\s+merge\b"],
-}
+OPERATORS = set(";&|()<>")
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "eval"}
 
 
 def hook(args: argparse.Namespace) -> None:
@@ -41,9 +39,77 @@ def hook(args: argparse.Namespace) -> None:
     tool_input = payload.get("tool_input")
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if isinstance(command, list):  # ponytail: an argv-shaped command, should a host send one
-        command = " ".join(map(str, command))
-    for rule, patterns in RULES.items():
-        for pattern in patterns:
-            found = re.search(pattern, str(command or ""))
-            if found:
-                refuse(REFUSALS[rule], code=2, found=found[0])
+        command = shlex.join(map(str, command))
+    for words in _commands(str(command or "")):
+        for i, word in enumerate(words):  # a program may follow sudo, env, xargs or find -exec
+            rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:])
+            if rule:
+                refuse(REFUSALS[rule], code=2, found=" ".join(words))
+
+
+def _commands(text: str, depth: int = 0) -> Iterator[list[str]]:
+    """Each simple command's words, including those run by sh -c, eval, $(...) and backticks."""
+    text = text.replace("\n", ";").replace("`", "$(")
+    try:
+        lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        words = list(lexer)
+    except ValueError:  # an unfinished quote, say in a heredoc: plain words still show programs
+        words = [word.strip("'\"") for word in text.split()]
+    command: list[str] = []
+    for word in [*words, ";"]:
+        if word and set(word) <= OPERATORS:
+            yield from _run_by(command, depth)
+            yield command
+            command = []
+        else:
+            command.append(word)
+            if "$(" in word and depth < 4:  # a quoted $(...) still runs
+                yield from _commands(word, depth + 1)
+
+
+def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
+    """The commands in the script that a shell or eval in this command runs."""
+    for i, word in enumerate(command):
+        if word.rsplit("/", 1)[-1] in SHELLS and depth < 4:
+            yield from _commands(" ".join(command[i + 1:]), depth + 1)
+            return
+
+
+def _rule(program: str, args: list[str]) -> str | None:
+    """The rule a program and its arguments break, if any."""
+    if "--no-verify" in args:
+        return "no_verify"
+    short = _short(args)
+    if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and (
+            "f" in short or "--force" in args):
+        return "destructive"
+    if program == "git":
+        sub, rest = _subcommand(args)
+        short = _short(rest)
+        if sub == "commit" and "n" in short:  # -n is commit's short --no-verify
+            return "no_verify"
+        if sub == "reset" and "--hard" in rest:
+            return "destructive"
+        # --force, --force-with-lease, --force-if-includes, -f, and a +refspec all force.
+        if sub == "push" and ("f" in short or any(a.startswith(("--force", "+")) for a in rest)):
+            return "destructive"
+    if (program == "terraform" and {"destroy", "-destroy"} & set(args)
+            or program == "kubectl" and "delete" in args):
+        return "destructive"
+    if program == "gh" and any(args[i:i + 2] == ["pr", "merge"] for i in range(len(args))):
+        return "merge"
+    return None
+
+
+def _short(args: list[str]) -> set[str]:
+    """The letters of short options, so -fr, -r -f and -Rf read alike."""
+    return {letter for arg in args if arg[:1] == "-" and arg[:2] != "--" for letter in arg[1:]}
+
+
+def _subcommand(args: list[str]) -> tuple[str, list[str]]:
+    """git's subcommand and its arguments, after options such as -C <dir> and -c <key=value>."""
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        i += 2 if args[i] in ("-C", "-c") else 1
+    return (args[i], args[i + 1:]) if i < len(args) else ("", [])

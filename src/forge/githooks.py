@@ -41,16 +41,18 @@ def pre_commit(args: argparse.Namespace) -> None:
 def pre_push(args: argparse.Namespace) -> None:
     default = repo.default_branch()
     for line in sys.stdin.read().splitlines():
-        local_ref, sha, remote_ref = (line.split() + ["", "", ""])[:3]
+        _, sha, remote_ref = (line.split() + ["", "", ""])[:3]
         if remote_ref == f"refs/heads/{default}":
             refuse(REFUSALS["push_default"], branch=default)
-        kind, _, fix = local_ref.removeprefix("refs/heads/").partition("/")
-        match = repo.ITEM.fullmatch(fix)
-        if kind not in ("fix", "forge") or not match or not match["fix"] or set(sha) == {"0"}:
+        # The destination names the fix, whatever the source: a branch, a tag or a commit ID.
+        kind, _, fix = remote_ref.removeprefix("refs/heads/").partition("/")
+        if kind not in ("fix", "forge") or set(sha) == {"0"}:  # a deletion pushes no commits
             continue
-        state = task.show(sha, repo.state_path(fix))
-        if state is not None:  # a fix branch Forge didn't start is forge-pr-check's to fail
-            _promote(fix, json.loads(state), repo.config()["interfaces"], _base(sha), sha)
+        match = repo.ITEM.fullmatch(fix)
+        state = task.show(sha, repo.state_path(fix)) if match and match["fix"] else None
+        # The pushed commit's own state decides; without one there is no allow-large reason.
+        _promote(fix, json.loads(state) if state else {}, repo.config()["interfaces"],
+                 _base(sha), sha)
 
 
 def _base(*tips: str) -> str:

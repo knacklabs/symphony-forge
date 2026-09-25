@@ -3,19 +3,40 @@ from __future__ import annotations
 
 import json
 
+DESTROY, HOOKS, MERGE = "destroy work", "the git hooks must run", "only a human merges"
 BLOCKED = {
-    "rm -rf build": "destroy work",
-    "git reset --hard HEAD~1": "destroy work",
-    "git push --force origin fix/a": "destroy work",
-    "terraform destroy -auto-approve": "destroy work",
-    "kubectl delete pod web": "destroy work",
-    "git commit --no-verify -m 'Fix it'": "the git hooks must run",
-    "git push --no-verify origin fix/a": "the git hooks must run",
-    "git add -A && git commit -nm 'Fix it'": "the git hooks must run",
-    "gh pr merge 12 --squash": "only a human merges",
+    # The carried-over list, in every spelling of its options.
+    "rm -rf build": DESTROY,
+    "rm -fr build": DESTROY,
+    "rm -r -f build": DESTROY,
+    "rm --recursive --force build": DESTROY,
+    "rm --force --recursive build": DESTROY,
+    "rm -Rf build": DESTROY,
+    "sudo /bin/rm -f -R build": DESTROY,
+    "find . -name '*.tmp' -exec rm -rf {} +": DESTROY,
+    "git reset --hard HEAD~1": DESTROY,
+    "git -C web reset --hard": DESTROY,
+    "git push --force origin fix/a": DESTROY,
+    "git push -f origin fix/a": DESTROY,
+    "git push -uf origin fix/a": DESTROY,
+    "git push --force-with-lease origin fix/a": DESTROY,
+    "git push origin +fix/a": DESTROY,
+    "terraform destroy -auto-approve": DESTROY,
+    "kubectl delete pod web": DESTROY,
+    # Inside another command, a shell script or a substitution.
+    "npm test; git push -f": DESTROY,
+    "bash -lc 'rm -fr build'": DESTROY,
+    'echo "$(git reset --hard)"': DESTROY,
+    "echo `rm -fr build`": DESTROY,
+    "git commit --no-verify -m 'Fix it'": HOOKS,
+    "git push --no-verify origin fix/a": HOOKS,
+    "git add -A && git commit -nm 'Fix it'": HOOKS,
+    "gh pr merge 12 --squash": MERGE,
 }
-ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the old page'", "git push origin fix/a",
-           "gh pr view 12", "rm build/old.txt", "pytest -q"]
+ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
+           "git commit -m 'Turn off -n mode'", "git push origin fix/a", "git push -u origin fix/a",
+           "git add -f notes.txt", "gh pr view 12", "rm build/old.txt", "rm -r build",
+           "grep -rf patterns.txt src", "echo 'git push -f is refused'", "pytest -q"]
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):

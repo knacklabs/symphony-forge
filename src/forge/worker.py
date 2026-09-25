@@ -104,7 +104,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         on.add("fix-round")
         values["findings"] = "\n".join(
             f"- {f.get('priority')} {f.get('title', '')} "
-            f"({(f.get('code_location') or {}).get('file_path') or 'no file'}): {f.get('body', '')}"
+            f"({':'.join(str(p) for p in (f.get('file'), f.get('line')) if p) or 'no file'}): "
+            f"{f.get('body', '')}"
             for f in findings) or "None."
         values["checks"] = "\n\n".join(
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."

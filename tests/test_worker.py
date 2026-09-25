@@ -54,7 +54,7 @@ def test_17_worker(repo, gh, monkeypatch):
                  "People keep asking", "1. The board shows every story.",
                  "2. Each story has a state sentence.",
                  "| ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |",
-                 "| PAGE | The page | The board page | 1 | `src/board.py`, `src/templates/` |",
+                 "| PAGE | The page | The board page | 1 | `web/board.py`, `web/templates/` |",
                  "New moving parts: none", "Risks: none", "Reuse the old board's look.",
                  "Functional check"):
         assert text in brief, text
@@ -72,12 +72,15 @@ def test_17_worker(repo, gh, monkeypatch):
     # A fix round adds the open serious findings and the failing checks with their log tails.
     state_file = folder / ".factory" / "stories" / "BOARD" / "tasks" / "PAGE.json"
     state = json.loads(state_file.read_text(encoding="utf-8"))
-    state["review"] = {"status": "blocked", "dismissals": [{"finding": 3, "because": "a.py:1 no"}],
+    state["review"] = {"commit": "0" * 40, "tree": "1" * 40, "status": "blocked",
+                       "dismissals": [{"finding": 3, "because": "web/board.py:3 not real"}],
                        "findings": [
         {"priority": "P1", "title": "Archived stories are missing", "body": "Show them too.",
-         "code_location": {"file_path": "src/board.py"}},
-        {"priority": "P2", "title": "Simpler: drop the cache", "body": "Unneeded."},
-        {"priority": "P0", "title": "Dismissed finding", "body": "Not real."}]}
+         "file": "web/board.py", "line": 12},
+        {"priority": "P2", "title": "Simpler: drop the cache", "body": "Unneeded.",
+         "file": "web/board.py", "line": 20},
+        {"priority": "P0", "title": "Dismissed finding", "body": "Not real.", "file": "web/board.py",
+         "line": 3}]}
     state_file.write_text(json.dumps(state), encoding="utf-8")
     gh.respond("pr", "checks", exit=1, stdout=json.dumps([
         {"name": "tests", "bucket": "fail", "link": "https://github.com/o/r/actions/runs/1/job/22"},
@@ -85,7 +88,7 @@ def test_17_worker(repo, gh, monkeypatch):
     gh.respond("run", "view", stdout="collected 3 items\nFAILED tests/test_board.py::test_page\n")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     brief = calls(log)[-1]["brief"]
-    assert "- P1 Archived stories are missing (src/board.py): Show them too." in brief
+    assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in brief
     assert "### tests" in brief and "FAILED tests/test_board.py::test_page" in brief
     for text in ("Simpler: drop the cache", "Dismissed finding", "forge-pr-check"):
         assert text not in brief, text

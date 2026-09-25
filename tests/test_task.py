@@ -25,10 +25,12 @@ People keep asking where things stand.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| PAGE | The page | The board page | 1 | `src/board.py`, `src/templates/` | `tests/test_board.py` | none | yes |
-| WORDS | The sentences | A state sentence per story | 2 | `src/words.py` | `tests/test_words.py` | PAGE | no |
-| STYLE | The look | The page's look | 1 | `src/templates/board.html` | `tests/test_style.py` | none | no |
-| HELP | The help | A help line | 1 | `src/help.py` | `tests/test_help.py` | none | no |
+| PAGE | The page | The board page | 1 | `web/board.py`, `web/templates/` | `tests/test_board.py` | none | yes |
+| WORDS | The sentences | A state sentence per story | 2 | `web/words.py` | `tests/test_words.py` | PAGE | no |
+| STYLE | The look | The page's look | 1 | `web/templates/board.html` | `tests/test_style.py` | none | no |
+| HELP | The help | A help line | 1 | `web/help.py` | `tests/test_help.py` | none | no |
+| API | The data | The board's data | 1 | `src/api/**` | `tests/test_api.py` | none | no |
+| ROUTES | The routes | The board's routes | 1 | `src/**/routes/*` | `tests/test_routes.py` | none | no |
 
 New moving parts: none
 
@@ -118,8 +120,13 @@ def test_16_task_start(repo):
     refused("BOARD/PAGE", "BOARD/PAGE is already started on task/BOARD-PAGE.\n"
                           "Next: forge work BOARD/PAGE\n")
     refused("BOARD/WORDS", "BOARD/WORDS waits for BOARD/PAGE to merge first.\nNext: forge next\n")
-    refused("BOARD/STYLE", "BOARD/STYLE would change src/templates/board.html, which BOARD/PAGE is "
+    refused("BOARD/STYLE", "BOARD/STYLE would change web/templates/board.html, which BOARD/PAGE is "
                            "changing and hasn't merged yet.\nNext: forge close BOARD/PAGE\n")
+    # Globs overlap unless their literal prefixes (before the first wildcard) are disjoint:
+    # src/ contains src/api/, so the routes may touch the data's files.
+    assert repo.forge("task", "start", "BOARD/API").returncode == 0
+    refused("BOARD/ROUTES", "BOARD/ROUTES would change src/**/routes/*, which BOARD/API is "
+                            "changing and hasn't merged yet.\nNext: forge close BOARD/API\n")
 
     # PAGE merges, bringing the story doc to the default branch: tasks now start from there.
     repo.git("merge", "-q", "--no-ff", "-m", "The board page", "task/BOARD-PAGE")

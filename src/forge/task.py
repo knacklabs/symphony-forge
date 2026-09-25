@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import re
-from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
@@ -183,11 +182,11 @@ def _started(main: str) -> dict[str, list[str]]:
 
 
 def _overlap(a: str, b: str) -> bool:
-    """Two Scope entries (files, folders or globs) that can touch the same file."""
-    # ponytail: glob against glob only overlaps when one matches the other as text.
-    a, b = a.rstrip("/"), b.rstrip("/")
-    return (a == b or a.startswith(b + "/") or b.startswith(a + "/")
-            or fnmatchcase(a, b) or fnmatchcase(b, a))
+    """Two Scope entries (files, folders or globs) that may touch the same file: their literal
+    prefixes, up to the first wildcard, are disjoint only when neither contains the other."""
+    # ponytail: prefix rule, may refuse some disjoint globs; widen only with a real need
+    a, b = (re.split(r"[*?[]", entry, maxsplit=1)[0] for entry in (a, b))
+    return a.startswith(b) or b.startswith(a)
 
 
 # --- forge fix start / forge fix allow-large -------------------------------------------
