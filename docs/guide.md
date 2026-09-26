@@ -53,6 +53,7 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
+| `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |
 | `forge decision new <slug>` | Writes a decision record |
 | `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
 | `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
