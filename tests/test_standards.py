@@ -4,7 +4,11 @@ Each test is named test_<criterion>_<rule> after the spec's acceptance criterion
 """
 from __future__ import annotations
 
+import json
+import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 from test_task import story
@@ -13,6 +17,7 @@ from test_worker import calls, install_claude
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = (ROOT / "docs" / "specs" / "lean-forge-v1.md").read_text(encoding="utf-8")
 PAGE = (ROOT / "src" / "forge" / "standards.md").read_text(encoding="utf-8")
+CONVENTIONS_DIR = ROOT / "src" / "forge" / "templates" / "conventions"
 CONVENTIONS = sorted((ROOT / "src" / "forge" / "templates" / "conventions").glob("*.md"))
 GUIDE = (ROOT / "docs" / "guide.md").read_text(encoding="utf-8")
 ADD_LATER = "add when a story's new moving parts names it"
@@ -23,7 +28,7 @@ def _prose(text: str) -> list[str]:
     return re.sub(r"(?ms)^```.*?^```", "", text).splitlines()
 
 
-def test_36_client_apps_simple(repo):
+def test_36_client_apps_simple(repo, tmp_path):
     # The page stays short and opens with Forge's 13 principles, word for word from the spec, then
     # the 11 client-app principles the spec names, in order.
     assert len(PAGE.splitlines()) <= 320
@@ -48,14 +53,17 @@ def test_36_client_apps_simple(repo):
             if re.search(concern, line, re.I):
                 assert re.search(r"\b(only|no|not|never)\b", line, re.I), line
 
-    # The stack conventions name Redis, queues, CDK, OIDC and a monitoring stack only as added later.
-    later = re.compile(r"\b(redis|queue|cdk|oidc|monitoring)s?\b", re.I)
+    # The stack conventions name Redis, queues, Terraform, OIDC and a monitoring stack only as added later.
+    later = re.compile(r"\b(redis|queue|terraform|oidc|monitoring)s?\b", re.I)
     named = [line for p in CONVENTIONS for line in p.read_text(encoding="utf-8").splitlines()
              if later.search(line)]
     for line in named:
         assert ADD_LATER in line.lower().replace("`", ""), line
     assert {match.lower() for line in named for match in later.findall(line)} == {
-        "redis", "queue", "cdk", "oidc", "monitoring"}
+        "redis", "queue", "terraform", "oidc", "monitoring"}
+
+    _carried_over_rules_are_on_their_pages()
+    _logger_example_writes_the_documented_fields(tmp_path)
 
     # Every worker brief, for a task or a fix, carries the whole page.
     log = install_claude(repo)
@@ -85,3 +93,50 @@ def test_36_client_apps_simple(repo):
                                                       GUIDE)}
     assert named_in_guide == table, (f"not commands: {sorted(named_in_guide - table)}; "
                                      f"missing: {sorted(table - named_in_guide)}")
+
+
+CARRIED_OVER_RULES = {
+    "standards.md": ["details.fieldErrors", "at debug", "PUT replaces", "?search=", "a replay is refused",
+                     "CSRF", "RoleUser", "system account", "unique field", "never make HTTP calls",
+                     "static text", "logs, temporary tables", "mailing-list", "Terraform", "TFSec"],
+    "api.md": ["1-4 line description", "one PascalCase tag", "never `Misc`", "ErrorResponseDto",
+               "error-code list", "path and query param"],
+    "backend.md": ["and local and dev too", "idempotent", "CreateXDto", "*.handler.ts", "never whole objects",
+                   "4xx at debug", "implements LoggerService"],
+    "frontend.md": ["packages/shared", "x-correlation-id"],
+    "testing.md": ["idempotency test", "failure test"],
+    "stack.md": ["ESLint", "Prettier", "Terraform"],
+}
+
+
+def _carried_over_rules_are_on_their_pages():
+    # Each rule the constitution holds and a worker needs is one line on the page that owns it,
+    # and no page still names AWS CDK, since the owner chose Terraform.
+    for name, phrases in CARRIED_OVER_RULES.items():
+        path = ROOT / "src" / "forge" / ("standards.md" if name == "standards.md" else f"templates/conventions/{name}")
+        text = path.read_text(encoding="utf-8")
+        for phrase in phrases:
+            assert phrase in text, f"{name} misses: {phrase}"
+    for path in [ROOT / "src" / "forge" / "standards.md", *CONVENTIONS]:
+        assert "CDK" not in path.read_text(encoding="utf-8"), path.name
+
+
+def _logger_example_writes_the_documented_fields(tmp_path):
+    # Run backend.md's own logger and its own call: a fixed message, the context object and the
+    # required fields at the top level, none nested inside `message`.
+    assert shutil.which("node"), "needs node to run the documented TypeScript"
+    blocks = re.findall(r"```ts\n(.*?)```", (CONVENTIONS_DIR / "backend.md").read_text(encoding="utf-8"), re.S)
+    logger = next(b for b in blocks if "implements LoggerService" in b).replace("@Injectable()\n", "")
+    call = next(line for b in blocks for line in b.splitlines() if "this.logger.log(" in line)
+    script = tmp_path / "logger.ts"
+    script.write_text("const correlationStore = { getStore: () => 'c-1' };\n"
+                      "type LoggerService = object;\n"
+                      f"{logger}\nconst invoiceId = 'inv-1';\nconst correlationId = 'c-1';\n"
+                      f"const self = {{ logger: new JsonLogger() }};\n{call.replace('this.', 'self.')}\n",
+                      encoding="utf-8")
+    out = subprocess.run(["node", str(script)], capture_output=True, text=True, check=True,
+                         env={**os.environ, "NODE_ENV": "Local"}).stdout
+    entry = json.loads(out.strip().splitlines()[-1])
+    assert entry["message"] == "Invoice paid" and entry["context"] == {"invoiceId": "inv-1"}
+    for field in ("timestampUtc", "level", "environment", "serviceName", "module", "correlationId"):
+        assert entry.get(field) not in (None, ""), field

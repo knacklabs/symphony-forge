@@ -46,6 +46,8 @@ expect(await screen.findByText('Order cancelled')).toBeInTheDocument();
 
 Answer the app's API calls with a small fake `fetch` per test, not a mocked hook.
 
+Each event handler gets an idempotency test (the same event twice runs once) and a failure test.
+
 ## Test data
 
 - Factories are plain functions (`makeOrder(db, overrides)`) that fill in sensible values and
