@@ -1,21 +1,25 @@
 # Forge's settings. Your coding agent keeps this file: ask it to change a setting or upgrade Forge.
 version = "v1.0.0-rc.2"
 repo = "forge-source"
-workers = "claude"
+workers = "codex"
 test = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
 [models.build]
-model = "opus"
-effort = "high"
+model = "gpt-6-sol"
+effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
 
 [models.fix]
-model = "opus"
-effort = "high"
+model = "gpt-6-sol"
+effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
 
 [models.lite]
-model = "sonnet"
+model = "gpt-6-sol"
 effort = "medium"
 
 [models.grill.codex]
