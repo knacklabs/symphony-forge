@@ -314,6 +314,17 @@ def _changed_agents(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     assert ("Needs you in AGENTS.md: it differs from the old Forge's, so its text stays above the "
             "Forge block; take the old Forge instructions out of it.") in dry.stdout
     assert "Replaces AGENTS.md" not in dry.stdout
+    # A phase with a comment could hide the phases after it, so test isn't seeded; .envrc, only
+    # the old Forge's lines, still goes.
+    repo.write(".envrc", (FIXTURE / "client" / ".envrc").read_text("utf-8")
+               + 'export FACTORY_STRUCTURAL_CMD="npm run lint # structural checks"\n')
+    _land(repo, "A verify phase with a comment")
+    dry = repo.forge("migrate", "--dry-run")
+    assert dry.returncode == 0, dry.stderr
+    assert ("Couldn't carry your old verify commands into forge.toml's test automatically: "
+            '"npm run lint # structural checks", "npm run typecheck || npm run typecheck:legacy", '
+            '"npm test". Ask your agent to set test.') in dry.stdout
+    assert "forge.toml's test:" not in dry.stdout and "\n- .envrc\n" in dry.stdout
 
 
 def _refusal(problem: str, next_step: str, setup):

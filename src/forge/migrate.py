@@ -227,6 +227,9 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
              if GSTACK_LINES[name].search(text)}
     left = {name: lines for name, text in texts.items()
             if (lines := [line for line in edits.get(name, text).splitlines() if "gstack" in line])}
+    phases = [said[name] for name in VERIFY if said.get(name)]
+    # ponytail: no shell parsing; a # or a line break could hide the phases after it, so none go.
+    unsafe = any(re.search(r"[#\r\n]", phase) for phase in phases)
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
     return {"ref": ref, "own": own, "kept": kept, "stories": _stories(top, ref, own),
@@ -236,8 +239,10 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
             "gstack_left": left,
             # A phase with its own && or || is grouped, so it fails as one step.
-            "test": " && ".join(f"({said[name]})" if re.search(r"[;&|]", said[name])
-                                else said[name] for name in VERIFY if said.get(name)),
+            "test": "" if unsafe else " && ".join(f"({phase})" if re.search(r"[;&|]", phase)
+                                                  else phase for phase in phases),
+            "unseeded": ", ".join(json.dumps(phase, ensure_ascii=False) for phase in phases)
+                        if unsafe else "",
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
@@ -515,6 +520,9 @@ def _report(plan: dict[str, Any], default: str) -> str:
         if plan["test"]:
             lines.append(f"Moves the old verify commands from .envrc into forge.toml's test: "
                          f"{plan['test']}")
+        if plan["unseeded"]:
+            lines.append("Couldn't carry your old verify commands into forge.toml's test "
+                         f"automatically: {plan['unseeded']}. Ask your agent to set test.")
         lines += [f"Writes forge.toml pinned to Forge v{__version__}, and the adapters for Claude "
                   "Code and Codex with forge sync.",
                   f"After this pull request merges, forge close {ITEM} turns on branch protection "
