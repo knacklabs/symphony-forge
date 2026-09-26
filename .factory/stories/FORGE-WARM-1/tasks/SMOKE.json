@@ -1,0 +1,21 @@
+{
+  "branch": "task/FORGE-WARM-1-SMOKE",
+  "review": {
+    "commit": "dd698821ff528bee9cef1fbd8315edce68e8672e",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "07403d531695cc89a4126954d65e98b021de006c3773701057c7a958cf9d2078"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T17:33:13+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T17:44:55+00:00",
+      "step": "review"
+    }
+  ]
+}

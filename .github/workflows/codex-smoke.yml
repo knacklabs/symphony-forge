@@ -1,0 +1,38 @@
+name: codex-smoke
+
+# The smoke test against the real pinned Codex SDK (tests/test_codex_smoke.py). Optional, never a
+# required check: it runs a few small Codex turns on the OPENAI_API_KEY secret's account, so it
+# runs only when the Codex driver or the test changes, or by hand.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/forge/codex.py
+      - src/forge/codex_turn.py
+      - tests/test_codex_smoke.py
+      - .github/workflows/codex-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      # Forge's own install, as forge doctor --fix runs it: the pinned SDK in its own environment.
+      - run: uv run --python 3.11 python -c "import sys; sys.path.insert(0, 'src'); from forge import codex; codex.install()"
+      - if: env.OPENAI_API_KEY == ''
+        run: echo "::notice::No OPENAI_API_KEY secret here, so the Codex smoke test didn't run."
+      # The SDK's own Codex program, logged in with the key.
+      - if: env.OPENAI_API_KEY != ''
+        run: |
+          python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.156.1/bin/python"
+          printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
+      - if: env.OPENAI_API_KEY != ''
+        run: uv run --python 3.11 --with pytest python -m pytest tests/test_codex_smoke.py -v -s
