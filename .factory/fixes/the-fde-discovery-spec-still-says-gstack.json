@@ -1,0 +1,14 @@
+{
+  "base": "bb6eabaed6931ee255b095a8a43996b921f2dc6b",
+  "branch": "fix/the-fde-discovery-spec-still-says-gstack",
+  "done_when": "docs/specs/fde-discovery.md carries every change listed in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/v1-stories/FDE-spec-amendment.md (office-hours for a new project or an ask no confirmed spec covers, discovery by size, forge spec payback and forge spec measure, gstack kept only for office-hours, success measure = share of specs whose Why names a problem card, checked 2026-12-15), saved with forge spec save fde-discovery",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T09:37:14+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The FDE discovery spec still says gstack and office-hours go away and has the old command names and success measure, so the approved FDE story can't cite it"
+}
