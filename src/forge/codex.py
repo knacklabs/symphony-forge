@@ -78,6 +78,8 @@ REFUSALS = {
                  "running Codex, and Forge can't read its start time and command to be sure, so "
                  "it counts it as running.", "stop process {pid} if it runs, then forge {command} "
                  "{item}"),
+    "record": ("Forge couldn't update {record} because another program kept it open.",
+               "close whatever reads {record}, then run the command again"),
 }
 
 
@@ -301,8 +303,9 @@ def _record(path: Path, **fields: Any) -> None:
         try:
             return os.replace(tmp, path)
         except PermissionError:
-            if not wait:
-                raise
+            if not wait:  # nothing unwritten counts as recorded: refuse, and let the caller clean up
+                tmp.unlink(missing_ok=True)
+                repo.refuse(REFUSALS["record"], record=path)
             time.sleep(wait)
 
 

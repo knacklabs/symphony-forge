@@ -423,3 +423,36 @@ def test_7_record_retries_while_another_reader_holds_it(tmp_path):
                           capture_output=True, text=True)
     assert done.returncode == 0 and done.stdout.strip() == "4", done.stderr
     assert json.loads(record.read_text()) == {"a": 1}
+
+
+def test_8_record_refuses_when_another_reader_never_lets_go(tmp_path, monkeypatch):
+    # A reader that never releases the file ends in a plain refusal, not a PermissionError.
+    from forge import codex, repo
+    record = tmp_path / "PAGE.json"
+    record.write_text('{"a": 1}\n')
+    monkeypatch.setattr(codex.time, "sleep", lambda _: None)
+    monkeypatch.setattr(codex.os, "replace", lambda *_: (_ for _ in ()).throw(
+        PermissionError(5, "Access is denied")))
+    with pytest.raises(repo.Refused) as refusal:
+        codex._record(record, b=2)
+    assert str(record) in str(refusal.value)
+    assert json.loads(record.read_text()) == {"a": 1} and not record.with_suffix(".tmp").exists()
+
+
+def test_9_record_waits_for_a_reader_to_release_an_existing_record(tmp_path, monkeypatch):
+    # The replace stays refused until an independent reader lets go, some time later: a loop
+    # that never waited would use up its attempts first.
+    import threading
+    from forge import codex
+    record = tmp_path / "PAGE.json"
+    record.write_text('{"a": 1}\n')
+    released, real = threading.Event(), os.replace
+
+    def replace(a, b):
+        if not released.is_set():
+            raise PermissionError(5, "Access is denied")
+        real(a, b)
+    monkeypatch.setattr(codex.os, "replace", replace)
+    threading.Timer(0.5, released.set).start()
+    codex._record(record, b=2)
+    assert json.loads(record.read_text()) == {"a": 1, "b": 2}
