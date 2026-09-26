@@ -3,7 +3,7 @@
   "branch": "fix/forge-read-writes-the-cold-reader-s-outp",
   "done_when": "forge read rewrites every path under the checkout in the reader's output to a repo-root path (/docs/..., which GitHub resolves from the repo root), before writing the notes, for both readers; a test feeds a stub reader an absolute path and finds only the repo-root path in the notes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T09:54:15+00:00",
