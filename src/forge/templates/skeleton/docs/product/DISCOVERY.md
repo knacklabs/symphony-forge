@@ -2,9 +2,17 @@
 
 Notes from talking with the client, before anything is built. They ship as fixes.
 
-## Problem
+## Problems
 
-<!-- What hurts, for whom, and where was it seen? -->
+<!-- One card per problem, filled from what actually happened; unknown until someone knows. -->
+
+### <short problem title>
+- Job: unknown
+- Workaround: unknown
+- Cost: unknown
+- Who feels it: unknown
+- How often: unknown
+- Evidence: unknown
 
 ## Stakeholders
 

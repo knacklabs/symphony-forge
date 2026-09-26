@@ -119,7 +119,7 @@ Structure earns its place by solving a problem the code has today. These rules s
 A new client app starts on the smallest stack that runs its first story: NestJS, Prisma and
 Postgres behind a React app built with Vite, in one repo with npm workspaces, tested in CI by
 Forge's `tests` check. A repo that already runs another stack keeps it. Anything else arrives only
-when a story's `New moving parts` line names it, and that includes Redis and job queues, AWS CDK,
+when a story's `New moving parts` line names it, and that includes Redis and job queues, Terraform,
 OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:
@@ -137,11 +137,15 @@ Open one only when your task touches its concern; the rules on this page apply e
 - Error codes are UPPER_SNAKE_CASE (`ORDER_NOT_FOUND`). The message says in plain words what
   happened and what to do next. Never return stack traces, SQL or library errors, or secrets.
 - A validation failure is a 400 with the field errors in `details`; it is normal, not an error.
+  The field errors are `details.fieldErrors: [{field, reason}]`, so the UI can place them.
+- PUT replaces the whole resource and PATCH changes part; neither is used for an action.
+- Filters are plain query params; search is `?search=`.
 - Lists take `page` (from 1) and `limit` (20 by default, at most 100) and return
   `data.items` with `data.pagination` (`page`, `limit`, `totalItems`, `totalPages`). Sorting uses
   `sortBy` and `sortOrder` (`asc` or `desc`).
 - A breaking change needs a new version while the old one has consumers; with no consumers yet,
-  change it in place. Payments, webhooks and retried actions accept an `Idempotency-Key`.
+  change it in place. Payments, webhooks and retried actions accept an `Idempotency-Key`; the values are stored, so a replay is refused.
+- Browser clients that send credentials get CSRF protection.
 - Swagger documents every endpoint from its decorators at `/api/docs`: a summary, each field with
   an example, the error responses and the auth it needs. The docs stay true because they're code.
 
@@ -155,6 +159,8 @@ Open one only when your task touches its concern; the rules on this page apply e
   `timestampUtc`, `level`, a fixed `message`, a `context` object, `environment`, `serviceName`,
   `module` and `correlationId`, plus `accountId`, `requestId` or `eventId` when there is one.
   A fixed message makes logs searchable; the details go in `context`.
+- Log validation failures (4xx) at debug, never as errors.
+- Error messages are static text with no interpolated values, so personal data can't slip in.
 - Never log passwords, tokens, one-time codes, secrets or personal data; mask what you must keep.
 - Levels: `debug` for detail, `info` for normal business events, `warn` for something unexpected
   that didn't fail, `error` for a failed operation, `fatal` when the app can't continue.
@@ -171,17 +177,21 @@ Open one only when your task touches its concern; the rules on this page apply e
   `Status` (`Order.paymentStatus`) and hold a fixed set of values mapped in application code.
 - Every domain table has `id`, `createdAtUtc` and `updatedAtUtc`; once the app has accounts, also
   `createdByAccountId` and `modifiedByAccountId`, so every change has an owner. Deleting is soft
-  (`deletedAtUtc`, and `deletedByAccountId` once there are accounts), which protects against loss.
+  (`deletedAtUtc`, and `deletedByAccountId` once there are accounts), which protects against loss;
+  logs, temporary tables and data the client asked to erase are the exceptions.
+- Automated jobs fill the audit fields with a system account.
 - Keep tables normalised; copy data only for a measured performance need, and say why. Use a JSON
   column only for metadata that is never queried or joined.
-- Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`.
+- Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`, and every unique field.
+- Many-to-many uses an explicit join table named with both tables in alphabetical order (`RoleUser`).
 - Every schema change is a migration with a timestamped name. Never edit a merged migration.
   Prefer migrations that only add; a destructive one goes under the story's Risks.
 - Use Postgres full-text search before adding a search engine.
 - When a story does add in-process events: name them `<Domain><Action>Event`, give each payload an
   `id`, `version`, `timestampUtc`, `initiatedByAccountId` and `data`, keep secrets out of it, and
   make every handler idempotent by recording the event ids it has processed, since events can
-  arrive twice.
+  arrive twice. Handlers never make HTTP calls or call providers directly, catch their own errors,
+  and log the event name, id, outcome and duration.
 
 ## Frontend
 
@@ -239,5 +249,8 @@ Open one only when your task touches its concern; the rules on this page apply e
   a pull request, never by hand in a console, so each change is reviewed and reversible.
 - On AWS, each client has its own organization with an account per environment. Root credentials
   have MFA, no access keys, and are never used for daily work; workloads use roles, not keys.
+  The root user's email is a mailing-list address, never a person's.
+- Infrastructure as code is Terraform, with `terraform fmt`, TFSec and a cost check in CI, added when
+  a story's `New moving parts` line names cloud resources.
 - Name cloud resources `<org>-<cloud>-<region>-<environment>-<type>-<project>-<name>` in lowercase,
   and tag each one with its owner, environment and project, so costs and ownership stay traceable.

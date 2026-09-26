@@ -559,7 +559,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
     for args in (("init",), ("sync",), ("migrate",),
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "allow-large", "It touches six files"), ("spec", "save", "carts"),
-                 ("spec", "confirm", "carts", "--by", "Ravi"), ("decision", "new", "carts"),
+                 ("spec", "confirm", "carts", "--by", "Ravi"),
+                 ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
                  ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
         repo.forge(*args)
     changing = {words for words, changes in commands.items() if changes}

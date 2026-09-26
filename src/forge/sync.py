@@ -230,6 +230,9 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{rel: _hooks(top, rel, events) for rel, events in HOSTS.items()},
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
+        # Discovery's worked example, question bank and call script, opened only when needed.
+        **{f"{host}/skills/forge/fde.md": (TEMPLATES / "fde.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
         # The test-audit skill (MIT, with its NOTICE) that workers and reviewers use for tests.
         **{f"{host}/skills/test-audit/{path.name}": path.read_text(encoding="utf-8")
            for host in (".claude", ".codex")

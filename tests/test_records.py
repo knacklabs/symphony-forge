@@ -24,6 +24,13 @@ Each invoice is emailed as a PDF.
 
 1. An invoice reaches the client's inbox.
 
+## Success measure
+
+- Metric: share of invoices paid within 30 days.
+- Baseline: 40% today.
+- Target: 70%.
+- Check date: 2026-12-01
+
 ## Roadmap
 
 {ITEMS}"""

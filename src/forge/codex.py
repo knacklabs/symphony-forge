@@ -327,10 +327,14 @@ def identity(pid: int) -> dict[str, Any] | None:
 
 def _alive(recorded: dict[str, Any]) -> bool | None:
     """Whether the recorded process still runs: False once its id is free or another process has
-    it, None when Forge can't tell, which counts as running."""
+    it, None when Forge can't tell, which counts as running. It goes by id and start time: a
+    program that starts itself again (`env`, a macOS framework Python) keeps both but changes its
+    command, so a record made right after it started must still match once it runs."""
     pid = recorded.get("pid")
     now = identity(pid) if isinstance(pid, int) else {}
-    return None if now is not None and "command" not in now else now == recorded
+    if now is not None and "command" not in now:
+        return None
+    return now is not None and now["started"] == recorded.get("started")
 
 
 def _stop_leftover(record: Path) -> tuple[bool, int | None]:

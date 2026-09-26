@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 import conftest
+from test_story import READER
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = re.search(r'AUTOREVIEW_PIN = "(\w+)"',
@@ -89,6 +90,40 @@ INCOMPLETE = {"exit": 2, "report": report(status="incomplete"),
 GREEN = [run("tests"), run("forge-pr-check"), run("lint"), run("release", "skipped")]
 
 
+def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Path | None = None) -> None:
+    """Approve story `key` the way a real one is approved: write and cold-read its doc on its story
+    branch (with a stub reader and the client's accepted sign-off), then send the hook a completed
+    ExitPlanMode showing that doc."""
+    top = cwd or repo.path
+    toml = top / "forge.toml"
+    if "models.grill" not in toml.read_text("utf-8"):
+        toml.write_text(toml.read_text("utf-8") + 'models.grill.claude = { model = "opus", effort = "high" }\n',
+                        encoding="utf-8")
+    roadmap = top / "plans" / "roadmap.json"
+    items = json.loads(roadmap.read_text("utf-8"))["items"] if roadmap.exists() else []
+    roadmap.parent.mkdir(exist_ok=True)
+    roadmap.write_text(json.dumps({"items": items + [{"key": key}]}), encoding="utf-8")
+    signoff = top / "docs" / "decisions" / "0001-client-signoff.md"
+    signoff.parent.mkdir(parents=True, exist_ok=True)
+    signoff.write_text('---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n',
+                       encoding="utf-8")
+    repo.git("add", "-A", cwd=top)
+    repo.git("commit", "-q", "-m", "Sign-off and roadmap", cwd=top)
+    repo.git("push", "-q", "origin", "main", cwd=top)
+    conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
+    made = repo.forge("story", "new", key, "Shoppers can save a basket", cwd=top)
+    assert made.returncode == 0, made.stderr
+    where = Path(re.search(rf"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/{key}$",
+                           repo.git("worktree", "list", "--porcelain", cwd=top), re.M)[1])
+    (where / "plans" / f"{key}.md").write_text(key_doc, encoding="utf-8")
+    read = repo.forge("read", key, cwd=top)
+    assert read.returncode == 0, read.stderr
+    plan = {"plan": key_doc, "isAgent": False, "filePath": "/plans/plan.md"}
+    payload = conftest._payload("PostToolUse", top, "ExitPlanMode", {"plan": key_doc}, plan)
+    approved = repo.forge("hook", "approval", input=json.dumps(payload), cwd=top)
+    assert approved.returncode == 0, approved.stderr
+
+
 class Forge:
     """A repo on Forge with a stub Autoreview and green checks, where tasks and fixes start."""
 
@@ -154,6 +189,21 @@ class Forge:
         return self.start(f"SHOP/{task}", f"task/SHOP-{task}",
                           f".factory/stories/SHOP/tasks/{task}.json", {},
                           changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"})
+
+    def start_approved_task(self, doc: str, task: str = "T1", changes: dict[str, str] | None = None,
+                            ) -> tuple[str, Path]:
+        """Approve story SHOP's doc through the approval hook, then forge task start the task and
+        commit the worker's changes in its worktree."""
+        approve_story(self.repo, doc)
+        # The human's merge lands the approved doc on the default branch, where this env keeps it.
+        self.repo.git("merge", "-q", "--ff-only", "story/SHOP")
+        self.repo.git("push", "-q", "origin", "main")
+        started = self.repo.forge("task", "start", f"SHOP/{task}")
+        assert started.returncode == 0, started.stderr
+        where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+        for path, text in (changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"}).items():
+            self.commit(where, path, text, "Work")
+        return f"SHOP/{task}", where
 
     def close(self, item: str, *extra: str):
         return self.repo.forge("close", item, *extra)

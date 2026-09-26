@@ -1,0 +1,21 @@
+{
+  "branch": "task/FORGE-FDE-1-DISCOVER",
+  "review": {
+    "commit": "dcd973792839c7c115e03594a6a1bf79582fb199",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "65ad306d02013fa771730b9bbf9f4bcbc180ac4133ecea421ab9d5f1d2121744"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T12:44:31+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T12:59:12+00:00",
+      "step": "review"
+    }
+  ]
+}
