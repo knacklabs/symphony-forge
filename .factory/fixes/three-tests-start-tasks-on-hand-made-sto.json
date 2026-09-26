@@ -1,0 +1,29 @@
+{
+  "base": "219094d10285be0d41bb13a8f2b24ddeff17e077",
+  "branch": "fix/three-tests-start-tasks-on-hand-made-sto",
+  "done_when": "Those three tests approve their story the way real stories are approved before starting a task, and still test what they tested; no product code changes",
+  "kind": "fix",
+  "review": {
+    "commit": "ce63f981385ca0de5275b9bd9723b04f6b36bd75",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "3b3978c1f987de1f807f4a9cb16c85d6767236e8e311290a965a088fe3be4da3"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T12:45:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T12:57:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T13:12:33+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Three tests start tasks on hand-made stories that were never approved (test 33 and 37 in tests/test_phases.py, test 11 in tests/test_codex_setup.py), which forces forge work to let unapproved stories through"
+}
