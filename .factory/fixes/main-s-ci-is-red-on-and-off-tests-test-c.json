@@ -3,11 +3,37 @@
   "branch": "fix/main-s-ci-is-red-on-and-off-tests-test-c",
   "done_when": "Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) and fix it at the cause; both tests pass on every OS in CI three runs in a row; no test is skipped or loosened to pass",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "6f679c47eef40b772aa1acfd455a14b9410694cf",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Two identical command snapshots 100 ms apart do not establish that startup execs have finished. If the launcher remains in its initial command across both reads, this records that temporary identity and stops polling. After it execs, `_alive` returns False because the command differs (`src/forge/codex.py:345-346`), and `_stop_leftover` skips the still-running server (`src/forge/codex.py:360-362`). Thus the startup race this patch targets remains possible under slow scheduling; the five-second loop does not help once two early reads agree. Establish the final identity through startup synchronization, or fix the test launcher if the mismatch is fixture-specific, before treating both reported failures as resolved.",
+        "file": "src/forge/codex.py",
+        "line": 336,
+        "priority": "P1",
+        "title": "Not done: Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) andfix"
+      },
+      {
+        "body": "No test exercises the delayed app-server exec that motivates `_settled`. `test_6_nothing_left_running` uses `_codex_repo_direct`, which deliberately bypasses the env launcher (`tests/test_codex_record.py:95-103,299`); its delayed-exec case changes the driver, not the app-server (`tests/test_codex_record.py:376-391`). The reader test uses the ordinary launcher without controlling the race (`tests/test_codex_reader.py:33-36,94-98`). Add a real-process regression that holds the app-server launcher across multiple identity reads, then execs and verifies crash cleanup. It should demonstrably fail before the repair and pass afterward.",
+        "file": "src/forge/codex.py",
+        "line": 328,
+        "priority": "P1",
+        "title": "Not done: regression test for app-server identity changing during startup"
+      }
+    ],
+    "status": "blocked",
+    "tree": "89e196fa89e99cef99c256eebe9a649fdbf73653c61f86d35a43f4af8a6b6313"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T13:21:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T14:07:21+00:00",
+      "step": "review"
     }
   ],
   "why": "Main's CI is red on and off: tests/test_codex_record.py::test_6_nothing_left_running fails on macOS and Linux (_down(pid) is False right after the stop), and tests/test_codex_reader.py::test_10_the_cold_read_runs_on_the_other_family fails on Linux (forge doctor doesn't report stopping a crashed forge read's processes), so every pull request hits them"
