@@ -1,33 +1,19 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "af09c5ffa223eaa6afc3ce2203602eab073a7608",
+    "commit": "b2f4faa80458f4b8ee6e8cf00890524c00ae53d5",
     "dismissals": [],
     "findings": [
       {
-        "body": "Containing the conversation ID does not establish that an InvalidRequestError means the conversation is absent. The pinned server also includes that ID when history cannot be materialized for includeTurns. This handler converts that failed read into null, causing recover() to log \"lost\" and permit another turn. Match only confirmed missing-conversation errors; propagate other failures so recovery refuses. Add a stub case for a non-missing InvalidRequestError containing the ID. See the pinned server's [history-read error mapping](https://github.com/openai/codex/blob/rust-v0.156.1/codex-rs/app-server/src/request_processors/thread_processor.rs#L5631).",
-        "file": "src/forge/codex_turn.py",
-        "line": 121,
-        "priority": "P1",
-        "title": "Not done: 9. Distinguish missing conversations from failed history reads"
-      },
-      {
-        "body": "Both approval comparisons are conditional on a truthy hash. If the approval or its state file is removed after a task starts, an edited story passes both checks, records a status commit, and starts Codex without renewed approval. An earlier task-start approval does not authorize that changed brief. Refuse missing approval before comparing hashes, as src/forge/task.py:137\u2013141 already does when starting a task.",
+        "body": "If approval is revoked and that story-state change reaches the task checkout, both the canonical and checkout approvals are absent. This condition then falls through, and both subsequent hash checks are skipped because `approved` is false. `forge work` can consequently commit its status and start a full-access worker on the changed, unapproved brief. Refuse missing canonical approval unconditionally, as `src/forge/task.py:137\u2013139` already does. Extend the approval test to remove the checkout's approval too; its current case preserves that old copy.",
         "file": "src/forge/worker.py",
-        "line": 117,
+        "line": 120,
         "priority": "P1",
-        "title": "Not done: 8. Refuse when the current approval is missing"
-      },
-      {
-        "body": "The supplied Functional check paragraph records approval refusal/reapproval and recovery read-error refusal, but skips covered item 7: continuing as Fix with the fix models, delivering checkout changes, and explaining fresh starts for drift. The test here exercises those paths, but the required functional-check record does not report their observed outcomes. Exercise and document item 7 in the commit's Functional check paragraph.",
-        "file": "tests/test_codex_resume.py",
-        "line": 156,
-        "priority": "P1",
-        "title": "Not done: functional check"
+        "title": "Not done: 8. Refuse missing approval even when the checkout's copy is gone"
       }
     ],
     "status": "blocked",
-    "tree": "303dd3b48bb743e0a7cc95c4c48de1ac044a7675ec2994d4b4256fc0d44bb789"
+    "tree": "337fadcb2368ad306439fdf35705491898b067cc4d05eb5bc3247f6b734cfb47"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +27,10 @@
     },
     {
       "at": "2026-09-26T11:08:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T11:40:56+00:00",
       "step": "review"
     }
   ]
