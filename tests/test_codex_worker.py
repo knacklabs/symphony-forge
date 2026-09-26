@@ -17,6 +17,7 @@ import pytest
 
 from conftest import _install
 from test_task import story
+from test_worker import calls as claude_calls, install_claude
 
 STORY = "FORGE-WARM-1"
 PIN = "0.156.1"
@@ -24,6 +25,14 @@ ROOT = Path(__file__).resolve().parents[1]
 NOW = "2026-09-26T10:00:00+00:00"
 DECLINE = {"decision": "decline"}
 KNOWN, UNKNOWN = "item/commandExecution/requestApproval", "item/stubFuture/requestSomething"
+SOL = {"model": "gpt-6-sol", "effort": "medium", "subagents": "gpt-6-luna", "subagent_effort": "max"}
+MODELS = {"build": SOL, "fix": SOL, "lite": {"model": "gpt-6-sol", "effort": "low"}}
+# What [models.build] becomes on the new conversation: Codex's own names for those settings.
+BUILD = {"model": "gpt-6-sol", "model_reasoning_effort": "medium",
+         "agents.default_subagent_model": "gpt-6-luna",
+         "agents.default_subagent_reasoning_effort": "max"}
+MODELS_REFUSAL = ("forge.toml's [models] table is not usable: {}.\n"
+                  "Next: ask your agent to fix forge.toml's [models] table\n")
 
 # The SDK finds its Codex program through the codex_cli_bin package, which the test environment
 # replaces with this: the program is whatever CODEX_BIN names, here the stub app-server.
@@ -87,17 +96,29 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
     return data
 
 
+def _toml(version: str, workers: str, models: dict[str, dict]) -> str:
+    """A forge.toml with these workers and this [models] table."""
+    lines = [f'version = "{version}"', f'workers = "{workers}"']
+    for kind, keys in models.items():
+        lines += ["", f"[models.{kind}]", *(f"{key} = {json.dumps(value)}" for key, value in keys.items())]
+    return "\n".join(lines) + "\n"
+
+
 def _codex_repo(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
-    """Codex workers on, story BOARD approved and BOARD/PAGE started. Returns the task's folder
-    and the stub app-server's log."""
+    """Codex workers with the models table, a project Codex trusts, story BOARD approved and
+    BOARD/PAGE started. Returns the task's folder and the stub app-server's log."""
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8"))
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     monkeypatch.setenv("FORGE_NOW", NOW)
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n')
+    codex_home = repo.path.parent / "codex-home"
+    codex_home.mkdir()
+    (codex_home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    repo.write("forge.toml", _toml(repo.forge("--version").stdout.split()[-1], "codex", MODELS))
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge with Codex workers")
     repo.git("push", "-q", "origin", "main")
@@ -114,6 +135,10 @@ def _stub(log: Path) -> list[dict]:
 def _sent(log: Path, method: str) -> list[dict]:
     """The params of each call the SDK made to the stub app-server with this method."""
     return [call["params"] for call in _stub(log) if call.get("method") == method]
+
+
+def _lines(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text("utf-8").splitlines()]
 
 
 def _running(pid: int) -> bool:
@@ -158,7 +183,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
 
     # Progress shows in the terminal and in the work log, and the task is working.
     expected = ["Codex app-server: process", 'Codex conversation "Build · BOARD/PAGE · The page": '
-                "thr-stub-1", "stub codex: built it with null", "$ touch ran-stub-ask-1 (declined)",
+                "thr-stub-1", "stub codex: built it with", "$ touch ran-stub-ask-1 (declined)",
                 "Changed web/board.py (declined)", "Codex ended the turn: completed"]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text(encoding="utf-8")
     for text in expected:
@@ -194,100 +219,122 @@ def test_2_every_request_is_declined(repo, monkeypatch, sdk_data, tmp_path):
         assert f"Declined Codex's request {method}" in built.stdout
         assert f"Declined Codex's request {method}" in log
 
-    # An SDK whose handler moved: Codex starts, but forge work refuses before any conversation.
+    # An SDK whose handler moved: forge work refuses before it records any status, and before
+    # it starts Codex at all.
     moved = tmp_path / "moved"
     moved.mkdir()
     (moved / "sitecustomize.py").write_text(MOVED, encoding="utf-8")
     monkeypatch.setenv("PYTHONPATH", str(moved))
-    before = len(_stub(calls))
+    head, before = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
     refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.returncode == 1
-    assert refused.stderr == ("Forge couldn't put in its handler that declines every Codex request, "
-                              "so it started no conversation.\nNext: forge doctor --fix\n")
-    after = [call.get("method") for call in _stub(calls)[before:]]
-    assert "initialize" in after and "thread/start" not in after and "turn/start" not in after
+    env = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
+    assert refused.stderr == (
+        f"The Codex SDK in {env} should be openai-codex {PIN}, openai-codex-cli-bin {PIN}, "
+        f"codex-cli {PIN}, but its Python says: the SDK client has no _approval_handler for Forge "
+        "to replace\nNext: forge doctor --fix\n")
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head
+    assert len(_stub(calls)) == before
 
 
-def test_3_settings_from_the_checkout(repo, monkeypatch, sdk_data):
+def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    settings = folder / ".codex" / "build.config.toml"
-    settings.parent.mkdir()
+    version = repo.forge("--version").stdout.split()[-1]
+    toml = folder / "forge.toml"
     head = repo.git("rev-parse", "HEAD", cwd=folder)
 
-    # A key outside the three, or a file that isn't TOML, refuses before any status commit or Codex.
-    settings.write_text('model = "gpt-test"\nsandbox_mode = "read-only"\n', encoding="utf-8")
-    refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.stderr == (
-        ".codex/build.config.toml may set only model, model_reasoning_effort and model_verbosity, "
-        "but it sets sandbox_mode.\nNext: remove sandbox_mode from .codex/build.config.toml\n")
-    settings.write_text("model = \n", encoding="utf-8")
-    broken = repo.forge("work", "BOARD/PAGE")
-    assert broken.returncode == 1
-    assert broken.stderr.startswith(".codex/build.config.toml is not valid TOML: ")
-    assert broken.stderr.endswith(".\nNext: fix .codex/build.config.toml\n")
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == head
-    assert not calls.exists()
+    # A table that isn't right, in the item's own checkout, refuses and says what to fix, before
+    # any status or any Codex call. An unused kind (fix, here) is checked too.
+    lite = MODELS["lite"]
+    for models, problem in (
+            ({**MODELS, "lite": {**lite, "sandbox": "read-only"}}, "models.lite can't set sandbox"),
+            ({**MODELS, "lite": {**lite, "effort": 3}}, "models.lite.effort must be a string"),
+            ({**MODELS, "lite": {"model": "gpt-6-sol"}}, "models.lite has no effort"),
+            ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
+             "models.fix sets only one of subagents and subagent_effort; set both or neither"),
+            ({**MODELS, "debug": lite},
+             "debug is not a kind of work; the kinds are build, fix, lite, grill and review"),
+            ({"lite": lite}, "it has no [models.build], which this work uses")):
+        toml.write_text(_toml(version, "codex", models), encoding="utf-8")
+        refused = repo.forge("work", "BOARD/PAGE")
+        assert refused.stderr == MODELS_REFUSAL.format(problem), refused.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and not calls.exists()
 
-    # The three keys reach the new conversation as its settings, read again on every call.
-    settings.write_text('model = "gpt-test"\nmodel_reasoning_effort = "high"\n'
-                        'model_verbosity = "low"\n', encoding="utf-8")
+    # The kind's models, subagents included, reach the new conversation as its settings. They are
+    # read again on every call, from the item's checkout; the caller's forge.toml is another.
+    toml.write_text(_toml(version, "codex", MODELS), encoding="utf-8")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert _sent(calls, "thread/start")[-1]["config"] == {
-        "model": "gpt-test", "model_reasoning_effort": "high", "model_verbosity": "low"}
-    settings.write_text('model = "gpt-other"\n', encoding="utf-8")
+    assert _sent(calls, "thread/start")[-1]["config"] == BUILD
+    toml.write_text(_toml(version, "codex", {"build": {"model": "gpt-6-nova", "effort": "high"}}),
+                    encoding="utf-8")
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
-    assert _sent(calls, "thread/start")[-1]["config"] == {"model": "gpt-other"}
-    assert 'stub codex: built it with {"model": "gpt-other"}' in again.stdout
-    settings.unlink()
-    assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert "config" not in _sent(calls, "thread/start")[-1]
+    config = {"model": "gpt-6-nova", "model_reasoning_effort": "high"}
+    assert _sent(calls, "thread/start")[-1]["config"] == config
+    assert f"stub codex: built it with {json.dumps(config, sort_keys=True)}" in again.stdout
+    assert "gpt-6-nova" not in (repo.path / "forge.toml").read_text(encoding="utf-8")
 
-    # A fix reads the Lite file in its own checkout.
+    # A fix uses the lite kind.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
-    lite = repo.path.parent / "repo-fix-fix-the-login-typo" / ".codex" / "lite.config.toml"
-    lite.parent.mkdir()
-    lite.write_text('model_reasoning_effort = "low"\n', encoding="utf-8")
     assert repo.forge("work", "fix-the-login-typo").returncode == 0
-    assert _sent(calls, "thread/start")[-1]["config"] == {"model_reasoning_effort": "low"}
+    assert _sent(calls, "thread/start")[-1]["config"] == {"model": "gpt-6-sol",
+                                                          "model_reasoning_effort": "low"}
+
+    # Claude workers take the kind's model and effort, and refuse subagents.
+    claude = install_claude(repo)
+    toml.write_text(_toml(version, "claude", MODELS), encoding="utf-8")
+    refused = repo.forge("work", "BOARD/PAGE")
+    assert refused.stderr == MODELS_REFUSAL.format(
+        "Claude workers take model and effort, so [models.build] can't set subagents")
+    assert claude_calls(claude) == []
+    toml.write_text(_toml(version, "claude", {"build": {"model": "opus", "effort": "high"}}),
+                    encoding="utf-8")
+    built = repo.forge("work", "BOARD/PAGE")
+    assert built.returncode == 0, built.stdout + built.stderr
+    assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    turns = repo.path / ".git" / "forge" / "threads" / "BOARD-PAGE.log"
+    turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
-    started = {"turn": "turn-stub-1", "kind": "Build", "started": NOW}
-    ended = {**started, "continued": False, "status": "completed", "ended": NOW,
-             "input_tokens": 1200, "cached_input_tokens": 1000, "output_tokens": 300}
+    started = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
+               "started": NOW}
+    ended = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
+             "continued": False, "fresh_start": "first turn", "status": "completed",
+             "started": NOW, "ended": NOW, "input_tokens": 1200, "cached_input_tokens": 1000,
+             "output_tokens": 300}
 
     # A "started" line when the turn starts, and the end line when Codex reports the end. The
     # driver reports the Codex process first, and none is left once forge work returns.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert [json.loads(line) for line in turns.read_text("utf-8").splitlines()] == [started, ended]
+    assert _lines(turns) == [started, ended]
     pids = [call["pid"] for call in _stub(calls) if "pid" in call]
     assert work_log.read_text("utf-8").splitlines()[1] == f"Codex app-server: process {pids[-1]}"
     assert not _running(pids[-1])
+
+    # A fix's turn log sits in its own folder.
+    assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
+    assert repo.forge("work", "fix-the-login-typo").returncode == 0
+    fix = repo.path / ".git" / "forge" / "threads" / "fix" / "fix-the-login-typo.log"
+    assert [line["kind"] for line in _lines(fix)] == ["Lite", "Lite"]
 
     # A failed turn is logged as Codex reported it, with blank tokens when it reports none, and
     # forge work stops with the log's path.
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     monkeypatch.setenv("STUB_CODEX_NO_USAGE", "1")
     failed = repo.forge("work", "BOARD/PAGE")
-    assert failed.returncode == 1
     assert failed.stderr == (f"The Codex turn didn't complete: Codex reported it failed; its log is "
                              f"{work_log}.\nNext: forge work BOARD/PAGE\n")
     assert "Codex ended the turn: failed (stub codex: the model gave up)" in failed.stdout
-    lines = [json.loads(line) for line in turns.read_text("utf-8").splitlines()]
-    assert lines[2:] == [started, {**ended, "status": "failed", "input_tokens": None,
-                                   "cached_input_tokens": None, "output_tokens": None}]
+    assert _lines(turns)[2:] == [started, {**ended, "status": "failed", "input_tokens": None,
+                                           "cached_input_tokens": None, "output_tokens": None}]
 
     # When Codex goes away before the turn ends, the turn log keeps only its "started" line:
     # Forge never writes a status Codex didn't report.
     monkeypatch.setenv("STUB_CODEX_STATUS", "vanish")
     vanished = repo.forge("work", "BOARD/PAGE")
-    assert vanished.returncode == 1
-    assert vanished.stderr.startswith("The Codex turn didn't complete: the driver stopped with "
-                                      "exit code 1 before Codex reported its end; its log is ")
-    assert [json.loads(line) for line in turns.read_text("utf-8").splitlines()][4:] == [started]
+    assert vanished.stderr == (f"The Codex turn didn't complete: Codex never reported its end; its "
+                               f"log is {work_log}.\nNext: forge work BOARD/PAGE\n")
+    assert _lines(turns)[4:] == [started]
     pids = [call["pid"] for call in _stub(calls) if "pid" in call]
-    assert len(pids) == 3 and not any(_running(pid) for pid in pids)
+    assert len(pids) == 4 and not any(_running(pid) for pid in pids)

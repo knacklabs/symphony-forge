@@ -21,9 +21,9 @@ UNTRUSTED = "- Codex doesn't trust this project"
 APPROVE = "- Note: when Codex asks you to approve Forge's hooks, approve them"
 
 # Stub uv: logs each call. `venv` makes a real, empty environment with the standard library's venv
-# (offline, nothing installed), and `pip install` writes a stand-in SDK into it: the two modules
-# and the two package versions that forge doctor's probe reads, with the test's program standing
-# in for the bundled Codex program.
+# (offline, nothing installed), and `pip install` writes a stand-in SDK into it: the modules and
+# the two package versions that forge doctor's probe reads, a client with the approval handler
+# Forge replaces, and the test's program standing in for the bundled Codex program.
 UV_STUB = """#!{python}
 import json, pathlib, subprocess, sys
 args = sys.argv[1:]
@@ -35,7 +35,11 @@ else:
     site = pathlib.Path(subprocess.run(
         [args[args.index("--python") + 1], "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
         capture_output=True, text=True, check=True).stdout.strip())
-    (site / "openai_codex.py").write_text("", encoding="utf-8")
+    (site / "openai_codex").mkdir()
+    (site / "openai_codex" / "__init__.py").write_text("", encoding="utf-8")
+    (site / "openai_codex" / "client.py").write_text(
+        "class CodexClient:\\n    def __init__(self):\\n        self._approval_handler = None\\n",
+        encoding="utf-8")
     (site / "codex_cli_bin.py").write_text(
         "def bundled_codex_path(): return " + repr({program!r}) + "\\n", encoding="utf-8")
     for name in ("openai-codex", "openai-codex-cli-bin"):
@@ -113,7 +117,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert (env / "forge-sdk-ready").read_text(encoding="utf-8") == f"{PIN}\n"
 
     # A wrong SDK version fails, and so does a bundled Codex program that says another version or
-    # exits non-zero.
+    # exits non-zero, and an SDK client with no approval handler for Forge to replace.
     metadata = next(env.rglob("openai_codex-*.dist-info")) / "METADATA"
     metadata.write_text("Name: openai-codex\nVersion: 0.150.0\n", encoding="utf-8")
     wrong_sdk = repo.forge("doctor", cwd=client)
@@ -123,23 +127,37 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     _program(program, "exit 3")
     failing_program = repo.forge("doctor", cwd=client)
     _program(program, f"echo codex-cli {PIN}")
+    sdk_client = next(env.rglob("openai_codex/client.py"))
+    handler = sdk_client.read_text(encoding="utf-8")
+    sdk_client.write_text("class CodexClient:\n    pass\n", encoding="utf-8")
+    moved_handler = repo.forge("doctor", cwd=client)
+    sdk_client.write_text(handler, encoding="utf-8")
     for done, said in (
             (wrong_sdk, f"openai-codex 0.150.0, openai-codex-cli-bin {PIN}, codex-cli {PIN}"),
             (wrong_program, f"openai-codex {PIN}, openai-codex-cli-bin {PIN}, codex-cli 0.150.0"),
-            (failing_program, "returned non-zero exit status 3.")):
+            (failing_program, "returned non-zero exit status 3."),
+            (moved_handler, "the SDK client has no _approval_handler for Forge to replace")):
         assert done.returncode == 1
         assert (f"- The Codex SDK in {env} should be openai-codex {PIN}, openai-codex-cli-bin "
                 f"{PIN}, codex-cli {PIN}, but its Python says: ") in done.stdout, done.stdout
         assert f"{said}\n  Fix: forge doctor --fix\n" in done.stdout, done.stdout
 
-    # A project marked untrusted fails; a task worktree gets its trusted main repo's trust.
-    trust("untrusted")
-    untrusted = repo.forge("doctor", cwd=client)
-    assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout
-    trust("trusted")
+    # A project marked untrusted fails doctor, and forge work refuses to start Codex in it before
+    # it records any status. A task worktree gets its trusted main repo's trust.
     worktree = tmp_path / "client-task"
     repo.git("worktree", "add", "-q", "-b", "task/SHOP-CART", str(worktree), cwd=client)
     _workers(worktree, "codex")
+    with (worktree / "forge.toml").open("a", encoding="utf-8") as toml:
+        toml.write('\n[models.build]\nmodel = "gpt-6-sol"\neffort = "medium"\n')
+    trust("untrusted")
+    untrusted = repo.forge("doctor", cwd=client)
+    assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout
+    head = repo.git("rev-parse", "HEAD", cwd=worktree)
+    refused = repo.forge("work", "SHOP/CART", cwd=worktree)
+    assert refused.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
+                              "Forge starts no Codex worker here.\nNext: forge doctor\n")
+    assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
+    trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)
     assert in_worktree.returncode == 0, in_worktree.stdout + in_worktree.stderr
 

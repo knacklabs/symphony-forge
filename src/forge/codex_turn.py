@@ -3,7 +3,8 @@
 Forge sends one JSON request on stdin: the checkout (cwd), the conversation's name, the prompt, the
 sandbox and the kind's settings (config). This prints one JSON line per step, in order: the
 app-server's process id, before anything else; the thread; the turn; each event and each declined
-request; then the turn's end with its status, error and token usage, only when Codex reports it.
+request; then the turn's end with its status, error, final text and token usage, only when Codex
+reports it.
 """
 from __future__ import annotations
 
@@ -13,8 +14,9 @@ import threading
 from typing import Any
 
 from openai_codex import ApprovalMode, Codex, Sandbox
-from openai_codex.models import (ThreadTokenUsageUpdatedNotification, TurnCompletedNotification,
-                                 UnknownNotification)
+from openai_codex._run import _final_assistant_response_from_items
+from openai_codex.models import (ItemCompletedNotification, ThreadTokenUsageUpdatedNotification,
+                                 TurnCompletedNotification, UnknownNotification)
 
 LOCK = threading.Lock()
 
@@ -50,7 +52,7 @@ def main() -> int:
         thread.set_name(request["name"])
         turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
         emit(turn=turn.id)
-        usage = None
+        usage, items = None, []
         for event in turn.stream():
             payload = event.payload
             # warnings=False: the SDK's own models warn about their own union and enum fields.
@@ -58,11 +60,15 @@ def main() -> int:
                       payload.model_dump(mode="json", by_alias=True, exclude_none=True,
                                          warnings=False))
             emit(event=event.method, params=params)
-            if isinstance(payload, ThreadTokenUsageUpdatedNotification):
+            if isinstance(payload, ItemCompletedNotification):
+                items.append(payload.item)
+            elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
                 usage = params["tokenUsage"]["last"]
             elif isinstance(payload, TurnCompletedNotification):
                 error = payload.turn.error
-                emit(status=payload.turn.status.value, error=error and error.message, usage=usage)
+                # The same final text as the SDK's TurnResult.final_response.
+                emit(status=payload.turn.status.value, error=error and error.message,
+                     text=_final_assistant_response_from_items(items), usage=usage)
         return 0
     finally:
         codex.close()

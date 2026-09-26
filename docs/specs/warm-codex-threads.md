@@ -75,6 +75,8 @@ round, and run nothing in the background.
     line.
   - A file that isn't valid TOML also makes `forge work` refuse.
 - Settings are read on every `forge work` call, resumes included.
+- **Note:** the owner decisions of 2026-09-26 in the FORGE-WARM-1 story doc govern here: each
+  kind's models live in `forge.toml`'s `[models]` table, not in `.codex/<kind>.config.toml`.
 
 ### Named threads
 - Forge names every thread it starts:
@@ -120,6 +122,9 @@ round, and run nothing in the background.
   killed `forge work`. Forge then interrupts it through the SDK and waits for its terminal state.
   If that state can't be confirmed, `forge work` refuses with `Next: forge work <item>`. Two turns
   never run for one item.
+- **Note:** the owner decisions of 2026-09-26 in the FORGE-WARM-1 story doc govern here: after a
+  crash, Forge stops the leftover Codex process first, then reads the conversation back, instead
+  of interrupting a running turn.
 
 ### Progress and the turn log
 - Each turn's events are printed to the terminal and to the item's work log in `.git/forge/`:
@@ -135,6 +140,8 @@ round, and run nothing in the background.
   turn-completed event.
 - A turn that fails or is interrupted stops `forge work` with the reason and the log's path. The
   thread stays resumable.
+- **Note:** the owner decisions of 2026-09-26 in the FORGE-WARM-1 story doc govern here: a turn
+  writes a "started" line when it starts and an end line when Codex reports its end, not one line.
 
 ### The cold reader on Codex
 - With Codex workers, the first `forge read` of a story or spec runs on a thread named Grill. The

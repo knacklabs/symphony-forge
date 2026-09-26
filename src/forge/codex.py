@@ -1,5 +1,5 @@
 """Codex workers, Forge's side: the pinned Codex SDK in its own environment, checked and installed,
-the per-kind settings, and one turn run through codex_turn.py.
+a kind's models as Codex settings, and one turn run through codex_turn.py.
 
 Forge never imports the SDK. It runs the environment's own Python to probe it and to drive a turn,
 so the SDK and the Codex program it bundles (about 300 MB) stay out of Forge's own install.
@@ -11,7 +11,6 @@ import os
 import re
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -22,9 +21,13 @@ from forge import repo, sync
 SDK_PIN = "0.156.1"
 # Written last by the install, so a half-finished install never looks ready.
 READY = "forge-sdk-ready"
-# Loads the SDK, runs its bundled Codex program with --version (a missing program, a failing one or
-# a hang raises), then prints both package versions and what the program said.
-PROBE = ("import importlib.metadata as m, subprocess, openai_codex, codex_cli_bin; "
+# Loads the SDK and makes its client, which starts no server, to see it has the approval handler
+# Forge replaces. Then runs its bundled Codex program with --version (a missing program, a failing
+# one or a hang raises), and prints both package versions and what the program said.
+PROBE = ("import importlib.metadata as m, subprocess, sys, openai_codex, openai_codex.client, "
+         "codex_cli_bin; "
+         "hasattr(openai_codex.client.CodexClient(), '_approval_handler') or "
+         "sys.exit('the SDK client has no _approval_handler for Forge to replace'); "
          "said = subprocess.run([codex_cli_bin.bundled_codex_path(), '--version'], "
          "capture_output=True, text=True, timeout=30, check=True).stdout.split(); "
          "print(*(f'{name} {m.version(name)}' "
@@ -36,17 +39,16 @@ GOOD = re.compile(re.escape(f"openai-codex {SDK_PIN}, openai-codex-cli-bin {SDK_
 
 # The driver the SDK's Python runs for one turn.
 TURN = Path(__file__).with_name("codex_turn.py")
-# All a per-kind settings file, .codex/<kind>.config.toml, may set.
-SETTINGS = ("model", "model_reasoning_effort", "model_verbosity")
+# The Codex setting each key of a kind's [models] entry overrides. The app-server reads a dotted
+# key as a path, as `codex -c` does, so it sets one setting inside [agents] and keeps the rest.
+OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
+             "subagents": "agents.default_subagent_model",
+             "subagent_effort": "agents.default_subagent_reasoning_effort"}
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
-    "bad_settings": ("{path} is not valid TOML: {problem}.", "fix {path}"),
-    "setting": ("{path} may set only model, model_reasoning_effort and model_verbosity, "
-                "but it sets {key}.", "remove {key} from {path}"),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
-    "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
 }
 
 
@@ -90,41 +92,36 @@ def install() -> None:
     print(f"Installed the Codex SDK {SDK_PIN} in {env}.")
 
 
-def settings(checkout: Path, kind: str) -> dict[str, Any]:
-    """The kind's own settings in the checkout, read fresh; {} when it has no file.
+def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
+    """The kind's models from forge.toml, as the Codex settings its conversation starts with.
 
     Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
     """
-    rel = f".codex/{kind.lower()}.config.toml"
-    path = checkout / rel
-    if not path.is_file():
-        return {}
-    try:
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
-        repo.refuse(REFUSALS["bad_settings"], path=rel, problem=exc)
-    for key in data:
-        if key not in SETTINGS:
-            repo.refuse(REFUSALS["setting"], path=rel, key=key)
-    return data
+    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower()).items()}
 
 
-def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str) -> None:
+def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
+        thread: str | None = None) -> dict[str, Any]:
     """Run the prompt as one turn on a new conversation named `name`, in the checkout.
 
+    `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
     The item's turn log gets a "started" line when the turn starts, and an end line only when Codex
-    reports the end. Refuses unless Codex reports the turn completed.
+    reports the end. Returns the conversation and turn ids, and the status, final text and token
+    usage Codex reported; status, text and usage are None when it reported no end.
     """
+    # ponytail: `thread` is RESUME's, which continues that conversation; BUILD always starts one.
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
-               "config": settings(checkout, kind)}
-    slug = item.replace("/", "-")
-    log = repo.forge_dir(checkout) / f"work-{slug}.log"
-    turns = log.parent / "threads" / f"{slug}.log"
-    turns.parent.mkdir(exist_ok=True)
+               "config": settings(repo.config(checkout), kind)}
+    log = repo.work_log(checkout, item)
+    base = repo.forge_dir(checkout) / "threads" / ("task" if "/" in item else "fix") / item
+    turns = base.with_name(f"{base.name}.log")
+    turns.parent.mkdir(parents=True, exist_ok=True)
     started: dict[str, Any] = {}
-    status, refused = "", False
+    result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
+                              "usage": None}
+    refused = False
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
@@ -144,20 +141,27 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             elif "refused" in said:
                 refused, text = True, ""
             elif "thread" in said:
+                result["conversation"] = said["thread"]
                 text = f'Codex conversation "{name}": {said["thread"]}'
             elif "turn" in said:
-                started = {"turn": said["turn"], "kind": kind, "started": repo.now()}
+                result["turn"] = said["turn"]
+                started = {"conversation": result["conversation"], "turn": said["turn"],
+                           "kind": kind, "started": repo.now()}
                 _append(turns, started)
                 text = ""
             elif "declined" in said:
                 text = f"Declined Codex's request {said['declined']}"
             elif "status" in said:
-                status, usage = said["status"], said.get("usage") or {}
-                _append(turns, {**started, "continued": False, "status": status,
-                                "ended": repo.now(), "input_tokens": usage.get("inputTokens"),
-                                "cached_input_tokens": usage.get("cachedInputTokens"),
-                                "output_tokens": usage.get("outputTokens")})
-                text = f"Codex ended the turn: {status}"
+                usage = said.get("usage") or {}
+                result.update(status=said["status"], text=said.get("text"), usage={
+                    "input_tokens": usage.get("inputTokens"),
+                    "cached_input_tokens": usage.get("cachedInputTokens"),
+                    "output_tokens": usage.get("outputTokens")})
+                _append(turns, {"conversation": result["conversation"], "turn": result["turn"],
+                                "kind": kind, "continued": False, "fresh_start": "first turn",
+                                "status": said["status"], "started": started.get("started"),
+                                "ended": repo.now(), **result["usage"]})
+                text = f"Codex ended the turn: {said['status']}"
                 text += f" ({said['error']})" if said.get("error") else ""
             else:
                 text = _event(said)
@@ -166,10 +170,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 out.write(text + "\n")
     if refused:
         repo.refuse(REFUSALS["handler"])
-    if status != "completed":
-        why = (f"Codex reported it {status}" if status else
-               f"the driver stopped with exit code {driver.returncode} before Codex reported its end")
-        repo.refuse(REFUSALS["turn"], why=why, log=log, item=item)
+    return result
 
 
 def _event(said: dict[str, Any]) -> str:
