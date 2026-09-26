@@ -71,6 +71,9 @@ pass; if a test is wrong, say so. A test whose result a stub or fake decides pro
 the test-audit skill whenever you write or change a test. Run the repo's test command before you
 stop.
 
+A change to documentation only needs no test.
+In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
+
 <!-- if user-facing -->
 ## Functional check
 
