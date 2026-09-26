@@ -102,6 +102,10 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",
                          encoding="utf-8")
+    # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
+    # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
+    monkeypatch.delenv("CLAUDECODE", raising=False)
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gitconfig))
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"

@@ -59,7 +59,9 @@ def test_36_client_apps_simple(repo):
 
     # Every worker brief, for a task or a fix, carries the whole page.
     log = install_claude(repo)
-    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n')
+    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n'
+                             'models.build = { model = "opus", effort = "high" }\n'
+                             'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")

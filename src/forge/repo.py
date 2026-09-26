@@ -25,6 +25,8 @@ REFUSALS = {
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
+    "old_model": ("forge.toml's model setting is now the [models] table.",
+                  "ask your agent to move it into forge.toml's [models] table"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -109,10 +111,9 @@ def work_log(top: Path, item: str) -> Path:
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "workers": str, "model": str, "test": str,
+KEYS = {"version": str, "repo": str, "workers": str, "test": str,
         "checks": list, "interfaces": list, "models": dict}
-# ponytail: `model` stays the Claude worker's model when there is no [models] table; READER drops it.
-DEFAULTS = {"repo": "client", "workers": "claude", "model": "opus", "test": "",
+DEFAULTS = {"repo": "client", "workers": "claude", "test": "",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
@@ -130,6 +131,8 @@ def config(top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "model" in data:
+        refuse(REFUSALS["old_model"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)

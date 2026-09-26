@@ -45,16 +45,7 @@ def work(args: argparse.Namespace) -> None:
     on_codex = config["workers"] == "codex"
     kind = "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
-    if on_codex:
-        problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
-        if problem:
-            refuse(REFUSALS["sdk"], problem=problem)
-        codex.settings(config, kind)
-        codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-        if not doctor._codex_trusts(top, codex_config):
-            refuse(REFUSALS["untrusted"])
-    else:
-        claude = _claude_models(config, kind.lower())
+    claude = ready(top, config, kind, on_codex)
     state = repo.read_state(item, top) or {}
     findings, failing = _fix_round(state)
     brief, subject = _brief(match, top, state, findings, failing)
@@ -70,15 +61,24 @@ def work(args: argparse.Namespace) -> None:
         refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
 
 
-def _claude_models(config: dict[str, Any], kind: str) -> list[str]:
-    """claude's --model and --effort for this kind of work; the single `model` without a table."""
-    if not config["models"]:
-        return ["--model", config["model"]]
-    chosen = repo.models(config, kind)
-    if "subagents" in chosen:
-        refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
-                                                 f"[models.{kind}] can't set subagents")
-    return ["--model", chosen["model"], "--effort", chosen["effort"]]
+def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[str]:
+    """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
+    the SDK with the declining handler's place and the project's trust. Returns claude's --model
+    and --effort, or [] on Codex. The cold read runs the same checks."""
+    if not on_codex:
+        chosen = repo.models(config, kind.lower())
+        if "subagents" in chosen:
+            refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
+                                                     f"[models.{kind.lower()}] can't set subagents")
+        return ["--model", chosen["model"], "--effort", chosen["effort"]]
+    problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
+    if problem:
+        refuse(REFUSALS["sdk"], problem=problem)
+    codex.settings(config, kind)
+    codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    if not doctor._codex_trusts(top, codex_config):
+        refuse(REFUSALS["untrusted"])
+    return []
 
 
 def _checkout(item: str, branches: list[str]) -> Path:

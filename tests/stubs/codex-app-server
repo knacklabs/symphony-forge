@@ -7,7 +7,9 @@ doesn't know. During the turn it asks for one known approval (to run a command) 
 whose method no SDK knows, and runs what they ask, writing ran-<id> in the thread's folder, unless
 the answer is a decline. Its message echoes the config overrides the thread started with.
 STUB_CODEX_STATUS sets the turn's final status (completed by default; "vanish" exits before the
-turn ends), and STUB_CODEX_NO_USAGE leaves out the token counts. `--version` prints the version.
+turn ends), and STUB_CODEX_NO_USAGE leaves out the token counts. STUB_CODEX_TOUCH names a file it
+writes in the thread's folder during the turn, to stand for a reader that changes a file.
+`--version` prints the version.
 """
 import json
 import os
@@ -76,6 +78,9 @@ def main():
                 (pathlib.Path(cwd) / ("ran-" + message["id"])).write_text(command, encoding="utf-8")
             log(answered=method, result=result, ran=ran)
             if not asked:
+                if os.environ.get("STUB_CODEX_TOUCH"):
+                    (pathlib.Path(cwd) / os.environ["STUB_CODEX_TOUCH"]).write_text(
+                        "changed by the reader\n", encoding="utf-8")
                 if status == "vanish":
                     return
                 finish_turn(config, status)

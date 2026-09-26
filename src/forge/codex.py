@@ -115,7 +115,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": settings(repo.config(checkout), kind)}
     log = repo.work_log(checkout, item)
-    base = repo.forge_dir(checkout) / "threads" / ("task" if "/" in item else "fix") / item
+    # A cold read's item is its story key or spec slug, so reads get their own folder: a spec and
+    # a fix of one name never share a conversation.
+    folder = "read" if kind == "Grill" else "task" if "/" in item else "fix"
+    base = repo.forge_dir(checkout) / "threads" / folder / item
     turns = base.with_name(f"{base.name}.log")
     turns.parent.mkdir(parents=True, exist_ok=True)
     started: dict[str, Any] = {}
