@@ -4,19 +4,19 @@
   "done_when": "Find which one it is: if Forge can return before the app-server process exits, make it wait for the exit; if it's only the check, make the test tell a leftover process from a reused PID. test_4_turn_log passes on Windows CI three runs in a row",
   "kind": "fix",
   "review": {
-    "commit": "6575a4c6c99d782ec157bd71464ac5bdc17ee1a7",
+    "commit": "eac0a46ce53531aab7d40b35969768bbfbfe5cff",
     "dismissals": [],
     "findings": [
       {
-        "body": "A failed identity lookup makes the leak assertion pass: empty stdout becomes `None`, so `_left(recorded_server)` returns false even if the server remains alive. On Windows, a nonterminating `Get-CimInstance` error also reaches `exit 3` because this script omits `$ErrorActionPreference = 'Stop'`. The production query explicitly distinguishes these cases in `src/forge/codex.py:310\u2013324`, and `tests/test_codex_record.py:267\u2013269` exercises this query-failure scenario. Make unexpected query failures fail the test, and return `None` only when the query successfully establishes that the PID is absent.",
+        "body": "If a process query fails after the initial live-process check, empty stdout becomes `None`, so `_left(recorded_server)` returns false and the leak assertion passes even when the app-server remains alive. Partial output can likewise produce a nonmatching identity. The Windows script also lacks `$ErrorActionPreference = 'Stop'`, allowing query errors to reach `exit 3`. Production distinguishes absent processes from failed queries in `src/forge/codex.py:310\u2013324`, and `tests/test_codex_record.py:267\u2013269` covers that distinction. Validate query status and complete identity fields, fail on unexpected errors, and return `None` only for confirmed absence.",
         "file": "tests/test_codex_worker.py",
-        "line": 171,
+        "line": 173,
         "priority": "P2",
-        "title": "Reject failed process queries instead of treating them as process exit"
+        "title": "Reject failed identity queries instead of treating them as process exit"
       }
     ],
     "status": "clean",
-    "tree": "b2f094e2883075b22f32e4120fc4cc4b618895e781ff54105a2633b99597ca25"
+    "tree": "94bec1029497201db8255d1029c48378f11b0df0baae3e4b9181a78776ca5adb"
   },
   "status": "waiting for checks",
   "steps": [
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-09-26T12:08:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T15:09:53+00:00",
       "step": "review"
     }
   ],
