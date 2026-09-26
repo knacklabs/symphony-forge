@@ -250,7 +250,10 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   - the standards page;
   - in a fix round, the open serious findings and the names and log tails of failing checks.
 - With `workers = "claude"`, the worker runs Claude Code headless (`claude -p`) in the worktree
-  with the configured model. It may edit files and run commands there, and it commits its own work.
+  with the configured model and full access, like Codex workers (`--permission-mode
+  bypassPermissions`): it may edit files and run any command there, and it commits its own work.
+  Forge's deny hook, which Claude Code runs in every permission mode, the review and the human
+  merge are the guards.
 - With `workers = "codex"`, v1 refuses and says Codex workers come with the warm-threads story.
 - Output goes to the terminal and to a log under `.git/forge/`, which is never committed.
 - For a user-facing task, the brief also asks the worker to write a short functional check in the
