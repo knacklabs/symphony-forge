@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 
-from test_story import DOC, GRILL, claude_plan, codex_question, hook, ready, setup
+from test_story import DOC, GRILL, claude_plan, codex_question, hook, new_story, ready, setup
 
 
 def _digest(repo):
@@ -17,7 +17,10 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     # "→" in both docs: Forge reads hook input and writes its output in UTF-8 even where the
     # console's code page can't hold it (as on Windows), so each plan hashes to its doc's digest.
     shop = DOC.replace("save a basket", "save a basket → and find it later")
-    ready(repo, "SHOP", shop)
+    # A "→" title too, so the confirmation Forge prints proves stdout is UTF-8.
+    path = new_story(repo, "SHOP", "Shoppers can save a basket → and find it later")
+    (path / "plans" / "SHOP.md").write_text(shop, encoding="utf-8")
+    assert repo.forge("read", "SHOP").returncode == 0
     ready(repo, "WISH", DOC.replace("save a basket", "keep a wish list →"))
     monkeypatch.setenv("PYTHONIOENCODING", "ascii")
 
@@ -29,7 +32,7 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     assert "→" in sent
     recorded = repo.forge("hook", "approval", input=sent)
     assert recorded.returncode == 0, recorded.stderr
-    assert "Recorded the approval" in recorded.stdout
+    assert "Recorded the approval of Shoppers can save a basket → and find it later." in recorded.stdout
     committed = repo.git("show", "--name-only", "--format=", "story/SHOP").splitlines()
     assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(committed)
     assert any(path.startswith(".factory/") for path in committed)
