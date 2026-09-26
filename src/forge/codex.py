@@ -192,7 +192,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = ""
                 elif "pid" in said:
                     server = said["pid"]
-                    found = identity(server)
+                    found = _settled(server)
                     if "command" not in (found or {}):  # nothing to stop it by after a crash
                         _stop(started_by, group=True)  # the group has the app-server too
                         refused = "server"
@@ -323,6 +323,19 @@ def identity(pid: int) -> dict[str, Any] | None:
     if done.returncode or not started.strip() or not command.strip():
         return {"pid": pid}
     return {"pid": pid, "started": started.strip(), "command": command.strip()}
+
+
+def _settled(pid: int) -> dict[str, Any] | None:
+    """A process's identity once two reads agree: a program that starts itself again under
+    another command (a macOS framework Python, `env`) has one command right after it starts and
+    another once it runs, and a record of the first would match nothing later."""
+    now = identity(pid)
+    for _ in range(50):
+        time.sleep(0.1)
+        before, now = now, identity(pid)
+        if now == before:
+            break
+    return now
 
 
 def _alive(recorded: dict[str, Any]) -> bool | None:
