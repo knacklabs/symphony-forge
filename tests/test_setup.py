@@ -108,6 +108,11 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     for shim in ("pre-commit", "pre-push"):
         assert f"exec forge hook {shim}" in (hooks / shim).read_text(encoding="utf-8")
 
+    # The remote-approval skill starts a plainly named Remote Control session in a chosen checkout.
+    skill = (repo.path / ".claude/skills/remote-approval/SKILL.md").read_text(encoding="utf-8")
+    assert re.search(r'^cd <checkout> && exec claude remote-control --name "<name>"$', skill, re.M)
+    assert "no IDs, hashes or branch names" in skill and "under about 30 characters" in skill
+
     # The workflow runs the test command as tests, plus forge-pr-check from the base branch.
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job, check_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")
