@@ -1,0 +1,25 @@
+{
+  "base": "ed9c2d1bfc3ba2720b63c184323f5e1fcb2e8610",
+  "branch": "fix/coordinating-agents-narrate-every-step-a",
+  "done_when": "The Rules in src/forge/templates/adapters/AGENTS.md (and this repo's synced AGENTS.md) say: no running commentary; speak only when something lands, when a failure or finding needs the human, or when a decision is theirs, in a line or two",
+  "kind": "fix",
+  "review": {
+    "commit": "b2c070326add0f5a7736afa85d73db73dc248496",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "2486dedaadf51a5186564a94633323134cc295dfbbcd619a859882069e2a312e"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T13:16:58+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:31:07+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Coordinating agents narrate every step and background event, which costs tokens and nobody reads it"
+}
