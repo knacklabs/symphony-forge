@@ -1,0 +1,37 @@
+{
+  "base": "20550fc0ff4a13e2ccf306d424daa8e722c75a69",
+  "branch": "fix/when-a-test-hangs-on-ci-the-job-is-cance",
+  "done_when": "Every pytest command in .github/workflows/forge-next.yml and forge.yml passes -o faulthandler_timeout=120, so a test still running after two minutes prints every thread's stack to the job log before the cap cancels it; no new dependency",
+  "kind": "fix",
+  "review": {
+    "commit": "7de90260bb9baf62a5752f72721571b832d4a57b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`forge.toml:5` still defines the test command without the timeout. `src/forge/sync.py:223\u2013226` inserts that command into this workflow, and lines 255\u2013263 overwrite differing files. Consequently, the next `forge sync` removes the timeout and makes the new regression test fail. This also immediately triggers the workflow-drift diagnostics in `src/forge/doctor.py:98\u201399,133\u2013135`. Add the timeout to `forge.toml` so regeneration preserves the fix.",
+        "file": ".github/workflows/forge.yml",
+        "line": 21,
+        "priority": "P2",
+        "title": "Preserve the timeout in the generated workflow's source configuration"
+      }
+    ],
+    "status": "clean",
+    "tree": "6ad7c0d769f9938ff857d69e7e239d99e36eec31d7f3dcf834a31db6445aa04e"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T12:35:49+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T12:43:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T12:52:18+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When a test hangs on CI the job is cancelled at its time cap and GitHub keeps no log, so nobody can tell which test hung (Windows group 1 hung for 10 minutes on PR 294)"
+}

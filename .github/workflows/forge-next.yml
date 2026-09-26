@@ -31,7 +31,7 @@ jobs:
       # runners where one runner is too slow.
       - run: >-
           uv run --python 3.11 --with pytest --with pytest-xdist --with pytest-split
-          python -m pytest tests -q -n auto --splits ${{ matrix.groups }} --group ${{ matrix.group }}
+          python -m pytest tests -q -n auto -o faulthandler_timeout=120 --splits ${{ matrix.groups }} --group ${{ matrix.group }}
 
   net-lines:
     if: github.event_name == 'pull_request'
