@@ -20,7 +20,7 @@ from test_close import PIN
 # test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
-          ".github/workflows/forge.yml",
+          ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md"))}
 SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",

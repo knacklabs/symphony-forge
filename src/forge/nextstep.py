@@ -2,7 +2,8 @@
 
 It reads each story from its own worktree (or from the default branch once it landed), each task
 from its worktree (merged once its state is on the default branch) and each fix from its worktree.
-A spec's success check is read from the default branch as landed, and listed first.
+A spec's success check is read from the default branch as landed, and listed first. With nothing
+in progress and an empty roadmap, it offers discovery until a problem card is filled.
 """
 from __future__ import annotations
 
@@ -22,6 +23,10 @@ STATUS = {
     "ready": ("{label} is ready and waiting for someone to merge it.",
               "merge its pull request, then forge next"),
 }
+
+DISCOVERY = "docs/product/DISCOVERY.md"
+# A problem card's six fields; a card is filled once any of them reads something other than unknown.
+CARD_FIELD = re.compile(r"^- (?:Job|Workaround|Cost|Who feels it|How often|Evidence):(.*)$", re.M)
 
 
 def next_step(args: Any) -> int:
@@ -55,11 +60,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             lines += _item(name, f"The fix {name}", state)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    if not lines:
-        lines = ["No story or fix is in progress.",
-                 'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
-                 'Next: forge fix start "<why>" --done "<done when>"']
-    lines = _due(top) + lines
+    lines = _due(top) + (lines or _idle(top))
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top))
     return lines, states
@@ -88,6 +89,27 @@ def _due(top: Path) -> list[str]:
                       'spec records its result"',
                       f'Next: forge spec measure {slug} --result "<measured result>"']
     return lines
+
+
+def _idle(top: Path) -> list[str]:
+    """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
+    ref = story.landed_ref(top)
+    items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
+    if isinstance(items, list) and items:
+        return ["No story or fix is in progress.",
+                'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+                'Next: forge fix start "<why>" --done "<done when>"']
+    fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
+    if any(value.strip().lower() not in ("", "unknown") for value in fields):
+        return ["No story or fix is in progress and the roadmap is empty; the discovery notes hold "
+                "a problem card, so write its spec.",
+                'Next: forge fix start "Write the spec for the chosen problem" --done "A confirmed '
+                'spec whose Why names the problem card"',
+                "Next: forge spec save <slug>"]
+    return ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
+            "the Forge skill's Discovery section says.",
+            'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
+            'filled problem card and the brief names it"']
 
 
 def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
