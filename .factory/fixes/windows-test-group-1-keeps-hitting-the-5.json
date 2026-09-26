@@ -3,7 +3,7 @@
   "branch": "fix/windows-test-group-1-keeps-hitting-the-5",
   "done_when": "forge-next.yml splits the Windows tests into three groups instead of two, keeping the 5-minute cap; nothing else in the workflow changes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T14:51:24+00:00",
