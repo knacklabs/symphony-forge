@@ -414,6 +414,19 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     story(repo, doc=DOC, approved=DOC)
     brief_refused()
 
+    # The story's branch still exists but its approved doc is deleted there: the default branch's
+    # older doc and approval, which match the task's checkout, don't stand in for it, so forge work
+    # refuses before it records any status or starts Codex.
+    story(repo, doc=changed, approved=changed)
+    repo.git("checkout", "-q", "story/BOARD")
+    repo.git("rm", "-q", "plans/BOARD.md")
+    repo.git("commit", "-q", "-m", "Drop the story doc")
+    repo.git("checkout", "-q", "main")
+    refused = repo.forge("work", "BOARD/PAGE")
+    assert refused.stderr == ('"What changes for you" or "Done when" of story BOARD changed after '
+                              "its approval, so it needs a new approval.\nNext: forge next\n")
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+
 
 def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)

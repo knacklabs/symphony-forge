@@ -111,7 +111,8 @@ def _approval(key: str, item: str, top: Path) -> str:
     checkout's own story doc, which the brief is made from, isn't the approved one."""
     doc = f"plans/{key}.md"
     base = f"story/{key}"
-    if task.show(base, doc) is None:
+    # Only a gone branch falls back: a doc deleted on the branch refuses below as a change.
+    if repo.run("git", "rev-parse", "--verify", "-q", f"{base}^{{commit}}").returncode:
         base = task.main_ref()
     state = task.show(base, repo.state_path(key))
     approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
