@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-NEXT-1-SWITCH",
-  "status": "working",
+  "review": {
+    "commit": "4f72c4bc0ad489225c59d4ab68f97edb2201cdc2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The entire branch change records SWITCH starting; it does not implement the switch. The old launcher remains at `forge:14`, pointing to `factory/scripts/forge.py`, and `src/forge/__init__.py:4` still declares `1.0.0-rc.2`. Thus the old Forge is demonstrably still present and the package has not been bumped to the required release version. Complete the scoped removal and release changes before treating this part as delivered, preserving the old state under its archive tag and tagging the merge commit as specified.",
+        "file": ".factory/stories/FORGE-NEXT-1/tasks/SWITCH.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: 9. The old Forge is deleted, its last state is kept under a tag, and version 1.0.0 is released."
+      }
+    ],
+    "status": "blocked",
+    "tree": "21a599f824fc1bcfd650602f2266a32674bce088a8cba64e927f303a68d2673b"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T20:25:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T20:27:17+00:00",
+      "step": "review"
     }
   ]
 }
