@@ -36,6 +36,7 @@ responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:
         sys.stdout.write(rule["stdout"])
+        sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)
@@ -81,10 +82,10 @@ class StubGh:
     def __init__(self, bin_dir: Path):
         self.responses, self.log = bin_dir / "gh-responses.json", bin_dir / "gh-calls.jsonl"
 
-    def respond(self, *args: str, stdout: str = "", exit: int = 0) -> None:
+    def respond(self, *args: str, stdout: str = "", stderr: str = "", exit: int = 0) -> None:
         """Answer any call starting with args. The newest matching response wins."""
         rules = json.loads(self.responses.read_text("utf-8")) if self.responses.exists() else []
-        rules.append({"args": list(args), "stdout": stdout, "exit": exit})
+        rules.append({"args": list(args), "stdout": stdout, "stderr": stderr, "exit": exit})
         self.responses.write_text(json.dumps(rules), encoding="utf-8")
 
     def calls(self) -> list[list[str]]:

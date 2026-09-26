@@ -143,6 +143,19 @@ def _gh(top: Path, *args: str) -> str:
     return done.stdout
 
 
+def _draft(top: Path, *args: str) -> str:
+    """A gh call that makes the pull request a draft. Where the repo allows no drafts (a private
+    repo on GitHub's free plan) it says so and returns ""; any other refusal still fails."""
+    try:
+        return _gh(top, *args)
+    except subprocess.CalledProcessError as error:
+        if "draft pull requests are not supported" not in error.stderr.lower():
+            raise
+    print("This repo doesn't allow draft pull requests, so the pull request is ready for review; "
+          "forge-pr-check still blocks its merge.")
+    return ""
+
+
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
     prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
@@ -164,12 +177,14 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         title, summary = _title(top, item, state)
         notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
         body_file.write_bytes(f"{summary}\n\n{notes}{block}\n".encode("utf-8"))
-        url = _gh(top, "pr", "create", "--base", default, "--head", branch, "--title", title,
-                  "--body-file", str(body_file), *(["--draft"] if draft else []))
+        create = ("--base", default, "--head", branch, "--title", title, "--body-file",
+                  str(body_file))
+        url = ((draft and _draft(top, "pr", "create", "--draft", *create))
+               or _gh(top, "pr", "create", *create))
         print(f"Opened the pull request: {url.strip()}")
         return
     if draft and not pr.get("isDraft"):
-        _gh(top, "pr", "ready", str(pr["number"]), "--undo")
+        _draft(top, "pr", "ready", str(pr["number"]), "--undo")
     body = pr.get("body") or ""
     marked = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.S)
     new = (marked.sub(lambda _: block, body, count=1) if marked.search(body)

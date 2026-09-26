@@ -402,7 +402,7 @@ def test_18_close(env, kind):
     # A serious finding blocks, so the pull request opens as a draft; the advisory one is listed;
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
-    assert create[-1] == "--draft" and not env.gh_calls("pr", "ready")
+    assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
     assert "1. P1 Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
     assert "2. P2 Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
@@ -436,6 +436,23 @@ def test_18_close(env, kind):
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
     assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
+
+    # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,
+    # and stays, ready for review, and forge-pr-check still blocks its merge.
+    no_drafts = "GraphQL: Draft pull requests are not supported in this repository.\n"
+    env.gh.respond("pr", "create", "--draft", stderr=no_drafts, exit=1)
+    env.gh.respond("pr", "ready", "7", "--undo", stderr=no_drafts, exit=1)
+    env.gh.respond("pr", "list", "--head", stdout="[]")  # no pull request yet
+    fourth = env.close(item)
+    refused, create = env.gh_calls("pr", "create")[-2:]
+    assert refused == [*create[:2], "--draft", *create[2:]]
+    env.open_pr(body(create))
+    fifth = env.close(item)
+    assert env.gh_calls("pr", "ready")[-1] == ["pr", "ready", "7", "--undo"]
+    for done in (fourth, fifth):
+        assert done.returncode == 1 and (
+            "This repo doesn't allow draft pull requests, so the pull request is ready for review; "
+            "forge-pr-check still blocks its merge.") in done.stdout.splitlines()
     # Once the story's last part merges, close names `forge story done`: criterion 42's test.
 
 
