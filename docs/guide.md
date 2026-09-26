@@ -53,6 +53,7 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
+| `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |
 | `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |
 | `forge decision new <slug>` | Writes a decision record |
 | `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
@@ -94,7 +95,9 @@ Only the human approves a story, chooses between options and merges. The agent d
 
 Planning records follow the same lane: `forge spec save <slug>`, a cold read with
 `forge read <slug>`, then `forge spec confirm <slug> --by "<name>"` once the human confirms in
-chat. Decisions use `forge decision new <slug>` and `forge decision accept <slug> --by "<name>"`.
+chat. Every spec needs a `## Success measure` with `- Metric:`, `- Baseline:`, `- Target:` and
+`- Check date: YYYY-MM-DD` filled in, or save and confirm refuse it. After the check date, record
+what you measured with `forge spec measure <slug> --result "<text>"` in a fix. Decisions use `forge decision new <slug>` and `forge decision accept <slug> --by "<name>"`.
 
 ## Closing
 
