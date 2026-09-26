@@ -37,9 +37,10 @@ OWN = ["README.md", "src/app.js", "docs/product/BRIEF.md", "docs/decisions/0001-
        ".github/workflows/ci.yml", "plans/roadmap.json"]
 # Forge files the client changed or added: set aside, not deleted.
 KEPT = ["factory/skills/our-skill/SKILL.md", "harness.yaml"]
-# The client's old verify commands in .envrc, outside the harness-only block, in order.
-TEST = ("npm run format:check && npm run check:architecture && npm run lint:changed && "
-        "npm run typecheck && npm test")
+# The client's old verify commands in .envrc, outside the harness-only block, in order; a phase
+# with its own && or || is grouped, so it fails as one step.
+TEST = ("(npm run format:check && npm run check:architecture && npm run lint:changed) && "
+        "(npm run typecheck || npm run typecheck:legacy) && npm test")
 # gstack's store in the repo: the office-hours design doc moves, the rest goes.
 DESIGN = "main-design-20260901-120000.md"
 GSTACK = ("Keeps 1 office-hours design doc in docs/context/; deletes the rest of gstack's store "
@@ -326,10 +327,9 @@ def _in_flight(repo, tmp_path: Path) -> None:
     _land(repo, "A stage is active")
 
 
-def _outside(repo, tmp_path: Path) -> None:
-    (tmp_path / "elsewhere").mkdir()
-    os.symlink(tmp_path / "elsewhere", repo.path / ".forge-migrate")
-    _land(repo, "A link out of the repo")
+def _linked_folder(repo, tmp_path: Path) -> None:
+    os.symlink("docs", repo.path / ".forge-migrate")  # a folder inside the repo
+    _land(repo, "A linked .forge-migrate")
 
 
 def _linked_adapter(repo, tmp_path: Path) -> None:
@@ -360,6 +360,11 @@ def _kept_taken(repo, tmp_path: Path) -> None:
     _land(repo, "An older set-aside copy")
 
 
+def _draft_taken(repo, tmp_path: Path) -> None:
+    repo.write(".forge-migrate/replan/SHIP-1.md", "# An older draft\n")
+    _land(repo, "An older draft")
+
+
 def _no_source(repo, tmp_path: Path) -> None:
     repo.write("constitution/VENDORED_FROM", "symphony-forge @ an unknown commit\n")
     _land(repo, "Lost the vendored commit")
@@ -379,18 +384,22 @@ CASES = {
     "a set-aside file already there": _refusal(
         ".forge-migrate/kept/harness.yaml is already there",
         "move .forge-migrate/ aside, then forge migrate", _kept_taken),
+    "a draft already there": _refusal(
+        ".forge-migrate/replan/SHIP-1.md is already there",
+        "move .forge-migrate/replan/SHIP-1.md aside, then forge migrate", _draft_taken),
     "two design docs with one name": _refusal(
         f"docs/context/{DESIGN} (from .gstack/projects/x/{DESIGN}) is already there",
         f"move .gstack/projects/y/{DESIGN} aside, then forge migrate", _same_design),
     "work in flight": _refusal(
         "Work is still in flight in the copied-in Forge: the stage SHIP-1-T2 in ",
         "finish or drop each one with the copied-in ./forge", _in_flight),
-    "a path outside the repo": _refusal(
-        "leads outside this repo, so Forge won't change anything through it.",
-        "remove that link, then forge migrate --dry-run", _outside),
+    # Never through a link, even to a folder inside the repo: the run works in another folder.
+    "a linked .forge-migrate": _refusal(
+        ".forge-migrate is a link, and forge migrate never follows one.",
+        "remove that link, then forge migrate --dry-run", _linked_folder),
     # sync writes the adapters only after the move began, so they are checked before any change.
     "an adapter file linked out of the repo": _refusal(
-        ".claude/settings.json leads outside this repo, so Forge won't change anything through it.",
+        ".claude/settings.json is a link, and forge migrate never follows one.",
         "remove that link, then forge migrate --dry-run", _linked_adapter),
     "an .agents/-era layout": _refusal(
         "origin/main has no copied-in factory/ layout to move", "forge next", _agents_era),
@@ -402,7 +411,7 @@ CASES = {
 
 @pytest.mark.parametrize("case", [
     pytest.param(name, marks=pytest.mark.skipif(
-        name in ("a path outside the repo", "an adapter file linked out of the repo")
+        name in ("a linked .forge-migrate", "an adapter file linked out of the repo")
         and os.name == "nt",
         reason="making a symlink needs extra rights on Windows")) for name in CASES])
 def test_30_migrate(repo, gh, tmp_path, monkeypatch, case):

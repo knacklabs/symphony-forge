@@ -51,8 +51,8 @@ REFUSALS = {
     "no_source": ("Forge can't read the copied-in version ({problem}), so it can't tell your "
                   "changes from its own.",
                   "check the network and constitution/VENDORED_FROM, then forge migrate --dry-run"),
-    "outside": ("{path} leads outside this repo, so Forge won't change anything through it.",
-                "remove that link, then forge migrate --dry-run"),
+    "link": ("{path} is a link, and forge migrate never follows one.",
+             "remove that link, then forge migrate --dry-run"),
     "not_ours": ("forge/migrate-v1 holds work that forge migrate didn't make, so it won't start the "
                  "branch again.", "git branch -m forge/migrate-v1 <another name>, then forge migrate"),
     "unsaved": ("{path}, the folder of forge/migrate-v1, has changes that aren't committed, so "
@@ -173,12 +173,17 @@ def migrate(args: argparse.Namespace) -> int:
     plan = _plan(top, ref, own)
     # sync's own list of the adapters it will write (their text is not needed here).
     adapters = sync.files(top, {"version": f"v{__version__}", "test": plan["test"]})
+    # Never through a link, even one inside the repo: the run works in another folder.
     for rel in [*_touched(plan), *adapters]:
-        if not (top / rel).resolve().is_relative_to(top.resolve()):
-            repo.refuse(REFUSALS["outside"], path=rel)
-    # A moved file never lands on a file in the tree, or on another moved file.
-    landed = dict.fromkeys(_tree(top, ref, KEPT, "docs/context"), "")
-    for rel, dest in plan["moves"]:
+        parts = Path(rel).parts
+        link = next((Path(*parts[:n]).as_posix() for n in range(1, len(parts) + 1)
+                     if (top / Path(*parts[:n])).is_symlink()), "")
+        if link:
+            repo.refuse(REFUSALS["link"], path=link)
+    # A moved or written file never lands on a file in the tree, or on another moved file.
+    landed = dict.fromkeys(_tree(top, ref, KEPT, REPLAN, "docs/context", "plans"), "")
+    for rel, dest in [*plan["moves"], *((entry["old"], entry["dest"])
+                                        for entry in plan["stories"] if "dest" in entry)]:
         if dest in landed:
             first = landed[dest]
             repo.refuse(REFUSALS["taken"], path=f"{dest} (from {first})" if first else dest,
@@ -227,16 +232,18 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "moves": [*((path, f"{KEPT}/{path}") for path in kept), *designs],  # (from, to)
             "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
             "gstack_left": left,
-            "test": " && ".join(said[name] for name in VERIFY if said.get(name)),
+            # A phase with its own && or || is grouped, so it fails as one step.
+            "test": " && ".join(f"({said[name]})" if re.search(r"[;&|]", said[name])
+                                else said[name] for name in VERIFY if said.get(name)),
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
 
 
 def _touched(plan: dict[str, Any]) -> list[str]:
-    """Every path the run removes, moves or writes (sync checks its own files as it writes)."""
+    """Every path the run removes, moves or writes, but the adapters sync.files lists."""
     written = [path for entry in plan["stories"] if "dest" in entry
-               for path in (entry["dest"], *map(repo.state_path, entry["states"]))]
+               for path in (entry["old"], entry["dest"], *map(repo.state_path, entry["states"]))]
     return [*plan["delete"], *(path for move in plan["moves"] for path in move),
             *plan["gstack_edits"], *written, "forge.toml", repo.state_path(ITEM)]
 
