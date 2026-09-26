@@ -77,6 +77,16 @@ if "app-server" in done.stdout:
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
+# A ps that reads a Codex app-server's start time but only its program's name, as it can under
+# load for a process that has only just started.
+BARE_SERVER = """#!{python}
+import subprocess, sys
+done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
+if "app-server" in done.stdout:
+    done.stdout = " ".join(done.stdout.split()[:5]) + " python\\n"
+sys.stdout.write(done.stdout)
+sys.exit(done.returncode)
+"""
 # On PYTHONPATH, every Python loads it: the two minutes Codex gets to start pass in a second.
 FAST = """import threading
 
@@ -435,3 +445,66 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
 
     if os.name != "nt":  # exec is POSIX
         _exec_driver_is_stopped(repo)
+
+def _record_in_process(tmp_path, refuse: str, seed: bool = True):
+    """Run codex._record on a record in a fresh process whose os.replace is refused as Windows
+    refuses it while another process has the file open. `refuse` is an expression of the count
+    of renames so far and the seconds since the first one; when true, the rename is refused."""
+    script = ("import os, sys, time; sys.path.insert(0, sys.argv[1])\n"
+              "from pathlib import Path\n"
+              "from forge import codex, repo\n"
+              "real, seen, first = os.replace, [], time.monotonic()\n"
+              "def replace(a, b):\n"
+              "    seen.append(a)\n"
+              f"    if {refuse}: raise PermissionError(5, 'Access is denied')\n"
+              "    real(a, b)\n"
+              "os.replace = replace\n"
+              "try:\n"
+              "    codex._record(Path(sys.argv[2]), b=2)\n"
+              "except repo.Refused as refusal:\n"
+              "    print(refusal)\n"
+              "print(len(seen))\n")
+    record = tmp_path / "PAGE.json"
+    if seed:
+        record.write_text('{"a": 1}\n')
+    src = Path(__file__).resolve().parent.parent / "src"
+    done = subprocess.run([sys.executable, "-c", script, str(src), str(record)],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    return record, done.stdout
+
+
+def test_7_record_retries_while_another_reader_holds_it(tmp_path):
+    # Windows refuses the rename ("Access is denied") while another process has the file open;
+    # here the first three renames are refused.
+    record, out = _record_in_process(tmp_path, "len(seen) <= 3", seed=False)
+    assert out.strip() == "4"
+    assert json.loads(record.read_text()) == {"b": 2}
+
+
+def test_8_record_refuses_when_another_reader_never_lets_go(tmp_path):
+    # A reader that never releases the file ends in a plain refusal, not a PermissionError.
+    record, out = _record_in_process(tmp_path, "True")
+    assert out.startswith(f"Forge couldn't update {record} because another program kept it open.")
+    assert json.loads(record.read_text()) == {"a": 1} and not record.with_suffix(".tmp").exists()
+
+
+def test_9_record_waits_for_a_reader_to_release_an_existing_record(tmp_path):
+    # The replace stays refused until a reader lets go half a second later: a loop that never
+    # waited would use up its attempts first.
+    record, out = _record_in_process(tmp_path, "time.monotonic() - first < 0.5")
+    assert json.loads(record.read_text()) == {"a": 1, "b": 2}
+
+
+def test_12_a_dead_driver_leaves_no_app_server_behind(repo, monkeypatch, sdk_data):
+    folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
+    record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
+    if os.name != "nt":
+        # Forge reads only "python" as the app-server's command, so it can't tell it by that.
+        _install(repo.bin, "ps", BARE_SERVER.format(python=sys.executable, ps=shutil.which("ps")))
+    work, saved, stub = _held(repo, calls, record, "hold")
+    if os.name != "nt":
+        assert "app-server" not in saved["app_server"]["command"]
+    os.kill(saved["driver"]["pid"], KILL)
+    assert "Codex never reported its end" in work.communicate(timeout=30)[1]
+    assert not _up(stub)  # already gone when forge work returns, not a moment later

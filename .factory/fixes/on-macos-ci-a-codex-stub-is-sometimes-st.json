@@ -1,0 +1,46 @@
+{
+  "base": "2c32dfbd526eec3a9bad60c8aef283e587578c2c",
+  "branch": "fix/on-macos-ci-a-codex-stub-is-sometimes-st",
+  "done_when": "Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge work never returns while a Codex process it started is alive, and both tests pass on every OS in CI three runs in a row; no test is skipped or loosened",
+  "kind": "fix",
+  "review": {
+    "commit": "26240094c9406d7112251004e61311940ceba2a3",
+    "dismissals": [
+      {
+        "because": "src/forge/codex.py:260 Forge has already sent SIGKILL to the whole process group it created and waited 30 seconds; SIGKILL can't be caught or ignored, so a process still alive is stuck in the kernel, and refusing loudly is the right fail-closed answer rather than hanging forge work forever",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "The timeout still allows `forge work` to return while its app-server remains alive. After 300 successful probes, `repo.refuse()` raises an exception; `src/forge/cli.py:173-175` catches it and exits. Returning an error does not satisfy the requirement that Forge never returns with a surviving Codex process. In the bare-command scenario this patch targets, the outer cleanup cannot repair this: `src/forge/codex.py:371-372` skips that app-server record, including during `hold()` cleanup at line 420. Keep ownership and wait for confirmed termination before exiting, and add coverage for termination outlasting the polling budget.",
+        "file": "src/forge/codex.py",
+        "line": 260,
+        "priority": "P1",
+        "title": "Not done: Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge\u4ed5\u4e8b"
+      }
+    ],
+    "status": "clean",
+    "tree": "850557878e8a28e2d82ba762181aa33d2d5a64b7bc329037d6af8a0a688d4fc9"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T15:18:57+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T16:15:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T16:25:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T16:33:36+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "On macOS CI a Codex stub is sometimes still running right after forge work returns (test_codex_record.py test_6_nothing_left_running and test_codex_worker.py test_4_turn_log failed together on PR 294 run 36250978748, after the startup-identity fix in PR 304), so Forge's promise that nothing is left running doesn't hold"
+}

@@ -245,6 +245,19 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 _stop_leftover(record)
                 driver.kill()  # not on record yet, it has started nothing
                 driver.wait()
+            if os.name != "nt":
+                # The group is Forge's own, and outlives its leader while anything runs in it, so
+                # this reaches an app-server the record can't name (a start time or command read
+                # wrong under load) after a driver that died without ending it.
+                stuck = False
+                with contextlib.suppress(OSError):
+                    os.killpg(driver.pid, signal.SIGKILL)
+                    for _ in range(300):  # SIGKILL only asks: wait until the group has no member
+                        os.killpg(driver.pid, 0)  # raises once none is left
+                        time.sleep(0.1)
+                    stuck = True  # thirty seconds on, a member still runs: don't claim it ended
+                if stuck:
+                    repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
                     pid=driver.pid if refused == "driver" else server)
