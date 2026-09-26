@@ -173,9 +173,7 @@ def _claude(top: Path) -> str:
     """
     text = read(top / "CLAUDE.md")
     start, end = _span(text, "CLAUDE.md")
-    if start == -1:
-        return text
-    rest = (text[:start] + text[end:]).strip()
+    rest = (text if start == -1 else text[:start] + text[end:]).strip()
     if rest in ("", "@AGENTS.md"):
         return ""
     return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"

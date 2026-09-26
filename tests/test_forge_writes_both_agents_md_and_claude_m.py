@@ -38,3 +38,14 @@ def test_3_sync_keeps_a_claude_md_with_the_repos_own_content_and_an_agents_impor
     assert text.startswith("# Ours\n\nUse tabs.\n")
     assert text.count("@AGENTS.md") == 1
     assert repo.forge("sync").stdout.startswith("Nothing to change")
+
+
+def test_4_sync_imports_agents_md_into_repo_owned_claude_md_without_forge_block(repo):
+    _on_a_branch_with_forge_toml(repo)
+    repo.write("CLAUDE.md", "# Ours\n\nUse tabs.\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Our own CLAUDE.md")
+    assert repo.forge("sync").returncode == 0
+    assert (repo.path / "CLAUDE.md").read_text(encoding="utf-8") == (
+        "# Ours\n\nUse tabs.\n\n@AGENTS.md\n")
+    assert repo.forge("sync").stdout.startswith("Nothing to change")
