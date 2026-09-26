@@ -223,27 +223,27 @@ def _red_check(env):
     env.checks([run("tests (ubuntu-latest)", "failure"),
                 run("tests (windows-latest)", None, "in_progress"),
                 run("forge-pr-check"), run("lint", "failure")])
-    return {"item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
+    return {"draft": True, "item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
 
 
 def _pending_check(env):
     env.checks([run("tests (ubuntu-latest)", None, "in_progress"), run("forge-pr-check")])
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: tests is still running.",
             "next": "forge close tidy-readme"}
 
 
 def _missing_required_check(env):
     env.checks([run("tests")])
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: forge-pr-check has not reported.",
             "next": "forge close tidy-readme"}
 
 
 def _github_api_error(env):
     env.gh.respond("api", stdout="HTTP 502: Bad Gateway", exit=1)
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: GitHub did not answer: HTTP 502: Bad Gateway.",
             "next": "forge close tidy-readme"}
 
@@ -342,6 +342,8 @@ GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _
 @pytest.mark.parametrize("case", GATES, ids=lambda case: case.__name__.strip("_"))
 def test_2_gates_check_outcomes(env, case):
     want = case(env)
+    if want.get("draft"):  # a draft left by an earlier blocked review
+        env.open_pr("", draft=True)
     done = env.close(want["item"], *want.get("args", []))
     assert done.returncode == 1, done.stdout + done.stderr
     problem, next_line = done.stderr.splitlines()[-2:]
@@ -354,6 +356,11 @@ def test_2_gates_check_outcomes(env, case):
         assert len(env.review_calls()) == want["reviews"]
     if "clean" in want:  # the conflicting merge was undone
         assert env.repo.git("status", "--porcelain", cwd=want["clean"]) == ""
+    if want.get("draft"):  # not green: still a draft; green on a retry: ready for review
+        assert not env.gh_calls("pr", "ready")
+        env.checks(GREEN)
+        assert env.close(want["item"]).returncode == 0
+        assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
 
 
 # --- criterion 18: close, for a task and for a fix ----------------------------------------
