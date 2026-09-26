@@ -32,9 +32,9 @@ def test_33_new_moving_parts_line(env):
 
     # The worker brief and the review instructions both carry the story's line.
     line = "New moving parts: a nightly clean-up job (Done when 1)"
-    env.commit(repo.path, "plans/SHOP.md", STORY_DOC.replace("New moving parts: none", line))
-    repo.git("push", "-q", "origin", "main")
-    item, where = env.start_task()
+    doc = STORY_DOC.replace("New moving parts: none", line)
+    env.commit(repo.path, "plans/SHOP.md", doc)
+    item, where = env.start_approved_task(doc)
     log = install_claude(repo)
     assert repo.forge("work", item).returncode == 0
     assert line in calls(log)[-1]["brief"]
@@ -42,7 +42,6 @@ def test_33_new_moving_parts_line(env):
     assert line in env.prompt()
 
     # forge-pr-check fails a pull request whose story doc has lost the line.
-    doc = (where / "plans" / "SHOP.md").read_text("utf-8")
     env.commit(where, "plans/SHOP.md", doc.replace(f"{line}\n", ""))
     checked = repo.forge("hook", "pr-check", "--base", repo.git("rev-parse", "origin/main"),
                          "--head", "HEAD", "--branch", "task/SHOP-T1", cwd=where)
@@ -110,8 +109,10 @@ def test_35_simple_enough_cold_read(repo):
 
 def test_37_one_ui_skill(env):
     # A user-facing task's brief and its review name motion only for a Done-when item needing it.
+    # T2 waits for T1, which counts as merged once its state is on the default branch.
+    env.commit(env.repo.path, ".factory/stories/SHOP/tasks/T1.json", '{"status": "merged"}')
+    item = env.start_approved_task(STORY_DOC, "T2", {"show.py": "print('basket')\n"})[0]
     log = install_claude(env.repo)
-    item = env.start_task("T2", {"show.py": "print('basket')\n"})[0]
     assert env.repo.forge("work", item).returncode == 0
     assert env.close(item).returncode == 0
     for text in (_flat(calls(log)[-1]["brief"]), _flat(env.prompt())):

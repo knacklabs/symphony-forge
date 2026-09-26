@@ -1,0 +1,25 @@
+{
+  "base": "ed9c2d1bfc3ba2720b63c184323f5e1fcb2e8610",
+  "branch": "fix/nothing-tells-the-planner-or-coordinator",
+  "done_when": "The skill's planning section and the story template's Tasks guidance say: split tasks so each owns its files; shared lines (command table, guide list, registry) go to one task or a small last wiring task; After only when a task needs another task's code. The cold-read prompt flags every After link or shared Scope entry that exists only because of a shared line, naming the split. The skill says to start every task and fix forge next lists as ready at once and close each as its worker finishes, and forge next prints '<n> parts of <title> can start now; start them together.' A test pins the forge next line",
+  "kind": "fix",
+  "review": {
+    "commit": "544e687c6b307d92025493f8c8164a9b3c3ceeb1",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "76079231a4bba95e2cdce5057540486c609d05687bc860292c9efa5f0148b9fb"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T13:14:23+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:20:54+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Nothing tells the planner or coordinator to aim for parallel work, so stories come out as serial chains (the FDE story's three tasks waited on each other only because they shared a command-table row and a guide line)"
+}
