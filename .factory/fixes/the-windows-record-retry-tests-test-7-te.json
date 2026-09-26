@@ -1,0 +1,14 @@
+{
+  "base": "6d650d944901825d467e4486f13b0fd55fd81711",
+  "branch": "fix/the-windows-record-retry-tests-test-7-te",
+  "done_when": "Those three tests move unchanged to their own test file with its own STORY key for the record-retry fix, and tests/test_codex_record.py keeps only FORGE-WARM-1 criteria tests; the full suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T16:28:04+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The Windows record-retry tests (test_7, test_8 and test_9 in tests/test_codex_record.py) are numbered as FORGE-WARM-1 criteria 7 to 9, which they don't cover, so FORGE-WARM-1's real test for criterion 7 fails the one-test-per-rule check"
+}
