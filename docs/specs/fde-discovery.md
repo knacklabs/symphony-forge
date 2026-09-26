@@ -1,8 +1,10 @@
 ---
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
-status: draft
+status: confirmed
 saved: 2026-09-26T09:45:57+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 7d0926f3de7fb3ac6471b18691d63c951f6e59c2fb501be2fd78407ffcca4a70
 ---
 
 # The agent works as a forward deployed engineer
