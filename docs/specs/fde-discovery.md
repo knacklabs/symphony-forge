@@ -32,8 +32,8 @@ this wins over the other two. An ask that a confirmed spec covers is a
 story, and one that corrects shipped behaviour is a fix; both get Forge's own
 interview: a fix asks at most two questions and a story at most eight. When
 the limit is reached, missing answers are written as "unknown" and the
-payback rule treats them as guessed, so questioning never loops. The agent saves the design doc it produces, unchanged, in
-`docs/context/` and fills the problem card from it, writing any field the
+payback rule treats them as guessed, so questioning never loops. The agent
+saves the design doc office-hours produces, unchanged, in `docs/context/` and fills the problem card from it, writing any field the
 doc leaves open as "unknown". If `/office-hours` isn't installed, the agent
 says it comes with gstack and runs its own interview with the story limit.
 Options, payback and the success measure work the same either way.
