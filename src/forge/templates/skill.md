@@ -29,9 +29,14 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" | `forge doctor` |
 | "Set up a new repo" | `forge init` |
+| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
+| "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
 The human approves stories, chooses between options and merges. Everything else is yours. Ask
 one question at a time, with options and your recommendation first.
+
+The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
+options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
 
 ## Planning a story
 

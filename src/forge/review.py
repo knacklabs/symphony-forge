@@ -153,7 +153,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if row.get("user-facing", "").lower() in ("yes", "true"):
             chosen.insert(1, "functional-check")
             values["functional_check"] = functional_check(top, base) or (
-                "None: no commit message on this branch has a `Functional check:` paragraph.")
+                "None: the worker's last commit message has no `Functional check:` paragraph.")
     else:
         chosen = ["fix", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
@@ -162,13 +162,13 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
 
 
 def functional_check(top: Path, base: str) -> str:
-    """The worker's functional check: the newest `Functional check:` paragraph in the branch's
-    commit messages, to the end of its message. Git holds it; Forge copies it, never stores it."""
-    for message in repo.git("log", "--format=%B%x00", f"{base}..HEAD", cwd=top).split("\0"):
-        found = re.search(r"^Functional check:.*", message, re.M | re.S)
-        if found:
-            return found[0].strip()
-    return ""
+    """The worker's functional check: the `Functional check:` paragraph of its last commit message,
+    to the end. That's the branch's newest commit that isn't a merge or only Forge's records; an
+    older commit's check never counts. Git holds it; Forge copies it, never stores it."""
+    message = repo.git("log", "-1", "--no-merges", "--format=%B", f"{base}..HEAD", "--",
+                       *(f":(exclude){path}" for path in BOOKKEEPING), cwd=top)
+    found = re.search(r"^Functional check:.*", message, re.M | re.S)
+    return found[0].strip() if found else ""
 
 
 def _bullets(items: Any) -> str:

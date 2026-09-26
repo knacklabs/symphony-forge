@@ -31,10 +31,12 @@ def test_17_worker(repo, gh, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nmodel = "sonnet"\ntest = "pytest -q"\n')
-    # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't.
+    # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't, and one sits
+    # next to its code.
     repo.write("tests/test_old_board.py", "from web import board\n")
     repo.write("tests/test_help_text.py", "from web import help\n")
-    repo.git("add", "forge.toml", "tests")
+    repo.write("web/test_board.py", "from web import board\n")
+    repo.git("add", "forge.toml", "tests", "web")
     repo.git("commit", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
     story(repo)
@@ -67,7 +69,7 @@ def test_17_worker(repo, gh, monkeypatch):
         assert standards.read_text(encoding="utf-8").strip() in brief
     # The existing tests that name the Scope, and the shipped conventions the worker may read.
     assert ("Existing tests that name a file or folder in your Scope, which must still pass: "
-            "`tests/test_old_board.py`.") in brief
+            "`tests/test_old_board.py`, `web/test_board.py`.") in brief
     conventions = ROOT / "src" / "forge" / "templates" / "conventions"
     assert f"`{conventions}`" in brief and (conventions / "stack.md").is_file()
     assert call["args"][call["args"].index("--add-dir") + 1] == str(conventions)
