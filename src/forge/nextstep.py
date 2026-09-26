@@ -156,7 +156,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
     if ready:
-        lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now.",
+        lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
+                  f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}" for task in ready)]
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
