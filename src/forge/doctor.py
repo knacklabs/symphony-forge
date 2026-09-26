@@ -1,4 +1,6 @@
-"""forge doctor: tools, the pin, the git hooks, the host hooks, adapter drift and CI; a row per problem."""
+"""forge doctor: tools, the pin, the git hooks, the host hooks, adapter drift, CI and, for Codex
+workers, the Codex SDK and the project's trust; a row per problem. With Codex workers, --fix
+installs the SDK."""
 from __future__ import annotations
 
 import argparse
@@ -8,20 +10,19 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from forge import __version__, repo, sync
+from forge import __version__, codex, repo, sync
 
 REFUSALS = {
     "problems": ("forge doctor found {count} problem(s); each row above gives its fix.",
                  "forge doctor"),
 }
 
-# How to install each tool doctor looks for: git, gh, uv and the worker CLI.
+# How to install each tool doctor looks for: git, gh, uv and, for Claude workers, Claude Code.
 INSTALL = {
     "git": "install git from https://git-scm.com/downloads",
     "gh": "install gh from https://cli.github.com",
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh",
     "claude": "npm install -g @anthropic-ai/claude-code",
-    "codex": "npm install -g @openai/codex",
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
@@ -59,8 +60,13 @@ def doctor(args: argparse.Namespace) -> None:
     cfg = repo.config(top)
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
+    on_codex = cfg["workers"] == "codex"
+    # Without uv there is nothing to install with; the uv row below says how to get it.
+    if args.fix and on_codex and shutil.which("uv") and codex.sdk_problem():
+        codex.install()
 
-    for tool in ("git", "gh", "uv", cfg["workers"]):
+    # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
+    for tool in ("git", "gh", "uv") if on_codex else ("git", "gh", "uv", "claude"):
         if not shutil.which(tool):
             rows.append((f"{tool} is not installed or not on PATH.", INSTALL[tool]))
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode:
@@ -69,6 +75,8 @@ def doctor(args: argparse.Namespace) -> None:
     if pinned != f"v{__version__}":
         rows.append((repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned),
                      install))
+    if on_codex and (problem := codex.sdk_problem()):
+        rows.append((problem, "forge doctor --fix"))
 
     try:
         wanted = sync.files(top, cfg)
@@ -112,17 +120,26 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
                      "command.", "forge sync"))
 
-    # Advice, not a problem: Codex skips the project hooks (the deny hook included) until the
-    # user trusts the project in their own Codex config.
-    codex = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    trusted = _codex_trusts(top, codex)
+    # Codex skips the project hooks (the deny hook included) and the project's Codex settings
+    # until the user trusts the project in their own Codex config. That fails Codex workers; with
+    # Claude workers it is advice.
+    codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    trusted = _codex_trusts(top, codex_config)
+    trust = ("open Codex here and trust the project, or add "
+             f'[projects."{top}"] with trust_level = "trusted" to {codex_config}')
+    if on_codex and not trusted:
+        rows.append(("Codex doesn't trust this project, so it would skip Forge's hooks and the "
+                     "project's Codex settings.", trust))
 
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
-    if not trusted:
+    if on_codex:
+        # Codex also asks the user to approve each project hook, and no outside program sees that.
+        print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see "
+              "whether you did.")
+    elif not trusted:
         print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
-              "trust this one yet.\n  Fix: open Codex here and trust the project, or add "
-              f'[projects."{top}"] with trust_level = "trusted" to {codex}')
+              f"trust this one yet.\n  Fix: {trust}")
     if rows:
         repo.refuse(REFUSALS["problems"], count=len(rows))
     print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")

@@ -1,119 +1,239 @@
 ---
 slug: warm-codex-threads
-title: Hybrid mode reuses warm Codex worker threads
+title: Codex workers keep a warm conversation per task
 status: confirmed
-saved: 2026-09-24T01:10:38+00:00
+saved: 2026-09-25T17:42:37+00:00
 ---
 
-# Hybrid mode reuses warm Codex worker threads
+# Codex workers keep a warm conversation per task
 
 ## Why
 
-In hybrid mode Claude coordinates and Codex executes. Every Codex delegation today starts a new
-conversation through the plugin companion, so each worker re-reads the repository before it can act,
-and every review-fix round starts cold again. Codex's app-server keeps conversations ("threads") that
-can be resumed, steered and watched live, and the official `openai-codex` Python SDK exposes them.
-Resuming a task's own worker for its fix rounds removes most of that repeated context gathering.
+Forge can run its workers on Claude Code or on Codex. The old Forge reached Codex through a Claude
+plugin, and every hand-off started a brand-new conversation. Each worker re-read the repository
+before it could act, and every review-fix round started cold again. The new Forge dropped that
+plugin, and it refuses Codex workers until this lands.
 
-Decision 0085 (executor modes) is accepted but not yet implemented; this story implements it, because
-"hybrid" is the mode this story speeds up.
-
-Out of scope here (a follow-up story): a warm story-level thread forked per task, and approving task
-plans from the primary checkout. Worker approvals are not routed to Claude: Forge-managed Codex chats
-keep full access with `approval_policy="never"` (decision 0081); scope stays enforced by the hooks and
-the measured diff, as today.
+Codex's official Python SDK drives Codex's own app-server. With it, a program can start a named
+conversation ("thread"), stop, and later resume the same thread in a new process with its memory
+intact. A probe on the pinned SDK showed exactly that, with 99% of the resumed turn's input read
+from cache. Forge can therefore give each task one warm Codex thread, continue it for every fix
+round, and run nothing in the background.
 
 ## Behaviour
 
-### Executor modes (decision 0085)
-- `FORGE_EXECUTOR` (in `.envrc`) selects `hybrid` (default: Claude coordinates, Codex executes),
-  `codex` (only Codex writes) or `claude` (Claude only; no Codex needed). It is independent of the
-  existing `FORGE_COORDINATOR` (`claude`|`codex`), which keeps choosing the coordinating runtime.
-- `claude` mode admits the Claude session and its subagents as writers under the same task, scope,
-  proof and review gates; its cold grill uses a fresh Claude reader and Autoreview's claude engine.
+### One route to Codex: Forge's own SDK client
+- `workers = "codex"` in `forge.toml` sends two things to Codex: `forge work`, and the first cold
+  read of a story or spec. `forge read --amended` runs no model turn, because it only records the
+  amendment. Nothing else selects Codex, and there is no fallback route. A failure is reported
+  with its next step, never retried another way.
+- Each `forge work` call, and each first cold read, opens one SDK client. That client starts
+  Codex's app-server as a child process, runs one turn and closes. No daemon, lease or shared
+  server exists between calls.
+- The client is closed in a `finally` block, so it closes on a normal exit, on an error and on
+  Ctrl-C.
+- `forge work` records the app-server child's process id in the item's thread record. If the
+  recorded process is still running, the next `forge work` on that item, or `forge doctor`,
+  terminates it first. Before terminating, it checks that the process is still a Codex app-server.
 
-### The SDK route (hybrid mode, Claude coordinating)
-- A new decision (0086) makes the Forge-owned SDK route the primary Claude→Codex delegation route in
-  hybrid mode and amends the delegation-boundary spec, the dual-coordinator parity architecture and the
-  product brief accordingly; the codex-plugin-cc companion becomes the fallback. Native Codex
-  coordination (host subagents) is unchanged.
-- Route selection happens once, before dispatch, in `forge delegate`: the SDK route is used when
-  `forge doctor`'s SDK check passes; otherwise the plugin route is used and the reason is printed.
-  Once a thread or turn has started, there is no fallback: a failure is reported and the delegation
-  is recorded as failed, never retried on another route.
-- The SDK is pinned: `openai-codex` at an exact version recorded in the harness, driving the
-  installed `codex` binary through `CodexConfig.codex_bin` (never the SDK's bundled binary). `forge
-  doctor` checks the SDK version, the binary version against the SDK's minimum, and the path; a
-  mismatch selects the plugin route pre-dispatch and names both versions.
-- Admission and close proof are per turn: every delegated turn is admitted by a ledger row binding
-  thread id, turn id, story, task, stage incarnation, delegation id, task worktree (and its Git common
-  directory), approved contract digest and base commit. The existing worker-admission and
-  stage-close checks accept an SDK row as equivalent to a companion launch row; a stage closes only
-  when its last turn reached a terminal `turn/completed` state and no turn of that task is loaded.
-- The SDK's approval handler is overridden on every path with an explicit handler that declines;
-  with `approval_policy="never"` no approval request is expected, and any request is declined and
-  logged.
+### The pinned SDK
+- The SDK is `openai-codex` 0.156.1, harvested from the earlier setup work. It is installed in a
+  Forge-managed environment at `~/.local/share/forge/codex-sdk/openai-codex-0.156.1` and is not a
+  dependency of the Forge package.
+- `forge doctor --fix` creates that environment, including on an existing Forge installation.
+- Workers use the Codex program bundled with that SDK version. With `workers = "codex"`, doctor
+  checks the environment and its bundled Codex program, not a standalone `codex` executable.
 
-### Resuming the worker for fix rounds
-- Each task records its worker thread. A review-fix round runs `forge delegate` exactly as today
-  (current task, stage, brief, effective scope, triage checks) and then resumes the recorded thread
-  with a turn that carries: the fresh brief, the current HEAD, the committed diff from the stage base
-  to HEAD plus the worktree's uncommitted changes, and the triaged findings.
-- If any binding changed (task, stage incarnation, worktree, contract digest), or the thread is
-  missing, archived or compacted past its base, Forge starts a new thread instead and says why.
-- The delegated thread keeps its Sol/medium lead; edits go to Luna/max subagents (decision 0084).
+### Full access, approvals declined, failing closed
+- Worker threads run with full access (danger-full-access) and approval policy "never", set on
+  every thread start, resume and turn.
+- Forge installs an approval handler that declines every approval request, known or unknown, and
+  logs it. The handler goes in before any thread exists. If it can't be installed, for example
+  because a new SDK moved the hook, `forge work` refuses before any thread exists.
+- A declined request does not execute.
+- There is no sandbox. The guards are these:
+  - Forge's deny hook, which blocks destructive commands, skipped git hooks and merges. It does
+    not enforce Scope.
+  - Scope, which is enforced by the review of each diff against its task's Scope.
+  - The human merge.
+- Codex runs project hooks only in a trusted project. So with `workers = "codex"`:
+  - an untrusted project is a failing `forge doctor` row;
+  - doctor still runs its hook health check;
+  - Codex asks separately to approve each hook, and an outside program can't see that approval,
+    so doctor prints a note to approve Forge's hooks when Codex asks.
 
-### Live events and steering
-- Forge consumes the event stream of every delegated turn (items, diff updates, token usage, turn
-  completion) and writes progress to the delegation log it already watches. If the supervising
-  process loses the stream, it reattaches and reconciles with `thread/read`; duplicate events are
-  idempotent; a turn whose state cannot be established blocks close as "unknown", never as done.
-- A worker signal pauses the worker as today; Forge maps the recorded resolution to `turn/steer` on
-  the exact active turn (by turn id), or `turn/interrupt` plus a resumed turn when steering is not
-  possible. A signal that arrives after the turn completed is delivered in the next resumed turn.
+### Model settings live in the project's Codex settings
+- Codex workers and readers take their model settings from Codex's own settings stack: the
+  project's `.codex/config.toml` and the user's Codex config. Forge adds no setting for them.
+- `.codex/config.toml` is committed, so every task worktree has its own copy. Codex reads the
+  project settings from the thread's folder, which is the item's checkout. `forge sync` writes
+  that file in the checkout it runs in, and merges only Forge's hooks key into it.
+- A settings file named after a kind of work, `.codex/<kind>.config.toml` (for example
+  `grill.config.toml`), overrides the settings for that kind. It may set only `model`,
+  `model_reasoning_effort` and `model_verbosity`.
+  - Any other key, sandbox and approval keys included, makes `forge work` refuse with a `Next:`
+    line.
+  - A file that isn't valid TOML also makes `forge work` refuse.
+- Settings are read on every `forge work` call, resumes included.
 
-### One app-server, one owner
-- One Forge-owned app-server per repository (keyed by the Git common directory) holds all Forge
-  threads. Ownership is a lease file in the Git common directory with pid, process start time and a
-  fencing counter; a stale lease (dead process) is detected and cleared; a live foreign holder is
-  reported, never raced.
+### Named threads
+- Forge names every thread it starts:
+  - a task's thread is `<Kind> · <STORY>/<TASK> · <task name>`;
+  - a fix's thread is `<Kind> · <fix name> · <why>`, for example `Fix · <fix name> · <why>`;
+  - a cold read's thread is `Grill · <STORY or spec slug> · <title>`.
+- Forge produces four kinds:
+  - Build, for a task's first turn;
+  - Lite, for a fix's first turn;
+  - Fix, for any later round, renamed when that round starts;
+  - Grill, for a cold read.
+- Review, Explore and Debug are naming guidance for threads a person opens by hand. They are
+  documented, but Forge never produces or tests them.
 
-### Upgrade and cleanup
-- `forge upgrade` of an existing client: adds the pinned SDK requirement and the doctor check, keeps
-  the plugin route working, sets no `FORGE_EXECUTOR` (default `hybrid`), and changes nothing about
-  in-flight tasks: a task started on the plugin route finishes on it. Re-running the upgrade is a
-  no-op. The Lean client-upgrade hold must be lifted before this ships to clients.
-- Cleanup: a task's worker thread is archived when its PR merges (task marker on trunk); remaining
-  Forge threads are archived when the story's outcome is recorded; archival is idempotent and retried
-  by `forge doctor`. The app-server lease is released on shutdown. `forge doctor --prune-threads`
-  removes archived rollouts of Forge-owned threads only (by the ledger's thread ids), never the
-  user's own Codex threads.
+### Thread record and one worker per item
+- Each task or fix has a thread record on the machine that made it, at
+  `.git/forge/threads/<item>.json`, which is never committed. It holds:
+  - the thread id;
+  - the checkout folder;
+  - the approval the thread started under;
+  - the app-server's process id;
+  - HEAD at the end of the last turn.
+- The record is written atomically right after the thread starts, before its first turn.
+- Only one `forge work` runs per item at a time. It holds an exclusive lock file under
+  `.git/forge/threads/`, and a second caller refuses with a `Next:` line. A lock left by a process
+  that is no longer running is cleared.
+
+### Resume and drift
+- A fix round, or any later `forge work` on the same item, resumes the recorded thread. It renames
+  the thread for the round and sends one turn with three things:
+  - the fresh brief, with the open findings and the failing checks;
+  - the commits since the recorded HEAD;
+  - the diff from that commit to the working tree, untracked files included.
+- Forge starts a new thread instead, and prints why, when any of these holds:
+  - there is no record on this machine;
+  - the recorded thread can't be resumed;
+  - the thread was started in another checkout;
+  - the recorded HEAD is no longer an ancestor of HEAD, after a rebase or an amended commit.
+- If the story's approved part changed, `forge work` refuses until the change is approved again.
+  It never runs on unapproved text. Once the change is approved, the thread started under the old
+  approval is not continued, and a fresh one starts.
+- A turn may still be in progress from an earlier call, for example after a lost connection or a
+  killed `forge work`. Forge then interrupts it through the SDK and waits for its terminal state.
+  If that state can't be confirmed, `forge work` refuses with `Next: forge work <item>`. Two turns
+  never run for one item.
+
+### Progress and the turn log
+- Each turn's events are printed to the terminal and to the item's work log in `.git/forge/`:
+  messages, commands run and files changed.
+- Each turn also adds one line to the item's turn log, `.git/forge/threads/<item>.log`, which is
+  kept on this machine and never committed. The line holds:
+  - the turn id and kind;
+  - whether the turn continued the thread, or why it started fresh;
+  - the status;
+  - the start and end times;
+  - the input, cached and output tokens, each null when the SDK omits it.
+- Duplicate events are ignored by turn id. The final status comes only from the SDK's
+  turn-completed event.
+- A turn that fails or is interrupted stops `forge work` with the reason and the log's path. The
+  thread stays resumable.
+
+### The cold reader on Codex
+- With Codex workers, the first `forge read` of a story or spec runs on a thread named Grill. The
+  thread starts, and runs each turn, with the read-only sandbox.
+- A failed or interrupted read writes no notes and records no read.
+- The existing discard rule stays. A read is discarded when any tracked file, or any untracked file
+  that git doesn't ignore, changes during the read.
+
+### The plugin is removed
+- Outside history, nothing in Forge uses or mentions the Claude Codex plugin (codex-plugin-cc and
+  its companion) any more. The guide shows how to uninstall it.
+- Autoreview stays an external black box with its own Codex use.
 
 ## Acceptance criteria
 
-1. `FORGE_EXECUTOR` selects hybrid, codex or claude as decision 0085 describes; claude mode passes
-   task close with Claude writers under the same gates; hybrid is the default.
-2. In hybrid mode with a passing doctor check, `forge delegate` runs the task on the SDK route; with a
-   failing check it runs on the plugin route pre-dispatch and prints why; after dispatch there is no
-   route fallback.
-3. The SDK and binary versions are pinned and checked; a mismatch names both versions.
-4. Every SDK turn is admitted by a ledger row with the bindings above, recorded through a
-   schema-validated recorder; stage close requires a terminal turn and no loaded turn for the task.
-5. A review-fix round resumes the task's recorded thread with the fresh brief, HEAD, stage-base diff
-   plus uncommitted changes and the findings; a changed binding starts a new thread with the reason.
-6. Benchmark: for three recorded fix rounds, replaying the same findings on a cold delegation and on
-   a resumed thread (same model, effort and brief, three runs each, median), the resumed round uses
-   fewer uncached input tokens and less wall time; the numbers are recorded as story evidence.
-7. Forge follows each turn through the event stream, reattaches after a lost stream, and blocks
-   close on an unknown turn state.
-8. A worker signal resolution reaches the exact active turn by steer or interrupt-and-resume, never
-   by cancel-and-relaunch.
-9. Only the lease holder resumes Forge threads; a stale lease is cleared; a live foreign holder is
-   reported.
-10. `forge upgrade` on an existing client installs the pinned SDK requirement and doctor check,
-    keeps plugin-route tasks working, and is idempotent.
-11. Worker threads are archived at task merge and story outcome; pruning touches Forge-owned threads
-    only.
-12. The dual-runtime parity matrix covers claude, codex and hybrid (SDK and plugin routes) across
-    setup, init/adopt/upgrade, scoped writes, hook delivery and task close on macOS, Linux and
-    Windows, per docs/specs/dual-coordinator-parity.md.
+1. **Route and cleanup.** With `workers = "codex"`, `forge work` runs the brief as one turn on a
+   new thread with full access and approval policy "never".
+   - After `forge work` exits, normally, on an error or on Ctrl-C, no app-server child of it
+     remains.
+   - A recorded child that is still running is terminated by the next `forge work` or by
+     `forge doctor`, and only after the check that it is a Codex app-server.
+2. **Approvals.** Every approval request, known or unknown, is declined and logged. A contract test
+   shows that a declined request does not execute. When the declining handler can't be installed,
+   `forge work` refuses before any thread exists.
+3. **Settings.** Workers and readers use the checkout's Codex settings.
+   - `.codex/<kind>.config.toml` can change only `model`, `model_reasoning_effort` and
+     `model_verbosity`.
+   - Any other key, or a file that isn't valid TOML, makes `forge work` refuse with `Next:`.
+   - Settings are read again on every call, resumes included.
+4. **Titles.** Task, fix and cold-read threads carry the titles above. Forge produces the kinds
+   Build, Lite, Fix and Grill, and no other kind.
+5. **Record and lock.**
+   - The thread record is written before the first turn.
+   - A second `forge work` on an item while one is running refuses with `Next:`.
+   - A stale lock is cleared.
+6. **Resume and drift.**
+   - A fix round resumes the recorded thread with the fresh brief, the commits since the recorded
+     HEAD, and the working-tree diff including untracked files.
+   - Each of the four fresh-start cases starts a fresh thread and prints its reason.
+   - A changed approved part refuses until it is approved again.
+7. **Unknown turn.** A turn left in progress is interrupted and awaited before a new turn starts.
+   When its end can't be confirmed, `forge work` refuses, and two turns never run for one item.
+8. **Turn log.**
+   - Each turn writes one line with the fields above, and tokens are null when the SDK omits them.
+   - Duplicate events don't add lines.
+   - The status comes only from the turn-completed event.
+9. **Cold reader.**
+   - With `workers = "codex"`, the first read of a story or spec runs on a Grill thread with the
+     read-only sandbox, both at start and on each turn.
+   - `forge read --amended` opens no client.
+   - A failed or interrupted read writes no notes and records no read.
+   - A change to any tracked or unignored untracked file discards the read.
+10. **Doctor.** With `workers = "codex"`, `forge doctor` fails on two things:
+    - a missing or wrong SDK environment or bundled Codex program;
+    - an untrusted project.
+
+    It still runs the hook health check, and it prints the note about approving Forge's hooks.
+    `forge doctor --fix` creates the pinned SDK environment.
+11. **Contract and smoke test.**
+    - A stub app-server replays recorded responses, each carrying an extra unknown field.
+    - A real smoke test against the pinned SDK exercises start, naming, resume, a declined
+      request, events and shutdown. It runs whenever the SDK environment exists, on a developer
+      machine and in an optional CI job that installs it.
+12. **Plugin removed.** Outside history, nothing in Forge references codex-plugin-cc or its
+    companion, and the guide documents how to uninstall the plugin.
+13. **A real task.** A Codex worker builds the task that removes the plugin.
+    - Its pull request body shows the thread name and the turn-log lines proving that the first
+      build and a later round used one thread id.
+    - It then passes review and its checks, and a human merges it.
+
+## Success measure
+
+- Metric: two numbers from the turn logs:
+  - the share of Codex fix rounds that continue their task's thread;
+  - the median share of a fix round's input tokens read from cache.
+- Window: every Codex fix round from the merge of the change that switches Forge's own repository
+  to Codex workers, until the check date.
+  - A fresh start because of drift or a lost thread counts as not continued.
+  - Failed rounds are left out.
+  - Rounds with missing token usage are left out of the cache median.
+- Baseline:
+  - continued rounds: 0%, because every Codex round starts a new conversation today;
+  - cache share: not measured on real fix rounds, though a two-turn probe read 99% from cache.
+- Target: at least 90% of Codex fix rounds continue their thread, and the median cache share is at
+  least 80%.
+- Check date: 2026-12-15
+
+## Out of scope
+
+- Any fallback route to Codex, including the plugin.
+- A per-turn ledger, a lease or supervisor process, and a shared app-server.
+- Live steering of a running turn, and signals bound to turns.
+- Executor modes: `workers` in `forge.toml` replaces them.
+- A shared story thread forked per task.
+- Archiving or pruning threads at merge.
+- A client-upgrade path.
+- The before-and-after benchmark.
+- The cross-platform parity matrix beyond the v1 suite's own runners.
+
+## Roadmap
+
+- FORGE-WARM-1: Codex builds your tasks and picks up where it left off
