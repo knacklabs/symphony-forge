@@ -17,14 +17,15 @@ worktree on forge/migrate-v1:
   becomes a draft in .forge-migrate/replan/;
 - AGENTS.md becomes just the Forge block only when it is the old Forge's word for word, and
   CLAUDE.md loses its import of the deleted .claude/CLAUDE.md;
-- it pins forge.toml to this Forge, runs forge sync, and makes one commit.
+- it pins forge.toml to this Forge and to the sign-off record harness.yaml named, runs forge sync,
+  and makes one commit.
 Its fix state (kind migrate) holds an allow-large reason naming who ran it, and the plan as notes
 for the pull request. `forge close` turns on branch protection once that pull request merged.
 
 In Forge's own repo (it holds src/forge/cli.py) the old Forge keeps running until the switch, so
 it deletes nothing. It converts only the plans the switch carries, reading their approvals from the
 old plan metadata, replaces AGENTS.md and CLAUDE.md wholly with the Forge block, and writes
-forge.toml (repo = "forge-source") and the adapters.
+forge.toml (repo = "forge-source") and the adapters. It installs no git hooks there.
 """
 from __future__ import annotations
 
@@ -63,6 +64,10 @@ REFUSALS = {
                 "forge migrate won't start that branch again.",
                 "look at them in {path}; if none are yours, git worktree remove --force {path}, "
                 "then forge migrate"),
+    "signoff": ("harness.yaml pins {pin} as the client's sign-off record, which forge.toml can't "
+                "pin: it isn't a docs/decisions/NNNN-client-signoff.md record.",
+                "pin the accepted client-signoff record in harness.yaml's signoff_record, "
+                "then forge migrate --dry-run"),
     "no_prs": ("Forge can't list the merged pull requests ({problem}), so it can't tell which "
                "tasks are done.", "gh auth status, then forge migrate --dry-run"),
 }
@@ -213,9 +218,10 @@ def migrate(args: argparse.Namespace) -> int:
         return 0
     path = _fresh_branch(top, ref)
     _apply(top, path, plan, report)
-    print(f"{report}\n\nMade {BRANCH} in {path} with one commit, not pushed yet. The git hooks "
-          f"that check each commit and push are installed.\nNext: forge doctor and your tests in "
-          f"{path}, then forge close {ITEM}")
+    hooks = ("No git hooks were installed: the old Forge's branches share them until the switch."
+             if plan["own"] else "The git hooks that check each commit and push are installed.")
+    print(f"{report}\n\nMade {BRANCH} in {path} with one commit, not pushed yet. {hooks}\n"
+          f"Next: forge doctor and your tests in {path}, then forge close {ITEM}")
     return 0
 
 
@@ -246,6 +252,12 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     unsafe = any(re.search(r"[#\r\n]", phase) for phase in phases)
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
+    # The client's sign-off record, which harness.yaml pinned; forge.toml's signoff pins it now.
+    pinned = re.search(r"^signoff_record:[ \t]*[\"']?([^\"'\s#]*)",
+                       "" if own else story.show(top, ref, "harness.yaml") or "", re.M)
+    signoff = pinned[1] if pinned else ""
+    if signoff and not repo.SIGNOFF.fullmatch(signoff):  # an empty pin would let any record count
+        repo.refuse(REFUSALS["signoff"], pin=signoff)
     stories = _stories(top, ref, own)
     converted = {entry.get("old") for entry in stories}
     return {"ref": ref, "own": own, "kept": kept, "stories": stories,
@@ -263,6 +275,7 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "unseeded": ", ".join(json.dumps(phase, ensure_ascii=False) for phase in phases)
                         if unsafe else "",
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
+            "signoff": signoff,
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
 
@@ -623,6 +636,10 @@ def _report(plan: dict[str, Any], default: str) -> str:
         if plan["unseeded"]:
             lines.append("Couldn't carry your old verify commands into forge.toml's test "
                          f"automatically: {plan['unseeded']}. Ask your agent to set test.")
+        if plan["signoff"]:
+            lines.append(f"Pins your sign-off record, {plan['signoff']}, in forge.toml's signoff, "
+                         "as harness.yaml did: a story is approved only once that record is "
+                         "accepted.")
         lines += [f"Writes forge.toml pinned to Forge v{__version__}, and the adapters for Claude "
                   "Code and Codex with forge sync.",
                   f"After this pull request merges, forge close {ITEM} turns on branch protection "
@@ -681,6 +698,9 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
     if plan["test"]:  # the old verify commands (Forge's own suite here), not the stack's default
         toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml,
                       count=1, flags=re.M)
+    if plan["signoff"]:
+        toml = re.sub(r"^repo = .*$", lambda found: f"{found[0]}\nsignoff = "
+                      f"{json.dumps(plan['signoff'])}", toml, count=1, flags=re.M)
     sync.write_file(path, "forge.toml", toml)
     touched.append("forge.toml")
     for name in (("AGENTS.md", "CLAUDE.md") if plan["own"]
@@ -715,4 +735,7 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
     repo.git("commit", "-q", "-m", MESSAGE, cwd=path)
     (repo.forge_dir(path) / MADE).write_text(repo.git("rev-parse", "HEAD", cwd=path) + "\n",
                                              encoding="utf-8")
-    sync.install_shims(path, cfg)
+    # Every worktree shares one hooks folder, and in Forge's own repo the old Forge's branches may
+    # still be in flight: v1's hooks would stop their commits, so none go in until the switch.
+    if not plan["own"]:
+        sync.install_shims(path, cfg)

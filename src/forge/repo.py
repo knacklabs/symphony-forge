@@ -111,11 +111,14 @@ def work_log(top: Path, item: str) -> Path:
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "workers": str, "test": str,
+KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str,
         "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "claude", "test": "",
+DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
+# signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
+# ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
+SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building and fixing may add their subagents' model and effort, as a pair.
 # The cold read runs on either family, so the grill kind has one such entry per family.
@@ -197,6 +200,9 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
+        if key == "signoff" and value and not SIGNOFF.fullmatch(value):
+            return ("signoff must name the client's sign-off record, "
+                    "docs/decisions/NNNN-client-signoff.md")
     return ""
 
 
