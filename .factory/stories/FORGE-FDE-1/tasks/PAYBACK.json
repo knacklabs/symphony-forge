@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-FDE-1-PAYBACK",
-  "status": "working",
+  "review": {
+    "commit": "6fa0d5a6744aa5ccfe37ff15e75a19aaa0dc9e79",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "fe8d50c8beea132633ca6ad26bd21c82cec3ba7473289209cd88de8e6f46f371"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T09:43:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T09:49:25+00:00",
+      "step": "review"
     }
   ]
 }
