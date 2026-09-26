@@ -3,7 +3,7 @@
   "branch": "fix/main-s-ci-is-red-on-and-off-tests-test-c",
   "done_when": "Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) and fix it at the cause; both tests pass on every OS in CI three runs in a row; no test is skipped or loosened to pass",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T13:21:39+00:00",
