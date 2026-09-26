@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -23,6 +24,27 @@ from test_codex_worker import _codex_repo, _stub, sdk_data  # noqa: F401 (sdk_da
 STORY = "FORGE-WARM-1"
 # A ps, and on Windows a PowerShell, that can't read any process.
 BLIND = "#!/usr/bin/env python3\nimport sys\nsys.exit('stub: no process can be read')\n"
+# A ps that reads every process but Forge's Codex driver.
+DRIVER_BLIND = """#!{python}
+import subprocess, sys
+done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
+if "codex_turn" in done.stdout:
+    sys.exit("stub: the driver can't be read")
+sys.stdout.write(done.stdout)
+sys.exit(done.returncode)
+"""
+# On PYTHONPATH, every Python loads it: the two minutes Codex gets to start pass in a second.
+FAST = """import threading
+
+start = threading.Timer.__init__
+
+
+def fast(self, interval, *args, **kwargs):
+    start(self, min(interval, 1), *args, **kwargs)
+
+
+threading.Timer.__init__ = fast
+"""
 
 
 def _saved(path: Path) -> dict:
@@ -105,6 +127,18 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
         work.communicate(timeout=30)
         assert not lock.exists() and _down(stub) and _down(driver["pid"])
 
+        # A driver Forge can't identify is stopped before it hears the request: no Codex starts.
+        _install(repo.bin, "ps", DRIVER_BLIND.format(python=sys.executable, ps=shutil.which("ps")))
+        servers = len([call for call in _stub(calls) if "pid" in call])
+        unknown = repo.forge("work", "BOARD/PAGE")
+        (repo.bin / "ps").unlink()
+        assert unknown.stderr.startswith(
+            "Forge can't read the start time and command of its Codex driver, process ")
+        assert unknown.stderr.endswith(", so it stopped the driver before any conversation.\n"
+                                       "Next: forge work BOARD/PAGE\n")
+        assert len([call for call in _stub(calls) if "pid" in call]) == servers
+        assert not lock.exists()
+
     # The app-server, the conversation, and HEAD once the turn ends, join the record.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     saved = _saved(record)
@@ -131,7 +165,7 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="the crashes are made with POSIX signals")
-def test_6_nothing_left_running(repo, monkeypatch, sdk_data):
+def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
@@ -181,3 +215,15 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data):
     assert lock.exists()
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _down(stub) and _down(saved["driver"]["pid"])
+
+    # Codex that never starts gets two minutes (a second here); then the driver ends its group,
+    # and forge work refuses with the log's path.
+    (tmp_path / "fast").mkdir()
+    (tmp_path / "fast" / "sitecustomize.py").write_text(FAST, encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path / "fast"))
+    monkeypatch.setenv("STUB_CODEX_STATUS", "stall")
+    late = repo.forge("work", "BOARD/PAGE")
+    log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
+    assert late.stderr == (f"Codex didn't start within two minutes, so Forge stopped it; its log "
+                           f"is {log}.\nNext: forge work BOARD/PAGE\n")
+    assert _down([call["pid"] for call in _stub(calls) if "pid" in call][-1])

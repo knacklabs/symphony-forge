@@ -1,7 +1,8 @@
-"""forge doctor: tools, the pin, the git hooks, the host hooks, adapter drift, CI and, for Codex
-workers, the Codex SDK and the project's trust; a row per problem. With Codex workers, or under
-Claude Code, whose cold read runs on Codex, it checks the SDK and --fix installs it. Whatever the
-workers, it stops the Codex processes a crashed forge work or read left, never a running one's."""
+"""forge doctor: tools, the pins (Forge's and the Autoreview helper's), the git hooks, the host
+hooks, adapter drift, CI and, for Codex workers, the Codex SDK and the project's trust; a row per
+problem. With Codex workers, or under Claude Code, whose cold read runs on Codex, it checks the SDK
+and --fix installs it. Whatever the workers, it stops the Codex processes a crashed forge work or
+read left, never a running one's."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +12,7 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from forge import __version__, codex, repo, sync
+from forge import __version__, codex, repo, review, sync
 
 REFUSALS = {
     "problems": ("forge doctor found {count} problem(s); each row above gives its fix.",
@@ -25,6 +26,8 @@ INSTALL = {
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh",
     "claude": "npm install -g @anthropic-ai/claude-code",
     "impeccable": "npx skills add pbakaus/impeccable -g",
+    "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
+                   f"{review.AUTOREVIEW_PIN} into {review.HELPER.parents[1]}"),
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
@@ -81,6 +84,10 @@ def doctor(args: argparse.Namespace) -> None:
                      install))
     if needs_sdk and (problem := codex.sdk_problem()):
         rows.append((problem, "forge doctor --fix"))
+    try:  # the reviewer close runs, at the version Forge pins
+        review.helper()
+    except repo.Refused as refused:
+        rows.append((str(refused).partition("\nNext: ")[0], INSTALL["autoreview"]))
 
     try:
         wanted = sync.files(top, cfg)
