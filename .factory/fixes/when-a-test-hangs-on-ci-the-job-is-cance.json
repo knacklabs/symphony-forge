@@ -3,7 +3,7 @@
   "branch": "fix/when-a-test-hangs-on-ci-the-job-is-cance",
   "done_when": "Every pytest command in .github/workflows/forge-next.yml and forge.yml passes -o faulthandler_timeout=120, so a test still running after two minutes prints every thread's stack to the job log before the cap cancels it; no new dependency",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T12:35:49+00:00",
