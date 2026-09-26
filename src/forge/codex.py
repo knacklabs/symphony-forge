@@ -290,10 +290,13 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                                  "fresh_start": None if said["continued"] else fresh}
                     # Codex may start the turn before Forge logs it, so a crash between the two
                     # leaves this for recover() to find the turn by. The turn starts from HEAD now,
-                    # before Codex can commit anything.
+                    # before Codex can commit anything. A new conversation drops the old one's
+                    # ending HEAD, which a rewritten history may no longer hold.
                     begun = repo.git("rev-parse", "HEAD", cwd=checkout)
+                    ended = {} if said["continued"] else {"head": None}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending={"kind": kind, "start": begun, **continued})
+                            approval=approval, pending={"kind": kind, "start": begun, **continued},
+                            **ended)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":

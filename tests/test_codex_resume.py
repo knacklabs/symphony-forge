@@ -280,6 +280,22 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns)[-1]["continued"] is True
 
+    # The history is rewritten again and the new conversation's first turn crashes: nothing
+    # rewrote that conversation's own history, so the next call continues it.
+    repo.git("commit", "-q", "--amend", "-m", "Reworded again", cwd=moved)
+    work, saved = _holding(repo, turns)
+    _crash(work, saved)
+    held = _lines(turns)[-1]
+    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads[held["conversation"]]["turns"][held["turn"]] = "interrupted"
+    store.write_text(json.dumps(threads), encoding="utf-8")
+    again = repo.forge("work", "BOARD/PAGE")
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert "Starting a new Codex conversation" not in again.stdout
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == held["conversation"]
+    assert (_lines(turns)[-1]["conversation"], _lines(turns)[-1]["continued"]) == (
+        held["conversation"], True)
+
 
 def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
