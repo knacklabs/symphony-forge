@@ -43,8 +43,11 @@ WANTED = f"openai-codex {SDK_PIN}, openai-codex-cli-bin {SDK_PIN}, codex-cli {SD
 GOOD = re.compile(re.escape(f"openai-codex {SDK_PIN}, openai-codex-cli-bin {SDK_PIN}, ")
                   + rf"(.* )?{re.escape(SDK_PIN)}")
 
-# The driver the SDK's Python runs for one turn.
+# The driver the SDK's Python runs for one turn, in a process group of its own, so the driver, the
+# app-server it starts and whatever that starts can be stopped together.
 TURN = Path(__file__).with_name("codex_turn.py")
+GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt"
+         else {"start_new_session": True})
 # The Codex setting each key of a kind's [models] entry overrides. The app-server reads a dotted
 # key as a path, as `codex -c` does, so it sets one setting inside [agents] and keeps the rest.
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
@@ -55,6 +58,10 @@ REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
+    "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
+              "forge work {item}"),
+    "driver": ("Forge can't read the start time and command of its Codex driver, process {pid}, "
+               "so it stopped the driver before any conversation.", "forge work {item}"),
     "busy": ("forge work {item} is already running as process {pid}, and only one runs per item; "
              "wait for it to finish.", "forge work {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
@@ -118,8 +125,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
-    The item's record gets the app-server's identity as soon as it starts, then the conversation,
-    then HEAD when the turn ends. The item's turn log gets a "started" line when the turn starts,
+    The item's record gets the driver's identity as soon as it starts, before Codex does, then the
+    app-server's, the conversation, and HEAD when the turn ends. The item's turn log gets a
+    "started" line when the turn starts,
     and an end line only when Codex reports the end. Returns the conversation and turn ids, and the
     status, final text and token usage Codex reported; status, text and usage are None when it
     reported no end.
@@ -132,16 +140,23 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     started: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
-    refused = False
+    refused = ""
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace") as driver:
+            errors="replace", **GROUP) as driver:
+        # The driver on record before it hears the request, so its group can always be stopped.
+        # One that is gone already has nothing to stop, and its output says why.
+        started_by = identity(driver.pid)
+        if started_by is not None and "command" not in started_by:
+            driver.kill()  # it hasn't read the request, so it has started nothing yet
+            repo.refuse(REFUSALS["driver"], pid=driver.pid, item=item)
+        _record(record, driver=started_by, app_server=None)
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        # One line, and stdin stays open: the driver closes its client once Forge's end closes.
+        # One line, and stdin stays open: the driver ends its group once Forge's end closes.
         driver.stdin.write(json.dumps(request) + "\n")
         driver.stdin.flush()
         try:
@@ -154,12 +169,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = line.rstrip("\n")
                 elif "pid" in said:
                     _record(record, app_server=identity(said["pid"]))
-                    with contextlib.suppress(OSError):  # recorded: the driver may go on
-                        driver.stdin.write("\n")
-                        driver.stdin.flush()
                     text = f"Codex app-server: process {said['pid']}"
                 elif "refused" in said:
-                    refused, text = True, ""
+                    refused, text = said["refused"], ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     _record(record, conversation=said["thread"])
@@ -190,13 +202,13 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 if text:
                     print(text, flush=True)
                     out.write(text + "\n")
-        finally:  # on an error or Ctrl-C too: the driver closes its client once stdin closes
+        finally:  # on an error or Ctrl-C too: the driver ends its group once stdin closes
             with contextlib.suppress(OSError):  # a driver that has gone already can't be told
                 driver.stdin.close()
             driver.stdout.close()
             driver.wait()
     if refused:
-        repo.refuse(REFUSALS["handler"])
+        repo.refuse(REFUSALS[refused], log=log, item=item)
     return result
 
 
@@ -281,25 +293,42 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     return None if now is not None and "command" not in now else now == recorded
 
 
-def _stop_leftover(record: Path) -> int | None:
-    """Stop the item's recorded app-server when it still runs as recorded; returns its id."""
-    server = _json(record).get("app_server") or {}
-    if "app-server" not in str(server.get("command")) or not _alive(server):
-        return None
+def _stop_leftover(record: Path) -> bool:
+    """Stop what the item's last call left running: its driver's whole process group when the
+    driver still runs as recorded, and its app-server when that does. True when it stopped any."""
+    saved = _json(record)
+    stopped = False
+    for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
+        recorded = saved.get(key) or {}
+        if runs in str(recorded.get("command")) and _alive(recorded):
+            _stop(recorded, group)
+            stopped = True
+    return stopped
+
+
+def _stop(recorded: dict[str, Any], group: bool) -> None:
+    """Stop a process, with its process group when `group`, and wait until it has gone: SIGTERM,
+    then SIGKILL five seconds on. On Windows taskkill ends it and everything it started."""
+    pid = recorded["pid"]
     for sig in (signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)):
         with contextlib.suppress(OSError):  # it may have ended on its own meanwhile
-            os.kill(server["pid"], sig)
-        for _ in range(50):  # five seconds to go before it is killed
-            if not _alive(server):
-                return server["pid"]
+            if os.name == "nt":
+                repo.run("taskkill", "/T", "/F", "/PID", str(pid))
+            elif group:
+                os.killpg(pid, sig)
+                os.killpg(pid, signal.SIGCONT)  # a stopped member acts on it too
+            else:
+                os.kill(pid, sig)
+        for _ in range(50):
+            if not _alive(recorded):
+                return
             time.sleep(0.1)
-    return server["pid"]
 
 
 @contextlib.contextmanager
 def hold(checkout: Path, item: str) -> Iterator[None]:
     """One forge work per item: take the item's lock, which holds this process's identity, stop
-    the Codex process an earlier call left, and on the way out stop this call's if it still runs
+    the Codex processes an earlier call left, and on the way out stop this call's if any still run
     and give the lock back. A lock whose owner is gone is cleared; a live one refuses."""
     lock, record = _item_file(checkout, item, ".lock"), _item_file(checkout, item, ".json")
     while True:
@@ -344,6 +373,6 @@ def tidy(checkout: Path) -> list[str]:
                         "leaves its Codex process alone.")
             continue
         lock.unlink(missing_ok=True)
-        if pid := _stop_leftover(base.with_suffix(".json")):
-            said.append(f"Stopped Codex process {pid}, which a crashed forge work {item} left.")
+        if _stop_leftover(base.with_suffix(".json")):
+            said.append(f"Stopped the Codex processes that a crashed forge work {item} left.")
     return said

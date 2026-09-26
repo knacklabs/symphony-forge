@@ -1,7 +1,8 @@
 """Codex workers: one forge work per item, and no Codex process left behind it.
 
-forge work and forge doctor run against the stub app-server, whose "hold" status keeps the
-conversation from ever starting and outlives its driver, as the server of a crashed call would.
+forge work and forge doctor run against the stub app-server, which can get stuck: "stall" never
+answers initialize, so Codex never starts, and "hold" never answers thread/start. Stuck, it ignores
+its stdin, as a server left behind by a crash would.
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
@@ -35,17 +36,22 @@ def _up(pid: int) -> bool:
     return bool(stat) and not stat.startswith("Z")
 
 
-def _parent(pid: int) -> int:
-    return int(subprocess.run(["ps", "-o", "ppid=", "-p", str(pid)], capture_output=True,
-                              text=True, check=True).stdout)
+def _down(pid: int) -> bool:
+    """Whether the process has gone, or goes within ten seconds: stopping takes a moment."""
+    for _ in range(100):
+        if not _up(pid):
+            return True
+        time.sleep(0.1)
+    return False
 
 
-def _held(repo, calls: Path, record: Path) -> tuple[subprocess.Popen, dict]:
-    """A forge work on BOARD/PAGE whose app-server holds its conversation from starting, and that
-    app-server as recorded."""
+def _held(repo, calls: Path, record: Path, status: str) -> tuple[subprocess.Popen, dict, int]:
+    """A forge work on BOARD/PAGE whose stub app-server is stuck ("stall" or "hold"). Returns the
+    forge work, its record once the stub is stuck, and the stub's process id."""
+    stuck = {"stall": "initialize", "hold": "thread/start"}[status]
     servers = len([call for call in _stub(calls) if "pid" in call])
     work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
-                            cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "hold"},
+                            cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": status},
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     for _ in range(600):
         try:  # the stub may be halfway through a line
@@ -53,22 +59,20 @@ def _held(repo, calls: Path, record: Path) -> tuple[subprocess.Popen, dict]:
         except ValueError:
             said = []
         pids = [call["pid"] for call in said if "pid" in call]
-        server = _saved(record).get("app_server") or {}
-        if (len(pids) > servers and said[-1].get("method") == "thread/start"
-                and server.get("pid") == pids[-1]):
-            return work, server
+        saved = _saved(record)
+        if (len(pids) > servers and said[-1].get("method") == stuck
+                and (status == "stall" or (saved.get("app_server") or {}).get("pid") == pids[-1])):
+            return work, saved, pids[-1]
         time.sleep(0.05)
     work.kill()
-    pytest.fail(f"forge work never held: {work.communicate()[1]}")
+    pytest.fail(f"forge work never got stuck: {work.communicate()[1]}")
 
 
-def _crash(work: subprocess.Popen, server: dict) -> None:
-    """Kill forge work and its driver together, as a crash would; the app-server stays."""
-    driver = _parent(server["pid"])
-    os.kill(driver, signal.SIGSTOP)  # so it can't close its client once forge work is gone
+def _crash(work: subprocess.Popen, saved: dict) -> None:
+    """Kill forge work while its driver can't act, as a crash might: its group is left behind."""
+    os.kill(saved["driver"]["pid"], signal.SIGSTOP)
     work.kill()
     work.communicate()
-    os.kill(driver, signal.SIGKILL)
 
 
 def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
@@ -77,10 +81,12 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
 
     if os.name != "nt":  # no SIGINT to send on Windows
-        # The app-server is on record by its id, start time and command before any conversation.
-        work, server = _held(repo, calls, record)
-        assert _saved(record) == {"app_server": server}
-        assert sorted(server) == ["command", "pid", "started"] and "app-server" in server["command"]
+        # The driver is on record by its id, start time and command at once, before Codex has
+        # started: here the app-server never answers initialize.
+        work, saved, stub = _held(repo, calls, record, "stall")
+        driver = saved["driver"]
+        assert saved == {"driver": driver, "app_server": None}
+        assert sorted(driver) == ["command", "pid", "started"] and "codex_turn" in driver["command"]
 
         # While it runs, a second forge work on the item refuses and says to wait, from another
         # worktree too, since the lock is in git's shared folder; it commits nothing.
@@ -91,15 +97,15 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
                                "Next: forge work BOARD/PAGE\n")
         assert repo.git("rev-parse", "HEAD", cwd=folder) == head
 
-        # Ctrl-C lets the lock go, and the app-server with it.
+        # Ctrl-C lets the lock go, and every process of the call with it.
         work.send_signal(signal.SIGINT)
         work.communicate(timeout=30)
-        assert not lock.exists() and not _up(server["pid"])
+        assert not lock.exists() and _down(stub) and _down(driver["pid"])
 
-    # The conversation, and HEAD once the turn ends, join the record.
+    # The app-server, the conversation, and HEAD once the turn ends, join the record.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     saved = _saved(record)
-    assert "app-server" in saved["app_server"]["command"]
+    assert "codex_turn" in saved["driver"]["command"]
     assert (saved["conversation"], saved["head"]) == ("thr-stub-1",
                                                       repo.git("rev-parse", "HEAD", cwd=folder))
 
@@ -127,34 +133,40 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data):
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
 
-    # While forge work runs, doctor says so and leaves its app-server alone.
-    work, server = _held(repo, calls, record)
+    # Killing forge work while Codex is still starting leaves nothing: the driver sees Forge go
+    # and ends its whole process group.
+    work, saved, stub = _held(repo, calls, record, "stall")
+    work.kill()
+    work.communicate()
+    assert _down(stub) and _down(saved["driver"]["pid"])
+
+    # While forge work runs, doctor says so and leaves it alone. An error: the driver dies, and
+    # forge work stops the app-server it recorded before it ends.
+    work, saved, stub = _held(repo, calls, record, "hold")
     assert (f"- forge work BOARD/PAGE is running as process {work.pid}, so doctor leaves its "
             "Codex process alone.\n") in repo.forge("doctor").stdout
-    assert _up(server["pid"])
-
-    # An error: the driver dies, and forge work stops the app-server it recorded before it ends.
-    os.kill(_parent(server["pid"]), signal.SIGKILL)
+    assert _up(stub)
+    os.kill(saved["driver"]["pid"], signal.SIGKILL)
     assert "Codex never reported its end" in work.communicate(timeout=30)[1]
-    assert not _up(server["pid"])
+    assert _down(stub)
 
-    # A crash leaves the app-server and a stale lock. Doctor clears the lock, and stops the server
-    # only once the record names it: not under another start time.
-    work, server = _held(repo, calls, record)
-    _crash(work, server)
-    saved = _saved(record)
-    record.write_text(json.dumps({**saved, "app_server": {**server, "started": "another time"}}),
+    # A crash that leaves the driver unable to act (stopped, here) leaves its process group and a
+    # stale lock. Doctor clears the lock, and stops the group only once the record names the
+    # driver: not under another start time.
+    work, saved, stub = _held(repo, calls, record, "stall")
+    _crash(work, saved)
+    record.write_text(json.dumps({**saved, "driver": {**saved["driver"], "started": "another"}}),
                       encoding="utf-8")
-    assert "Stopped" not in repo.forge("doctor").stdout and _up(server["pid"])
+    assert "Stopped" not in repo.forge("doctor").stdout and _up(stub)
     assert not lock.exists()
     record.write_text(json.dumps(saved), encoding="utf-8")
-    assert (f"- Stopped Codex process {server['pid']}, which a crashed forge work BOARD/PAGE "
-            "left.\n") in repo.forge("doctor").stdout
-    assert not _up(server["pid"])
+    assert ("- Stopped the Codex processes that a crashed forge work BOARD/PAGE left.\n"
+            in repo.forge("doctor").stdout)
+    assert _down(stub) and _down(saved["driver"]["pid"])
 
-    # After another crash, the next forge work clears the lock, stops the leftover, and runs.
-    work, server = _held(repo, calls, record)
-    _crash(work, server)
+    # After another crash, the next forge work stops the leftover group by identity, and runs.
+    work, saved, stub = _held(repo, calls, record, "stall")
+    _crash(work, saved)
     assert lock.exists()
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert not _up(server["pid"])
+    assert _down(stub) and _down(saved["driver"]["pid"])

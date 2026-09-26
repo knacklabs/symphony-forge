@@ -4,14 +4,17 @@ Forge sends one JSON request line on stdin: the checkout (cwd), the conversation
 the sandbox and the kind's settings (config). This prints one JSON line per step, in order: the
 app-server's process id, before anything else; the thread; the turn; each event and each declined
 request; then the turn's end with its status, error, final text and token usage, only when Codex
-reports it. After the process id it waits for Forge's empty line saying it has recorded it. Forge
-keeps stdin open while it runs; once it closes, Forge has gone, and this closes its client and
-exits, so no app-server outlives Forge.
+reports it. Codex gets two minutes to start, or this prints a refusal and ends.
+
+Forge starts this in its own process group and keeps stdin open while it runs. Once stdin closes,
+Forge has gone, and this ends the whole group, itself and the app-server it started, even while
+Codex is still starting.
 """
 from __future__ import annotations
 
 import json
 import os
+import signal
 import sys
 import threading
 from typing import Any
@@ -22,6 +25,8 @@ from openai_codex.models import (ItemCompletedNotification, ThreadTokenUsageUpda
                                  TurnCompletedNotification, UnknownNotification)
 
 LOCK = threading.Lock()
+START = 120  # the seconds Codex gets to start: Codex() waits on initialize with no timeout
+CLIENT: list[Codex] = []  # the client once it has started, for end() on Windows
 
 
 def emit(**line: Any) -> None:
@@ -36,24 +41,40 @@ def decline(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
     return {"decision": "decline"}
 
 
-def watch(codex: Codex) -> None:
-    """Close the client and exit once Forge, the calling process, goes away: stdin closes."""
-    sys.stdin.read()
-    codex.close()
+def end() -> None:
+    """End this driver and everything it started: the process group Forge made for it."""
+    if os.name == "nt":  # no group to end: close the client if it has started
+        for codex in CLIENT:
+            codex.close()
+    else:
+        os.killpg(0, signal.SIGTERM)
     os._exit(1)
+
+
+def watch() -> None:
+    """End everything once Forge, the calling process, goes away: its end of stdin closes."""
+    sys.stdin.read()
+    end()
+
+
+def late() -> None:
+    emit(refused="start")
+    end()
 
 
 def main() -> int:
     request = json.loads(sys.stdin.readline())
     sandbox = Sandbox(request["sandbox"])
+    threading.Thread(target=watch, daemon=True).start()
+    timer = threading.Timer(START, late)
+    timer.daemon = True
+    timer.start()
     codex = Codex()  # starts `codex app-server`; a failed start stops it again
+    timer.cancel()
+    CLIENT.append(codex)
     try:
         client = getattr(codex, "_client", None)
         emit(pid=getattr(getattr(client, "_proc", None), "pid", None))
-        # Forge answers once it has recorded the app-server, so the record comes before any thread.
-        if not sys.stdin.readline():
-            return 1  # Forge has gone
-        threading.Thread(target=watch, args=(codex,), daemon=True).start()
         # ponytail: Codex() takes no handler and its default accepts commands and file changes, so
         # Forge swaps the private one. SDK_PIN keeps it where this looks; a moved one refuses here.
         if not hasattr(client, "_approval_handler"):
