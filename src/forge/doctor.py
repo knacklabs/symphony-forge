@@ -61,7 +61,8 @@ def doctor(args: argparse.Namespace) -> None:
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     on_codex = cfg["workers"] == "codex"
-    if args.fix and on_codex and codex.sdk_problem():
+    # Without uv there is nothing to install with; the uv row below says how to get it.
+    if args.fix and on_codex and shutil.which("uv") and codex.sdk_problem():
         codex.install()
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
