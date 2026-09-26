@@ -4,21 +4,21 @@
   "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/standards-gaps.md is in the page it names, each as one short line in that page's voice; no page names AWS CDK; tests/test_standards.py still passes",
   "kind": "fix",
   "review": {
-    "commit": "da4280ed55bafed0307200777ef5a2f132e6e9bb",
+    "commit": "bce7e4d699da0d52f213fe2f81163c3b3f4b55ed",
     "dismissals": [],
     "findings": [
       {
-        "body": "When Node is absent, `pytest.skip()` aborts the entire `test_36_client_apps_simple` test because this helper is called at tests/test_standards.py:67. This skips both the new logger assertions and the existing worker-brief and command-guide checks at lines 69\u201396, allowing regressions to pass the suite. The suite command in forge.toml:5 provisions only Python dependencies, and .github/workflows/forge.yml:19\u201321 does not explicitly provision Node. Ensure the required logger check runs in the supported test environment, and isolate it so its prerequisites cannot suppress the existing checks.",
-        "file": "tests/test_standards.py",
-        "line": 129,
-        "priority": "P1",
-        "title": "Not done: logger regression and existing standards checks always run"
+        "body": "Once this logger is registered with Nest, `Logger.fatal(...)` silently produces no output because `JsonLogger` has no `fatal` method. Nest delegates through an optional call to the custom logger's method ([Nest implementation](https://raw.githubusercontent.com/nestjs/nest/master/packages/common/services/logger.service.ts)). This loses precisely the unrecoverable-failure records required by `src/forge/standards.md:166`. Add a `fatal` method that writes the corresponding level and cover it in the logger regression test, which currently exercises only `log`.",
+        "file": "src/forge/templates/conventions/backend.md",
+        "line": 56,
+        "priority": "P2",
+        "title": "Implement fatal logging in the replacement logger"
       }
     ],
-    "status": "blocked",
-    "tree": "d36dae12226b882c711e25ab06598989287c92dc85a6b9fb146e4c3cee0d79f9"
+    "status": "clean",
+    "tree": "ca1eb947a3173c4ac7ea665b839b4d9955443f7cb543ba77536ac5e01d05c115"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T13:18:39+00:00",
@@ -38,6 +38,10 @@
     },
     {
       "at": "2026-09-26T14:49:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:54:48+00:00",
       "step": "review"
     }
   ],
