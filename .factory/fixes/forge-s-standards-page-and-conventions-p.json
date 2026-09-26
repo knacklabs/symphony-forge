@@ -1,0 +1,14 @@
+{
+  "base": "e23a28fbb862e1c76a54c3aafa32578aa521d795",
+  "branch": "fix/forge-s-standards-page-and-conventions-p",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/standards-gaps.md is in the page it names, each as one short line in that page's voice; no page names AWS CDK; tests/test_standards.py still passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T13:18:39+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's standards page and conventions pages miss about 22 constitution rules a worker needs, three places where the pages disagree with each other, and name AWS CDK where the owner chose Terraform"
+}
