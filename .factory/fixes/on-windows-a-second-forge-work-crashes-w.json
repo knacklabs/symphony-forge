@@ -4,11 +4,11 @@
   "done_when": "Recording to the item's record file on Windows retries the replace briefly when the file is held open by another reader and never crashes forge work with PermissionError; the second worker still gets the one-worker-per-item refusal; test_6_nothing_left_running passes on Windows CI",
   "kind": "fix",
   "review": {
-    "commit": "d97f93c534c413148a1ef96d5ae03b2cd1ad5520",
+    "commit": "c19f3ba22817a5652a58ff9f51b13b8dd2218438",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "b573a0660ec4a3932701c7868883a9ab5125aa30df70388ceaee1a0bedf4238f"
+    "tree": "ef7a0c7e1ea90022c676d2ebf940f6e4963bd5303a4bf6484b800cca6c9b993f"
   },
   "status": "waiting for checks",
   "steps": [
@@ -22,6 +22,10 @@
     },
     {
       "at": "2026-09-26T13:18:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:59:46+00:00",
       "step": "review"
     }
   ],
