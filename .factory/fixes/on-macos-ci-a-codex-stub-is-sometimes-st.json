@@ -3,11 +3,37 @@
   "branch": "fix/on-macos-ci-a-codex-stub-is-sometimes-st",
   "done_when": "Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge work never returns while a Codex process it started is alive, and both tests pass on every OS in CI three runs in a row; no test is skipped or loosened",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "91324c5b107a5092f8de08e6feba1e42a4b3cae4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new SIGKILL is asynchronous: it requests termination but does not wait for the app-server to exit. In the exact bare-command scenario added by this patch, the later cleanup cannot supply that wait: src/forge/codex.py:364-365 skips app-server records whose command lacks `app-server`, including when called from hold() at line 413. Consequently, forge work can still return while the signalled process remains alive under load. Confirm termination of the processes this invocation owns before returning; waiting only for the driver does not satisfy the Done-when guarantee.",
+        "file": "src/forge/codex.py",
+        "line": 253,
+        "priority": "P1",
+        "title": "Not done: Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge\u4ed5\u4e8b"
+      },
+      {
+        "body": "The regression test accepts the timing defect this fix must eliminate. After work.communicate() returns, `_down(stub)` polls for another ten seconds (tests/test_codex_record.py:129-134), so a Codex process that outlives forge work can still pass. Assert that the process has already exited when work returns, with coverage that exposes delayed termination. Also, the guard at line 502 bypasses every lifecycle assertion on Windows, reporting a passing test after setup without exercising its named behavior.",
+        "file": "tests/test_codex_record.py",
+        "line": 510,
+        "priority": "P1",
+        "title": "Not done: test_12_a_dead_driver_leaves_no_app_server_behind"
+      }
+    ],
+    "status": "blocked",
+    "tree": "b3f609620c22455cfe70d6195bc70b583a8ae6335daa3a6beb15f5a7bfdc0493"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T15:18:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T16:15:04+00:00",
+      "step": "review"
     }
   ],
   "why": "On macOS CI a Codex stub is sometimes still running right after forge work returns (test_codex_record.py test_6_nothing_left_running and test_codex_worker.py test_4_turn_log failed together on PR 294 run 36250978748, after the startup-identity fix in PR 304), so Forge's promise that nothing is left running doesn't hold"
