@@ -18,7 +18,9 @@ $why
 it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
 share a function, field, file format or command, the first task pins it: it commits the shared
 names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. The moving-parts line stays last: "none", or each new dependency, service, datastore,
+After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
+to one task or a small last wiring task; After only when a task needs another task's code. The
+moving-parts line stays last: "none", or each new dependency, service, datastore,
 queue, background job or abstraction layer, with the Done-when item that needs it. -->
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |

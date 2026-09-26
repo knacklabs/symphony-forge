@@ -86,6 +86,9 @@ choice and one line of why into the spec's Behaviour.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
+- Aim for parallel work: split tasks so each owns its files. A line several tasks would edit (a
+  command-table row, a guide list or a registry) goes to one task, or to a small last wiring
+  task. Use After only when a task needs another task's code.
 - End the Tasks section with its one `New moving parts:` line (see Build simple).
 - Risks names every one-way step: deleting data, a destructive migration, a new vendor.
 - Use the stack already in the repo. Ask the human only when options differ in cost, lock-in or
@@ -94,6 +97,9 @@ choice and one line of why into the spec's Behaviour.
 **The roadmap.** Order stories by value, not by layer. The first story is the smallest slice, end
 to end and usable by the client; it brings only the setup, sign-in and data it needs. No
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
+
+Start every task and fix `forge next` lists as ready at once, and close each as its worker
+finishes.
 
 ## Build simple
 
