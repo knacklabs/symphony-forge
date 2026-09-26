@@ -192,7 +192,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = ""
                 elif "pid" in said:
                     server = said["pid"]
-                    found = _settled(server)
+                    found = identity(server)
                     if "command" not in (found or {}):  # nothing to stop it by after a crash
                         _stop(started_by, group=True)  # the group has the app-server too
                         refused = "server"
@@ -325,25 +325,16 @@ def identity(pid: int) -> dict[str, Any] | None:
     return {"pid": pid, "started": started.strip(), "command": command.strip()}
 
 
-def _settled(pid: int) -> dict[str, Any] | None:
-    """A process's identity once two reads agree: a program that starts itself again under
-    another command (a macOS framework Python, `env`) has one command right after it starts and
-    another once it runs, and a record of the first would match nothing later."""
-    now = identity(pid)
-    for _ in range(50):
-        time.sleep(0.1)
-        before, now = now, identity(pid)
-        if now == before:
-            break
-    return now
-
-
 def _alive(recorded: dict[str, Any]) -> bool | None:
     """Whether the recorded process still runs: False once its id is free or another process has
-    it, None when Forge can't tell, which counts as running."""
+    it, None when Forge can't tell, which counts as running. It goes by id and start time: a
+    program that starts itself again (`env`, a macOS framework Python) keeps both but changes its
+    command, so a record made right after it started must still match once it runs."""
     pid = recorded.get("pid")
     now = identity(pid) if isinstance(pid, int) else {}
-    return None if now is not None and "command" not in now else now == recorded
+    if now is not None and "command" not in now:
+        return None
+    return now is not None and now["started"] == recorded.get("started")
 
 
 def _stop_leftover(record: Path) -> tuple[bool, int | None]:

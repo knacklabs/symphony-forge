@@ -402,3 +402,21 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     assert late.stderr == (f"Codex didn't start within two minutes, so Forge stopped it; its log "
                            f"is {log}.\nNext: forge work BOARD/PAGE\n")
     assert _down([call["pid"] for call in _stub(calls) if "pid" in call][-1])
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the process starts itself again with POSIX exec")
+def test_a_process_that_execs_after_it_was_recorded_still_counts_as_running():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+    from forge import codex
+    # A real process that runs `sleep` under a shell's command, then execs into another command.
+    proc = subprocess.Popen(["sh", "-c", "sleep 1; exec sleep 30"])
+    try:
+        recorded = codex.identity(proc.pid)
+        assert "sh -c" in recorded["command"]
+        time.sleep(1.5)
+        assert "sleep 30" in codex.identity(proc.pid)["command"]
+        assert codex._alive(recorded) is True
+    finally:
+        proc.kill()
+        proc.wait()
+    assert codex._alive(recorded) is False
