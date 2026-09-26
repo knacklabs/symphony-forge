@@ -1,6 +1,6 @@
 """forge sync: the adapter files for Claude Code and Codex, the CI workflow and the git hook shims.
 
-The Markdown lives in templates/; the rest is inline here. AGENTS.md, CLAUDE.md, both host hook
+The Markdown lives in templates/; the rest is inline here. AGENTS.md, both host hook
 files and .codex/config.toml are merged: everything in them that isn't Forge's stays as it is.
 A git hook that was there before Forge is kept as <hook>.pre-forge and runs first.
 """
@@ -145,16 +145,40 @@ def write_file(top: Path, rel: str, text: str) -> None:
     path.write_bytes(text.encode("utf-8"))
 
 
+def _span(text: str, rel: str) -> tuple[int, int]:
+    """Where the Forge block starts and ends in the text, or (-1, -1) when there is none."""
+    start, end = text.find(BEGIN), text.find(END)
+    if start == end == -1:
+        return -1, -1
+    if not 0 <= start < end or text.count(BEGIN) + text.count(END) != 2:
+        repo.refuse(REFUSALS["bad_block"], path=rel)
+    return start, end + len(END)
+
+
 def _block(top: Path, rel: str, template: str) -> str:
     """The file with its Forge block replaced, or appended when it has none."""
     text = read(top / rel)
     block = f"{BEGIN}\n{(TEMPLATES / template).read_text(encoding='utf-8').rstrip()}\n{END}"
-    start, end = text.find(BEGIN), text.find(END)
-    if start == end == -1:
+    start, end = _span(text, rel)
+    if start == -1:
         return f"{text.rstrip()}\n\n{block}\n" if text.strip() else f"{block}\n"
-    if not 0 <= start < end or text.count(BEGIN) + text.count(END) != 2:
-        repo.refuse(REFUSALS["bad_block"], path=rel)
-    return text[:start] + block + text[end + len(END):]
+    return text[:start] + block + text[end:]
+
+
+def _claude(top: Path) -> str:
+    """CLAUDE.md without the Forge block an older Forge wrote; "" means delete it.
+
+    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md. A CLAUDE.md with content of
+    the repo's own stays, and keeps an @AGENTS.md line, since Claude Code reads it instead.
+    """
+    text = read(top / "CLAUDE.md")
+    start, end = _span(text, "CLAUDE.md")
+    if start == -1:
+        return text
+    rest = (text[:start] + text[end:]).strip()
+    if rest in ("", "@AGENTS.md"):
+        return ""
+    return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
 
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> str:
@@ -226,7 +250,8 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<test>", json.dumps(cfg["test"])))
     return {
         "AGENTS.md": _block(top, "AGENTS.md", "adapters/AGENTS.md"),
-        "CLAUDE.md": _block(top, "CLAUDE.md", "adapters/CLAUDE.md"),
+        # Only when the repo has one: an older Forge's block comes out of it.
+        **({"CLAUDE.md": _claude(top)} if (top / "CLAUDE.md").exists() else {}),
         **{rel: _hooks(top, rel, events) for rel, events in HOSTS.items()},
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
@@ -262,7 +287,10 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
     for rel in changed:
-        write_file(top, rel, wanted[rel])
+        if wanted[rel]:
+            write_file(top, rel, wanted[rel])
+        else:
+            (top / rel).unlink()
     return changed
 
 

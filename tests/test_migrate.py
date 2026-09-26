@@ -207,7 +207,7 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     written = {*(f".forge-migrate/kept/{path}" for path in KEPT), ".forge-migrate/replan/SHIP-1.md",
                "plans/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
                ".forge-migrate/replan/DRAFT-1.md", f"docs/context/{DESIGN}", ".gitignore",
-               ".gitattributes", "forge.toml", *LISTED}
+               ".gitattributes", "forge.toml", "CLAUDE.md", *LISTED}
     assert written <= added and all(path.startswith(".factory/") for path in added - written)
     assert not set(OWN) & set(changed)
     for path in KEPT:
@@ -224,12 +224,13 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.
     assert '\nsignoff = "docs/decisions/0001-client-signoff.md"\n' in toml
     # AGENTS.md was the old Forge's word for word, so only the Forge block is left; CLAUDE.md
-    # keeps its own lines but no longer imports the deleted old Claude adapter.
+    # keeps its own lines but no longer imports the deleted old Claude adapter, and Forge adds
+    # no block of its own to it.
     agents = repo.git("show", "forge/migrate-v1:AGENTS.md")
     assert agents.startswith("<!-- forge:begin -->") and "The old Forge contract" not in agents
     claude = repo.git("show", "forge/migrate-v1:CLAUDE.md")
-    assert "@.claude/CLAUDE.md" not in claude and "@AGENTS.md\n" in claude
-    assert "<!-- forge:begin -->" in claude
+    assert "@.claude/CLAUDE.md" not in claude and "@AGENTS.md" in claude
+    assert "<!-- forge:begin -->" not in claude
 
     # A converted plan keeps its sections word for word and the old tasks as rows.
     doc = repo.git("show", "forge/migrate-v1:.forge-migrate/replan/SHIP-1.md")
@@ -447,11 +448,11 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     assert (sorted(os.listdir(hooks)) if hooks.is_dir() else []) == before
     assert "No git hooks were installed" in done.stdout
     # Nothing is deleted: the old tree, its records and every old plan stay as they are, and only
-    # the adapters change.
+    # the adapters change (and CLAUDE.md goes, since Forge writes none).
     assert "so nothing is deleted" in done.stdout
     changed = dict(line.split("\t")[::-1] for line in repo.git(
         "diff", "--name-status", "--no-renames", "main", "forge/migrate-v1").splitlines())
-    assert {path for path, status in changed.items() if status != "A"} <= LISTED, changed
+    assert {path for path, status in changed.items() if status != "A"} <= LISTED | {"CLAUDE.md"}, changed
     # Only the three plans the switch carries are converted; the others wait for the switch.
     for line in ("Converts 3 active plans into story docs:",
                  "- Forge v1: a lean rebuild (FORGE-NEXT-1): its approval on main carries over; "
@@ -463,7 +464,7 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
                  ".forge-migrate/replan/FORGE-FDE-1.md; re-plan it with forge story new FORGE-FDE-1.",
                  "Leaves 5 other active plans as they are, superseded at the switch:",
                  f"\n- {SHIP}\n", f"\n- {TIDY}\n",
-                 "Replaces AGENTS.md and CLAUDE.md wholly with the Forge block."):
+                 "Replaces AGENTS.md wholly with the Forge block and deletes CLAUDE.md."):
         assert line in done.stdout, done.stdout
     listing = repo.git("ls-tree", "-r", "--name-only", "forge/migrate-v1").splitlines()
     assert {"plans/FORGE-NEXT-1.md", "plans/FORGE-WARM-1.md", ".forge-migrate/replan/FORGE-FDE-1.md",
@@ -472,10 +473,10 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     assert repo.git("show", "forge/migrate-v1:plans/FORGE-WARM-1.md") == WARM_DOC.strip()
     assert ("\nNew moving parts: the v1 package (Done when 1); git hooks (1).\n"
             in repo.git("show", "forge/migrate-v1:plans/FORGE-NEXT-1.md"))
-    # AGENTS.md and CLAUDE.md hold only the Forge block now.
-    for name in ("AGENTS.md", "CLAUDE.md"):
-        text = repo.git("show", f"forge/migrate-v1:{name}")
-        assert text.startswith("<!-- forge:begin -->") and text.endswith("<!-- forge:end -->"), text
+    # AGENTS.md holds only the Forge block now, and there is no CLAUDE.md.
+    text = repo.git("show", "forge/migrate-v1:AGENTS.md")
+    assert text.startswith("<!-- forge:begin -->") and text.endswith("<!-- forge:end -->"), text
+    assert "CLAUDE.md" not in listing
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     for setting in (f'version = "{version}"', 'repo = "forge-source"',
                     f"test = {json.dumps(SOURCE_TEST)}", 'checks = ["tests", "forge-pr-check"]',

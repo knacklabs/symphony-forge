@@ -617,7 +617,7 @@ def _report(plan: dict[str, Any], default: str) -> str:
                      "superseded at the switch:")
         lines += [f"- {rel}" for rel in plan["superseded"]]
     if plan["own"]:
-        lines += ["Replaces AGENTS.md and CLAUDE.md wholly with the Forge block.",
+        lines += ["Replaces AGENTS.md wholly with the Forge block and deletes CLAUDE.md.",
                   f"Writes forge.toml pinned to Forge v{__version__} (repo = \"forge-source\", "
                   f"test = {json.dumps(plan['test'])}), and the adapters for Claude Code and Codex "
                   "with forge sync."]
@@ -703,10 +703,12 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
                       f"{json.dumps(plan['signoff'])}", toml, count=1, flags=re.M)
     sync.write_file(path, "forge.toml", toml)
     touched.append("forge.toml")
-    for name in (("AGENTS.md", "CLAUDE.md") if plan["own"]
-                 else ("AGENTS.md",) if plan["agents"] == "replace" else ()):
-        sync.write_file(path, name, "")  # sync then writes only the Forge block
-        touched.append(name)
+    if plan["own"] or plan["agents"] == "replace":
+        sync.write_file(path, "AGENTS.md", "")  # sync then writes only the Forge block
+        touched.append("AGENTS.md")
+    if plan["own"]:  # Forge writes no CLAUDE.md; Claude Code reads AGENTS.md by itself
+        (path / "CLAUDE.md").unlink(missing_ok=True)
+        touched.append("CLAUDE.md")
     if plan["claude_import"]:
         sync.write_file(path, "CLAUDE.md", IMPORT.sub("", sync.read(path / "CLAUDE.md")))
         touched.append("CLAUDE.md")
