@@ -1,33 +1,26 @@
 {
   "branch": "task/FORGE-NEXT-1-FIXES",
   "review": {
-    "commit": "12e49d58eb1b913ff1bafbaec6a18393ddb61035",
+    "commit": "245a8728139eb316ff87ef302e5fd7e30095e571",
     "dismissals": [],
     "findings": [
       {
-        "body": "An unsupported nonempty pin is converted to an empty signoff, and migration continues after printing a warning. This weakens approval: approval.py:93 falls back to any accepted client-signoff record when the pin is empty. It also affects previously valid names such as docs/decisions/0001-acmeclient-signoff.md, which factory/scripts/factory_lib.py:532 accepts but the new SIGNOFF pattern rejects. A different accepted record can therefore satisfy approval after migration. Preserve supported legacy pins and refuse migration before making changes when a nonempty pin cannot be carried over.",
-        "file": "src/forge/migrate.py",
-        "line": 272,
-        "priority": "P1",
-        "title": "Preserve the sign-off gate when migration cannot carry its pin"
-      },
-      {
-        "body": "The new Unicode plan does not exercise UTF-8 stdin decoding. The hook helper at tests/test_story.py:106 serializes it with json.dumps(payload), whose default ensure_ascii=True escapes the arrow into ASCII. Removing stdin from cli.main's reconfiguration would therefore leave this test passing, despite its stated input-encoding coverage. Send the payload with ensure_ascii=False under the forced ASCII environment and assert that approval succeeds.",
+        "body": "The forced-ASCII test verifies UTF-8 stdin and stderr, but its stdout assertions check only ASCII. `ready()` creates stories with an ASCII title (tests/test_story.py:90,98), and approval prints that stored title (src/forge/approval.py:138\u2013143), so the Unicode document does not exercise stdout encoding. The existing Codex test cannot cover this gap because src/forge/codex.py:131 independently reconfigures stdout. Leaving CLI stdout at its previous encoding with replacement enabled would still pass these tests. Exercise a command that prints a Unicode title under the forced encoding and assert the exact Unicode output.",
         "file": "tests/test_approval.py",
-        "line": 26,
+        "line": 32,
         "priority": "P1",
-        "title": "Not done: UTF-8 hook-input regression test"
+        "title": "Not done: UTF-8 stdout regression test"
       },
       {
-        "body": "Using next() assigns each reported check to only one requirement. With checks = [\"tests\", \"tests (windows-latest)\"], a successful Windows run is assigned to \"tests\", leaving the explicitly named Windows requirement empty. Close then times out claiming it has not reported even when every check passed. The previous per-requirement matching handled this configuration. Evaluate presence and success for every matching required name while retaining the new checks for unnamed jobs.",
+        "body": "Using `next()` assigns a reported check to only one required name. With `checks = [\"tests\", \"tests (windows-latest)\"]`, a successful Windows check populates only the `tests` group; the explicitly named Windows group remains empty. Close consequently times out reporting a missing check even when every check succeeded. Populate every matching requirement while retaining the checks for unnamed jobs.",
         "file": "src/forge/checks.py",
         "line": 36,
         "priority": "P2",
-        "title": "Count a check toward every matching required name"
+        "title": "Count each check toward every matching requirement"
       }
     ],
     "status": "blocked",
-    "tree": "4ccf0cbab3c79234c5a58e07e2f06dfbb03bfbcd2c6dca00321fa81ec6ee1884"
+    "tree": "9474308335aa3beec6f31e344f3eb2182077fbe0abf765302bed46b353ef40ea"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +30,10 @@
     },
     {
       "at": "2026-09-26T08:07:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T08:19:33+00:00",
       "step": "review"
     }
   ]
