@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto -o faulthandler_timeout=120"
+      - run: "uv run --python 3.11 --with pytest --with pytest-xdist --with pytest-timeout python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
