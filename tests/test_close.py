@@ -523,6 +523,7 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
+    assert "--draft" not in create  # a clean review opens ready for review
     assert body(create).splitlines()[0] == summary
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
