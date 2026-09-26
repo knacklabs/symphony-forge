@@ -22,7 +22,7 @@ SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
 NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "
                  "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
-OLD_FORGE_HOOK ="sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
+OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
 
 
 def _executable(path: Path, text: str) -> None:
