@@ -4,26 +4,19 @@
   "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/standards-gaps.md is in the page it names, each as one short line in that page's voice; no page names AWS CDK; tests/test_standards.py still passes",
   "kind": "fix",
   "review": {
-    "commit": "2c9db33b57e95eb64820ac1a14c440dcc6fb7e29",
+    "commit": "6472ecf2ff505c054dc4f726e5394f7fd6ac50d2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The logger check only requires the text `implements LoggerService`; it never verifies emitted JSON. It passes with the current broken example in backend.md:66, whose structured fields become nested inside `message`. Add a regression test that exercises the documented call and checks the fixed message, context and required top-level fields.",
+        "body": "The logger regression test skips whenever Node is absent, allowing broken logger output to pass the suite without being exercised. The suite command in forge.toml:5 and CI setup in .github/workflows/forge.yml:19\u201321 provision Python tooling only. Checking for any Node executable is also insufficient: the test directly executes TypeScript, which older Node versions cannot run this way; [Node documents the type-stripping version requirements](https://nodejs.org/api/typescript.html). Ensure the suite provides a compatible runtime and executes this required regression test instead of silently skipping it.",
         "file": "tests/test_standards.py",
-        "line": 99,
+        "line": 128,
         "priority": "P1",
-        "title": "Not done: logger output matches the documented structured-log contract"
-      },
-      {
-        "body": "The call at backend.md:66 passes `{ message, context, correlationId }`, but `write` serializes that entire object under `message`, leaves top-level `context` empty and omits `module`. Following this example therefore violates the structured-log contract in standards.md:158\u2013161 and prevents consumers from finding details in the prescribed fields. Normalize structured input or update the logger signature and example together.",
-        "file": "src/forge/templates/conventions/backend.md",
-        "line": 49,
-        "priority": "P2",
-        "title": "Preserve structured fields in the logger's documented input"
+        "title": "Not done: logger output regression test always runs in the repository suite"
       }
     ],
     "status": "blocked",
-    "tree": "2bdee8ad0a353dc36403df12888aef2ac647516e02533f83bd9dc5191298a889"
+    "tree": "ef0b85067a908f75524ac9bd8533b7a4a030375f8a20381741330a9cc1b444e9"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +30,10 @@
     },
     {
       "at": "2026-09-26T13:45:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:43:35+00:00",
       "step": "review"
     }
   ],
