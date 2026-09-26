@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
-      - run: "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
+      - run: "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto -o faulthandler_timeout=120"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'

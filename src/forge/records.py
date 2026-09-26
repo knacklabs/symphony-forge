@@ -18,6 +18,10 @@ A spec's cold read, written by `forge read <slug>`, lives in the notes file besi
 Each finding is a numbered item at the start of a line; its disposition follows it.
 `spec confirm` stores the SHA-256 of the confirmed body (the text after the frontmatter) as
 `confirmed_hash`, and `roadmap add` reads a spec only while its body still matches it.
+
+A spec's `## Success measure` holds `- Metric:`, `- Baseline:`, `- Target:` and
+`- Check date: YYYY-MM-DD` lines, each of which may wrap onto indented lines. `spec measure`
+appends a `- Result: <text> (YYYY-MM-DD)` line and refreshes `confirmed_hash`.
 """
 from __future__ import annotations
 
@@ -25,6 +29,7 @@ import argparse
 import hashlib
 import json
 import re
+from datetime import date
 from pathlib import Path
 
 from forge import repo
@@ -52,6 +57,13 @@ REFUSALS = {
                     "spec adds roadmap items.", 'forge spec confirm {slug} --by "<name>"'),
     "not_confirmed_text": ("docs/specs/{slug}.md is not the text that was confirmed; it needs a new "
                            "cold read and confirmation.", "forge spec save {slug}"),
+    "no_measure": ("docs/specs/{slug}.md needs a ## Success measure section with {missing} "
+                   "filled in.", "forge spec save {slug}"),
+    "measure_unconfirmed": ("docs/specs/{slug}.md is not confirmed (status: {status}); only a "
+                            "confirmed spec records a result.",
+                            'forge spec confirm {slug} --by "<name>"'),
+    "bad_result": ("--result needs the measured result, on one line.",
+                   'forge spec measure {slug} --result "<measured result>"'),
     "roadmap_section": ("The Roadmap section of docs/specs/{slug}.md needs one `- KEY: title` line "
                         "per story: {problem}.", "forge spec save {slug}"),
     "decision_exists": ("{rel} already exists.", 'forge decision accept {slug} --by "<name>"'),
@@ -73,6 +85,10 @@ DECISION_SECTIONS = ("Context", "Decision", "Consequences")
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
+MEASURE_LINE = re.compile(r"^-[ \t]*(Metric|Baseline|Target|Check date|Result):(.*(?:\n[ \t]+\S.*)*)",
+                          re.M)  # a field wraps onto indented lines
+MEASURE_FIELDS = {"Metric": "- Metric:", "Baseline": "- Baseline:", "Target": "- Target:",
+                  "Check date": "- Check date: YYYY-MM-DD"}
 ROADMAP_LINE = re.compile(r"- ([A-Z][A-Z0-9-]*): (\S.*)")
 ROADMAP = "plans/roadmap.json"
 DECISION = """---
@@ -113,6 +129,7 @@ def spec_save(args: argparse.Namespace) -> None:
     if not title or missing:
         repo.refuse(REFUSALS["incomplete"], slug=args.slug,
                     missing=", ".join(([] if title else ["a # title"]) + missing))
+    _check_measure(args.slug, body)
     _roadmap_items(args.slug, body)  # a malformed Roadmap section fails here, before the read
     _write(top, rel, _set(text, slug=args.slug, title=title[1], status="draft", saved=repo.now(),
                           confirmed_by=None, confirmed_hash=None))
@@ -130,6 +147,7 @@ def spec_confirm(args: argparse.Namespace) -> None:
         return
     if status != "draft":
         repo.refuse(REFUSALS["not_draft"], slug=args.slug, status=status)
+    _check_measure(args.slug, body)
     notes = f"docs/specs/{args.slug}.read.md"
     record, findings = _front(_text(top, notes))
     if not record.get("read_hash"):
@@ -146,6 +164,50 @@ def spec_confirm(args: argparse.Namespace) -> None:
                           confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
     print(f"{rel} is confirmed by {by}. Next: forge roadmap add {args.slug}")
+
+
+def spec_measure(args: argparse.Namespace) -> None:
+    top = _start(args, args.slug)
+    result = args.result.strip()
+    if not result or not result.isprintable():
+        repo.refuse(REFUSALS["bad_result"], slug=args.slug)
+    rel, text, fields, body = _spec(top, args.slug)
+    if not text:
+        repo.refuse(REFUSALS["no_spec"], slug=args.slug)
+    if fields.get("status") != "confirmed":
+        repo.refuse(REFUSALS["measure_unconfirmed"], slug=args.slug,
+                    status=fields.get("status") or "none")
+    if fields.get("confirmed_hash") != _digest(body):
+        repo.refuse(REFUSALS["not_confirmed_text"], slug=args.slug)
+    _check_measure(args.slug, body)
+    front = text[:len(text) - len(body)]
+    heading = list(re.finditer(r"^## +(.+?)(?:[ \t]+#+)?[ \t]*$", body, re.M))
+    at = max(n for n, found in enumerate(heading) if found[1] == "Success measure")  # as _sections
+    end = heading[at + 1].start() if at + 1 < len(heading) else len(body)
+    cut = heading[at].end() + len(body[heading[at].end():end].rstrip())
+    body = body[:cut] + f"\n- Result: {result} ({repo.now()[:10]})" + body[cut:]
+    _write(top, rel, _set(front + body, confirmed_hash=_digest(body)))
+    repo.commit_state(f"Record the result of the {args.slug} spec's success measure", rel, top=top)
+    print(f"Added the result to the Success measure of {rel}; it stays confirmed.")
+
+
+def due_check(text: str, today: str) -> tuple[str, str] | None:
+    """A confirmed spec's title and metric when its check date has come and it has no result yet.
+
+    Whether its stories are done is the caller's to check.
+    """
+    fields, body = _front(text)
+    measure = success_measure(body)
+    if (fields.get("status") != "confirmed" or _measure_gaps(measure) or "Result" in measure
+            or measure["Check date"] > today):
+        return None
+    return fields.get("title") or "", measure["Metric"].rstrip(".")
+
+
+def success_measure(body: str) -> dict[str, str]:
+    """The fields of a spec's Success measure, each on one line; {} when it has none."""
+    return {match[1]: " ".join(match[2].split())
+            for match in MEASURE_LINE.finditer(_sections(body).get("Success measure", ""))}
 
 
 # --- decisions -------------------------------------------------------------------------
@@ -268,6 +330,24 @@ def _spec(top: Path, slug: str) -> tuple[str, str, dict[str, str], str]:
 
 def _digest(body: str) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+
+def _measure_gaps(measure: dict[str, str]) -> list[str]:
+    """The Success measure lines that are missing, empty or (the check date) not a real date."""
+    gaps = [line for name, line in MEASURE_FIELDS.items() if not measure.get(name)]
+    when = measure.get("Check date")
+    if when:
+        try:
+            date.fromisoformat(when if re.fullmatch(r"\d{4}-\d{2}-\d{2}", when) else "")
+        except ValueError:
+            gaps.append(MEASURE_FIELDS["Check date"])
+    return gaps
+
+
+def _check_measure(slug: str, body: str) -> None:
+    gaps = _measure_gaps(success_measure(body))
+    if gaps:
+        repo.refuse(REFUSALS["no_measure"], slug=slug, missing=", ".join(gaps))
 
 
 def _roadmap_items(slug: str, body: str) -> dict[str, str]:
