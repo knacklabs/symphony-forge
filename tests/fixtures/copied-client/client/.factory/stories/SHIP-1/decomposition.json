@@ -1,0 +1,67 @@
+{
+  "story": "SHIP-1",
+  "plan_file": "plans/active/SHIP-1-shoppers-can-save-a-basket.md",
+  "tasks": [
+    {
+      "id": "SHIP-1-T1",
+      "title": "Save a basket",
+      "objective": "Shoppers can save their basket with one click.",
+      "acceptance_criteria": [
+        "a shopper can save a basket with one click."
+      ],
+      "depends_on": [],
+      "write_scope": [
+        "src/basket.js"
+      ],
+      "required_tests": [
+        {
+          "id": "saves",
+          "path": "test/basket.test.js",
+          "command": "npm test"
+        }
+      ],
+      "user_facing": true
+    },
+    {
+      "id": "SHIP-1-T2",
+      "title": "Show a saved basket",
+      "objective": "A saved basket shows again after sign-in.",
+      "acceptance_criteria": [
+        "the basket page lists every saved item"
+      ],
+      "plan_contracts": [
+        {
+          "id": "SHIP-1-AC2",
+          "statement": "a saved basket shows again after sign-in."
+        }
+      ],
+      "depends_on": [
+        "SHIP-1-T1"
+      ],
+      "write_scope": [
+        "src/signin.js",
+        "src/basket-view.js"
+      ],
+      "required_tests": [
+        {
+          "id": "shows",
+          "path": "test/signin.test.js",
+          "command": "npm test"
+        }
+      ],
+      "user_facing": true
+    },
+    {
+      "id": "SHIP-1-T3",
+      "title": "Tidy the basket code",
+      "objective": "The basket code reads well.",
+      "acceptance_criteria": [
+        "the basket code reads well"
+      ],
+      "depends_on": [
+        "SHIP-1-T2"
+      ],
+      "user_facing": false
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "story": "SIGNIN-1",
+  "tasks": [
+    {
+      "id": "SIGNIN-1-T1",
+      "title": "Longer sessions",
+      "objective": "A session lasts a week.",
+      "acceptance_criteria": [
+        "a shopper stays signed in for a week."
+      ],
+      "write_scope": [
+        "src/session.js"
+      ],
+      "required_tests": [
+        {
+          "path": "test/session.test.js"
+        }
+      ]
+    }
+  ]
+}
