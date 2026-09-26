@@ -480,11 +480,14 @@ STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's 
 
 @pytest.mark.parametrize("task, answer, refused", [
     ("T2", blocked(MISSING_CHECK), True), ("T2", blocked(HOLLOW_CHECK), True),
-    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False)],
-    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing"])
+    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False),
+    ("empty", None, False)],
+    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing", "empty-commit"])
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
     # `Not done`; close refuses on that finding and passes once the check is there.
+    if task == "empty":
+        return _empty_commit_check(env)
     item, where = env.start_task(task, {"show.py": "print('basket')\n"})
     check = "Functional check: signed in as a shopper and saw the saved basket."
     stale = answer == blocked(STALE_CHECK)
@@ -510,6 +513,20 @@ def test_19_functional_check(env, task, answer, refused):
         assert check in env.prompt()
         [create] = env.gh_calls("pr", "create")
         assert f"\n{check}\n<!-- forge:end -->" in body(create)
+
+
+def _empty_commit_check(env):
+    # A hand walkthrough recorded in an empty commit is the branch's functional check, and a
+    # changed check is a new review, not the earlier one reused.
+    item, where = env.start_task("T2", {"show.py": "print('basket')\n"})
+    assert env.close(item).returncode == 0
+    assert "None: the worker's last commit message has no `Functional check:`" in env.prompt()
+    check = "Functional check: signed in as a shopper and saw the saved basket."
+    env.repo.git("commit", "-q", "--allow-empty", "-m", f"Walked it\n\n{check}", cwd=where)
+    env.reviews(CLEAN)
+    assert env.close(item).returncode == 0
+    assert len(env.review_calls()) == 2 and check in env.prompt()
+    assert f"\n{check}\n<!-- forge:end -->" in body(env.gh_calls("pr", "create")[-1])
 
 
 # --- criterion 27: the pull request's title and summary ----------------------------------------

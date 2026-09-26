@@ -53,7 +53,7 @@ def close(args: argparse.Namespace) -> int:
 
     _merge_default(top, item, branch, default)
     result = state.get("review") or {}
-    fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state)
+    fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
