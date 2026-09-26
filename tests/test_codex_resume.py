@@ -3,8 +3,9 @@
 The stand-in Codex app-server here keeps its conversations in threads.json beside itself, as Codex
 keeps them in its home, so a second app-server, in a later forge work, resumes or reads what the
 first one left. The test edits that file to set what Codex reports. STUB_CODEX_STATUS=hold leaves
-a turn in progress, "vanish" exits instead of answering a read, and "error" fails the read with an
-internal error.
+a turn in progress, "vanish" exits instead of answering a read, "error" fails the read with an
+internal error, and "unmaterialized" fails it as Codex does when it can't load a conversation's
+history, naming the conversation's id.
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
@@ -76,8 +77,10 @@ def main():
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd"), "turns": {}}) \
             if method == "thread/start" else threads.get(id)
-        if saved is None:
-            send(id=message["id"], error={"code": -32600, "message": "no rollout found for " + id})
+        if saved is None:  # as Codex says it: a read and a resume word it differently
+            send(id=message["id"], error={"code": -32600, "message": "thread not loaded: " + id
+                                          if method == "thread/read" else
+                                          "no rollout found for " + id})
             continue
         result = {}
         if method in ("thread/start", "thread/resume"):
@@ -89,6 +92,10 @@ def main():
                 return
             if os.environ.get("STUB_CODEX_STATUS") == "error":  # a server fault, not a missing one
                 send(id=message["id"], error={"code": -32603, "message": "stub: store is busy"})
+                continue
+            if os.environ.get("STUB_CODEX_STATUS") == "unmaterialized":
+                send(id=message["id"], error={"code": -32600, "message": f"thread {id} is not "
+                     "materialized yet; includeTurns is unavailable before first user message"})
                 continue
             result = {"thread": thread(id, saved)}
         elif method == "turn/start":
@@ -275,6 +282,13 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     brief_refused()
     repo.git("checkout", "--", "plans/BOARD.md", cwd=folder)
 
+    # The approval is gone and the story doc changed: an earlier approval doesn't carry over, so
+    # forge work refuses before it records any status or starts Codex.
+    story(repo, doc=changed, approved=None)
+    unapproved = repo.forge("work", "BOARD/PAGE")
+    assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+
     # The story's approved part changes: forge work refuses before it records any status or
     # starts Codex, until the change is approved again.
     story(repo, doc=changed, approved=DOC)
@@ -345,12 +359,19 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     assert failed.stderr == unread.stderr
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
 
+    # Nor is a failed history read, though its message names the conversation.
+    monkeypatch.setenv("STUB_CODEX_STATUS", "unmaterialized")
+    unloaded = repo.forge("work", "BOARD/PAGE")
+    monkeypatch.delenv("STUB_CODEX_STATUS")
+    assert unloaded.stderr == unread.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+
     # Codex still says the turn is running: forge work refuses again, so two turns never run.
     running = repo.forge("work", "BOARD/PAGE")
     assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
                               "starts no second one.\nNext: wait for it to end in the Codex app, "
                               "then forge work BOARD/PAGE\n")
-    assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 3
+    assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 4
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
     assert not lock.exists() and len(_sent(calls, "turn/start")) == 1
 
@@ -377,3 +398,17 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     assert lines[-3] == {**held, "continued": True, "fresh_start": None, "status": "lost",
                          "ended": NOW, "input_tokens": None, "cached_input_tokens": None,
                          "output_tokens": None}
+
+    # A crashed turn whose whole conversation Codex no longer has is logged as lost too, and the
+    # work starts a new conversation, saying why.
+    work, saved = _holding(repo, turns)
+    _crash(work, saved)
+    held = _lines(turns)[-1]
+    threads = json.loads(store.read_text(encoding="utf-8"))
+    del threads[held["conversation"]]
+    store.write_text(json.dumps(threads), encoding="utf-8")
+    gone = repo.forge("work", "BOARD/PAGE")
+    assert gone.returncode == 0, gone.stdout + gone.stderr
+    lines = _lines(turns)
+    assert (lines[-3]["turn"], lines[-3]["status"]) == (held["turn"], "lost")
+    assert (lines[-1]["continued"], lines[-1]["status"]) == (False, "completed")

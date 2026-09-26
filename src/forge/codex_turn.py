@@ -115,10 +115,10 @@ def main() -> int:
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
             except InvalidRequestError as error:
-                # Only Codex saying it has no such conversation means it reports no status; it
-                # names the id ("thread not loaded: <id>"). Any other failure proves nothing, so
-                # it ends this with no read line and Forge refuses.
-                if request["thread"] not in error.message:
+                # Only Codex saying it has no such conversation means it reports no status. Its
+                # other failures, such as history it can't load, name the id too but prove
+                # nothing, so they end this with no read line and Forge refuses.
+                if error.message != f"thread not loaded: {request['thread']}":
                     raise
                 turns = []
             emit(read=next((turn.status.value for turn in turns if turn.id == request["read"]),
