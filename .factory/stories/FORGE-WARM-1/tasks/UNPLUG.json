@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-WARM-1-UNPLUG",
-  "status": "working",
+  "review": {
+    "commit": "9fb9c964cb59147dea32d6d7c473d4fffa64dae4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The test scans `src/forge` and only `docs/guide.md`, so plugin mentions in other new Forge documentation are never checked. For example, `docs/archive.md` is retained documentation (see its lines 28\u201333) but is excluded. The pattern also misses `codex@openai-codex`, allowing a plugin installation command in a template or outside the guide's uninstall section to pass. Extend the scan to the new Forge documentation, preserving the old-Forge exclusions, and detect the plugin identifier as well as its prose names.",
+        "file": "tests/test_no_plugin.py",
+        "line": 16,
+        "priority": "P1",
+        "title": "Not done: test plugin absence across the new Forge docs and package"
+      },
+      {
+        "body": "The revised prerequisites say Codex alone is sufficient, but a Codex coordinator's mandatory cold read invokes Claude Code. `src/forge/story.py:71` maps `CODEX_THREAD_ID` to the Claude reader, and line 144 runs `claude -p`. Someone following this installation guidance without Claude Code cannot complete the story workflow. Explain the opposite-family reader requirement alongside the coordinator and worker choices.",
+        "file": "docs/guide.md",
+        "line": 11,
+        "priority": "P2",
+        "title": "Document Claude Code as required for Codex-coordinated cold reads"
+      }
+    ],
+    "status": "blocked",
+    "tree": "24cd59a9ef32b65a4e47b7aa1cc1c30db81a39a58c158d40f755fd7c71b6c6f5"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T20:25:16+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T20:39:54+00:00",
+      "step": "review"
     }
   ]
 }
