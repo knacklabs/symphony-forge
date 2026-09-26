@@ -1,5 +1,6 @@
 """forge doctor: tools, the pin, the git hooks, the host hooks, adapter drift, CI and, for Codex
-workers, the Codex SDK and the project's trust; a row per problem. --fix installs the SDK."""
+workers, the Codex SDK and the project's trust; a row per problem. With Codex workers, --fix
+installs the SDK."""
 from __future__ import annotations
 
 import argparse
@@ -55,13 +56,13 @@ def _codex_trusts(top: Path, config: Path) -> bool:
 
 
 def doctor(args: argparse.Namespace) -> None:
-    if args.fix and codex.sdk_problem():
-        codex.install()
     top = repo.root()
     cfg = repo.config(top)
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     on_codex = cfg["workers"] == "codex"
+    if args.fix and on_codex and codex.sdk_problem():
+        codex.install()
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
     for tool in ("git", "gh", "uv") if on_codex else ("git", "gh", "uv", "claude"):

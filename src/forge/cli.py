@@ -32,7 +32,7 @@ TABLE = [
     ("doctor", "doctor:doctor", False,
      "Check tools, versions, hooks, adapter drift and the named CI checks",
      [_arg("--fix", action="store_true",
-           help="install the pinned Codex SDK if it is missing or wrong")]),
+           help="with Codex workers, install the pinned Codex SDK if it is missing or wrong")]),
     ("migrate", "migrate:migrate", True,
      "Move a client from the copied-in Forge to v1 in one pull request", []),
     ("next", "nextstep:next_step", False,

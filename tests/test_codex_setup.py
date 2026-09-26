@@ -22,7 +22,8 @@ APPROVE = "- Note: when Codex asks you to approve Forge's hooks, approve them"
 
 # Stub uv: logs each call. `venv` makes a real, empty environment with the standard library's venv
 # (offline, nothing installed), and `pip install` writes a stand-in SDK into it: the two modules
-# and the two package versions that forge doctor's probe reads.
+# and the two package versions that forge doctor's probe reads, with the test's program standing
+# in for the bundled Codex program.
 UV_STUB = """#!{python}
 import json, pathlib, subprocess, sys
 args = sys.argv[1:]
@@ -35,12 +36,19 @@ else:
         [args[args.index("--python") + 1], "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
         capture_output=True, text=True, check=True).stdout.strip())
     (site / "openai_codex.py").write_text("", encoding="utf-8")
-    (site / "codex_cli_bin.py").write_text("def bundled_codex_path(): pass\\n", encoding="utf-8")
+    (site / "codex_cli_bin.py").write_text(
+        "def bundled_codex_path(): return " + repr({program!r}) + "\\n", encoding="utf-8")
     for name in ("openai-codex", "openai-codex-cli-bin"):
         info = site / (name.replace("-", "_") + "-{pin}.dist-info")
         info.mkdir()
         (info / "METADATA").write_text("Name: " + name + "\\nVersion: {pin}\\n", encoding="utf-8")
 """
+
+
+def _program(path: Path, line: str) -> None:
+    """The stand-in bundled Codex program: it runs one line, in sh (cmd on Windows)."""
+    path.write_text(f"@{line}\n" if os.name == "nt" else f"#!/bin/sh\n{line}\n", encoding="utf-8")
+    path.chmod(0o755)
 
 
 def _workers(top: Path, kind: str) -> None:
@@ -58,7 +66,9 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))  # never the real SDK environment
     env = tmp_path / "data" / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
-    _install(repo.bin, "uv", UV_STUB.format(python=sys.executable, pin=PIN))
+    program = tmp_path / ("bundled-codex.cmd" if os.name == "nt" else "bundled-codex")
+    _program(program, f"echo codex-cli {PIN}")
+    _install(repo.bin, "uv", UV_STUB.format(python=sys.executable, pin=PIN, program=str(program)))
     hooks = _stub_forge(tmp_path, monkeypatch)
     _workers(client, "codex")
 
@@ -87,14 +97,25 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
         ["pip", "install", "--python", str(python), f"openai-codex=={PIN}"]]
     assert (env / "forge-sdk-ready").read_text(encoding="utf-8") == f"{PIN}\n"
 
-    # The wrong SDK version fails.
+    # A wrong SDK version fails, and so does a bundled Codex program that says another version or
+    # exits non-zero.
     metadata = next(env.rglob("openai_codex-*.dist-info")) / "METADATA"
     metadata.write_text("Name: openai-codex\nVersion: 0.150.0\n", encoding="utf-8")
-    wrong = repo.forge("doctor", cwd=client)
-    assert wrong.returncode == 1
-    assert (f"should be openai-codex {PIN}, openai-codex-cli-bin {PIN}, but its Python says: "
-            f"openai-codex 0.150.0, openai-codex-cli-bin {PIN}") in wrong.stdout, wrong.stdout
+    wrong_sdk = repo.forge("doctor", cwd=client)
     metadata.write_text(f"Name: openai-codex\nVersion: {PIN}\n", encoding="utf-8")
+    _program(program, "echo codex-cli 0.150.0")
+    wrong_program = repo.forge("doctor", cwd=client)
+    _program(program, "exit 3")
+    failing_program = repo.forge("doctor", cwd=client)
+    _program(program, f"echo codex-cli {PIN}")
+    for done, said in (
+            (wrong_sdk, f"openai-codex 0.150.0, openai-codex-cli-bin {PIN}, codex-cli {PIN}"),
+            (wrong_program, f"openai-codex {PIN}, openai-codex-cli-bin {PIN}, codex-cli 0.150.0"),
+            (failing_program, "returned non-zero exit status 3.")):
+        assert done.returncode == 1
+        assert (f"- The Codex SDK in {env} should be openai-codex {PIN}, openai-codex-cli-bin "
+                f"{PIN}, codex-cli {PIN}, but its Python says: ") in done.stdout, done.stdout
+        assert f"{said}\n  Fix: forge doctor --fix\n" in done.stdout, done.stdout
 
     # A project marked untrusted fails; a task worktree gets its trusted main repo's trust.
     trust("untrusted")
@@ -107,11 +128,17 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     in_worktree = repo.forge("doctor", cwd=worktree)
     assert in_worktree.returncode == 0, in_worktree.stdout + in_worktree.stderr
 
-    # Claude workers: no Codex rows and no approval note, even with no SDK and no trust entry.
+    # Claude workers: no Codex rows and no approval note, even with no SDK and no trust entry, and
+    # --fix installs nothing.
     shutil.rmtree(env)
     (codex_home / "config.toml").unlink()
     _workers(client, "claude")
     _install(repo.bin, "claude", "#!/bin/sh\n")
-    claude = repo.forge("doctor", cwd=client)
+    claude = repo.forge("doctor", "--fix", cwd=client)
     assert claude.returncode == 0, claude.stdout + claude.stderr
     assert "Codex SDK" not in claude.stdout and APPROVE not in claude.stdout
+    # Outside a Forge project it refuses as ever, before installing anything.
+    outside = repo.forge("doctor", "--fix")
+    assert outside.stderr == "This repo has no forge.toml.\nNext: forge init\n"
+    assert not env.exists()
+    assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
