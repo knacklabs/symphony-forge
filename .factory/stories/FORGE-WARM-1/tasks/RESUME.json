@@ -1,39 +1,18 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "60bbe3ee362c3e83c3726076b3c251defb3023d3",
+    "commit": "6f0ad0cae9cdba2d7cc4789c2cd9eacf794193a2",
     "dismissals": [],
     "findings": [
       {
-        "body": "When neither the checkout nor the searched history contains a story record, this condition allows work with no approval, and both subsequent hash checks are skipped. A manually created branch, or rewritten history that removes the approval record, can therefore send an unapproved brief to the full-access worker after committing status. The comment explicitly preserves this production exception for test fixtures. Require approval unconditionally, matching src/forge/task.py:137\u2013139, and update those fixtures.",
+        "body": "The supplied Functional check exercises approval refusal and conversation replacement, but skips item 9's crash recovery entirely and item 7's change delivery and four drift cases. The review contract explicitly requires the walkthrough to cover every item this part owns. Exercise those paths through `forge work` and record the observed prompts, recovery statuses, and refusals in the Functional check paragraph.",
         "file": "src/forge/worker.py",
-        "line": 120,
-        "priority": "P1",
-        "title": "Not done: 8. Refuse missing approval unconditionally"
-      },
-      {
-        "body": "The thread handler already captures the correct baseline in pending.start before acknowledging the conversation. This line replaces it with a fresh HEAD lookup after Codex has started executing: src/forge/codex_turn.py:138\u2013139 starts the turn before emitting its ID. If Forge is delayed while the worker commits, the saved baseline includes that work, so the next fix round omits those commits and changes. Persist the previously captured pending.start instead of rereading HEAD.",
-        "file": "src/forge/codex.py",
-        "line": 307,
-        "priority": "P1",
-        "title": "Not done: 7. Preserve the commit captured before the turn starts"
-      },
-      {
-        "body": "The test captures its expected start commit after the first work call returns, and the stub never commits during that turn. Consequently, using the previous turn's ending commit instead of its starting commit would still pass these delta assertions. Add a case that commits during the first turn and verifies that the next prompt includes that commit and its changes.",
-        "file": "tests/test_codex_resume.py",
-        "line": 170,
-        "priority": "P1",
-        "title": "Not done: test changes since the previous turn started"
-      },
-      {
-        "body": "The supplied walkthrough tests absent approval records, but does not exercise item 8's changed approved text, refusal before a status commit, reapproval, and replacement of the old conversation. Deleting approval records does not exercise the hash comparisons or approval-based conversation invalidation. Complete that user-facing sequence and record its observed results in the Functional check paragraph.",
-        "file": "src/forge/worker.py",
-        "line": 124,
+        "line": 64,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "This new lockfile is outside the permitted scope and introduces no dependency resolution needed by continuation, approval checks, or recovery. The SDK remains separately pinned and installed by Forge; pyproject.toml declares no project dependencies. Remove the unrelated lockfile from this change.",
+        "body": "This new lockfile is outside the permitted scope and adds no dependency resolution needed for continuation, approval checking, or recovery. `pyproject.toml:10\u201311` declares Python compatibility and an empty dependency list; the Codex SDK remains independently pinned and installed by Forge. Remove the unrelated lockfile from this change.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
@@ -41,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "dfbeda7f4add424c2368f91235587be73f1857b84ce38929591ee798830a5707"
+    "tree": "94b12643071e64830e05d746c9a043ea7cdd111632d9cc945107d8adb9ce6428"
   },
   "status": "fixing",
   "steps": [
@@ -67,6 +46,10 @@
     },
     {
       "at": "2026-09-26T12:43:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T13:40:46+00:00",
       "step": "review"
     }
   ]
