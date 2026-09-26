@@ -11,7 +11,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import pytest
 from test_task import story
 from test_worker import calls, install_claude
 
@@ -64,7 +63,6 @@ def test_36_client_apps_simple(repo, tmp_path):
         "redis", "queue", "terraform", "oidc", "monitoring"}
 
     _carried_over_rules_are_on_their_pages()
-    _logger_example_writes_the_documented_fields(tmp_path)
 
     # Every worker brief, for a task or a fix, carries the whole page.
     log = install_claude(repo)
@@ -122,11 +120,10 @@ def _carried_over_rules_are_on_their_pages():
         assert "CDK" not in path.read_text(encoding="utf-8"), path.name
 
 
-def _logger_example_writes_the_documented_fields(tmp_path):
+def test_36_logger_example_writes_the_documented_fields(tmp_path):
     # Run backend.md's own logger and its own call: a fixed message, the context object and the
     # required fields at the top level, none nested inside `message`.
-    if not shutil.which("node"):
-        pytest.skip("needs node to run the documented TypeScript")
+    assert shutil.which("node"), "needs node to run the documented TypeScript"
     blocks = re.findall(r"```ts\n(.*?)```", (CONVENTIONS_DIR / "backend.md").read_text(encoding="utf-8"), re.S)
     logger = next(b for b in blocks if "implements LoggerService" in b).replace("@Injectable()\n", "")
     call = next(line for b in blocks for line in b.splitlines() if "this.logger.log(" in line)
