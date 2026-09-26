@@ -4,21 +4,13 @@
   "done_when": "Every pytest command in .github/workflows/forge-next.yml and the generated forge.yml adds pytest-timeout with --timeout=150 --timeout-method=thread, so a hung test fails by name with its stack in the log before the job cap; nothing else in the workflows changes",
   "kind": "fix",
   "review": {
-    "commit": "fde95d7af112aa7110866e09fd2dcd7cfa17f8b4",
+    "commit": "49369a233fa24c791098a6300e8f758f21f72db3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The timeout is added only to the generated artifact. `forge.toml:5` still supplies a test command without pytest-timeout or either timeout flag, and `src/forge/sync.py:223\u2013226` inserts that command into the workflow. The write path at `src/forge/sync.py:258\u2013265` overwrites the committed file, so the next `forge sync` on a work branch removes this protection and makes the new regression test fail. Update the generation input so the required timeout survives regeneration, while preserving the existing workflow behavior.",
-        "file": ".github/workflows/forge.yml",
-        "line": 24,
-        "priority": "P1",
-        "title": "Not done: Every pytest command in .github/workflows/forge-next.yml and the generated forge.yml adds pytest-timeout with --timeout=150 --time"
-      }
-    ],
-    "status": "blocked",
-    "tree": "a33f996d9bde43a8935ce64a14fa2344eb70a638cb33ff6f67d70f24ff4627aa"
+    "findings": [],
+    "status": "clean",
+    "tree": "7af3de125e2a8fdfe3edebb637deb40a1bc0ae1ae5db5787ee47be415f4aaef7"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T19:15:43+00:00",
@@ -26,6 +18,10 @@
     },
     {
       "at": "2026-09-26T19:20:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T19:27:51+00:00",
       "step": "review"
     }
   ],
