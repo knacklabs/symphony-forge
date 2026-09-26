@@ -361,6 +361,9 @@ def test_2_gates_check_outcomes(env, case):
         env.checks(GREEN)
         assert env.close(want["item"]).returncode == 0
         assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
+        # gh prints only the JSON fields asked for, so the draft state must be requested.
+        listing = env.gh_calls("pr", "list")[-1]
+        assert "isDraft" in listing[listing.index("--json") + 1].split(",")
 
 
 # --- criterion 18: close, for a task and for a fix ----------------------------------------
