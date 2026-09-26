@@ -180,15 +180,18 @@ def migrate(args: argparse.Namespace) -> int:
                      if (top / Path(*parts[:n])).is_symlink()), "")
         if link:
             repo.refuse(REFUSALS["link"], path=link)
-    # A moved or written file never lands on a file in the tree, or on another moved file.
-    landed = dict.fromkeys(_tree(top, ref, KEPT, REPLAN, "docs/context", "plans"), "")
+    # A moved or written file never lands on anything there, or on another moved file, even by a
+    # name that differs only in capitals: a disk may not tell those apart.
+    there = {path.casefold() for rel in repo.git("ls-files", "-z", cwd=top).split("\0") if rel
+             for path in (rel, *map(str, Path(rel).parents))}
+    landed: dict[str, str] = {}
     for rel, dest in [*plan["moves"], *((entry["old"], entry["dest"])
                                         for entry in plan["stories"] if "dest" in entry)]:
-        if dest in landed:
-            first = landed[dest]
+        if dest.casefold() in landed or dest.casefold() in there or os.path.lexists(top / dest):
+            first = landed.get(dest.casefold(), "")
             repo.refuse(REFUSALS["taken"], path=f"{dest} (from {first})" if first else dest,
                         aside=rel if first else ".forge-migrate/" if dest.startswith(KEPT) else dest)
-        landed[dest] = rel
+        landed[dest.casefold()] = rel
     report = _report(plan, default)
     if args.dry_run:
         print(f"Nothing was changed. forge migrate would do this, on its own branch {BRANCH}:\n\n"
@@ -533,7 +536,7 @@ def _fresh_branch(top: Path, ref: str) -> Path:
         if made and made != [sync.read(repo.forge_dir(top) / MADE).strip()]:
             repo.refuse(REFUSALS["not_ours"])
         # ponytail: any uncommitted change stops it, even a stopped run's own; a human looks first.
-        if path is not None and repo.git("status", "--porcelain", cwd=path):
+        if path is not None and repo.git("status", "--porcelain", "--ignored", cwd=path):
             repo.refuse(REFUSALS["unsaved"], path=path)
         if path is not None:
             repo.git("worktree", "remove", "--force", str(path), cwd=top)

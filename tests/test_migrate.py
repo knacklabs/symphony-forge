@@ -161,6 +161,12 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert done.returncode == 0, done.stderr
     assert done.stdout.startswith(dry.stdout.split("\n\n", 1)[1].rstrip()), done.stdout
     assert "Next: forge doctor and your tests" in done.stdout
+    # An ignored file in its folder is someone's too: the rerun refuses and leaves it.
+    (worktree / ".env").write_text("SECRET=ours\n", "utf-8")
+    ignored = repo.forge("migrate")
+    assert ignored.returncode == 1 and "has changes that aren't committed" in ignored.stderr
+    assert (worktree / ".env").is_file()
+    (worktree / ".env").unlink()
     tree = repo.git("rev-parse", "forge/migrate-v1^{tree}")
     again = repo.forge("migrate")
     assert again.returncode == 0, again.stderr
@@ -205,7 +211,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert repo.git("show", f"forge/migrate-v1:docs/context/{DESIGN}") == (
         FIXTURE / "client" / ".gstack/projects/x" / DESIGN).read_text("utf-8").strip()
     # Only the old Forge's gstack lines go; the client's own stay.
-    assert repo.git("show", "forge/migrate-v1:.gitignore") == "node_modules/\n.gstack/slug-cache/"
+    assert repo.git("show", "forge/migrate-v1:.gitignore") == (
+        "node_modules/\n.env\n.gstack/slug-cache/")
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == "*.png binary"
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
@@ -351,13 +358,13 @@ def _behind(repo, tmp_path: Path) -> None:
 
 
 def _same_design(repo, tmp_path: Path) -> None:
-    repo.write(f".gstack/projects/y/{DESIGN}", "# Another project's office hours\n")
-    _land(repo, "Another project's design doc, with the same name")
+    repo.write(f".gstack/projects/y/{DESIGN.capitalize()}", "# Another project's office hours\n")
+    _land(repo, "Another project's design doc, its name differing only in capitals")
 
 
 def _kept_taken(repo, tmp_path: Path) -> None:
-    repo.write(".forge-migrate/kept/harness.yaml", "an older set-aside copy\n")
-    _land(repo, "An older set-aside copy")
+    repo.write(".forge-migrate/kept/harness.yaml/notes.md", "a folder where a file goes\n")
+    _land(repo, "A folder at a set-aside path")
 
 
 def _draft_taken(repo, tmp_path: Path) -> None:
@@ -381,15 +388,15 @@ CASES = {
     "a checkout behind origin": _refusal(
         "This checkout isn't at origin/main, which forge migrate moves",
         "git switch main && git pull, then forge migrate", _behind),
-    "a set-aside file already there": _refusal(
+    "a folder already at a set-aside path": _refusal(
         ".forge-migrate/kept/harness.yaml is already there",
         "move .forge-migrate/ aside, then forge migrate", _kept_taken),
     "a draft already there": _refusal(
         ".forge-migrate/replan/SHIP-1.md is already there",
         "move .forge-migrate/replan/SHIP-1.md aside, then forge migrate", _draft_taken),
-    "two design docs with one name": _refusal(
-        f"docs/context/{DESIGN} (from .gstack/projects/x/{DESIGN}) is already there",
-        f"move .gstack/projects/y/{DESIGN} aside, then forge migrate", _same_design),
+    "two design docs whose names differ only in capitals": _refusal(
+        f"docs/context/{DESIGN.capitalize()} (from .gstack/projects/x/{DESIGN}) is already there",
+        f"move .gstack/projects/y/{DESIGN.capitalize()} aside, then forge migrate", _same_design),
     "work in flight": _refusal(
         "Work is still in flight in the copied-in Forge: the stage SHIP-1-T2 in ",
         "finish or drop each one with the copied-in ./forge", _in_flight),
