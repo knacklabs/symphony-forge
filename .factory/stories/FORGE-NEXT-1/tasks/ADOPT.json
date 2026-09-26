@@ -1,0 +1,21 @@
+{
+  "branch": "task/FORGE-NEXT-1-ADOPT",
+  "review": {
+    "commit": "d69daf084a658a9785fdfe3e0bb03109ba4820cd",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c5fd485388c3ef2008706abedadb70eda24e5de3b792d6f5e6eb3d0050ba4c83"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T07:19:58+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T07:21:53+00:00",
+      "step": "review"
+    }
+  ]
+}
