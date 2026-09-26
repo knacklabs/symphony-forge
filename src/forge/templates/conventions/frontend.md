@@ -8,11 +8,13 @@ changes a screen.
 ```
 apps/web/src/
   main.tsx
-  api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors
+  api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors, sends an x-correlation-id
   pages/            one file per screen
   components/ui/    shadcn/ui components (generated; change them through shadcn)
   components/       the app's own components, grouped by domain
 ```
+
+Error codes and their user messages live in `packages/shared`.
 
 Add a router (TanStack Router) when the app gets a second page.
 
