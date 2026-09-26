@@ -3,7 +3,7 @@
   "branch": "fix/reviews-block-merges-with-p1-findings-th",
   "done_when": "The review prompt (src/forge/templates/review.md) says: a Not done finding is P1 only when this branch can meet it; work that needs another task's code not yet on the default branch is a P2 naming that task; an edge case the done-when doesn't ask for, where the item's purpose is already met, is a P2; missing tests and functional-check rules are unchanged; a test pins the new wording",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T13:03:10+00:00",
