@@ -88,7 +88,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.
-    monkeypatch.setenv("STUB_SAY", f" see {shop.resolve()}/plans/SHOP.md and {shop}/docs/a.md")
+    win = str(shop).replace("/", "\\")  # the checkout spelled with backslashes, as a Windows reader cites it
+    monkeypatch.setenv("STUB_SAY", f" see {shop.resolve()}/plans/SHOP.md, {shop}/docs/a.md and {win}\\docs\\c.md")
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stdout + read.stderr
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
@@ -115,8 +116,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert not claude.exists()
 
     # Absolute paths under the checkout become repo-root paths in the notes, for either reader.
-    assert str(shop.resolve()) not in written and str(shop) not in written
-    assert "see /plans/SHOP.md and /docs/a.md" in written
+    assert str(shop.resolve()) not in written and str(shop) not in written and win not in written
+    assert "see /plans/SHOP.md, /docs/a.md and /docs/c.md" in written
 
     # Recording the amendment runs no model, so it needs no coordinator.
     monkeypatch.delenv("CLAUDECODE")

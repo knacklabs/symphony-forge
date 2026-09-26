@@ -149,8 +149,7 @@ def read(args: Any) -> int:
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
-    for root in {str(top), str(top.resolve())}:  # ponytail: POSIX paths only, Windows readers not handled
-        said = said.replace(f"{root}/", "/")  # repo-root paths resolve on GitHub for everyone
+    said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before:
         repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
     if failed or not said:
@@ -438,6 +437,14 @@ def _record(notes: str) -> tuple[dict[str, str], str]:
 def _notes(record: dict[str, str], findings: str) -> str:
     head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD)
     return f"---\n{head}---\n{findings}"
+
+
+def _repo_root_paths(said: str, roots: Any) -> str:
+    """Rewrite paths under a checkout, with either separator, to repo-root paths GitHub resolves."""
+    for root in roots:
+        head = r"[\\/]".join(map(re.escape, re.split(r"[\\/]", root)))
+        said = re.sub(head + r"[\\/]([^\s`'\")\]>]*)", lambda m: "/" + m[1].replace("\\", "/"), said)
+    return said
 
 
 def _snapshot(top: Path) -> str:
