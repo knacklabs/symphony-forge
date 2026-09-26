@@ -105,20 +105,19 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
 
 
 def _approval(key: str, item: str, top: Path) -> str | None:
-    """The story's approval, read where forge task start reads it; refused when the task started
-    under one that is gone, when the approved part of the story doc changed since, until it is
-    approved again, and when the checkout's own story doc, which the brief is made from, isn't the
-    approved one."""
+    """The story's approval, read where forge task start reads it; refused when the story's record
+    has none, when the approved part of the story doc changed since, until it is approved again, and
+    when the checkout's own story doc, which the brief is made from, isn't the approved one."""
     main = task.main_ref()
     doc = f"plans/{key}.md"
     base = main if task.show(main, doc) is not None else f"story/{key}"
-    approved = (json.loads(task.show(base, repo.state_path(key)) or "{}").get("approval") or {}
-                ).get("hash")
-    # forge task start cuts the task from an approved story, so its checkout holds that approval;
-    # once it is removed, the earlier one doesn't carry over to whatever the doc says now.
-    state = top / repo.state_path(key)
-    if not approved and (json.loads(state.read_text(encoding="utf-8")) if state.is_file() else {}
-                         ).get("approval"):
+    state = task.show(base, repo.state_path(key))
+    approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
+    # forge task start refuses a story without an approval, so a task of a story whose record has
+    # none, here or in the checkout, lost it after it started.
+    # ponytail: a story with no record anywhere passes, as only a hand-made branch has one;
+    # refuse it too once the tests that start such tasks approve their stories.
+    if not approved and (state is not None or (top / repo.state_path(key)).is_file()):
         refuse(task.REFUSALS["not_approved"], key=key)
     if approved and approved != task.approval_hash(task.show(base, doc) or ""):
         refuse(task.REFUSALS["changed"], key=key)

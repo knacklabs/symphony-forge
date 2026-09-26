@@ -288,6 +288,14 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     unapproved = repo.forge("work", "BOARD/PAGE")
     assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+    # The removal reaches the task's checkout too, so no copy of the old approval is left.
+    kept = folder / ".factory" / "stories" / "BOARD" / "story.json"
+    old = kept.read_text(encoding="utf-8")
+    kept.write_text(json.dumps({**json.loads(old), "approval": None}), encoding="utf-8")
+    unapproved = repo.forge("work", "BOARD/PAGE")
+    assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
+    assert len(_stub(calls)) == said
+    kept.write_text(old, encoding="utf-8")
 
     # The story's approved part changes: forge work refuses before it records any status or
     # starts Codex, until the change is approved again.
