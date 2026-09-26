@@ -5,6 +5,7 @@ Each test is named test_<criterion>_<rule> after the spec's acceptance criterion
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -134,7 +135,8 @@ def test_36_logger_example_writes_the_documented_fields(tmp_path):
                       f"{logger}\nconst invoiceId = 'inv-1';\nconst correlationId = 'c-1';\n"
                       f"const self = {{ logger: new JsonLogger() }};\n{call.replace('this.', 'self.')}\n",
                       encoding="utf-8")
-    out = subprocess.run(["node", str(script)], capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(["node", str(script)], capture_output=True, text=True, check=True,
+                         env={**os.environ, "NODE_ENV": "Local"}).stdout
     entry = json.loads(out.strip().splitlines()[-1])
     assert entry["message"] == "Invoice paid" and entry["context"] == {"invoiceId": "inv-1"}
     for field in ("timestampUtc", "level", "environment", "serviceName", "module", "correlationId"):
