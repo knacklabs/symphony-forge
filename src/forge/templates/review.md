@@ -60,6 +60,14 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 `Promote: <the interface>`: a change like that needs a story, not a fix.
 
 <!-- rules -->
+## What blocks the merge
+A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
+- work that needs another task's code not yet on the default branch is a P2 `Later:` finding
+  naming that task;
+- an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+
+Missing tests and the functional check are unchanged: they stay P1.
+
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
 behaviour it names broke. Report a missing test, or a hollow one (it checks only a mock, asserts
