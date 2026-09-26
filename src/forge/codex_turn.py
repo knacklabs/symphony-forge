@@ -1,8 +1,9 @@
 """One Codex turn for Forge, run by the Codex SDK's own Python; Forge itself never imports the SDK.
 
-Forge sends one JSON request line on stdin: the checkout (cwd), the conversation's name, the prompt,
-the sandbox and the kind's settings (config). This prints one JSON line per step, in order: the
-app-server's process id, before anything else; the thread; the turn; each event and each declined
+This prints its own process id first, and once Forge has it on record, Forge sends one JSON
+request line on stdin: the checkout (cwd), the conversation's name, the prompt, the sandbox and the
+kind's settings (config). This then prints one JSON line per step, in order: the app-server's
+process id, before Codex starts; the thread; the turn; each event and each declined
 request; then the turn's end with its status, error, final text and token usage, only when Codex
 reports it. After the app-server's id and after the thread's, this waits for Forge to answer with
 a line saying it has them on record, so nothing starts that Forge hasn't recorded. Codex gets two
@@ -89,6 +90,7 @@ def late() -> None:
 
 
 def main() -> int:
+    emit(driver=os.getpid())  # Forge records this process, as it now runs, before it sends a request
     request = json.loads(sys.stdin.readline())
     sandbox = Sandbox(request["sandbox"])
     threading.Thread(target=watch, daemon=True).start()

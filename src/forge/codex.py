@@ -160,17 +160,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace", **GROUP) as driver:
-        # The driver on record before it hears the request, so its group can always be stopped.
-        # One that is gone already has nothing to stop, and its output says why.
-        started_by = identity(driver.pid)
-        if started_by is not None and "command" not in started_by:
-            driver.kill()  # it hasn't read the request, so it has started nothing yet
-            repo.refuse(REFUSALS["driver"], pid=driver.pid, item=item, command=command)
-        _record(record, driver=started_by, app_server=None)
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        # One line, and stdin stays open: the driver ends its group once Forge's end closes.
-        driver.stdin.write(json.dumps(request) + "\n")
-        driver.stdin.flush()
+        started_by: dict[str, Any] | None = None
 
         def recorded() -> None:
             """Tell the driver the id it sent is on record, so it goes on."""
@@ -185,6 +176,20 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     said = None
                 if not isinstance(said, dict):  # the driver's own output, such as a traceback
                     text = line.rstrip("\n")
+                elif "driver" in said:
+                    # The driver on record before it hears the request, so its group can always be
+                    # stopped. Read once it says it runs: a macOS framework Python starts itself
+                    # again under another command first, and the first one would match nothing.
+                    started_by = identity(driver.pid)
+                    if "command" not in (started_by or {}):
+                        driver.kill()  # it hasn't read the request, so it has started nothing yet
+                        refused = "driver"
+                        break
+                    _record(record, driver=started_by, app_server=None)
+                    # One line, and stdin stays open: the driver ends its group once Forge's closes.
+                    driver.stdin.write(json.dumps(request) + "\n")
+                    driver.stdin.flush()
+                    text = ""
                 elif "pid" in said:
                     server = said["pid"]
                     found = identity(server)
@@ -236,9 +241,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 driver.wait(timeout=5)
             except subprocess.TimeoutExpired:  # it can't act (stopped, say): end its group here
                 _stop_leftover(record)
+                driver.kill()  # not on record yet, it has started nothing
                 driver.wait()
     if refused:
-        repo.refuse(REFUSALS[refused], log=log, item=item, command=command, pid=server)
+        repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
+                    pid=driver.pid if refused == "driver" else server)
     return result
 
 

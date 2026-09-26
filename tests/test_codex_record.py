@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
-from test_codex_worker import _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
+from test_codex_worker import PIN, _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
 
 STORY = "FORGE-WARM-1"
 KILL = getattr(signal, "SIGKILL", signal.SIGTERM)  # on Windows os.kill ends a process either way
@@ -372,6 +372,24 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
         assert _saved(record) == saved and _up(stub)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _down(stub)
+
+    if os.name != "nt":  # the stand-in Python is a shell script
+        # A macOS framework Python starts itself again under another command right after it
+        # starts; here the SDK's Python is a script that does so a second on. Forge still knows
+        # its driver by the command it runs under, and the next forge work after a crash stops it.
+        real = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
+        env = tmp_path / "data" / "forge" / "codex-sdk" / real.name
+        (env / "bin").mkdir(parents=True)
+        shutil.copy(real / "forge-sdk-ready", env)
+        (env / "bin" / "python").write_text(f'#!/bin/sh\nsleep 1\nexec "{real}/bin/python" "$@"\n',
+                                            encoding="utf-8")
+        (env / "bin" / "python").chmod(0o755)
+        monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+        work, saved, stub = _held(repo, calls, record, "stall")
+        _crash(work, saved)
+        assert repo.forge("work", "BOARD/PAGE").returncode == 0
+        assert _down(stub) and _down(saved["driver"]["pid"])
+        monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
 
     # Codex that never starts gets two minutes (a second here); then the driver ends its group,
     # and forge work refuses with the log's path.
