@@ -6,12 +6,12 @@ Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
 
-import csv
 import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 import uuid
 from pathlib import Path
 
@@ -155,14 +155,26 @@ def _running(pid: int) -> bool:
     return True
 
 
-def _app_server_left(pid: int) -> bool:
-    """Whether the reported Codex process still runs. On Windows an id is reused within moments,
-    so a process there only counts when it is the stub's cmd.exe shim, not whatever took the id."""
-    if os.name != "nt":
-        return _running(pid)
-    listed = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
-                            capture_output=True, text=True).stdout
-    return any(row[:2] == ["cmd.exe", str(pid)] for row in csv.reader(listed.splitlines()))
+def _identity(pid: int) -> dict | None:
+    """The process with this id by its start time and command, or None when there is none."""
+    if os.name == "nt":
+        done = subprocess.run(["powershell", "-NoProfile", "-Command", "$p = Get-CimInstance "
+                               f"Win32_Process -Filter 'ProcessId = {pid}'; if (!$p) {{ exit 3 }}; "
+                               "$p.CreationDate.ToString('o'); $p.CommandLine"],
+                              capture_output=True, text=True)
+        started, _, command = done.stdout.strip().partition("\n")
+    else:
+        done = subprocess.run(["ps", "-ww", "-o", "lstart=,command=", "-p", str(pid)],
+                              capture_output=True, text=True)
+        *start, command = done.stdout.split(None, 5) or [""]
+        started = " ".join(start)
+    return {"pid": pid, "started": started.strip(), "command": command.strip()} if done.stdout.strip() else None
+
+
+def _left(server: dict) -> bool:
+    """Whether the process Forge recorded for the app-server still runs. A reused id has another
+    start time, or another command, so it never passes for it, even when it is also a cmd.exe."""
+    return _identity(server["pid"]) == server
 
 
 def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
@@ -318,6 +330,20 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     turns = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.log"
     work_log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
+    records = repo.path / ".git" / "forge" / "threads"
+    # The check that a process is left tells a live one from a reused id, even one that is also a
+    # cmd.exe: the same id with another start time or command is not the recorded process.
+    live = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        lived = _identity(live.pid)
+        assert _left(lived)
+        assert not _left({**lived, "started": "an earlier start"})
+        assert not _left({**lived, "command": "cmd.exe /c other"})
+    finally:
+        live.kill()
+        live.wait()
+    assert not _left(lived)
+    servers = []  # each run's app-server as Forge recorded it, read before the next run clears it
     started = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
                "started": NOW}
     ended = {"conversation": "thr-stub-1", "turn": "turn-stub-1", "kind": "Build",
@@ -335,11 +361,13 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     # On Windows the stub runs through its .cmd shim, so the process the client started, and the
     # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.
     assert pid == stub if os.name != "nt" else pid not in (stub, os.getpid())
-    assert not _app_server_left(pid)
+    servers.append(json.loads((records / "task" / "BOARD" / "PAGE.json").read_text("utf-8"))["app_server"])
+    assert servers[-1]["pid"] == pid and not _left(servers[-1])
 
     # A fix's turn log sits in its own folder.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
     assert repo.forge("work", "fix-the-login-typo").returncode == 0
+    servers.append(json.loads((records / "fix" / "fix-the-login-typo.json").read_text("utf-8"))["app_server"])
     fix = repo.path / ".git" / "forge" / "threads" / "fix" / "fix-the-login-typo.log"
     assert [line["kind"] for line in _lines(fix)] == ["Lite", "Lite"]
 
@@ -351,6 +379,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert failed.stderr == (f"The Codex turn didn't complete: Codex reported it failed; its log is "
                              f"{work_log}.\nNext: forge work BOARD/PAGE\n")
     assert "Codex ended the turn: failed (stub codex: the model gave up)" in failed.stdout
+    servers.append(json.loads((records / "task" / "BOARD" / "PAGE.json").read_text("utf-8"))["app_server"])
     assert _lines(turns)[2:] == [started, {**ended, "status": "failed", "input_tokens": None,
                                            "cached_input_tokens": None, "output_tokens": None}]
 
@@ -361,7 +390,9 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert vanished.stderr == (f"The Codex turn didn't complete: Codex never reported its end; its "
                                f"log is {work_log}.\nNext: forge work BOARD/PAGE\n")
     assert _lines(turns)[4:] == [started]
+    servers.append(json.loads((records / "task" / "BOARD" / "PAGE.json").read_text("utf-8"))["app_server"])
     reported = [int(line.rpartition(" ")[2]) for log in work_log.parent.glob("work-*.log")
                 for line in log.read_text("utf-8").splitlines()
                 if line.startswith("Codex app-server: process ")]
-    assert len(reported) == 4 and not any(_app_server_left(pid) for pid in reported)
+    assert len(reported) == 4 and sorted(server["pid"] for server in servers) == sorted(reported)
+    assert not any(_left(server) for server in servers)
