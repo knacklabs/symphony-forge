@@ -29,8 +29,9 @@ So the agent has to act as the engineer's product partner: find the real problem
 is worth building, and check afterwards whether it paid off.
 
 The new Forge doesn't carry gstack. Its office-hours session is still the best way to shape a new
-project, or an ask no confirmed spec covers, so the agent uses it for exactly that, and a short
-interview of its own handles everyday asks.
+project, or an ask no confirmed spec covers: it is a longer design session that challenges the
+premise, weighs alternatives and ends in a design doc, which a short interview doesn't do. So the
+agent uses it for exactly that, and a short interview of its own handles everyday asks.
 
 This is also the first story built on the new Forge from start to finish: one cold read, one
 approval, and its own tasks, each closed and merged the new way. How long its tasks take starts the
@@ -96,12 +97,21 @@ New moving parts: gstack's office-hours skill, run by the agent (never by Forge'
   size, and "gstack stays, only for office-hours"), then saved, read once and confirmed in its own
   fix. Its success measure changes to the share of specs whose Why names a problem card, checked on
   2026-12-15. Its one cold read runs on the other model family from the coordinator's (Codex when
-  Claude coordinates), with the models in `forge.toml`'s `[models.grill]`.
+  Claude coordinates), with the models in `forge.toml`'s `[models.grill]`. Decision 0089
+  ("discovery without gstack") is narrowed, not replaced: gstack stays only for office-hours, and
+  the amended spec says so (owner decision, 2026-09-26, recorded in the spec rather than a new
+  decision).
 - **Order.** The three tasks run one after another, because each pair shares a file. PAYBACK and
   MEASURE both add a command row and a guide line, and MEASURE and DISCOVER both change
   `forge next`. DISCOVER writes all the skill text last, so every command it names already exists.
   PAYBACK pins the payback flags and output, and MEASURE pins the Success measure format and
-  `spec measure`.
+  `spec measure`. MEASURE also pins the shared `forge next` seam: a due check is listed before the
+  discovery prompt, with one test crossing both.
+- **Choosing among options.** Each option that builds something gets its own `forge spec payback`
+  line. The agent recommends the option with the fewest months among those answering "build" or
+  "smallest slice first"; a tie goes to the smaller build. If none does, it recommends "don't
+  build", or "find out first" when an option's value can't be estimated. PAYBACK's reference
+  examples pin this.
 - **Harvest** from branch `feat/FORGE-FDE-1-FDE` (local only, head `a529a1ee`):
   - `factory/scripts/forge_cli/payback.py` becomes `src/forge/payback.py`. Keep the pure function,
     the `Fraction` arithmetic, the exact boundaries and the display rounding. Its error messages move
@@ -148,9 +158,11 @@ New moving parts: gstack's office-hours skill, run by the agent (never by Forge'
 
   It prints one sentence naming the spec and its metric, then two Next lines: a fix, then
   `forge spec measure`.
-- **Discovery first.** When `plans/roadmap.json` has no items and no story or fix is in progress,
-  `forge next` says to start with discovery as the skill's Discovery section says, and names a fix
-  that fills the discovery notes and the brief.
+- **Discovery first.** When `plans/roadmap.json` has no items, no story or fix is in progress, and
+  the discovery notes hold no filled card (every card's fields still read `unknown`), `forge next`
+  says to start with discovery as the skill's Discovery section says, and names a fix that fills
+  the discovery notes and the brief. Once a card is filled, it names the next planning step
+  instead: writing the spec.
 - **Discovery section of the skill** (DISCOVER):
   - The asking rules: one question per turn, about past events, no solutions during discovery, and
     praise isn't evidence. Fact questions get neutral choices and decisions get the recommendation
