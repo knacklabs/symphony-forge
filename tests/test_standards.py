@@ -63,6 +63,7 @@ def test_36_client_apps_simple(repo, tmp_path):
         "redis", "queue", "terraform", "oidc", "monitoring"}
 
     _carried_over_rules_are_on_their_pages()
+    _logger_example_writes_the_documented_fields(tmp_path)
 
     # Every worker brief, for a task or a fix, carries the whole page.
     log = install_claude(repo)
@@ -120,7 +121,7 @@ def _carried_over_rules_are_on_their_pages():
         assert "CDK" not in path.read_text(encoding="utf-8"), path.name
 
 
-def test_36_logger_example_writes_the_documented_fields(tmp_path):
+def _logger_example_writes_the_documented_fields(tmp_path):
     # Run backend.md's own logger and its own call: a fixed message, the context object and the
     # required fields at the top level, none nested inside `message`.
     assert shutil.which("node"), "needs node to run the documented TypeScript"
