@@ -4,13 +4,13 @@
   "done_when": "Those three tests move unchanged to their own test file with its own STORY key for the record-retry fix, and tests/test_codex_record.py keeps only FORGE-WARM-1 criteria tests; the full suite passes",
   "kind": "fix",
   "review": {
-    "commit": "26e517a43546e048a27489549507429b2a47dddf",
+    "commit": "b3ddf987a7892105e291bfe9fb868c87a8c4f493",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "8f423cc92fa45ce421c3b2f757692ae87417d4a3d7412893a0c58f19b8279f0d"
+    "tree": "d2d1beff39bbbacb4ce2ba88baff009ce73db969dd2a165659ce7f7b80d13bfa"
   },
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T16:28:04+00:00",
@@ -18,6 +18,10 @@
     },
     {
       "at": "2026-09-26T16:36:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T17:19:51+00:00",
       "step": "review"
     }
   ],
