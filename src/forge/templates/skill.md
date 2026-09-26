@@ -21,8 +21,11 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "What should we build?" or "Find the real problem" | Discovery, below |
+| "Is it worth building?" | `forge spec payback --build-days <days> --day-rate <rate>` plus a value group |
 | "Save this spec" | `forge spec save <slug>` |
 | "The spec is confirmed" | `forge spec confirm <slug> --by "<name>"` |
+| "Record the check-back result" | In a fix: `forge spec measure <slug> --result "<result>"` |
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
@@ -33,10 +36,45 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
 The human approves stories, chooses between options and merges. Everything else is yours. Ask
-one question at a time, with options and your recommendation first.
+one question at a time: a decision gets options with your recommendation first, a question of
+fact gets neutral choices.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
+
+## Discovery
+
+Every ask is a guess about a problem: find the problem before anything is planned. The worked
+example, question bank and customer call script are in [the reference page](fde.md).
+
+**By size.** On a fix or an everyday story, interview the engineer, and through them the
+customer: one question per turn, about something that already happened. Offer no solutions while
+discovering, and praise isn't evidence. A question of fact gets neutral choices; a decision gets
+your recommendation first. Add a one-line `Why I ask:` to each question until the engineer says
+they know why. Ask at most two questions for a fix and eight for a story, then write what is
+still unanswered as `unknown`.
+
+**Office-hours.** On a new project, or an ask no confirmed spec covers, run gstack's
+`/office-hours` first. At its end it names its design doc, kept under
+`~/.gstack/projects/<project>/` as `*-design-*.md`; copy that file unchanged into `docs/context/`
+in the discovery fix. Fill the card from it, write what it leaves open as `unknown`, and name the
+doc in the card's Evidence. Without `/office-hours`, say it comes with gstack
+(github.com/garrytan/gstack), then run your own interview with the story limit. Use gstack for
+nothing else.
+
+**The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
+adding the section to an older file on first use: `### <short problem title>`, then Job,
+Workaround, Cost, Who feels it, How often and Evidence. Write customer notes in `docs/context/`
+into cards and leave the notes where they are. Name the chosen card's heading in the brief's
+Summary and the spec's Why. Costs use rounded rates, never real salaries.
+
+**Options.** For the chosen problem, offer two to four options, always with `Don't build` and
+`Smallest slice`, plus `Use what they have` (a setting, report or process change in tools they
+already run) whenever one could do the job. Give each option that builds something its own
+`forge spec payback` line, and recommend the one with the fewest months among those answering
+build or smallest slice first; a tie goes to the smaller build. If none does, recommend don't
+build, or find out first when an option's value can't be estimated. The human chooses; write the
+choice and one line of why into the spec's Behaviour.
 
 ## Planning a story
 
@@ -63,10 +101,7 @@ Rules for the client's app in every phase; Forge's own principles govern Forge. 
 in the cold reads, the review, the functional check and the check-back, and add no record.
 
 **Challenge first.** Treat every feature the client or the FDE asks for as a guess about a
-problem. Ask one question at a time: what happened last time, what it cost, what if we build
-nothing. For a decision, give 2 to 4 options, your recommendation first with its reason, always
-with `Don't build` and `Smallest slice`, plus `Use what they have` (a setting, report or process
-change in tools they already run) whenever one could do the job.
+problem, and find that problem through Discovery before building.
 
 1. Problem first: a spec's Why names the problem and what today's workaround costs.
 2. Smallest slice: the first story is the thinnest end-to-end path that moves the success
@@ -105,7 +140,8 @@ before anything else. If the code proves the finding wrong, dismiss it with
 
 ## Check-back
 
-On a spec's check date, write the measured result under its success measure (as a fix), then ask
-the human one question. Target met: "Stop here" (recommended) or "Next problem card". Target
+Once every story from a spec is done and its check date has passed, `forge next` lists the check.
+Measure it, record it in a fix with `forge spec measure <slug> --result "<result>"`, then ask the
+human one question. Target met: "Stop here" (recommended) or "Next problem card". Target
 missed: "Change the slice", "Remove it" or "Find out why". Adding features is never the default.
 Ask which parts the client doesn't use; each becomes a removal story on the roadmap.
