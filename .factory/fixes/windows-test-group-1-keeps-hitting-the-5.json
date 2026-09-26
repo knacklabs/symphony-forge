@@ -3,11 +3,30 @@
   "branch": "fix/windows-test-group-1-keeps-hitting-the-5",
   "done_when": "forge-next.yml splits the Windows tests into three groups instead of two, keeping the 5-minute cap; nothing else in the workflow changes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "264dd4882be9753c11bbba52e073703f0138817d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The assertion counts matching entries but accepts any group digit. Changing the third Windows entry from `group: 3` to `group: 2` would still pass, despite leaving one third of the suite untested: `.github/workflows/forge-next.yml:35` passes that number directly to pytest's `--group`. No other inspected test checks group coverage. Under the required test audit, assert that the Windows entries contain exactly `(1, 3)`, `(2, 3)`, and `(3, 3)` for `(group, groups)`.",
+        "file": "tests/test_rules.py",
+        "line": 122,
+        "priority": "P1",
+        "title": "Not done: verify Windows runs each of the three test groups exactly once"
+      }
+    ],
+    "status": "blocked",
+    "tree": "51c6cbd418867be32614c7eb04151111191d5802beac44d6577d803226d6ef75"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T14:51:24+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T14:52:56+00:00",
+      "step": "review"
     }
   ],
   "why": "Windows test group 1 keeps hitting the 5-minute job cap in .github/workflows/forge-next.yml and is cancelled without a result, so pull requests need reruns"
