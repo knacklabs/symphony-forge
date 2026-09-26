@@ -1,28 +1,21 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "6f0ad0cae9cdba2d7cc4789c2cd9eacf794193a2",
+    "commit": "3b6bc25a9c64c6c886cf70b44765755a17ff01e4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied Functional check exercises approval refusal and conversation replacement, but skips item 9's crash recovery entirely and item 7's change delivery and four drift cases. The review contract explicitly requires the walkthrough to cover every item this part owns. Exercise those paths through `forge work` and record the observed prompts, recovery statuses, and refusals in the Functional check paragraph.",
-        "file": "src/forge/worker.py",
-        "line": 64,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      },
-      {
-        "body": "This new lockfile is outside the permitted scope and adds no dependency resolution needed for continuation, approval checking, or recovery. `pyproject.toml:10\u201311` declares Python compatibility and an empty dependency list; the Codex SDK remains independently pinned and installed by Forge. Remove the unrelated lockfile from this change.",
+        "body": "This new lockfile is outside the allowed scope and supplies no dependency needed for conversation continuation, approval checks, or recovery. `pyproject.toml:11` declares an empty dependency list, and the Codex SDK remains separately pinned and installed in its own environment. Remove the unrelated lockfile from this branch.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
         "title": "Simpler: new uv.lock \u2192 existing package configuration"
       }
     ],
-    "status": "blocked",
-    "tree": "94b12643071e64830e05d746c9a043ea7cdd111632d9cc945107d8adb9ce6428"
+    "status": "clean",
+    "tree": "02a7258fde3164f27200d6641a13460feda155a954547291562fb988804d376e"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T10:24:56+00:00",
@@ -50,6 +43,10 @@
     },
     {
       "at": "2026-09-26T13:40:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T13:50:42+00:00",
       "step": "review"
     }
   ]
