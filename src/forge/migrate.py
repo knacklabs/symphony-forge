@@ -171,8 +171,10 @@ def migrate(args: argparse.Namespace) -> int:
     if busy:
         repo.refuse(REFUSALS["in_flight"], items="; ".join(busy))
     plan = _plan(top, ref, own)
-    for rel in _touched(plan):
-        if not (top / rel).parent.resolve().is_relative_to(top.resolve()):
+    # sync's own list of the adapters it will write (their text is not needed here).
+    adapters = sync.files(top, {"version": f"v{__version__}", "test": plan["test"]})
+    for rel in [*_touched(plan), *adapters]:
+        if not (top / rel).resolve().is_relative_to(top.resolve()):
             repo.refuse(REFUSALS["outside"], path=rel)
     # A moved file never lands on a file in the tree, or on another moved file.
     landed = dict.fromkeys(_tree(top, ref, KEPT, "docs/context"), "")

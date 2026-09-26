@@ -332,6 +332,12 @@ def _outside(repo, tmp_path: Path) -> None:
     _land(repo, "A link out of the repo")
 
 
+def _linked_adapter(repo, tmp_path: Path) -> None:
+    (repo.path / ".claude/settings.json").unlink()
+    os.symlink(tmp_path / "elsewhere.json", repo.path / ".claude/settings.json")
+    _land(repo, "An adapter file linked out of the repo")
+
+
 def _agents_era(repo, tmp_path: Path) -> None:
     repo.git("rm", "-r", "-q", "factory")
     repo.write(".agents/README.md", "# The older layout\n")
@@ -382,6 +388,10 @@ CASES = {
     "a path outside the repo": _refusal(
         "leads outside this repo, so Forge won't change anything through it.",
         "remove that link, then forge migrate --dry-run", _outside),
+    # sync writes the adapters only after the move began, so they are checked before any change.
+    "an adapter file linked out of the repo": _refusal(
+        ".claude/settings.json leads outside this repo, so Forge won't change anything through it.",
+        "remove that link, then forge migrate --dry-run", _linked_adapter),
     "an .agents/-era layout": _refusal(
         "origin/main has no copied-in factory/ layout to move", "forge next", _agents_era),
     "no copied-in commit": _refusal(
@@ -392,7 +402,8 @@ CASES = {
 
 @pytest.mark.parametrize("case", [
     pytest.param(name, marks=pytest.mark.skipif(
-        name == "a path outside the repo" and os.name == "nt",
+        name in ("a path outside the repo", "an adapter file linked out of the repo")
+        and os.name == "nt",
         reason="making a symlink needs extra rights on Windows")) for name in CASES])
 def test_30_migrate(repo, gh, tmp_path, monkeypatch, case):
     monkeypatch.setenv("FORGE_NOW", "2026-09-25T12:00:00+00:00")
