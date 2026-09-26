@@ -47,9 +47,9 @@ Risks: none
 # A stub reader: it records each call, prints claude-says.md (or "No findings."), and writes the
 # file named in claude-touch, to stand for a reader that changes a file.
 READER = """#!{python}
-import json, os, pathlib, sys
+import io, json, os, pathlib, sys
 here = pathlib.Path(__file__).resolve().parent
-prompt = sys.stdin.read()
+prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()  # UTF-8 whatever the code page
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": sys.argv[1:], "cwd": os.getcwd(), "prompt": prompt}}) + "\\n")
 touch = here / "claude-touch"
@@ -60,10 +60,15 @@ sys.stdout.write(said.read_text("utf-8") if said.exists() else "No findings.\\n"
 """
 
 
+# Claude's cold-read models, as a top-level line, so keys added after it stay top-level.
+GRILL = 'models.grill.claude = { model = "opus", effort = "high" }\n'
+
+
 def setup(repo, kind="forge-source", keys=("SHOP",)):
-    """forge.toml pinned to this Forge, a roadmap with these keys, and a stub claude reader."""
+    """forge.toml pinned to this Forge with the grill kind's models, a roadmap with these keys, and
+    a stub claude reader."""
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "{kind}"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "{kind}"\n{GRILL}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up Forge")

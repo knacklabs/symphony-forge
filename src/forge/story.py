@@ -31,7 +31,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import repo
+from forge import codex, repo, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -45,6 +45,8 @@ REFUSALS = {
     "discarded": ("A file changed during the cold read of {doc}, so the read was discarded.",
                   "git status, then forge read {target}"),
     "reader_failed": ("The cold read of {doc} failed: {problem}", "forge read {target}"),
+    "coordinator": ("Forge can't tell which app is coordinating, so it can't pick the other one "
+                    "to read.", "run forge read {target} from Claude Code or Codex"),
     "already_read": ("{doc} already has its one cold read.", "forge read {target} --amended"),
     "no_read": ("{doc} has no cold read.", "forge read {target}"),
     "changed": ("{doc} changed after its cold read.", "forge read {target} --amended"),
@@ -64,10 +66,9 @@ FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
-READERS = {  # read-only backends; the prompt goes on stdin
-    "claude": lambda model: ["claude", "-p", "--model", model, "--permission-mode", "plan"],
-    "codex": lambda model: ["codex", "exec", "--sandbox", "read-only", "-"],
-}
+# The variable each coordinating app sets in the commands it runs, and the other family, which does
+# the cold read, read-only. Codex's is its conversation's id.
+READERS = {"CLAUDECODE": "codex", "CODEX_THREAD_ID": "claude"}
 
 
 # --- commands ------------------------------------------------------------------------------
@@ -128,21 +129,34 @@ def read(args: Any) -> int:
         repo.refuse(REFUSALS["already_read"], doc=rel, target=target)
     if is_story:
         _parsed(doc, rel)
-    config = repo.config(top)
+    readers = [reader for variable, reader in READERS.items() if os.environ.get(variable)]
+    if len(readers) != 1:  # neither app, or one running inside the other
+        repo.refuse(REFUSALS["coordinator"], target=target)
+    reader, config = readers[0], repo.config(top)
+    models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
     prompt, head = (TEMPLATES / "cold-read.md").read_text(encoding="utf-8").split("<!-- forge:notes -->\n")
-    read_hash, before = _hash(top, doc), _snapshot(top)
-    done = repo.run(*READERS[config["workers"]](config["model"]), cwd=top,
-                    input=Template(prompt).safe_substitute(path=rel, doc=_text(doc)))
+    before = _snapshot(top)  # first, so any change from here on discards the read
+    text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
+    read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
+                               capture_output=True, check=True).stdout.decode().strip()
+    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"))
+    if reader == "claude":
+        done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
+        said, failed = done.stdout.strip(), done.returncode
+        problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
+    else:
+        ran = codex.run(top, target, "Grill", f"Grill · {target} · {rel}", prompt, "read-only")
+        said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
+        problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
+                   "Codex never reported the turn's end." if failed else "it wrote nothing.")
     if _snapshot(top) != before:
         repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
-    said = done.stdout.strip()
-    if done.returncode or not said:
-        problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
+    if failed or not said:
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
     if not FINDING.search(said) and not said.lower().startswith("no findings"):
         said = f"1. {said}"  # ponytail: unstructured output is one finding, so it still needs a disposition
-    reader = "codex" if config["workers"] == "codex" else f"claude ({config['model']})"
-    record = {"reader": reader, "read_at": repo.now(), "read_hash": read_hash, "amended_hash": ""}
+    record = {"reader": f"{reader} ({repo.models(config, 'grill', reader)['model']})",
+              "read_at": repo.now(), "read_hash": read_hash, "amended_hash": ""}
     _write(notes, _notes(record, f"{head.strip()}\n\n{said}\n"))
     if is_story:
         state = repo.read_state(target, top) or {}

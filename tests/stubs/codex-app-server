@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Stub Codex app-server: speaks the app-server's JSON-RPC over stdio, just enough for one turn.
+
+It logs its process id, every message it gets and every answer to its own requests in
+codex-app-server.jsonl beside itself. Every response and notification carries a field the SDK
+doesn't know. During the turn it asks for one known approval (to run a command) and one request
+whose method no SDK knows, and runs what they ask, writing ran-<id> in the thread's folder, unless
+the answer is a decline. Its message echoes the config overrides the thread started with.
+STUB_CODEX_STATUS sets the turn's final status (completed by default; "vanish" exits before the
+turn ends), and STUB_CODEX_NO_USAGE leaves out the token counts. STUB_CODEX_TOUCH names a file it
+writes in the thread's folder during the turn, to stand for a reader that changes a file.
+`--version` prints the version.
+"""
+import json
+import os
+import pathlib
+import sys
+
+VERSION = "0.156.1"
+THREAD, TURN = "thr-stub-1", "turn-stub-1"
+DECLINE = {"decision": "decline"}
+LOG = pathlib.Path(__file__).resolve().parent / "codex-app-server.jsonl"
+
+
+def log(**entry):
+    with open(LOG, "a", encoding="utf-8") as out:
+        out.write(json.dumps(entry) + "\n")
+
+
+def send(**message):
+    sys.stdout.write(json.dumps(message) + "\n")
+    sys.stdout.flush()
+
+
+def reply(request, result):
+    send(id=request["id"], result=dict(result, stubUnknownField=True))
+
+
+def notify(method, **params):
+    send(method=method, params=dict(params, stubUnknownField=True))
+
+
+def finish_turn(config, status):
+    item = {"type": "agentMessage", "id": "msg-1", "text": "stub codex: built it with "
+            + json.dumps(config, sort_keys=True)}
+    notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=2, item=item)
+    command = {"type": "commandExecution", "id": "cmd-1", "command": "touch ran-stub-ask-1",
+               "commandActions": [], "cwd": "/", "status": "declined"}
+    notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=command)
+    # A failing test run: 45 lines of output, streamed as a delta and then whole at the end.
+    output = "".join(f"stub test line {n}\n" for n in range(1, 45)) + "FAILED stub diagnostic\n"
+    notify("item/commandExecution/outputDelta", threadId=THREAD, turnId=TURN, itemId="cmd-2",
+           delta="stub delta chunk\n")
+    tests = {"type": "commandExecution", "id": "cmd-2", "command": "pytest -q",
+             "commandActions": [], "cwd": "/", "status": "failed", "exitCode": 1,
+             "aggregatedOutput": output}
+    notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=tests)
+    patch = {"type": "fileChange", "id": "patch-1", "status": "declined",
+             "changes": [{"path": "web/board.py", "kind": {"type": "update"}, "diff": ""}]}
+    notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=patch)
+    if not os.environ.get("STUB_CODEX_NO_USAGE"):
+        last = {"inputTokens": 1200, "cachedInputTokens": 1000, "outputTokens": 300,
+                "reasoningOutputTokens": 0, "totalTokens": 1500}
+        notify("thread/tokenUsage/updated", threadId=THREAD, turnId=TURN,
+               tokenUsage={"last": last, "total": last})
+    turn = {"id": TURN, "items": [], "status": status, "startedAt": 1, "completedAt": 4}
+    if status == "failed":
+        turn["error"] = {"message": "stub codex: the model gave up"}
+    notify("turn/completed", threadId=THREAD, turn=turn)
+
+
+def main():
+    if sys.argv[1:] == ["--version"]:
+        print("codex-cli " + VERSION)
+        return
+    log(pid=os.getpid(), args=sys.argv[1:])
+    status = os.environ.get("STUB_CODEX_STATUS", "completed")
+    cwd, config, asked = ".", None, {}
+    for line in sys.stdin:
+        message = json.loads(line)
+        if "method" not in message:  # the answer to one of this stub's own requests
+            method, command = asked.pop(message["id"])
+            result = message.get("result")
+            ran = result != DECLINE
+            if ran:
+                (pathlib.Path(cwd) / ("ran-" + message["id"])).write_text(command, encoding="utf-8")
+            log(answered=method, result=result, ran=ran)
+            if not asked:
+                if os.environ.get("STUB_CODEX_TOUCH"):
+                    (pathlib.Path(cwd) / os.environ["STUB_CODEX_TOUCH"]).write_text(
+                        "changed by the reader\n", encoding="utf-8")
+                if status == "vanish":
+                    return
+                finish_turn(config, status)
+            continue
+        method, params = message["method"], message.get("params") or {}
+        log(method=method, params=params)
+        if "id" not in message:  # a notification, such as initialized
+            continue
+        if method == "initialize":
+            reply(message, {"userAgent": "codex_app_server/" + VERSION,
+                            "serverInfo": {"name": "codex", "version": VERSION}})
+        elif method == "thread/start":
+            cwd, config = params.get("cwd", "."), params.get("config")
+            thread = {"id": THREAD, "cliVersion": VERSION, "createdAt": 0, "updatedAt": 0,
+                      "cwd": cwd, "ephemeral": False, "modelProvider": "openai", "preview": "",
+                      "sessionId": "stub-session", "source": "appServer",
+                      "status": {"type": "idle"}, "turns": [], "stubUnknownField": True}
+            reply(message, {"approvalPolicy": params.get("approvalPolicy", "on-request"),
+                            "approvalsReviewer": "user", "cwd": cwd,
+                            "model": (config or {}).get("model", "stub-model"),
+                            "modelProvider": "openai", "sandbox": {"type": "dangerFullAccess"},
+                            "thread": thread})
+        elif method == "thread/name/set":
+            reply(message, {})
+        elif method == "turn/start":
+            reply(message, {"turn": {"id": TURN, "items": [], "status": "inProgress"}})
+            notify("turn/started", threadId=THREAD, turn={"id": TURN, "items": [],
+                                                          "status": "inProgress"})
+            asked = {"stub-ask-1": ("item/commandExecution/requestApproval", "touch ran-stub-ask-1"),
+                     "stub-ask-2": ("item/stubFuture/requestSomething", "rm -rf ran-stub-ask-2")}
+            for ask, (ask_method, command) in asked.items():
+                send(id=ask, method=ask_method,
+                     params={"threadId": THREAD, "turnId": TURN, "itemId": "cmd-1",
+                             "command": command, "cwd": cwd, "stubUnknownField": True})
+        else:
+            send(id=message["id"], error={"code": -32601, "message": "stub: no " + method})
+
+
+main()

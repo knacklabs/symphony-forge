@@ -208,6 +208,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", base, "--engine", "codex",
                 "--max-priority", "P3", "--prompt", prompt, "--json-output", str(out)]
+        chosen = cfg["models"].get("review")
+        if chosen:  # forge.toml's review kind: its model, and its effort when it sets one
+            argv += ["--model", f"codex={chosen['model']}"]
+            argv += ["--thinking", f"codex={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree)
         if launcher:
             argv += ["--codex-bin", str(launcher)]

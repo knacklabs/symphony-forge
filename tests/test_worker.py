@@ -30,7 +30,9 @@ def calls(log: Path) -> list[dict]:
 def test_17_worker(repo, gh, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nmodel = "sonnet"\ntest = "pytest -q"\n')
+    repo.write("forge.toml", f'version = "{version}"\ntest = "pytest -q"\n'
+                             'models.build = { model = "sonnet", effort = "medium" }\n'
+                             'models.lite = { model = "sonnet", effort = "medium" }\n')
     # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't, and one sits
     # next to its code.
     repo.write("tests/test_old_board.py", "from web import board\n")
@@ -51,7 +53,8 @@ def test_17_worker(repo, gh, monkeypatch):
     assert built.returncode == 0, built.stderr
     assert "stub claude: built it" in built.stdout
     call = calls(log)[-1]
-    assert call["args"][:5] == ["-p", "--model", "sonnet", "--permission-mode", "acceptEdits"]
+    assert call["args"][:7] == ["-p", "--model", "sonnet", "--effort", "medium",
+                                "--permission-mode", "acceptEdits"]
     assert "Bash(git commit:*)" in call["args"] and "Bash(pytest -q:*)" in call["args"]
     assert Path(call["cwd"]).resolve() == folder.resolve()
     brief = call["brief"]
@@ -118,13 +121,3 @@ def test_17_worker(repo, gh, monkeypatch):
     assert failed.returncode == 1
     assert failed.stderr.startswith("The worker stopped with exit code 3; its log is ")
     assert failed.stderr.endswith("work-fix-the-login-typo.log.\nNext: forge work fix-the-login-typo\n")
-
-    # Codex workers arrive with the warm-threads story.
-    count = len(calls(log))
-    repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n')
-    refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.returncode == 1
-    assert refused.stderr == (
-        "Codex workers come with the warm-threads story; v1 runs its workers on Claude Code.\n"
-        'Next: set workers = "claude" in forge.toml, then forge work BOARD/PAGE\n')
-    assert len(calls(log)) == count

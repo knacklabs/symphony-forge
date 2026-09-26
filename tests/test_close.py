@@ -176,7 +176,8 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     conftest._install(repo.bin, "codex", CODEX_STUB.format(python=sys.executable))
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nchecks = ["tests", "forge-pr-check"]\n'
-                             'interfaces = ["**/routes/**"]\n')
+                             'interfaces = ["**/routes/**"]\n'
+                             'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Run on Forge")
@@ -358,6 +359,9 @@ def test_2_gates_check_outcomes(env, case):
 
 @pytest.mark.parametrize("kind", ["task", "fix"])
 def test_18_close(env, kind):
+    toml = env.repo.path / "forge.toml"  # the review kind's model and effort go to Autoreview
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+               + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
     branch = "task/SHOP-T1" if kind == "task" else "fix/tidy-readme"
     moved = env.commit(env.repo.path, "NEWS.md", "The shop opens.\n")  # main moves on meanwhile
@@ -372,8 +376,10 @@ def test_18_close(env, kind):
     [call] = env.review_calls()
     env.repo.git("merge-base", "--is-ancestor", moved, call["head"])  # raises if main wasn't merged
     options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
-        "--mode": "branch", "--base": "origin/main", "--engine": "codex", "--max-priority": "P3"}
+    assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority",
+                                             "--model", "--thinking")} == {
+        "--mode": "branch", "--base": "origin/main", "--engine": "codex", "--max-priority": "P3",
+        "--model": "codex=gpt-6-astra", "--thinking": "codex=high"}
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones
