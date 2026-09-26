@@ -131,7 +131,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
     The item's record gets the driver's identity as soon as it starts, before Codex does, then the
-    app-server's, the conversation, and HEAD when the turn ends. The item's turn log gets a
+    app-server's, the conversation, and HEAD when the turn ends. The driver waits for each of the
+    app-server and the conversation to be on record before it goes on. The item's turn log gets a
     "started" line when the turn starts, and an end line only when Codex reports the end. Returns
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
@@ -164,6 +165,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         # One line, and stdin stays open: the driver ends its group once Forge's end closes.
         driver.stdin.write(json.dumps(request) + "\n")
         driver.stdin.flush()
+
+        def recorded() -> None:
+            """Tell the driver the id it sent is on record, so it goes on."""
+            with contextlib.suppress(OSError):  # a driver that has gone waits for nothing
+                driver.stdin.write("recorded\n")
+                driver.stdin.flush()
         try:
             for line in driver.stdout:
                 try:
@@ -174,12 +181,14 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = line.rstrip("\n")
                 elif "pid" in said:
                     _record(record, app_server=identity(said["pid"]))
+                    recorded()
                     text = f"Codex app-server: process {said['pid']}"
                 elif "refused" in said:
                     refused, text = said["refused"], ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     _record(record, conversation=said["thread"])
+                    recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                 elif "turn" in said:
                     result["turn"] = said["turn"]
@@ -279,7 +288,8 @@ def identity(pid: int) -> dict[str, Any] | None:
     record, and its owner counts as running.
     """
     if os.name == "nt":
-        done = repo.run("powershell", "-NoProfile", "-Command",
+        # Every error stops the script (exit 1), so only a query that finds no process exits 3.
+        done = repo.run("powershell", "-NoProfile", "-Command", "$ErrorActionPreference = 'Stop'; "
                         f"$p = Get-CimInstance Win32_Process -Filter 'ProcessId = {pid}'; "
                         "if (!$p) { exit 3 }; $p.CreationDate.ToString('o'); $p.CommandLine")
         gone = done.returncode == 3

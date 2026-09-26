@@ -4,7 +4,9 @@ Forge sends one JSON request line on stdin: the checkout (cwd), the conversation
 the sandbox and the kind's settings (config). This prints one JSON line per step, in order: the
 app-server's process id, before anything else; the thread; the turn; each event and each declined
 request; then the turn's end with its status, error, final text and token usage, only when Codex
-reports it. Codex gets two minutes to start, or this prints a refusal and ends.
+reports it. After the app-server's id and after the thread's, this waits for Forge to answer with
+a line saying it has them on record, so nothing starts that Forge hasn't recorded. Codex gets two
+minutes to start, or this prints a refusal and ends.
 
 Forge starts this in its own process group and keeps stdin open while it runs. Once stdin closes,
 Forge has gone, and this ends the whole group, itself and the app-server it started, even while
@@ -31,6 +33,7 @@ LOCK = threading.Lock()
 START = 120  # the seconds Codex gets to start: Codex() waits on initialize with no timeout
 STARTING = threading.Lock()  # end() never falls between the app-server starting and SERVER
 SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
+RECORDED = threading.Semaphore(0)  # a release per line Forge sends once it has recorded an id
 
 
 def emit(**line: Any) -> None:
@@ -54,6 +57,7 @@ class Client(CodexClient):
             super().start()
             SERVER.append(self._proc.pid)
         emit(pid=self._proc.pid)
+        RECORDED.acquire()
 
 
 # ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
@@ -72,8 +76,10 @@ def end() -> None:
 
 
 def watch() -> None:
-    """End everything once Forge, the calling process, goes away: its end of stdin closes."""
-    sys.stdin.read()
+    """Pass on each line saying Forge recorded an id, and end everything once Forge, the calling
+    process, goes away: its end of stdin closes."""
+    for _ in sys.stdin:
+        RECORDED.release()
     end()
 
 
@@ -102,6 +108,7 @@ def main() -> int:
         thread = codex.thread_start(approval_mode=ApprovalMode.deny_all, sandbox=sandbox,
                                     cwd=request["cwd"], config=request["config"] or None)
         emit(thread=thread.id)
+        RECORDED.acquire()
         thread.set_name(request["name"])
         turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
         emit(turn=turn.id)

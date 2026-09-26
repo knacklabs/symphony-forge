@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
-from test_codex_worker import _codex_repo, _running, _stub, sdk_data  # noqa: F401 (a fixture)
+from test_codex_worker import _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
 
 STORY = "FORGE-WARM-1"
 KILL = getattr(signal, "SIGKILL", signal.SIGTERM)  # on Windows os.kill ends a process either way
@@ -34,6 +34,28 @@ done = subprocess.run([{tool!r}, *sys.argv[1:]], capture_output=True, text=True)
 sys.stdout.write(done.stdout)
 sys.stderr.write(done.stderr)
 sys.exit(done.returncode)
+"""
+# That tool, slow to read the app-server, the one process it finds that is neither forge nor its
+# driver: a second on, it copies the stub app-server's log to {seen}, the messages Codex had sent
+# by the time Forge had the app-server's identity.
+SLOW_SERVER = """#!{python}
+import shutil, subprocess, sys, time
+done = subprocess.run([{tool!r}, *sys.argv[1:]], capture_output=True, text=True)
+if done.stdout.strip() and not any(own in done.stdout for own in ("forge work", "codex_turn")):
+    time.sleep(1)
+    shutil.copy({calls!r}, {seen!r})
+sys.stdout.write(done.stdout)
+sys.stderr.write(done.stderr)
+sys.exit(done.returncode)
+"""
+# The real PowerShell, whose process query fails with an error that PowerShell's default lets the
+# script run on past.
+QUERY_FAILS = """#!{python}
+import subprocess, sys
+args = sys.argv[1:]
+at = args.index("-Command") + 1
+args[at] = "function Get-CimInstance {{ Write-Error 'stub: the query failed' }}; " + args[at]
+sys.exit(subprocess.run([{tool!r}, *args]).returncode)
 """
 # A ps, and on Windows a PowerShell, that can't read any process.
 BLIND = "#!/usr/bin/env python3\nimport sys\nsys.exit('stub: no process can be read')\n"
@@ -142,6 +164,7 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
+    tool = shutil.which(PS)  # the real one, before any stand-in
 
     if os.name != "nt":  # no SIGINT to send on Windows
         # The driver, then the app-server, are on record by id, start time and command before
@@ -186,6 +209,18 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     assert (saved["conversation"], saved["head"]) == ("thr-stub-1",
                                                       repo.git("rev-parse", "HEAD", cwd=folder))
 
+    # Codex waits for Forge to record the app-server: while Forge is slow to read its identity,
+    # no conversation starts.
+    seen = repo.path.parent / "seen.jsonl"
+    before = len(_sent(calls, "thread/start"))
+    _install(repo.bin, PS, SLOW_SERVER.format(python=sys.executable, tool=tool,
+                                              calls=str(calls), seen=str(seen)))
+    assert repo.forge("work", "BOARD/PAGE").returncode == 0
+    for fake in [*repo.bin.glob("ps*"), *repo.bin.glob("powershell*")]:
+        fake.unlink()
+    assert (len(_sent(seen, "thread/start")), len(_sent(calls, "thread/start"))) == (before,
+                                                                                    before + 1)
+
     # When Forge can't read who holds the lock, the owner counts as running: forge work refuses,
     # naming the lock.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
@@ -196,6 +231,9 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     assert blind.stderr == (f"Forge can't read the start time and command of process {os.getpid()}"
                             f", so it can't tell who holds {lock}; it counts it as held.\n"
                             f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
+    if os.name == "nt":  # a query that fails, where PowerShell runs on past the error, can't tell
+        _install(repo.bin, "powershell", QUERY_FAILS.format(python=sys.executable, tool=tool))
+        assert repo.forge("work", "BOARD/PAGE").stderr == blind.stderr
 
     # Once it can, a lock whose process id now belongs to another process is stale and cleared.
     for fake in [*repo.bin.glob("ps*"), *repo.bin.glob("powershell*")]:
