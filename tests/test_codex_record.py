@@ -91,6 +91,18 @@ threading.Timer.__init__ = fast
 """
 
 
+def _codex_repo_direct(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
+    """_codex_repo, with the stub app-server run by this Python itself. Codex's own program runs as
+    it started, but `#!/usr/bin/env python3` execs twice more (env, then a macOS framework Python
+    re-execs itself), so the command Forge records at its start could change under it, and Forge
+    would rightly take the process for another one."""
+    made = _codex_repo(repo, monkeypatch, sdk_data)
+    stub = repo.bin / "codex-app-server"
+    stub.write_text(f"#!{sys.executable}\n" + stub.read_text(encoding="utf-8").split("\n", 1)[1],
+                    encoding="utf-8")
+    return made
+
+
 def _saved(path: Path) -> dict:
     return json.loads(path.read_text("utf-8")) if path.exists() else {}
 
@@ -170,7 +182,7 @@ def _crash(work: subprocess.Popen, saved: dict) -> None:
 
 
 def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
     tool = shutil.which(PS)  # the real one, before any stand-in
@@ -284,7 +296,7 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
 
 
 def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
-    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
 
