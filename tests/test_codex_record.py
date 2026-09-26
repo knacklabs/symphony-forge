@@ -500,11 +500,11 @@ def test_12_a_dead_driver_leaves_no_app_server_behind(repo, monkeypatch, sdk_dat
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
     if os.name != "nt":
-        # forge work stops the app-server its driver started when the driver dies, though Forge
-        # read only "python" as the app-server's command and so can't tell it by that.
+        # Forge reads only "python" as the app-server's command, so it can't tell it by that.
         _install(repo.bin, "ps", BARE_SERVER.format(python=sys.executable, ps=shutil.which("ps")))
-        work, saved, stub = _held(repo, calls, record, "hold")
+    work, saved, stub = _held(repo, calls, record, "hold")
+    if os.name != "nt":
         assert "app-server" not in saved["app_server"]["command"]
-        os.kill(saved["driver"]["pid"], KILL)
-        assert "Codex never reported its end" in work.communicate(timeout=30)[1]
-        assert not _up(stub)  # already gone when forge work returns, not a moment later
+    os.kill(saved["driver"]["pid"], KILL)
+    assert "Codex never reported its end" in work.communicate(timeout=30)[1]
+    assert not _up(stub)  # already gone when forge work returns, not a moment later
