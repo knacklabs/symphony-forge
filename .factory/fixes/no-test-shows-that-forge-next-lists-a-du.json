@@ -3,11 +3,30 @@
   "branch": "fix/no-test-shows-that-forge-next-lists-a-du",
   "done_when": "tests/test_discovery.py has one test where a project with nothing on its roadmap also has a spec whose success check is due, and forge next prints the due check before the discovery prompt",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "2441817d8528c886d64c40e6eb40710f2bc74f55",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch only adds fix-tracking metadata; it does not add the required test. In tests/test_discovery.py, the existing discovery test invokes `forge next` at line 75 without creating a spec with a due success check. None of the file's three tests exercises the combined scenario or asserts output ordering. Add a collected test that creates an empty-roadmap project and a spec with a due success check, invokes the real command, and asserts that both messages appear with the due check before the discovery prompt.",
+        "file": ".factory/fixes/no-test-shows-that-forge-next-lists-a-du.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: tests/test_discovery.py has one test where a project with nothing on its roadmap also has a spec whose success check is due, and"
+      }
+    ],
+    "status": "blocked",
+    "tree": "422c276d020345567f0af164be1ea04eec46b5c9bed5f2837bab70edbbd58ea5"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T13:12:19+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:14:09+00:00",
+      "step": "review"
     }
   ],
   "why": "No test shows that forge next lists a due success check before the discovery prompt; the FDE story moved that crossing test from MEASURE to DISCOVER and DISCOVER shipped without it"
