@@ -507,4 +507,4 @@ def test_12_a_dead_driver_leaves_no_app_server_behind(repo, monkeypatch, sdk_dat
         assert "app-server" not in saved["app_server"]["command"]
         os.kill(saved["driver"]["pid"], KILL)
         assert "Codex never reported its end" in work.communicate(timeout=30)[1]
-        assert _down(stub)
+        assert not _up(stub)  # already gone when forge work returns, not a moment later

@@ -251,6 +251,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 # wrong under load) after a driver that died without ending it.
                 with contextlib.suppress(OSError):
                     os.killpg(driver.pid, signal.SIGKILL)
+                    for _ in range(50):  # SIGKILL only asks: wait until the group has no member
+                        os.killpg(driver.pid, 0)  # raises once none is left
+                        time.sleep(0.1)
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
                     pid=driver.pid if refused == "driver" else server)
