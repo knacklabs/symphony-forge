@@ -1,19 +1,26 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "3b6bc25a9c64c6c886cf70b44765755a17ff01e4",
+    "commit": "f828827d07922ad53621992acd6a03665fa5b6e2",
     "dismissals": [],
     "findings": [
       {
-        "body": "This new lockfile is outside the allowed scope and supplies no dependency needed for conversation continuation, approval checks, or recovery. `pyproject.toml:11` declares an empty dependency list, and the Codex SDK remains separately pinned and installed in its own environment. Remove the unrelated lockfile from this branch.",
+        "body": "Once a task has merged the story document into origin/main, this lookup always selects main's version. Subsequent edits and re-approvals in the story's own checkout are ignored: an existing task with the old document passes validation and resumes its old conversation. The approval workflow explicitly finds the story checkout and commits approvals there (src/forge/approval.py:123 and :139; src/forge/story.py:359). Validate the current story's planning state and approval before checking the task's copy, including after the first task has merged.",
+        "file": "src/forge/worker.py",
+        "line": 113,
+        "priority": "P1",
+        "title": "Not done: 8. Changed approvals must block work and retire the old conversation"
+      },
+      {
+        "body": "This new lockfile is outside the permitted scope and adds nothing needed for continuation, approval validation, or recovery. pyproject.toml:10 declares no runtime dependencies, and src/forge/codex.py:121 installs the pinned SDK separately in its managed environment. Remove the unrelated lockfile from this change.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
-        "title": "Simpler: new uv.lock \u2192 existing package configuration"
+        "title": "Simpler: unrelated uv.lock \u2192 existing package configuration"
       }
     ],
-    "status": "clean",
-    "tree": "02a7258fde3164f27200d6641a13460feda155a954547291562fb988804d376e"
+    "status": "blocked",
+    "tree": "2fb69616fb349e4a49b0ff662c1fdac92f7038ff083c846b96903dd4cc572f24"
   },
   "status": "fixing",
   "steps": [
@@ -47,6 +54,10 @@
     },
     {
       "at": "2026-09-26T13:50:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T15:01:06+00:00",
       "step": "review"
     }
   ]
