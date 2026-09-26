@@ -1,16 +1,21 @@
 """Codex workers, Forge's side: the pinned Codex SDK in its own environment, checked and installed,
-a kind's models as Codex settings, and one turn run through codex_turn.py.
+a kind's models as Codex settings, one turn run through codex_turn.py, and each item's record and
+lock, so one forge work runs per item and no Codex process outlives it.
 
 Forge never imports the SDK. It runs the environment's own Python to probe it and to drive a turn,
 so the SDK and the Codex program it bundles (about 300 MB) stay out of Forge's own install.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
+import time
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +54,11 @@ REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
+    "busy": ("forge work {item} is already running as process {pid}, and only one runs per item; "
+             "wait for it to finish.", "forge work {item}"),
+    "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
+                "who holds {lock}; it counts it as held.",
+                "delete {lock} once no forge work runs on {item}"),
 }
 
 
@@ -107,17 +117,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
-    The item's turn log gets a "started" line when the turn starts, and an end line only when Codex
-    reports the end. Returns the conversation and turn ids, and the status, final text and token
-    usage Codex reported; status, text and usage are None when it reported no end.
+    The item's record gets the app-server's identity as soon as it starts, then the conversation,
+    then HEAD when the turn ends. The item's turn log gets a "started" line when the turn starts,
+    and an end line only when Codex reports the end. Returns the conversation and turn ids, and the
+    status, final text and token usage Codex reported; status, text and usage are None when it
+    reported no end.
     """
     # ponytail: `thread` is RESUME's, which continues that conversation; BUILD always starts one.
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": settings(repo.config(checkout), kind)}
     log = repo.work_log(checkout, item)
-    base = repo.forge_dir(checkout) / "threads" / ("task" if "/" in item else "fix") / item
-    turns = base.with_name(f"{base.name}.log")
-    turns.parent.mkdir(parents=True, exist_ok=True)
+    record, turns = _item_file(checkout, item, ".json"), _item_file(checkout, item, ".log")
     started: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
@@ -127,47 +137,60 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace") as driver:
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        driver.stdin.write(json.dumps(request))
-        driver.stdin.close()
-        for line in driver.stdout:
-            try:
-                said = json.loads(line)
-            except ValueError:
-                said = None
-            if not isinstance(said, dict):  # the driver's own output, such as a traceback
-                text = line.rstrip("\n")
-            elif "pid" in said:
-                text = f"Codex app-server: process {said['pid']}"
-            elif "refused" in said:
-                refused, text = True, ""
-            elif "thread" in said:
-                result["conversation"] = said["thread"]
-                text = f'Codex conversation "{name}": {said["thread"]}'
-            elif "turn" in said:
-                result["turn"] = said["turn"]
-                started = {"conversation": result["conversation"], "turn": said["turn"],
-                           "kind": kind, "started": repo.now()}
-                _append(turns, started)
-                text = ""
-            elif "declined" in said:
-                text = f"Declined Codex's request {said['declined']}"
-            elif "status" in said:
-                usage = said.get("usage") or {}
-                result.update(status=said["status"], text=said.get("text"), usage={
-                    "input_tokens": usage.get("inputTokens"),
-                    "cached_input_tokens": usage.get("cachedInputTokens"),
-                    "output_tokens": usage.get("outputTokens")})
-                _append(turns, {"conversation": result["conversation"], "turn": result["turn"],
-                                "kind": kind, "continued": False, "fresh_start": "first turn",
-                                "status": said["status"], "started": started.get("started"),
-                                "ended": repo.now(), **result["usage"]})
-                text = f"Codex ended the turn: {said['status']}"
-                text += f" ({said['error']})" if said.get("error") else ""
-            else:
-                text = _event(said)
-            if text:
-                print(text, flush=True)
-                out.write(text + "\n")
+        # One line, and stdin stays open: the driver closes its client once Forge's end closes.
+        driver.stdin.write(json.dumps(request) + "\n")
+        driver.stdin.flush()
+        try:
+            for line in driver.stdout:
+                try:
+                    said = json.loads(line)
+                except ValueError:
+                    said = None
+                if not isinstance(said, dict):  # the driver's own output, such as a traceback
+                    text = line.rstrip("\n")
+                elif "pid" in said:
+                    _record(record, app_server=identity(said["pid"]))
+                    with contextlib.suppress(OSError):  # recorded: the driver may go on
+                        driver.stdin.write("\n")
+                        driver.stdin.flush()
+                    text = f"Codex app-server: process {said['pid']}"
+                elif "refused" in said:
+                    refused, text = True, ""
+                elif "thread" in said:
+                    result["conversation"] = said["thread"]
+                    _record(record, conversation=said["thread"])
+                    text = f'Codex conversation "{name}": {said["thread"]}'
+                elif "turn" in said:
+                    result["turn"] = said["turn"]
+                    started = {"conversation": result["conversation"], "turn": said["turn"],
+                               "kind": kind, "started": repo.now()}
+                    _append(turns, started)
+                    text = ""
+                elif "declined" in said:
+                    text = f"Declined Codex's request {said['declined']}"
+                elif "status" in said:
+                    usage = said.get("usage") or {}
+                    result.update(status=said["status"], text=said.get("text"), usage={
+                        "input_tokens": usage.get("inputTokens"),
+                        "cached_input_tokens": usage.get("cachedInputTokens"),
+                        "output_tokens": usage.get("outputTokens")})
+                    _append(turns, {"conversation": result["conversation"], "turn": result["turn"],
+                                    "kind": kind, "continued": False, "fresh_start": "first turn",
+                                    "status": said["status"], "started": started.get("started"),
+                                    "ended": repo.now(), **result["usage"]})
+                    _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
+                    text = f"Codex ended the turn: {said['status']}"
+                    text += f" ({said['error']})" if said.get("error") else ""
+                else:
+                    text = _event(said)
+                if text:
+                    print(text, flush=True)
+                    out.write(text + "\n")
+        finally:  # on an error or Ctrl-C too: the driver closes its client once stdin closes
+            with contextlib.suppress(OSError):  # a driver that has gone already can't be told
+                driver.stdin.close()
+            driver.stdout.close()
+            driver.wait()
     if refused:
         repo.refuse(REFUSALS["handler"])
     return result
@@ -191,3 +214,128 @@ def _event(said: dict[str, Any]) -> str:
 def _append(path: Path, line: dict[str, Any]) -> None:
     with path.open("a", encoding="utf-8") as out:
         out.write(json.dumps(line) + "\n")
+
+
+def _item_file(checkout: Path, item: str, suffix: str) -> Path:
+    """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
+    worktree shares: threads/task/<STORY>/<TASK> or threads/fix/<name>, one set per item."""
+    path = (repo.forge_dir(checkout) / "threads" / ("task" if "/" in item else "fix")
+            / f"{item}{suffix}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _json(path: Path) -> dict[str, Any]:
+    """A record or lock, or {} when it is missing or unreadable."""
+    try:
+        data = json.loads(sync.read(path) or "{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _record(path: Path, **fields: Any) -> None:
+    """Add fields to the item's record through a temporary file and a rename, so it stays whole."""
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps({**_json(path), **fields}, indent=2) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def identity(pid: int) -> dict[str, Any] | None:
+    """A running process by its id, start time and command, so a reused id never passes for it.
+
+    None when no process has the id. Only the id when Forge can't read the rest: that matches no
+    record, and its owner counts as running.
+    """
+    if os.name == "nt":
+        done = repo.run("powershell", "-NoProfile", "-Command",
+                        f"$p = Get-CimInstance Win32_Process -Filter 'ProcessId = {pid}'; "
+                        "if (!$p) { exit 3 }; $p.CreationDate.ToString('o'); $p.CommandLine")
+        gone = done.returncode == 3
+        started, _, command = done.stdout.strip().partition("\n")
+    else:
+        done = repo.run("ps", "-ww", "-o", "lstart=,command=", "-p", str(pid))  # -ww: whole command
+        gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
+        *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
+        started = " ".join(start)
+    if gone:
+        return None
+    if done.returncode or not started.strip() or not command.strip():
+        return {"pid": pid}
+    return {"pid": pid, "started": started.strip(), "command": command.strip()}
+
+
+def _alive(recorded: dict[str, Any]) -> bool | None:
+    """Whether the recorded process still runs: False once its id is free or another process has
+    it, None when Forge can't tell, which counts as running."""
+    pid = recorded.get("pid")
+    now = identity(pid) if isinstance(pid, int) else {}
+    return None if now is not None and "command" not in now else now == recorded
+
+
+def _stop_leftover(record: Path) -> int | None:
+    """Stop the item's recorded app-server when it still runs as recorded; returns its id."""
+    server = _json(record).get("app_server") or {}
+    if "app-server" not in str(server.get("command")) or not _alive(server):
+        return None
+    for sig in (signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)):
+        with contextlib.suppress(OSError):  # it may have ended on its own meanwhile
+            os.kill(server["pid"], sig)
+        for _ in range(50):  # five seconds to go before it is killed
+            if not _alive(server):
+                return server["pid"]
+            time.sleep(0.1)
+    return server["pid"]
+
+
+@contextlib.contextmanager
+def hold(checkout: Path, item: str) -> Iterator[None]:
+    """One forge work per item: take the item's lock, which holds this process's identity, stop
+    the Codex process an earlier call left, and on the way out stop this call's if it still runs
+    and give the lock back. A lock whose owner is gone is cleared; a live one refuses."""
+    lock, record = _item_file(checkout, item, ".lock"), _item_file(checkout, item, ".json")
+    while True:
+        if lock.exists():
+            owner = _json(lock)
+            alive = _alive(owner)
+            if alive is None:
+                repo.refuse(REFUSALS["unknown"], pid=owner.get("pid"), lock=lock, item=item)
+            if alive:
+                repo.refuse(REFUSALS["busy"], pid=owner["pid"], item=item)
+            # ponytail: two calls that find the same stale lock at once can both clear it; the
+            # window is one read. Clear it by an exclusive rename if that ever bites.
+            lock.unlink(missing_ok=True)
+        me = identity(os.getpid()) or {}
+        if "command" not in me:  # a lock no one else could check would pass for a stale one
+            repo.refuse(REFUSALS["unknown"], pid=os.getpid(), lock=lock, item=item)
+        try:
+            with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
+                json.dump(me, out)
+            break
+        except FileExistsError:  # another call took it meanwhile: check its owner
+            continue
+    try:
+        _stop_leftover(record)
+        yield
+    finally:
+        _stop_leftover(record)
+        lock.unlink(missing_ok=True)
+
+
+def tidy(checkout: Path) -> list[str]:
+    """For forge doctor: clear each stale lock and stop each leftover Codex process, unless a
+    forge work still runs on the item. A line for each process stopped or left alone."""
+    threads = repo.forge_dir(checkout) / "threads"
+    said = []
+    for base in sorted({path.with_suffix("") for path in threads.rglob("*.*")}):
+        item = base.relative_to(threads).as_posix().split("/", 1)[1]
+        lock = base.with_suffix(".lock")
+        owner = _json(lock)
+        if lock.exists() and _alive(owner) is not False:
+            said.append(f"forge work {item} is running as process {owner.get('pid')}, so doctor "
+                        "leaves its Codex process alone.")
+            continue
+        lock.unlink(missing_ok=True)
+        if pid := _stop_leftover(base.with_suffix(".json")):
+            said.append(f"Stopped Codex process {pid}, which a crashed forge work {item} left.")
+    return said

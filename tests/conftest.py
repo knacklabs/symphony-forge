@@ -98,6 +98,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
         if name.startswith("GIT_"):
             monkeypatch.delenv(name)
+    monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
     gitconfig = tmp_path / "gitconfig"
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",

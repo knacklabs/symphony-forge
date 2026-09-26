@@ -165,7 +165,11 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
     ("tampered hook command", (".claude/settings.json differs from what forge sync writes",)),
-    ("no checks or test", ("forge.toml names no checks", "forge.toml has no test command.")),
+    ("no checks or test", (
+        "forge.toml names no checks, so close has nothing to wait for.\n"
+        "  Fix: ask your agent to set checks in forge.toml\n",
+        "forge.toml has no test command.\n"
+        "  Fix: ask your agent to set test in forge.toml, then run forge sync\n")),
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
     ("codex doesn't trust the project", ()),

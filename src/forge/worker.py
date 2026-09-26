@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -55,19 +56,23 @@ def work(args: argparse.Namespace) -> None:
             refuse(REFUSALS["untrusted"])
     else:
         claude = _claude_models(config, kind.lower())
-    state = repo.read_state(item, top) or {}
-    findings, failing = _fix_round(state)
-    brief, subject = _brief(match, top, state, findings, failing)
-    state["status"] = "fixing" if findings or failing else "working"
-    repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top), top=top)
-    if not on_codex:
-        _run(item, top, config, brief, claude)
-        return
-    result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access")
-    if result["status"] != "completed":
-        why = (f"Codex reported it {result['status']}" if result["status"]
-               else "Codex never reported its end")
-        refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+    # Codex workers take the item's lock and stop a leftover Codex process before the status
+    # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
+    with codex.hold(top, item) if on_codex else contextlib.nullcontext():
+        state = repo.read_state(item, top) or {}
+        findings, failing = _fix_round(state)
+        brief, subject = _brief(match, top, state, findings, failing)
+        state["status"] = "fixing" if findings or failing else "working"
+        repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
+                          top=top)
+        if not on_codex:
+            _run(item, top, config, brief, claude)
+            return
+        result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access")
+        if result["status"] != "completed":
+            why = (f"Codex reported it {result['status']}" if result["status"]
+                   else "Codex never reported its end")
+            refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
 
 
 def _claude_models(config: dict[str, Any], kind: str) -> list[str]:
