@@ -3,11 +3,30 @@
   "branch": "fix/owners-away-from-the-laptop-can-t-act-in",
   "done_when": "forge sync installs a remote-approval skill for Claude Code that starts a plainly named claude remote-control session in a chosen checkout, and doctor's drift check covers it",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "873c3c33c56120211a90adbcf1e51a957ca7d5b6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The tests cover installation and drift, but none protects the launch behavior required by Done-when. In tests/test_setup.py:105\u2013107, the sync test checks paths and write messages; lines 120\u2013125 check idempotence. The doctor case checks changed content against the same template. Removing `cd <checkout>`, `remote-control`, `--name`, or the plain-English naming instructions from the template would leave these tests passing. Add an independent contract test against the installed skill that fails when those required instructions break.",
+        "file": "tests/test_setup.py",
+        "line": 22,
+        "priority": "P1",
+        "title": "Not done: test the installed skill's named launch in the chosen checkout"
+      }
+    ],
+    "status": "blocked",
+    "tree": "063c43fd7feac9c592689224091255d21b6a23ad3df76bd0d1f8a785e5fd7e3c"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T08:07:15+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T08:19:59+00:00",
+      "step": "review"
     }
   ],
   "why": "Owners away from the laptop can't act in a session that needs another checkout's hooks"
