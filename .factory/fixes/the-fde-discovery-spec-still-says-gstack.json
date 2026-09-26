@@ -4,11 +4,11 @@
   "done_when": "docs/specs/fde-discovery.md carries every change listed in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/v1-stories/FDE-spec-amendment.md (office-hours for a new project or an ask no confirmed spec covers, discovery by size, forge spec payback and forge spec measure, gstack kept only for office-hours, success measure = share of specs whose Why names a problem card, checked 2026-12-15), saved with forge spec save fde-discovery",
   "kind": "fix",
   "review": {
-    "commit": "906cff35375546ec7c084303d6f841b596979274",
+    "commit": "436e30086ca7dccabada4c833547cc0cbdec66d4",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "4b9b19004bb4774429d9ef187bf608cd140e757164ed2c4efb9fe3411a2cbf59"
+    "tree": "5b4d08cc8ba10ffcae0cb6ac70555a914e8d7ce4c23b28f40d6f43fa804eef46"
   },
   "status": "waiting for checks",
   "steps": [
@@ -18,6 +18,10 @@
     },
     {
       "at": "2026-09-26T09:48:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T10:14:06+00:00",
       "step": "review"
     }
   ],
