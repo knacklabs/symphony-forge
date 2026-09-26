@@ -297,7 +297,13 @@ def _record(path: Path, **fields: Any) -> None:
     """Add fields to the item's record through a temporary file and a rename, so it stays whole."""
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({**_json(path), **fields}, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, path)
+    for wait in (0.05,) * 40 + (0,):  # Windows refuses the rename while a reader has the file open
+        try:
+            return os.replace(tmp, path)
+        except PermissionError:
+            if not wait:
+                raise
+            time.sleep(wait)
 
 
 def identity(pid: int) -> dict[str, Any] | None:

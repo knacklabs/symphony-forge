@@ -402,3 +402,24 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     assert late.stderr == (f"Codex didn't start within two minutes, so Forge stopped it; its log "
                            f"is {log}.\nNext: forge work BOARD/PAGE\n")
     assert _down([call["pid"] for call in _stub(calls) if "pid" in call][-1])
+
+
+def test_7_record_retries_while_another_reader_holds_it(tmp_path):
+    # Windows refuses the rename ("Access is denied") while another process has the file open;
+    # here the first three renames are refused.
+    script = ("import os, sys; sys.path.insert(0, sys.argv[1])\n"
+              "from forge import codex\n"
+              "real, seen = os.replace, []\n"
+              "def replace(a, b):\n"
+              "    seen.append(a)\n"
+              "    if len(seen) <= 3: raise PermissionError(5, 'Access is denied')\n"
+              "    real(a, b)\n"
+              "os.replace = replace\n"
+              "codex._record(__import__('pathlib').Path(sys.argv[2]), a=1)\n"
+              "print(len(seen))\n")
+    record = tmp_path / "PAGE.json"
+    src = Path(__file__).resolve().parent.parent / "src"
+    done = subprocess.run([sys.executable, "-c", script, str(src), str(record)],
+                          capture_output=True, text=True)
+    assert done.returncode == 0 and done.stdout.strip() == "4", done.stderr
+    assert json.loads(record.read_text()) == {"a": 1}
