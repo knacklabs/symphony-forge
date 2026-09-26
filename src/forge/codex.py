@@ -206,7 +206,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             with contextlib.suppress(OSError):  # a driver that has gone already can't be told
                 driver.stdin.close()
             driver.stdout.close()
-            driver.wait()
+            try:
+                driver.wait(timeout=5)
+            except subprocess.TimeoutExpired:  # it can't act (stopped, say): end its group here
+                _stop_leftover(record)
+                driver.wait()
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item)
     return result

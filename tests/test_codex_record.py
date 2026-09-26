@@ -140,6 +140,14 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data):
     work.communicate()
     assert _down(stub) and _down(saved["driver"]["pid"])
 
+    # Ctrl-C while the driver can't act (stopped, here): forge work still returns, ends the
+    # driver's group itself, and lets the lock go.
+    work, saved, stub = _held(repo, calls, record, "stall")
+    os.kill(saved["driver"]["pid"], signal.SIGSTOP)
+    work.send_signal(signal.SIGINT)
+    work.communicate(timeout=30)
+    assert not lock.exists() and _down(stub) and _down(saved["driver"]["pid"])
+
     # While forge work runs, doctor says so and leaves it alone. An error: the driver dies, and
     # forge work stops the app-server it recorded before it ends.
     work, saved, stub = _held(repo, calls, record, "hold")
