@@ -7,14 +7,16 @@ doesn't know. During the turn it asks for one known approval (to run a command) 
 whose method no SDK knows, and runs what they ask, writing ran-<id> in the thread's folder, unless
 the answer is a decline. Its message echoes the config overrides the thread started with.
 STUB_CODEX_STATUS sets the turn's final status (completed by default; "vanish" exits before the
-turn ends), and STUB_CODEX_NO_USAGE leaves out the token counts. STUB_CODEX_TOUCH names a file it
-writes in the thread's folder during the turn, to stand for a reader that changes a file.
-`--version` prints the version.
+turn ends; "hold" never answers thread/start, and "stall" never answers initialize, each ignoring
+stdin for two minutes, as a stuck server would), and STUB_CODEX_NO_USAGE leaves out the token
+counts. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
+for a reader that changes a file. `--version` prints the version.
 """
 import json
 import os
 import pathlib
 import sys
+import time
 
 VERSION = "0.156.1"
 THREAD, TURN = "thr-stub-1", "turn-stub-1"
@@ -98,9 +100,15 @@ def main():
         if "id" not in message:  # a notification, such as initialized
             continue
         if method == "initialize":
+            if status == "stall":
+                time.sleep(120)
+                return
             reply(message, {"userAgent": "codex_app_server/" + VERSION,
                             "serverInfo": {"name": "codex", "version": VERSION}})
         elif method == "thread/start":
+            if status == "hold":
+                time.sleep(120)
+                return
             cwd, config = params.get("cwd", "."), params.get("config")
             thread = {"id": THREAD, "cliVersion": VERSION, "createdAt": 0, "updatedAt": 0,
                       "cwd": cwd, "ephemeral": False, "modelProvider": "openai", "preview": "",

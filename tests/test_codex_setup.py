@@ -174,3 +174,14 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert outside.stderr == "This repo has no forge.toml.\nNext: forge init\n"
     assert not env.exists()
     assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
+
+    # Under Claude Code the cold read runs on Codex, so with Claude workers doctor checks the SDK
+    # and --fix installs it; trust stays advice.
+    monkeypatch.setenv("CLAUDECODE", "1")
+    reader = repo.forge("doctor", cwd=client)
+    assert reader.returncode == 1
+    assert f"- The Codex SDK {PIN} isn't installed in {env}.\n  Fix: forge doctor --fix\n" in (
+        reader.stdout)
+    fixed = repo.forge("doctor", "--fix", cwd=client)
+    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
+    assert (env / "forge-sdk-ready").read_text(encoding="utf-8") == f"{PIN}\n"

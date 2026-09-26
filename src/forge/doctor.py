@@ -1,6 +1,8 @@
 """forge doctor: tools, the pins (Forge's and the Autoreview helper's), the git hooks, the host
 hooks, adapter drift, CI and, for Codex workers, the Codex SDK and the project's trust; a row per
-problem. With Codex workers, --fix installs the SDK."""
+problem. With Codex workers, or under Claude Code, whose cold read runs on Codex, it checks the SDK
+and --fix installs it. Whatever the workers, it stops the Codex processes a crashed forge work or
+read left, never a running one's."""
 from __future__ import annotations
 
 import argparse
@@ -64,8 +66,10 @@ def doctor(args: argparse.Namespace) -> None:
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     on_codex = cfg["workers"] == "codex"
+    # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too.
+    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE"))
     # Without uv there is nothing to install with; the uv row below says how to get it.
-    if args.fix and on_codex and shutil.which("uv") and codex.sdk_problem():
+    if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         codex.install()
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
@@ -78,7 +82,7 @@ def doctor(args: argparse.Namespace) -> None:
     if pinned != f"v{__version__}":
         rows.append((repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned),
                      install))
-    if on_codex and (problem := codex.sdk_problem()):
+    if needs_sdk and (problem := codex.sdk_problem()):
         rows.append((problem, "forge doctor --fix"))
     try:  # the reviewer close runs, at the version Forge pins
         review.helper()
@@ -119,10 +123,10 @@ def doctor(args: argparse.Namespace) -> None:
 
     if not cfg["checks"]:
         rows.append(("forge.toml names no checks, so close has nothing to wait for.",
-                     'set checks = ["tests", "forge-pr-check"] in forge.toml'))
+                     "ask your agent to set checks in forge.toml"))
     if not cfg["test"]:
         rows.append(("forge.toml has no test command.",
-                     'set test = "<the full test command>" in forge.toml, then run forge sync'))
+                     "ask your agent to set test in forge.toml, then run forge sync"))
     elif f"run: {json.dumps(cfg['test'])}" not in sync.read(top / sync.WORKFLOW_PATH):
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
                      "command.", "forge sync"))
@@ -149,6 +153,8 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
                      f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
 
+    for line in codex.tidy(top):
+        print(f"- {line}")
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
     if on_codex:
