@@ -106,13 +106,15 @@ code proves the finding wrong, dismiss it with
 
 ## Upgrading a repo
 
-Upgrading is a fix like any other:
+You never edit `forge.toml` by hand. Ask your coding agent to upgrade Forge, or to change any
+other setting such as the workers or the test command; it asks you first, with options, then
+makes the change in a fix like any other:
 
 1. `forge fix start "Upgrade Forge to vX.Y.Z" --done "forge doctor passes on vX.Y.Z"`.
-2. Change `version` in `forge.toml` to `vX.Y.Z`.
-3. Install that release with the `uv tool install` line above, using `@vX.Y.Z`.
+2. It changes `version` in `forge.toml` to `vX.Y.Z`.
+3. It installs that release with the `uv tool install` line above, using `@vX.Y.Z`.
 4. `forge sync` rewrites the generated files for the new version.
-5. `forge close <fix>`, and merge.
+5. `forge close <fix>`, and you merge.
 
 ## Releasing Forge
 
