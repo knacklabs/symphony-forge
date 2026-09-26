@@ -4,6 +4,7 @@ Each test is named test_<criterion>_<rule> after the spec's acceptance criterion
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -154,6 +155,25 @@ class Forge:
         return self.start(f"SHOP/{task}", f"task/SHOP-{task}",
                           f".factory/stories/SHOP/tasks/{task}.json", {},
                           changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"})
+
+    def start_approved_task(self, doc: str, task: str = "T1", changes: dict[str, str] | None = None,
+                            ) -> tuple[str, Path]:
+        """Approve story SHOP's doc on the default branch, then forge task start the task and
+        commit the worker's changes in its worktree."""
+        parts = dict(re.findall(r"^## ([^\n]+)\n(.*?)(?=^## |\Z)", doc, re.M | re.S))
+        both = f"{parts['What changes for you'].strip()}\n{parts['Done when'].strip()}"
+        self.commit(self.repo.path, ".factory/stories/SHOP/story.json", json.dumps({
+            "status": "approved", "approval": {
+                "by": "Ravi", "at": "2026-09-25T10:00:00+00:00",
+                "hash": hashlib.sha256(both.encode("utf-8")).hexdigest()}}))
+        self.repo.git("push", "-q", "origin", "main")
+        item = f"SHOP/{task}"
+        started = self.repo.forge("task", "start", item)
+        assert started.returncode == 0, started.stderr
+        where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+        for path, text in (changes or {"app.py": "print('saved')\n", "other.py": "x = 1\n"}).items():
+            self.commit(where, path, text, "Work")
+        return item, where
 
     def close(self, item: str, *extra: str):
         return self.repo.forge("close", item, *extra)
