@@ -105,3 +105,53 @@ def test_32_client_signoff(repo, claude_payload):
     recorded = hook(repo, approval)
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout
+
+
+def test_utf8_whatever_the_code_page(repo, claude_payload, monkeypatch):
+    # Forge reads its hook input and writes its output in UTF-8, even where the console's code page
+    # can't hold "→" (as on Windows): the plan hashes to the doc's digest, and a refusal shows it.
+    setup(repo)
+    doc = DOC.replace("save a basket", "save a basket → and find it later")
+    ready(repo, "SHOP", doc)
+    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
+    recorded = hook(repo, claude_plan(claude_payload, doc))
+    assert recorded.returncode == 0, recorded.stderr
+    refused = repo.forge("task", "start", "→")
+    assert refused.stderr.startswith("'→' is not a task"), refused.stderr
+
+
+def _decision(repo, rel, status):
+    repo.write(rel, f'---\nstatus: {status}\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n')
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", f"{rel} is {status}")
+    repo.git("push", "-q", "origin", "main")
+
+
+def test_32_signoff_record_is_pinned(repo, claude_payload):
+    # forge.toml's signoff pins the client's sign-off record, and approval needs exactly that one
+    # accepted: another accepted sign-off decision doesn't count.
+    setup(repo, kind="client")
+    pin = "docs/decisions/0001-client-signoff.md"
+    toml = repo.path / "forge.toml"
+    toml.write_text(toml.read_text(encoding="utf-8") + f'signoff = "{pin}"\n', encoding="utf-8")
+    _decision(repo, pin, "proposed")
+    _decision(repo, "docs/decisions/0002-our-client-signoff.md", "accepted")
+    ready(repo, "SHOP")
+    approval = claude_plan(claude_payload, DOC)
+
+    refused = hook(repo, approval)
+    assert refused.returncode == 1
+    assert refused.stderr.startswith(
+        "This client's sign-off isn't recorded yet, so the approval was not recorded.\n")
+
+    _decision(repo, pin, "accepted")
+    recorded = hook(repo, approval)
+    assert recorded.returncode == 0, recorded.stderr
+
+    # A pin that isn't a sign-off record is refused before anything runs.
+    toml.write_text(toml.read_text(encoding="utf-8").replace(pin, "docs/decisions/0003-use-postgres.md"),
+                    encoding="utf-8")
+    bad = repo.forge("story", "new", "OWN", "Shoppers own a basket")
+    assert bad.returncode == 1 and bad.stderr.startswith(
+        "forge.toml is not usable: signoff must name the client's sign-off record, "
+        "docs/decisions/NNNN-client-signoff.md.\n"), bad.stderr

@@ -5,7 +5,9 @@ import argparse
 import json
 import shlex
 import shutil
+import subprocess
 from pathlib import Path
+from typing import Any, NoReturn
 
 from forge import __version__, repo, sync
 
@@ -73,22 +75,74 @@ def _scaffold(top: Path) -> dict[str, str]:
 
 
 def protect(top: Path, branch: str, checks: list[str]) -> None:
-    """Allow changes to branch only through a pull request with these checks green, and say so."""
-    body = {"required_status_checks": {"strict": False, "contexts": checks},
-            "enforce_admins": True,  # nobody pushes directly, admins included
-            "required_pull_request_reviews": {"required_approving_review_count": 0},
-            "restrictions": None}
+    """Allow changes to branch only through a pull request with these checks green, and say so.
+
+    It never weakens a rule already there: it reads the branch's protection, adds the pull request
+    requirement, these checks and admins included, and keeps everything else as it was.
+    """
+    endpoint = f"repos/{{owner}}/{{repo}}/branches/{branch}/protection"
+    read = ["gh", "api", endpoint]
+    done = repo.run(*read, cwd=top)
+    try:
+        current = json.loads(done.stdout) if done.returncode == 0 else {}
+    except ValueError:
+        current = None
+    # GitHub answers 404 "Branch not protected" when there is no rule yet; anything else unread
+    # would be overwritten blind, so it stops.
+    if not isinstance(current, dict) or (
+            done.returncode and "Branch not protected" not in done.stdout + done.stderr):
+        _protect_failed(done, branch, read)
+    body = _stronger(current, checks)
     path = repo.forge_dir(top) / "branch-protection.json"
     path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
-    args = ["gh", "api", "--method", "PUT", f"repos/{{owner}}/{{repo}}/branches/{branch}/protection",
-            "--input", str(path)]
+    args = ["gh", "api", "--method", "PUT", endpoint, "--input", str(path)]
     done = repo.run(*args, cwd=top)
     if done.returncode:
-        said = (done.stderr.strip() or f"gh exited with code {done.returncode}").splitlines()[0]
-        repo.refuse(REFUSALS["protect"], branch=branch, problem=said.rstrip("."),
-                    command=shlex.join(args))
+        _protect_failed(done, branch, args)
     print(f"Branch protection is on for {branch}: changes arrive only through a pull request whose "
-          f"{' and '.join(checks)} checks pass, and nobody can push to it directly.")
+          f"{' and '.join(checks)} checks pass, and nobody can push to it directly."
+          + (" Its other rules stay as they were." if current else ""))
+
+
+def _protect_failed(done: subprocess.CompletedProcess[str], branch: str, args: list[str]) -> NoReturn:
+    said = (done.stderr.strip() or f"gh exited with code {done.returncode}").splitlines()[0]
+    repo.refuse(REFUSALS["protect"], branch=branch, problem=said.rstrip("."), command=shlex.join(args))
+
+
+def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
+    """The protection GitHub reported (its read shape), in the shape it takes, with Forge's rules
+    added: a pull request, the named checks and admins included."""
+    def on(block: Any) -> bool:
+        return isinstance(block, dict) and block.get("enabled") is True
+
+    def who(block: Any) -> dict[str, list[str]]:
+        block = block if isinstance(block, dict) else {}
+        return {kind: [entry[key] for entry in block.get(kind) or [] if key in entry]
+                for kind, key in (("users", "login"), ("teams", "slug"), ("apps", "slug"))}
+
+    status = current.get("required_status_checks") or {}
+    # A check keeps the app it must come from; one named only by context (older rules) has none.
+    kept = status.get("checks") or [{"context": name} for name in status.get("contexts") or []]
+    required = [{"context": entry["context"], **({"app_id": entry["app_id"]}
+                                                if isinstance(entry.get("app_id"), int) else {})}
+                for entry in kept if isinstance(entry, dict) and "context" in entry]
+    required += [{"context": name} for name in checks
+                 if name not in {entry["context"] for entry in required}]
+    reviews = current.get("required_pull_request_reviews") or {}
+    pull = {"required_approving_review_count": reviews.get("required_approving_review_count", 0),
+            **{key: reviews[key] for key in ("dismiss_stale_reviews", "require_code_owner_reviews",
+                                              "require_last_push_approval") if key in reviews},
+            **{key: who(reviews[key]) for key in ("dismissal_restrictions",
+                                                   "bypass_pull_request_allowances")
+               if key in reviews}}
+    return {"required_status_checks": {"strict": status.get("strict") is True, "checks": required},
+            "enforce_admins": True,  # nobody pushes directly, admins included
+            "required_pull_request_reviews": pull,
+            "restrictions": who(current["restrictions"]) if current.get("restrictions") else None,
+            **{key: on(current[key]) for key in (
+                "required_linear_history", "allow_force_pushes", "allow_deletions", "block_creations",
+                "required_conversation_resolution", "lock_branch", "allow_fork_syncing")
+               if key in current}}
 
 
 def init(args: argparse.Namespace) -> None:

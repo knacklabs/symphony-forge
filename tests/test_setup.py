@@ -164,6 +164,9 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
     repo.git("remote", "add", "origin", str(remote), cwd=client)
     gh.respond("api", stdout="{}")
+    # What GitHub answers for a branch with no protection yet.
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
     return client, repo.forge("init", cwd=client)
 
 
@@ -253,10 +256,13 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "refs/heads/main" in repo.git("ls-remote", "origin", cwd=client)
         assert f'version = "{_version(repo)}"' in toml.read_text(encoding="utf-8")
         assert "Branch protection is on for main" in init.stdout
-        [call] = [args for args in gh.calls() if args[0] == "api"]
+        # It reads the branch's protection first (a new repo has none), then sets Forge's rule.
+        read, call = [args for args in gh.calls() if args[0] == "api"]
+        assert read == ["api", "repos/{owner}/{repo}/branches/main/protection"]
         assert call[:4] == ["api", "--method", "PUT", "repos/{owner}/{repo}/branches/main/protection"]
         rule = json.loads(Path(call[call.index("--input") + 1]).read_text(encoding="utf-8"))
-        assert rule["required_status_checks"]["contexts"] == ["tests", "forge-pr-check"]
+        assert rule["required_status_checks"]["checks"] == [{"context": "tests"},
+                                                            {"context": "forge-pr-check"}]
         assert rule["required_pull_request_reviews"] is not None and rule["enforce_admins"] is True
 
         assert done.returncode == 0, done.stdout + done.stderr
