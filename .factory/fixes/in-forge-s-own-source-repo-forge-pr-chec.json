@@ -1,0 +1,25 @@
+{
+  "base": "7529f805d4b7b39cc31332b1d4e419b37ead16e7",
+  "branch": "fix/in-forge-s-own-source-repo-forge-pr-chec",
+  "done_when": "When forge.toml says repo = \"forge-source\", sync writes the forge-pr-check job to install Forge from the base branch checkout it already has (uv tool install .) instead of the pinned tag, and this repo's .github/workflows/forge.yml says so; a client repo still installs the pinned tag; a test covers both",
+  "kind": "fix",
+  "review": {
+    "commit": "8bf0ebac0953b8ecb51e0ca9eb44e691790596c9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "9f33f7af663e80f4eb37b83de55574bae2f75b15e295e1dc99647f353be339b7"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T09:50:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T10:04:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "In Forge's own source repo, forge-pr-check installs the pinned Forge tag while close uses the current code, so any change to how reviews are fingerprinted (like the functional check joining it) fails the check on every pull request"
+}

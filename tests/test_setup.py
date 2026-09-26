@@ -243,6 +243,9 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             }.get(case)
     if edit:
         toml.write_text(re.sub(*edit, toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
+    if case == "forge's own repo without git hooks":  # the workflow installs Forge from its checkout
+        repo.git("checkout", "-q", "-b", "fix/own", cwd=client)  # sync refuses on main
+        assert repo.forge("sync", cwd=client).returncode == 0
     if case in ("missing hook shims", "forge's own repo without git hooks"):
         (_hooks_folder(client) / "pre-push").unlink()
     if case == "adapter drift":
