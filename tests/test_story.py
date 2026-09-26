@@ -47,9 +47,9 @@ Risks: none
 # A stub reader: it records each call, prints claude-says.md (or "No findings."), and writes the
 # file named in claude-touch, to stand for a reader that changes a file.
 READER = """#!{python}
-import json, os, pathlib, sys
+import io, json, os, pathlib, sys
 here = pathlib.Path(__file__).resolve().parent
-prompt = sys.stdin.read()
+prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()  # UTF-8 whatever the code page
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": sys.argv[1:], "cwd": os.getcwd(), "prompt": prompt}}) + "\\n")
 touch = here / "claude-touch"

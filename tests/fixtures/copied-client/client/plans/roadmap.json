@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "key": "SHIP-1",
+      "title": "Shoppers can save a basket",
+      "status": "active"
+    },
+    {
+      "key": "DRAFT-1",
+      "title": "Shoppers can share a basket",
+      "status": "pending"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "story": "tidy-up",
+  "tasks": [
+    {
+      "id": "tidy-up-T1",
+      "title": "Split checkout",
+      "objective": "One module per checkout step.",
+      "acceptance_criteria": [
+        "checkout is split into one module per step."
+      ],
+      "dependencies": [],
+      "write_scope": [
+        "src/checkout/"
+      ],
+      "required_tests": [
+        {
+          "path": "test/checkout.test.js"
+        }
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "tidy-up-T2",
+      "title": "Remove the old helpers",
+      "objective": "The old checkout helpers are gone.",
+      "acceptance_criteria": [
+        "the old checkout helpers are gone."
+      ],
+      "dependencies": [
+        "tidy-up-T1"
+      ],
+      "write_scope": [
+        "src/helpers.js"
+      ],
+      "required_tests": [
+        {
+          "path": "test/helpers.test.js"
+        }
+      ],
+      "user_facing": false
+    }
+  ]
+}

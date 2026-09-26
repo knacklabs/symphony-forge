@@ -47,6 +47,14 @@ def finish_turn(config, status):
     command = {"type": "commandExecution", "id": "cmd-1", "command": "touch ran-stub-ask-1",
                "commandActions": [], "cwd": "/", "status": "declined"}
     notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=command)
+    # A failing test run: 45 lines of output, streamed as a delta and then whole at the end.
+    output = "".join(f"stub test line {n}\n" for n in range(1, 45)) + "FAILED stub diagnostic\n"
+    notify("item/commandExecution/outputDelta", threadId=THREAD, turnId=TURN, itemId="cmd-2",
+           delta="stub delta chunk\n")
+    tests = {"type": "commandExecution", "id": "cmd-2", "command": "pytest -q",
+             "commandActions": [], "cwd": "/", "status": "failed", "exitCode": 1,
+             "aggregatedOutput": output}
+    notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=tests)
     patch = {"type": "fileChange", "id": "patch-1", "status": "declined",
              "changes": [{"path": "web/board.py", "kind": {"type": "update"}, "diff": ""}]}
     notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=3, item=patch)

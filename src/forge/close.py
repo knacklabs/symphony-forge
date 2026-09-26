@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from forge import checks, repo, review
+from forge import checks, init, repo, review
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -45,7 +45,10 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = repo.current_branch(top), repo.default_branch(top)
     pr = _pull_request(top, branch)
+    migrating = state.get("kind") == "migrate"
     if pr and pr["state"] == "MERGED":
+        if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
+            init.protect(top, default, cfg["checks"])
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
@@ -77,7 +80,9 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    checks.wait(top, item, head, cfg["checks"])
+    # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
+    checks.wait(top, item, head, [name for name in cfg["checks"]
+                                  if not (migrating and name == "forge-pr-check")])
     print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
 
@@ -153,7 +158,8 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
     if pr is None:
         title, summary = _title(top, item, state)
-        body_file.write_bytes(f"{summary}\n\n{block}\n".encode("utf-8"))
+        notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
+        body_file.write_bytes(f"{summary}\n\n{notes}{block}\n".encode("utf-8"))
         url = _gh(top, "pr", "create", "--base", default, "--head", branch, "--title", title,
                   "--body-file", str(body_file))
         print(f"Opened the pull request: {url.strip()}")
