@@ -250,7 +250,10 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   - the standards page;
   - in a fix round, the open serious findings and the names and log tails of failing checks.
 - With `workers = "claude"`, the worker runs Claude Code headless (`claude -p`) in the worktree
-  with the configured model. It may edit files and run commands there, and it commits its own work.
+  with the configured model and full access, like Codex workers (`--permission-mode
+  bypassPermissions`): it may edit files and run any command there, and it commits its own work.
+  Forge's deny hook, which Claude Code runs in every permission mode, the review and the human
+  merge are the guards.
 - With `workers = "codex"`, v1 refuses and says Codex workers come with the warm-threads story.
 - Output goes to the terminal and to a log under `.git/forge/`, which is never committed.
 - For a user-facing task, the brief also asks the worker to write a short functional check in the
@@ -297,6 +300,9 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   The story's other Done-when items are given as context.
 - A serious finding (P0 or P1), or a red, missing or pending check, stops close. Close then prints
   the problem and the next command (`forge work <item>`, or wait).
+- While the review is blocked the pull request is a draft; close marks it ready for review once
+  the review is clean and the checks are green. In a repo that allows no drafts it stays ready for
+  review, and forge-pr-check still blocks its merge.
 - The coordinator can dismiss a finding with `--dismiss`, citing the line that proves it wrong
   (host triage, decision 0075).
 - For a user-facing task, the review instructions report a missing or hollow functional check as

@@ -84,8 +84,9 @@ CLEAN = {"exit": 0, "report": report()}
 FAILED = {"exit": 3, "report": None, "say": "codex: the model is unavailable"}
 INCOMPLETE = {"exit": 2, "report": report(status="incomplete"),
               "say": "autoreview incomplete: selected scope could not be certified"}
-# "lint" isn't named in forge.toml, so it never blocks close, even red.
-GREEN = [run("tests"), run("forge-pr-check"), run("lint", "failure")]
+# "lint" and "release" aren't named in forge.toml; a check GitHub skipped (a job that runs only on
+# tags) doesn't block unless forge.toml names it.
+GREEN = [run("tests"), run("forge-pr-check"), run("lint"), run("release", "skipped")]
 
 
 class Forge:
@@ -117,9 +118,9 @@ class Forge:
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
 
-    def open_pr(self, body: str, state: str = "OPEN") -> None:
-        self.gh.respond("pr", "list", "--head",
-                        stdout=json.dumps([{"number": 7, "state": state, "body": body}]))
+    def open_pr(self, body: str, state: str = "OPEN", draft: bool = False) -> None:
+        self.gh.respond("pr", "list", "--head", stdout=json.dumps(
+            [{"number": 7, "state": state, "body": body, "isDraft": draft}]))
 
     def gh_calls(self, *prefix: str) -> list[list[str]]:
         return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)]
@@ -185,6 +186,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
     gh.respond("pr", "edit")
+    gh.respond("pr", "ready")
     forge = Forge(repo, gh, tmp_path)
     forge.reviews(CLEAN)
     forge.checks(GREEN)
@@ -221,28 +223,52 @@ def _red_check(env):
     # One matrix variant failed while another still runs: red at once, no waiting.
     env.checks([run("tests (ubuntu-latest)", "failure"),
                 run("tests (windows-latest)", None, "in_progress"),
-                run("forge-pr-check"), run("lint", "failure")])
-    return {"item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
+                run("forge-pr-check"), run("lint")])
+    return {"draft": True, "item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
+
+
+def _red_check_not_named(env):
+    # Every check on the head must be green, not only the ones forge.toml names.
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", "failure")],
+               [{"context": "ci/deploy-preview", "state": "error"}])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: lint, ci/deploy-preview.",
+            "next": "forge work tidy-readme"}
+
+
+def _skipped_named_check(env):
+    # A named check GitHub skipped tested nothing, so it is red.
+    env.checks([run("tests", "skipped"), run("forge-pr-check")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: tests.",
+            "next": "forge work tidy-readme"}
+
+
+def _pending_check_not_named(env):
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", None, "queued")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "The checks are not green yet: lint is still running.",
+            "next": "forge close tidy-readme"}
 
 
 def _pending_check(env):
     env.checks([run("tests (ubuntu-latest)", None, "in_progress"), run("forge-pr-check")])
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: tests is still running.",
             "next": "forge close tidy-readme"}
 
 
 def _missing_required_check(env):
     env.checks([run("tests")])
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: forge-pr-check has not reported.",
             "next": "forge close tidy-readme"}
 
 
 def _github_api_error(env):
     env.gh.respond("api", stdout="HTTP 502: Bad Gateway", exit=1)
-    return {"item": env.start_fix()[0],
+    return {"draft": True, "item": env.start_fix()[0],
             "problem": "The checks are not green yet: GitHub did not answer: HTTP 502: Bad Gateway.",
             "next": "forge close tidy-readme"}
 
@@ -332,7 +358,8 @@ def _task_row_missing(env):
 
 
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
-         _pending_check, _missing_required_check, _github_api_error, _no_checks_named,
+         _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
+         _missing_required_check, _github_api_error, _no_checks_named,
          _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
@@ -341,6 +368,8 @@ GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _
 @pytest.mark.parametrize("case", GATES, ids=lambda case: case.__name__.strip("_"))
 def test_2_gates_check_outcomes(env, case):
     want = case(env)
+    if want.get("draft"):  # a draft left by an earlier blocked review
+        env.open_pr("", draft=True)
     done = env.close(want["item"], *want.get("args", []))
     assert done.returncode == 1, done.stdout + done.stderr
     problem, next_line = done.stderr.splitlines()[-2:]
@@ -353,6 +382,14 @@ def test_2_gates_check_outcomes(env, case):
         assert len(env.review_calls()) == want["reviews"]
     if "clean" in want:  # the conflicting merge was undone
         assert env.repo.git("status", "--porcelain", cwd=want["clean"]) == ""
+    if want.get("draft"):  # not green: still a draft; green on a retry: ready for review
+        assert not env.gh_calls("pr", "ready")
+        env.checks(GREEN)
+        assert env.close(want["item"]).returncode == 0
+        assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
+        # gh prints only the JSON fields asked for, so the draft state must be requested.
+        listing = env.gh_calls("pr", "list")[-1]
+        assert "isDraft" in listing[listing.index("--json") + 1].split(",")
 
 
 # --- criterion 18: close, for a task and for a fix ----------------------------------------
@@ -367,7 +404,7 @@ def test_18_close(env, kind):
     moved = env.commit(env.repo.path, "NEWS.md", "The shop opens.\n")  # main moves on meanwhile
     env.repo.git("push", "-q", "origin", "main")
     env.reviews(blocked(finding("P1", "Not done: A shopper can save a basket"),
-                        finding("P2", "Simpler: drop the cache → a dict")), CLEAN)
+                        finding("P2", "Simpler: drop the cache → a dict")))
 
     first = env.close(item)
 
@@ -398,14 +435,21 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
-    # A serious finding blocks; the advisory one is listed; the result is committed and pushed.
+    # A serious finding blocks, so the pull request opens as a draft; the advisory one is listed;
+    # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
+    assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
     assert "1. P1 Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
     assert "2. P2 Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
-    env.open_pr(body(create))
+    env.open_pr(body(create), draft=True)
+
+    # Green checks alone don't promote it: the serious finding still blocks, so it stays a draft.
+    env.checks(GREEN)
+    blocked_again = env.close(item)
+    assert blocked_again.returncode == 1 and not env.gh_calls("pr", "ready")
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
@@ -420,14 +464,36 @@ def test_18_close(env, kind):
     pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
     assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
+    # Right after the checks are green, close marks the draft ready for review.
+    assert env.gh.calls()[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
 
-    # A new commit needs a new round; the older result and its dismissal no longer count.
+    # A new commit needs a new round; the older result and its dismissal no longer count, so the
+    # finding blocks again and the ready pull request goes back to a draft.
+    env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)
-    assert third.returncode == 0, third.stderr
+    assert third.returncode == 1
     rounds = env.review_calls()
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
     assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
+    assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
+
+    # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,
+    # and stays, ready for review, and forge-pr-check still blocks its merge.
+    no_drafts = "GraphQL: Draft pull requests are not supported in this repository.\n"
+    env.gh.respond("pr", "create", "--draft", stderr=no_drafts, exit=1)
+    env.gh.respond("pr", "ready", "7", "--undo", stderr=no_drafts, exit=1)
+    env.gh.respond("pr", "list", "--head", stdout="[]")  # no pull request yet
+    fourth = env.close(item)
+    refused, create = env.gh_calls("pr", "create")[-2:]
+    assert refused == [*create[:2], "--draft", *create[2:]]
+    env.open_pr(body(create))
+    fifth = env.close(item)
+    assert env.gh_calls("pr", "ready")[-1] == ["pr", "ready", "7", "--undo"]
+    for done in (fourth, fifth):
+        assert done.returncode == 1 and (
+            "This repo doesn't allow draft pull requests, so the pull request is ready for review; "
+            "forge-pr-check still blocks its merge.") in done.stdout.splitlines()
     # Once the story's last part merges, close names `forge story done`: criterion 42's test.
 
 
@@ -440,11 +506,14 @@ STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's 
 
 @pytest.mark.parametrize("task, answer, refused", [
     ("T2", blocked(MISSING_CHECK), True), ("T2", blocked(HOLLOW_CHECK), True),
-    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False)],
-    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing"])
+    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False),
+    ("empty", None, False)],
+    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing", "empty-commit"])
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
     # `Not done`; close refuses on that finding and passes once the check is there.
+    if task == "empty":
+        return _empty_commit_check(env)
     item, where = env.start_task(task, {"show.py": "print('basket')\n"})
     check = "Functional check: signed in as a shopper and saw the saved basket."
     stale = answer == blocked(STALE_CHECK)
@@ -472,6 +541,20 @@ def test_19_functional_check(env, task, answer, refused):
         assert f"\n{check}\n<!-- forge:end -->" in body(create)
 
 
+def _empty_commit_check(env):
+    # A hand walkthrough recorded in an empty commit is the branch's functional check, and a
+    # changed check is a new review, not the earlier one reused.
+    item, where = env.start_task("T2", {"show.py": "print('basket')\n"})
+    assert env.close(item).returncode == 0
+    assert "None: the worker's last commit message has no `Functional check:`" in env.prompt()
+    check = "Functional check: signed in as a shopper and saw the saved basket."
+    env.repo.git("commit", "-q", "--allow-empty", "-m", f"Walked it\n\n{check}", cwd=where)
+    env.reviews(CLEAN)
+    assert env.close(item).returncode == 0
+    assert len(env.review_calls()) == 2 and check in env.prompt()
+    assert f"\n{check}\n<!-- forge:end -->" in body(env.gh_calls("pr", "create")[-1])
+
+
 # --- criterion 27: the pull request's title and summary ----------------------------------------
 
 @pytest.mark.parametrize("kind, title, summary", [
@@ -483,6 +566,7 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
+    assert "--draft" not in create  # a clean review opens ready for review
     assert body(create).splitlines()[0] == summary
 
     # Someone adds a line under Forge's block; the next round replaces only the block.

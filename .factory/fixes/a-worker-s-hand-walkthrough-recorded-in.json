@@ -1,0 +1,33 @@
+{
+  "base": "bb6eabaed6931ee255b095a8a43996b921f2dc6b",
+  "branch": "fix/a-worker-s-hand-walkthrough-recorded-in",
+  "done_when": "An empty commit whose message has a Functional check paragraph counts as the branch's functional check, and a changed functional check makes close and forge-pr-check treat the earlier review as stale and review again; Forge's own record commits still never count",
+  "kind": "fix",
+  "review": {
+    "commit": "fc2a633110faa2df81764029de1e154bcbee991c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "A commit changing only `plans/manual walkthrough.md` is incorrectly treated as worker code: `.split()` produces `plans/manual` and `walkthrough.md`, so the bookkeeping-prefix check fails. If that commit follows a valid functional check, its message replaces the check with an empty string, unnecessarily invalidating the review and potentially restoring the missing-check blocker. `BOOKKEEPING` explicitly excludes all of `plans/` (src/forge/review.py:30). Use NUL-delimited output and split on NUL, filtering empty entries; this also handles Git's quoted filenames correctly. See the [git-diff-tree documentation](https://git-scm.com/docs/git-diff-tree#Documentation/git-diff-tree.txt--z).",
+        "file": "src/forge/review.py",
+        "line": 172,
+        "priority": "P2",
+        "title": "Preserve filename boundaries when identifying bookkeeping commits"
+      }
+    ],
+    "status": "clean",
+    "tree": "91da1a8bd0468b9469aee19105ac047e36c5d09dfe74d3d534b741c66f6cbcf3"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T09:22:21+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T09:39:32+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A worker's hand walkthrough recorded in an empty commit is ignored: the functional check skips commits that change no files, and close reuses the earlier review because the code didn't move, so the same 'functional check missing' finding blocks forever"
+}

@@ -100,6 +100,16 @@ def _fix_done_when_changed_after_review(env):
         "forge close tidy-readme")
 
 
+def _functional_check_added_after_review(env):
+    item, where = env.start_fix()
+    assert env.close(item).returncode == 0
+    env.repo.git("commit", "-q", "--allow-empty", "-m",
+                 "Walked it\n\nFunctional check: opened the readme and saw the greeting.", cwd=where)
+    return "fix/tidy-readme", where, (
+        f"The committed review at the head of fix/tidy-readme is {OUT_OF_DATE}",
+        "forge close tidy-readme")
+
+
 def _no_branch_given(env):
     return None, None, (
         "forge hook pr-check needs the pull request's --base, --head and --branch.",
@@ -109,7 +119,8 @@ def _no_branch_given(env):
 CASES = [_passes_once_close_finished, _branch_forge_did_not_start, _fix_without_done_when,
          _fix_over_the_limit, _fix_allowed_large, _interface_path_by_base_config, _review_blocked,
          _product_changed_after_review, _story_done_when_changed_after_review,
-         _fix_done_when_changed_after_review, _no_branch_given]
+         _fix_done_when_changed_after_review, _functional_check_added_after_review,
+         _no_branch_given]
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case.__name__.strip("_"))

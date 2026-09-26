@@ -1,0 +1,37 @@
+{
+  "branch": "task/FORGE-NEXT-1-FIXES",
+  "review": {
+    "commit": "50672d80c75bc7813d29c7d548c0adc0767513f3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With `checks = [\"tests\", \"tests (windows-latest)\"]`, a successful Windows check matches both requirements, but `next()` assigns it only to `tests`. The explicitly named Windows group remains empty, so close times out reporting a missing check even when every check succeeded. Populate every matching requirement while retaining validation of unnamed checks, and add a regression case with overlapping configured names.",
+        "file": "src/forge/checks.py",
+        "line": 36,
+        "priority": "P2",
+        "title": "Count each check toward every matching requirement"
+      }
+    ],
+    "status": "clean",
+    "tree": "c9530a0daa6ace3b138f86269f51b06463764c8ca17ef0c1bee1db47b6b7cca1"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T07:27:13+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T08:07:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T08:19:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T09:39:12+00:00",
+      "step": "review"
+    }
+  ]
+}

@@ -9,8 +9,10 @@ import ast
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -125,6 +127,9 @@ def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
     repo.git("init", "-q", "-b", "main", str(client))
     repo.git("remote", "add", "origin", str(remote), cwd=client)
     gh.respond("api", exit=1)
+    # The branch has no rule yet, so reading it works; setting Forge's rule fails.
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
     return (("init",), client, "", re.compile(
         r"Branch protection on main was not set: gh exited with code 1\.\n"
         r"Next: gh api --method PUT 'repos/\{owner\}/\{repo\}/branches/main/protection' "
@@ -503,6 +508,21 @@ def test_8_plain_english(env):
         assert line in text, text
     assert not _not_plain(text), (_not_plain(text), text)
     assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
+
+    # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
+    # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
+    if os.name != "nt":
+        slow, started = env.tmp / "slow", env.tmp / "gh-started"
+        slow.mkdir()
+        _executable(slow / "gh", f'#!/bin/sh\ntouch "{started}"\nsleep 30\n')
+        doctor = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "doctor"], cwd=repo.path,
+                               env={**os.environ, "PATH": f"{slow}{os.pathsep}{os.environ['PATH']}"},
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        while not started.exists() and doctor.poll() is None:
+            time.sleep(0.05)
+        doctor.send_signal(signal.SIGINT)
+        out, err = doctor.communicate(timeout=30)
+        assert (doctor.returncode, err) == (130, ""), (out, err)
 
 
 # --- criterion 9: nothing changes outside a pull request --------------------------------------
