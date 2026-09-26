@@ -68,6 +68,15 @@ if "codex_turn" in done.stdout:
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
+# A ps that reads every process but a Codex app-server.
+SERVER_BLIND = """#!{python}
+import subprocess, sys
+done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
+if "app-server" in done.stdout:
+    sys.exit("stub: the app-server can't be read")
+sys.stdout.write(done.stdout)
+sys.exit(done.returncode)
+"""
 # On PYTHONPATH, every Python loads it: the two minutes Codex gets to start pass in a second.
 FAST = """import threading
 
@@ -202,6 +211,18 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
         assert len([call for call in _stub(calls) if "pid" in call]) == servers
         assert not lock.exists()
 
+        # An app-server Forge can't identify is stopped, with its driver, before any conversation.
+        _install(repo.bin, "ps", SERVER_BLIND.format(python=sys.executable, ps=shutil.which("ps")))
+        before = len(_sent(calls, "thread/start"))
+        unknown = repo.forge("work", "BOARD/PAGE")
+        (repo.bin / "ps").unlink()
+        stub = [call["pid"] for call in _stub(calls) if "pid" in call][-1]
+        assert unknown.stderr == ("Forge can't read the start time and command of the Codex "
+                                  f"app-server, process {stub}, so it stopped Codex before any "
+                                  "conversation.\nNext: forge work BOARD/PAGE\n")
+        assert len(_sent(calls, "thread/start")) == before and _down(stub)
+        assert _saved(record)["app_server"] is None and not lock.exists()
+
     # The app-server, the conversation, and HEAD once the turn ends, join the record.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     saved = _saved(record)
@@ -323,6 +344,20 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     work.kill()
     work.communicate()
     assert _down(saved["driver"]["pid"])
+    if os.name != "nt":
+        # While Forge can't identify that app-server, it counts as running: forge work refuses and
+        # keeps it on record, and doctor says so and leaves it alone.
+        _install(repo.bin, "ps", SERVER_BLIND.format(python=sys.executable, ps=shutil.which("ps")))
+        blind = repo.forge("work", "BOARD/PAGE")
+        assert blind.stderr == (f"Process {stub}, which an earlier forge work BOARD/PAGE left, may "
+                                "still be running Codex, and Forge can't read its start time and "
+                                "command to be sure, so it counts it as running.\n"
+                                f"Next: stop process {stub} if it runs, then forge work BOARD/PAGE\n")
+        assert (f"- Process {stub}, which a crashed forge work BOARD/PAGE left, may still be running "
+                "Codex, and Forge can't read its start time and command to be sure, so doctor "
+                "leaves it alone; stop it if it runs.\n") in repo.forge("doctor").stdout
+        (repo.bin / "ps").unlink()
+        assert _saved(record) == saved and _up(stub)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _down(stub)
 

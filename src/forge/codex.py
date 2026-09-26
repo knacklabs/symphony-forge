@@ -67,11 +67,17 @@ REFUSALS = {
               "forge {command} {item}"),
     "driver": ("Forge can't read the start time and command of its Codex driver, process {pid}, "
                "so it stopped the driver before any conversation.", "forge {command} {item}"),
+    "server": ("Forge can't read the start time and command of the Codex app-server, process "
+               "{pid}, so it stopped Codex before any conversation.", "forge {command} {item}"),
     "busy": ("forge {command} {item} is already running as process {pid}, and only one runs per "
              "item; wait for it to finish.", "forge {command} {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
                 "who holds {lock}; it counts it as held.",
                 "delete {lock} once no forge {command} runs on {item}"),
+    "leftover": ("Process {pid}, which an earlier forge {command} {item} left, may still be "
+                 "running Codex, and Forge can't read its start time and command to be sure, so "
+                 "it counts it as running.", "stop process {pid} if it runs, then forge {command} "
+                 "{item}"),
 }
 
 
@@ -146,7 +152,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     started: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
-    refused = ""
+    refused, server = "", None
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
@@ -180,9 +186,15 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 if not isinstance(said, dict):  # the driver's own output, such as a traceback
                     text = line.rstrip("\n")
                 elif "pid" in said:
-                    _record(record, app_server=identity(said["pid"]))
+                    server = said["pid"]
+                    found = identity(server)
+                    if "command" not in (found or {}):  # nothing to stop it by after a crash
+                        _stop(started_by, group=True)  # the group has the app-server too
+                        refused = "server"
+                        break
+                    _record(record, app_server=found)
                     recorded()
-                    text = f"Codex app-server: process {said['pid']}"
+                    text = f"Codex app-server: process {server}"
                 elif "refused" in said:
                     refused, text = said["refused"], ""
                 elif "thread" in said:
@@ -226,7 +238,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 _stop_leftover(record)
                 driver.wait()
     if refused:
-        repo.refuse(REFUSALS[refused], log=log, item=item, command=command)
+        repo.refuse(REFUSALS[refused], log=log, item=item, command=command, pid=server)
     return result
 
 
@@ -314,17 +326,24 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     return None if now is not None and "command" not in now else now == recorded
 
 
-def _stop_leftover(record: Path) -> bool:
+def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     """Stop what the item's last call left running: its driver's whole process group when the
-    driver still runs as recorded, and its app-server when that does. True when it stopped any."""
+    driver still runs as recorded, and its app-server when that does. Returns whether it stopped
+    any, and the id of one Forge can't confirm has gone, which counts as running and stays on
+    record."""
     saved = _json(record)
-    stopped = False
+    stopped, unknown = False, None
     for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
         recorded = saved.get(key) or {}
-        if runs in str(recorded.get("command")) and _alive(recorded):
+        if runs not in str(recorded.get("command")):
+            continue
+        alive = _alive(recorded)
+        if alive:
             _stop(recorded, group)
-            stopped = True
-    return stopped
+            stopped, alive = True, _alive(recorded)
+        if alive is not False:
+            unknown = recorded["pid"]
+    return stopped, unknown
 
 
 def _stop(recorded: dict[str, Any], group: bool) -> None:
@@ -341,7 +360,7 @@ def _stop(recorded: dict[str, Any], group: bool) -> None:
             else:
                 os.kill(pid, sig)
         for _ in range(50):
-            if not _alive(recorded):
+            if _alive(recorded) is False:
                 return
             time.sleep(0.1)
 
@@ -360,7 +379,9 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
         repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,
                     item=item, command=command)
     try:
-        _stop_leftover(record)
+        _, unknown = _stop_leftover(record)
+        if unknown:  # its record stays, so a later call can still stop it
+            repo.refuse(REFUSALS["leftover"], pid=unknown, item=item, command=command)
         yield
     finally:
         _stop_leftover(record)
@@ -424,9 +445,14 @@ def tidy(checkout: Path) -> list[str]:
                         "doctor leaves its Codex process alone.")
             continue
         try:
-            if _stop_leftover(base.with_suffix(".json")):
+            stopped, unknown = _stop_leftover(base.with_suffix(".json"))
+            if stopped:
                 said.append(f"Stopped the Codex processes that a crashed forge {command} {item} "
                             "left.")
+            if unknown:
+                said.append(f"Process {unknown}, which a crashed forge {command} {item} left, may "
+                            "still be running Codex, and Forge can't read its start time and "
+                            "command to be sure, so doctor leaves it alone; stop it if it runs.")
         finally:
             lock.unlink(missing_ok=True)
     return said
