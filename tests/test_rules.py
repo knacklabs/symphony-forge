@@ -21,9 +21,13 @@ EVERY_CRITERION_TESTED = False
 
 
 def test_4_one_test_per_rule():
-    cited: dict[int, str] = {}
+    cited: dict[tuple[str, int], str] = {}
     for path in sorted((ROOT / "tests").glob("test_*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
+        # A story's own test file sets STORY = "<key>"; its numbers cite that story's Done when.
+        story = next((node.value.value for node in tree.body if isinstance(node, ast.Assign)
+                      and isinstance(node.value, ast.Constant)
+                      and [getattr(target, "id", "") for target in node.targets] == ["STORY"]), "")
         for node in ast.walk(tree):
             # ponytail: tests may not import forge, so they can only see command output,
             # git, files and stub calls. A direct JSON read of a state file is left to review.
@@ -37,15 +41,17 @@ def test_4_one_test_per_rule():
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test"):
                 match = re.fullmatch(r"test_(\d+)_\w+", node.name)
                 assert match, f"{path.name}: {node.name} cites no criterion; name it test_<n>_<rule>"
-                number = int(match[1])
+                number = (story, int(match[1]))
                 assert number not in cited, (
-                    f"criterion {number} has two tests: {cited[number]} and {path.name}::{node.name}")
+                    f"criterion {number[1]} {story} has two tests: {cited[number]} and "
+                    f"{path.name}::{node.name}")
                 cited[number] = f"{path.name}::{node.name}"
     if EVERY_CRITERION_TESTED:
         criteria = SPEC.read_text(encoding="utf-8").split("## Acceptance criteria")[1]
         numbers = {int(n) for n in re.findall(r"^(\d+)\. \*\*", criteria, re.M)}
-        assert not numbers - set(cited), f"criteria with no test: {sorted(numbers - set(cited))}"
-        assert not set(cited) - numbers, f"tests citing no criterion: {sorted(set(cited) - numbers)}"
+        spec = {n for story, n in cited if not story}
+        assert not numbers - spec, f"criteria with no test: {sorted(numbers - spec)}"
+        assert not spec - numbers, f"tests citing no criterion: {sorted(spec - numbers)}"
 
 
 def test_5_forge_stays_small(repo):

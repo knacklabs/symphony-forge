@@ -1018,19 +1018,22 @@
     },
     {
       "key": "FORGE-WARM-1",
-      "title": "Hybrid mode reuses warm Codex worker threads",
-      "story": "As a developer running Forge in hybrid mode, I get review-fix rounds from a Codex worker that already knows the task, so fixes land faster without re-reading the repo",
+      "title": "Codex builds your tasks and picks up where it left off",
+      "story": "As a developer who sets workers = \"codex\", I get tasks built by a Codex worker through Forge's own SDK client, and fix rounds that continue the task's own conversation, so fixes come back faster without re-reading the repository and without the Claude Codex plugin.",
       "acceptance_criteria": [
-        "FORGE_EXECUTOR selects hybrid (default), codex or claude per decision 0085",
-        "Hybrid delegation uses the pinned SDK route when doctor passes, else the plugin route pre-dispatch",
-        "Every SDK turn is admitted by a recorded ledger row; close needs a terminal turn",
-        "Review-fix rounds resume the task's worker thread with brief, HEAD, diff and findings",
-        "A recorded benchmark shows resumed fix rounds use fewer uncached tokens and less time",
-        "Live event stream with reattach; signals steer or interrupt the active turn",
-        "One lease-held app-server per repository",
-        "forge upgrade adds the SDK route to existing clients idempotently; plugin tasks keep working",
-        "Forge threads are archived at task merge and story close; pruning touches Forge threads only",
-        "Parity matrix covers claude, codex and hybrid on macOS, Linux and Windows"
+        "With workers = \"codex\", forge work runs one turn on a new named thread with full access; no app-server child remains after it exits, and a leftover one is stopped by the next forge work or forge doctor",
+        "Every approval request is declined and logged and never executes; forge work refuses if the declining handler can't be installed",
+        "Model settings come from the checkout's Codex settings; .codex/<kind>.config.toml may set only model, model_reasoning_effort and model_verbosity, and anything else refuses",
+        "Threads are named Build, Lite, Fix or Grill with the story/task or fix name and a title",
+        "The thread record is written before the first turn, and only one forge work runs per item at a time",
+        "Fix rounds resume the item's thread with the brief, new commits and working-tree diff; drift starts fresh with a reason; a changed approval refuses until re-approved",
+        "A turn left in progress is interrupted and awaited, and two turns never run for one item",
+        "Each turn writes one turn-log line with its status and token counts (null when omitted)",
+        "The first cold read runs on a read-only Grill thread; forge read --amended runs no model turn",
+        "With workers = \"codex\", forge doctor fails on a missing SDK environment or an untrusted project, and forge doctor --fix installs the pinned SDK",
+        "A stub contract test and a real smoke test against the pinned SDK both pass",
+        "Nothing outside history references codex-plugin-cc, and the guide documents uninstalling it",
+        "The plugin-removal task is built by a Codex worker, and its pull request shows one thread id across its build and a later round"
       ],
       "order": 48,
       "status": "active",
@@ -1189,5 +1192,5 @@
       ]
     }
   ],
-  "updated_at": "2026-09-25T14:33:24+00:00"
+  "updated_at": "2026-09-26T00:55:04+00:00"
 }
