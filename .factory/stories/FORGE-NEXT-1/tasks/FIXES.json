@@ -1,28 +1,21 @@
 {
   "branch": "task/FORGE-NEXT-1-FIXES",
   "review": {
-    "commit": "245a8728139eb316ff87ef302e5fd7e30095e571",
+    "commit": "50672d80c75bc7813d29c7d548c0adc0767513f3",
     "dismissals": [],
     "findings": [
       {
-        "body": "The forced-ASCII test verifies UTF-8 stdin and stderr, but its stdout assertions check only ASCII. `ready()` creates stories with an ASCII title (tests/test_story.py:90,98), and approval prints that stored title (src/forge/approval.py:138\u2013143), so the Unicode document does not exercise stdout encoding. The existing Codex test cannot cover this gap because src/forge/codex.py:131 independently reconfigures stdout. Leaving CLI stdout at its previous encoding with replacement enabled would still pass these tests. Exercise a command that prints a Unicode title under the forced encoding and assert the exact Unicode output.",
-        "file": "tests/test_approval.py",
-        "line": 32,
-        "priority": "P1",
-        "title": "Not done: UTF-8 stdout regression test"
-      },
-      {
-        "body": "Using `next()` assigns a reported check to only one required name. With `checks = [\"tests\", \"tests (windows-latest)\"]`, a successful Windows check populates only the `tests` group; the explicitly named Windows group remains empty. Close consequently times out reporting a missing check even when every check succeeded. Populate every matching requirement while retaining the checks for unnamed jobs.",
+        "body": "With `checks = [\"tests\", \"tests (windows-latest)\"]`, a successful Windows check matches both requirements, but `next()` assigns it only to `tests`. The explicitly named Windows group remains empty, so close times out reporting a missing check even when every check succeeded. Populate every matching requirement while retaining validation of unnamed checks, and add a regression case with overlapping configured names.",
         "file": "src/forge/checks.py",
         "line": 36,
         "priority": "P2",
         "title": "Count each check toward every matching requirement"
       }
     ],
-    "status": "blocked",
-    "tree": "9474308335aa3beec6f31e344f3eb2182077fbe0abf765302bed46b353ef40ea"
+    "status": "clean",
+    "tree": "c9530a0daa6ace3b138f86269f51b06463764c8ca17ef0c1bee1db47b6b7cca1"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T07:27:13+00:00",
@@ -34,6 +27,10 @@
     },
     {
       "at": "2026-09-26T08:19:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T09:39:12+00:00",
       "step": "review"
     }
   ]
