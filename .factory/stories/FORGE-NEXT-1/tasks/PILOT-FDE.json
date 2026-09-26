@@ -1,0 +1,34 @@
+{
+  "branch": "task/FORGE-NEXT-1-PILOT-FDE",
+  "review": {
+    "commit": "f96808e8c7d8e8e55ae2238d620d0efd28542535",
+    "dismissals": [
+      {
+        "because": ".factory/stories/FORGE-NEXT-1/tasks/PILOT-FDE.json:3 the pilot's deliverables live in the FDE story's own pull requests, all reviewed clean and merged on main: #288 spec amended and confirmed, #289 spec payback, #292 spec measure, #297 discovery skill; the impeccable row was cut in the approved FDE story (doctor already checks impeccable); this branch only records the task",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "The entire change records PILOT-FDE as `working` with only a `start` step. It does not deliver the required re-planned and approved FDE story/spec or establish that its skill, `spec payback`, `spec measure`, and impeccable-row tasks have been reviewed clean, tested green, and merged. Complete those deliverables through the FDE story\u2019s own pull requests before closing this pilot.",
+        "file": ".factory/stories/FORGE-NEXT-1/tasks/PILOT-FDE.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: The FDE story, re-planned for the new Forge, is built, reviewed clean, tested green and merged."
+      }
+    ],
+    "status": "clean",
+    "tree": "d15b8807482fc894e15628adf23b5cc837176b992cd21ac58e8211e68ade5749"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T17:33:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T17:37:08+00:00",
+      "step": "review"
+    }
+  ]
+}
