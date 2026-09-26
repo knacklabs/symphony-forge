@@ -1,26 +1,19 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "437edcaed09a8e400a2832b7f16a32d742133d6b",
+    "commit": "2fb89640fa96d6f77473a06beeb73f6f827bab15",
     "dismissals": [],
     "findings": [
       {
-        "body": "When rewritten history causes a fresh conversation, this write retains the previous conversation's `head`: `_record` merges fields into the existing record (`src/forge/codex.py:386\u2013390`). If the replacement turn crashes, `recover()` logs its recovered status without replacing that stale `head`. The subsequent ancestry check then rejects the replacement conversation because the old conversation's ending commit is still outside the rewritten history. Thus the next `forge work` discards a resumable conversation even though its own history hasn't changed. Clear the previous conversation's ending commit when recording a new conversation, and cover a history rewrite followed by a crashed replacement turn.",
-        "file": "src/forge/codex.py",
-        "line": 295,
+        "body": "The supplied functional-check paragraph exercises history rewriting and crash recovery, but skips covered item 8. Reporting that the suite passes does not satisfy the required user-facing walkthrough. Exercise a changed approved section, verify that `forge work` refuses without committing status, then approve the change again and verify that work starts a new conversation. Record those actions and observed results in the commit's `Functional check:` paragraph.",
+        "file": "src/forge/worker.py",
+        "line": 57,
         "priority": "P1",
-        "title": "Not done: 7. Continue the replacement conversation after recovery"
-      },
-      {
-        "body": "This new lockfile is outside the permitted scope and contains only the local package. It contributes nothing required for continuation, approval validation, or recovery: `pyproject.toml:10` declares no runtime dependencies, and the Codex SDK uses its separate managed environment. Remove this unrelated addition.",
-        "file": "uv.lock",
-        "line": 1,
-        "priority": "P2",
-        "title": "Simpler: unrelated uv.lock \u2192 existing package configuration"
+        "title": "Not done: functional check"
       }
     ],
     "status": "blocked",
-    "tree": "d2b2fe3a75b2aefebdc7647153c0a08eb4aa64a3c4312fcdd94e23f84639c5df"
+    "tree": "0251d0d24518b602403adc56eed88fe04112973ee282c8480c5088f41a9e6293"
   },
   "status": "fixing",
   "steps": [
@@ -66,6 +59,10 @@
     },
     {
       "at": "2026-09-26T15:17:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T15:58:08+00:00",
       "step": "review"
     }
   ]
