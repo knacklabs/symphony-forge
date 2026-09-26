@@ -37,6 +37,13 @@ OWN = ["README.md", "src/app.js", "docs/product/BRIEF.md", "docs/decisions/0001-
        ".github/workflows/ci.yml", "plans/roadmap.json"]
 # Forge files the client changed or added: set aside, not deleted.
 KEPT = ["factory/skills/our-skill/SKILL.md", "harness.yaml"]
+# The client's old verify commands in .envrc, outside the harness-only block, in order.
+TEST = ("npm run format:check && npm run check:architecture && npm run lint:changed && "
+        "npm run typecheck && npm test")
+# gstack's store in the repo: the office-hours design doc moves, the rest goes.
+DESIGN = "main-design-20260901-120000.md"
+GSTACK = ("Keeps 1 office-hours design doc in docs/context/; deletes the rest of gstack's store "
+          "(.gstack/, 2 files); git history keeps them.")
 
 
 def _files(folder: Path) -> set[str]:
@@ -98,9 +105,11 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert _snapshot(repo) == before and gh.calls() == []
     for line in ("\n- factory/ (2 files)\n", "\n- forge\n", "\n- forge.cmd\n", "\n- harness.yaml\n",
                  "\n- constitution/ (2 files)\n", "\n- .github/workflows/pr-ticket-check.yml\n",
-                 "\n- setup\n", "\n- .claude/CLAUDE.md\n",
+                 "\n- setup\n", "\n- .claude/CLAUDE.md\n", "\n- .envrc\n",
                  "Deletes 12 old Forge records under .factory/; git history keeps them.",
-                 "Deletes 4 old ledger records under plans/",
+                 "Deletes 4 old ledger records under plans/", GSTACK,
+                 "\nNeeds you in .gitignore: these gstack lines are yours, so they stay; take them "
+                 "out once nothing uses them: .gstack/slug-cache/\n",
                  "Sets aside 2 files that differ from the copied-in Forge, in .forge-migrate/kept/",
                  "\n- factory/skills/our-skill/SKILL.md\n",
                  # A task with no Scope makes a malformed story doc: it isn't approved.
@@ -124,6 +133,7 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
                  "to the new Forge.",
                  "Replaces AGENTS.md, which is the old Forge's word for word, with the Forge block.",
                  "Drops CLAUDE.md's import of .claude/CLAUDE.md, the old Claude adapter.",
+                 f"Moves the old verify commands from .envrc into forge.toml's test: {TEST}\n",
                  f"forge.toml pinned to Forge {version}",
                  "forge close migrate-v1 turns on branch protection for main"):
         assert line in dry.stdout, dry.stdout
@@ -163,21 +173,29 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     changed = dict(line.split("\t")[::-1] for line in repo.git(
         "diff", "--name-status", "--no-renames", "main", "forge/migrate-v1").splitlines())
     records = {path for path in _files(FIXTURE / "client")
-               if path.startswith((".factory/", "plans/quickfixes/", "plans/lessons", "plans/deferrals"))}
+               if path.startswith((".factory/", ".gstack/", "plans/quickfixes/", "plans/lessons",
+                                   "plans/deferrals"))}
     sync_rewrites = {".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md"}
     assert {path for path, status in changed.items() if status == "D"} == (
         (_files(FIXTURE / "source") - sync_rewrites - SHARED) | set(KEPT) | records
-        | {"constitution/VENDORED_FROM", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
+        | {"constitution/VENDORED_FROM", ".envrc", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
     added = {path for path, status in changed.items() if status != "D"}
     written = {*(f".forge-migrate/kept/{path}" for path in KEPT), ".forge-migrate/replan/SHIP-1.md",
                "plans/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
-               ".forge-migrate/replan/DRAFT-1.md", "forge.toml", *LISTED}
+               ".forge-migrate/replan/DRAFT-1.md", f"docs/context/{DESIGN}", ".gitignore",
+               ".gitattributes", "forge.toml", *LISTED}
     assert written <= added and all(path.startswith(".factory/") for path in added - written)
     assert not set(OWN) & set(changed)
     for path in KEPT:
         assert repo.git("show", f"forge/migrate-v1:.forge-migrate/kept/{path}") == (
             FIXTURE / "client" / path).read_text("utf-8").strip()
-    assert f'version = "{version}"' in repo.git("show", "forge/migrate-v1:forge.toml")
+    assert repo.git("show", f"forge/migrate-v1:docs/context/{DESIGN}") == (
+        FIXTURE / "client" / ".gstack/projects/x" / DESIGN).read_text("utf-8").strip()
+    # Only the old Forge's gstack lines go; the client's own stay.
+    assert repo.git("show", "forge/migrate-v1:.gitignore") == "node_modules/\n.gstack/slug-cache/"
+    assert repo.git("show", "forge/migrate-v1:.gitattributes") == "*.png binary"
+    toml = repo.git("show", "forge/migrate-v1:forge.toml")
+    assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
     # AGENTS.md was the old Forge's word for word, so only the Forge block is left; CLAUDE.md
     # keeps its own lines but no longer imports the deleted old Claude adapter.
     agents = repo.git("show", "forge/migrate-v1:AGENTS.md")
@@ -207,6 +225,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     text = body(create)
     assert text.startswith("Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
     assert "Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope" in text
+    assert "\n- .envrc\n" in text and f"from .envrc into forge.toml's test: {TEST}\n" in text
+    assert GSTACK in text
 
     # Work migrate didn't make (close's committed review) is never reset.
     head = repo.git("rev-parse", "forge/migrate-v1")
@@ -258,12 +278,20 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
 def _changed_agents(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo.write("AGENTS.md", "# Shop agents\n\nOur own rules, and the old Forge contract.\n")
-    _land(repo, "Our own AGENTS.md")
+    # A line of the client's own in .envrc: it is set aside, and still seeds test.
+    repo.write(".envrc", (FIXTURE / "client" / ".envrc").read_text("utf-8")
+               + 'export DATABASE_URL="postgres://localhost/shop"\n')
+    _land(repo, "Our own AGENTS.md and .envrc line")
     dry = repo.forge("migrate", "--dry-run")
     assert dry.returncode == 0, dry.stderr
     assert ("Needs you in AGENTS.md: it differs from the old Forge's, so its text stays above the "
             "Forge block; take the old Forge instructions out of it.") in dry.stdout
     assert "Replaces AGENTS.md" not in dry.stdout
+    kept = dry.stdout.split("Sets aside 3 files that differ from the copied-in Forge", 1)[1]
+    assert kept.split("\nConverts ", 1)[0].endswith(
+        "\n- .envrc\n- factory/skills/our-skill/SKILL.md\n- harness.yaml\n.envrc has lines of your "
+        "own besides the old Forge's, so it is set aside, not deleted."), dry.stdout
+    assert f"forge.toml's test: {TEST}\n" in dry.stdout
 
 
 def _refusal(problem: str, next_step: str, setup):
@@ -296,6 +324,17 @@ def _agents_era(repo, tmp_path: Path) -> None:
     _land(repo, "The .agents/ layout")
 
 
+def _behind(repo, tmp_path: Path) -> None:
+    repo.write("src/app.js", "console.log('newer');\n")
+    _land(repo, "A newer commit")
+    repo.git("reset", "-q", "--hard", "HEAD~1")
+
+
+def _kept_taken(repo, tmp_path: Path) -> None:
+    repo.write(".forge-migrate/kept/harness.yaml", "an older set-aside copy\n")
+    _land(repo, "An older set-aside copy")
+
+
 def _no_source(repo, tmp_path: Path) -> None:
     repo.write("constitution/VENDORED_FROM", "symphony-forge @ an unknown commit\n")
     _land(repo, "Lost the vendored commit")
@@ -309,6 +348,12 @@ CASES = {
         "The working tree has changes that aren't committed: src/app.js.",
         "commit or drop them, then forge migrate --dry-run",
         lambda repo, tmp_path: repo.write("src/app.js", "console.log('changed');\n")),
+    "a checkout behind origin": _refusal(
+        "This checkout isn't at origin/main, which forge migrate moves",
+        "git switch main && git pull, then forge migrate", _behind),
+    "a set-aside file already there": _refusal(
+        ".forge-migrate/kept/harness.yaml is already there",
+        "move .forge-migrate/ aside, then forge migrate", _kept_taken),
     "work in flight": _refusal(
         "Work is still in flight in the copied-in Forge: the stage SHIP-1-T2 in ",
         "finish or drop each one with the copied-in ./forge", _in_flight),

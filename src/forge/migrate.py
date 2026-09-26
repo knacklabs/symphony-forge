@@ -1,12 +1,16 @@
 """forge migrate: move a client that copied Forge in (the factory/ layout) to v1 in one pull request.
 
-Everything is worked out from the default branch as last fetched, before anything changes, and
-`--dry-run` prints that plan and stops. The run works in its own worktree on forge/migrate-v1:
+Everything is worked out from the default branch as last fetched, which the checkout must be at,
+before anything changes, and `--dry-run` prints that plan and stops. The run works in its own
+worktree on forge/migrate-v1:
 - it deletes the copied-in Forge's listed paths, except files that differ from the copied-in
   version (the Forge source at the commit constitution/VENDORED_FROM names), which move to
-  .forge-migrate/kept/;
+  .forge-migrate/kept/. .envrc is set aside only when it has lines besides the old Forge's, and
+  its old verify commands become forge.toml's test;
 - it deletes every old record under .factory/ and the old ledgers under plans/; git history
   keeps them;
+- it moves gstack's office-hours design docs to docs/context/, deletes the rest of .gstack/, and
+  takes the old Forge's gstack lines out of .gitignore and .gitattributes;
 - each active plan approved on the default branch becomes a story doc whose approval carries
   over; a task whose old marker is on the default branch is merged, and a story whose every task
   is merged is finished. An unapproved plan, or an unfinished one whose story doc is malformed,
@@ -22,8 +26,10 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import json
 import os
 import re
+import shlex
 import subprocess
 import tempfile
 from pathlib import Path
@@ -34,6 +40,10 @@ from forge import __version__, init, repo, story, sync
 REFUSALS = {
     "dirty": ("The working tree has changes that aren't committed: {paths}.",
               "commit or drop them, then forge migrate --dry-run"),
+    "not_current": ("This checkout isn't at {ref}, which forge migrate moves, so it can't check "
+                    "that tree here.", "git switch {default} && git pull, then forge migrate"),
+    "taken": ("{path} is already there, so forge migrate won't write over it.",
+              "move {aside} aside, then forge migrate"),
     "no_layout": ("{ref} has no copied-in factory/ layout to move; a client from before it (the "
                   '.agents/ layout) moves with the "move vendored clients" story.', "forge next"),
     "in_flight": ("Work is still in flight in the copied-in Forge: {items}.",
@@ -59,7 +69,7 @@ VENDORED = ("factory", "forge", "forge.cmd", "harness.yaml", "harness", "install
             "docs/harness-philosophy.md", "docs/degraded-mode.md", "docs/windows.md",
             "docs/codex-factory.md", "docs/memory/factory-entry-contract.md", ".codex/agents",
             ".codex/explore.config.toml", ".codex/skills/forge", ".claude/skills/forge",
-            ".claude/CLAUDE.md",
+            ".claude/CLAUDE.md", ".envrc",
             *(f".github/workflows/{name}.yml" for name in (
                 "factory-scaffold", "gardener", "harness-health", "roadmap-gate", "board-invariant",
                 "pr-link", "pr-ticket-check")))
@@ -77,6 +87,21 @@ SECTIONS = {"What changes for you": ("What changes for you", "Scope / Non-goals"
 MISSING = "<Not in the old plan; write it.>"
 FINISHED = "Finished before the move to the new Forge."
 IMPORT = re.compile(r"^@\.claude/CLAUDE\.md[ \t]*(?:\r?\n|\Z)", re.M)  # the old Claude adapter
+# The old Forge's .envrc lines: comments, its harness-only block and its exports. Any other line
+# is the client's, so the file is set aside. Its verify commands, in this order, become test.
+VERIFY = ("FACTORY_STRUCTURAL_CMD", "FACTORY_TYPECHECK_CMD", "FACTORY_TEST_CMD")
+OLD_ENVRC = re.compile(r"[ \t]*(?:#.*|if \[ ! -f constitution/VENDORED_FROM \]; then|fi|"
+                       rf"export (?:GSTACK_HOME|{'|'.join(VERIFY)})=.*)?")
+HARNESS_ONLY = re.compile(r"^[ \t]*if \[ ! -f constitution/VENDORED_FROM \].*?^[ \t]*fi[ \t]*$",
+                          re.M | re.S)
+# gstack's store, which the old Forge kept in the repo: only office-hours design docs stay.
+# ponytail: two projects' design docs with one name would collide; the names carry a timestamp.
+DESIGN = re.compile(r"\.gstack/projects/[^/]+/[^/]*-design-[^/]*\.md")
+GSTACK_LINES = {  # the old Forge's own gstack lines; the client's other gstack lines stay
+    ".gitignore": re.compile(r"^# forge gstack: project-local store.*\n\.gstack/\*\r?\n"
+                             r"!\.gstack/projects/\r?\n\.gstack/\*\*/brain-cache/\r?\n"
+                             r"\.gstack/\*\*/timeline\.jsonl[ \t]*(?:\r?\n|\Z)", re.M),
+    ".gitattributes": re.compile(r"^\.gstack/\*\*/\*\.jsonl merge=union[ \t]*(?:\r?\n|\Z)", re.M)}
 HEADER = ["| " + " | ".join(story.COLUMNS) + " |", "|" + "---|" * len(story.COLUMNS)]
 DOC = """# {title}
 
@@ -120,6 +145,10 @@ def migrate(args: argparse.Namespace) -> int:
     if dirty:
         repo.refuse(REFUSALS["dirty"], paths=", ".join(line[3:] for line in dirty[:5]))
     ref, default = story.landed_ref(top), repo.default_branch(top)
+    # The checks below read this checkout; clean and at ref, it is the tree migrate moves.
+    heads = repo.run("git", "rev-parse", "HEAD", f"{ref}^{{commit}}", cwd=top).stdout.split()
+    if len(heads) != 2 or heads[0] != heads[1]:
+        repo.refuse(REFUSALS["not_current"], ref=ref, default=default)
     if not own and repo.run("git", "cat-file", "-e", f"{ref}:factory", cwd=top).returncode:
         repo.refuse(REFUSALS["no_layout"], ref=ref)
     busy = _in_flight(top)
@@ -129,6 +158,12 @@ def migrate(args: argparse.Namespace) -> int:
     for rel in _touched(plan):
         if not (top / rel).parent.resolve().is_relative_to(top.resolve()):
             repo.refuse(REFUSALS["outside"], path=rel)
+    taken = _tree(top, ref, KEPT, "docs/context")
+    clash = next((dest for dest in [*(f"{KEPT}/{rel}" for rel in plan["kept"]),
+                                    *plan["designs"].values()] if dest in taken), "")
+    if clash:
+        repo.refuse(REFUSALS["taken"], path=clash,
+                    aside=".forge-migrate/" if clash.startswith(KEPT) else clash)
     report = _report(plan, default)
     if args.dry_run:
         print(f"Nothing was changed. forge migrate would do this, on its own branch {BRANCH}:\n\n"
@@ -149,12 +184,27 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     vendored = {} if own else _tree(top, ref, *VENDORED)
     records = {} if own else _tree(top, ref, ".factory", *LEDGERS)
     source = _source(top, ref) if vendored else {}
-    kept = sorted(path for path, blob in vendored.items()
-                  if path not in FORGE_MADE and source.get(path) != blob)
+    envrc = (story.show(top, ref, ".envrc") or "") if vendored else ""
+    ours = any(not OLD_ENVRC.fullmatch(line) for line in envrc.splitlines())
+    kept = sorted(path for path, blob in vendored.items() if path not in FORGE_MADE
+                  and (ours if path == ".envrc" else source.get(path) != blob))
+    # Outside the harness-only block; the last export of each wins, as in the shell.
+    said = dict(word.partition("=")[::2]
+                for word in shlex.split(HARNESS_ONLY.sub("", envrc), comments=True))
+    store = {} if own else _tree(top, ref, ".gstack")
+    designs = {path: f"docs/context/{Path(path).name}" for path in store if DESIGN.fullmatch(path)}
+    texts = {} if own else {name: story.show(top, ref, name) or "" for name in GSTACK_LINES}
+    edits = {name: GSTACK_LINES[name].sub("", text) for name, text in texts.items()
+             if GSTACK_LINES[name].search(text)}
+    left = {name: lines for name, text in texts.items()
+            if (lines := [line for line in edits.get(name, text).splitlines() if "gstack" in line])}
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
     return {"ref": ref, "own": own, "kept": kept, "stories": _stories(top, ref, own),
-            "delete": sorted((set(vendored) - set(kept)) | set(records)),
+            "delete": sorted((set(vendored) - set(kept)) | set(records)
+                             | (set(store) - set(designs))),
+            "gstack": len(store), "designs": designs, "gstack_edits": edits, "gstack_left": left,
+            "test": " && ".join(said[name] for name in VERIFY if said.get(name)),
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
@@ -165,6 +215,7 @@ def _touched(plan: dict[str, Any]) -> list[str]:
     written = [path for entry in plan["stories"] if "dest" in entry
                for path in (entry["dest"], *map(repo.state_path, entry["states"]))]
     return [*plan["delete"], *plan["kept"], *(f"{KEPT}/{path}" for path in plan["kept"]),
+            *plan["designs"], *plan["designs"].values(), *plan["gstack_edits"],
             *written, "forge.toml", repo.state_path(ITEM)]
 
 
@@ -390,10 +441,21 @@ def _report(plan: dict[str, Any], default: str) -> str:
         lines += [f"Deletes {records:,} old Forge records under .factory/; git history keeps them.",
                   f"Deletes {ledgers:,} old ledger records under plans/ (quickfixes, lessons, "
                   "deferrals and briefs); git history keeps them."]
+        if plan["gstack"]:
+            designs = len(plan["designs"])
+            lines.append(f"Keeps {designs} office-hours design doc{'s' * (designs != 1)} in "
+                         "docs/context/; deletes the rest of gstack's store (.gstack/, "
+                         f"{_files(plan['gstack'] - designs)}); git history keeps them.")
+        lines += [f"Needs you in {name}: these gstack lines are yours, so they stay; take them out "
+                  f"once nothing uses them: {', '.join(left)}"
+                  for name, left in plan["gstack_left"].items()]
         if plan["kept"]:
             lines.append(f"Sets aside {_files(len(plan['kept']))} that differ from the copied-in "
                          f"Forge, in {KEPT}/, for you to decide on:")
             lines += [f"- {path}" for path in plan["kept"]]
+            if ".envrc" in plan["kept"]:
+                lines.append(".envrc has lines of your own besides the old Forge's, so it is set "
+                             "aside, not deleted.")
         else:
             lines.append("Sets nothing aside: every copied-in Forge file is as it was copied in.")
     count = sum(1 for entry in plan["stories"] if "key" in entry)
@@ -418,6 +480,9 @@ def _report(plan: dict[str, Any], default: str) -> str:
                          "stays above the Forge block; take the old Forge instructions out of it.")
         if plan["claude_import"]:
             lines.append("Drops CLAUDE.md's import of .claude/CLAUDE.md, the old Claude adapter.")
+        if plan["test"]:
+            lines.append(f"Moves the old verify commands from .envrc into forge.toml's test: "
+                         f"{plan['test']}")
         lines += [f"Writes forge.toml pinned to Forge v{__version__}, and the adapters for Claude "
                   "Code and Codex with forge sync.",
                   f"After this pull request merges, forge close {ITEM} turns on branch protection "
@@ -448,12 +513,11 @@ def _fresh_branch(top: Path, ref: str) -> Path:
 
 
 def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
-    touched = [*plan["delete"], *plan["kept"]]
-    for rel in plan["kept"]:
-        dest = path / KEPT / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        os.replace(path / rel, dest)
-        touched.append(f"{KEPT}/{rel}")
+    touched = [*plan["delete"], *plan["kept"], *plan["designs"]]
+    for rel, dest in [*((rel, f"{KEPT}/{rel}") for rel in plan["kept"]), *plan["designs"].items()]:
+        (path / dest).parent.mkdir(parents=True, exist_ok=True)
+        os.replace(path / rel, path / dest)
+        touched.append(dest)
     for rel in plan["delete"]:
         (path / rel).unlink(missing_ok=True)
     # Emptied folders go too: on a disk that ignores capitals an old .factory/stories/cache-bug/
@@ -471,8 +535,12 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
         sync.write_file(path, entry["dest"], entry["text"])
         touched += [entry["dest"], *(repo.write_state(item, data, path)
                                      for item, data in entry["states"].items())]
-    sync.write_file(path, "forge.toml", sync.read(top / "forge.toml") if plan["own"]
-                    else init._scaffold(path)["forge.toml"])  # pyright: ignore[reportPrivateUsage]
+    toml = (sync.read(top / "forge.toml") if plan["own"]
+            else init._scaffold(path)["forge.toml"])  # pyright: ignore[reportPrivateUsage]
+    if plan["test"]:  # the old verify commands, not the stack's default
+        toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml,
+                      count=1, flags=re.M)
+    sync.write_file(path, "forge.toml", toml)
     touched.append("forge.toml")
     if plan["agents"] == "replace":  # sync then writes only the Forge block
         sync.write_file(path, "AGENTS.md", "")
@@ -480,6 +548,9 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
     if plan["claude_import"]:
         sync.write_file(path, "CLAUDE.md", IMPORT.sub("", sync.read(path / "CLAUDE.md")))
         touched.append("CLAUDE.md")
+    for name, text in plan["gstack_edits"].items():
+        sync.write_file(path, name, text)
+        touched.append(name)
     cfg = repo.config(path)
     touched += sync.write(path, cfg)
     who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=path).split("<")[0].strip()

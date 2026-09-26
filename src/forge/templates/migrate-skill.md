@@ -22,6 +22,10 @@ stop and ask the human whenever one fails; never work around it.
     deletes the old records under `.factory/` and the old ledgers under `plans/` (git history
     keeps them);
   - which Forge files the client changed, set aside in `.forge-migrate/kept/` for them to decide;
+  - the old verify commands it moves from `.envrc` into forge.toml's `test`, and whether `.envrc`
+    goes or, holding lines of their own, is set aside;
+  - the office-hours design docs it keeps in `docs/context/` (the rest of `.gstack/` goes), and
+    any gstack lines of their own it leaves in `.gitignore` or `.gitattributes`;
   - each converted story, whether its approval carries over (or why not), and which stories are
     already finished, so they need nothing more;
   - the unfinished parts, and any part they must fix (a missing Scope or Done-when item);

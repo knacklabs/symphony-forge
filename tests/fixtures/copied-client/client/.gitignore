@@ -1,0 +1,8 @@
+node_modules/
+.gstack/slug-cache/
+
+# forge gstack: project-local store — projects/ is committed, machine noise is not
+.gstack/*
+!.gstack/projects/
+.gstack/**/brain-cache/
+.gstack/**/timeline.jsonl
