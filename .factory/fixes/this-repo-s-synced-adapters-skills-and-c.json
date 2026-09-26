@@ -3,11 +3,22 @@
   "branch": "fix/this-repo-s-synced-adapters-skills-and-c",
   "done_when": "forge sync has rewritten every file it owns, and forge doctor reports no out-of-date files",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "e139a20a86db2b9df647d3fbbd1e9393072cc739",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "b6f65ed4c97b6a8e5e85734f78f05bac5f8ddb4de1ae5248705a3fe833f02b93"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T20:15:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T20:18:06+00:00",
+      "step": "review"
     }
   ],
   "why": "This repo's synced adapters, skills and CI workflow are out of date with Forge's templates, so forge doctor reports 7 problems and the Codex worker can't start"
