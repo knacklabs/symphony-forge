@@ -13,7 +13,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -296,6 +295,35 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
                                                  "process "), said
 
 
+def _exec_driver_is_stopped(repo) -> None:
+    # A driver recorded just after it started, that then execs into another command (as `env` or a
+    # macOS framework Python does): same id and start time, new command. Doctor still stops it.
+    flag = repo.path / "go"
+    proc = subprocess.Popen(["sh", "-c", 'while [ ! -e "$1" ]; do sleep 0.05; done; exec sleep "$((20+10))"',
+                            "codex_turn", str(flag)], start_new_session=True)
+    try:
+        def ps(field: str) -> str:
+            return subprocess.run(["ps", "-ww", "-o", f"{field}=", "-p", str(proc.pid)],
+                                  capture_output=True, text=True).stdout.strip()
+        record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "EXEC.json"
+        record.parent.mkdir(parents=True, exist_ok=True)
+        record.write_text(json.dumps({"driver": {"pid": proc.pid, "started": ps("lstart"),
+                                                 "command": ps("command")}}), encoding="utf-8")
+        flag.touch()
+        for _ in range(200):
+            if "sleep 30" in ps("command"):
+                break
+            time.sleep(0.05)
+        else:
+            pytest.fail("the shell never exec'd")
+        assert ("- Stopped the Codex processes that a crashed forge work BOARD/EXEC left.\n"
+                in repo.forge("doctor").stdout)
+        assert _down(proc.pid)
+    finally:
+        proc.kill()
+        proc.wait()
+
+
 def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
@@ -404,26 +432,5 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
                            f"is {log}.\nNext: forge work BOARD/PAGE\n")
     assert _down([call["pid"] for call in _stub(calls) if "pid" in call][-1])
 
-
-@pytest.mark.skipif(os.name == "nt", reason="the process starts itself again with POSIX exec")
-def test_a_process_that_execs_after_it_was_recorded_still_counts_as_running():
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-    from forge import codex
-    # A real shell that waits for a flag file, then execs into a command whose text the shell's own
-    # command line does not contain, so the change of command is unambiguous.
-    flag = Path(tempfile.mkdtemp()) / "go"
-    proc = subprocess.Popen(["sh", "-c", 'while [ ! -e "$1" ]; do sleep 0.05; done; exec sleep "$((20+10))"',
-                             "sh", str(flag)])
-    try:
-        recorded = codex.identity(proc.pid)
-        assert "sleep 30" not in recorded["command"]
-        flag.touch()
-        deadline = time.monotonic() + 10
-        while "sleep 30" not in codex.identity(proc.pid)["command"]:
-            assert time.monotonic() < deadline, "the shell never exec'd"
-            time.sleep(0.05)
-        assert codex._alive(recorded) is True
-    finally:
-        proc.kill()
-        proc.wait()
-    assert codex._alive(recorded) is False
+    if os.name != "nt":  # exec is POSIX
+        _exec_driver_is_stopped(repo)
