@@ -13,6 +13,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -408,13 +409,19 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
 def test_a_process_that_execs_after_it_was_recorded_still_counts_as_running():
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from forge import codex
-    # A real process that runs `sleep` under a shell's command, then execs into another command.
-    proc = subprocess.Popen(["sh", "-c", "sleep 1; exec sleep 30"])
+    # A real shell that waits for a flag file, then execs into a command whose text the shell's own
+    # command line does not contain, so the change of command is unambiguous.
+    flag = Path(tempfile.mkdtemp()) / "go"
+    proc = subprocess.Popen(["sh", "-c", 'while [ ! -e "$1" ]; do sleep 0.05; done; exec sleep "$((20+10))"',
+                             "sh", str(flag)])
     try:
         recorded = codex.identity(proc.pid)
-        assert "sh -c" in recorded["command"]
-        time.sleep(1.5)
-        assert "sleep 30" in codex.identity(proc.pid)["command"]
+        assert "sleep 30" not in recorded["command"]
+        flag.touch()
+        deadline = time.monotonic() + 10
+        while "sleep 30" not in codex.identity(proc.pid)["command"]:
+            assert time.monotonic() < deadline, "the shell never exec'd"
+            time.sleep(0.05)
         assert codex._alive(recorded) is True
     finally:
         proc.kill()
