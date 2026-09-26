@@ -104,7 +104,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     return []
 
 
-def _approval(key: str, item: str, top: Path) -> str | None:
+def _approval(key: str, item: str, top: Path) -> str:
     """The story's approval, read where forge task start reads it; refused when the story's record
     has none, when the approved part of the story doc changed since, until it is approved again, and
     when the checkout's own story doc, which the brief is made from, isn't the approved one."""
@@ -113,18 +113,12 @@ def _approval(key: str, item: str, top: Path) -> str | None:
     base = main if task.show(main, doc) is not None else f"story/{key}"
     state = task.show(base, repo.state_path(key))
     approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
-    # forge task start refuses a story without an approval, so a task of a story that has a record,
-    # or ever had one, lost its approval after it started: deleting the record doesn't lift it.
-    # ponytail: a story with no record in any history passes, as only a hand-made branch has none;
-    # refuse it too once the tests that start such tasks approve their stories.
-    if not approved and ((top / repo.state_path(key)).is_file()
-                         or git("rev-list", "-1", "--ignore-missing", base, "HEAD", "--",
-                                repo.state_path(key), cwd=top)):
+    if not approved:
         refuse(task.REFUSALS["not_approved"], key=key)
-    if approved and approved != task.approval_hash(task.show(base, doc) or ""):
+    if approved != task.approval_hash(task.show(base, doc) or ""):
         refuse(task.REFUSALS["changed"], key=key)
     brief = top / doc
-    if approved and approved != task.approval_hash(
+    if approved != task.approval_hash(
             brief.read_text(encoding="utf-8") if brief.is_file() else ""):
         refuse(REFUSALS["brief"], item=item, key=key, top=top, base=base, doc=doc)
     return approved

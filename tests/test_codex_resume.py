@@ -36,7 +36,7 @@ FIX_CONFIG = {"model": "gpt-6-sol", "model_reasoning_effort": "high",
 LARGE = 200 * 1024
 
 RESUMING = r'''
-import json, os, pathlib, sys, time
+import json, os, pathlib, subprocess, sys, time
 
 HERE = pathlib.Path(__file__).resolve().parent
 STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
@@ -45,6 +45,13 @@ STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
 def log(**entry):
     with open(LOG, "a", encoding="utf-8") as out:
         out.write(json.dumps(entry) + "\n")
+
+
+def save(threads):
+    """Through a temporary file and a rename: Forge may end this at any moment once a turn ends,
+    and a half-written store would read as empty."""
+    (HERE / "threads.tmp").write_text(json.dumps(threads), encoding="utf-8")
+    os.replace(HERE / "threads.tmp", STORE)
 
 
 def send(**message):
@@ -102,7 +109,12 @@ def main():
         elif method == "turn/start":
             turn = f"turn-stub-{sum(len(each['turns']) for each in threads.values()) + 1}"
             saved["turns"][turn] = "inProgress"
-            STORE.write_text(json.dumps(threads), encoding="utf-8")
+            save(threads)
+            if os.environ.get("STUB_CODEX_COMMIT"):  # the worker commits before Forge hears more
+                name = os.environ["STUB_CODEX_COMMIT"]
+                pathlib.Path(saved["cwd"], name).write_text("BUILT = True\n", encoding="utf-8")
+                for args in (["add", name], ["commit", "-q", "-m", "Build the page"]):
+                    subprocess.run(["git", *args], cwd=saved["cwd"], check=True)
             if os.environ.get("STUB_CODEX_STATUS") == "starting":  # started, not yet answered
                 time.sleep(120)
                 return
@@ -117,9 +129,10 @@ def main():
                     "text": f"stub codex: {turn} on {id}"}
             send(method="item/completed", params={"threadId": id, "turnId": turn, "item": said})
             saved["turns"][turn] = "completed"
+            save(threads)
             send(method="turn/completed", params={"threadId": id, "turn": {
                 "id": turn, "items": [], "status": "completed"}})
-        STORE.write_text(json.dumps(threads), encoding="utf-8")
+        save(threads)
         if method != "turn/start":
             send(id=message["id"], result=result)
 
@@ -166,8 +179,12 @@ def _holding(repo, turns: Path) -> tuple[subprocess.Popen, dict]:
 
 def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    # The worker commits during the first turn, before Forge hears that the turn started.
+    monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    start = repo.git("rev-parse", "HEAD", cwd=folder)  # the commit the first turn started from
+    monkeypatch.delenv("STUB_CODEX_COMMIT")
+    assert repo.git("log", "-1", "--format=%s", cwd=folder) == "Build the page"
+    start = repo.git("rev-parse", "HEAD~1", cwd=folder)  # the commit the first turn started from
 
     # Since that turn: a commit, an edit, a new file and an ignored one, and a serious finding.
     (folder / "notes.md").write_text("First notes\n", encoding="utf-8")
@@ -207,6 +224,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in text
     assert f"The new commits:\n\n{commits}\n" in text
     assert "Add the notes" in text and "+First notes" in text
+    assert "Build the page" in text and "+BUILT = True" in text
     assert "+Edited after the turn" in text and "+NEW_FILE = True" in text
     assert "IGNORED CONTENT" not in text and "secret.log" not in text
     # Git's own index is left as it was: the new file is still untracked.
@@ -312,6 +330,20 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
     kept.write_text(old, encoding="utf-8")
+
+    # A task branch made by hand, for a story that never had a record: no approval, so forge work
+    # refuses the same way before it records any status or starts Codex.
+    repo.git("checkout", "-q", "-b", "story/HAND")
+    repo.write("plans/HAND.md", DOC)
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "A story no one approved")
+    repo.git("checkout", "-q", "main")
+    hand = repo.path.parent / "repo-HAND-PAGE"
+    repo.git("worktree", "add", "-q", "-b", "task/HAND-PAGE", str(hand), "story/HAND")
+    hand_head = repo.git("rev-parse", "HEAD", cwd=hand)
+    unapproved = repo.forge("work", "HAND/PAGE")
+    assert unapproved.stderr == "Story HAND is not approved yet.\nNext: forge next\n"
+    assert repo.git("rev-parse", "HEAD", cwd=hand) == hand_head and len(_stub(calls)) == said
 
     # The story's approved part changes: forge work refuses before it records any status or
     # starts Codex, until the change is approved again.

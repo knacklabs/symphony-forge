@@ -289,11 +289,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     continued = {"continued": said["continued"],
                                  "fresh_start": None if said["continued"] else fresh}
                     # Codex may start the turn before Forge logs it, so a crash between the two
-                    # leaves this for recover() to find the turn by.
+                    # leaves this for recover() to find the turn by. The turn starts from HEAD now,
+                    # before Codex can commit anything.
+                    begun = repo.git("rev-parse", "HEAD", cwd=checkout)
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending={
-                                "kind": kind, "start": repo.git("rev-parse", "HEAD", cwd=checkout),
-                                **continued})
+                            approval=approval, pending={"kind": kind, "start": begun, **continued})
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":
@@ -303,8 +303,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     started = {"conversation": result["conversation"], "turn": said["turn"],
                                "kind": kind, "started": repo.now()}
                     _append(turns, started)
-                    _record(record, start=repo.git("rev-parse", "HEAD", cwd=checkout),
-                            pending=None, **continued)
+                    _record(record, start=begun, pending=None, **continued)
                     text = ""
                 elif "declined" in said:
                     text = f"Declined Codex's request {said['declined']}"
