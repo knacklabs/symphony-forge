@@ -161,3 +161,5 @@ def main(argv: list[str] | None = None) -> int:
     except repo.Refused as refusal:
         print(refusal, file=sys.stderr)
         return refusal.code
+    except KeyboardInterrupt:  # Ctrl-C: the human stopped it on purpose, so no traceback
+        return 130
