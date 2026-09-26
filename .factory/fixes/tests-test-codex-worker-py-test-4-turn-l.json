@@ -4,28 +4,21 @@
   "done_when": "Find which one it is: if Forge can return before the app-server process exits, make it wait for the exit; if it's only the check, make the test tell a leftover process from a reused PID. test_4_turn_log passes on Windows CI three runs in a row",
   "kind": "fix",
   "review": {
-    "commit": "b05f519fd64b5021b7bb2430df883cd6b3afcea0",
+    "commit": "6575a4c6c99d782ec157bd71464ac5bdc17ee1a7",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new predicate still cannot distinguish a leftover shim from a reused PID when the replacement process is also cmd.exe. This is relevant to this suite: tests/conftest.py:50\u201352 creates .cmd shims for test commands, and .github/workflows/forge-next.yml:34 runs tests concurrently. An unrelated shim acquiring a reported PID therefore still fails the assertion after the original server has exited. Compare the original process's creation time and command, or retain its process handle, instead of treating the executable name as identity. This leaves the required PID-reuse distinction incomplete.",
+        "body": "A failed identity lookup makes the leak assertion pass: empty stdout becomes `None`, so `_left(recorded_server)` returns false even if the server remains alive. On Windows, a nonterminating `Get-CimInstance` error also reaches `exit 3` because this script omits `$ErrorActionPreference = 'Stop'`. The production query explicitly distinguishes these cases in `src/forge/codex.py:310\u2013324`, and `tests/test_codex_record.py:267\u2013269` exercises this query-failure scenario. Make unexpected query failures fail the test, and return `None` only when the query successfully establishes that the PID is absent.",
         "file": "tests/test_codex_worker.py",
-        "line": 165,
-        "priority": "P1",
-        "title": "Not done: Find which one it is: if Forge can return before the app-server process exits, make it wait for the exit; if it's only the check,"
-      },
-      {
-        "body": "Both uses of the new helper assert only that it returns false after normal cleanup. No test establishes that it detects a still-running shim or distinguishes a replacement process; replacing the Windows implementation with `return False` would satisfy every changed assertion. Add regression coverage exercising a live shim, its exit, and replacement identity (including another cmd.exe), with observable process behavior rather than only mocked tasklist output. The existing integration test does not independently validate the new check that is meant to resolve this flake.",
-        "file": "tests/test_codex_worker.py",
-        "line": 338,
-        "priority": "P1",
-        "title": "Not done: Test that the Windows process check detects a live server and rejects a reused PID"
+        "line": 171,
+        "priority": "P2",
+        "title": "Reject failed process queries instead of treating them as process exit"
       }
     ],
-    "status": "blocked",
-    "tree": "c851cc42c14713d6531f5e5b69186601212b962aac86fc8243b6bfddf7745520"
+    "status": "clean",
+    "tree": "b2f094e2883075b22f32e4120fc4cc4b618895e781ff54105a2633b99597ca25"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T11:52:23+00:00",
@@ -33,6 +26,10 @@
     },
     {
       "at": "2026-09-26T11:56:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T12:08:15+00:00",
       "step": "review"
     }
   ],
