@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from forge import approval, repo, story
+from forge import approval, board, repo, story
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
@@ -47,9 +47,8 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
     for branch, path in sorted(story.worktrees(top).items()):
-        kind, _, name = branch.partition("/")  # forge/<name> is migrate's fix
-        state = (repo.read_state(name, path) if kind in ("fix", "forge")
-                 and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
+        name = branch.removeprefix("fix/")
+        state = repo.read_state(name, path) if re.fullmatch(r"fix/[a-z0-9][a-z0-9-]*", branch) else None
         if state is not None:
             lines += _item(name, f"The fix {name}", state)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
@@ -58,6 +57,8 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         lines = ["No story or fix is in progress.",
                  'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                  'Next: forge fix start "<why>" --done "<done when>"']
+    if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
+        lines.append(board.numbers_line(top))
     return lines, states
 
 
@@ -146,8 +147,6 @@ def _item(item: str, label: str, state: dict[str, Any]) -> list[str]:
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
-    if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already
-        sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,
               "reason": str(state.get("reason") or "it has serious findings or red checks").rstrip(".")}
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
