@@ -371,6 +371,21 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-2"]
 
+    # Once a task has merged, the default branch holds the story doc and that approval, but the
+    # story's own branch, where approvals are committed, still decides: a change there refuses
+    # before any status or Codex call, and its new approval isn't sent under the old doc.
+    repo.git("checkout", "story/BOARD", "--", "plans/BOARD.md", ".factory/stories/BOARD")
+    repo.git("commit", "-q", "-m", "The first task merged")
+    repo.git("push", "-q", "origin", "main")
+    head, said = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
+    story(repo, doc=DOC, approved=changed)
+    refused = repo.forge("work", "BOARD/PAGE")
+    assert refused.stderr == ('"What changes for you" or "Done when" of story BOARD changed after '
+                              "its approval, so it needs a new approval.\nNext: forge next\n")
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+    story(repo, doc=DOC, approved=DOC)
+    brief_refused()
+
 
 def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)

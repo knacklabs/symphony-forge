@@ -105,12 +105,14 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
 
 
 def _approval(key: str, item: str, top: Path) -> str:
-    """The story's approval, read where forge task start reads it; refused when the story's record
-    has none, when the approved part of the story doc changed since, until it is approved again, and
-    when the checkout's own story doc, which the brief is made from, isn't the approved one."""
-    main = task.main_ref()
+    """The story's approval, read from its own branch, where approvals are committed, else from the
+    default branch once that branch is gone; refused when the story's record has none, when the
+    approved part of the story doc changed since, until it is approved again, and when the
+    checkout's own story doc, which the brief is made from, isn't the approved one."""
     doc = f"plans/{key}.md"
-    base = main if task.show(main, doc) is not None else f"story/{key}"
+    base = f"story/{key}"
+    if task.show(base, doc) is None:
+        base = task.main_ref()
     state = task.show(base, repo.state_path(key))
     approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
     if not approved:
