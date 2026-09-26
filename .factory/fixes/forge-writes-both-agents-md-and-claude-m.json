@@ -1,0 +1,14 @@
+{
+  "base": "1cc1edac4ac0683cc3c6a5da1000bee6c62e95be",
+  "branch": "fix/forge-writes-both-agents-md-and-claude-m",
+  "done_when": "Forge no longer writes CLAUDE.md: its two Claude-only lines (story approval through Plan Mode, run long forge work in the background) move into AGENTS.md's Forge block; sync removes Forge's block from an existing CLAUDE.md and deletes the file when nothing else is left, but keeps it with an @AGENTS.md line when the repo has its own content there; doctor stops expecting CLAUDE.md; this repo's CLAUDE.md goes; tests cover the three cases",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T19:04:22+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge writes both AGENTS.md and CLAUDE.md, but Claude Code (2.1.277 and later) reads AGENTS.md by itself whenever there's no CLAUDE.md, so the second file is duplication"
+}
