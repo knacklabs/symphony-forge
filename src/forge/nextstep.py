@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from forge import approval, repo, story
+from forge import approval, board, repo, story
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
@@ -57,6 +57,8 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         lines = ["No story or fix is in progress.",
                  'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                  'Next: forge fix start "<why>" --done "<done when>"']
+    if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
+        lines.append(board.numbers_line(top))
     return lines, states
 
 
