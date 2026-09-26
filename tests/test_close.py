@@ -117,9 +117,9 @@ class Forge:
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
 
-    def open_pr(self, body: str, state: str = "OPEN") -> None:
-        self.gh.respond("pr", "list", "--head",
-                        stdout=json.dumps([{"number": 7, "state": state, "body": body}]))
+    def open_pr(self, body: str, state: str = "OPEN", draft: bool = False) -> None:
+        self.gh.respond("pr", "list", "--head", stdout=json.dumps(
+            [{"number": 7, "state": state, "body": body, "isDraft": draft}]))
 
     def gh_calls(self, *prefix: str) -> list[list[str]]:
         return [call for call in self.gh.calls() if call[:len(prefix)] == list(prefix)]
@@ -185,6 +185,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
     gh.respond("pr", "edit")
+    gh.respond("pr", "ready")
     forge = Forge(repo, gh, tmp_path)
     forge.reviews(CLEAN)
     forge.checks(GREEN)
@@ -367,7 +368,7 @@ def test_18_close(env, kind):
     moved = env.commit(env.repo.path, "NEWS.md", "The shop opens.\n")  # main moves on meanwhile
     env.repo.git("push", "-q", "origin", "main")
     env.reviews(blocked(finding("P1", "Not done: A shopper can save a basket"),
-                        finding("P2", "Simpler: drop the cache → a dict")), CLEAN)
+                        finding("P2", "Simpler: drop the cache → a dict")))
 
     first = env.close(item)
 
@@ -398,14 +399,16 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
-    # A serious finding blocks; the advisory one is listed; the result is committed and pushed.
+    # A serious finding blocks, so the pull request opens as a draft; the advisory one is listed;
+    # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
+    assert create[-1] == "--draft" and not env.gh_calls("pr", "ready")
     assert "1. P1 Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
     assert "2. P2 Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
-    env.open_pr(body(create))
+    env.open_pr(body(create), draft=True)
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
@@ -420,14 +423,19 @@ def test_18_close(env, kind):
     pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
     assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
     assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
+    # Right after the checks are green, close marks the draft ready for review.
+    assert env.gh.calls()[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
 
-    # A new commit needs a new round; the older result and its dismissal no longer count.
+    # A new commit needs a new round; the older result and its dismissal no longer count, so the
+    # finding blocks again and the ready pull request goes back to a draft.
+    env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)
-    assert third.returncode == 0, third.stderr
+    assert third.returncode == 1
     rounds = env.review_calls()
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
     assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
+    assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
     # Once the story's last part merges, close names `forge story done`: criterion 42's test.
 
 

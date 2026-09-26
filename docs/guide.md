@@ -99,7 +99,9 @@ chat. Decisions use `forge decision new <slug>` and `forge decision accept <slug
 
 `forge close <item>` follows the close rule: it merges the default branch in, pushes and opens or
 updates the pull request, runs the review until no serious finding is left, waits for the checks
-`forge.toml` names (`tests` and `forge-pr-check` by default), and marks the item ready. When it stops, it prints why and the next
+`forge.toml` names (`tests` and `forge-pr-check` by default), and marks the item ready. While the
+review is blocked the pull request is a draft, and close marks it ready for review once the review
+is clean and the checks are green. When it stops, it prints why and the next
 command, usually `forge work <item>` for a fix round. Open the line a finding cites first: if the
 code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <reason>"`.
