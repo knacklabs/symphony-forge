@@ -18,9 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - run: "uv run --python 3.11 --with pytest --with pytest-xdist --with pytest-timeout python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
 
   forge-pr-check:
