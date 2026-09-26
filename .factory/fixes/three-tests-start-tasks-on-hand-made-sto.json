@@ -3,11 +3,30 @@
   "branch": "fix/three-tests-start-tasks-on-hand-made-sto",
   "done_when": "Those three tests approve their story the way real stories are approved before starting a task, and still test what they tested; no product code changes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "5f8bad770727ef045f36f9ca2c458bcda3dfdd49",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "All three tests still fabricate approval instead of obtaining it through the real approval flow. This helper writes `status` and a locally calculated approval hash directly; `tests/test_codex_setup.py:159` does the same. Real approval goes through `forge hook approval`: `src/forge/approval.py:130\u2013140` checks the cold read and client sign-off, records the approval event, and commits the resulting state. Calling `forge task start` afterward exercises task creation but does not satisfy the explicit requirement to approve stories the way real stories are approved. Use the approval-hook setup demonstrated in `tests/test_approval.py:23\u201334`, preserving the existing phase and doctor assertions.",
+        "file": "tests/test_close.py",
+        "line": 165,
+        "priority": "P1",
+        "title": "Not done: Those three tests approve their story the way real stories are approved before starting a task, and still test what they tested; ."
+      }
+    ],
+    "status": "blocked",
+    "tree": "2d15bb0e721e06873a6af223f2d6b4fb0b36f1a29bc7dec28985c7d5aa44c5a2"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T12:45:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T12:57:21+00:00",
+      "step": "review"
     }
   ],
   "why": "Three tests start tasks on hand-made stories that were never approved (test 33 and 37 in tests/test_phases.py, test 11 in tests/test_codex_setup.py), which forces forge work to let unapproved stories through"
