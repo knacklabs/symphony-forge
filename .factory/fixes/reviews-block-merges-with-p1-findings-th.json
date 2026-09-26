@@ -3,11 +3,22 @@
   "branch": "fix/reviews-block-merges-with-p1-findings-th",
   "done_when": "The review prompt (src/forge/templates/review.md) says: a Not done finding is P1 only when this branch can meet it; work that needs another task's code not yet on the default branch is a P2 naming that task; an edge case the done-when doesn't ask for, where the item's purpose is already met, is a P2; missing tests and functional-check rules are unchanged; a test pins the new wording",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "ec415478c76c61a7995964a0bfee3d31fe0c53d8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "a3d683b50bdd83823639cdcc5636035d352bddaa62d94014ed17d48bf7bdc2a4"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T13:03:10+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:11:20+00:00",
+      "step": "review"
     }
   ],
   "why": "Reviews block merges with P1 findings that the item can't or needn't meet: a test the plan puts in a task whose code doesn't exist yet, or an edge case beyond what the done-when asks, so tasks take two to four extra rounds"
