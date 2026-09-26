@@ -84,8 +84,9 @@ CLEAN = {"exit": 0, "report": report()}
 FAILED = {"exit": 3, "report": None, "say": "codex: the model is unavailable"}
 INCOMPLETE = {"exit": 2, "report": report(status="incomplete"),
               "say": "autoreview incomplete: selected scope could not be certified"}
-# "lint" isn't named in forge.toml, so it never blocks close, even red.
-GREEN = [run("tests"), run("forge-pr-check"), run("lint", "failure")]
+# "lint" and "release" aren't named in forge.toml; a check GitHub skipped (a job that runs only on
+# tags) doesn't block unless forge.toml names it.
+GREEN = [run("tests"), run("forge-pr-check"), run("lint"), run("release", "skipped")]
 
 
 class Forge:
@@ -222,9 +223,33 @@ def _red_check(env):
     # One matrix variant failed while another still runs: red at once, no waiting.
     env.checks([run("tests (ubuntu-latest)", "failure"),
                 run("tests (windows-latest)", None, "in_progress"),
-                run("forge-pr-check"), run("lint", "failure")])
+                run("forge-pr-check"), run("lint")])
     return {"draft": True, "item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
+
+
+def _red_check_not_named(env):
+    # Every check on the head must be green, not only the ones forge.toml names.
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", "failure")],
+               [{"context": "ci/deploy-preview", "state": "error"}])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: lint, ci/deploy-preview.",
+            "next": "forge work tidy-readme"}
+
+
+def _skipped_named_check(env):
+    # A named check GitHub skipped tested nothing, so it is red.
+    env.checks([run("tests", "skipped"), run("forge-pr-check")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: tests.",
+            "next": "forge work tidy-readme"}
+
+
+def _pending_check_not_named(env):
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", None, "queued")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "The checks are not green yet: lint is still running.",
+            "next": "forge close tidy-readme"}
 
 
 def _pending_check(env):
@@ -333,7 +358,8 @@ def _task_row_missing(env):
 
 
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
-         _pending_check, _missing_required_check, _github_api_error, _no_checks_named,
+         _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
+         _missing_required_check, _github_api_error, _no_checks_named,
          _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
