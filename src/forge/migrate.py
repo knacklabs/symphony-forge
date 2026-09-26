@@ -9,7 +9,8 @@ Everything is worked out from the default branch as last fetched, before anythin
   keeps them;
 - each active plan approved on the default branch becomes a story doc whose approval carries
   over; a task whose old marker is on the default branch is merged, and a story whose every task
-  is merged is finished. An unapproved plan becomes a draft in .forge-migrate/replan/;
+  is merged is finished. An unapproved plan, or an unfinished one whose story doc is malformed,
+  becomes a draft in .forge-migrate/replan/;
 - AGENTS.md becomes just the Forge block only when it is the old Forge's word for word, and
   CLAUDE.md loses its import of the deleted .claude/CLAUDE.md;
 - it pins forge.toml to this Forge, runs forge sync, and makes one commit.
@@ -44,6 +45,10 @@ REFUSALS = {
                 "remove that link, then forge migrate --dry-run"),
     "not_ours": ("forge/migrate-v1 holds work that forge migrate didn't make, so it won't start the "
                  "branch again.", "git branch -m forge/migrate-v1 <another name>, then forge migrate"),
+    "unsaved": ("{path}, the folder of forge/migrate-v1, has changes that aren't committed, so "
+                "forge migrate won't start that branch again.",
+                "look at them in {path}; if none are yours, git worktree remove --force {path}, "
+                "then forge migrate"),
 }
 
 BRANCH, ITEM, MESSAGE = "forge/migrate-v1", "migrate-v1", "Move to Forge v1"
@@ -261,20 +266,24 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
     why_not = (f'its plan on {where} says "{status or "nothing"}", not "approved"'
                if status != "approved" else
                f'the old plan has no "{lost[0]}" section to approve' if lost else "")
+    shipped = bool(states) and len(states) == len(rows)  # every part shipped before the move
+    if not why_not:
+        try:
+            story.parse(doc)
+        except ValueError as exc:
+            if not needs:
+                needs.append(str(exc))
+            if not shipped:  # a doc that is malformed isn't approved; a finished story stays done
+                why_not = f"the story doc it becomes is malformed: {exc}"
     entry = {"key": key, "title": title, "old": rel, "why_not": why_not, "needs": needs,
              "waiting": waiting, "done": len(states), "total": len(rows), "outcome": ""}
     if why_not:
         return {**entry, "dest": f"{REPLAN}/{key}.md", "text": doc, "states": {}}
-    try:
-        story.parse(doc)
-    except ValueError as exc:
-        if not needs:
-            needs.append(str(exc))
     approval = {"by": "carried over from the copied-in Forge", "at": saved,
                 "hash": story.approval_hash(doc)}
     state = {"title": title, "doc": f"plans/{key}.md", "status": "approved", "touches": 0,
              "approval": approval, "steps": [{"step": "approved", "at": saved}]}
-    if states and len(states) == len(rows):  # every part shipped before the move: it is finished
+    if shipped:  # it is finished
         merged = {item.partition("/")[2]: data["steps"][0]["at"] for item, data in states.items()}
         said = story.json_of(story.show(top, ref, f".factory/stories/{old}/outcome.json")).get("outcome")
         entry["outcome"] = _flat(said) if isinstance(said, str) and said.strip() else FINISHED
@@ -421,16 +430,17 @@ def _report(plan: dict[str, Any], default: str) -> str:
 
 
 def _fresh_branch(top: Path, ref: str) -> Path:
-    """forge/migrate-v1 in its own worktree, from ref. A branch holding only migrate's own work
-    (an interrupted or earlier run) starts again; anything else on it stops migrate."""
+    """forge/migrate-v1 in its own worktree, from ref. A branch holding only migrate's own commits
+    and a clean worktree (an earlier run) starts again; anything else on it stops migrate."""
     repo.git("worktree", "prune", cwd=top)
     if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/{BRANCH}", cwd=top).returncode == 0:
         made = repo.git("log", "--format=%s", f"{ref}..{BRANCH}", cwd=top).splitlines()
         path = story.worktrees(top).get(BRANCH)
-        # Migrate commits all its changes at once, so edits after its commit are someone else's.
-        edited = bool(made) and path is not None and bool(repo.git("status", "--porcelain", cwd=path))
-        if edited or any(subject != MESSAGE for subject in made):
+        if any(subject != MESSAGE for subject in made):
             repo.refuse(REFUSALS["not_ours"])
+        # ponytail: any uncommitted change stops it, even a stopped run's own; a human looks first.
+        if path is not None and repo.git("status", "--porcelain", cwd=path):
+            repo.refuse(REFUSALS["unsaved"], path=path)
         if path is not None:
             repo.git("worktree", "remove", "--force", str(path), cwd=top)
         repo.git("branch", "-D", BRANCH, cwd=top)

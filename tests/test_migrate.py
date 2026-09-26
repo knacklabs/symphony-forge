@@ -103,9 +103,13 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
                  "Deletes 4 old ledger records under plans/",
                  "Sets aside 2 files that differ from the copied-in Forge, in .forge-migrate/kept/",
                  "\n- factory/skills/our-skill/SKILL.md\n",
-                 "Shoppers can save a basket (SHIP-1): its approval on main carries over; 1 of 3 "
-                 "parts done.", "  | T2 | Show a saved basket |",
-                 "Needs you in plans/SHIP-1.md: T3: no Scope and covers no Done-when item.",
+                 # A task with no Scope makes a malformed story doc: it isn't approved.
+                 "Shoppers can save a basket (SHIP-1): not carried over, because the story doc it "
+                 "becomes is malformed: Tasks row T3: Scope is empty. Its draft is "
+                 ".forge-migrate/replan/SHIP-1.md; re-plan it with forge story new SHIP-1.",
+                 "  | T2 | Show a saved basket |",
+                 "Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope and covers no "
+                 "Done-when item.",
                  'Shoppers can share a basket (DRAFT-1): not carried over, because its plan on main '
                  'says "awaiting-approval", not "approved". Its draft is '
                  ".forge-migrate/replan/DRAFT-1.md; re-plan it with forge story new DRAFT-1.",
@@ -124,7 +128,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
                  "forge close migrate-v1 turns on branch protection for main"):
         assert line in dry.stdout, dry.stdout
 
-    # A run stopped part way (here the client's own pre-commit hook fails once) is run again: it
+    # A run stopped part way (here the client's own pre-commit hook fails once) leaves changes in
+    # its folder, so the next run refuses and wipes nothing; once a human removed the folder it
     # starts its own branch over, and one more run gives the same branch.
     hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks"))
     flag = tmp_path / "stop-commits"
@@ -136,6 +141,11 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     worktree = tmp_path / "repo-forge-migrate-v1"
     (worktree / "left-behind.txt").write_text("from the stopped run\n", "utf-8")
     flag.unlink()
+    unsaved = repo.forge("migrate")
+    assert unsaved.returncode == 1 and "has changes that aren't committed" in unsaved.stderr
+    assert str(worktree) in unsaved.stderr and "\nNext: look at them in " in unsaved.stderr
+    assert (worktree / "left-behind.txt").is_file()
+    repo.git("worktree", "remove", "--force", str(worktree))
     done = repo.forge("migrate")
     assert done.returncode == 0, done.stderr
     assert done.stdout.startswith(dry.stdout.split("\n\n", 1)[1].rstrip()), done.stdout
@@ -159,9 +169,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         (_files(FIXTURE / "source") - sync_rewrites - SHARED) | set(KEPT) | records
         | {"constitution/VENDORED_FROM", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
     added = {path for path, status in changed.items() if status != "D"}
-    written = {*(f".forge-migrate/kept/{path}" for path in KEPT), "plans/SHIP-1.md", "plans/TIDY-UP.md",
-               "plans/SEARCH-1.md", "plans/SIGNIN-1.md", ".forge-migrate/replan/DRAFT-1.md",
-               "forge.toml", *LISTED}
+    written = {*(f".forge-migrate/kept/{path}" for path in KEPT), ".forge-migrate/replan/SHIP-1.md",
+               "plans/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
+               ".forge-migrate/replan/DRAFT-1.md", "forge.toml", *LISTED}
     assert written <= added and all(path.startswith(".factory/") for path in added - written)
     assert not set(OWN) & set(changed)
     for path in KEPT:
@@ -176,8 +186,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert "@.claude/CLAUDE.md" not in claude and "@AGENTS.md\n" in claude
     assert "<!-- forge:begin -->" in claude
 
-    # The approved plan is a story doc: its sections word for word, the old tasks as rows.
-    doc = repo.git("show", "forge/migrate-v1:plans/SHIP-1.md")
+    # A converted plan keeps its sections word for word and the old tasks as rows.
+    doc = repo.git("show", "forge/migrate-v1:.forge-migrate/replan/SHIP-1.md")
     assert doc.startswith("# Shoppers can save a basket\n\n## What changes for you\n\n"
                           "- A shopper can save a basket and see it again after signing in.")
     assert "## Done when\n\n1. AC1: a shopper can save a basket with one click.\n2. AC2:" in doc
@@ -196,6 +206,7 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     [create] = [call for call in gh.calls() if call[:2] == ["pr", "create"]]
     text = body(create)
     assert text.startswith("Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
+    assert "Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope" in text
 
     # Work migrate didn't make (close's committed review) is never reset.
     head = repo.git("rev-parse", "forge/migrate-v1")
@@ -215,14 +226,14 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # On the default branch the carried-over approval and the merged task hold for v1's commands.
     repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#7)", "forge/migrate-v1")
     repo.git("push", "-q", "--no-verify", "origin", "main")
-    for item in ("SHIP-1/T2", "TIDY-UP/T2"):
-        started = repo.forge("task", "start", item)
-        assert started.returncode == 0, started.stderr
-    finished = repo.forge("task", "start", "SHIP-1/T1")
+    started = repo.forge("task", "start", "TIDY-UP/T2")
+    assert started.returncode == 0, started.stderr
+    finished = repo.forge("task", "start", "TIDY-UP/T1")
     assert finished.returncode == 1 and "is already started" in finished.stderr
-    # Stories shipped before the move are finished: forge next asks no bookkeeping about them.
+    # Stories shipped before the move are finished: forge next asks no bookkeeping about them, and
+    # no story doc it reads is malformed.
     after = repo.forge("next").stdout
-    assert "story done" not in after and "search the shop" not in after
+    assert "story done" not in after and "search the shop" not in after and "malformed" not in after
     assert "stay signed in" not in after
 
 
@@ -236,7 +247,7 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     assert "nothing is deleted" in done.stdout
     assert repo.git("diff", "--name-only", "--diff-filter=D", "main", "forge/migrate-v1") == ""
     listing = repo.git("ls-tree", "-r", "--name-only", "forge/migrate-v1").splitlines()
-    assert {"factory/scripts/forge.py", SHIP, "plans/SHIP-1.md", *LISTED} <= set(listing)
+    assert {"factory/scripts/forge.py", SHIP, "plans/SEARCH-1.md", *LISTED} <= set(listing)
     # The old records stay here, and tidy-up's folder would clash with TIDY-UP's on a disk that
     # ignores capitals, so that plan stays as it is.
     assert (f"- {TIDY} stays as it is: .factory/stories/TIDY-UP is taken by a name that differs "

@@ -32,8 +32,9 @@ stop and ask the human whenever one fails; never work around it.
 
 - Run `forge migrate`. It works only on its own branch, `forge/migrate-v1`, in its own folder,
   with one commit. The default branch doesn't change.
-- If it stops part way, run it again: it starts its own branch over, and never resets work it
-  didn't make.
+- If it stops part way, its folder keeps changes that aren't committed, so the next run refuses.
+  Look in that folder; if nothing there is the human's, remove it with
+  `git worktree remove --force <folder>` and run it again. It never resets work it didn't make.
 
 ## 4. Check it, in the forge/migrate-v1 folder
 
