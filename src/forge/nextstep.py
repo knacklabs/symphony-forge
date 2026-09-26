@@ -2,6 +2,7 @@
 
 It reads each story from its own worktree (or from the default branch once it landed), each task
 from its worktree (merged once its state is on the default branch) and each fix from its worktree.
+A spec's success check is read from the default branch as landed, and listed first.
 """
 from __future__ import annotations
 
@@ -9,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, repo, story
+from forge import approval, board, records, repo, story
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
@@ -58,9 +59,35 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         lines = ["No story or fix is in progress.",
                  'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                  'Next: forge fix start "<why>" --done "<done when>"']
+    lines = _due(top) + lines
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top))
     return lines, states
+
+
+def _due(top: Path) -> list[str]:
+    """A success check for each spec whose check date has come and whose stories are all done."""
+    ref = story.landed_ref(top)
+    items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
+    keys: dict[str, list[str]] = {}
+    for item in items if isinstance(items, list) else []:
+        if (isinstance(item, dict) and isinstance(item.get("spec"), str)
+                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))):
+            keys.setdefault(item["spec"], []).append(item["key"])
+    lines: list[str] = []
+    for rel, spec_keys in sorted(keys.items()):
+        if not all(story.json_of(story.show(top, ref, repo.state_path(key))).get("status") == "done"
+                   for key in spec_keys):
+            continue
+        found = records.due_check(story.show(top, ref, rel) or "", repo.now()[:10])
+        if found:
+            slug = Path(rel).stem
+            lines += [f"Every story from the {found[0] or slug} spec is done and its check date has "
+                      f"passed; measure {found[1]}.",
+                      f'Next: forge fix start "Record the {slug} success result" --done "The {slug} '
+                      'spec records its result"',
+                      f'Next: forge spec measure {slug} --result "<measured result>"']
+    return lines
 
 
 def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
