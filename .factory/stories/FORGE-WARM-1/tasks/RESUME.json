@@ -1,25 +1,18 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "23e1cac74cb2f2fcc5aa302f4edd0c52f5c90c3c",
+    "commit": "437edcaed09a8e400a2832b7f16a32d742133d6b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Editing an approved section in the story's own worktree without committing it still allows `forge work` to commit its status and continue the old conversation. This comparison uses `task.show`, which reads only committed content (`src/forge/task.py:94\u201397`), while the task checkout can still contain the old approved document. The approval workflow already recognizes working-tree changes (`src/forge/approval.py:74\u201380`). Check the current document in the story's worktree before accepting its approval, and add a regression test with an uncommitted story edit.",
-        "file": "src/forge/worker.py",
-        "line": 120,
+        "body": "When rewritten history causes a fresh conversation, this write retains the previous conversation's `head`: `_record` merges fields into the existing record (`src/forge/codex.py:386\u2013390`). If the replacement turn crashes, `recover()` logs its recovered status without replacing that stale `head`. The subsequent ancestry check then rejects the replacement conversation because the old conversation's ending commit is still outside the rewritten history. Thus the next `forge work` discards a resumable conversation even though its own history hasn't changed. Clear the previous conversation's ending commit when recording a new conversation, and cover a history rewrite followed by a crashed replacement turn.",
+        "file": "src/forge/codex.py",
+        "line": 295,
         "priority": "P1",
-        "title": "Not done: 8. Refuse when the story's approved part changes"
+        "title": "Not done: 7. Continue the replacement conversation after recovery"
       },
       {
-        "body": "The supplied Functional check exercises a first build and approval refusals, but never exercises a later successful continuation or crash recovery. It therefore skips covered items 7 and 9. Exercise the continuation, change briefing and drift behavior, then stop-and-read recovery and the running-turn refusal through `forge work`; record the observed outcomes in the required commit-message paragraph. Saying the test suite passes does not supply the missing functional walkthrough.",
-        "file": "src/forge/worker.py",
-        "line": 63,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      },
-      {
-        "body": "This new lockfile is outside the permitted scope and contains only the local package. It adds nothing required for continuation, approval validation or recovery: `pyproject.toml:10` declares no runtime dependencies, and the Codex SDK is installed separately in its managed environment. Remove this unrelated file from the branch.",
+        "body": "This new lockfile is outside the permitted scope and contains only the local package. It contributes nothing required for continuation, approval validation, or recovery: `pyproject.toml:10` declares no runtime dependencies, and the Codex SDK uses its separate managed environment. Remove this unrelated addition.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
@@ -27,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "f63487a7aa5b3bf67cc7d2ea34a8ccb936ab5bc578eb8a6b8c15c26f738c2a82"
+    "tree": "d2b2fe3a75b2aefebdc7647153c0a08eb4aa64a3c4312fcdd94e23f84639c5df"
   },
   "status": "fixing",
   "steps": [
@@ -69,6 +62,10 @@
     },
     {
       "at": "2026-09-26T15:10:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T15:17:29+00:00",
       "step": "review"
     }
   ]
