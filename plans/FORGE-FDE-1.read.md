@@ -16,7 +16,7 @@ run `forge read <doc> --amended`:
 Only a genuine trade-off goes to the human, as a question with options. There is no second read.
 
 1. The story conflicts with the accepted discovery decision and the current confirmed spec.
-   [Decision 0089](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-FDE-1/docs/decisions/0089-fde-discovery-without-gstack.md) says discovery needs no gstack bundle; the [spec](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-FDE-1/docs/specs/fde-discovery.md) says gstack is removed and names `forge payback`. The planned spec fix does not resolve the accepted decision. Reconcile both authorities before approval.
+   [Decision 0089](/docs/decisions/0089-fde-discovery-without-gstack.md) says discovery needs no gstack bundle; the [spec](/docs/specs/fde-discovery.md) says gstack is removed and names `forge payback`. The planned spec fix does not resolve the accepted decision. Reconcile both authorities before approval.
    Disposition: keep the owner chose (2026-09-26) to record "gstack stays, only for office-hours" in the amended spec, not a new decision; the Notes now say decision 0089 is narrowed, not replaced.
 
 2. The option recommendation has no decision rule.
