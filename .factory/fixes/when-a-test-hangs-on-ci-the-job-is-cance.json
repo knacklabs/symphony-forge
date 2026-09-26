@@ -4,21 +4,21 @@
   "done_when": "Every pytest command in .github/workflows/forge-next.yml and forge.yml passes -o faulthandler_timeout=120, so a test still running after two minutes prints every thread's stack to the job log before the cap cancels it; no new dependency",
   "kind": "fix",
   "review": {
-    "commit": "3af92893845dd5804b8edaeaa1643250c98c4eb6",
+    "commit": "7de90260bb9baf62a5752f72721571b832d4a57b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The workflow is generated from `forge.toml:5`, whose test command still omits the timeout. `src/forge/sync.py:223\u2013226` substitutes that command into the workflow, and lines 255\u2013263 overwrite differing files. Consequently, the next `forge sync` removes this fix and makes the new regression test fail. The change also immediately triggers workflow-drift diagnostics (`src/forge/doctor.py:98\u201399,133\u2013135`). Add the timeout to the source configuration so regeneration preserves it.",
+        "body": "`forge.toml:5` still defines the test command without the timeout. `src/forge/sync.py:223\u2013226` inserts that command into this workflow, and lines 255\u2013263 overwrite differing files. Consequently, the next `forge sync` removes the timeout and makes the new regression test fail. This also immediately triggers the workflow-drift diagnostics in `src/forge/doctor.py:98\u201399,133\u2013135`. Add the timeout to `forge.toml` so regeneration preserves the fix.",
         "file": ".github/workflows/forge.yml",
         "line": 21,
         "priority": "P2",
-        "title": "Preserve the timeout in the workflow's source configuration"
+        "title": "Preserve the timeout in the generated workflow's source configuration"
       }
     ],
     "status": "clean",
-    "tree": "8597f27ddaa57b9d827e7274c9c5feca97ab7021e1fca16cf43a6cd2881f8282"
+    "tree": "6ad7c0d769f9938ff857d69e7e239d99e36eec31d7f3dcf834a31db6445aa04e"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T12:35:49+00:00",
@@ -26,6 +26,10 @@
     },
     {
       "at": "2026-09-26T12:43:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T12:52:18+00:00",
       "step": "review"
     }
   ],
