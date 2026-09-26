@@ -77,6 +77,16 @@ if "app-server" in done.stdout:
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
+# A ps that reads a Codex app-server's start time but only its program's name, as it can under
+# load for a process that has only just started.
+BARE_SERVER = """#!{python}
+import subprocess, sys
+done = subprocess.run([{ps!r}, *sys.argv[1:]], capture_output=True, text=True)
+if "app-server" in done.stdout:
+    done.stdout = " ".join(done.stdout.split()[:5]) + " python\\n"
+sys.stdout.write(done.stdout)
+sys.exit(done.returncode)
+"""
 # On PYTHONPATH, every Python loads it: the two minutes Codex gets to start pass in a second.
 FAST = """import threading
 
@@ -484,3 +494,17 @@ def test_9_record_waits_for_a_reader_to_release_an_existing_record(tmp_path):
     # waited would use up its attempts first.
     record, out = _record_in_process(tmp_path, "time.monotonic() - first < 0.5")
     assert json.loads(record.read_text()) == {"a": 1, "b": 2}
+
+
+def test_12_a_dead_driver_leaves_no_app_server_behind(repo, monkeypatch, sdk_data):
+    folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
+    record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"
+    if os.name != "nt":
+        # Forge reads only "python" as the app-server's command, so it can't tell it by that.
+        _install(repo.bin, "ps", BARE_SERVER.format(python=sys.executable, ps=shutil.which("ps")))
+    work, saved, stub = _held(repo, calls, record, "hold")
+    if os.name != "nt":
+        assert "app-server" not in saved["app_server"]["command"]
+    os.kill(saved["driver"]["pid"], KILL)
+    assert "Codex never reported its end" in work.communicate(timeout=30)[1]
+    assert not _up(stub)  # already gone when forge work returns, not a moment later
