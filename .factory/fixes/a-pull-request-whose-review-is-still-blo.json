@@ -3,7 +3,7 @@
   "branch": "fix/a-pull-request-whose-review-is-still-blo",
   "done_when": "forge close opens a blocked pull request as a draft and marks it ready for review once its review is clean and its checks are green",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T07:29:48+00:00",
