@@ -15,12 +15,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows runs the suite 2-3x slower than Linux, so it takes two runners, each half the tests.
+        # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests.
         include:
           - {os: ubuntu-latest, group: 1, groups: 1}
           - {os: macos-latest, group: 1, groups: 1}
-          - {os: windows-latest, group: 1, groups: 2}
-          - {os: windows-latest, group: 2, groups: 2}
+          - {os: windows-latest, group: 1, groups: 3}
+          - {os: windows-latest, group: 2, groups: 3}
+          - {os: windows-latest, group: 3, groups: 3}
     runs-on: ${{ matrix.os }}
     # The whole suite must finish in under five minutes on every runner.
     timeout-minutes: 5
