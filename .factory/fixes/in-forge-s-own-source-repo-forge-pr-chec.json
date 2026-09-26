@@ -3,7 +3,7 @@
   "branch": "fix/in-forge-s-own-source-repo-forge-pr-chec",
   "done_when": "When forge.toml says repo = \"forge-source\", sync writes the forge-pr-check job to install Forge from the base branch checkout it already has (uv tool install .) instead of the pinned tag, and this repo's .github/workflows/forge.yml says so; a client repo still installs the pinned tag; a test covers both",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T09:50:15+00:00",
