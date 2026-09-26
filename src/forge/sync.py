@@ -232,6 +232,9 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{f"{host}/skills/test-audit/{path.name}": path.read_text(encoding="utf-8")
            for host in (".claude", ".codex")
            for path in sorted((TEMPLATES / "skills" / "test-audit").glob("*.md"))},
+        # Claude Code only: the Remote Control session it starts is a Claude feature.
+        ".claude/skills/remote-approval/SKILL.md":
+            (TEMPLATES / "skills" / "remote-approval" / "SKILL.md").read_text(encoding="utf-8"),
         ".codex/config.toml": _codex_config(top),
         WORKFLOW_PATH: workflow,
     }

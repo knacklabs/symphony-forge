@@ -19,7 +19,7 @@ from test_close import PIN
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
-          ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
+          ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md"))}
@@ -108,6 +108,11 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     for shim in ("pre-commit", "pre-push"):
         assert f"exec forge hook {shim}" in (hooks / shim).read_text(encoding="utf-8")
 
+    # The remote-approval skill starts a plainly named Remote Control session in a chosen checkout.
+    skill = (repo.path / ".claude/skills/remote-approval/SKILL.md").read_text(encoding="utf-8")
+    assert re.search(r'^cd <checkout> && exec claude remote-control --name "<name>"$', skill, re.M)
+    assert "no IDs, hashes or branch names" in skill and "under about 30 characters" in skill
+
     # The workflow runs the test command as tests, plus forge-pr-check from the base branch.
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job, check_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")
@@ -179,6 +184,8 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
+    ("remote-approval skill drift",
+     (".claude/skills/remote-approval/SKILL.md differs from what forge sync writes",)),
     ("tampered hook command", (".claude/settings.json differs from what forge sync writes",)),
     ("no checks or test", ("forge.toml names no checks", "forge.toml has no test command.")),
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
@@ -240,6 +247,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         (_hooks_folder(client) / "pre-push").unlink()
     if case == "adapter drift":
         (client / ".codex/config.toml").write_text("[features]\n", encoding="utf-8")
+    if case == "remote-approval skill drift":
+        (client / ".claude/skills/remote-approval/SKILL.md").write_text("old\n", encoding="utf-8")
     marker = tmp_path / "tampered-hook-ran"
     if case == "tampered hook command":  # a Forge-looking hook that also runs something else
         settings = client / ".claude/settings.json"

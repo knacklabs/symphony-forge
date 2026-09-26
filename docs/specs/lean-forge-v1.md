@@ -300,6 +300,9 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   The story's other Done-when items are given as context.
 - A serious finding (P0 or P1), or a red, missing or pending check, stops close. Close then prints
   the problem and the next command (`forge work <item>`, or wait).
+- While the review is blocked the pull request is a draft; close marks it ready for review once
+  the review is clean and the checks are green. In a repo that allows no drafts it stays ready for
+  review, and forge-pr-check still blocks its merge.
 - The coordinator can dismiss a finding with `--dismiss`, citing the line that proves it wrong
   (host triage, decision 0075).
 - For a user-facing task, the review instructions report a missing or hollow functional check as

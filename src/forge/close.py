@@ -83,6 +83,8 @@ def close(args: argparse.Namespace) -> int:
     # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
     checks.wait(top, item, head, [name for name in cfg["checks"]
                                   if not (migrating and name == "forge-pr-check")])
+    if pr and pr.get("isDraft"):  # a blocked review left it a draft
+        _gh(top, "pr", "ready", str(pr["number"]))
     print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
 
@@ -141,18 +143,33 @@ def _gh(top: Path, *args: str) -> str:
     return done.stdout
 
 
+def _draft(top: Path, *args: str) -> str:
+    """A gh call that makes the pull request a draft. Where the repo allows no drafts (a private
+    repo on GitHub's free plan) it says so and returns ""; any other refusal still fails."""
+    try:
+        return _gh(top, *args)
+    except subprocess.CalledProcessError as error:
+        if "draft pull requests are not supported" not in error.stderr.lower():
+            raise
+    print("This repo doesn't allow draft pull requests, so the pull request is ready for review; "
+          "forge-pr-check still blocks its merge.")
+    return ""
+
+
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
     prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
-                         "--json", "number,state,body"))
+                         "--json", "number,state,body,isDraft"))
     return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
                 None)
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
              pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
-    """Open the pull request, or replace only Forge's block in its body."""
+    """Open the pull request, or replace only Forge's block in its body. While the review is
+    blocked, the pull request is a draft."""
     block = _block(result, review.functional_check(top, f"origin/{default}"))
+    draft = result["status"] == "blocked"
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -160,10 +177,14 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         title, summary = _title(top, item, state)
         notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
         body_file.write_bytes(f"{summary}\n\n{notes}{block}\n".encode("utf-8"))
-        url = _gh(top, "pr", "create", "--base", default, "--head", branch, "--title", title,
-                  "--body-file", str(body_file))
+        create = ("--base", default, "--head", branch, "--title", title, "--body-file",
+                  str(body_file))
+        url = ((draft and _draft(top, "pr", "create", "--draft", *create))
+               or _gh(top, "pr", "create", *create))
         print(f"Opened the pull request: {url.strip()}")
         return
+    if draft and not pr.get("isDraft"):
+        _draft(top, "pr", "ready", str(pr["number"]), "--undo")
     body = pr.get("body") or ""
     marked = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.S)
     new = (marked.sub(lambda _: block, body, count=1) if marked.search(body)
