@@ -4,26 +4,21 @@
   "done_when": "forge read rewrites every path under the checkout in the reader's output to a repo-root path (/docs/..., which GitHub resolves from the repo root), before writing the notes, for both readers; a test feeds a stub reader an absolute path and finds only the repo-root path in the notes",
   "kind": "fix",
   "review": {
-    "commit": "376669b9851c7f13afade77f306b66bce3bfcb6d",
-    "dismissals": [
-      {
-        "because": "src/forge/story.py:445 the machine-specific checkout prefix is removed for every path in either separator form, which is this fix's purpose; a backslash left after a space inside a quoted Windows path is repo-relative, leaks nothing, and is an edge case not worth more parsing",
-        "finding": 1
-      }
-    ],
+    "commit": "7cc201d5f06d3344dad5be65e6b3be38900cff31",
+    "dismissals": [],
     "findings": [
       {
-        "body": "The suffix match stops at whitespace, leaving Windows separators after spaces untouched. For checkout `C:\\work\\repo`, the quoted citation `\"C:\\work\\repo\\docs\\design notes\\a.md\"` becomes `\"/docs/design notes\\a.md\"`, rather than `/docs/design notes/a.md`. This fails the repo-root path requirement for valid directory names on a supported platform (`.github/workflows/forge-next.yml:22`). Normalize the complete quoted path, and extend the stub-reader test with a directory containing spaces; its current inputs only exercise space-free suffixes.",
+        "body": "The suffix regex stops at whitespace, so Windows separators after a space remain unchanged. For checkout `C:\\work\\repo`, the quoted citation `\"C:\\work\\repo\\docs\\design notes\\a.md\"` becomes `\"/docs/design notes\\a.md\"`, rather than `\"/docs/design notes/a.md\"`. Windows is supported by `.github/workflows/forge-next.yml:22`. Removing the machine-specific prefix alone does not satisfy the required repo-root path conversion. Normalize the complete cited path and extend the stub-reader test with a directory containing spaces.",
         "file": "src/forge/story.py",
         "line": 446,
         "priority": "P1",
-        "title": "Not done: forge read rewrites every path under the checkout to a repo-root path for both readers"
+        "title": "Not done: forge read rewrites every path under the checkout in the reader's output to a repo-root path (/docs/..., which GitHub resolves \u0645\u0646?"
       }
     ],
-    "status": "clean",
-    "tree": "b688e235651996e4017f85124eef8ffbade0a0c29c7c3423cc98b3474904ffbb"
+    "status": "blocked",
+    "tree": "809221808d83134f81f24411053dbc14b48ddad1159e6762641f45c000b6d744"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T09:54:15+00:00",
@@ -35,6 +30,10 @@
     },
     {
       "at": "2026-09-26T10:10:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T10:14:14+00:00",
       "step": "review"
     }
   ],
