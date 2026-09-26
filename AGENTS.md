@@ -33,4 +33,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
   human, or when a decision is theirs, in a line or two.
 - Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
   summaries or the board.
+- A story is approved through Plan Mode: exit Plan Mode with the text of the story doc that
+  `forge next` names, unchanged, as the plan. The approval matches its "What changes for you" and
+  "Done when" sections exactly, so a summary or a rewrite records nothing. There is no other
+  approval step.
+- Run long `forge work` runs in the background and keep watching them.
 <!-- forge:end -->
