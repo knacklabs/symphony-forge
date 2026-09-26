@@ -4,26 +4,26 @@
   "done_when": "Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) and fix it at the cause; both tests pass on every OS in CI three runs in a row; no test is skipped or loosened to pass",
   "kind": "fix",
   "review": {
-    "commit": "6f679c47eef40b772aa1acfd455a14b9410694cf",
+    "commit": "2f4d7486ebf739268deeeec520e9d675d1abe61c",
     "dismissals": [],
     "findings": [
       {
-        "body": "Two identical command snapshots 100 ms apart do not establish that startup execs have finished. If the launcher remains in its initial command across both reads, this records that temporary identity and stops polling. After it execs, `_alive` returns False because the command differs (`src/forge/codex.py:345-346`), and `_stop_leftover` skips the still-running server (`src/forge/codex.py:360-362`). Thus the startup race this patch targets remains possible under slow scheduling; the five-second loop does not help once two early reads agree. Establish the final identity through startup synchronization, or fix the test launcher if the mismatch is fixture-specific, before treating both reported failures as resolved.",
-        "file": "src/forge/codex.py",
-        "line": 336,
+        "body": "The assertion does not establish that exec happened: the original `sh -c sleep 1; exec sleep 30` command already contains `sleep 30`. If the child is delayed beyond the fixed sleep, this test can pass with the original broken `_alive`, because both identity snapshots still describe the shell. Conversely, delaying the first identity read past exec fails line 415 even with correct production code. Synchronize the initial snapshot and wait for an unambiguous command transition before asserting liveness, so this regression test reliably detects the bug.",
+        "file": "tests/test_codex_record.py",
+        "line": 417,
         "priority": "P1",
-        "title": "Not done: Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) andfix"
+        "title": "Not done: test_a_process_that_execs_after_it_was_recorded_still_counts_as_running"
       },
       {
-        "body": "No test exercises the delayed app-server exec that motivates `_settled`. `test_6_nothing_left_running` uses `_codex_repo_direct`, which deliberately bypasses the env launcher (`tests/test_codex_record.py:95-103,299`); its delayed-exec case changes the driver, not the app-server (`tests/test_codex_record.py:376-391`). The reader test uses the ordinary launcher without controlling the race (`tests/test_codex_reader.py:33-36,94-98`). Add a real-process regression that holds the app-server launcher across multiple identity reads, then execs and verifies crash cleanup. It should demonstrably fail before the repair and pass afterward.",
+        "body": "A zombie retains its PID and start time, so this comparison now returns True after termination until the parent reaps it. Previously its changed command made the identity comparison fail. This affects real callers: `_stop` at src/forge/codex.py:373-376 exhausts both waiting periods, and `_take` at lines 408-410 treats a zombie lock owner as still running, preventing doctor from recovering its processes. The timeout cleanup at lines 241-245 also waits to reap its own driver until after `_stop_leftover` returns. Read process state and exclude zombies while preserving identity across exec. See the [Linux wait contract](https://man7.org/linux/man-pages/man2/wait.2.html).",
         "file": "src/forge/codex.py",
-        "line": 328,
-        "priority": "P1",
-        "title": "Not done: regression test for app-server identity changing during startup"
+        "line": 337,
+        "priority": "P2",
+        "title": "Treat terminated, unreaped processes as stopped"
       }
     ],
     "status": "blocked",
-    "tree": "89e196fa89e99cef99c256eebe9a649fdbf73653c61f86d35a43f4af8a6b6313"
+    "tree": "4845046d26912eeab28abf576894eeb9010a422afda3868cc9724296f82414cc"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-09-26T14:07:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:47:23+00:00",
       "step": "review"
     }
   ],
