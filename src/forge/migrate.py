@@ -63,6 +63,8 @@ REFUSALS = {
                 "forge migrate won't start that branch again.",
                 "look at them in {path}; if none are yours, git worktree remove --force {path}, "
                 "then forge migrate"),
+    "no_prs": ("Forge can't list the merged pull requests ({problem}), so it can't tell which "
+               "tasks are done.", "gh auth status, then forge migrate --dry-run"),
 }
 
 BRANCH, ITEM, MESSAGE = "forge/migrate-v1", "migrate-v1", "Move to Forge v1"
@@ -349,7 +351,20 @@ def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
 
 def _source_stories(top: Path, ref: str) -> list[dict[str, Any]]:
     """Forge's own repo: the plans SOURCE_PLANS names, found and approved through their old plan
-    metadata (its plans have no frontmatter), dated by their old approval."""
+    metadata (its plans have no frontmatter), dated by their old approval. Its tasks were closed by
+    pull request, so a task is done when a merged one came from exactly feat/<KEY>-<TASK>."""
+    # ponytail: one gh call for the newest 10,000; search by branch if Forge ever merges more.
+    done = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "10000", "--json",
+                    "headRefName,mergedAt", cwd=top)
+    try:
+        prs = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        prs = None
+    if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
+        said = done.stderr.strip().splitlines() or [
+            f"gh exited with code {done.returncode}" if done.returncode else "gh's answer isn't a list"]
+        repo.refuse(REFUSALS["no_prs"], problem=said[-1].rstrip("."))
+    merged = {str(pr.get("headRefName")): str(pr["mergedAt"]) for pr in prs if pr.get("mergedAt")}
     found: list[dict[str, Any]] = []
     for key, replan in SOURCE_PLANS.items():
         old = f".factory/stories/{key}"
@@ -363,12 +378,14 @@ def _source_stories(top: Path, ref: str) -> list[dict[str, Any]]:
         fields = {"status": str(meta.get("status") or ""), "replan": replan,
                   "title": title[1].strip() if title else str(meta.get("title") or key),
                   "saved": str(approved.get("approved_at") or meta.get("saved") or "")}
-        found.append(_convert(top, ref, rel, key, key, fields, text, own=True))
+        found.append(_convert(top, ref, rel, key, key, fields, text, merged))
     return found
 
 
 def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str, str],
-             body: str, own: bool = False) -> dict[str, Any]:
+             body: str, prs: dict[str, str] | None = None) -> dict[str, Any]:
+    """An old plan as a story doc. prs, in Forge's own repo only: merged branch -> merge date."""
+    own = prs is not None
     found = story.sections(body)
     picked = {name: next((heading for heading in olds if heading in found), None)
               for name, olds in SECTIONS.items()}
@@ -377,7 +394,7 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
     parts = re.split(r"^(\d+)\.[ \t]+", done, flags=re.M)
     items = {int(n): _flat(block) for n, block in zip(parts[1::2], parts[2::2])}
     saved, title = fields.get("saved") or repo.now(), fields.get("title") or key
-    rows, states, needs, waiting = (_plan_rows(found) if own
+    rows, states, needs, waiting = (_plan_rows(found, key, prs) if prs is not None
                                     else _tasks(top, ref, old, key, items, saved))
     moving = re.search(r"^New moving parts:.*(?:\n[ \t]*[-*].*)*", "\n".join(found.values()), re.M)
     notes = [f"### {heading}\n\n{part.strip()}" for heading, part in found.items()
@@ -464,19 +481,27 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
         if problems:
             needs.append(f"{tid}: {' and '.join(problems)}")
         if done:
-            at = story.merged_at(top, ref, done) or saved
-            states[f"{key}/{tid}"] = {"status": "merged", "branch": f"task/{key}-{tid}",
-                                      "touches": 0, "steps": [{"step": "merged", "at": at}]}
+            states[f"{key}/{tid}"] = _merged(key, tid, story.merged_at(top, ref, done) or saved)
         else:
             waiting.append(row)
     return rows, states, needs, waiting
 
 
-def _plan_rows(found: dict[str, str]) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
+def _merged(key: str, tid: str, at: str) -> dict[str, Any]:
+    """The state of a task merged before the move."""
+    return {"status": "merged", "branch": f"task/{key}-{tid}", "touches": 0,
+            "steps": [{"step": "merged", "at": at}]}
+
+
+def _plan_rows(found: dict[str, str], key: str, prs: dict[str, str],
+               ) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
     """Forge's own plans: the Tasks rows from the plan's own table, in the old plan's columns
-    ("Label / exact task ID", "Depends on", "user_facing") or a story doc's. None is merged yet."""
+    ("Label / exact task ID", "Depends on", "user_facing") or a story doc's. A task is merged
+    when a pull request from exactly feat/<KEY>-<TASK> merged, on that date."""
     rows: list[str] = []
+    states: dict[str, Any] = {}
     needs: list[str] = []
+    waiting: list[str] = []
     for row in review.rows(found.get("Tasks") or found.get("Task decomposition") or ""):
         name, _, tid = row.get("label / exact task id", "").rpartition(" / ")
         tid, facing = row.get("id") or tid, row.get("user-facing") or row.get("user_facing", "")
@@ -486,7 +511,12 @@ def _plan_rows(found: dict[str, str]) -> tuple[list[str], dict[str, Any], list[s
             or "none", "yes" if facing.lower() in ("yes", "true") else "no")) + " |")
         if not row.get("scope", "").strip(" `—-"):
             needs.append(f"{tid}: no Scope")
-    return rows, {}, needs, rows
+        at = prs.get(f"feat/{key}-{tid}")
+        if at:
+            states[f"{key}/{tid}"] = _merged(key, tid, at)
+        else:
+            waiting.append(rows[-1])
+    return rows, states, needs, waiting
 
 
 def _numbered(text: str) -> str:

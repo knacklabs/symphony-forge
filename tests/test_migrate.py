@@ -335,6 +335,7 @@ Every hand-off started cold.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | SDK | Codex SDK set up | The pinned SDK | 1 | `src/forge/codex.py` | `tests/test_sdk.py` | — | no |
+| BUILD | Codex builds a task | Codex builds it | 1 | `src/forge/worker.py` | `tests/test_work.py` | SDK | no |
 
 New moving parts: the pinned Codex SDK (1).
 
@@ -383,6 +384,19 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         repo.write(f".factory/stories/{key}/plan-approval.json",
                    json.dumps({"approved_at": "2026-09-26T01:29:20+00:00"}))
     _land(repo, "Forge's own repo")
+    # Its tasks were closed by pull request: without gh, Forge can't tell which are done.
+    gh.respond("pr", "list", "--state", "merged", exit=1)
+    blind = repo.forge("migrate", "--dry-run")
+    assert blind.returncode == 1 and blind.stderr == (
+        "Forge can't list the merged pull requests (gh exited with code 1), so it can't tell which "
+        "tasks are done.\nNext: gh auth status, then forge migrate --dry-run\n")
+    # A task is done when a pull request from exactly feat/<KEY>-<TASK> merged; near misses aren't.
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
+        {"headRefName": "feat/FORGE-NEXT-1-CORE", "mergedAt": "2026-09-25T10:00:00Z"},
+        {"headRefName": "feat/FORGE-WARM-1-SDK", "mergedAt": "2026-09-26T08:00:00Z"},
+        {"headRefName": "feat/FORGE-NEXT-1-SWITCH-docs", "mergedAt": "2026-09-26T09:00:00Z"},
+        {"headRefName": "FORGE-NEXT-1-SWITCH", "mergedAt": "2026-09-26T09:00:00Z"},
+        {"headRefName": "feat/FORGE-WARM-1-BUILD", "mergedAt": None}]))
 
     done = repo.forge("migrate")
     assert done.returncode == 0, done.stderr
@@ -395,8 +409,9 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     # Only the three plans the switch carries are converted; the others wait for the switch.
     for line in ("Converts 3 active plans into story docs:",
                  "- Forge v1: a lean rebuild (FORGE-NEXT-1): its approval on main carries over; "
-                 "0 of 2 parts done.",
-                 "- Codex builds your tasks (FORGE-WARM-1): its approval on main carries over;",
+                 "1 of 2 parts done.",
+                 "- Codex builds your tasks (FORGE-WARM-1): its approval on main carries over; "
+                 "1 of 2 parts done.",
                  "- The agent works as a forward deployed engineer (FORGE-FDE-1): not carried over, "
                  "because the new Forge re-plans it with one fresh approval. Its draft is "
                  ".forge-migrate/replan/FORGE-FDE-1.md; re-plan it with forge story new FORGE-FDE-1.",
@@ -421,12 +436,18 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
                     '"**/routes/**"'):
         assert setting in toml, toml
 
-    # Merged, the carried-over approvals hold: tasks of both stories start; the draft's don't.
+    assert "2026-09-25T10:00:00Z" in repo.git(
+        "show", "forge/migrate-v1:.factory/stories/FORGE-NEXT-1/tasks/CORE.json")
+
+    # Merged, the carried-over approvals hold: the open tasks of both stories start, after the
+    # tasks merged by pull request; those are done, and the draft's tasks don't start.
     repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#8)", "forge/migrate-v1")
     repo.git("push", "-q", "--no-verify", "origin", "main")
-    for item in ("FORGE-NEXT-1/CORE", "FORGE-WARM-1/SDK"):
+    for item in ("FORGE-NEXT-1/SWITCH", "FORGE-WARM-1/BUILD"):
         started = repo.forge("task", "start", item)
         assert started.returncode == 0, started.stderr
+    for item in ("FORGE-NEXT-1/CORE", "FORGE-WARM-1/SDK"):
+        assert "is already started" in repo.forge("task", "start", item).stderr
     refused = repo.forge("task", "start", "FORGE-FDE-1/FDE")
     assert refused.stderr.startswith("Story FORGE-FDE-1 has no story doc on main"), refused.stderr
 
