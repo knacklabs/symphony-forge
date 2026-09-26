@@ -62,6 +62,7 @@ REFUSALS = {
 }
 
 BRANCH, ITEM, MESSAGE = "forge/migrate-v1", "migrate-v1", "Move to Forge v1"
+MADE = "migrate-made"  # in .git/forge/: the one commit migrate made, so a rerun may replace it
 SOURCE = "https://github.com/knacklabs/symphony-forge"
 # The copied-in Forge: a file here that differs from the copied-in version is set aside.
 VENDORED = ("factory", "forge", "forge.cmd", "harness.yaml", "harness", "install", "constitution",
@@ -87,15 +88,30 @@ SECTIONS = {"What changes for you": ("What changes for you", "Scope / Non-goals"
 MISSING = "<Not in the old plan; write it.>"
 FINISHED = "Finished before the move to the new Forge."
 IMPORT = re.compile(r"^@\.claude/CLAUDE\.md[ \t]*(?:\r?\n|\Z)", re.M)  # the old Claude adapter
-# The old Forge's .envrc lines: comments, its harness-only block and its exports. Any other line
-# is the client's, so the file is set aside. Its verify commands, in this order, become test.
+# The old Forge's .envrc lines: its comments word for word, its harness-only block and its
+# exports. Any other line, a comment too, is the client's, so the file is set aside. Its verify
+# commands, in this order, become test.
 VERIFY = ("FACTORY_STRUCTURAL_CMD", "FACTORY_TYPECHECK_CMD", "FACTORY_TEST_CMD")
-OLD_ENVRC = re.compile(r"[ \t]*(?:#.*|if \[ ! -f constitution/VENDORED_FROM \]; then|fi|"
+OLD_ENVRC = re.compile(r"[ \t]*(?:if \[ ! -f constitution/VENDORED_FROM \]; then|fi|"
                        rf"export (?:GSTACK_HOME|{'|'.join(VERIFY)})=.*)?")
+OLD_COMMENTS = frozenset("""\
+# Project-local gstack (loaded by direnv; run `direnv allow` once per machine).
+# Design docs, decision store, and learnings land in <repo>/.gstack — committed
+# and shared — instead of a personal ~/.gstack. Machine-local noise under
+# .gstack/ is gitignored; JSONL stores union-merge via .gitattributes.
+# The three phases verify.py runs. It REFUSES when these are unset rather than
+# guessing a toolchain, so each repo must name its own commands.
+#
+# ONLY in the harness itself. This file is vendored verbatim into client repos,
+# and factory/tests goes with it — so an unconditional export would make a
+# client's verify run the HARNESS's gate tests and record green having tested
+# none of their product. That is the exact failure the refusal exists to
+# prevent. VENDORED_FROM is written into every scaffolded/upgraded target and
+# never exists here, so it is the discriminator. Client repos: set your own
+# three commands below this block.""".splitlines())
 HARNESS_ONLY = re.compile(r"^[ \t]*if \[ ! -f constitution/VENDORED_FROM \].*?^[ \t]*fi[ \t]*$",
                           re.M | re.S)
 # gstack's store, which the old Forge kept in the repo: only office-hours design docs stay.
-# ponytail: two projects' design docs with one name would collide; the names carry a timestamp.
 DESIGN = re.compile(r"\.gstack/projects/[^/]+/[^/]*-design-[^/]*\.md")
 GSTACK_LINES = {  # the old Forge's own gstack lines; the client's other gstack lines stay
     ".gitignore": re.compile(r"^# forge gstack: project-local store.*\n\.gstack/\*\r?\n"
@@ -158,12 +174,14 @@ def migrate(args: argparse.Namespace) -> int:
     for rel in _touched(plan):
         if not (top / rel).parent.resolve().is_relative_to(top.resolve()):
             repo.refuse(REFUSALS["outside"], path=rel)
-    taken = _tree(top, ref, KEPT, "docs/context")
-    clash = next((dest for dest in [*(f"{KEPT}/{rel}" for rel in plan["kept"]),
-                                    *plan["designs"].values()] if dest in taken), "")
-    if clash:
-        repo.refuse(REFUSALS["taken"], path=clash,
-                    aside=".forge-migrate/" if clash.startswith(KEPT) else clash)
+    # A moved file never lands on a file in the tree, or on another moved file.
+    landed = dict.fromkeys(_tree(top, ref, KEPT, "docs/context"), "")
+    for rel, dest in plan["moves"]:
+        if dest in landed:
+            first = landed[dest]
+            repo.refuse(REFUSALS["taken"], path=f"{dest} (from {first})" if first else dest,
+                        aside=rel if first else ".forge-migrate/" if dest.startswith(KEPT) else dest)
+        landed[dest] = rel
     report = _report(plan, default)
     if args.dry_run:
         print(f"Nothing was changed. forge migrate would do this, on its own branch {BRANCH}:\n\n"
@@ -185,14 +203,15 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     records = {} if own else _tree(top, ref, ".factory", *LEDGERS)
     source = _source(top, ref) if vendored else {}
     envrc = (story.show(top, ref, ".envrc") or "") if vendored else ""
-    ours = any(not OLD_ENVRC.fullmatch(line) for line in envrc.splitlines())
+    ours = any(line.strip() not in OLD_COMMENTS and not OLD_ENVRC.fullmatch(line)
+               for line in envrc.splitlines())
     kept = sorted(path for path, blob in vendored.items() if path not in FORGE_MADE
                   and (ours if path == ".envrc" else source.get(path) != blob))
     # Outside the harness-only block; the last export of each wins, as in the shell.
     said = dict(word.partition("=")[::2]
                 for word in shlex.split(HARNESS_ONLY.sub("", envrc), comments=True))
     store = {} if own else _tree(top, ref, ".gstack")
-    designs = {path: f"docs/context/{Path(path).name}" for path in store if DESIGN.fullmatch(path)}
+    designs = [(path, f"docs/context/{Path(path).name}") for path in store if DESIGN.fullmatch(path)]
     texts = {} if own else {name: story.show(top, ref, name) or "" for name in GSTACK_LINES}
     edits = {name: GSTACK_LINES[name].sub("", text) for name, text in texts.items()
              if GSTACK_LINES[name].search(text)}
@@ -202,8 +221,10 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
     return {"ref": ref, "own": own, "kept": kept, "stories": _stories(top, ref, own),
             "delete": sorted((set(vendored) - set(kept)) | set(records)
-                             | (set(store) - set(designs))),
-            "gstack": len(store), "designs": designs, "gstack_edits": edits, "gstack_left": left,
+                             | (set(store) - {path for path, _ in designs})),
+            "moves": [*((path, f"{KEPT}/{path}") for path in kept), *designs],  # (from, to)
+            "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
+            "gstack_left": left,
             "test": " && ".join(said[name] for name in VERIFY if said.get(name)),
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
             "claude_import": ".claude/CLAUDE.md" in vendored
@@ -214,9 +235,8 @@ def _touched(plan: dict[str, Any]) -> list[str]:
     """Every path the run removes, moves or writes (sync checks its own files as it writes)."""
     written = [path for entry in plan["stories"] if "dest" in entry
                for path in (entry["dest"], *map(repo.state_path, entry["states"]))]
-    return [*plan["delete"], *plan["kept"], *(f"{KEPT}/{path}" for path in plan["kept"]),
-            *plan["designs"], *plan["designs"].values(), *plan["gstack_edits"],
-            *written, "forge.toml", repo.state_path(ITEM)]
+    return [*plan["delete"], *(path for move in plan["moves"] for path in move),
+            *plan["gstack_edits"], *written, "forge.toml", repo.state_path(ITEM)]
 
 
 def _tree(top: Path, ref: str, *paths: str) -> dict[str, str]:
@@ -442,7 +462,7 @@ def _report(plan: dict[str, Any], default: str) -> str:
                   f"Deletes {ledgers:,} old ledger records under plans/ (quickfixes, lessons, "
                   "deferrals and briefs); git history keeps them."]
         if plan["gstack"]:
-            designs = len(plan["designs"])
+            designs = plan["designs"]
             lines.append(f"Keeps {designs} office-hours design doc{'s' * (designs != 1)} in "
                          "docs/context/; deletes the rest of gstack's store (.gstack/, "
                          f"{_files(plan['gstack'] - designs)}); git history keeps them.")
@@ -495,13 +515,13 @@ def _report(plan: dict[str, Any], default: str) -> str:
 
 
 def _fresh_branch(top: Path, ref: str) -> Path:
-    """forge/migrate-v1 in its own worktree, from ref. A branch holding only migrate's own commits
-    and a clean worktree (an earlier run) starts again; anything else on it stops migrate."""
+    """forge/migrate-v1 in its own worktree, from ref. A branch holding nothing past ref but the
+    commit migrate recorded making, in a clean worktree, starts again; anything else stops it."""
     repo.git("worktree", "prune", cwd=top)
     if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/{BRANCH}", cwd=top).returncode == 0:
-        made = repo.git("log", "--format=%s", f"{ref}..{BRANCH}", cwd=top).splitlines()
+        made = repo.git("rev-list", f"{ref}..{BRANCH}", cwd=top).split()
         path = story.worktrees(top).get(BRANCH)
-        if any(subject != MESSAGE for subject in made):
+        if made and made != [sync.read(repo.forge_dir(top) / MADE).strip()]:
             repo.refuse(REFUSALS["not_ours"])
         # ponytail: any uncommitted change stops it, even a stopped run's own; a human looks first.
         if path is not None and repo.git("status", "--porcelain", cwd=path):
@@ -513,8 +533,8 @@ def _fresh_branch(top: Path, ref: str) -> Path:
 
 
 def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
-    touched = [*plan["delete"], *plan["kept"], *plan["designs"]]
-    for rel, dest in [*((rel, f"{KEPT}/{rel}") for rel in plan["kept"]), *plan["designs"].items()]:
+    touched = [*plan["delete"], *(rel for rel, _ in plan["moves"])]
+    for rel, dest in plan["moves"]:
         (path / dest).parent.mkdir(parents=True, exist_ok=True)
         os.replace(path / rel, path / dest)
         touched.append(dest)
@@ -570,4 +590,6 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
         raise subprocess.CalledProcessError(done.returncode or 1, ["git", "add"], done.stdout,
                                             done.stderr or f"git didn't take in {lost}")
     repo.git("commit", "-q", "-m", MESSAGE, cwd=path)
+    (repo.forge_dir(path) / MADE).write_text(repo.git("rev-parse", "HEAD", cwd=path) + "\n",
+                                             encoding="utf-8")
     sync.install_shims(path, cfg)
