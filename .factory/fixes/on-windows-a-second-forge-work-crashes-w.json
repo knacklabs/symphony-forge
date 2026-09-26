@@ -3,11 +3,37 @@
   "branch": "fix/on-windows-a-second-forge-work-crashes-w",
   "done_when": "Recording to the item's record file on Windows retries the replace briefly when the file is held open by another reader and never crashes forge work with PermissionError; the second worker still gets the one-worker-per-item refusal; test_6_nothing_left_running passes on Windows CI",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "3d3b0d066d30c979009c5c36558c55e44a8b628a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If a reader holds the record open through all 41 attempts, this explicitly re-raises PermissionError after roughly two seconds. The calls in src/forge/codex.py:188 and :200 do not handle it, and src/forge/cli.py:173\u2013176 catches only Refused and KeyboardInterrupt, so forge work still exits with a traceback. This violates the stated no-PermissionError-crash requirement. Handle retry exhaustion with a controlled failure that preserves process cleanup and does not acknowledge an unwritten record.",
+        "file": "src/forge/codex.py",
+        "line": 305,
+        "priority": "P1",
+        "title": "Not done: Recording to the item's record file on Windows retries the replace briefly when the file is held open by another reader and never"
+      },
+      {
+        "body": "The injected error clears after three calls regardless of elapsed time, and the destination file does not yet exist. Removing time.sleep entirely would still pass this test, although the resulting tight retry loop could exhaust every attempt before a Windows reader releases the file. The existing polling in tests/test_codex_record.py:139\u2013148 does not deterministically enforce this contention either. Add a case using an existing record whose replacement remains blocked until an independently controlled reader releases it, and assert that the update completes without a traceback.",
+        "file": "tests/test_codex_record.py",
+        "line": 415,
+        "priority": "P1",
+        "title": "Not done: test_7_record_retries_while_another_reader_holds_it"
+      }
+    ],
+    "status": "blocked",
+    "tree": "521f3c804a9c9e2362ba226f775a076329f40e20bff72943b79709ab052b72f6"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T13:03:12+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:08:37+00:00",
+      "step": "review"
     }
   ],
   "why": "On Windows a second forge work crashes with PermissionError (Access is denied) in codex._record, because os.replace can't replace the item's record file while another process has it open (seen in test_6_nothing_left_running on CI)"
