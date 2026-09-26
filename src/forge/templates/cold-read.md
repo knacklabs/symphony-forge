@@ -12,6 +12,9 @@ Check:
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,
    field, file format or command that two tasks both use and that no earlier task pins: the first
    task that needs it must pin it.
+   Flag every After link or shared Scope entry that exists only because of a shared line (a
+   command-table row, a guide list, a registry), and name the split: the shared line to one task
+   or a small last wiring task.
 2. Is this simple enough?
    - Each task must map to the "Done when" items it covers, and each "Done when" item to the
      spec's behaviour or success measure. Anything that maps to nothing gets
