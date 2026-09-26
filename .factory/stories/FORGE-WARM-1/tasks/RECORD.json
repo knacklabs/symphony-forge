@@ -1,10 +1,57 @@
 {
   "branch": "task/FORGE-WARM-1-RECORD",
-  "status": "started",
+  "review": {
+    "commit": "86426e920e10ea1d152e57c828e4c32b545eb095",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Two callers can both read the same stale lock and determine that its owner is gone. Caller A then removes it and creates its own lock; caller B executes this unlink using its earlier observation, deletes A's live lock, and creates another. Both enter the protected work section. Doctor can likewise delete a newly acquired worker lock and stop that worker's Codex process. Stale-lock reclamation must be serialized with acquisition so it cannot delete a replacement owner's lock.",
+        "file": "src/forge/codex.py",
+        "line": 366,
+        "priority": "P1",
+        "title": "Not done: 5. Only one forge work runs per task or fix"
+      },
+      {
+        "body": "On Windows, if Forge dies while Codex() is waiting for initialize, CLIENT is still empty: it is populated only after the constructor returns at lines 72\u201374. The stdin watcher therefore exits the driver without stopping its app-server. A stalled server that does not react to stdin closure remains running. Its identity has not been emitted either, so the record contains only the now-dead driver and app_server=null; the next work or doctor cannot recover it through _stop_leftover (codex.py:307\u2013310). Preserve a way to terminate the child during construction before exiting the Windows driver.",
+        "file": "src/forge/codex_turn.py",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: 6. No Codex process is left after work ends"
+      },
+      {
+        "body": "The entire cleanup test is skipped on Windows, although the driver implements a separate Windows shutdown path. Consequently the suite cannot detect failures in cleanup during initialization, parent death, or subsequent doctor/work recovery on that platform. Add Windows-compatible lifecycle cases that exercise the real driver and stub server; retain POSIX-only skips only for scenarios that specifically require POSIX signals.",
+        "file": "tests/test_codex_record.py",
+        "line": 167,
+        "priority": "P1",
+        "title": "Not done: Windows process-lifecycle tests"
+      },
+      {
+        "body": "The supplied commit-message audit explicitly reports no Functional check paragraph. This user-facing change requires recorded exercises of both covered items: a second work invocation refusing, and cleanup after normal completion, errors, interruption, and crash recovery. Perform those checks and record what was exercised and observed in the required commit-message paragraph.",
+        "file": "src/forge/worker.py",
+        "line": 52,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      },
+      {
+        "body": "The new Claude-coordinator SDK installation behavior and its test concern cold-reader setup, not the covered locking and cleanup requirements. Cleanup through codex.tidy does not require installing an SDK. This also introduces the otherwise unnecessary tests/conftest.py environment change. Separately, tests/test_setup.py:179\u2013183 changes expectations solely for unrelated doctor message rewrites. These test files are outside this part's allowed scope; remove the unrelated setup and wording changes from this branch.",
+        "file": "tests/test_codex_setup.py",
+        "line": 180,
+        "priority": "P2",
+        "title": "Simpler: unrelated doctor setup changes \u2192 existing setup behavior"
+      }
+    ],
+    "status": "blocked",
+    "tree": "1378679d6c141eebf7afbbeadb6cc1cc04340b03119be518d4b25f7c379a3228"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T07:21:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T07:24:43+00:00",
+      "step": "review"
     }
   ]
 }
