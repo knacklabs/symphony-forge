@@ -85,3 +85,29 @@ def test_36_client_apps_simple(repo):
                                                       GUIDE)}
     assert named_in_guide == table, (f"not commands: {sorted(named_in_guide - table)}; "
                                      f"missing: {sorted(table - named_in_guide)}")
+
+
+CARRIED_OVER_RULES = {
+    "standards.md": ["details.fieldErrors", "at debug", "PUT replaces", "?search=", "a replay is refused",
+                     "CSRF", "RoleUser", "system account", "unique field", "never make HTTP calls",
+                     "static text", "logs, temporary tables", "mailing-list", "Terraform", "TFSec"],
+    "api.md": ["1-4 line description", "one PascalCase tag", "never `Misc`", "ErrorResponseDto",
+               "error-code list", "path and query param"],
+    "backend.md": ["and local and dev too", "idempotent", "CreateXDto", "*.handler.ts", "never whole objects",
+                   "4xx at debug", "implements LoggerService"],
+    "frontend.md": ["packages/shared", "x-correlation-id"],
+    "testing.md": ["idempotency test", "failure test"],
+    "stack.md": ["ESLint", "Prettier", "Terraform"],
+}
+
+
+def test_carried_over_rules_are_on_their_pages():
+    # Each rule the constitution holds and a worker needs is one line on the page that owns it,
+    # and no page still names AWS CDK, since the owner chose Terraform.
+    for name, phrases in CARRIED_OVER_RULES.items():
+        path = ROOT / "src" / "forge" / ("standards.md" if name == "standards.md" else f"templates/conventions/{name}")
+        text = path.read_text(encoding="utf-8")
+        for phrase in phrases:
+            assert phrase in text, f"{name} misses: {phrase}"
+    for path in [ROOT / "src" / "forge" / "standards.md", *CONVENTIONS]:
+        assert "CDK" not in path.read_text(encoding="utf-8"), path.name

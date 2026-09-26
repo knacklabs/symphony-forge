@@ -80,3 +80,8 @@ Allow `sortBy` only on the columns the endpoint names, since any other value rea
 The spec is generated from the decorators, so it can't drift from the code. Every endpoint has a
 summary, its success type inside the envelope (`@ApiEnvelope`) and its error responses; every DTO
 field has a description and an example; protected routes carry `@ApiBearerAuth()`.
+
+- Give each endpoint a 1-4 line description besides its summary.
+- Use one PascalCase tag per module, never `Misc` or `General`.
+- Document every path and query param with its type and whether it is required.
+- Type error responses with an `ErrorResponseDto`, and keep every error code in one error-code list.

@@ -11,6 +11,7 @@ already runs a different stack keeps its own.
 | Frontend | React with Vite | Widely known; fast builds with almost no config |
 | Server data | TanStack Query | Caching, loading and error states without hand-written effects |
 | UI | Tailwind with shadcn/ui | Accessible components you own as code |
+| Lint | ESLint and Prettier | The usual pair; both run in the one `test` script |
 | Tests | Vitest, Supertest, Testing Library | One runner for both apps; tests through HTTP and the screen |
 | Workspace | npm workspaces | Built into npm, so there is no extra build tool |
 | CI | Forge's generated `forge.yml` | Runs forge.toml's `test` command as the `tests` check |
@@ -36,7 +37,7 @@ advance. The story that needs one names it, with the Done-when item it serves.
 
 - Redis, for a cache or limits shared by several app instances: add when a story's New moving parts names it.
 - A job queue (for example BullMQ) for work that must outlive a request: add when a story's New moving parts names it; until then the work happens inside the request.
-- AWS CDK, for the client's cloud infrastructure as code: add when a story's New moving parts names it.
+- Terraform, for the client's cloud infrastructure as code: add when a story's New moving parts names it.
 - OIDC sign-in through the client's identity provider: add when a story's New moving parts names it.
 - A monitoring stack (metrics, traces, dashboards): add when a story's New moving parts names it; until then the structured logs are the record.
 
