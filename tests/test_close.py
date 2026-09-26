@@ -417,6 +417,11 @@ def test_18_close(env, kind):
         "rev-parse", "HEAD", cwd=where)
     env.open_pr(body(create), draft=True)
 
+    # Green checks alone don't promote it: the serious finding still blocks, so it stays a draft.
+    env.checks(GREEN)
+    blocked_again = env.close(item)
+    assert blocked_again.returncode == 1 and not env.gh_calls("pr", "ready")
+
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
     second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
