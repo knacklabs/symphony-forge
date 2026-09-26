@@ -82,6 +82,8 @@ REFUSALS = {
                 "one.", "wait for it to end in the Codex app, then forge {command} {item}"),
     "unread": ("Codex didn't say how the last turn of {item} ended, so Forge starts no second one; "
                "its log is {log}.", "forge {command} {item}"),
+    "record": ("Forge couldn't update {record} because another program kept it open.",
+               "close whatever reads {record}, then run the command again"),
 }
 # The token counts an end line carries, blank when Codex reports none.
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens")
@@ -390,7 +392,14 @@ def _record(path: Path, **fields: Any) -> None:
     """Add fields to the item's record through a temporary file and a rename, so it stays whole."""
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({**_json(path), **fields}, indent=2) + "\n", encoding="utf-8")
-    os.replace(tmp, path)
+    for wait in (0.05,) * 40 + (0,):  # Windows refuses the rename while a reader has the file open
+        try:
+            return os.replace(tmp, path)
+        except PermissionError:
+            if not wait:  # nothing unwritten counts as recorded: refuse, and let the caller clean up
+                tmp.unlink(missing_ok=True)
+                repo.refuse(REFUSALS["record"], record=path)
+            time.sleep(wait)
 
 
 def identity(pid: int) -> dict[str, Any] | None:
