@@ -13,6 +13,7 @@ import tomllib
 from pathlib import Path
 
 from conftest import _install
+from test_codex_record import _crash, _down, _held
 from test_codex_worker import MODELS_REFUSAL, NOW, ROOT, _lines, _sent, _stub, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_setup import _fresh_client
@@ -85,6 +86,16 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     monkeypatch.delenv("STUB_CODEX_TOUCH")
     (shop / "scratch.txt").unlink()
     assert unchanged()
+
+    if os.name != "nt":  # the crash is made with POSIX signals
+        # A crashed read leaves its Codex processes behind, and doctor stops them though the
+        # workers are Claude's: a record exists only where Codex ran.
+        record = repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json"
+        crashed, saved, server = _held(repo, stub, record, "stall", "read", "SHOP", cwd=shop)
+        _crash(crashed, saved)
+        assert ("- Stopped the Codex processes that a crashed forge read SHOP left.\n"
+                in repo.forge("doctor", cwd=shop).stdout)
+        assert _down(server) and _down(saved["driver"]["pid"]) and unchanged()
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.

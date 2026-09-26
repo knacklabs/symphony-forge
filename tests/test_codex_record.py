@@ -45,13 +45,16 @@ def _down(pid: int) -> bool:
     return False
 
 
-def _held(repo, calls: Path, record: Path, status: str) -> tuple[subprocess.Popen, dict, int]:
-    """A forge work on BOARD/PAGE whose stub app-server is stuck ("stall" or "hold"). Returns the
-    forge work, its record once the stub is stuck, and the stub's process id."""
+def _held(repo, calls: Path, record: Path, status: str, *args: str,
+          cwd: Path | None = None) -> tuple[subprocess.Popen, dict, int]:
+    """A forge call (work BOARD/PAGE unless args say another) whose stub app-server is stuck
+    ("stall" or "hold"). Returns the call, its record once the stub is stuck, and the stub's
+    process id."""
     stuck = {"stall": "initialize", "hold": "thread/start"}[status]
     servers = len([call for call in _stub(calls) if "pid" in call])
-    work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
-                            cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": status},
+    work = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
+                             *(args or ("work", "BOARD/PAGE"))], cwd=cwd or repo.path,
+                            env={**os.environ, "STUB_CODEX_STATUS": status},
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     for _ in range(600):
         try:  # the stub may be halfway through a line
@@ -65,7 +68,7 @@ def _held(repo, calls: Path, record: Path, status: str) -> tuple[subprocess.Pope
             return work, saved, pids[-1]
         time.sleep(0.05)
     work.kill()
-    pytest.fail(f"forge work never got stuck: {work.communicate()[1]}")
+    pytest.fail(f"the forge call never got stuck: {work.communicate()[1]}")
 
 
 def _crash(work: subprocess.Popen, saved: dict) -> None:
@@ -153,7 +156,7 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data):
     work, saved, stub = _held(repo, calls, record, "hold")
     assert (f"- forge work BOARD/PAGE is running as process {work.pid}, so doctor leaves its "
             "Codex process alone.\n") in repo.forge("doctor").stdout
-    assert _up(stub)
+    assert _up(stub) and _saved(lock)["pid"] == work.pid
     os.kill(saved["driver"]["pid"], signal.SIGKILL)
     assert "Codex never reported its end" in work.communicate(timeout=30)[1]
     assert _down(stub)

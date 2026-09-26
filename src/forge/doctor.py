@@ -1,7 +1,7 @@
 """forge doctor: tools, the pin, the git hooks, the host hooks, adapter drift, CI and, for Codex
 workers, the Codex SDK and the project's trust; a row per problem. With Codex workers, or under
-Claude Code, whose cold read runs on Codex, it checks the SDK and --fix installs it. With Codex
-workers it also stops a Codex process a crashed forge work left, never a running one's."""
+Claude Code, whose cold read runs on Codex, it checks the SDK and --fix installs it. Whatever the
+workers, it stops the Codex processes a crashed forge work or read left, never a running one's."""
 from __future__ import annotations
 
 import argparse
@@ -146,7 +146,7 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
                      f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
 
-    for line in codex.tidy(top) if on_codex else []:
+    for line in codex.tidy(top):
         print(f"- {line}")
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")

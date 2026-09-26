@@ -339,27 +339,11 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
     command = "read" if kind == "Grill" else "work"
-    while True:
-        if lock.exists():
-            owner = _json(lock)
-            alive = _alive(owner)
-            if alive is None:
-                repo.refuse(REFUSALS["unknown"], pid=owner.get("pid"), lock=lock, item=item,
-                            command=command)
-            if alive:
-                repo.refuse(REFUSALS["busy"], pid=owner["pid"], item=item, command=command)
-            # ponytail: two calls that find the same stale lock at once can both clear it; the
-            # window is one read. Clear it by an exclusive rename if that ever bites.
-            lock.unlink(missing_ok=True)
-        me = identity(os.getpid()) or {}
-        if "command" not in me:  # a lock no one else could check would pass for a stale one
-            repo.refuse(REFUSALS["unknown"], pid=os.getpid(), lock=lock, item=item, command=command)
-        try:
-            with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
-                json.dump(me, out)
-            break
-        except FileExistsError:  # another call took it meanwhile: check its owner
-            continue
+    held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
+    if held:
+        owner, alive = held
+        repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,
+                    item=item, command=command)
     try:
         _stop_leftover(record)
         yield
@@ -368,21 +352,49 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
         lock.unlink(missing_ok=True)
 
 
+def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
+    """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
+    else the owner keeping it, and True, or None when Forge can't tell, which counts as running."""
+    while True:
+        if lock.exists():
+            owner = _json(lock)
+            alive = _alive(owner)
+            if alive is not False:
+                return owner, alive
+            # ponytail: two calls that find the same stale lock at once can both clear it; the
+            # window is one read. Clear it by an exclusive rename if that ever bites.
+            lock.unlink(missing_ok=True)
+        if "command" not in me:  # a lock no one else could check would pass for a stale one
+            return me, None
+        try:
+            with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
+                json.dump(me, out)
+            return None
+        except FileExistsError:  # another call took it meanwhile: check its owner
+            continue
+
+
 def tidy(checkout: Path) -> list[str]:
-    """For forge doctor: clear each stale lock and stop each leftover Codex process, unless a
-    forge work or read still runs on the item. A line for each process stopped or left alone."""
+    """For forge doctor, whatever the workers, since a record exists only where Codex ran: under
+    each item's lock, clear what a crashed call left. An item whose lock is held is running, and
+    is left alone. A line for each item stopped or left alone."""
     threads = repo.forge_dir(checkout) / "threads"
+    bases = sorted({path.with_suffix("") for path in threads.rglob("*.*")})
+    me = (identity(os.getpid()) or {"pid": os.getpid()}) if bases else {}
     said = []
-    for base in sorted({path.with_suffix("") for path in threads.rglob("*.*")}):
+    for base in bases:
         folder, item = base.relative_to(threads).as_posix().split("/", 1)
         command = "read" if folder == "read" else "work"
         lock = base.with_suffix(".lock")
-        owner = _json(lock)
-        if lock.exists() and _alive(owner) is not False:
-            said.append(f"forge {command} {item} is running as process {owner.get('pid')}, so "
+        held = _take(lock, me)
+        if held:
+            said.append(f"forge {command} {item} is running as process {held[0].get('pid')}, so "
                         "doctor leaves its Codex process alone.")
             continue
-        lock.unlink(missing_ok=True)
-        if _stop_leftover(base.with_suffix(".json")):
-            said.append(f"Stopped the Codex processes that a crashed forge {command} {item} left.")
+        try:
+            if _stop_leftover(base.with_suffix(".json")):
+                said.append(f"Stopped the Codex processes that a crashed forge {command} {item} "
+                            "left.")
+        finally:
+            lock.unlink(missing_ok=True)
     return said
