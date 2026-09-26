@@ -258,8 +258,8 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     # naming the lock.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
                                 "command": "forge work BOARD/PAGE"}), encoding="utf-8")
-    for tool in ("ps", "powershell"):
-        _install(repo.bin, tool, BLIND)
+    for name in ("ps", "powershell"):
+        _install(repo.bin, name, BLIND)
     blind = repo.forge("work", "BOARD/PAGE")
     assert blind.stderr == (f"Forge can't read the start time and command of process {os.getpid()}"
                             f", so it can't tell who holds {lock}; it counts it as held.\n"
