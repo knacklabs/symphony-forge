@@ -6,8 +6,8 @@ kind's settings (config), and the conversation to continue (thread), if any. Thi
 JSON line per step, in order: the app-server's process id, before Codex starts; why a new
 conversation starts when Codex can't resume that one; the thread, and whether it continued; the
 turn; each event and each declined request; then the turn's end with its status, error, final text
-and token usage, only when Codex reports it. With a turn id to read back (read), this runs no turn:
-after the app-server's id it prints that turn's status as Codex reports it, or null. After the
+and token usage, only when Codex reports it. With read, this runs no turn: after the app-server's
+id it prints each turn of the conversation with its status as Codex reports it. After the
 app-server's id and after the thread's, this waits for Forge to answer with a line saying it has
 them on record, so nothing starts that Forge hasn't recorded. Codex gets two minutes to start, or
 this prints a refusal and ends.
@@ -111,7 +111,7 @@ def main() -> int:
             emit(refused="handler")
             return 3
         client._approval_handler = decline
-        if request.get("read"):  # after a crash: how the turn Forge never saw end, ended
+        if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
             except InvalidRequestError as error:
@@ -121,8 +121,7 @@ def main() -> int:
                 if error.message != f"thread not loaded: {request['thread']}":
                     raise
                 turns = []
-            emit(read=next((turn.status.value for turn in turns if turn.id == request["read"]),
-                           None))
+            emit(read=[[turn.id, turn.status.value] for turn in turns])
             return 0
         settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
                     "cwd": request["cwd"], "config": request["config"] or None}

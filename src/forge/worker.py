@@ -113,11 +113,13 @@ def _approval(key: str, item: str, top: Path) -> str | None:
     base = main if task.show(main, doc) is not None else f"story/{key}"
     state = task.show(base, repo.state_path(key))
     approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
-    # forge task start refuses a story without an approval, so a task of a story whose record has
-    # none, here or in the checkout, lost it after it started.
-    # ponytail: a story with no record anywhere passes, as only a hand-made branch has one;
+    # forge task start refuses a story without an approval, so a task of a story that has a record,
+    # or ever had one, lost its approval after it started: deleting the record doesn't lift it.
+    # ponytail: a story with no record in any history passes, as only a hand-made branch has none;
     # refuse it too once the tests that start such tasks approve their stories.
-    if not approved and (state is not None or (top / repo.state_path(key)).is_file()):
+    if not approved and ((top / repo.state_path(key)).is_file()
+                         or git("rev-list", "-1", "--ignore-missing", base, "HEAD", "--",
+                                repo.state_path(key), cwd=top)):
         refuse(task.REFUSALS["not_approved"], key=key)
     if approved and approved != task.approval_hash(task.show(base, doc) or ""):
         refuse(task.REFUSALS["changed"], key=key)
