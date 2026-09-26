@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-NEXT-1-CLIENT-FIX",
-  "status": "working",
+  "review": {
+    "commit": "0831f051a79f71eba53da712033fc8744e25f181",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The entire change records a task start with status `working`; it does not deliver the required client trial. The task contract in `plans/FORGE-NEXT-1.md:495\u2013501` requires initializing the private client from `v1.0.0-rc.1`, merging a fix with green checks and a clean review, and applying and reporting branch protection. Complete that trial and provide its merged pull request and verification evidence before treating this part as delivered.",
+        "file": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: A brand-new client set up with the new Forge makes a small fix, and it is merged the same way."
+      },
+      {
+        "body": "This task explicitly requires adding or changing the trial client's CI, but the supplied patch contains only a start record. No client workflow or test exercising the small fix is delivered. Add the client CI and a meaningful regression test for the fix, and establish that the required checks pass on its pull request.",
+        "file": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json",
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: Trial client CI"
+      }
+    ],
+    "status": "blocked",
+    "tree": "32c9cc5fdf7fa4d08d9899f5e717e9d32e9195e2c8f0c5361a344c79dabf77b3"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T18:56:32+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T18:58:33+00:00",
+      "step": "review"
     }
   ]
 }
