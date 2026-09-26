@@ -23,6 +23,7 @@ INSTALL = {
     "gh": "install gh from https://cli.github.com",
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh",
     "claude": "npm install -g @anthropic-ai/claude-code",
+    "impeccable": "npx skills add pbakaus/impeccable -g",
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
@@ -130,6 +131,17 @@ def doctor(args: argparse.Namespace) -> None:
     if on_codex and not trusted:
         rows.append(("Codex doesn't trust this project, so it would skip Forge's hooks and the "
                      "project's Codex settings.", trust))
+
+    # impeccable is the one required UI skill, so it must be where the configured worker reads
+    # skills: its own config folder (Claude's is $CLAUDE_CONFIG_DIR when set), or the repo's.
+    skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"),
+                         top / ".claude"],
+              "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
+                        top / ".agents"]}
+    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file()
+               for folder in skills[cfg["workers"]]):
+        rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
+                     f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
 
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")

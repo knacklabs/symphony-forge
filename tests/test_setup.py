@@ -20,6 +20,8 @@ LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/for
           ".github/workflows/forge.yml"}
 SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
+NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "
+                 "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
 OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
 
 
@@ -164,14 +166,37 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
     ("codex doesn't trust the project", ()),
+    ("no impeccable", (NO_IMPECCABLE,)),
+    ("impeccable only for codex", (NO_IMPECCABLE,)),
+    ("impeccable only in the repo's .agents", (NO_IMPECCABLE,)),
+    ("impeccable in CLAUDE_CONFIG_DIR", ()),
 ])
 def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
+    home = tmp_path / "home"  # so skills installed on this machine don't count
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
     codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
     codex_home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    claude_config = tmp_path / "claude-config"  # $CLAUDE_CONFIG_DIR, read instead of ~/.claude
+    if case == "impeccable in CLAUDE_CONFIG_DIR":
+        monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_config))
+    else:
+        monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    # impeccable where the configured worker (claude, from forge init) reads skills, or only
+    # where Codex reads them, or only in the repo's .agents (Claude Code never reads that), or
+    # nowhere.
+    skills = {"no impeccable": None, "impeccable only for codex": codex_home,
+              "impeccable only in the repo's .agents": client / ".agents",
+              "impeccable in CLAUDE_CONFIG_DIR": claude_config}.get(case, home / ".claude")
+    if skills:
+        skill = skills / "skills" / "impeccable" / "SKILL.md"
+        skill.parent.mkdir(parents=True)
+        skill.write_text("---\nname: impeccable\n---\n", encoding="utf-8")
     if case != "codex doesn't trust the project":
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
@@ -232,6 +257,9 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
         assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
         assert "Everything else checks out" in done.stdout
+    elif case == "impeccable in CLAUDE_CONFIG_DIR":
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert done.stdout.startswith("Everything checks out"), done.stdout
     else:
         assert done.returncode == 1
         for row in rows:

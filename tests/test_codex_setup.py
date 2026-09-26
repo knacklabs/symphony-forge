@@ -64,6 +64,12 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
     codex_home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    # The one required UI skill, where each worker reads skills; test_29 covers its absence.
+    claude_home = tmp_path / "claude"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_home))
+    for home in (codex_home, claude_home):
+        (home / "skills" / "impeccable").mkdir(parents=True)
+        (home / "skills" / "impeccable" / "SKILL.md").write_text("impeccable\n", encoding="utf-8")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))  # never the real SDK environment
     env = tmp_path / "data" / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     program = tmp_path / ("bundled-codex.cmd" if os.name == "nt" else "bundled-codex")

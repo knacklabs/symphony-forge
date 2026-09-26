@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
 with STUB_CLAUDE_EXIT (0 by default)."""
+import io
 import json
 import os
 import pathlib
 import sys
 
 here = pathlib.Path(__file__).resolve().parent
-call = {"args": sys.argv[1:], "cwd": os.getcwd(), "brief": sys.stdin.read()}
+# The brief arrives as UTF-8 whatever the console code page (Windows would read it as cp1252).
+brief = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
+call = {"args": sys.argv[1:], "cwd": os.getcwd(), "brief": brief}
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(call) + "\n")
 print("stub claude: built it")
