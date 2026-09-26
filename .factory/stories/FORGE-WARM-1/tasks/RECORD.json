@@ -1,18 +1,18 @@
 {
   "branch": "task/FORGE-WARM-1-RECORD",
   "review": {
-    "commit": "c6d8b40c2ecbfa11fd52da8dacd713ed33a37d02",
+    "commit": "13122c7d88ef66a40ed222147a54772bb3f25fe6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The loop at line 261 overwrites the saved PowerShell executable path with the string `powershell`. Consequently, QUERY_FAILS launches the same wrapper installed on PATH instead of real PowerShell. It never exercises the intended Get-CimInstance error: recursion can hang or fail for an unrelated reason that still satisfies the refusal assertion. Preserve the real executable path under a separate variable so this test actually detects broken query-error handling.",
-        "file": "tests/test_codex_record.py",
-        "line": 268,
+        "body": "The supplied functional-check paragraph reports a suite run and source inspection of a Windows test edit, but does not describe walking either covered item as a user. It gives no observed second-worker refusal, Ctrl-C cleanup, or crash recovery through the next work call and doctor. Add the required walkthrough and record the commands exercised and their observed outcomes; the suite result alone does not meet this explicit acceptance requirement.",
+        "file": "src/forge/worker.py",
+        "line": 50,
         "priority": "P1",
-        "title": "Not done: Windows process-query failure test"
+        "title": "Not done: functional check"
       },
       {
-        "body": "Expanding SDK checks and installation to CLAUDECODE implements cold-reader setup, outside this part's locking and cleanup requirements. The diagnostic rewrites at lines 126 and 129 are also unrelated. These changes require unnecessary edits to tests/test_codex_setup.py and tests/test_setup.py; the added CLAUDECODE reset in tests/conftest.py duplicates the existing reset at line 113. Remove those changes while retaining doctor cleanup integration and the lifecycle tests.",
+        "body": "Expanding SDK checks and installation to Claude Code implements cold-reader setup, which neither locking nor leftover-process cleanup requires. The diagnostic rewrites at doctor.py lines 126 and 129 are also unrelated. These changes bring unnecessary edits to tests/test_codex_setup.py and tests/test_setup.py into this part. The added CLAUDECODE reset in tests/conftest.py line 102 also duplicates its existing reset at line 109. Remove these unrelated changes while retaining doctor cleanup integration and the reader lifecycle changes needed to protect active reads from cleanup.",
         "file": "src/forge/doctor.py",
         "line": 70,
         "priority": "P2",
@@ -20,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "4e8650f2e064bab46c8e7b598a69f45f7228cdd76a5db467f4ead9c3cdd33217"
+    "tree": "720575f5066e583d285aaabb08ec22bc621b91c5a3714a10b15bf79259ca2f0d"
   },
   "status": "fixing",
   "steps": [
@@ -50,6 +50,10 @@
     },
     {
       "at": "2026-09-26T09:01:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T09:07:28+00:00",
       "step": "review"
     }
   ]
