@@ -145,7 +145,8 @@ def read(args: Any) -> int:
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
-        ran = codex.run(top, target, "Grill", f"Grill · {target} · {rel}", prompt, "read-only")
+        with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
+            ran = codex.run(top, target, "Grill", f"Grill · {target} · {rel}", prompt, "read-only")
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")

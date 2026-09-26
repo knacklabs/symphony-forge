@@ -1,6 +1,6 @@
 """Codex workers, Forge's side: the pinned Codex SDK in its own environment, checked and installed,
 a kind's models as Codex settings, one turn run through codex_turn.py, and each item's record and
-lock, so one forge work runs per item and no Codex process outlives it.
+lock, so one forge work or read runs per item and no Codex process outlives it.
 
 Forge never imports the SDK. It runs the environment's own Python to probe it and to drive a turn,
 so the SDK and the Codex program it bundles (about 300 MB) stay out of Forge's own install.
@@ -59,14 +59,14 @@ REFUSALS = {
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
-              "forge work {item}"),
+              "forge {command} {item}"),
     "driver": ("Forge can't read the start time and command of its Codex driver, process {pid}, "
-               "so it stopped the driver before any conversation.", "forge work {item}"),
-    "busy": ("forge work {item} is already running as process {pid}, and only one runs per item; "
-             "wait for it to finish.", "forge work {item}"),
+               "so it stopped the driver before any conversation.", "forge {command} {item}"),
+    "busy": ("forge {command} {item} is already running as process {pid}, and only one runs per "
+             "item; wait for it to finish.", "forge {command} {item}"),
     "unknown": ("Forge can't read the start time and command of process {pid}, so it can't tell "
                 "who holds {lock}; it counts it as held.",
-                "delete {lock} once no forge work runs on {item}"),
+                "delete {lock} once no forge {command} runs on {item}"),
 }
 
 
@@ -115,7 +115,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
 
     Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
     """
-    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower()).items()}
+    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower(), "codex").items()}
 
 
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
@@ -127,16 +127,16 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
     The item's record gets the driver's identity as soon as it starts, before Codex does, then the
     app-server's, the conversation, and HEAD when the turn ends. The item's turn log gets a
-    "started" line when the turn starts,
-    and an end line only when Codex reports the end. Returns the conversation and turn ids, and the
-    status, final text and token usage Codex reported; status, text and usage are None when it
-    reported no end.
+    "started" line when the turn starts, and an end line only when Codex reports the end. Returns
+    the conversation and turn ids, and the status, final text and token usage Codex reported;
+    status, text and usage are None when it reported no end.
     """
     # ponytail: `thread` is RESUME's, which continues that conversation; BUILD always starts one.
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": settings(repo.config(checkout), kind)}
     log = repo.work_log(checkout, item)
-    record, turns = _item_file(checkout, item, ".json"), _item_file(checkout, item, ".log")
+    record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
+    command = "read" if kind == "Grill" else "work"
     started: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
@@ -153,7 +153,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         started_by = identity(driver.pid)
         if started_by is not None and "command" not in started_by:
             driver.kill()  # it hasn't read the request, so it has started nothing yet
-            repo.refuse(REFUSALS["driver"], pid=driver.pid, item=item)
+            repo.refuse(REFUSALS["driver"], pid=driver.pid, item=item, command=command)
         _record(record, driver=started_by, app_server=None)
         out.write(f"--- forge work {item} at {repo.now()}\n")
         # One line, and stdin stays open: the driver ends its group once Forge's end closes.
@@ -212,7 +212,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 _stop_leftover(record)
                 driver.wait()
     if refused:
-        repo.refuse(REFUSALS[refused], log=log, item=item)
+        repo.refuse(REFUSALS[refused], log=log, item=item, command=command)
     return result
 
 
@@ -240,11 +240,13 @@ def _append(path: Path, line: dict[str, Any]) -> None:
         out.write(json.dumps(line) + "\n")
 
 
-def _item_file(checkout: Path, item: str, suffix: str) -> Path:
+def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
-    worktree shares: threads/task/<STORY>/<TASK> or threads/fix/<name>, one set per item."""
-    path = (repo.forge_dir(checkout) / "threads" / ("task" if "/" in item else "fix")
-            / f"{item}{suffix}")
+    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name> or threads/read/<item>."""
+    # A cold read's item is its story key or spec slug, so reads get their own folder: a spec and
+    # a fix of one name never share a conversation.
+    folder = "read" if kind == "Grill" else "task" if "/" in item else "fix"
+    path = repo.forge_dir(checkout) / "threads" / folder / f"{item}{suffix}"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -330,25 +332,28 @@ def _stop(recorded: dict[str, Any], group: bool) -> None:
 
 
 @contextlib.contextmanager
-def hold(checkout: Path, item: str) -> Iterator[None]:
-    """One forge work per item: take the item's lock, which holds this process's identity, stop
-    the Codex processes an earlier call left, and on the way out stop this call's if any still run
-    and give the lock back. A lock whose owner is gone is cleared; a live one refuses."""
-    lock, record = _item_file(checkout, item, ".lock"), _item_file(checkout, item, ".json")
+def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
+    """One forge work, or cold read, per item: take the item's lock, which holds this process's
+    identity, stop the Codex processes an earlier call left, and on the way out stop this call's
+    if any still run and give the lock back. A lock whose owner is gone is cleared; a live one
+    refuses."""
+    lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
+    command = "read" if kind == "Grill" else "work"
     while True:
         if lock.exists():
             owner = _json(lock)
             alive = _alive(owner)
             if alive is None:
-                repo.refuse(REFUSALS["unknown"], pid=owner.get("pid"), lock=lock, item=item)
+                repo.refuse(REFUSALS["unknown"], pid=owner.get("pid"), lock=lock, item=item,
+                            command=command)
             if alive:
-                repo.refuse(REFUSALS["busy"], pid=owner["pid"], item=item)
+                repo.refuse(REFUSALS["busy"], pid=owner["pid"], item=item, command=command)
             # ponytail: two calls that find the same stale lock at once can both clear it; the
             # window is one read. Clear it by an exclusive rename if that ever bites.
             lock.unlink(missing_ok=True)
         me = identity(os.getpid()) or {}
         if "command" not in me:  # a lock no one else could check would pass for a stale one
-            repo.refuse(REFUSALS["unknown"], pid=os.getpid(), lock=lock, item=item)
+            repo.refuse(REFUSALS["unknown"], pid=os.getpid(), lock=lock, item=item, command=command)
         try:
             with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
                 json.dump(me, out)
@@ -365,18 +370,19 @@ def hold(checkout: Path, item: str) -> Iterator[None]:
 
 def tidy(checkout: Path) -> list[str]:
     """For forge doctor: clear each stale lock and stop each leftover Codex process, unless a
-    forge work still runs on the item. A line for each process stopped or left alone."""
+    forge work or read still runs on the item. A line for each process stopped or left alone."""
     threads = repo.forge_dir(checkout) / "threads"
     said = []
     for base in sorted({path.with_suffix("") for path in threads.rglob("*.*")}):
-        item = base.relative_to(threads).as_posix().split("/", 1)[1]
+        folder, item = base.relative_to(threads).as_posix().split("/", 1)
+        command = "read" if folder == "read" else "work"
         lock = base.with_suffix(".lock")
         owner = _json(lock)
         if lock.exists() and _alive(owner) is not False:
-            said.append(f"forge work {item} is running as process {owner.get('pid')}, so doctor "
-                        "leaves its Codex process alone.")
+            said.append(f"forge {command} {item} is running as process {owner.get('pid')}, so "
+                        "doctor leaves its Codex process alone.")
             continue
         lock.unlink(missing_ok=True)
         if _stop_leftover(base.with_suffix(".json")):
-            said.append(f"Stopped the Codex processes that a crashed forge work {item} left.")
+            said.append(f"Stopped the Codex processes that a crashed forge {command} {item} left.")
     return said

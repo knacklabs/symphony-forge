@@ -111,6 +111,10 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     turn_log = repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.log"
     assert [(line["kind"], line.get("status")) for line in _lines(turn_log)][-2:] == [
         ("Grill", None), ("Grill", "completed")]
+    # Its record sits beside the turn log, and the lock it held is given back.
+    grill = json.loads(turn_log.with_suffix(".json").read_text("utf-8"))
+    assert grill["conversation"] == "thr-stub-1" and "codex_turn" in grill["driver"]["command"]
+    assert not turn_log.with_suffix(".lock").exists()
     assert not claude.exists()
 
     # Recording the amendment runs no model, so it needs no coordinator.
