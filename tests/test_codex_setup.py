@@ -146,9 +146,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     # it records any status. A task worktree gets its trusted main repo's trust.
     worktree = tmp_path / "client-task"
     repo.git("worktree", "add", "-q", "-b", "task/SHOP-CART", str(worktree), cwd=client)
-    _workers(worktree, "codex")
-    with (worktree / "forge.toml").open("a", encoding="utf-8") as toml:
-        toml.write('\n[models.build]\nmodel = "gpt-6-sol"\neffort = "medium"\n')
+    _workers(worktree, "codex")  # forge init wrote the [models] table
     trust("untrusted")
     untrusted = repo.forge("doctor", cwd=client)
     assert untrusted.returncode == 1 and UNTRUSTED in untrusted.stdout

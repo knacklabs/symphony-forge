@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from test_story import DOC, claude_plan, codex_question, hook, ready, setup
+from test_story import DOC, GRILL, claude_plan, codex_question, hook, ready, setup
 
 
 def _digest(repo):
@@ -88,7 +88,7 @@ def test_32_client_signoff(repo, claude_payload):
 
     # Forge's own repo needs no sign-off.
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     repo.git("commit", "-q", "-am", "This is Forge's own repo")
     own = DOC.replace("save a basket", "own a basket")
     ready(repo, "OWN", own)

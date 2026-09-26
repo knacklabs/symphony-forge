@@ -26,6 +26,32 @@ STACKS = [("pyproject.toml", "uv run pytest"), ("go.mod", "go test ./...")]
 # Otherwise the smallest client stack (Node). Before the first story adds the app there is
 # nothing to test, and the tests check passes; after that it runs the app's tests.
 NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
+# The model and effort each kind of work runs on; the review kind's model goes to Autoreview. The
+# cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
+MODELS = """
+[models.build]
+model = "opus"
+effort = "high"
+
+[models.fix]
+model = "opus"
+effort = "high"
+
+[models.lite]
+model = "sonnet"
+effort = "medium"
+
+[models.grill.codex]
+model = "gpt-6-sol"
+effort = "high"
+
+[models.grill.claude]
+model = "opus"
+effort = "high"
+
+[models.review]
+model = "gpt-6-astra"
+"""
 
 
 def _scaffold(top: Path) -> dict[str, str]:
@@ -36,10 +62,10 @@ def _scaffold(top: Path) -> dict[str, str]:
         "forge.toml": (
             "# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
-            f'version = "v{__version__}"\nrepo = "client"\nworkers = "claude"\nmodel = "opus"\n'
+            f'version = "v{__version__}"\nrepo = "client"\nworkers = "claude"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(['tests', 'forge-pr-check'])}\n"
-            f"interfaces = {json.dumps(INTERFACES)}\n"),
+            f"interfaces = {json.dumps(INTERFACES)}\n{MODELS}"),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()},
         "plans/roadmap.json": '{\n  "items": []\n}\n',

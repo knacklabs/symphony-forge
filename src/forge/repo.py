@@ -25,6 +25,8 @@ REFUSALS = {
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
+    "old_model": ("forge.toml's model setting is now the [models] table.",
+                  "ask your agent to move it into forge.toml's [models] table"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -109,16 +111,17 @@ def work_log(top: Path, item: str) -> Path:
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "workers": str, "model": str, "test": str,
+KEYS = {"version": str, "repo": str, "workers": str, "test": str,
         "checks": list, "interfaces": list, "models": dict}
-# ponytail: `model` stays the Claude worker's model when there is no [models] table; READER drops it.
-DEFAULTS = {"repo": "client", "workers": "claude", "model": "opus", "test": "",
+DEFAULTS = {"repo": "client", "workers": "claude", "test": "",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building and fixing may add their subagents' model and effort, as a pair.
+# The cold read runs on either family, so the grill kind has one such entry per family.
 KINDS = ("build", "fix", "lite", "grill", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
+FAMILIES = ("codex", "claude")
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -130,6 +133,8 @@ def config(top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "model" in data:
+        refuse(REFUSALS["old_model"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
@@ -139,11 +144,15 @@ def config(top: Path | None = None) -> dict[str, Any]:
     return {**DEFAULTS, **data}
 
 
-def models(cfg: dict[str, Any], kind: str) -> dict[str, str]:
-    """One kind's models from forge.toml's [models] table; refused when the table lacks the kind."""
-    if kind not in cfg["models"]:
+def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
+    """One kind's models from forge.toml's [models] table, the family's entry for the grill kind;
+    refused when the table lacks it."""
+    chosen = cfg["models"].get(kind)
+    if kind == "grill":
+        kind, chosen = f"grill.{family}", (chosen or {}).get(family)
+    if chosen is None:
         refuse(REFUSALS["models"], problem=f"it has no [models.{kind}], which this work uses")
-    return cfg["models"][kind]
+    return chosen
 
 
 def _models_problem(table: Any) -> str:
@@ -154,16 +163,24 @@ def _models_problem(table: Any) -> str:
             return f"{kind} is not a kind of work; the kinds are {', '.join(KINDS[:-1])} and {KINDS[-1]}"
         if not isinstance(chosen, dict):
             return f"models.{kind} must be a table"
-        for key, value in chosen.items():
-            if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix") else ())):
-                return f"models.{kind} can't set {key}"
-            if not isinstance(value, str):
-                return f"models.{kind}.{key} must be a string"
-        for key in ("model",) if kind == "review" else ("model", "effort"):
-            if key not in chosen:
-                return f"models.{kind} has no {key}"
-        if (SUBAGENTS[0] in chosen) != (SUBAGENTS[1] in chosen):
-            return f"models.{kind} sets only one of subagents and subagent_effort; set both or neither"
+        wrong = [key for key in chosen if key not in FAMILIES] if kind == "grill" else []
+        if wrong:
+            return f"models.grill has one entry per family, codex and claude, so it can't set {wrong[0]}"
+        entries = ({f"grill.{family}": entry for family, entry in chosen.items()} if kind == "grill"
+                   else {kind: chosen})
+        for name, entry in entries.items():
+            if not isinstance(entry, dict):
+                return f"models.{name} must be a table"
+            for key, value in entry.items():
+                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix") else ())):
+                    return f"models.{name} can't set {key}"
+                if not isinstance(value, str):
+                    return f"models.{name}.{key} must be a string"
+            for key in ("model",) if kind == "review" else ("model", "effort"):
+                if key not in entry:
+                    return f"models.{name} has no {key}"
+            if (SUBAGENTS[0] in entry) != (SUBAGENTS[1] in entry):
+                return f"models.{name} sets only one of subagents and subagent_effort; set both or neither"
     return ""
 
 
