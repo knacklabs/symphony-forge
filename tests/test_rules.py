@@ -119,4 +119,5 @@ def test_31_speed():
     assert "pytest tests" in workflow
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]
     assert timeouts and max(timeouts) <= 5, f"job timeouts over five minutes: {timeouts}"
-    assert len(re.findall(r"os: windows-latest, group: \d, groups: 3", workflow)) == 3, "Windows isn't in three groups"
+    windows = re.findall(r"os: windows-latest, group: (\d), groups: (\d)", workflow)
+    assert sorted(windows) == [("1", "3"), ("2", "3"), ("3", "3")], f"Windows isn't in groups 1-3 of 3: {windows}"
