@@ -1,0 +1,14 @@
+{
+  "base": "20550fc0ff4a13e2ccf306d424daa8e722c75a69",
+  "branch": "fix/when-a-test-hangs-on-ci-the-job-is-cance",
+  "done_when": "Every pytest command in .github/workflows/forge-next.yml and forge.yml passes -o faulthandler_timeout=120, so a test still running after two minutes prints every thread's stack to the job log before the cap cancels it; no new dependency",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T12:35:49+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a test hangs on CI the job is cancelled at its time cap and GitHub keeps no log, so nobody can tell which test hung (Windows group 1 hung for 10 minutes on PR 294)"
+}
