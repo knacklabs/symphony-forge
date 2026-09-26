@@ -6,6 +6,7 @@ Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import tomllib
@@ -96,10 +97,13 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
     assert all((turn["sandboxPolicy"]["type"], turn["approvalPolicy"]) == ("readOnly", "never")
                for turn in turns)
-    assert "Shoppers can save a basket and come back" in turns[-1]["input"][0]["text"]
     assert _sent(stub, "thread/name/set")[-1]["name"] == "Grill · SHOP · plans/SHOP.md"
     written = notes.read_text("utf-8")
-    for fact in ("reader: codex (gpt-6-sol)", f"read_at: {NOW}",
+    # The reader gets exactly the bytes whose hash the notes record: one read, after the baseline.
+    data = doc.read_bytes()
+    blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+    assert data.decode("utf-8") in turns[-1]["input"][0]["text"]
+    for fact in (f"read_hash: {blob}", "reader: codex (gpt-6-sol)", f"read_at: {NOW}",
                  '1. stub codex: built it with {"model": "gpt-6-sol", "model_reasoning_effort": '
                  '"high"}'):
         assert fact in written, written

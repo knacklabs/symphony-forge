@@ -135,8 +135,11 @@ def read(args: Any) -> int:
     reader, config = readers[0], repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
     prompt, head = (TEMPLATES / "cold-read.md").read_text(encoding="utf-8").split("<!-- forge:notes -->\n")
-    prompt = Template(prompt).safe_substitute(path=rel, doc=_text(doc))
-    read_hash, before = _hash(top, doc), _snapshot(top)
+    before = _snapshot(top)  # first, so any change from here on discards the read
+    text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
+    read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
+                               capture_output=True, check=True).stdout.decode().strip()
+    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"))
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
