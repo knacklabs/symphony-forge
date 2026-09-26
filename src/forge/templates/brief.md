@@ -75,7 +75,9 @@ This task is user-facing. Walk each Done-when item it covers the way the client'
 that path, check keyboard access, labels and readable contrast, and trigger one likely failure to
 see that its message says in plain words what to do next. Then end your last commit message's body
 with a paragraph that starts `Functional check:` and says what you exercised and what you saw.
-Forge copies it into the pull request, and the reviewer reads it there.
+Forge copies it into the pull request, and the reviewer reads it there. Close reads only the last
+commit's paragraph, so in every round, fix rounds included, it walks every Done-when item this
+part covers, not only what the round changed.
 
 impeccable is the one UI skill for the screens. Use a motion skill only when a Done-when item needs
 motion.
