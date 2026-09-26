@@ -14,10 +14,13 @@ from pathlib import Path
 
 import pytest
 
-# The adapter files the spec lists for both hosts, plus the generated workflow.
+# The adapter files the spec lists for both hosts, plus the generated workflow and the
+# test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
-          ".github/workflows/forge.yml"}
+          ".github/workflows/forge.yml",
+          *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
+            for name in ("SKILL.md", "NOTICE.md"))}
 SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
 NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "

@@ -34,7 +34,8 @@ def _scaffold(top: Path) -> dict[str, str]:
     test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
     return {
         "forge.toml": (
-            "# Forge's settings. To upgrade: bump version, install that version, run forge sync.\n"
+            "# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
+            "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nworkers = "claude"\nmodel = "opus"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(['tests', 'forge-pr-check'])}\n"

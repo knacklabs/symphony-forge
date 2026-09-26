@@ -4,6 +4,9 @@
 Forge takes each change from an approved plan to a merged pull request. Whenever you
 are unsure, run `forge next`: it says where things stand and gives the exact next command.
 
+If Forge started you with a brief, as a worker or a cold reader, that brief is your job: follow it
+and the Rules below, and leave the flow and the approval steps to the agent coordinating the work.
+
 ### The flow
 
 1. A story starts as one short doc: `forge story new <KEY> "<title>"`.

@@ -63,9 +63,10 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 
 ## How to work
 
-- **Think before you code.** State your assumptions. If the brief can be read two ways, or
-  something is unclear, stop and say so instead of picking silently: a wrong guess costs a whole
-  review round.
+- **Think before you code.** State your assumptions, and never pick silently. If the brief can be
+  read two ways and both readings can be undone, pick the one closer to Done-when and write
+  `Ruling: <what> - <why>` in the commit body, so the reviewer sees it. Stop and say so only for a
+  one-way step, a security question, a path outside your Scope or a new moving part.
 - **Touch only what the task needs.** Match the existing style, don't tidy neighbouring code, and
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.

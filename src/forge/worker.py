@@ -14,6 +14,11 @@ from forge import repo, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
+# The shipped how-to per concern of the client stack; the brief names it and the worker may read it.
+CONVENTIONS = (HERE / "templates" / "conventions").resolve()
+# Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
+TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
+              ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
 SERIOUS = ("P0", "P1")
 # The worker edits files in its checkout and may run only these commands, plus the repo's test.
 COMMANDS = ["git add", "git commit", "git status", "git diff", "git log"]
@@ -96,7 +101,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             moving=moving[0].strip() if moving else "New moving parts: none",
             row="\n".join(f"| {' | '.join(cells)} |" for cells in (
                 list(row), ["---"] * len(row), list(row.values()))),
-            covers=row.get("Covers", ""), scope=row.get("Scope", ""), tests=row.get("Tests", ""))
+            covers=row.get("Covers", ""), scope=row.get("Scope", ""), tests=row.get("Tests", ""),
+            existing_tests=_existing_tests(top, task.cell_list(row.get("Scope", ""))))
     else:
         on.add("fix")
         values.update(why=state.get("why", ""), done=state.get("done_when", ""))
@@ -113,10 +119,23 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if standards.is_file():  # ponytail: DOCS-STANDARDS ships the standards page
         on.add("standards")
         values["standards"] = standards.read_text(encoding="utf-8").strip()
+    values["conventions"] = str(CONVENTIONS)
     text = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values)
+
+
+def _existing_tests(top: Path, scope: list[str]) -> str:
+    """The checkout's test files that name a Scope file or folder, listed for the brief."""
+    # ponytail: a whole-word match on each entry's last plain name (`board` for `web/board.py`), so
+    # a common name such as `index` lists more tests than it should; match imports if that's noisy.
+    names = sorted({Path(plain[-1]).stem for entry in scope
+                    if (plain := [p for p in Path(entry).parts if not set(p) & set("*?[")])})
+    patterns = [arg for name in names for arg in ("-e", name)]
+    found = repo.run("git", "grep", "-l", "-w", "-F", *patterns, "--", *TEST_PATHS,
+                     cwd=top).stdout.splitlines() if names else []
+    return ", ".join(f"`{path}`" for path in found) or "none found"
 
 
 def _run(item: str, top: Path, config: dict[str, Any], brief: str) -> None:
@@ -127,7 +146,7 @@ def _run(item: str, top: Path, config: dict[str, Any], brief: str) -> None:
     log = repo.forge_dir(top) / f"work-{item.replace('/', '-')}.log"
     allowed = [f"Bash({command}:*)" for command in [*COMMANDS, config["test"]] if command]
     command = [exe, "-p", "--model", config["model"], "--permission-mode", "acceptEdits",
-               "--allowedTools", *allowed]
+               "--add-dir", str(CONVENTIONS), "--allowedTools", *allowed]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:
