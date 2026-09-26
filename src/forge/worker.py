@@ -33,6 +33,9 @@ REFUSALS = {
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex worker here.", "forge doctor"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
+    "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
+              "what story {key} approved, so Forge sends no brief from it.",
+              "git -C {top} checkout {base} -- {doc}, commit it, then forge work {item}"),
 }
 
 
@@ -51,7 +54,7 @@ def work(args: argparse.Namespace) -> None:
         repo.read_state(item, top) or {}).get("status", "started") != "started")
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
-    approval = _approval(match["key"]) if match["task"] else None
+    approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex)
     # Codex workers take the item's lock, stop a leftover Codex process and read back a turn it
     # left before the status commit, and leave none running when this ends, whether it succeeds,
@@ -101,10 +104,11 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     return []
 
 
-def _approval(key: str) -> str | None:
+def _approval(key: str, item: str, top: Path) -> str | None:
     """The story's approval, read where forge task start reads it, which refuses a story with
     none; refused when the approved part of the story doc changed since, until it is approved
-    again."""
+    again, and when the checkout's own story doc, which the brief is made from, isn't the approved
+    one."""
     main = task.main_ref()
     doc = f"plans/{key}.md"
     base = main if task.show(main, doc) is not None else f"story/{key}"
@@ -112,6 +116,10 @@ def _approval(key: str) -> str | None:
                 ).get("hash")
     if approved and approved != task.approval_hash(task.show(base, doc) or ""):
         refuse(task.REFUSALS["changed"], key=key)
+    brief = top / doc
+    if approved and approved != task.approval_hash(
+            brief.read_text(encoding="utf-8") if brief.is_file() else ""):
+        refuse(REFUSALS["brief"], item=item, key=key, top=top, base=base, doc=doc)
     return approved
 
 

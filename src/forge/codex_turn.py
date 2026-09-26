@@ -29,7 +29,7 @@ from typing import Any
 
 from openai_codex import ApprovalMode, Codex, Sandbox, api
 from openai_codex.client import CodexClient
-from openai_codex.errors import JsonRpcError
+from openai_codex.errors import InvalidRequestError, JsonRpcError
 from openai_codex._run import _final_assistant_response_from_items
 from openai_codex.models import (ItemCompletedNotification, ThreadTokenUsageUpdatedNotification,
                                  TurnCompletedNotification, UnknownNotification)
@@ -114,7 +114,12 @@ def main() -> int:
         if request.get("read"):  # after a crash: how the turn Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
-            except JsonRpcError:  # Codex has no such conversation, so it reports no status
+            except InvalidRequestError as error:
+                # Only Codex saying it has no such conversation means it reports no status; it
+                # names the id ("thread not loaded: <id>"). Any other failure proves nothing, so
+                # it ends this with no read line and Forge refuses.
+                if request["thread"] not in error.message:
+                    raise
                 turns = []
             emit(read=next((turn.status.value for turn in turns if turn.id == request["read"]),
                            None))

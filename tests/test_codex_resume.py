@@ -3,7 +3,8 @@
 The stand-in Codex app-server here keeps its conversations in threads.json beside itself, as Codex
 keeps them in its home, so a second app-server, in a later forge work, resumes or reads what the
 first one left. The test edits that file to set what Codex reports. STUB_CODEX_STATUS=hold leaves
-a turn in progress, and "vanish" exits instead of answering a read.
+a turn in progress, "vanish" exits instead of answering a read, and "error" fails the read with an
+internal error.
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
@@ -86,6 +87,9 @@ def main():
         elif method == "thread/read":
             if os.environ.get("STUB_CODEX_STATUS") == "vanish":  # gone before it answers
                 return
+            if os.environ.get("STUB_CODEX_STATUS") == "error":  # a server fault, not a missing one
+                send(id=message["id"], error={"code": -32603, "message": "stub: store is busy"})
+                continue
             result = {"thread": thread(id, saved)}
         elif method == "turn/start":
             turn = f"turn-stub-{sum(len(each['turns']) for each in threads.values()) + 1}"
@@ -252,18 +256,40 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
 
+    changed = DOC.replace("Anyone can open", "Anyone can print")
+    head, said = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
+
+    def brief_refused() -> None:
+        """forge work refuses to brief the worker from the checkout's story doc, which isn't the
+        approved one, before it records any status or starts Codex."""
+        refused = repo.forge("work", "BOARD/PAGE")
+        assert refused.stderr == (
+            '"What changes for you" or "Done when" in the story doc of BOARD/PAGE\'s checkout '
+            "isn't what story BOARD approved, so Forge sends no brief from it.\n"
+            f"Next: git -C {folder} checkout story/BOARD -- plans/BOARD.md, commit it, then "
+            "forge work BOARD/PAGE\n")
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+
+    # The approved part changes in the task's own checkout, which the brief is made from.
+    (folder / "plans" / "BOARD.md").write_text(changed, encoding="utf-8")
+    brief_refused()
+    repo.git("checkout", "--", "plans/BOARD.md", cwd=folder)
+
     # The story's approved part changes: forge work refuses before it records any status or
     # starts Codex, until the change is approved again.
-    changed = DOC.replace("Anyone can open", "Anyone can print")
     story(repo, doc=changed, approved=DOC)
-    head, said = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
     refused = repo.forge("work", "BOARD/PAGE")
     assert refused.stderr == ('"What changes for you" or "Done when" of story BOARD changed after '
                               "its approval, so it needs a new approval.\nNext: forge next\n")
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
 
-    # Once approved again, the conversation started under the old approval isn't continued.
+    # Once approved again, the checkout's old story doc isn't sent under the new approval; once the
+    # approved doc is in the checkout, the conversation started under the old approval isn't
+    # continued.
     story(repo, doc=changed, approved=changed)
+    brief_refused()
+    repo.git("checkout", "story/BOARD", "--", "plans/BOARD.md", cwd=folder)
+    repo.git("commit", "-q", "-m", "Take the approved story doc", cwd=folder)
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     why = "the story's approval changed after its conversation started"
@@ -311,12 +337,20 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
     assert _down(stub) and _down(saved["driver"]["pid"])
 
+    # Codex fails the read for another reason than a missing conversation: that proves nothing
+    # about the turn, so forge work refuses the same way instead of logging it lost.
+    monkeypatch.setenv("STUB_CODEX_STATUS", "error")
+    failed = repo.forge("work", "BOARD/PAGE")
+    monkeypatch.delenv("STUB_CODEX_STATUS")
+    assert failed.stderr == unread.stderr
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+
     # Codex still says the turn is running: forge work refuses again, so two turns never run.
     running = repo.forge("work", "BOARD/PAGE")
     assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
                               "starts no second one.\nNext: wait for it to end in the Codex app, "
                               "then forge work BOARD/PAGE\n")
-    assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 2
+    assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 3
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
     assert not lock.exists() and len(_sent(calls, "turn/start")) == 1
 
