@@ -15,7 +15,7 @@ product manager decided what to build; that is no longer true. So the agent
 acts as the FDE's product partner: it finds the real problem, weighs whether
 it is worth building, and checks afterwards whether it paid off. The new
 Forge doesn't carry gstack, but gstack's office-hours session is still the
-best way to shape a new project or a big new idea, so the agent runs it for
+best way to shape a new project or an ask no confirmed spec covers, so the agent runs it for
 exactly that and runs its own short interview for everyday asks. This narrows
 decision 0089: of gstack, only office-hours stays.
 
@@ -26,12 +26,13 @@ fewer) and a reference page, `fde.md`, that `forge sync` writes beside the
 skill for both hosts. The agent opens the page only when needed (worked
 example, question bank, customer call script, bad-to-better questions).
 
-**Discovery by size.** Everyday asks get Forge's own interview: a fix asks
-at most two questions and a story at most eight. When the limit is reached,
-missing answers are written as "unknown" and the payback rule treats them as
-guessed, so questioning never loops. A new project, or a big new idea (an
-ask that no existing spec covers), starts with gstack's `/office-hours`
-instead. The agent saves the design doc it produces, unchanged, in
+**Discovery by size.** The route follows what the ask is. A new project, or
+an ask that no confirmed spec covers, starts with gstack's `/office-hours`;
+this wins over the other two. An ask that a confirmed spec covers is a
+story, and one that corrects shipped behaviour is a fix; both get Forge's own
+interview: a fix asks at most two questions and a story at most eight. When
+the limit is reached, missing answers are written as "unknown" and the
+payback rule treats them as guessed, so questioning never loops. The agent saves the design doc it produces, unchanged, in
 `docs/context/` and fills the problem card from it, writing any field the
 doc leaves open as "unknown". If `/office-hours` isn't installed, the agent
 says it comes with gstack and runs its own interview with the story limit.
@@ -45,23 +46,30 @@ option first. Each question carries one "Why I ask" line until the FDE
 answers that they know why; from then on, only the question.
 
 **Problem cards.** `docs/product/DISCOVERY.md` has a `## Problems` section
-with one card per pain (a `###` heading each) holding six fields: the job,
-today's workaround, the cost, who feels it, how often, and the evidence. The
-chosen card's heading is named in the Brief's problem and in the capability
-spec's Why. `forge init` writes DISCOVERY.md with an empty card, and an
-existing DISCOVERY.md gets the section on first use. While nothing is on the
+with one card per pain (a `### <short problem title>` heading each) holding
+six fields: `- Job:`, `- Workaround:`, `- Cost:`, `- Who:`, `- How often:`
+and `- Evidence:`. The chosen card's heading is named in the Brief's
+Summary and in the capability spec's Why. `forge init` writes DISCOVERY.md
+with one card whose fields read "unknown", replacing the template's old
+`## Problem` section. An existing DISCOVERY.md gets the section on first use;
+any text under its old `## Problem` stays where it is and is written into a
+card. While nothing is on the
 roadmap, `forge next` offers discovery first. When the customer doesn't know
 what to build, the agent asks about their work and ranks the pains by cost,
 or gives the FDE a customer call script. The agent reads the notes the FDE
 drops in `docs/context/`, writes what they show into the cards, and leaves
-the notes where they are.
+the notes where they are. The new Forge keeps no ledger of those notes; this
+repository's older inbox rules go away with the switch to it.
 
 **Options and the choice.** The agent offers two to four options per problem,
-always including not building and the smallest testable slice, and
-recommends the one with the best payback. The human chooses through an
-option question (recommendation first); the chosen option and one line of
-why are written into the capability spec's Behaviour. UI prototypes use
-impeccable, the one required UI skill.
+always including not building and the smallest testable slice. Each option
+that builds something gets its own `forge spec payback` answer. The agent
+recommends the option with the fewest months among those answering "build"
+or "smallest slice first", a tie going to the smaller build. If none does,
+it recommends not building, or finding out first when an option's value
+can't be estimated. The human chooses through an option question
+(recommendation first); the chosen option and one line of why are written
+into the capability spec's Behaviour.
 
 **The payback rule.** Monthly value = hours saved per month × people ×
 rounded loaded hourly rate, plus added revenue per month, plus risk
@@ -74,9 +82,17 @@ recommend not building. If the value cannot be estimated at all, the
 recommendation is to find out first (one more customer conversation), not to
 build. Real salaries are never recorded. `forge spec payback` computes this
 from the inputs, so the agent never does the arithmetic by hand and the same
-inputs always give the same answer. It changes nothing and runs anywhere. It
-takes the rates as flags each time, treats a missing confidence as guessed,
-and refuses a partial set of inputs, naming what is missing.
+inputs always give the same answer. It changes nothing and runs anywhere.
+Its flags are `--build-days` and `--day-rate`, plus one or more value
+groups that add up: `--hours-per-month`, `--people` and `--hourly-rate`;
+`--revenue-per-month`; `--incident-cost` and `--incident-chance` (0 to 1).
+`--confidence measured|estimated|guessed` defaults to guessed. It prints one
+line: `find out first` when no value group is given, otherwise
+`build: <m> months`, `smallest slice first: <m> months` or
+`don't build: <m> months`, or `don't build: no monthly value` when the value
+is zero. Months are compared exactly and shown to one decimal. It refuses a
+partly given group, value without both build numbers, and a negative or
+non-number input, each naming the flag.
 
 **Success measure.** Every capability spec confirmed after this change has a
 `## Success measure` section with four non-empty fields: metric, baseline,
@@ -87,19 +103,21 @@ When several roadmap stories come from one spec, the measure belongs to the
 spec and is checked after its last story ships.
 
 **After ship.** Nothing is stored ahead of time: `forge next` lists a spec's
-success check when every roadmap story linked to that spec is done, its check
-date has passed, and its Success measure has no result yet. The agent
-measures, and `forge spec measure <slug> --result "<measured result>"`, run
-in a fix, adds a `- Result: <text> (YYYY-MM-DD)` line to the spec's Success
-measure. That stops the listing, and the spec stays confirmed. A story added
-to the spec later simply postpones the check until it is done too.
+success check when at least one roadmap item names the spec, every such
+item's story is done (its story state on the default branch, as landed), its
+check date is today or earlier, and its Success measure has no result yet. A
+spec no roadmap item names is never due. The agent measures, and
+`forge spec measure <slug> --result "<measured result>"`, run in a fix, adds
+a `- Result: <text> (YYYY-MM-DD)` line to the spec's Success measure. It
+refuses a spec whose body changed since it was confirmed, then refreshes the
+confirmed body's hash, so the spec stays confirmed and `forge roadmap add`
+still accepts it. That stops the listing. A story added to the spec later
+simply postpones the next check until it is done too.
 
 **gstack: office-hours only.** Forge's code never installs, calls or checks
-gstack. The agent uses its `/office-hours` skill for a new project or a big
-new idea, and keeps only the design doc it produces, in `docs/context/`.
-Nothing else from gstack is stored in a repo. `forge migrate` already moves a
-client's office-hours design docs to `docs/context/` and deletes the rest of
-`.gstack/`, and the switch does the same for this repository.
+gstack. The agent uses its `/office-hours` skill for a new project or an ask
+no confirmed spec covers, and keeps only the design doc it produces, in
+`docs/context/`. Nothing else from gstack is stored in a repo.
 
 ## Acceptance criteria
 
@@ -108,7 +126,7 @@ client's office-hours design docs to `docs/context/` and deletes the rest of
 - A vague everyday ask gets one question per turn, each with a "Why I ask"
   line until the FDE says they know why. It stops at the limit (two for a
   fix, eight for a story) and fills a problem card in DISCOVERY.md.
-- A new project or a big new idea starts with `/office-hours`. Its design doc
+- A new project, or an ask no confirmed spec covers, starts with `/office-hours`. Its design doc
   is saved unchanged in `docs/context/` and fills the problem card. Without
   `/office-hours`, the agent says where to get it and runs its own interview.
 - A new project's DISCOVERY.md starts with an empty problem card, and
@@ -129,16 +147,17 @@ client's office-hours design docs to `docs/context/` and deletes the rest of
 ## Success measure
 
 - Metric: share of specs confirmed after this ships whose Why names a
-  problem card, and FDE-reported confidence in choosing what to build.
-- Baseline: 0% of specs today; confidence not measured.
-- Target: at least 4 of 5 such specs; at least 4 of 5 FDEs say discovery
-  helped them choose (one-question check-in).
+  problem card.
+- Baseline: 0% of specs today.
+- Target: at least 4 of 5 such specs; if fewer than five exist by the check
+  date, every one of them.
 - Check date: 2026-12-15
 
 ## Out of scope
 
 - A harvest ledger or `forge context mark`: customer notes stay where they
   are.
-- A pinned impeccable version, and installing it from `forge doctor`.
+- Any change to UI tooling: impeccable stays the one UI skill, unpinned.
+- Deleting gstack stores in migration or the switch: that is their own work.
 - Any gstack skill other than office-hours, and a doctor check for gstack.
 - Rate settings in `forge.toml`: payback takes rates as flags each time.
