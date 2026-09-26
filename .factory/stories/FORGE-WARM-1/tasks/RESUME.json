@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
-  "status": "working",
+  "review": {
+    "commit": "bb5aed138e89ccf837a90de84b69ec09f7035d71",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The approval check hashes the document on origin/main or story/<key>, but `_brief` reads the task checkout's working copy (worker.py:183). Editing \"What changes for you\" or \"Done when\" in that checkout therefore passes this check while sending unapproved instructions to Codex and recording a status commit. Conversely, re-approving the story branch can start a conversation under the new approval while still sending the task checkout's old brief. Validate the actual brief's approved sections against the current approval before committing status.",
+        "file": "src/forge/worker.py",
+        "line": 113,
+        "priority": "P1",
+        "title": "Not done: 8. Validate approval against the story text sent to the worker"
+      },
+      {
+        "body": "Every `JsonRpcError` is treated as proof that the conversation is absent. A server error while reading an existing conversation therefore emits `read: null`; `recover` then logs the unfinished turn as \"lost\" and permits another turn (codex.py:170\u2013177). A failed read does not establish that Codex reports no turn or that the previous turn stopped. Only a confirmed missing conversation/turn should produce null; other read failures must preserve the unfinished record and refuse.",
+        "file": "src/forge/codex_turn.py",
+        "line": 117,
+        "priority": "P1",
+        "title": "Not done: 9. Refuse recovery when reading the conversation fails"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c8098bed26b3031ba950dc59a4f4bf44a960089c4888b9bc0ec8d3dbe8848d3d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T10:24:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T10:56:11+00:00",
+      "step": "review"
     }
   ]
 }
