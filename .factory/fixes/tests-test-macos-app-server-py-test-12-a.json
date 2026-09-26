@@ -1,0 +1,14 @@
+{
+  "base": "d176e301eaa6d610aa9a46c4d9ef5fb424d20ca4",
+  "branch": "fix/tests-test-macos-app-server-py-test-12-a",
+  "done_when": "Find why the test hits Permission denied on Windows and fix it at the cause (a file still held open, or a POSIX-only step run on Windows); the test passes on Windows, macOS and Linux in CI; nothing is skipped or loosened",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T19:43:59+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "tests/test_macos_app_server.py::test_12_a_dead_driver_leaves_no_app_server_behind fails on Windows CI with PermissionError (Errno 13) on a temp file, so main is red on Windows"
+}
