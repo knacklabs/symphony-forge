@@ -13,7 +13,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, repo, task
+from forge import codex, doctor, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -118,6 +118,11 @@ def _approval(key: str, item: str, top: Path) -> str:
     if not approved:
         refuse(task.REFUSALS["not_approved"], key=key)
     if approved != task.approval_hash(task.show(base, doc) or ""):
+        refuse(task.REFUSALS["changed"], key=key)
+    # The story's own worktree holds the doc its next approval reads, uncommitted edits included.
+    planning = story.stories_here(top).get(key)
+    if planning and approved != task.approval_hash(
+            (planning / doc).read_text(encoding="utf-8") if (planning / doc).is_file() else ""):
         refuse(task.REFUSALS["changed"], key=key)
     brief = top / doc
     if approved != task.approval_hash(

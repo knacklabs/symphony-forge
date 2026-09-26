@@ -371,6 +371,18 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-2"]
 
+    # The approved part changes in the story's own worktree, not yet committed: that is the doc the
+    # next approval reads, so forge work refuses before it records any status or starts Codex.
+    planning = repo.path.parent / "repo-story-BOARD"
+    repo.git("worktree", "add", "-q", str(planning), "story/BOARD")
+    (planning / "plans" / "BOARD.md").write_text(DOC, encoding="utf-8")
+    head, said = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
+    refused = repo.forge("work", "BOARD/PAGE")
+    assert refused.stderr == ('"What changes for you" or "Done when" of story BOARD changed after '
+                              "its approval, so it needs a new approval.\nNext: forge next\n")
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
+    repo.git("worktree", "remove", "--force", str(planning))
+
     # Once a task has merged, the default branch holds the story doc and that approval, but the
     # story's own branch, where approvals are committed, still decides: a change there refuses
     # before any status or Codex call, and its new approval isn't sent under the old doc.
