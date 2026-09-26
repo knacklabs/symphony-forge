@@ -117,8 +117,8 @@ DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
-# ends in client-signoff, as `forge decision new` names it.
-SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-(?:[a-z0-9-]*-)?client-signoff\.md")
+# ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
+SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building and fixing may add their subagents' model and effort, as a pair.
 # The cold read runs on either family, so the grill kind has one such entry per family.

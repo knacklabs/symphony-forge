@@ -586,6 +586,20 @@ def _draft_taken(repo, tmp_path: Path) -> None:
     _land(repo, "An older draft")
 
 
+def _pin(repo, pin: str) -> None:
+    repo.write("harness.yaml", f'project: shop\nsignoff_record: "{pin}"\n')
+    _land(repo, "Pin another sign-off record")
+
+
+def _legacy_signoff(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A name the old Forge accepted, with no hyphen before client-signoff, carries over."""
+    pin = "docs/decisions/0001-acmeclient-signoff.md"
+    _pin(repo, pin)
+    dry = repo.forge("migrate", "--dry-run")
+    assert dry.returncode == 0, dry.stderr
+    assert f"Pins your sign-off record, {pin}, in forge.toml's signoff" in dry.stdout, dry.stdout
+
+
 def _no_source(repo, tmp_path: Path) -> None:
     repo.write("constitution/VENDORED_FROM", "symphony-forge @ an unknown commit\n")
     _land(repo, "Lost the vendored commit")
@@ -626,6 +640,13 @@ CASES = {
     "an .agents/-era layout": _refusal(
         "origin/main has no copied-in factory/ layout to move; a client from before it (the "
         '.agents/ layout) moves with the "move vendored clients" story.', "forge next", _agents_era),
+    "a legacy sign-off name": _legacy_signoff,
+    # Dropping the pin would let any accepted sign-off record approve a story.
+    "a sign-off pin forge.toml can't hold": _refusal(
+        "harness.yaml pins docs/signoff.md as the client's sign-off record, which forge.toml "
+        "can't pin: it isn't a docs/decisions/NNNN-client-signoff.md record.",
+        "pin the accepted client-signoff record in harness.yaml's signoff_record, "
+        "then forge migrate --dry-run", lambda repo, tmp_path: _pin(repo, "docs/signoff.md")),
     "no copied-in commit": _refusal(
         "Forge can't read the copied-in version (constitution/VENDORED_FROM names no copied-in "
         "commit), so it can't tell your changes from its own.",

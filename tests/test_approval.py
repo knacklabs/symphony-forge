@@ -1,6 +1,7 @@
 """Approval capture on both hosts, and the client sign-off gate (spec criteria 14 and 32)."""
 from __future__ import annotations
 
+import json
 import re
 
 from test_story import DOC, GRILL, claude_plan, codex_question, hook, ready, setup
@@ -22,8 +23,11 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
 
     # Claude Code: a successful ExitPlanMode showing the doc records the approval, and commits the
     # doc, its read notes and its state on the story branch.
+    # The payload's "→" arrives as UTF-8 bytes, not a JSON escape, as Claude Code sends it.
     claude_approval = claude_plan(claude_payload, shop)
-    recorded = hook(repo, claude_approval)
+    sent = json.dumps(claude_approval, ensure_ascii=False)
+    assert "→" in sent
+    recorded = repo.forge("hook", "approval", input=sent)
     assert recorded.returncode == 0, recorded.stderr
     assert "Recorded the approval" in recorded.stdout
     committed = repo.git("show", "--name-only", "--format=", "story/SHOP").splitlines()

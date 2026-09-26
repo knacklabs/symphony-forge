@@ -64,6 +64,10 @@ REFUSALS = {
                 "forge migrate won't start that branch again.",
                 "look at them in {path}; if none are yours, git worktree remove --force {path}, "
                 "then forge migrate"),
+    "signoff": ("harness.yaml pins {pin} as the client's sign-off record, which forge.toml can't "
+                "pin: it isn't a docs/decisions/NNNN-client-signoff.md record.",
+                "pin the accepted client-signoff record in harness.yaml's signoff_record, "
+                "then forge migrate --dry-run"),
     "no_prs": ("Forge can't list the merged pull requests ({problem}), so it can't tell which "
                "tasks are done.", "gh auth status, then forge migrate --dry-run"),
 }
@@ -252,6 +256,8 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     pinned = re.search(r"^signoff_record:[ \t]*[\"']?([^\"'\s#]*)",
                        "" if own else story.show(top, ref, "harness.yaml") or "", re.M)
     signoff = pinned[1] if pinned else ""
+    if signoff and not repo.SIGNOFF.fullmatch(signoff):  # an empty pin would let any record count
+        repo.refuse(REFUSALS["signoff"], pin=signoff)
     stories = _stories(top, ref, own)
     converted = {entry.get("old") for entry in stories}
     return {"ref": ref, "own": own, "kept": kept, "stories": stories,
@@ -269,8 +275,7 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "unseeded": ", ".join(json.dumps(phase, ensure_ascii=False) for phase in phases)
                         if unsafe else "",
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
-            "signoff": signoff if repo.SIGNOFF.fullmatch(signoff) else "",
-            "bad_signoff": "" if repo.SIGNOFF.fullmatch(signoff) else signoff,
+            "signoff": signoff,
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
 
@@ -635,10 +640,6 @@ def _report(plan: dict[str, Any], default: str) -> str:
             lines.append(f"Pins your sign-off record, {plan['signoff']}, in forge.toml's signoff, "
                          "as harness.yaml did: a story is approved only once that record is "
                          "accepted.")
-        elif plan["bad_signoff"]:
-            lines.append(f"Couldn't carry harness.yaml's sign-off record, {plan['bad_signoff']}, "
-                         "into forge.toml: it isn't a docs/decisions/NNNN-client-signoff.md record. "
-                         "Ask your agent to set signoff.")
         lines += [f"Writes forge.toml pinned to Forge v{__version__}, and the adapters for Claude "
                   "Code and Codex with forge sync.",
                   f"After this pull request merges, forge close {ITEM} turns on branch protection "
