@@ -10,6 +10,8 @@ from pathlib import Path
 from test_task import story
 
 ROOT = Path(__file__).resolve().parents[1]
+WALKS_ALL = ("in every round, fix rounds included, it walks every Done-when item this\n"
+             "part covers, not only what the round changed.")
 
 
 def install_claude(repo) -> Path:
@@ -64,7 +66,7 @@ def test_17_worker(repo, gh, monkeypatch):
                  "| ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |",
                  "| PAGE | The page | The board page | 1 | `web/board.py`, `web/templates/` |",
                  "New moving parts: none", "Risks: none", "Reuse the old board's look.",
-                 "Functional check"):
+                 "Functional check", WALKS_ALL):
         assert text in brief, text
     assert "Fix round" not in brief and "$" not in brief.split("## Standards")[0]
     standards = ROOT / "src" / "forge" / "standards.md"
@@ -103,6 +105,7 @@ def test_17_worker(repo, gh, monkeypatch):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     brief = calls(log)[-1]["brief"]
     assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in brief
+    assert WALKS_ALL in brief  # the fix round's Functional check still covers every Done-when item
     assert "### tests" in brief and "FAILED tests/test_board.py::test_page" in brief
     for text in ("Simpler: drop the cache", "Dismissed finding", "forge-pr-check"):
         assert text not in brief, text
