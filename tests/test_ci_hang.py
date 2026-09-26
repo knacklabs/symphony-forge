@@ -25,3 +25,14 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
             assert "--with pytest-timeout" in command, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
     assert seen == 2
+
+
+def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow():
+    import tomllib
+    from forge import sync
+    top = Path(__file__).resolve().parents[1]
+    cfg = tomllib.loads((top / "forge.toml").read_text(encoding="utf-8"))
+    generated = sync.files(top, cfg)[sync.WORKFLOW_PATH]
+    committed = (top / sync.WORKFLOW_PATH).read_text(encoding="utf-8")
+    run = lambda text: re.search(r"- run: \"uv run[^\n]*", text).group(0)
+    assert run(generated) == run(committed)
