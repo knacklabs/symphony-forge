@@ -3,7 +3,7 @@
   "branch": "fix/the-windows-record-retry-tests-test-7-te",
   "done_when": "Those three tests move unchanged to their own test file with its own STORY key for the record-retry fix, and tests/test_codex_record.py keeps only FORGE-WARM-1 criteria tests; the full suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T16:28:04+00:00",
