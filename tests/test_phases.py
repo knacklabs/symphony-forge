@@ -109,10 +109,10 @@ def test_35_simple_enough_cold_read(repo):
 
 def test_37_one_ui_skill(env):
     # A user-facing task's brief and its review name motion only for a Done-when item needing it.
-    log = install_claude(env.repo)
     # T2 waits for T1, which counts as merged once its state is on the default branch.
     env.commit(env.repo.path, ".factory/stories/SHOP/tasks/T1.json", '{"status": "merged"}')
     item = env.start_approved_task(STORY_DOC, "T2", {"show.py": "print('basket')\n"})[0]
+    log = install_claude(env.repo)
     assert env.repo.forge("work", item).returncode == 0
     assert env.close(item).returncode == 0
     for text in (_flat(calls(log)[-1]["brief"]), _flat(env.prompt())):

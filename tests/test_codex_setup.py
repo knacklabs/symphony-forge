@@ -5,7 +5,6 @@ Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -14,7 +13,7 @@ import sys
 from pathlib import Path
 
 from conftest import _install
-from test_close import STORY_DOC
+from test_close import STORY_DOC, approve_story
 from test_setup import _autoreview, _fresh_client, _stub_forge
 
 STORY = "FORGE-WARM-1"
@@ -148,20 +147,8 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     # A project marked untrusted fails doctor, and forge work refuses to start Codex in it before
     # it records any status. A task worktree gets its trusted main repo's trust.
     # The task starts the real way: from an approved story.
-    doc = STORY_DOC.replace("T1 | Save a basket", "CART | Save a basket")
-    repo.git("checkout", "-q", "-b", "story/SHOP", cwd=client)
-    (client / "plans").mkdir(exist_ok=True)
-    (client / "plans" / "SHOP.md").write_text(doc, encoding="utf-8")
-    parts = dict(re.findall(r"^## ([^\n]+)\n(.*?)(?=^## |\Z)", doc, re.M | re.S))
-    both = f"{parts['What changes for you'].strip()}\n{parts['Done when'].strip()}"
-    state = client / ".factory" / "stories" / "SHOP" / "story.json"
-    state.parent.mkdir(parents=True, exist_ok=True)
-    state.write_text(json.dumps({"status": "approved", "approval": {
-        "by": "Ravi", "at": "2026-09-25T10:00:00+00:00",
-        "hash": hashlib.sha256(both.encode("utf-8")).hexdigest()}}), encoding="utf-8")
-    repo.git("add", "plans", ".factory", cwd=client)
-    repo.git("commit", "-q", "-m", "Story doc and its approval", cwd=client)
-    repo.git("checkout", "-q", "main", cwd=client)
+    doc = STORY_DOC.replace("T1", "CART")
+    approve_story(repo, doc, cwd=client)
     started = repo.forge("task", "start", "SHOP/CART", cwd=client)
     assert started.returncode == 0, started.stderr
     worktree = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
