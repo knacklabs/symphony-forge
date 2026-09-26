@@ -19,9 +19,22 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
-from test_codex_worker import _codex_repo, _stub, sdk_data  # noqa: F401 (sdk_data is a fixture)
+from test_codex_worker import _codex_repo, _running, _stub, sdk_data  # noqa: F401 (a fixture)
 
 STORY = "FORGE-WARM-1"
+KILL = getattr(signal, "SIGKILL", signal.SIGTERM)  # on Windows os.kill ends a process either way
+# The tool Forge reads a process's start time and command with.
+PS = "powershell" if os.name == "nt" else "ps"
+# That tool, a second slower: two calls that start together both read a stale lock before either
+# takes it.
+SLOW = """#!{python}
+import subprocess, sys, time
+time.sleep(1)
+done = subprocess.run([{tool!r}, *sys.argv[1:]], capture_output=True, text=True)
+sys.stdout.write(done.stdout)
+sys.stderr.write(done.stderr)
+sys.exit(done.returncode)
+"""
 # A ps, and on Windows a PowerShell, that can't read any process.
 BLIND = "#!/usr/bin/env python3\nimport sys\nsys.exit('stub: no process can be read')\n"
 # A ps that reads every process but Forge's Codex driver.
@@ -53,6 +66,8 @@ def _saved(path: Path) -> dict:
 
 def _up(pid: int) -> bool:
     """Whether the process runs; a finished one its parent hasn't collected yet doesn't."""
+    if os.name == "nt":
+        return _running(pid)
     stat = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True,
                           text=True).stdout.strip()
     return bool(stat) and not stat.startswith("Z")
@@ -70,8 +85,8 @@ def _down(pid: int) -> bool:
 def _held(repo, calls: Path, record: Path, status: str, *args: str,
           cwd: Path | None = None) -> tuple[subprocess.Popen, dict, int]:
     """A forge call (work BOARD/PAGE unless args say another) whose stub app-server is stuck
-    ("stall" or "hold"). Returns the call, its record once the stub is stuck, and the stub's
-    process id."""
+    ("stall" or "hold"). Returns the call, its record once the stub is stuck and on record, and
+    the stub's process id (on Windows the record's app-server is the .cmd that started it)."""
     stuck = {"stall": "initialize", "hold": "thread/start"}[status]
     servers = len([call for call in _stub(calls) if "pid" in call])
     work = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
@@ -85,17 +100,40 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
             said = []
         pids = [call["pid"] for call in said if "pid" in call]
         saved = _saved(record)
-        if (len(pids) > servers and said[-1].get("method") == stuck
-                and (status == "stall" or (saved.get("app_server") or {}).get("pid") == pids[-1])):
+        if len(pids) > servers and said[-1].get("method") == stuck and saved.get("app_server"):
             return work, saved, pids[-1]
         time.sleep(0.05)
     work.kill()
     pytest.fail(f"the forge call never got stuck: {work.communicate()[1]}")
 
 
+def _freeze(pid: int) -> None:
+    """Leave the process unable to act: SIGSTOP, and on Windows, which has none, suspend it and
+    every process it started."""
+    if os.name != "nt":
+        os.kill(pid, signal.SIGSTOP)
+        return
+    import ctypes
+    listed = subprocess.run(["powershell", "-NoProfile", "-Command",
+                             "Get-CimInstance Win32_Process | ForEach-Object "
+                             "{ \"$($_.ProcessId) $($_.ParentProcessId)\" }"],
+                            capture_output=True, text=True, check=True).stdout.split()
+    parents = dict(zip(map(int, listed[0::2]), map(int, listed[1::2])))
+    tree = {pid}
+    for _ in parents:  # add each generation of children until none is new
+        tree |= {child for child, parent in parents.items() if parent in tree}
+    kernel32 = ctypes.windll.kernel32
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    for each in tree:
+        handle = kernel32.OpenProcess(0x0800, False, each)  # PROCESS_SUSPEND_RESUME
+        if handle:
+            ctypes.windll.ntdll.NtSuspendProcess(ctypes.c_void_p(handle))
+            kernel32.CloseHandle(ctypes.c_void_p(handle))
+
+
 def _crash(work: subprocess.Popen, saved: dict) -> None:
     """Kill forge work while its driver can't act, as a crash might: its group is left behind."""
-    os.kill(saved["driver"]["pid"], signal.SIGSTOP)
+    _freeze(saved["driver"]["pid"])
     work.kill()
     work.communicate()
 
@@ -106,12 +144,14 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
 
     if os.name != "nt":  # no SIGINT to send on Windows
-        # The driver is on record by its id, start time and command at once, before Codex has
-        # started: here the app-server never answers initialize.
+        # The driver, then the app-server, are on record by id, start time and command before
+        # Codex has started and before any conversation: here the app-server never answers
+        # initialize.
         work, saved, stub = _held(repo, calls, record, "stall")
-        driver = saved["driver"]
-        assert saved == {"driver": driver, "app_server": None}
+        driver, server = saved["driver"], saved["app_server"]
+        assert saved == {"driver": driver, "app_server": server}
         assert sorted(driver) == ["command", "pid", "started"] and "codex_turn" in driver["command"]
+        assert sorted(server) == ["command", "pid", "started"] and server["pid"] == stub
 
         # While it runs, a second forge work on the item refuses and says to wait, from another
         # worktree too, since the lock is in git's shared folder; it commits nothing.
@@ -163,45 +203,66 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert not lock.exists()
 
+    # Two calls that find one stale lock together: one clears it and runs, and the other then
+    # finds the new lock and refuses, rather than clearing that one too.
+    lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
+                                "command": "forge work BOARD/PAGE"}), encoding="utf-8")
+    _install(repo.bin, PS, SLOW.format(python=sys.executable, tool=shutil.which(PS)))
+    both = [subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
+                             cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "hold"},
+                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+            for _ in range(2)]
+    for _ in range(600):
+        done = [call for call in both if call.poll() is not None]
+        if done:
+            break
+        time.sleep(0.05)
+    for call in both:
+        call.kill()
+    said = [call.communicate()[1] for call in done]
+    assert len(said) == 1 and said[0].startswith("forge work BOARD/PAGE is already running as "
+                                                 "process "), said
 
-@pytest.mark.skipif(os.name == "nt", reason="the crashes are made with POSIX signals")
+
 def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
 
     # Killing forge work while Codex is still starting leaves nothing: the driver sees Forge go
-    # and ends its whole process group.
+    # and ends its whole process group, or on Windows the app-server's process tree.
     work, saved, stub = _held(repo, calls, record, "stall")
     work.kill()
     work.communicate()
     assert _down(stub) and _down(saved["driver"]["pid"])
 
-    # Ctrl-C while the driver can't act (stopped, here): forge work still returns, ends the
-    # driver's group itself, and lets the lock go.
-    work, saved, stub = _held(repo, calls, record, "stall")
-    os.kill(saved["driver"]["pid"], signal.SIGSTOP)
-    work.send_signal(signal.SIGINT)
-    work.communicate(timeout=30)
-    assert not lock.exists() and _down(stub) and _down(saved["driver"]["pid"])
+    if os.name != "nt":  # Ctrl-C is SIGINT, which Windows can't send to one process
+        # Ctrl-C while the driver can't act (stopped, here): forge work still returns, ends the
+        # driver's group itself, and lets the lock go.
+        work, saved, stub = _held(repo, calls, record, "stall")
+        _freeze(saved["driver"]["pid"])
+        work.send_signal(signal.SIGINT)
+        work.communicate(timeout=30)
+        assert not lock.exists() and _down(stub) and _down(saved["driver"]["pid"])
 
     # While forge work runs, doctor says so and leaves it alone. An error: the driver dies, and
     # forge work stops the app-server it recorded before it ends.
     work, saved, stub = _held(repo, calls, record, "hold")
-    assert (f"- forge work BOARD/PAGE is running as process {work.pid}, so doctor leaves its "
+    owner = _saved(lock)["pid"]  # forge work's own process, behind any Windows launcher
+    assert (f"- forge work BOARD/PAGE is running as process {owner}, so doctor leaves its "
             "Codex process alone.\n") in repo.forge("doctor").stdout
-    assert _up(stub) and _saved(lock)["pid"] == work.pid
-    os.kill(saved["driver"]["pid"], signal.SIGKILL)
+    assert _up(stub) and _up(owner)
+    os.kill(saved["driver"]["pid"], KILL)
     assert "Codex never reported its end" in work.communicate(timeout=30)[1]
     assert _down(stub)
 
     # A crash that leaves the driver unable to act (stopped, here) leaves its process group and a
-    # stale lock. Doctor clears the lock, and stops the group only once the record names the
-    # driver: not under another start time.
+    # stale lock. Doctor clears the lock, and stops the Codex processes only once the record
+    # names them: not under another start time.
     work, saved, stub = _held(repo, calls, record, "stall")
     _crash(work, saved)
-    record.write_text(json.dumps({**saved, "driver": {**saved["driver"], "started": "another"}}),
-                      encoding="utf-8")
+    record.write_text(json.dumps({key: {**saved[key], "started": "another"}
+                                  for key in ("driver", "app_server")}), encoding="utf-8")
     assert "Stopped" not in repo.forge("doctor").stdout and _up(stub)
     assert not lock.exists()
     record.write_text(json.dumps(saved), encoding="utf-8")
@@ -215,6 +276,17 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     assert lock.exists()
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _down(stub) and _down(saved["driver"]["pid"])
+
+    # A crash that kills the driver while Codex is starting, and forge work before it can act,
+    # leaves only the app-server: the next forge work stops it by the identity on record.
+    work, saved, stub = _held(repo, calls, record, "stall")
+    _freeze(work.pid)
+    os.kill(saved["driver"]["pid"], KILL)
+    work.kill()
+    work.communicate()
+    assert _down(saved["driver"]["pid"])
+    assert repo.forge("work", "BOARD/PAGE").returncode == 0
+    assert _down(stub)
 
     # Codex that never starts gets two minutes (a second here); then the driver ends its group,
     # and forge work refuses with the log's path.

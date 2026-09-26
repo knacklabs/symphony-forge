@@ -22,6 +22,11 @@ from typing import Any
 
 from forge import repo, sync
 
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
 # The one SDK version Forge drives. Moving it is a deliberate change that reruns the contract and
 # smoke tests.
 SDK_PIN = "0.156.1"
@@ -355,23 +360,40 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
     """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
     else the owner keeping it, and True, or None when Forge can't tell, which counts as running."""
-    while True:
+    with _one_at_a_time(lock):
         if lock.exists():
             owner = _json(lock)
             alive = _alive(owner)
             if alive is not False:
                 return owner, alive
-            # ponytail: two calls that find the same stale lock at once can both clear it; the
-            # window is one read. Clear it by an exclusive rename if that ever bites.
             lock.unlink(missing_ok=True)
         if "command" not in me:  # a lock no one else could check would pass for a stale one
             return me, None
+        with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
+            json.dump(me, out)
+        return None
+
+
+@contextlib.contextmanager
+def _one_at_a_time(lock: Path) -> Iterator[None]:
+    """Hold the lock's guard file while a call checks, clears or takes the lock, so two calls that
+    find one stale lock never both clear it, and one clears another's new lock. The system lets
+    go of the guard when its holder ends, however it ends, so it is never stale itself."""
+    with lock.with_suffix(".guard").open("ab") as guard:
+        if os.name != "nt":
+            fcntl.flock(guard, fcntl.LOCK_EX)
+            yield
+            return
+        guard.seek(0)
+        while True:  # LK_LOCK gives up after ten seconds
+            with contextlib.suppress(OSError):
+                msvcrt.locking(guard.fileno(), msvcrt.LK_LOCK, 1)
+                break
         try:
-            with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
-                json.dump(me, out)
-            return None
-        except FileExistsError:  # another call took it meanwhile: check its owner
-            continue
+            yield
+        finally:
+            guard.seek(0)
+            msvcrt.locking(guard.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def tidy(checkout: Path) -> list[str]:

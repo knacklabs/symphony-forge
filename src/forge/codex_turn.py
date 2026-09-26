@@ -8,25 +8,29 @@ reports it. Codex gets two minutes to start, or this prints a refusal and ends.
 
 Forge starts this in its own process group and keeps stdin open while it runs. Once stdin closes,
 Forge has gone, and this ends the whole group, itself and the app-server it started, even while
-Codex is still starting.
+Codex is still starting. Windows has no such group, so there this ends the app-server's process
+tree by the id it kept when the app-server started.
 """
 from __future__ import annotations
 
 import json
 import os
 import signal
+import subprocess
 import sys
 import threading
 from typing import Any
 
-from openai_codex import ApprovalMode, Codex, Sandbox
+from openai_codex import ApprovalMode, Codex, Sandbox, api
+from openai_codex.client import CodexClient
 from openai_codex._run import _final_assistant_response_from_items
 from openai_codex.models import (ItemCompletedNotification, ThreadTokenUsageUpdatedNotification,
                                  TurnCompletedNotification, UnknownNotification)
 
 LOCK = threading.Lock()
 START = 120  # the seconds Codex gets to start: Codex() waits on initialize with no timeout
-CLIENT: list[Codex] = []  # the client once it has started, for end() on Windows
+STARTING = threading.Lock()  # end() never falls between the app-server starting and SERVER
+SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
 
 
 def emit(**line: Any) -> None:
@@ -41,14 +45,30 @@ def decline(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
     return {"decision": "decline"}
 
 
+class Client(CodexClient):
+    """The SDK's client, which prints the app-server's id as soon as it starts, before Codex()
+    waits on initialize, so Forge has it on record even when Codex never answers."""
+
+    def start(self) -> None:
+        with STARTING:
+            super().start()
+            SERVER.append(self._proc.pid)
+        emit(pid=self._proc.pid)
+
+
+# ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
+api.CodexClient = Client
+
+
 def end() -> None:
     """End this driver and everything it started: the process group Forge made for it."""
-    if os.name == "nt":  # no group to end: close the client if it has started
-        for codex in CLIENT:
-            codex.close()
-    else:
-        os.killpg(0, signal.SIGTERM)
-    os._exit(1)
+    with STARTING:
+        if os.name == "nt":  # no group to end: end the app-server's process tree
+            for pid in SERVER:
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
+        else:
+            os.killpg(0, signal.SIGTERM)
+        os._exit(1)
 
 
 def watch() -> None:
@@ -71,10 +91,8 @@ def main() -> int:
     timer.start()
     codex = Codex()  # starts `codex app-server`; a failed start stops it again
     timer.cancel()
-    CLIENT.append(codex)
     try:
         client = getattr(codex, "_client", None)
-        emit(pid=getattr(getattr(client, "_proc", None), "pid", None))
         # ponytail: Codex() takes no handler and its default accepts commands and file changes, so
         # Forge swaps the private one. SDK_PIN keeps it where this looks; a moved one refuses here.
         if not hasattr(client, "_approval_handler"):
