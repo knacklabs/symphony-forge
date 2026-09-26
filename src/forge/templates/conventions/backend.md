@@ -45,15 +45,15 @@ logging library:
 ```ts
 @Injectable()
 export class JsonLogger implements LoggerService {
-  private write(level: string, message: unknown, module?: string, context: object = {}) {
+  private write(level: string, message: string, module?: string, context: object = {}) {
     process.stdout.write(JSON.stringify({ timestampUtc: new Date().toISOString(), level, message,
       context, environment: process.env.NODE_ENV, serviceName: 'api', module,
       correlationId: correlationStore.getStore() }) + '\n');
   }
-  log(message: unknown, module?: string) { this.write('info', message, module); }
-  warn(message: unknown, module?: string) { this.write('warn', message, module); }
-  error(message: unknown, trace?: string, module?: string) { this.write('error', message, module, { trace }); }
-  debug(message: unknown, module?: string) { this.write('debug', message, module); }
+  log(message: string, module?: string, context?: object) { this.write('info', message, module, context); }
+  warn(message: string, module?: string, context?: object) { this.write('warn', message, module, context); }
+  error(message: string, trace?: string, module?: string) { this.write('error', message, module, { trace }); }
+  debug(message: string, module?: string, context?: object) { this.write('debug', message, module, context); }
 }
 // main.ts: NestFactory.create(AppModule, { logger: new JsonLogger() })
 ```
@@ -63,7 +63,7 @@ A middleware in `common/` takes the `x-correlation-id` header (or makes a UUID),
 entry and outgoing call. Log a fixed message with only the fields needed in the context object, never whole objects:
 
 ```ts
-this.logger.log({ message: 'Invoice paid', context: { invoiceId }, correlationId });
+this.logger.log('Invoice paid', 'InvoiceService', { invoiceId });
 ```
 
 ## Errors
