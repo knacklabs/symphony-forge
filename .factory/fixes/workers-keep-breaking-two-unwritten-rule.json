@@ -3,11 +3,22 @@
   "branch": "fix/workers-keep-breaking-two-unwritten-rule",
   "done_when": "The worker brief (src/forge/templates/brief.md) says a change to documentation only needs no test, and that in a repo whose tests run Forge (forge-source) a test runs the forge command and never imports forge; a test pins both lines",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "b5fddbd315e8bc7dbe890eeb004b72c6c8c155c7",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "16774d2ff20406baa2d0698d48f40666a6c433aef8605f1fc391d069fe85152f"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T19:37:14+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T19:42:06+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers keep breaking two unwritten rules: they add a test for a docs-only change that nothing runs (trial client PR 1), and they import forge in tests instead of running the forge command (PRs 298, 304, 317), each costing a failed round"
