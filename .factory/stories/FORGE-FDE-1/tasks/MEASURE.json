@@ -1,33 +1,19 @@
 {
   "branch": "task/FORGE-FDE-1-MEASURE",
   "review": {
-    "commit": "4e934431c46cdfeffefd8a372168c6d586efdcb4",
+    "commit": "2bbc20096d9492aadf77b96092db1fab34e7e0ba",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied functional-check paragraph exercises a due notification and refusal to measure a legacy spec. It does not exercise item 5's save and confirm refusals, or item 6's successful result recording, retained confirmation, and removal of the landed check. Automated tests cover these paths, but the required user-facing walkthrough still skips them. Exercise those paths and record their observed outcomes in the Functional check paragraph.",
-        "file": "src/forge/records.py",
-        "line": 132,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      },
-      {
-        "body": "The required crossing test is still absent: this assertion puts the due check before generic idle output, without exercising a discovery prompt. It therefore cannot detect discovery taking precedence over a due check. Add the explicitly required case that exercises both outputs and verifies their order.",
+        "body": "The explicitly required test crossing the due check and discovery prompt is missing. This assertion checks ordering only against generic idle output; it never exercises discovery, so it cannot detect discovery suppressing or preceding a due check. Add the required case exercising both outputs and asserting that the due check comes first.",
         "file": "tests/test_measure.py",
         "line": 161,
         "priority": "P1",
         "title": "Not done: due-check precedence over discovery test"
-      },
-      {
-        "body": "This new lockfile is outside the permitted scope and records only the existing editable project. The change introduces no dependency that requires it. Remove it from this branch.",
-        "file": "uv.lock",
-        "line": 1,
-        "priority": "P2",
-        "title": "Simpler: unrelated lockfile \u2192 existing dependency configuration"
       }
     ],
     "status": "blocked",
-    "tree": "90546eb21c94ac662a5ade861eced58df396725713626b25e817ce69444ce5d7"
+    "tree": "994b924236777da1dfbc9719ae30bab61f77a24c191eb8dfafbc7a14380f75d0"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +27,10 @@
     },
     {
       "at": "2026-09-26T11:02:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T11:19:35+00:00",
       "step": "review"
     }
   ]
