@@ -4,26 +4,26 @@
   "done_when": "Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge work never returns while a Codex process it started is alive, and both tests pass on every OS in CI three runs in a row; no test is skipped or loosened",
   "kind": "fix",
   "review": {
-    "commit": "91324c5b107a5092f8de08e6feba1e42a4b3cae4",
+    "commit": "c82ab83adafc1f2a675f15c8b9d6bb3964b016ef",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new SIGKILL is asynchronous: it requests termination but does not wait for the app-server to exit. In the exact bare-command scenario added by this patch, the later cleanup cannot supply that wait: src/forge/codex.py:364-365 skips app-server records whose command lacks `app-server`, including when called from hold() at line 413. Consequently, forge work can still return while the signalled process remains alive under load. Confirm termination of the processes this invocation owns before returning; waiting only for the driver does not satisfy the Done-when guarantee.",
+        "body": "The loop falls through after five seconds even if every process-group probe succeeds. If termination is still pending, Forge returns while its app-server remains alive. The later cleanup cannot close this gap in the bare-command scenario: src/forge/codex.py:365-368 skips that app-server record, including when invoked by hold() at line 416. Confirm termination before returning instead of treating exhaustion of the polling budget as completion.",
         "file": "src/forge/codex.py",
-        "line": 253,
+        "line": 254,
         "priority": "P1",
         "title": "Not done: Reproduce it (run the two tests in a loop under load on macOS), name the root cause with evidence, fix it at the cause so forge\u4ed5\u4e8b"
       },
       {
-        "body": "The regression test accepts the timing defect this fix must eliminate. After work.communicate() returns, `_down(stub)` polls for another ten seconds (tests/test_codex_record.py:129-134), so a Codex process that outlives forge work can still pass. Assert that the process has already exited when work returns, with coverage that exposes delayed termination. Also, the guard at line 502 bypasses every lifecycle assertion on Windows, reporting a passing test after setup without exercising its named behavior.",
+        "body": "On Windows this test finishes after fixture setup without starting the worker, killing its driver, or checking that the app-server exited. It therefore reports success even if its named lifecycle behavior is broken. This violates the explicit test-audit and no-skipped-tests requirements. Exercise the lifecycle scenario on Windows with an appropriate process-query fixture and retain the immediate post-return assertion.",
         "file": "tests/test_codex_record.py",
-        "line": 510,
+        "line": 502,
         "priority": "P1",
         "title": "Not done: test_12_a_dead_driver_leaves_no_app_server_behind"
       }
     ],
     "status": "blocked",
-    "tree": "b3f609620c22455cfe70d6195bc70b583a8ae6335daa3a6beb15f5a7bfdc0493"
+    "tree": "98e8a6a9d02a461d5abd594eebad91585e096c74f8c69b01fce44714a34bc8fe"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-09-26T16:15:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T16:25:33+00:00",
       "step": "review"
     }
   ],
