@@ -1,32 +1,39 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "cdf56bd1481356c819b3997c0c6ab0624d96fe65",
+    "commit": "60bbe3ee362c3e83c3726076b3c251defb3023d3",
     "dismissals": [],
     "findings": [
       {
-        "body": "If the canonical story record and the checkout's copy are deleted while the task and story document remain, this condition permits work without approval. Both hash checks are then skipped, allowing a changed brief to reach a full-access worker after a status commit. Missing approval must refuse unconditionally, as `src/forge/task.py:137\u2013139` already does. Remove the test-fixture exception and cover deletion of both records.",
+        "body": "When neither the checkout nor the searched history contains a story record, this condition allows work with no approval, and both subsequent hash checks are skipped. A manually created branch, or rewritten history that removes the approval record, can therefore send an unapproved brief to the full-access worker after committing status. The comment explicitly preserves this production exception for test fixtures. Require approval unconditionally, matching src/forge/task.py:137\u2013139, and update those fixtures.",
         "file": "src/forge/worker.py",
         "line": 120,
         "priority": "P1",
-        "title": "Not done: 8. Refuse work when both story approval records are absent"
+        "title": "Not done: 8. Refuse missing approval unconditionally"
       },
       {
-        "body": "Recovery returns immediately when the log is empty or its last entry describes a completed turn. However, `src/forge/codex_turn.py:139` starts the next turn before Forge appends its started line at `src/forge/codex.py:280`. A crash between those operations leaves a recorded conversation with an unlogged turn. The next call stops the processes but skips reading that conversation, so it neither reconciles the missing end nor refuses if Codex still reports the turn as running. Reconcile this pending-start case before allowing another turn, and test a crash before the started line is appended.",
+        "body": "The thread handler already captures the correct baseline in pending.start before acknowledging the conversation. This line replaces it with a fresh HEAD lookup after Codex has started executing: src/forge/codex_turn.py:138\u2013139 starts the turn before emitting its ID. If Forge is delayed while the worker commits, the saved baseline includes that work, so the next fix round omits those commits and changes. Persist the previously captured pending.start instead of rereading HEAD.",
         "file": "src/forge/codex.py",
-        "line": 166,
+        "line": 307,
         "priority": "P1",
-        "title": "Not done: 9. Recover turns started before their log line was written"
+        "title": "Not done: 7. Preserve the commit captured before the turn starts"
       },
       {
-        "body": "The supplied Functional check exercises only the approval refusal from item 8. It does not exercise continued fix rounds from item 7 or crash recovery from item 9, both covered by this part. The statement that the suite passes does not supply the required user-facing walkthrough. Exercise those paths through `forge work` and record what happened in a Functional check paragraph.",
+        "body": "The test captures its expected start commit after the first work call returns, and the stub never commits during that turn. Consequently, using the previous turn's ending commit instead of its starting commit would still pass these delta assertions. Add a case that commits during the first turn and verifies that the next prompt includes that commit and its changes.",
+        "file": "tests/test_codex_resume.py",
+        "line": 170,
+        "priority": "P1",
+        "title": "Not done: test changes since the previous turn started"
+      },
+      {
+        "body": "The supplied walkthrough tests absent approval records, but does not exercise item 8's changed approved text, refusal before a status commit, reapproval, and replacement of the old conversation. Deleting approval records does not exercise the hash comparisons or approval-based conversation invalidation. Complete that user-facing sequence and record its observed results in the Functional check paragraph.",
         "file": "src/forge/worker.py",
-        "line": 64,
+        "line": 124,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "This change adds a repository lockfile without changing dependencies or needing it for conversation continuation, approval checks, or recovery. It is outside this part's permitted scope and has no demonstrated role in its requirements. Remove it from this branch.",
+        "body": "This new lockfile is outside the permitted scope and introduces no dependency resolution needed by continuation, approval checks, or recovery. The SDK remains separately pinned and installed by Forge; pyproject.toml declares no project dependencies. Remove the unrelated lockfile from this change.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
@@ -34,7 +41,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "8765421c3bd879f6acd2df95cbc3d6e958783f57da0a9546232b785ed2a36626"
+    "tree": "dfbeda7f4add424c2368f91235587be73f1857b84ce38929591ee798830a5707"
   },
   "status": "fixing",
   "steps": [
@@ -56,6 +63,10 @@
     },
     {
       "at": "2026-09-26T11:51:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T12:43:29+00:00",
       "step": "review"
     }
   ]
