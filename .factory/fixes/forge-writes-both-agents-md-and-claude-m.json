@@ -3,7 +3,7 @@
   "branch": "fix/forge-writes-both-agents-md-and-claude-m",
   "done_when": "Forge no longer writes CLAUDE.md: its two Claude-only lines (story approval through Plan Mode, run long forge work in the background) move into AGENTS.md's Forge block; sync removes Forge's block from an existing CLAUDE.md and deletes the file when nothing else is left, but keeps it with an @AGENTS.md line when the repo has its own content there; doctor stops expecting CLAUDE.md; this repo's CLAUDE.md goes; tests cover the three cases",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T19:04:22+00:00",
