@@ -189,6 +189,12 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     for text in expected:
         assert text in built.stdout and text in log, text
     assert "Warning" not in log and "Traceback" not in log
+    # A finished command's output follows it, its last 40 lines, so a failing test shows why; the
+    # streamed deltas don't.
+    run = log.split("$ pytest -q (failed)\n", 1)[1].splitlines()
+    assert run[:2] == ["(… 5 earlier lines in Codex's own log)", "stub test line 6"]
+    assert run[40] == "FAILED stub diagnostic" and "FAILED stub diagnostic" in built.stdout
+    assert "stub test line 5\n" not in log and "stub delta chunk" not in log
     state = json.loads((folder / ".factory/stories/BOARD/tasks/PAGE.json").read_text("utf-8"))
     assert state["status"] == "working"
     assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == ""

@@ -181,7 +181,11 @@ def _event(said: dict[str, Any]) -> str:
     if item.get("type") == "agentMessage":
         return item.get("text", "")
     if item.get("type") == "commandExecution":
-        return f"$ {item.get('command')} ({item.get('status')})"
+        # The output as a whole once the command ends (its deltas are dropped): the last 40 lines,
+        # enough to show why a test failed.
+        output = (item.get("aggregatedOutput") or "").rstrip("\n").splitlines()
+        cut = [f"(… {len(output) - 40} earlier lines in Codex's own log)"] if len(output) > 40 else []
+        return "\n".join([f"$ {item.get('command')} ({item.get('status')})", *cut, *output[-40:]])
     if item.get("type") == "fileChange":
         paths = ", ".join(change.get("path", "") for change in item.get("changes") or [])
         return f"Changed {paths} ({item.get('status')})"
