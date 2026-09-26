@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import uuid
@@ -155,6 +156,9 @@ def _running(pid: int) -> bool:
 
 def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    # Output to a Windows pipe starts in its legacy code page; here on every OS. Forge's output,
+    # the names' "·" included, must still reach its reader as UTF-8.
+    monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
 
     # Without the pinned SDK, forge work refuses before it records any status.
     head = repo.git("rev-parse", "HEAD", cwd=folder)
@@ -314,9 +318,13 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     # driver reports the Codex process first, and none is left once forge work returns.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns) == [started, ended]
-    pids = [call["pid"] for call in _stub(calls) if "pid" in call]
-    assert work_log.read_text("utf-8").splitlines()[1] == f"Codex app-server: process {pids[-1]}"
-    assert not _running(pids[-1])
+    pid = int(re.fullmatch(r"Codex app-server: process (\d+)",
+                           work_log.read_text("utf-8").splitlines()[1])[1])
+    stub = [call["pid"] for call in _stub(calls) if "pid" in call][-1]
+    # On Windows the stub runs through its .cmd shim, so the process the client started, and the
+    # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.
+    assert pid == stub if os.name != "nt" else pid not in (stub, os.getpid())
+    assert not _running(pid)
 
     # A fix's turn log sits in its own folder.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
@@ -342,5 +350,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert vanished.stderr == (f"The Codex turn didn't complete: Codex never reported its end; its "
                                f"log is {work_log}.\nNext: forge work BOARD/PAGE\n")
     assert _lines(turns)[4:] == [started]
-    pids = [call["pid"] for call in _stub(calls) if "pid" in call]
-    assert len(pids) == 4 and not any(_running(pid) for pid in pids)
+    reported = [int(line.rpartition(" ")[2]) for log in work_log.parent.glob("work-*.log")
+                for line in log.read_text("utf-8").splitlines()
+                if line.startswith("Codex app-server: process ")]
+    assert len(reported) == 4 and not any(_running(pid) for pid in reported)

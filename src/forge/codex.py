@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -122,6 +123,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
     refused = False
+    # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
+    # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
