@@ -1,0 +1,27 @@
+{
+  "base": "64da2b6c3b2adb2ff7de4354ecd4c26604e34913",
+  "branch": "fix/forge-fde-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "The agent now works as a forward deployed engineer: it interviews by the size of the ask or runs office-hours for new work, writes problem cards, prices options with forge spec payback, and checks results with forge spec measure.",
+  "review": {
+    "commit": "3dd5c19bf4c7b3b9285a0a9c97abe2e0dc67bde8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "006a377c8cd39f71147dc9536b4a64af1c15b929bd43e3812820ef1c4fbb711d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T17:33:11+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T17:34:11+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that The agent works as a forward deployed engineer is finished, and what it achieved."
+}
