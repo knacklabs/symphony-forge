@@ -155,9 +155,7 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
         try:
             saved = _saved(record)
         except PermissionError:
-            if os.name != "nt":
-                raise
-            time.sleep(0.05)  # Windows can refuse a read while Forge replaces the record.
+            time.sleep(0.05)  # A replacement can briefly keep the record from this reader.
             continue
         if len(pids) > servers and said[-1].get("method") == stuck and saved.get("app_server"):
             return work, saved, pids[-1]
