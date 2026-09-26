@@ -3,11 +3,30 @@
   "branch": "fix/forge-writes-both-agents-md-and-claude-m",
   "done_when": "Forge no longer writes CLAUDE.md: its two Claude-only lines (story approval through Plan Mode, run long forge work in the background) move into AGENTS.md's Forge block; sync removes Forge's block from an existing CLAUDE.md and deletes the file when nothing else is left, but keeps it with an @AGENTS.md line when the repo has its own content there; doctor stops expecting CLAUDE.md; this repo's CLAUDE.md goes; tests cover the three cases",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "03a2b55af208fda3b384e448bbf10dc81fe1cb79",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When an existing CLAUDE.md contains repository-owned instructions but no Forge block, this early return preserves it without adding `@AGENTS.md`. Under the stated Claude Code behavior, that file prevents automatic loading of AGENTS.md, so Claude misses Forge's instructions, including the two moved lines. Ensure the import is present whenever CLAUDE.md retains repository-owned content, including files without legacy markers. Add a regression case: the current preservation test always supplies OLD_BLOCK and cannot catch this failure. Doctor also accepts this broken state because src/forge/doctor.py:93\u201399 compares against this same generated output.",
+        "file": "src/forge/sync.py",
+        "line": 177,
+        "priority": "P1",
+        "title": "Not done: Forge no longer writes CLAUDE.md: its two Claude-only lines (story approval through Plan Mode, run long forge work in the backward"
+      }
+    ],
+    "status": "blocked",
+    "tree": "42ac6f185d73c1fed2b401fd186c6357565b29738482db258dcab4925d366c88"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T19:04:22+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T19:26:33+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge writes both AGENTS.md and CLAUDE.md, but Claude Code (2.1.277 and later) reads AGENTS.md by itself whenever there's no CLAUDE.md, so the second file is duplication"
