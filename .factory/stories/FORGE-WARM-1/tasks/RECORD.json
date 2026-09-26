@@ -1,33 +1,40 @@
 {
   "branch": "task/FORGE-WARM-1-RECORD",
   "review": {
-    "commit": "8d64f09a02d321545ba5948029a248df4c332e66",
+    "commit": "da307f9bddc907b82184fd21337651f78aecc396",
     "dismissals": [],
     "findings": [
       {
-        "body": "On Windows, a failed Get-CimInstance query can leave $p empty and continue to `exit 3`; `gone` then treats the owner as absent even when stderr reports a lookup failure. PowerShell's default error behavior permits this continuation ([documentation](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_commonparameters#erroraction)). If this occurs while checking an existing owner, `_take` deletes its live lock. A second work can enter, or doctor can stop the active worker's Codex processes. Distinguish query failures from successful queries returning no process, and return an unknown identity on failure.",
+        "body": "When the app-server identity lookup fails, `identity()` returns only its PID. This code persists that incomplete identity and still acknowledges it, allowing the driver to start a conversation without recording the required start time and command. If the driver subsequently dies, `_stop_leftover()` cannot recover that server because its record lacks a command. Require a complete identity before acknowledging startup; otherwise stop the owned driver group and refuse. Add coverage where only the app-server identity lookup fails.",
         "file": "src/forge/codex.py",
-        "line": 284,
+        "line": 183,
         "priority": "P1",
-        "title": "Not done: 5. Unidentifiable owners count as running"
+        "title": "Not done: 5. Record the complete process identity before any conversation"
       },
       {
-        "body": "`emit(pid=...)` only writes to a pipe; the driver immediately continues toward `thread_start` without waiting for Forge to save the identity. Meanwhile, codex.py:175\u2013176 still needs to receive the message, run ps/PowerShell, and atomically write the record. A delayed identity lookup therefore allows a conversation and turn to start while the record still has `app_server: null`. Emitting the thread ID has the same unsynchronized persistence gap. Require acknowledgement of successful recording before advancing, and test with the recorder delayed rather than initialization stalled.",
-        "file": "src/forge/codex_turn.py",
-        "line": 56,
+        "body": "An unreadable leftover identity makes `_alive()` return `None`, which this condition silently skips. After a crash with a dead Forge owner and an unidentifiable surviving app-server, `hold()` therefore permits another worker. `run()` then overwrites the old process identities at line 163, permanently losing the information needed to clean up the survivor. Doctor also silently skips this unresolved process. Distinguish an unknown identity from a confirmed absent or mismatched process, preserve its record, and refuse new work until cleanup can be verified.",
+        "file": "src/forge/codex.py",
+        "line": 324,
         "priority": "P1",
-        "title": "Not done: 5. Record the process before starting any conversation"
+        "title": "Not done: 6. Preserve unresolved leftovers before starting another worker"
       },
       {
-        "body": "Installing/checking the SDK under a Claude coordinator is separate cold-reader setup work; process recovery through `codex.tidy` does not require it. This extension adds unnecessary changes to the out-of-scope tests/test_codex_setup.py and tests/conftest.py. The tests/test_setup.py changes likewise support unrelated doctor wording changes. Remove those setup and wording changes from this part while retaining the lifecycle integration and its tests.",
-        "file": "tests/test_codex_setup.py",
-        "line": 180,
+        "body": "The supplied commit-message audit reports no `Functional check:` paragraph. This user-facing part requires documented exercise of both covered items: competing workers refusing and process cleanup after completion, interruption, and crash recovery. Perform that walkthrough and record what was exercised and observed in the required commit-message paragraph.",
+        "file": "src/forge/worker.py",
+        "line": 50,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      },
+      {
+        "body": "Checking and installing the SDK under a Claude coordinator is separate cold-reader setup work, unnecessary for this part's locking and process recovery. It introduces out-of-scope changes in `tests/test_codex_setup.py:180` and `tests/conftest.py:101`. The doctor wording changes at lines 126\u2013129 likewise require unrelated changes in `tests/test_setup.py:179`. Remove those setup and wording changes from this part while retaining `codex.tidy()` and the lifecycle coverage.",
+        "file": "src/forge/doctor.py",
+        "line": 70,
         "priority": "P2",
         "title": "Simpler: unrelated doctor setup changes \u2192 existing setup behavior"
       }
     ],
     "status": "blocked",
-    "tree": "9fd9236a54d8a1b20b1e414cd1393e5ebdf24fe9396457a336d1efbcfd56ccf3"
+    "tree": "55c299dbc7bee160e8310ded14a850734d1e082e9af02d6757af6b3b85599870"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +48,10 @@
     },
     {
       "at": "2026-09-26T07:51:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T08:17:14+00:00",
       "step": "review"
     }
   ]
