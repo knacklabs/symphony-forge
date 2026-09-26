@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 
-DESTROY, HOOKS, MERGE = "destroy work", "the git hooks must run", "only a human merges"
+DESTROY = '" because it can destroy work that cannot be recovered.'
+HOOKS = '" because the git hooks must run on every commit and push.'
+MERGE = '" because only a human merges a pull request.'
 BLOCKED = {
     # The carried-over list, in every spelling of its options.
     "rm -rf build": DESTROY,

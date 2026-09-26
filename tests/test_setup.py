@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+from test_close import PIN
+
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
@@ -56,6 +58,15 @@ def _hook_commands(top: Path) -> list[tuple[str, str, str]]:
 def _hooks_folder(top: Path) -> Path:
     return Path(subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-path", "hooks"],
                                cwd=top, capture_output=True, text=True, check=True).stdout.strip())
+
+
+def _autoreview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pin: str = PIN) -> None:
+    """An Autoreview helper stamped with this version, where forge doctor and close find it."""
+    skill = tmp_path / "autoreview-helper"
+    (skill / "scripts").mkdir(parents=True)
+    (skill / "scripts" / "autoreview").write_text("", encoding="utf-8")
+    (skill / ".upstream-sha").write_text(pin + "\n", encoding="utf-8")
+    monkeypatch.setenv("AUTOREVIEW", str(skill / "scripts" / "autoreview"))
 
 
 def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = "") -> Path:
@@ -178,6 +189,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
+    _autoreview(tmp_path, monkeypatch)
     home = tmp_path / "home"  # so skills installed on this machine don't count
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
@@ -268,7 +280,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         for row in rows:
             assert row in done.stdout, done.stdout
         assert "\n  Fix: " in done.stdout
-        assert "Next: forge doctor" in done.stderr
+        assert done.stderr.startswith("forge doctor found ") and done.stderr.endswith(
+            " problem(s); each row above gives its fix.\nNext: forge doctor\n"), done.stderr
         if case == "tampered hook command":
             # Doctor never ran it; only the untouched Codex deny hook ran.
             assert not marker.exists()
