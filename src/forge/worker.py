@@ -63,10 +63,10 @@ def work(args: argparse.Namespace) -> None:
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
-    the SDK with the declining handler's place and the project's trust. Returns claude's --model
-    and --effort, or [] on Codex. The cold read runs the same checks."""
+    the SDK with the declining handler's place and, for a worker, the project's trust. Returns
+    claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
-        chosen = repo.models(config, kind.lower())
+        chosen = repo.models(config, kind.lower(), "claude")
         if "subagents" in chosen:
             refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
                                                      f"[models.{kind.lower()}] can't set subagents")
@@ -75,6 +75,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
     codex.settings(config, kind)
+    if kind == "Grill":  # a read-only turn with approvals "never" can't write, so it needs no trust
+        return []
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     if not doctor._codex_trusts(top, codex_config):
         refuse(REFUSALS["untrusted"])

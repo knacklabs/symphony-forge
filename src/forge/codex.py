@@ -97,7 +97,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
 
     Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
     """
-    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower()).items()}
+    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower(), "codex").items()}
 
 
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,

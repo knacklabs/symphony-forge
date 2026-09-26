@@ -152,8 +152,8 @@ def read(args: Any) -> int:
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
     if not FINDING.search(said) and not said.lower().startswith("no findings"):
         said = f"1. {said}"  # ponytail: unstructured output is one finding, so it still needs a disposition
-    record = {"reader": f"{reader} ({repo.models(config, 'grill')['model']})", "read_at": repo.now(),
-              "read_hash": read_hash, "amended_hash": ""}
+    record = {"reader": f"{reader} ({repo.models(config, 'grill', reader)['model']})",
+              "read_at": repo.now(), "read_hash": read_hash, "amended_hash": ""}
     _write(notes, _notes(record, f"{head.strip()}\n\n{said}\n"))
     if is_story:
         state = repo.read_state(target, top) or {}

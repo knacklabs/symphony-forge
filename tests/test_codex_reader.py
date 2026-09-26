@@ -19,7 +19,8 @@ from test_story import DOC, new_story, setup
 from test_worker import calls as claude_calls
 
 STORY = "FORGE-WARM-1"
-GRILL = {"model": "gpt-6-sol", "effort": "high"}
+GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
+         "grill.claude": {"model": "opus", "effort": "high"}}
 COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the other one to "
                "read.\nNext: run forge read SHOP from Claude Code or Codex\n")
 
@@ -32,11 +33,10 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    codex_home = tmp_path / "codex-home"
-    codex_home.mkdir()
-    (codex_home / "config.toml").write_text(
-        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
-    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    # Codex trusts no project here: a read-only turn with approvals "never" can't write, so a read
+    # needs no trust.
+    (tmp_path / "codex-home").mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
     stub, claude = repo.bin / "codex-app-server.jsonl", repo.bin / "claude-calls.jsonl"
     version = repo.forge("--version").stdout.split()[-1]
     shop = new_story(repo, "SHOP")
@@ -44,7 +44,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     state = shop / ".factory" / "stories" / "SHOP" / "story.json"
     doc.write_text(DOC, encoding="utf-8")
     toml = shop / "forge.toml"  # the grill kind's models come from the story's own checkout
-    toml.write_text(_toml(version, "claude", {"grill": GRILL}), encoding="utf-8")
+    toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     head, planned = repo.git("rev-parse", "HEAD", cwd=shop), state.read_text("utf-8")
 
     def unchanged() -> bool:
@@ -59,12 +59,16 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert repo.forge("read", "SHOP").stderr == COORDINATOR
     assert unchanged() and not stub.exists() and not claude.exists()
 
-    # Under Claude Code the reader is Codex, and the grill kind is required.
+    # Under Claude Code the reader is Codex, and the grill kind needs Codex's own entry; the grill
+    # kind has one entry per family.
     monkeypatch.delenv("CODEX_THREAD_ID")
-    toml.write_text(_toml(version, "claude", {}), encoding="utf-8")
-    refused = repo.forge("read", "SHOP")
-    assert refused.stderr == MODELS_REFUSAL.format("it has no [models.grill], which this work uses")
-    toml.write_text(_toml(version, "claude", {"grill": GRILL}), encoding="utf-8")
+    for models, problem in (
+            ({"grill.claude": GRILL["grill.claude"]}, "it has no [models.grill.codex], which this work uses"),
+            ({"grill": GRILL["grill.claude"]},
+             "models.grill has one entry per family, codex and claude, so it can't set model")):
+        toml.write_text(_toml(version, "claude", models), encoding="utf-8")
+        assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(problem)
+    toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
     # A failed turn, and a file changed during the read, leave the notes and the state unchanged.
@@ -122,14 +126,17 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert "reader: claude (opus)" in (wish / "plans" / "WISH.read.md").read_text("utf-8")
     assert len(_stub(stub)) == before
 
-    # forge init writes the models table and no single model key; an old one refuses.
+    # forge init writes the models table, grill with an entry per family, and no single model key;
+    # an old one refuses.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
     assert written["models"] == {
         "build": {"model": "opus", "effort": "high"}, "fix": {"model": "opus", "effort": "high"},
-        "lite": {"model": "sonnet", "effort": "medium"}, "grill": {"model": "opus", "effort": "high"},
+        "lite": {"model": "sonnet", "effort": "medium"},
+        "grill": {"codex": {"model": "gpt-6-sol", "effort": "high"},
+                  "claude": {"model": "opus", "effort": "high"}},
         "review": {"model": "gpt-6-astra"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)

@@ -60,8 +60,8 @@ sys.stdout.write(said.read_text("utf-8") if said.exists() else "No findings.\\n"
 """
 
 
-# The cold read's models, as a top-level line, so keys added after it stay top-level.
-GRILL = 'models.grill = { model = "opus", effort = "high" }\n'
+# Claude's cold-read models, as a top-level line, so keys added after it stay top-level.
+GRILL = 'models.grill.claude = { model = "opus", effort = "high" }\n'
 
 
 def setup(repo, kind="forge-source", keys=("SHOP",)):
