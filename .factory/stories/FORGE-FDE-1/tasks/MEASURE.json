@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-FDE-1-MEASURE",
-  "status": "working",
+  "review": {
+    "commit": "7b371914c7a182f0b2ad213a76cdd49d89089fcc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The task explicitly requires MEASURE to pin the shared `forge next` seam with a test crossing a due check and the discovery prompt. This test instead checks that an existing fix follows the due check. It never exercises discovery, so it cannot detect discovery taking precedence over the check. Add the required crossing test.",
+        "file": "tests/test_measure.py",
+        "line": 154,
+        "priority": "P1",
+        "title": "Not done: due-check precedence over discovery test"
+      },
+      {
+        "body": "The tests never call `spec measure` on a confirmed spec with a matching confirmed hash but an incomplete Success measure. The legacy spec case only calls `spec confirm`. Consequently, removing `_check_measure` from `spec_measure` would leave this required refusal untested. Add a legacy confirmed-spec case that reaches this guard and asserts the refusal and unchanged file.",
+        "file": "tests/test_measure.py",
+        "line": 125,
+        "priority": "P1",
+        "title": "Not done: measuring an incomplete confirmed spec refusal test"
+      },
+      {
+        "body": "`uv.lock` is outside the permitted scope and contains only the existing editable project. This change adds no dependencies and requires no dependency-resolution changes. Remove the generated lockfile from this branch.",
+        "file": "uv.lock",
+        "line": 1,
+        "priority": "P2",
+        "title": "Simpler: unrelated lockfile \u2192 existing dependency configuration"
+      }
+    ],
+    "status": "blocked",
+    "tree": "4a1fbdaa5a6074344c403f45b8572ebe8abdabf63457d08807d471f8745fb57d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T10:24:54+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T10:41:24+00:00",
+      "step": "review"
     }
   ]
 }
