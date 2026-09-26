@@ -1,0 +1,14 @@
+{
+  "base": "e23a28fbb862e1c76a54c3aafa32578aa521d795",
+  "branch": "fix/main-s-ci-is-red-on-and-off-tests-test-c",
+  "done_when": "Find the root cause of each (Forge not waiting for its processes to exit, or the test checking too early or on a reused id) and fix it at the cause; both tests pass on every OS in CI three runs in a row; no test is skipped or loosened to pass",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T13:21:39+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's CI is red on and off: tests/test_codex_record.py::test_6_nothing_left_running fails on macOS and Linux (_down(pid) is False right after the stop), and tests/test_codex_reader.py::test_10_the_cold_read_runs_on_the_other_family fails on Linux (forge doctor doesn't report stopping a crashed forge read's processes), so every pull request hits them"
+}
