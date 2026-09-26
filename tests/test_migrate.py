@@ -433,7 +433,8 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     for setting in (f'version = "{version}"', 'repo = "forge-source"',
                     f"test = {json.dumps(SOURCE_TEST)}", 'checks = ["tests", "forge-pr-check"]',
-                    '"**/routes/**"'):
+                    '"**/routes/**"', "\n[models.build]\n", "\n[models.grill.claude]\n",
+                    "\n[models.review]\n"):  # forge init's defaults
         assert setting in toml, toml
 
     assert "2026-09-25T10:00:00Z" in repo.git(

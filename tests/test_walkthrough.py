@@ -5,8 +5,10 @@ close, the human's merge and story done, ending with the board (spec criterion 4
 """
 from __future__ import annotations
 
+import ast
 import json
 import sys
+from pathlib import Path
 
 import conftest
 from test_board import seen as page_text
@@ -44,6 +46,17 @@ Risks: none
 """
 SIGNOFF = '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n'
 OUTCOME = "Shoppers now share their carts with friends."
+# forge init's [models] table, read from init.py's source: tests never import forge.
+INIT_MODELS = next(
+    node.value.value for node in ast.parse(
+        (Path(__file__).resolve().parents[1] / "src" / "forge" / "init.py").read_text("utf-8")).body
+    if isinstance(node, ast.Assign) and [getattr(t, "id", "") for t in node.targets] == ["MODELS"])
+
+
+def with_models(toml: str) -> str:
+    """forge.toml's text with forge init's [models] table in place of the models it names."""
+    return "".join(line for line in toml.splitlines(keepends=True)
+                   if not line.startswith("models.")) + INIT_MODELS
 
 
 def walk(env, claude_payload, monkeypatch) -> dict:
@@ -53,6 +66,7 @@ def walk(env, claude_payload, monkeypatch) -> dict:
     last part merged, the `story done` output, and the board's text.
     """
     repo, gh = env.repo, env.gh
+    env.commit(repo.path, "forge.toml", with_models((repo.path / "forge.toml").read_text("utf-8")))
     env.commit(repo.path, "plans/roadmap.json",
                json.dumps({"items": [{"key": "CART", "title": "Shoppers can share a cart"}]}))
     env.commit(repo.path, "docs/decisions/0001-client-signoff.md", SIGNOFF)

@@ -21,8 +21,9 @@ from test_board import seen as page_text
 from test_close import PIN, body, env, finding, report, run  # noqa: F401 (env is a fixture)
 from test_setup import _executable, _hook_commands, _version
 from test_story import DOC, READER, claude_plan, codex_question, ready, setup, worktree
+from test_codex_worker import _codex_repo, sdk_data  # noqa: F401 (sdk_data is a fixture)
 from test_walkthrough import DOC as CART_DOC
-from test_walkthrough import walk
+from test_walkthrough import walk, with_models
 from test_worker import calls, install_claude
 
 STORY = "FORGE-NEXT-1"
@@ -69,7 +70,7 @@ def _parts(template: str) -> list[str]:
             if part]
 
 
-def _bad_hook_input(repo, gh, tmp_path, monkeypatch):
+def _bad_hook_input(repo, gh, tmp_path, monkeypatch, request):
     return (("hook", "approval"), None, "not json",
             "The hook input is not a JSON object.\nNext: forge doctor\n")
 
@@ -81,20 +82,20 @@ def _approval(repo, **fields) -> str:
                        "tool_input": {"plan": DOC}, **fields})
 
 
-def _approval_outside_the_contract(repo, gh, tmp_path, monkeypatch):
+def _approval_outside_the_contract(repo, gh, tmp_path, monkeypatch, request):
     return (("hook", "approval"), None, _approval(repo, tool_response={"accepted": True}),
             "The approval doesn't match the approval contract, so nothing was recorded.\n"
             "Next: forge next\n")
 
 
-def _approval_with_no_session(repo, gh, tmp_path, monkeypatch):
+def _approval_with_no_session(repo, gh, tmp_path, monkeypatch, request):
     return (("hook", "approval"), None,
             _approval(repo, session_id="", tool_response={"plan": DOC, "isAgent": False}),
             "The approval has no session or event id to guard against a replay, so nothing was "
             "recorded.\nNext: forge next\n")
 
 
-def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch):
+def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
     repo.write("forge.toml", f'version = "{_version(repo)}"\nworkers = "codex"\n')
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     conftest._install(repo.bin, "uv", f"#!{sys.executable}\nimport sys\n"
@@ -104,13 +105,13 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch):
             "Next: forge doctor --fix\n")
 
 
-def _init_with_commits(repo, gh, tmp_path, monkeypatch):
+def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
     return (("init",), None, "",
             "forge init sets up a new repo, and this one already has commits; a repo with the "
             "copied-in Forge moves over with forge migrate.\nNext: forge migrate\n")
 
 
-def _init_without_origin(repo, gh, tmp_path, monkeypatch):
+def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):
     fresh = tmp_path / "fresh"
     repo.git("init", "-q", "-b", "main", str(fresh))
     return (("init",), fresh, "",
@@ -118,7 +119,7 @@ def _init_without_origin(repo, gh, tmp_path, monkeypatch):
             "default branch.\nNext: gh repo create <name> --private --source . --remote origin\n")
 
 
-def _protection_fails(repo, gh, tmp_path, monkeypatch):
+def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
     client, remote = tmp_path / "client", tmp_path / "client.git"
     repo.git("init", "-q", "--bare", "-b", "main", str(remote))
     repo.git("init", "-q", "-b", "main", str(client))
@@ -130,60 +131,60 @@ def _protection_fails(repo, gh, tmp_path, monkeypatch):
         r"--input \S+branch-protection\.json'?\n"))
 
 
-def _not_a_repo(repo, gh, tmp_path, monkeypatch):
+def _not_a_repo(repo, gh, tmp_path, monkeypatch, request):
     (tmp_path / "nowhere").mkdir()
     return (("next",), tmp_path / "nowhere", "",
             "This folder is not inside a git repository.\nNext: cd <your repo>\n")
 
 
-def _unknown_setting(repo, gh, tmp_path, monkeypatch):
+def _unknown_setting(repo, gh, tmp_path, monkeypatch, request):
     repo.write("forge.toml", 'version = "v1.0.0"\ncolour = "blue"\n')
     return (("sync",), None, "",
             "forge.toml is not usable: 'colour' is not a forge.toml key.\nNext: forge doctor\n")
 
 
-def _roadmap_without_items(repo, gh, tmp_path, monkeypatch):
+def _roadmap_without_items(repo, gh, tmp_path, monkeypatch, request):
     repo.write("plans/roadmap.json", "[]\n")
     return (("story", "new", "SHOP", "Shoppers can save a basket"), None, "",
             "plans/roadmap.json is not usable: it needs an items list where every item has a key.\n"
             "Next: git checkout -- plans/roadmap.json\n")
 
 
-def _not_an_item(repo, gh, tmp_path, monkeypatch):
+def _not_an_item(repo, gh, tmp_path, monkeypatch, request):
     return (("work", "Not An Item"), None, "",
             "'Not An Item' is not a story key, a KEY/TASK task or a fix name.\nNext: forge next\n")
 
 
-def _unreadable_state(repo, gh, tmp_path, monkeypatch):
+def _unreadable_state(repo, gh, tmp_path, monkeypatch, request):
     repo.write(".factory/fixes/tidy.json", "not json\n")
     return (("close", "tidy"), None, "",
             ".factory/fixes/tidy.json is not usable: Expecting value: line 1 column 1 (char 0).\n"
             "Next: git checkout -- .factory/fixes/tidy.json\n")
 
 
-def _lower_case_key(repo, gh, tmp_path, monkeypatch):
+def _lower_case_key(repo, gh, tmp_path, monkeypatch, request):
     return (("story", "new", "shop", "Shoppers can save a basket"), None, "",
             "'shop' is not a story key; a key is capital letters, digits and hyphens.\n"
             'Next: forge story new <KEY> "<title>"\n')
 
 
-def _no_title(repo, gh, tmp_path, monkeypatch):
+def _no_title(repo, gh, tmp_path, monkeypatch, request):
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
     return (("story", "new", "SHOP"), None, "",
             'A new story needs a plain-English title.\nNext: forge story new SHOP "<title>"\n')
 
 
-def _no_story(repo, gh, tmp_path, monkeypatch):
+def _no_story(repo, gh, tmp_path, monkeypatch, request):
     return (("read", "SHOP"), None, "",
             'There is no story SHOP here.\nNext: forge story new SHOP "<title>"\n')
 
 
-def _no_spec(repo, gh, tmp_path, monkeypatch):
+def _no_spec(repo, gh, tmp_path, monkeypatch, request):
     return (("read", "saved-baskets"), None, "",
             "docs/specs/saved-baskets.md does not exist.\nNext: forge spec save saved-baskets\n")
 
 
-def _reader_fails(repo, gh, tmp_path, monkeypatch):
+def _reader_fails(repo, gh, tmp_path, monkeypatch, request):
     setup(repo)
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
     (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
@@ -194,10 +195,37 @@ def _reader_fails(repo, gh, tmp_path, monkeypatch):
             "Next: forge read SHOP\n")
 
 
-def _story_not_finished(repo, gh, tmp_path, monkeypatch):
+def _story_not_finished(repo, gh, tmp_path, monkeypatch, request):
     return (("story", "done", "SHOP", "Shoppers keep their basket."), None, "",
             "SHOP isn't finished: its story doc isn't on the default branch yet.\n"
             "Next: git fetch origin, then forge next\n")
+
+
+# The Codex SDK moves its approval handler once a conversation's client is made, after forge
+# work's check of the SDK passed. On PYTHONPATH, every Python loads it; only the SDK's has Codex.
+MOVED_LATE = """try:
+    import openai_codex
+except ImportError:
+    pass
+else:
+    start = openai_codex.Codex.__init__
+
+    def moved(self, *args, **kwargs):
+        start(self, *args, **kwargs)
+        self._client._request_handler = self._client.__dict__.pop("_approval_handler")
+
+    openai_codex.Codex.__init__ = moved
+"""
+
+
+def _codex_handler_moved(repo, gh, tmp_path, monkeypatch, request):
+    _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
+    (tmp_path / "moved").mkdir()
+    (tmp_path / "moved" / "sitecustomize.py").write_text(MOVED_LATE, encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(tmp_path / "moved"))
+    return (("work", "BOARD/PAGE"), None, "",
+            "Forge couldn't put in its handler that declines every Codex request, so it started no "
+            "conversation.\nNext: forge doctor --fix\n")
 
 
 def _on_a_branch(repo) -> None:
@@ -205,7 +233,7 @@ def _on_a_branch(repo) -> None:
     repo.git("checkout", "-q", "-b", "fix/adapters")
 
 
-def _adapter_linked_outside(repo, gh, tmp_path, monkeypatch):
+def _adapter_linked_outside(repo, gh, tmp_path, monkeypatch, request):
     _on_a_branch(repo)
     os.symlink(tmp_path / "elsewhere.md", repo.path / "AGENTS.md")
     return (("sync",), None, "",
@@ -213,7 +241,7 @@ def _adapter_linked_outside(repo, gh, tmp_path, monkeypatch):
             "Next: forge sync\n")
 
 
-def _unreadable_settings(repo, gh, tmp_path, monkeypatch):
+def _unreadable_settings(repo, gh, tmp_path, monkeypatch, request):
     _on_a_branch(repo)
     repo.write(".claude/settings.json", "not json\n")
     return (("sync",), None, "",
@@ -221,7 +249,7 @@ def _unreadable_settings(repo, gh, tmp_path, monkeypatch):
             "it by hand.\nNext: forge sync\n")
 
 
-def _broken_block(repo, gh, tmp_path, monkeypatch):
+def _broken_block(repo, gh, tmp_path, monkeypatch, request):
     _on_a_branch(repo)
     repo.write("AGENTS.md", "<!-- forge:end -->\nOurs.\n<!-- forge:begin -->\n")
     return (("sync",), None, "",
@@ -233,7 +261,7 @@ def _hooks(repo) -> Path:
     return Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks"))
 
 
-def _hook_linked_outside(repo, gh, tmp_path, monkeypatch):
+def _hook_linked_outside(repo, gh, tmp_path, monkeypatch, request):
     _on_a_branch(repo)
     os.symlink(tmp_path / "our-hook", _hooks(repo) / "pre-commit")
     return (("sync",), None, "",
@@ -242,7 +270,7 @@ def _hook_linked_outside(repo, gh, tmp_path, monkeypatch):
             "Next: forge sync\n")
 
 
-def _two_own_hooks(repo, gh, tmp_path, monkeypatch):
+def _two_own_hooks(repo, gh, tmp_path, monkeypatch, request):
     _on_a_branch(repo)
     hook, kept = _hooks(repo) / "pre-commit", _hooks(repo) / "pre-commit.pre-forge"
     for path in (hook, kept):
@@ -254,8 +282,8 @@ def _two_own_hooks(repo, gh, tmp_path, monkeypatch):
 
 LINKS = pytest.mark.skipif(os.name == "nt", reason="making a symlink needs extra rights on Windows")
 TRIGGERS = [_bad_hook_input, _approval_outside_the_contract, _approval_with_no_session,
-            _codex_sdk_install_fails, _init_with_commits, _init_without_origin, _protection_fails,
-            _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
+            _codex_sdk_install_fails, _codex_handler_moved, _init_with_commits,
+            _init_without_origin, _protection_fails, _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
             _lower_case_key, _no_title, _no_story, _no_spec, _reader_fails, _story_not_finished,
             pytest.param(_adapter_linked_outside, marks=LINKS), _unreadable_settings,
             _broken_block, pytest.param(_hook_linked_outside, marks=LINKS), _two_own_hooks]
@@ -263,7 +291,7 @@ TRIGGERS = [_bad_hook_input, _approval_outside_the_contract, _approval_with_no_s
 
 @pytest.mark.parametrize("case", ["every refusal has a test", *TRIGGERS],
                          ids=lambda case: case if isinstance(case, str) else case.__name__.strip("_"))
-def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, case):
+def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, request, case):
     if isinstance(case, str):
         # Each refusal's words (its problem, or its Next line when the problem is only values)
         # are among the texts some test expects, or the refusal is listed above with its reason.
@@ -279,7 +307,7 @@ def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, case):
                 untested.append(f"{name}: {problem}")
         assert not untested, "refusals no test triggers:\n" + "\n".join(untested)
         return
-    args, cwd, stdin, expected = case(repo, gh, tmp_path, monkeypatch)
+    args, cwd, stdin, expected = case(repo, gh, tmp_path, monkeypatch, request)
     done = repo.forge(*args, input=stdin, cwd=cwd)
     assert done.returncode != 0, done.stdout
     if isinstance(expected, re.Pattern):
@@ -337,6 +365,8 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
+        env.commit(repo.path, "forge.toml", with_models((repo.path / "forge.toml").read_text("utf-8")))
+        repo.git("push", "-q", "origin", "main")
         wish = ready(repo, "WISH", DOC)
         build = claude_payload if tool == "claude" else codex_payload
 
@@ -435,8 +465,8 @@ def _not_plain(text: str) -> list[str]:
 
 def test_8_plain_english(env):
     repo, gh = env.repo, env.gh
-    env.commit(repo.path, "forge.toml",
-               (repo.path / "forge.toml").read_text("utf-8") + 'repo = "forge-source"\n')
+    env.commit(repo.path, "forge.toml", with_models(
+        (repo.path / "forge.toml").read_text("utf-8") + 'repo = "forge-source"\n'))
     env.commit(repo.path, "plans/roadmap.json", json.dumps({"items": [
         {"key": "SHOP", "title": "Shoppers can save a basket"},
         {"key": "CART", "title": "Shoppers can share a cart"}]}))

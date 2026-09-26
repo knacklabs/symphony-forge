@@ -89,8 +89,8 @@ model = "gpt-6-astra"
 ```
 
 Note (2026-09-26, owner decision): the models per kind of work live in the `[models.<kind>]`
-table instead of one `model` key. The story FORGE-WARM-1 builds it; until then v1 reads one `model`
-key.
+table instead of one `model` key. The story FORGE-WARM-1 built it, and `forge init` and `forge
+migrate` write its defaults.
 
 - `forge init` fills `interfaces` with defaults for the repo's stack: API routes, the database
   schema and migrations, a CLI command table, and the config schema.
