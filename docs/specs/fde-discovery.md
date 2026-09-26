@@ -2,7 +2,7 @@
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
 status: draft
-saved: 2026-09-26T09:45:39+00:00
+saved: 2026-09-26T09:45:57+00:00
 ---
 
 # The agent works as a forward deployed engineer
