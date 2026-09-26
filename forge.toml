@@ -1,5 +1,5 @@
 # Forge's settings. Your coding agent keeps this file: ask it to change a setting or upgrade Forge.
-version = "v1.0.0-rc.1"
+version = "v1.0.0-rc.2"
 repo = "forge-source"
 workers = "claude"
 test = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"

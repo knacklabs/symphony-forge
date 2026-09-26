@@ -1,0 +1,25 @@
+{
+  "base": "1e78908bed76ac24aab8bc647b87b5ea0149c9b1",
+  "branch": "fix/clients-made-with-forge-init-today-pin-f",
+  "done_when": "Forge's version is 1.0.0-rc.2 everywhere it is declared (src/forge/__init__.py and pyproject.toml), this repo's forge.toml pins it, and the version test passes",
+  "kind": "fix",
+  "review": {
+    "commit": "f207c86948c65912819e07a4388b95c3a4838ac4",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "74d6fcce5637ba2246a46e2146991a94d7c14a76075e023598c31140bca23989"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T17:44:04+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T17:51:36+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients made with forge init today pin Forge 1.0.0-rc.1, whose tag predates today's fixes (including the review fingerprint), so a new client's forge-pr-check would install old code and fail"
+}
