@@ -4,6 +4,7 @@ Driven only through the forge command; a merge to main pushed to origin is how w
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 
@@ -119,11 +120,17 @@ def test_5_a_spec_without_a_complete_success_measure_is_refused(repo, monkeypatc
     _refused(repo.forge("spec", "confirm", "invoices", "--by", "Ravi", cwd=fix),
              NEEDS.format(slug="invoices", missing="- Baseline:"), "forge spec save invoices")
 
-    # A spec confirmed before the measure was required isn't checked again until it is saved.
-    (fix / "docs/specs/old.md").write_text(
-        "---\nslug: old\nstatus: confirmed\n---\n\n" + SPEC.replace(MEASURE, ""), encoding="utf-8")
+    # A spec confirmed before the measure was required isn't checked again until it is saved,
+    # but it can't record a result without one.
+    body = "\n" + SPEC.replace(MEASURE, "")
+    old = (f"---\nslug: old\nstatus: confirmed\n"
+           f"confirmed_hash: {hashlib.sha256(body.encode()).hexdigest()}\n---\n{body}")
+    (fix / "docs/specs/old.md").write_text(old, encoding="utf-8")
     assert _ok(repo.forge("spec", "confirm", "old", "--by", "Ravi", cwd=fix)) == (
         "docs/specs/old.md is already confirmed.\n")
+    _refused(repo.forge("spec", "measure", "old", "--result", "72%", cwd=fix),
+             NEEDS.format(slug="old", missing=ALL), "forge spec save old")
+    assert (fix / "docs/specs/old.md").read_text(encoding="utf-8") == old
 
 
 def test_6_forge_next_lists_a_due_check_until_forge_spec_measure_records_it(repo, monkeypatch):
@@ -143,15 +150,18 @@ def test_6_forge_next_lists_a_due_check_until_forge_spec_measure_records_it(repo
                  "--result needs the measured result, on one line.",
                  'forge spec measure invoices --result "<measured result>"')
     _land(repo, "fix/plan-invoices-by-email")
+    repo.git("worktree", "remove", str(plan))  # nothing is in progress once the plan lands
 
     # Not due while any of its stories is unfinished, nor before its check date.
     _done(repo, "INV-1")
     assert not set(DUE) & set(_next(repo, monkeypatch, "2026-10-01"))
     _done(repo, "INV-2")
     assert not set(DUE) & set(_next(repo, monkeypatch, "2026-09-30"))
-    lines = _next(repo, monkeypatch, "2026-10-01")
-    assert lines[:3] == DUE
-    assert lines[3] == "The fix plan-invoices-by-email is started; its worker hasn't run yet."
+    # A due check comes before the idle lines, where discovery and the next planning step go.
+    assert _next(repo, monkeypatch, "2026-10-01") == DUE + [
+        "No story or fix is in progress.",
+        'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+        'Next: forge fix start "<why>" --done "<done when>"']
 
     # Recording the result: only in a fix, only on the confirmed text, and the spec stays confirmed.
     record = _fix(repo, "Record the invoices success result")
