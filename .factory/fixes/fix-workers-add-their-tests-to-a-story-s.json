@@ -3,7 +3,7 @@
   "branch": "fix/fix-workers-add-their-tests-to-a-story-s",
   "done_when": "test_12_a_dead_driver_leaves_no_app_server_behind moves unchanged to its own test file with its own STORY key for the macOS process fix; the worker brief for a fix says its tests go in their own file with the fix's own STORY key, never into a story's test file; a test pins that brief line",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T17:50:26+00:00",
