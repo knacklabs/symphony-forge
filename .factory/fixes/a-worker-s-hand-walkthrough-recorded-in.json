@@ -1,0 +1,14 @@
+{
+  "base": "bb6eabaed6931ee255b095a8a43996b921f2dc6b",
+  "branch": "fix/a-worker-s-hand-walkthrough-recorded-in",
+  "done_when": "An empty commit whose message has a Functional check paragraph counts as the branch's functional check, and a changed functional check makes close and forge-pr-check treat the earlier review as stale and review again; Forge's own record commits still never count",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T09:22:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A worker's hand walkthrough recorded in an empty commit is ignored: the functional check skips commits that change no files, and close reuses the earlier review because the code didn't move, so the same 'functional check missing' finding blocks forever"
+}
