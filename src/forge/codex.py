@@ -245,6 +245,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 _stop_leftover(record)
                 driver.kill()  # not on record yet, it has started nothing
                 driver.wait()
+            if os.name != "nt":
+                # The group is Forge's own, and outlives its leader while anything runs in it, so
+                # this reaches an app-server the record can't name (a start time or command read
+                # wrong under load) after a driver that died without ending it.
+                with contextlib.suppress(OSError):
+                    os.killpg(driver.pid, signal.SIGKILL)
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
                     pid=driver.pid if refused == "driver" else server)
