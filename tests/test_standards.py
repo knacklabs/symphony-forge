@@ -48,14 +48,16 @@ def test_36_client_apps_simple(repo):
             if re.search(concern, line, re.I):
                 assert re.search(r"\b(only|no|not|never)\b", line, re.I), line
 
-    # The stack conventions name Redis, queues, CDK, OIDC and a monitoring stack only as added later.
-    later = re.compile(r"\b(redis|queue|cdk|oidc|monitoring)s?\b", re.I)
+    # The stack conventions name Redis, queues, Terraform, OIDC and a monitoring stack only as added later.
+    later = re.compile(r"\b(redis|queue|terraform|oidc|monitoring)s?\b", re.I)
     named = [line for p in CONVENTIONS for line in p.read_text(encoding="utf-8").splitlines()
              if later.search(line)]
     for line in named:
         assert ADD_LATER in line.lower().replace("`", ""), line
     assert {match.lower() for line in named for match in later.findall(line)} == {
-        "redis", "queue", "cdk", "oidc", "monitoring"}
+        "redis", "queue", "terraform", "oidc", "monitoring"}
+
+    _carried_over_rules_are_on_their_pages()
 
     # Every worker brief, for a task or a fix, carries the whole page.
     log = install_claude(repo)
@@ -101,7 +103,7 @@ CARRIED_OVER_RULES = {
 }
 
 
-def test_carried_over_rules_are_on_their_pages():
+def _carried_over_rules_are_on_their_pages():
     # Each rule the constitution holds and a worker needs is one line on the page that owns it,
     # and no page still names AWS CDK, since the owner chose Terraform.
     for name, phrases in CARRIED_OVER_RULES.items():
