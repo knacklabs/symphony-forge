@@ -3,7 +3,7 @@
   "branch": "fix/tests-test-codex-worker-py-test-4-turn-l",
   "done_when": "Find which one it is: if Forge can return before the app-server process exits, make it wait for the exit; if it's only the check, make the test tell a leftover process from a reused PID. test_4_turn_log passes on Windows CI three runs in a row",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T11:52:23+00:00",
