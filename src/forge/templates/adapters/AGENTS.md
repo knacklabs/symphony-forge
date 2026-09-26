@@ -28,5 +28,7 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
   git hooks refuse anything else.
 - Never merge a pull request and never use `--no-verify`. Merging is the human's call.
 - Ask the human only to approve a story, to choose between options, or to merge.
+- No running commentary. Speak only when something lands, when a failure or finding needs the
+  human, or when a decision is theirs, in a line or two.
 - Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
   summaries or the board.
