@@ -31,7 +31,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
-      - run: uv tool install git+https://github.com/knacklabs/symphony-forge@v1.0.0-rc.1
+      - run: uv tool install .
       - env:
           PR: ${{ github.event.pull_request.number }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
