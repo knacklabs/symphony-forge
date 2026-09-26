@@ -142,8 +142,11 @@ def test_default_review_uses_one_helper_and_publishes_one_generation(repo, tmp_p
     )
     assert generation["input"] in meaning["accepted_inputs"]
     prompt = (repo / ".factory/review-briefs/T1.combined.md").read_bytes()
+    from factory_lib import review_identity_body
+    identity_body = review_identity_body(prompt)
     assert generation["input"] == {
-        "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+        "sha256": hashlib.sha256(identity_body).hexdigest(),
+        "bytes": len(identity_body),
     }
 
 

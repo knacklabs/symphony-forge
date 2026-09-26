@@ -17,7 +17,7 @@ from factory_lib import (
     plan_digest_without_assumptions, proof_path, render_recorded_task_contract,
     effective_review_base, product_delta_digest,
     protected_decomposition_state_path, repo_root, require_task_grill,
-    run_state_path, safe_factory_write_bytes, story_dir,
+    review_identity_body, run_state_path, safe_factory_write_bytes, story_dir,
 )
 
 
@@ -552,7 +552,8 @@ def render_review_brief(
     reviewed_task: str = "",
 ) -> tuple[bytes, dict | None, str]:
     """Purely render the authoritative review dataset and its active inputs."""
-    lines = [title, "", VERDICT_INSTRUCTION, ""]
+    from .delegate import thread_title
+
     from .stages import load_stages
     statuses = {
         row.get("id"): row.get("status")
@@ -566,6 +567,19 @@ def render_review_brief(
              if status == "active"),
             "",
         )
+    target = next((task for task in selected
+                   if task.get("id") == reviewed_task), None)
+    if target is None and selected:
+        target = selected[0]
+    subject_task = str((target or {}).get("id") or reviewed_task or "review")
+    state = raw_run_state(base)
+    story = str(state.get("issue_key") or state.get("story") or "")
+    subject = f"{story}/{subject_task}" if story else subject_task
+    thread_line = thread_title(
+        "Review", subject,
+        str((target or {}).get("title") or "plan-contract review"),
+    )
+    lines = [thread_line, title, "", VERDICT_INSTRUCTION, ""]
     reviewed_inputs = None
     lines.extend(_decision_inputs_section(base, selected))
     settled_seen: dict[tuple[str, ...], str] = {}
@@ -646,7 +660,7 @@ def cmd_review_brief(args: argparse.Namespace) -> None:
         story = state.get("issue_key")
         if not isinstance(story, str) or not story:
             raise SystemExit("Cannot mint a branch review run without an active story.")
-        brief_sha256 = hashlib.sha256(body).hexdigest()
+        brief_sha256 = hashlib.sha256(review_identity_body(body)).hexdigest()
         diff_digest = (
             reviewed_inputs["delta_id"] if reviewed_inputs else branch_diff_digest(base)
         )

@@ -1,0 +1,94 @@
+{
+  "event": "done",
+  "id": "Q-0254-41da",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "PR 259: title line broke reviewed-meaning identity (123 tests)",
+  "base_sha": "bf3f4d16f9de6ae66830dd7e6f28fb16f1293819",
+  "started_at": "2026-09-25T10:48:06+00:00",
+  "completed_at": "2026-09-25T12:31:50+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_lenses_in_parallel.py",
+    "factory/tests/test_thread_titles.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0254-41da (7 product path(s), bf3f4d1..0108ce7, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The visible producers and consumers consistently exclude the generated title from review hashes. The changed tests cover title changes while preserving a distinction for body changes. No actionable defect is shown in the supplied diff; unchanged call paths were unavailable for inspection.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_thread_titles.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "bf3f4d16f9de6ae66830dd7e6f28fb16f1293819",
+      "branch_diff_digest": "83085e09cd469ef2388d54b02fb8f5cd7f94f89f421db7a396487fc82fc3a821",
+      "commit": "0108ce7018e1ac9125f9ea23171eca0cbf57fcf1",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T12:31:49+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0254-41da (7 product path(s), bf3f4d1..0108ce7, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added first-line extraction shows no actionable performance risk in the supplied evidence.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_thread_titles.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "bf3f4d16f9de6ae66830dd7e6f28fb16f1293819",
+      "branch_diff_digest": "83085e09cd469ef2388d54b02fb8f5cd7f94f89f421db7a396487fc82fc3a821",
+      "commit": "0108ce7018e1ac9125f9ea23171eca0cbf57fcf1",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T12:31:49+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0254-41da (7 product path(s), bf3f4d1..0108ce7, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The excluded line is the generated review label. The supplied evidence shows no concrete credential exposure or trust-boundary defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_thread_titles.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "bf3f4d16f9de6ae66830dd7e6f28fb16f1293819",
+      "branch_diff_digest": "83085e09cd469ef2388d54b02fb8f5cd7f94f89f421db7a396487fc82fc3a821",
+      "commit": "0108ce7018e1ac9125f9ea23171eca0cbf57fcf1",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T12:31:50+00:00"
+    }
+  }
+}

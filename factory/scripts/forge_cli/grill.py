@@ -148,11 +148,32 @@ def _contract_section(base: Path, gate: str, task_id: str) -> str:
 
 def _compose_brief(base: Path, gate: str, label: str, artifact: str,
                    task_id: str = "") -> str:
+    from factory_lib import protected_decomposition_state_path
+    from .delegate import thread_title
+
+    state = load_json(run_state_path(base), default={})
+    story = str(state.get("issue_key") or state.get("story") or "")
+    if gate == "task":
+        subject = f"{story}/{task_id}" if story else task_id
+        tasks = load_json(protected_decomposition_state_path(base), default={})
+        task = next((item for item in tasks.get("tasks", [])
+                     if item.get("id") == task_id), {})
+        title = str(task.get("title") or label)
+    elif gate == "spec":
+        subject = f"spec {Path(label.removeprefix('spec ')).stem}"
+        title = label
+    elif gate == "plan":
+        subject = f"plan {story}" if story else "plan"
+        title = label
+    else:
+        subject = gate
+        title = label
     contract = base / "factory" / "prompts" / "griller.md"
     contract_text = (contract.read_text(encoding="utf-8")
                      if contract.is_file() else "")
     skill_section = _grill_skill_section()
     return "\n".join([
+        thread_title("Grill", subject, title),
         f"# Cold-read grill — gate: {gate} — {label}",
         "",
         "You did NOT write what follows. Read it cold, as an adversary trying "

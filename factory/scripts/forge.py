@@ -636,6 +636,8 @@ def main() -> None:
     p_del.add_argument("id", help="task id from the recorded decomposition")
     p_del.add_argument("--read-only", action="store_true",
                        help="exploration run: override the derived write flag")
+    p_del.add_argument("--debug", action="store_true",
+                       help="label a read-only delegation as Debug")
     p_del.add_argument("--background", action="store_true",
                        help="request background execution from the active runtime")
     p_del.add_argument("--print-only", action="store_true",

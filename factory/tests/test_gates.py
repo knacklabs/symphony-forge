@@ -872,10 +872,13 @@ def write_passing_artifacts(
             }
         lib.dump_json(task_root / "tests.json", tests)
 
+    from forge_cli.delegate import thread_title  # noqa: E402
     from forge_cli.review_brief import (  # noqa: E402
         VERDICT_INSTRUCTION, _task_section,
     )
+    first_task = decomposition["tasks"][0]
     brief_lines = [
+        thread_title("Review", f"{key}/{first_task['id']}", first_task["title"]),
         "# Branch-wide plan-contract review brief", "", VERDICT_INSTRUCTION, "",
     ]
     for task in decomposition["tasks"]:
@@ -883,7 +886,7 @@ def write_passing_artifacts(
     brief = repo / ".factory" / "review-briefs" / "all.md"
     brief.parent.mkdir(parents=True, exist_ok=True)
     brief.write_text("\n".join(brief_lines).rstrip() + "\n", encoding="utf-8")
-    brief_sha256 = hashlib.sha256(brief.read_bytes()).hexdigest()
+    brief_sha256 = hashlib.sha256(lib.review_identity_body(brief.read_bytes())).hexdigest()
     helper = {
         "path": "/fixture/autoreview", "version": "fixture", "sha256": "a" * 64,
     }
@@ -20760,7 +20763,8 @@ def test_review_consumers_include_complete_approved_inputs(
     ))
     assert dataset_bytes.count(task_section.encode()) == 1
     review_run = json.loads((story_state(repo) / "review-run.json").read_text())
-    assert review_run["brief_sha256"] == hashlib.sha256(dataset_bytes).hexdigest()
+    assert review_run["brief_sha256"] == hashlib.sha256(
+        stages_mod.review_identity_body(dataset_bytes)).hexdigest()
     assert (
         f"- Current delta ID: `{review_run['branch_diff_digest']}`".encode()
         in dataset_bytes
@@ -22145,8 +22149,9 @@ def test_review_brief_mints_run_id_and_lenses_echo_it(repo, tmp_path):
     brief = repo / ".factory" / "review-briefs" / "all.md"
     token = json.loads((story_state(repo) / "review-run.json").read_text())
     assert token["task_id"] == "T1"
-    assert token["brief_sha256"] == hashlib.sha256(brief.read_bytes()).hexdigest()
-    from factory_lib import effective_review_base, product_delta_digest
+    from factory_lib import effective_review_base, product_delta_digest, review_identity_body
+    assert token["brief_sha256"] == hashlib.sha256(
+        review_identity_body(brief.read_bytes())).hexdigest()
     assert token["branch_diff_digest"] == product_delta_digest(
         repo, effective_review_base(repo, "T1"),
     )
