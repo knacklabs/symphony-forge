@@ -84,8 +84,9 @@ CLEAN = {"exit": 0, "report": report()}
 FAILED = {"exit": 3, "report": None, "say": "codex: the model is unavailable"}
 INCOMPLETE = {"exit": 2, "report": report(status="incomplete"),
               "say": "autoreview incomplete: selected scope could not be certified"}
-# "lint" isn't named in forge.toml, so it never blocks close, even red.
-GREEN = [run("tests"), run("forge-pr-check"), run("lint", "failure")]
+# "lint" and "release" aren't named in forge.toml; a check GitHub skipped (a job that runs only on
+# tags) doesn't block unless forge.toml names it.
+GREEN = [run("tests"), run("forge-pr-check"), run("lint"), run("release", "skipped")]
 
 
 class Forge:
@@ -222,9 +223,33 @@ def _red_check(env):
     # One matrix variant failed while another still runs: red at once, no waiting.
     env.checks([run("tests (ubuntu-latest)", "failure"),
                 run("tests (windows-latest)", None, "in_progress"),
-                run("forge-pr-check"), run("lint", "failure")])
+                run("forge-pr-check"), run("lint")])
     return {"draft": True, "item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
+
+
+def _red_check_not_named(env):
+    # Every check on the head must be green, not only the ones forge.toml names.
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", "failure")],
+               [{"context": "ci/deploy-preview", "state": "error"}])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: lint, ci/deploy-preview.",
+            "next": "forge work tidy-readme"}
+
+
+def _skipped_named_check(env):
+    # A named check GitHub skipped tested nothing, so it is red.
+    env.checks([run("tests", "skipped"), run("forge-pr-check")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "Checks failed on the pull request: tests.",
+            "next": "forge work tidy-readme"}
+
+
+def _pending_check_not_named(env):
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", None, "queued")])
+    return {"draft": True, "item": env.start_fix()[0],
+            "problem": "The checks are not green yet: lint is still running.",
+            "next": "forge close tidy-readme"}
 
 
 def _pending_check(env):
@@ -333,7 +358,8 @@ def _task_row_missing(env):
 
 
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
-         _pending_check, _missing_required_check, _github_api_error, _no_checks_named,
+         _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
+         _missing_required_check, _github_api_error, _no_checks_named,
          _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
@@ -480,11 +506,14 @@ STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's 
 
 @pytest.mark.parametrize("task, answer, refused", [
     ("T2", blocked(MISSING_CHECK), True), ("T2", blocked(HOLLOW_CHECK), True),
-    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False)],
-    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing"])
+    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False),
+    ("empty", None, False)],
+    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing", "empty-commit"])
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
     # `Not done`; close refuses on that finding and passes once the check is there.
+    if task == "empty":
+        return _empty_commit_check(env)
     item, where = env.start_task(task, {"show.py": "print('basket')\n"})
     check = "Functional check: signed in as a shopper and saw the saved basket."
     stale = answer == blocked(STALE_CHECK)
@@ -510,6 +539,20 @@ def test_19_functional_check(env, task, answer, refused):
         assert check in env.prompt()
         [create] = env.gh_calls("pr", "create")
         assert f"\n{check}\n<!-- forge:end -->" in body(create)
+
+
+def _empty_commit_check(env):
+    # A hand walkthrough recorded in an empty commit is the branch's functional check, and a
+    # changed check is a new review, not the earlier one reused.
+    item, where = env.start_task("T2", {"show.py": "print('basket')\n"})
+    assert env.close(item).returncode == 0
+    assert "None: the worker's last commit message has no `Functional check:`" in env.prompt()
+    check = "Functional check: signed in as a shopper and saw the saved basket."
+    env.repo.git("commit", "-q", "--allow-empty", "-m", f"Walked it\n\n{check}", cwd=where)
+    env.reviews(CLEAN)
+    assert env.close(item).returncode == 0
+    assert len(env.review_calls()) == 2 and check in env.prompt()
+    assert f"\n{check}\n<!-- forge:end -->" in body(env.gh_calls("pr", "create")[-1])
 
 
 # --- criterion 27: the pull request's title and summary ----------------------------------------

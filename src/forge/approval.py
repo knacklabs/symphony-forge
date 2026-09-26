@@ -81,14 +81,22 @@ def waiting_digest(key: str, top: Path) -> str | None:
 
 
 def signed_off(top: Path) -> bool:
-    """Forge's own repo needs no sign-off. A client repo needs an accepted decision whose slug ends in
-    client-signoff, in this checkout or on the default branch."""
-    if repo.config(top)["repo"] == "forge-source":
+    """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
+    checkout or on the default branch: exactly the record forge.toml's signoff pins, or, with none
+    pinned, a decision whose slug ends in client-signoff."""
+    cfg = repo.config(top)
+    if cfg["repo"] == "forge-source":
         return True
-    texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*client-signoff.md")]
+    pinned = cfg["signoff"]
+
+    def wanted(name: str) -> bool:
+        return name == pinned if pinned else name.endswith("client-signoff.md")
+
+    texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*.md")
+             if wanted(path.relative_to(top).as_posix())]
     ref = story.landed_ref(top)
     names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-    texts += [story.show(top, ref, name) or "" for name in names if name.endswith("client-signoff.md")]
+    texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
     return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
                for text in texts if text.startswith("---"))
 

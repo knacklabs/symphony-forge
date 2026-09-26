@@ -169,6 +169,9 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
     repo.git("remote", "add", "origin", str(remote), cwd=client)
     gh.respond("api", stdout="{}")
+    # What GitHub answers for a branch with no protection yet.
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
     return client, repo.forge("init", cwd=client)
 
 
@@ -177,6 +180,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("missing tool", ("claude is not installed or not on PATH.",)),
     ("version mismatch", ("but this repo pins v0.0.1.",)),
     ("missing hook shims", ("The git hooks that check each commit and push aren't installed.",)),
+    ("forge's own repo without git hooks", ()),
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
@@ -234,10 +238,12 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     toml = client / "forge.toml"
     edit = {"version mismatch": (r'version = ".*"', 'version = "v0.0.1"'),
             "no checks or test": (r'(?s)test = .*?\nchecks = .*?\n', 'test = ""\nchecks = []\n'),
-            "workflow skips test": (r"test = .*", 'test = "make test"')}.get(case)
+            "workflow skips test": (r"test = .*", 'test = "make test"'),
+            "forge's own repo without git hooks": ('repo = "client"', 'repo = "forge-source"'),
+            }.get(case)
     if edit:
         toml.write_text(re.sub(*edit, toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
-    if case == "missing hook shims":
+    if case in ("missing hook shims", "forge's own repo without git hooks"):
         (_hooks_folder(client) / "pre-push").unlink()
     if case == "adapter drift":
         (client / ".codex/config.toml").write_text("[features]\n", encoding="utf-8")
@@ -262,10 +268,13 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "refs/heads/main" in repo.git("ls-remote", "origin", cwd=client)
         assert f'version = "{_version(repo)}"' in toml.read_text(encoding="utf-8")
         assert "Branch protection is on for main" in init.stdout
-        [call] = [args for args in gh.calls() if args[0] == "api"]
+        # It reads the branch's protection first (a new repo has none), then sets Forge's rule.
+        read, call = [args for args in gh.calls() if args[0] == "api"]
+        assert read == ["api", "repos/{owner}/{repo}/branches/main/protection"]
         assert call[:4] == ["api", "--method", "PUT", "repos/{owner}/{repo}/branches/main/protection"]
         rule = json.loads(Path(call[call.index("--input") + 1]).read_text(encoding="utf-8"))
-        assert rule["required_status_checks"]["contexts"] == ["tests", "forge-pr-check"]
+        assert rule["required_status_checks"]["checks"] == [{"context": "tests"},
+                                                            {"context": "forge-pr-check"}]
         assert rule["required_pull_request_reviews"] is not None and rule["enforce_admins"] is True
 
         assert done.returncode == 0, done.stdout + done.stderr
@@ -281,7 +290,8 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
         assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
         assert "Everything else checks out" in done.stdout
-    elif case == "impeccable in CLAUDE_CONFIG_DIR":
+    elif case in ("impeccable in CLAUDE_CONFIG_DIR", "forge's own repo without git hooks"):
+        # Forge's own repo runs without the git hooks until the switch, so doctor doesn't ask.
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
     else:

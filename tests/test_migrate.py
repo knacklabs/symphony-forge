@@ -135,6 +135,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
                  "Replaces AGENTS.md, which is the old Forge's word for word, with the Forge block.",
                  "Drops CLAUDE.md's import of .claude/CLAUDE.md, the old Claude adapter.",
                  f"Moves the old verify commands from .envrc into forge.toml's test: {TEST}\n",
+                 "Pins your sign-off record, docs/decisions/0001-client-signoff.md, in forge.toml's "
+                 "signoff, as harness.yaml did",
                  f"forge.toml pinned to Forge {version}",
                  "forge close migrate-v1 turns on branch protection for main"):
         assert line in dry.stdout, dry.stdout
@@ -219,6 +221,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert repo.git("show", "forge/migrate-v1:.gitattributes") == "*.png binary"
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
+    # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.
+    assert '\nsignoff = "docs/decisions/0001-client-signoff.md"\n' in toml
     # AGENTS.md was the old Forge's word for word, so only the Forge block is left; CLAUDE.md
     # keeps its own lines but no longer imports the deleted old Claude adapter.
     agents = repo.git("show", "forge/migrate-v1:AGENTS.md")
@@ -257,14 +261,50 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert refused.returncode == 1 and "holds work that forge migrate didn't make" in refused.stderr
     assert "\nNext: " in refused.stderr and repo.git("rev-parse", "forge/migrate-v1") == head
 
-    # Once a human merged it, close turns branch protection on and says so.
+    # Once a human merged it, close turns branch protection on and says so. It never weakens the
+    # client's rule: a protection it can't read stops it before it writes anything...
     gh.respond("pr", "list", stdout=json.dumps([{"number": 7, "state": "MERGED", "body": ""}]))
     gh.respond("api", "--method", "PUT", stdout="{}")
+    endpoint = "repos/{owner}/{repo}/branches/main/protection"
+    gh.respond("api", endpoint, stdout='{"message":"Must have admin rights"}', exit=1)
+    unread = repo.forge("close", "migrate-v1")
+    assert unread.returncode == 1 and unread.stderr == (
+        "Branch protection on main was not set: gh exited with code 1.\n"
+        f"Next: gh api '{endpoint}'\n"), unread.stderr
+    assert not [call for call in gh.calls() if call[:3] == ["api", "--method", "PUT"]]
+    # ... and the rule it reads keeps everything it had, with Forge's pull request, checks and
+    # admins added.
+    gh.respond("api", endpoint, stdout=json.dumps({
+        "required_status_checks": {"strict": True, "contexts": ["lint", "tests"],
+                                   "checks": [{"context": "lint", "app_id": 15368},
+                                              {"context": "tests", "app_id": None}]},
+        "enforce_admins": {"enabled": False},
+        "required_pull_request_reviews": {
+            "required_approving_review_count": 2, "dismiss_stale_reviews": True,
+            "require_code_owner_reviews": True, "require_last_push_approval": False,
+            "dismissal_restrictions": {"users": [{"login": "lead"}], "teams": [], "apps": []}},
+        "restrictions": {"users": [{"login": "release-bot"}], "teams": [{"slug": "core"}],
+                         "apps": []},
+        "required_linear_history": {"enabled": True}, "allow_force_pushes": {"enabled": False},
+        "required_conversation_resolution": {"enabled": True}}))
     merged = repo.forge("close", "migrate-v1")
     assert merged.returncode == 0, merged.stderr
     assert "Branch protection is on for main" in merged.stdout
+    assert "Its other rules stay as they were." in merged.stdout
     [put] = [call for call in gh.calls() if call[:3] == ["api", "--method", "PUT"]]
-    assert put[3] == "repos/{owner}/{repo}/branches/main/protection"
+    assert put[3] == endpoint
+    assert json.loads(Path(put[put.index("--input") + 1]).read_text("utf-8")) == {
+        "required_status_checks": {"strict": True, "checks": [
+            {"context": "lint", "app_id": 15368}, {"context": "tests"},
+            {"context": "forge-pr-check"}]},
+        "enforce_admins": True,
+        "required_pull_request_reviews": {
+            "required_approving_review_count": 2, "dismiss_stale_reviews": True,
+            "require_code_owner_reviews": True, "require_last_push_approval": False,
+            "dismissal_restrictions": {"users": ["lead"], "teams": [], "apps": []}},
+        "restrictions": {"users": ["release-bot"], "teams": ["core"], "apps": []},
+        "required_linear_history": True, "allow_force_pushes": False,
+        "required_conversation_resolution": True}
 
     # On the default branch the carried-over approval and the merged task hold for v1's commands.
     repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#7)", "forge/migrate-v1")
@@ -398,8 +438,14 @@ def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         {"headRefName": "FORGE-NEXT-1-SWITCH", "mergedAt": "2026-09-26T09:00:00Z"},
         {"headRefName": "feat/FORGE-WARM-1-BUILD", "mergedAt": None}]))
 
+    hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks"))
+    before = sorted(os.listdir(hooks)) if hooks.is_dir() else []
     done = repo.forge("migrate")
     assert done.returncode == 0, done.stderr
+    # Every worktree shares the hooks folder, and the old Forge's branches may still be in
+    # flight, so no git hook goes in.
+    assert (sorted(os.listdir(hooks)) if hooks.is_dir() else []) == before
+    assert "No git hooks were installed" in done.stdout
     # Nothing is deleted: the old tree, its records and every old plan stay as they are, and only
     # the adapters change.
     assert "so nothing is deleted" in done.stdout
@@ -540,6 +586,20 @@ def _draft_taken(repo, tmp_path: Path) -> None:
     _land(repo, "An older draft")
 
 
+def _pin(repo, pin: str) -> None:
+    repo.write("harness.yaml", f'project: shop\nsignoff_record: "{pin}"\n')
+    _land(repo, "Pin another sign-off record")
+
+
+def _legacy_signoff(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A name the old Forge accepted, with no hyphen before client-signoff, carries over."""
+    pin = "docs/decisions/0001-acmeclient-signoff.md"
+    _pin(repo, pin)
+    dry = repo.forge("migrate", "--dry-run")
+    assert dry.returncode == 0, dry.stderr
+    assert f"Pins your sign-off record, {pin}, in forge.toml's signoff" in dry.stdout, dry.stdout
+
+
 def _no_source(repo, tmp_path: Path) -> None:
     repo.write("constitution/VENDORED_FROM", "symphony-forge @ an unknown commit\n")
     _land(repo, "Lost the vendored commit")
@@ -580,6 +640,13 @@ CASES = {
     "an .agents/-era layout": _refusal(
         "origin/main has no copied-in factory/ layout to move; a client from before it (the "
         '.agents/ layout) moves with the "move vendored clients" story.', "forge next", _agents_era),
+    "a legacy sign-off name": _legacy_signoff,
+    # Dropping the pin would let any accepted sign-off record approve a story.
+    "a sign-off pin forge.toml can't hold": _refusal(
+        "harness.yaml pins docs/signoff.md as the client's sign-off record, which forge.toml "
+        "can't pin: it isn't a docs/decisions/NNNN-client-signoff.md record.",
+        "pin the accepted client-signoff record in harness.yaml's signoff_record, "
+        "then forge migrate --dry-run", lambda repo, tmp_path: _pin(repo, "docs/signoff.md")),
     "no copied-in commit": _refusal(
         "Forge can't read the copied-in version (constitution/VENDORED_FROM names no copied-in "
         "commit), so it can't tell your changes from its own.",

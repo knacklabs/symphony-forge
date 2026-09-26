@@ -152,11 +152,14 @@ def _run(argv: list[str] | None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    # Piped output on Windows uses a legacy code page; never crash on a character like "→".
-    for stream in (sys.stdout, sys.stderr):
-        stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+    # UTF-8 whatever the console code page (Windows pipes use a legacy one), so "→" stays "→".
+    # Hook input too: a plan read in the wrong code page would hash to another digest.
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     try:
         return _run(argv)
     except repo.Refused as refusal:
         print(refusal, file=sys.stderr)
         return refusal.code
+    except KeyboardInterrupt:  # Ctrl-C: the human stopped it on purpose, so no traceback
+        return 130

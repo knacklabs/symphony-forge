@@ -94,10 +94,11 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 # --- what a review covers --------------------------------------------------------------
 
 
-def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any]) -> str:
+def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
     """What a clean review covers: the product tree at commit (everything outside .factory/ and
     plans/), plus what the change must do: a task's story doc Done when, Tasks, Risks and New
-    moving parts, or a fix's why and done-when lines from its state. Read through git, so a pull
+    moving parts, or a fix's why and done-when lines from its state, plus the worker's functional
+    check, so a changed check makes an earlier review stale. Read through git, so a pull
     request's head is only ever data."""
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
@@ -110,6 +111,7 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any]) -> str
                  moving_parts(text)]
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
+    parts.append(functional_check(top, base, commit))
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
@@ -161,14 +163,19 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
-def functional_check(top: Path, base: str) -> str:
+def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     """The worker's functional check: the `Functional check:` paragraph of its last commit message,
-    to the end. That's the branch's newest commit that isn't a merge or only Forge's records; an
-    older commit's check never counts. Git holds it; Forge copies it, never stores it."""
-    message = repo.git("log", "-1", "--no-merges", "--format=%B", f"{base}..HEAD", "--",
-                       *(f":(exclude){path}" for path in BOOKKEEPING), cwd=top)
-    found = re.search(r"^Functional check:.*", message, re.M | re.S)
-    return found[0].strip() if found else ""
+    to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
+    empty commit counts); an older commit's check never counts. Git holds it; Forge copies it,
+    never stores it."""
+    for sha in repo.git("rev-list", "--no-merges", f"{base}..{head}", cwd=top).split():
+        files = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, cwd=top).split()
+        if files and all(f.startswith(BOOKKEEPING) for f in files):
+            continue
+        found = re.search(r"^Functional check:.*", repo.git("show", "-s", "--format=%B", sha,
+                                                            cwd=top), re.M | re.S)
+        return found[0].strip() if found else ""
+    return ""
 
 
 def _bullets(items: Any) -> str:
@@ -226,7 +233,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.run("git", "worktree", "remove", "--force", str(tree), cwd=top)
         shutil.rmtree(tmp, ignore_errors=True)
         repo.run("git", "worktree", "prune", cwd=top)
-    return {"commit": head, "tree": fingerprint(head, item, top, state), "findings": findings,
+    return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
             "dismissals": []}
 
 

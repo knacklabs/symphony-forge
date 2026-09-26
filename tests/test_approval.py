@@ -1,9 +1,10 @@
 """Approval capture on both hosts, and the client sign-off gate (spec criteria 14 and 32)."""
 from __future__ import annotations
 
+import json
 import re
 
-from test_story import DOC, GRILL, claude_plan, codex_question, hook, ready, setup
+from test_story import DOC, GRILL, claude_plan, codex_question, hook, new_story, ready, setup
 
 
 def _digest(repo):
@@ -11,17 +12,27 @@ def _digest(repo):
     return re.search(r"approve_plan_([0-9a-f]{64})", repo.forge("next").stdout)[1]
 
 
-def test_14_approval_capture(repo, claude_payload, codex_payload):
+def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     setup(repo, keys=("SHOP", "WISH", "GIFT", "CARD"))
-    ready(repo, "SHOP")
-    ready(repo, "WISH", DOC.replace("save a basket", "keep a wish list"))
+    # "→" in both docs: Forge reads hook input and writes its output in UTF-8 even where the
+    # console's code page can't hold it (as on Windows), so each plan hashes to its doc's digest.
+    shop = DOC.replace("save a basket", "save a basket → and find it later")
+    # A "→" title too, so the confirmation Forge prints proves stdout is UTF-8.
+    path = new_story(repo, "SHOP", "Shoppers can save a basket → and find it later")
+    (path / "plans" / "SHOP.md").write_text(shop, encoding="utf-8")
+    assert repo.forge("read", "SHOP").returncode == 0
+    ready(repo, "WISH", DOC.replace("save a basket", "keep a wish list →"))
+    monkeypatch.setenv("PYTHONIOENCODING", "ascii")
 
     # Claude Code: a successful ExitPlanMode showing the doc records the approval, and commits the
     # doc, its read notes and its state on the story branch.
-    claude_approval = claude_plan(claude_payload, DOC)
-    recorded = hook(repo, claude_approval)
+    # The payload's "→" arrives as UTF-8 bytes, not a JSON escape, as Claude Code sends it.
+    claude_approval = claude_plan(claude_payload, shop)
+    sent = json.dumps(claude_approval, ensure_ascii=False)
+    assert "→" in sent
+    recorded = repo.forge("hook", "approval", input=sent)
     assert recorded.returncode == 0, recorded.stderr
-    assert "Recorded the approval" in recorded.stdout
+    assert "Recorded the approval of Shoppers can save a basket → and find it later." in recorded.stdout
     committed = repo.git("show", "--name-only", "--format=", "story/SHOP").splitlines()
     assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(committed)
     assert any(path.startswith(".factory/") for path in committed)
@@ -32,6 +43,9 @@ def test_14_approval_capture(repo, claude_payload, codex_payload):
     recorded = hook(repo, codex_question(codex_payload, _digest(repo)))
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start WISH/SAVE" in repo.forge("next").stdout
+    refused = repo.forge("task", "start", "→")
+    assert refused.stderr.startswith("'→' is not a task"), refused.stderr
+    monkeypatch.delenv("PYTHONIOENCODING")
 
     # Nothing is recorded, and forge next says why, for each of these.
     shared = DOC.replace("save a basket", "send a gift")
@@ -69,8 +83,15 @@ def test_14_approval_capture(repo, claude_payload, codex_payload):
     assert "the last answer was not recorded" not in repo.forge("next").stdout
 
 
+def _decision(repo, rel, status):
+    repo.write(rel, f'---\nstatus: {status}\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n')
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", f"{rel} is {status}")
+    repo.git("push", "-q", "origin", "main")
+
+
 def test_32_client_signoff(repo, claude_payload):
-    setup(repo, kind="client", keys=("SHOP", "OWN"))
+    setup(repo, kind="client", keys=("SHOP", "OWN", "PIN"))
     shop = ready(repo, "SHOP")
     head = repo.git("rev-parse", "story/SHOP")
     approval = claude_plan(claude_payload, DOC)
@@ -105,3 +126,27 @@ def test_32_client_signoff(repo, claude_payload):
     recorded = hook(repo, approval)
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout
+
+    # forge.toml's signoff pins the client's sign-off record, and approval needs exactly that one
+    # accepted: the other accepted sign-off decision above doesn't count.
+    pin = "docs/decisions/0002-client-signoff.md"
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nsignoff = "{pin}"\n{GRILL}')
+    _decision(repo, pin, "proposed")
+    pinned = DOC.replace("save a basket", "pin a basket")
+    ready(repo, "PIN", pinned)
+    approval = claude_plan(claude_payload, pinned)
+    refused = hook(repo, approval)
+    assert refused.returncode == 1
+    assert refused.stderr.startswith(
+        "This client's sign-off isn't recorded yet, so the approval was not recorded.\n")
+    _decision(repo, pin, "accepted")
+    recorded = hook(repo, approval)
+    assert recorded.returncode == 0, recorded.stderr
+
+    # A pin that isn't a sign-off record is refused before anything runs.
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n'
+                             f'signoff = "docs/decisions/0003-use-postgres.md"\n{GRILL}')
+    bad = repo.forge("story", "new", "OWN", "Shoppers own a basket")
+    assert bad.returncode == 1 and bad.stderr.startswith(
+        "forge.toml is not usable: signoff must name the client's sign-off record, "
+        "docs/decisions/NNNN-client-signoff.md.\n"), bad.stderr
