@@ -14,6 +14,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -132,6 +133,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
     refused = False
+    # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
+    # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
@@ -204,7 +208,11 @@ def _event(said: dict[str, Any]) -> str:
     if item.get("type") == "agentMessage":
         return item.get("text", "")
     if item.get("type") == "commandExecution":
-        return f"$ {item.get('command')} ({item.get('status')})"
+        # The output as a whole once the command ends (its deltas are dropped): the last 40 lines,
+        # enough to show why a test failed.
+        output = (item.get("aggregatedOutput") or "").rstrip("\n").splitlines()
+        cut = [f"(… {len(output) - 40} earlier lines in Codex's own log)"] if len(output) > 40 else []
+        return "\n".join([f"$ {item.get('command')} ({item.get('status')})", *cut, *output[-40:]])
     if item.get("type") == "fileChange":
         paths = ", ".join(change.get("path", "") for change in item.get("changes") or [])
         return f"Changed {paths} ({item.get('status')})"
