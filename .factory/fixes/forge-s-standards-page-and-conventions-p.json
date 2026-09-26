@@ -1,0 +1,49 @@
+{
+  "base": "e23a28fbb862e1c76a54c3aafa32578aa521d795",
+  "branch": "fix/forge-s-standards-page-and-conventions-p",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/standards-gaps.md is in the page it names, each as one short line in that page's voice; no page names AWS CDK; tests/test_standards.py still passes",
+  "kind": "fix",
+  "review": {
+    "commit": "bce7e4d699da0d52f213fe2f81163c3b3f4b55ed",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Once this logger is registered with Nest, `Logger.fatal(...)` silently produces no output because `JsonLogger` has no `fatal` method. Nest delegates through an optional call to the custom logger's method ([Nest implementation](https://raw.githubusercontent.com/nestjs/nest/master/packages/common/services/logger.service.ts)). This loses precisely the unrecoverable-failure records required by `src/forge/standards.md:166`. Add a `fatal` method that writes the corresponding level and cover it in the logger regression test, which currently exercises only `log`.",
+        "file": "src/forge/templates/conventions/backend.md",
+        "line": 56,
+        "priority": "P2",
+        "title": "Implement fatal logging in the replacement logger"
+      }
+    ],
+    "status": "clean",
+    "tree": "ca1eb947a3173c4ac7ea665b839b4d9955443f7cb543ba77536ac5e01d05c115"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T13:18:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:24:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T13:45:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:43:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:49:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T14:54:48+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's standards page and conventions pages miss about 22 constitution rules a worker needs, three places where the pages disagree with each other, and name AWS CDK where the owner chose Terraform"
+}
