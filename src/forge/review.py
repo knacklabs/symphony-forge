@@ -1,8 +1,8 @@
 """One review round: Autoreview over the branch in a read-only worktree, and its committed result.
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
-priority, title, body and code_location, then review_status and overall_correctness) and
-ignores everything else it writes.
+priority, title, body and code_location, in findings and scope_rejected_findings, then
+review_status and overall_correctness) and ignores everything else it writes.
 """
 from __future__ import annotations
 
@@ -152,11 +152,23 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["task", "rules"]
         if row.get("user-facing", "").lower() in ("yes", "true"):
             chosen.insert(1, "functional-check")
+            values["functional_check"] = functional_check(top, base) or (
+                "None: the worker's last commit message has no `Functional check:` paragraph.")
     else:
         chosen = ["fix", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def functional_check(top: Path, base: str) -> str:
+    """The worker's functional check: the `Functional check:` paragraph of its last commit message,
+    to the end. That's the branch's newest commit that isn't a merge or only Forge's records; an
+    older commit's check never counts. Git holds it; Forge copies it, never stores it."""
+    message = repo.git("log", "-1", "--no-merges", "--format=%B", f"{base}..HEAD", "--",
+                       *(f":(exclude){path}" for path in BOOKKEEPING), cwd=top)
+    found = re.search(r"^Functional check:.*", message, re.M | re.S)
+    return found[0].strip() if found else ""
 
 
 def _bullets(items: Any) -> str:
@@ -231,10 +243,16 @@ def _attempt(argv: list[str], cwd: Path, out: Path) -> tuple[list[dict[str, Any]
         report = None
     if code not in (0, 1, 2) or not isinstance(report, dict):
         return [], last or f"it exited with code {code}"
-    if code == 2 or report.get("review_status") == "incomplete":
+    # The helper moves a finding pinned outside the changed files to scope_rejected_findings and
+    # calls the review incomplete for it. Forge keeps those findings like any other, so none is
+    # lost. ponytail: the helper doesn't say whether the engine also stopped early in that run,
+    # so a run with rejected findings always counts as finished; its findings still block.
+    rejected = report.get("scope_rejected_findings") or []
+    if not rejected and (code == 2 or report.get("review_status") == "incomplete"):
         return [], "it reported the review as incomplete"
     raw = report.get("findings")
-    findings = [_finding(f) for f in raw] if isinstance(raw, list) else [None]
+    findings = ([_finding(f) for f in [*raw, *rejected]]
+                if isinstance(raw, list) and isinstance(rejected, list) else [None])
     if None in findings:
         return [], "it wrote findings Forge cannot read"
     if not findings and report.get("overall_correctness") == "patch is incorrect":

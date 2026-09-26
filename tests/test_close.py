@@ -436,16 +436,23 @@ def test_18_close(env, kind):
 
 MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
 HOLLOW_CHECK = {**MISSING_CHECK, "body": "The check says only 'it works'; nothing was exercised."}
+STALE_CHECK = {**MISSING_CHECK, "body": "The only check is in an older commit's message."}
 
 
 @pytest.mark.parametrize("task, answer, refused", [
     ("T2", blocked(MISSING_CHECK), True), ("T2", blocked(HOLLOW_CHECK), True),
-    ("T2", CLEAN, False), ("T1", CLEAN, False)],
-    ids=["missing", "hollow", "user-facing-clean", "not-user-facing"])
+    ("T2", blocked(STALE_CHECK), True), ("T2", CLEAN, False), ("T1", CLEAN, False)],
+    ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing"])
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
     # `Not done`; close refuses on that finding and passes once the check is there.
-    item = env.start_task(task, {"show.py": "print('basket')\n"})[0]
+    item, where = env.start_task(task, {"show.py": "print('basket')\n"})
+    check = "Functional check: signed in as a shopper and saw the saved basket."
+    stale = answer == blocked(STALE_CHECK)
+    if task == "T2" and (stale or not refused):  # the worker ends its last commit with its check
+        env.commit(where, "show.py", "print('saved basket')\n", f"Show the basket\n\n{check}")
+    if stale:  # a later commit has none, so the older check no longer counts
+        env.commit(where, "show.py", "print('saved basket twice')\n", "Tidy the basket")
     env.reviews(answer)
     done = env.close(item)
     assert ("`Not done: functional check`" in env.prompt()) is (task == "T2")
@@ -453,8 +460,17 @@ def test_19_functional_check(env, task, answer, refused):
         assert done.returncode == 1
         assert done.stderr.splitlines()[-2] == (
             "The review left serious findings open: finding 1 (Not done: functional check).")
+        assert "None: the worker's last commit message has no `Functional check:`" in env.prompt()
+        [create] = env.gh_calls("pr", "create")
+        assert check not in env.prompt() and check not in body(create)
     else:
         assert done.returncode == 0, done.stderr
+    if task == "T2" and not refused:
+        # Forge reads the check from the commit, hands it to the reviewer and copies it into the
+        # pull request's Forge block.
+        assert check in env.prompt()
+        [create] = env.gh_calls("pr", "create")
+        assert f"\n{check}\n<!-- forge:end -->" in body(create)
 
 
 # --- criterion 27: the pull request's title and summary ----------------------------------------
