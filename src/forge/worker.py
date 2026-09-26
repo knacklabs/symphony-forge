@@ -10,7 +10,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import repo, task
+from forge import codex, repo, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -19,10 +19,9 @@ SERIOUS = ("P0", "P1")
 COMMANDS = ["git add", "git commit", "git status", "git diff", "git log"]
 
 REFUSALS = {
-    "codex": ("Codex workers come with the warm-threads story; v1 runs its workers on Claude Code.",
-              'set workers = "claude" in forge.toml, then forge work {item}'),
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
+    "sdk": ("{problem}", "forge doctor --fix"),
 }
 
 
@@ -32,16 +31,24 @@ def work(args: argparse.Namespace) -> None:
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
     config = repo.config()
-    if config["workers"] == "codex":
-        refuse(REFUSALS["codex"], item=item)
     top = _checkout(item, [f"task/{match['key']}-{match['task']}"] if match["task"]
                     else [f"fix/{item}", f"forge/{item}"])
+    on_codex = config["workers"] == "codex"
+    kind = "Build" if match["task"] else "Lite"
+    if on_codex:  # both refuse before the status commit, so a refused call changes nothing
+        problem = codex.sdk_problem()
+        if problem:
+            refuse(REFUSALS["sdk"], problem=problem)
+        codex.settings(top, kind)
     state = repo.read_state(item, top) or {}
     findings, failing = _fix_round(state)
-    brief = _brief(match, top, state, findings, failing)
+    brief, subject = _brief(match, top, state, findings, failing)
     state["status"] = "fixing" if findings or failing else "working"
     repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top), top=top)
-    _run(item, top, config, brief)
+    if on_codex:
+        codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access")
+    else:
+        _run(item, top, config, brief)
 
 
 def _checkout(item: str, branches: list[str]) -> Path:
@@ -80,13 +87,15 @@ def _failing(branch: str) -> list[tuple[str, str]]:
 
 
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
-           findings: list[dict[str, Any]], failing: list[tuple[str, str]]) -> str:
-    """The brief from templates/brief.md: `<!-- if NAME -->` blocks stay only when NAME is on."""
+           findings: list[dict[str, Any]], failing: list[tuple[str, str]]) -> tuple[str, str]:
+    """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
+    on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {}
     if match["task"]:
         doc = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
         row = task.rows(doc).get(match["task"], {})
+        subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
         on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
                           else set())
@@ -99,7 +108,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             covers=row.get("Covers", ""), scope=row.get("Scope", ""), tests=row.get("Tests", ""))
     else:
         on.add("fix")
-        values.update(why=state.get("why", ""), done=state.get("done_when", ""))
+        subject = state.get("why", "")
+        values.update(why=subject, done=state.get("done_when", ""))
     if findings or failing:
         on.add("fix-round")
         values["findings"] = "\n".join(
@@ -116,7 +126,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     text = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
-    return Template(text).safe_substitute(values)
+    return Template(text).safe_substitute(values), subject
 
 
 def _run(item: str, top: Path, config: dict[str, Any], brief: str) -> None:

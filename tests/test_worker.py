@@ -107,13 +107,3 @@ def test_17_worker(repo, gh, monkeypatch):
     assert failed.returncode == 1
     assert failed.stderr.startswith("The worker stopped with exit code 3; its log is ")
     assert failed.stderr.endswith("work-fix-the-login-typo.log.\nNext: forge work fix-the-login-typo\n")
-
-    # Codex workers arrive with the warm-threads story.
-    count = len(calls(log))
-    repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n')
-    refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.returncode == 1
-    assert refused.stderr == (
-        "Codex workers come with the warm-threads story; v1 runs its workers on Claude Code.\n"
-        'Next: set workers = "claude" in forge.toml, then forge work BOARD/PAGE\n')
-    assert len(calls(log)) == count
