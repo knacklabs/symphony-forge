@@ -1,0 +1,17 @@
+{
+  "approval": {
+    "at": "2026-09-26T03:29:50+00:00",
+    "by": "carried over from the copied-in Forge",
+    "hash": "d0ef3e2ed63c97687ef588fab517952b293e136183efd3cc25d8896e37f03326"
+  },
+  "doc": "plans/FORGE-NEXT-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-26T03:29:50+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge v1: a lean rebuild that both coordinators drive, then the switch",
+  "touches": 0
+}

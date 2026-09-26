@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-NEXT-1-RECORDS",
+  "status": "merged",
+  "steps": [
+    {
+      "at": "2026-09-25T16:21:40Z",
+      "step": "merged"
+    }
+  ],
+  "touches": 0
+}

@@ -2,57 +2,32 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook session_start || exit 2' || exit 2",
-            "statusMessage": "Loading factory context"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook pre_compact || exit 2' || exit 2"
+            "command": "sh -c 'forge hook context || exit 2' || exit 2"
           }
         ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|apply_patch|request_user_input",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook pre_tool_use || exit 2' || exit 2",
-            "statusMessage": "Applying factory command policy"
+            "command": "sh -c 'forge hook deny || exit 2' || exit 2"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "^request_user_input$",
+        "matcher": "request_user_input",
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook post_tool_use || exit 0' || exit 0"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2",
-            "timeout": 30,
-            "statusMessage": "Checking factory completion"
+            "command": "sh -c 'forge hook approval || exit 2' || exit 2"
           }
         ]
       }

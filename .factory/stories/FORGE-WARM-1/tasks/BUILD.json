@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-WARM-1-BUILD",
+  "status": "merged",
+  "steps": [
+    {
+      "at": "2026-09-26T04:10:15Z",
+      "step": "merged"
+    }
+  ],
+  "touches": 0
+}

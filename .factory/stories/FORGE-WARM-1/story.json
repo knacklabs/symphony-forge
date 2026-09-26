@@ -1,0 +1,17 @@
+{
+  "approval": {
+    "at": "2026-09-26T03:17:14+00:00",
+    "by": "carried over from the copied-in Forge",
+    "hash": "c7bf1971534d31522d2f1506a87be2918427c09c9f29338a87b0d23b7ba2a2f1"
+  },
+  "doc": "plans/FORGE-WARM-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-26T03:17:14+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Codex builds your tasks and picks up where it left off",
+  "touches": 0
+}
