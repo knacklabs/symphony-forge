@@ -3,11 +3,37 @@
   "branch": "fix/forge-s-standards-page-and-conventions-p",
   "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/standards-gaps.md is in the page it names, each as one short line in that page's voice; no page names AWS CDK; tests/test_standards.py still passes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "9fd64d6e2d76e0bcb74bd23e20fd536b26d9a107",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The Terraform replacement makes the existing test fail: tests/test_standards.py:52 still matches `cdk`, and lines 57\u201358 require it in the resulting set. With CDK removed from the conventions, that assertion cannot pass. The added test also prohibits CDK, so the two tests now contradict each other. Update the existing matcher and expected set to Terraform to satisfy the Done-when requirement.",
+        "file": "src/forge/templates/conventions/stack.md",
+        "line": 40,
+        "priority": "P1",
+        "title": "Not done: tests/test_standards.py still passes"
+      },
+      {
+        "body": "The documented call at backend.md:66 passes `{ message, context, correlationId }` as the first argument. This implementation serializes that entire object under `message`, leaving the top-level `context` empty and omitting `module`. Consequently, following the example violates the logging contract in standards.md:158\u2013161: message is not fixed text and details are unavailable under `context`. Normalize structured inputs into the required fields, or change the logger signature and example together.",
+        "file": "src/forge/templates/conventions/backend.md",
+        "line": 49,
+        "priority": "P2",
+        "title": "Preserve the documented structured fields in the logger"
+      }
+    ],
+    "status": "blocked",
+    "tree": "f74b0d4705928b49973f5527992d5a24a8e2fedef126ccc79cc485453742e161"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T13:18:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T13:24:16+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's standards page and conventions pages miss about 22 constitution rules a worker needs, three places where the pages disagree with each other, and name AWS CDK where the owner chose Terraform"
