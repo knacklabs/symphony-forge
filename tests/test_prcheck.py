@@ -82,8 +82,10 @@ def _story_done_when_changed_after_review(env):
     doc = (where / "plans" / "SHOP.md").read_text("utf-8")
     env.commit(where, "plans/SHOP.md", doc.replace("1. A shopper can save a basket.",
                                                    "1. A shopper can save and name a basket."))
+    # A changed Done when is caught first by the story doc's approval check, before review freshness.
     return "task/SHOP-T1", where, (
-        f"The committed review at the head of task/SHOP-T1 is {OUT_OF_DATE}", "forge close SHOP/T1")
+        "The approval of plans/SHOP.md doesn't match its \"What changes for you\" and \"Done when\".",
+        "fix the story doc, then forge read <KEY> --amended if it changed after its read")
 
 
 def _fix_done_when_changed_after_review(env):

@@ -27,6 +27,7 @@ REFUSALS = {
                 'forge fix allow-large "<reason>")'),
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
+    "story_doc": ("{problem}", "fix the story doc, then forge read <KEY> --amended if it changed after its read"),
 }
 CODE_LIMIT = 5
 
@@ -56,8 +57,9 @@ def pr_check(args: argparse.Namespace) -> int:
             raise
         # ponytail: STORY builds story.py in parallel; its story-doc checks run once it lands.
         story = None
-    if story:
-        story.check_pr_docs(top, head, changed)
+    doc_problem = story.check_pr_docs(top, head, changed) if story else None
+    if doc_problem:
+        repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     result = state.get("review")
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):

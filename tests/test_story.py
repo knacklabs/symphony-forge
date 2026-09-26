@@ -132,6 +132,13 @@ def test_1_what_changes_first(repo):
     repo.git("add", "-A", cwd=shop)
     repo.git("commit", "-q", "-m", "Plan the story", cwd=shop)
     base = repo.git("rev-parse", "main")
+    # ponytail: a task state stand-in so CLOSE's pr-check sees a branch Forge started.
+    repo.git("checkout", "-q", "-B", "task-base", "story/SHOP")
+    repo.write(".factory/stories/SHOP/tasks/SAVE.json",
+               '{"branch": "task/SHOP-SAVE", "status": "working", "steps": []}\n')
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Start task SAVE")
+    repo.git("checkout", "-q", "main")
     cases = {
         "SHOP.md": (DOC.replace("## What changes for you", "## Summary"),
                     'must start with "What changes for you"'),
@@ -141,10 +148,11 @@ def test_1_what_changes_first(repo):
                      "doesn't match its \"What changes for you\" and \"Done when\""),
     }
     for name, (text, problem) in cases.items():
-        repo.git("checkout", "-q", "-B", "task/SHOP-SAVE", "story/SHOP")
+        repo.git("checkout", "-q", "-B", "task/SHOP-SAVE", "task-base")
         repo.write(f"plans/{name.strip()}", text)
         repo.git("commit", "-q", "-am", "A pull request")
-        checked = repo.forge("hook", "pr-check", "--base", base, "--head", "HEAD")
+        checked = repo.forge("hook", "pr-check", "--base", base, "--head", "HEAD",
+                             "--branch", "task/SHOP-SAVE")
         assert checked.returncode != 0 and problem in checked.stdout + checked.stderr
         repo.git("checkout", "-q", "main")
 
