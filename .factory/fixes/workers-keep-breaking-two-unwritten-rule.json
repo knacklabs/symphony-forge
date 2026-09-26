@@ -4,11 +4,11 @@
   "done_when": "The worker brief (src/forge/templates/brief.md) says a change to documentation only needs no test, and that in a repo whose tests run Forge (forge-source) a test runs the forge command and never imports forge; a test pins both lines",
   "kind": "fix",
   "review": {
-    "commit": "b5fddbd315e8bc7dbe890eeb004b72c6c8c155c7",
+    "commit": "8d840f4f0c19d3400c7b3369503c0742a249c494",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "16774d2ff20406baa2d0698d48f40666a6c433aef8605f1fc391d069fe85152f"
+    "tree": "8ecffccdd37833a788530b0c36cf0941cf3f27390de111f4b87ff42c5f9cbeb5"
   },
   "status": "waiting for checks",
   "steps": [
@@ -18,6 +18,10 @@
     },
     {
       "at": "2026-09-26T19:42:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T20:09:07+00:00",
       "step": "review"
     }
   ],
