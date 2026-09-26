@@ -3,7 +3,7 @@
   "branch": "fix/tests-test-macos-app-server-py-test-12-a",
   "done_when": "Find why the test hits Permission denied on Windows and fix it at the cause (a file still held open, or a POSIX-only step run on Windows); the test passes on Windows, macOS and Linux in CI; nothing is skipped or loosened",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T19:43:59+00:00",
