@@ -445,7 +445,10 @@ HOLLOW_CHECK = {**MISSING_CHECK, "body": "The check says only 'it works'; nothin
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
     # `Not done`; close refuses on that finding and passes once the check is there.
-    item = env.start_task(task, {"show.py": "print('basket')\n"})[0]
+    item, where = env.start_task(task, {"show.py": "print('basket')\n"})
+    check = "Functional check: signed in as a shopper and saw the saved basket."
+    if task == "T2" and not refused:  # the worker ends its last commit message with its check
+        env.commit(where, "show.py", "print('saved basket')\n", f"Show the basket\n\n{check}")
     env.reviews(answer)
     done = env.close(item)
     assert ("`Not done: functional check`" in env.prompt()) is (task == "T2")
@@ -453,8 +456,15 @@ def test_19_functional_check(env, task, answer, refused):
         assert done.returncode == 1
         assert done.stderr.splitlines()[-2] == (
             "The review left serious findings open: finding 1 (Not done: functional check).")
+        assert "None: no commit message on this branch has a `Functional check:`" in env.prompt()
     else:
         assert done.returncode == 0, done.stderr
+    if task == "T2" and not refused:
+        # Forge reads the check from the commit, hands it to the reviewer and copies it into the
+        # pull request's Forge block.
+        assert check in env.prompt()
+        [create] = env.gh_calls("pr", "create")
+        assert f"\n{check}\n<!-- forge:end -->" in body(create)
 
 
 # --- criterion 27: the pull request's title and summary ----------------------------------------

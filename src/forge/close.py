@@ -147,7 +147,7 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
              pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
     """Open the pull request, or replace only Forge's block in its body."""
-    block = _block(result)
+    block = _block(result, review.functional_check(top, f"origin/{default}"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -168,8 +168,9 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         print("Updated the pull request's review block.")
 
 
-def _block(result: dict[str, Any]) -> str:
-    """Forge's block in the pull request body: every finding, numbered for --dismiss."""
+def _block(result: dict[str, Any], check: str) -> str:
+    """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
+    worker's functional check from its commit message."""
     because = {d["finding"]: d["because"] for d in result["dismissals"]}
     lines = [BEGIN, f"Forge review of {result['commit'][:12]}: {result['status']}.", ""]
     for n, finding in enumerate(result["findings"], 1):
@@ -177,7 +178,7 @@ def _block(result: dict[str, Any]) -> str:
                 else "blocks the merge" if finding["priority"] in review.SERIOUS else "advisory")
         lines.append(f"{n}. {finding['priority']} {finding['title']} "
                      f"({finding['file']}:{finding['line']}): {note}")
-    return "\n".join([*lines, END])
+    return "\n".join([*lines, *(["", check] if check else []), END])
 
 
 def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str]:

@@ -254,6 +254,8 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   step.
 - Autoreview is run with today's read-only worktree launcher at a pinned helper version. Forge
   reads only its `findings` and `review_status`.
+  Note: its `scope_rejected_findings` (findings it drops for citing an unchanged file) count as
+  findings, so none is lost.
 - The review blocks only on the Done-when items the task covers: an unmet one is a P1 "Not done".
   The story's other Done-when items are given as context.
 - A serious finding (P0 or P1), or a red, missing or pending check, stops close. Close then prints
