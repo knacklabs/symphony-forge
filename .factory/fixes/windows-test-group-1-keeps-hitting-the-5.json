@@ -1,0 +1,14 @@
+{
+  "base": "9bb5619b6e295486388802d8cfbd22f8ae2086f1",
+  "branch": "fix/windows-test-group-1-keeps-hitting-the-5",
+  "done_when": "forge-next.yml splits the Windows tests into three groups instead of two, keeping the 5-minute cap; nothing else in the workflow changes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T14:51:24+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Windows test group 1 keeps hitting the 5-minute job cap in .github/workflows/forge-next.yml and is cancelled without a result, so pull requests need reruns"
+}
