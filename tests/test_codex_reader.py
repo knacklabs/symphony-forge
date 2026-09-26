@@ -88,6 +88,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.
+    monkeypatch.setenv("STUB_SAY", f" see {shop.resolve()}/plans/SHOP.md and {shop}/docs/a.md")
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stdout + read.stderr
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
@@ -113,6 +114,10 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         ("Grill", None), ("Grill", "completed")]
     assert not claude.exists()
 
+    # Absolute paths under the checkout become repo-root paths in the notes, for either reader.
+    assert str(shop.resolve()) not in written and str(shop) not in written
+    assert "see /plans/SHOP.md and /docs/a.md" in written
+
     # Recording the amendment runs no model, so it needs no coordinator.
     monkeypatch.delenv("CLAUDECODE")
     before = len(_stub(stub))
@@ -123,11 +128,15 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-coordinator")
     wish = new_story(repo, "WISH")
     (wish / "plans" / "WISH.md").write_text(DOC, encoding="utf-8")
+    (repo.bin / "claude-says.md").write_text(f"1. see {wish.resolve()}/docs/b.md\n", encoding="utf-8")
     assert repo.forge("read", "WISH").returncode == 0
     [call] = claude_calls(claude)
     assert call["args"] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode", "plan"]
     assert Path(call["cwd"]).resolve() == wish.resolve()
-    assert "reader: claude (opus)" in (wish / "plans" / "WISH.read.md").read_text("utf-8")
+    wished = (wish / "plans" / "WISH.read.md").read_text("utf-8")
+    assert "reader: claude (opus)" in wished and "see /docs/b.md" in wished
+    (repo.bin / "claude-says.md").unlink()
+    monkeypatch.delenv("STUB_SAY")
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill with an entry per family, and no single model key;

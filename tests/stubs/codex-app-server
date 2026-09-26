@@ -42,7 +42,7 @@ def notify(method, **params):
 
 def finish_turn(config, status):
     item = {"type": "agentMessage", "id": "msg-1", "text": "stub codex: built it with "
-            + json.dumps(config, sort_keys=True)}
+            + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")}
     notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=2, item=item)
     command = {"type": "commandExecution", "id": "cmd-1", "command": "touch ran-stub-ask-1",
                "commandActions": [], "cwd": "/", "status": "declined"}
