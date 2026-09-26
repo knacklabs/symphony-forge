@@ -3,7 +3,7 @@
   "branch": "fix/a-test-sometimes-hangs-in-windows-test-g",
   "done_when": "Every pytest command in .github/workflows/forge-next.yml and the generated forge.yml adds pytest-timeout with --timeout=150 --timeout-method=thread, so a hung test fails by name with its stack in the log before the job cap; nothing else in the workflows changes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-26T19:15:43+00:00",
