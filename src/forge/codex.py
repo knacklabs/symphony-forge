@@ -78,7 +78,13 @@ REFUSALS = {
                  "running Codex, and Forge can't read its start time and command to be sure, so "
                  "it counts it as running.", "stop process {pid} if it runs, then forge {command} "
                  "{item}"),
+    "running": ("Codex says the last turn of {item} is still running, so Forge starts no second "
+                "one.", "wait for it to end in the Codex app, then forge {command} {item}"),
+    "unread": ("Codex didn't say how the last turn of {item} ended, so Forge starts no second one; "
+               "its log is {log}.", "forge {command} {item}"),
 }
+# The token counts an end line carries, blank when Codex reports none.
+TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens")
 
 
 def sdk_env() -> Path:
@@ -129,27 +135,77 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower(), "codex").items()}
 
 
+def record(checkout: Path, item: str) -> dict[str, Any]:
+    """The item's record: its Codex processes, conversation, checkout, approval, the commit its
+    last turn started from, and HEAD when a turn last ended."""
+    return _json(_item_file(checkout, item, ".json", "Fix"))
+
+
+def conversation(checkout: Path, item: str, approval: str | None) -> tuple[str | None, str]:
+    """The item's conversation to continue and "", or None and why Forge starts a new one."""
+    saved = record(checkout, item)
+    if not saved.get("start"):
+        return None, "Forge has no record of its conversation on this machine"
+    if saved.get("checkout") != str(checkout):
+        return None, f"its conversation was started in another checkout, {saved.get('checkout')}"
+    if saved.get("approval") != approval:
+        return None, "the story's approval changed after its conversation started"
+    for commit in {saved["start"], saved.get("head") or saved["start"]}:
+        if repo.run("git", "merge-base", "--is-ancestor", commit, "HEAD", cwd=checkout).returncode:
+            return None, "the branch's history was rewritten under its conversation"
+    return saved["conversation"], ""
+
+
+def recover(checkout: Path, item: str) -> None:
+    """After a crash, once its Codex processes are stopped: a turn whose end Forge never logged
+    gets an end line with the status Codex now reports, or "lost" when Codex reports none. While
+    Codex says it still runs, or doesn't answer, refuse: two turns never run for one item."""
+    turns = _item_file(checkout, item, ".log", "Fix")
+    lines = sync.read(turns).splitlines()
+    last = json.loads(lines[-1]) if lines else {"status": None}
+    if "status" in last:
+        return
+    said = run(checkout, item, last["kind"], "", "", "read-only", last["conversation"],
+               read=last["turn"])
+    if "read" not in said or said["read"] == "inProgress":
+        repo.refuse(REFUSALS["unread" if "read" not in said else "running"], item=item,
+                    command="work", log=repo.work_log(checkout, item))
+    saved = record(checkout, item)
+    status = said["read"] or "lost"
+    _append(turns, {**last, "continued": saved.get("continued"),
+                    "fresh_start": saved.get("fresh_start"), "status": status,
+                    "ended": repo.now(), **dict.fromkeys(TOKENS)})
+    print(f"Forge never saw the last turn end; Codex reports it {status}." if said["read"] else
+          "Forge never saw the last turn end, and Codex reports no status for it: it is logged "
+          "as lost.", flush=True)
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
-        thread: str | None = None) -> dict[str, Any]:
-    """Run the prompt as one turn on a new conversation named `name`, in the checkout.
+        thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
+        read: str | None = None) -> dict[str, Any]:
+    """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
+    resume it, else on a new one, and name the conversation `name`. `fresh` says why a new one
+    starts, and the conversation is recorded with the story's `approval`. With `read`, run no
+    turn: read back that turn's status on `thread`, returned as "read" (None: Codex reports none).
 
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
     and every request Codex sends is declined. Events go to the terminal and the item's work log.
     The item's record gets the driver's identity as soon as it starts, before Codex does, then the
-    app-server's, the conversation, and HEAD when the turn ends. The driver waits for each of the
+    app-server's, the conversation with its checkout and approval, the commit the turn starts
+    from, and HEAD when the turn ends. The driver waits for each of the
     app-server and the conversation to be on record before it goes on. The item's turn log gets a
     "started" line when the turn starts, and an end line only when Codex reports the end. Returns
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
-    # ponytail: `thread` is RESUME's, which continues that conversation; BUILD always starts one.
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
-               "config": settings(repo.config(checkout), kind)}
+               "config": settings(repo.config(checkout), kind), "thread": thread, "read": read}
     log = repo.work_log(checkout, item)
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
     command = "read" if kind == "Grill" else "work"
     started: dict[str, Any] = {}
+    continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
     refused, server = "", None
@@ -202,15 +258,25 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
                     refused, text = said["refused"], ""
+                elif "read" in said:
+                    result["read"], text = said["read"], ""
+                elif "fresh" in said:  # Codex couldn't resume the conversation
+                    fresh, text = said["fresh"], ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
-                    _record(record, conversation=said["thread"])
+                    continued = {"continued": said["continued"],
+                                 "fresh_start": None if said["continued"] else fresh}
+                    _record(record, conversation=said["thread"], checkout=str(checkout),
+                            approval=approval)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
+                    if not said["continued"] and fresh != "first turn":
+                        text = f"Starting a new Codex conversation, because {fresh}.\n{text}"
                 elif "turn" in said:
                     result["turn"] = said["turn"]
                     started = {"conversation": result["conversation"], "turn": said["turn"],
                                "kind": kind, "started": repo.now()}
+                    _record(record, start=repo.git("rev-parse", "HEAD", cwd=checkout), **continued)
                     _append(turns, started)
                     text = ""
                 elif "declined" in said:
@@ -221,9 +287,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         "input_tokens": usage.get("inputTokens"),
                         "cached_input_tokens": usage.get("cachedInputTokens"),
                         "output_tokens": usage.get("outputTokens")})
-                    _append(turns, {"conversation": result["conversation"], "turn": result["turn"],
-                                    "kind": kind, "continued": False, "fresh_start": "first turn",
-                                    "status": said["status"], "started": started.get("started"),
+                    _append(turns, {**started, **continued, "status": said["status"],
                                     "ended": repo.now(), **result["usage"]})
                     _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
                     text = f"Codex ended the turn: {said['status']}"
