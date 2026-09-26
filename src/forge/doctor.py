@@ -119,8 +119,9 @@ def doctor(args: argparse.Namespace) -> None:
     trusted = _codex_trusts(top, codex)
 
     # impeccable is the one required UI skill, so it must be where the configured worker reads
-    # skills: its own folder in the user's home, or the repo's.
-    skills = {"claude": [Path.home() / ".claude", top / ".claude", top / ".agents"],
+    # skills: its own config folder (Claude's is $CLAUDE_CONFIG_DIR when set), or the repo's.
+    skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"),
+                         top / ".claude"],
               "codex": [codex.parent, Path.home() / ".agents", top / ".codex", top / ".agents"]}
     if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file()
                for folder in skills[cfg["workers"]]):
