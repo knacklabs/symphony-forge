@@ -4,11 +4,11 @@
   "done_when": "forge-next.yml splits the macOS tests into two groups the way Windows is split, keeping the 5-minute cap; the workflow test checks that macOS runs groups 1 and 2 of 2 exactly once",
   "kind": "fix",
   "review": {
-    "commit": "8b721a5ea7ce5bbd14bceb5bdc720bde7d264306",
+    "commit": "6639de73c1b6353d334948ece56f422fbab7bc48",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "8beef5fffe9796be340118b09b61c80ae9176b9d3c4580426b35dfc6553f07da"
+    "tree": "0cd40806c880306a95779beacf3fcb6a0775957be66acc21e4e285711fdb42d0"
   },
   "status": "waiting for checks",
   "steps": [
@@ -18,6 +18,10 @@
     },
     {
       "at": "2026-09-26T19:49:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T20:09:05+00:00",
       "step": "review"
     }
   ],
