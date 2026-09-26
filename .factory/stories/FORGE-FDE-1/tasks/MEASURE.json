@@ -1,25 +1,25 @@
 {
   "branch": "task/FORGE-FDE-1-MEASURE",
   "review": {
-    "commit": "7b371914c7a182f0b2ad213a76cdd49d89089fcc",
+    "commit": "4e934431c46cdfeffefd8a372168c6d586efdcb4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The task explicitly requires MEASURE to pin the shared `forge next` seam with a test crossing a due check and the discovery prompt. This test instead checks that an existing fix follows the due check. It never exercises discovery, so it cannot detect discovery taking precedence over the check. Add the required crossing test.",
+        "body": "The supplied functional-check paragraph exercises a due notification and refusal to measure a legacy spec. It does not exercise item 5's save and confirm refusals, or item 6's successful result recording, retained confirmation, and removal of the landed check. Automated tests cover these paths, but the required user-facing walkthrough still skips them. Exercise those paths and record their observed outcomes in the Functional check paragraph.",
+        "file": "src/forge/records.py",
+        "line": 132,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      },
+      {
+        "body": "The required crossing test is still absent: this assertion puts the due check before generic idle output, without exercising a discovery prompt. It therefore cannot detect discovery taking precedence over a due check. Add the explicitly required case that exercises both outputs and verifies their order.",
         "file": "tests/test_measure.py",
-        "line": 154,
+        "line": 161,
         "priority": "P1",
         "title": "Not done: due-check precedence over discovery test"
       },
       {
-        "body": "The tests never call `spec measure` on a confirmed spec with a matching confirmed hash but an incomplete Success measure. The legacy spec case only calls `spec confirm`. Consequently, removing `_check_measure` from `spec_measure` would leave this required refusal untested. Add a legacy confirmed-spec case that reaches this guard and asserts the refusal and unchanged file.",
-        "file": "tests/test_measure.py",
-        "line": 125,
-        "priority": "P1",
-        "title": "Not done: measuring an incomplete confirmed spec refusal test"
-      },
-      {
-        "body": "`uv.lock` is outside the permitted scope and contains only the existing editable project. This change adds no dependencies and requires no dependency-resolution changes. Remove the generated lockfile from this branch.",
+        "body": "This new lockfile is outside the permitted scope and records only the existing editable project. The change introduces no dependency that requires it. Remove it from this branch.",
         "file": "uv.lock",
         "line": 1,
         "priority": "P2",
@@ -27,7 +27,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "4a1fbdaa5a6074344c403f45b8572ebe8abdabf63457d08807d471f8745fb57d"
+    "tree": "90546eb21c94ac662a5ade861eced58df396725713626b25e817ce69444ce5d7"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-26T10:41:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T11:02:35+00:00",
       "step": "review"
     }
   ]
