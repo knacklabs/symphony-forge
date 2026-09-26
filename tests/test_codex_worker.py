@@ -6,6 +6,7 @@ Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 from __future__ import annotations
 
+import csv
 import json
 import os
 import re
@@ -152,6 +153,16 @@ def _running(pid: int) -> bool:
     except ProcessLookupError:
         return False
     return True
+
+
+def _app_server_left(pid: int) -> bool:
+    """Whether the reported Codex process still runs. On Windows an id is reused within moments,
+    so a process there only counts when it is the stub's cmd.exe shim, not whatever took the id."""
+    if os.name != "nt":
+        return _running(pid)
+    listed = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+                            capture_output=True, text=True).stdout
+    return any(row[:2] == ["cmd.exe", str(pid)] for row in csv.reader(listed.splitlines()))
 
 
 def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
@@ -324,7 +335,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     # On Windows the stub runs through its .cmd shim, so the process the client started, and the
     # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.
     assert pid == stub if os.name != "nt" else pid not in (stub, os.getpid())
-    assert not _running(pid)
+    assert not _app_server_left(pid)
 
     # A fix's turn log sits in its own folder.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
@@ -353,4 +364,4 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     reported = [int(line.rpartition(" ")[2]) for log in work_log.parent.glob("work-*.log")
                 for line in log.read_text("utf-8").splitlines()
                 if line.startswith("Codex app-server: process ")]
-    assert len(reported) == 4 and not any(_running(pid) for pid in reported)
+    assert len(reported) == 4 and not any(_app_server_left(pid) for pid in reported)
