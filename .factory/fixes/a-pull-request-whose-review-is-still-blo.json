@@ -3,11 +3,30 @@
   "branch": "fix/a-pull-request-whose-review-is-still-blo",
   "done_when": "forge close opens a blocked pull request as a draft and marks it ready for review once its review is clean and its checks are green",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "6fd9dc965e7e82a477529dd63d038aa4f88b8db3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new draft-to-ready test only supplies green checks. The red, pending, missing-check and API-error cases in tests/test_close.py:221\u2013248 use the default empty PR list and never assert that promotion is withheld. Consequently, promoting a draft from a finally block around checks.wait would pass both the new ordering assertion and the existing refusal tests while marking failed-check PRs ready. Extend those cases with an existing draft and assert that no `pr ready` command is issued, then verify promotion after a successful retry. This covers the negative half of the explicit green-check requirement.",
+        "file": "tests/test_close.py",
+        "line": 427,
+        "priority": "P1",
+        "title": "Not done: a draft stays draft when required checks are not green"
+      }
+    ],
+    "status": "blocked",
+    "tree": "373ad9fb80880826ff2a3f1e4ab113e4bde039009a593512ae4da9c674a833e1"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-26T07:29:48+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-26T07:54:31+00:00",
+      "step": "review"
     }
   ],
   "why": "A pull request whose review is still blocked looks mergeable on GitHub"
