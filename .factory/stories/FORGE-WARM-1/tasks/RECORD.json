@@ -2,7 +2,12 @@
   "branch": "task/FORGE-WARM-1-RECORD",
   "review": {
     "commit": "c37783844a41e17836628ec900cb82ab7127ac65",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:168 the walkthrough is in commit 28b9676d, an empty commit this lookup skips; it records the second-run refusal, normal end, Ctrl-C, error and crash recovery by the next work and by doctor",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "The supplied functional-check paragraph reports a suite run and a manual comparison of stub command lines. It does not describe exercising the covered user flows or their observed results: concurrent-work refusal, cleanup after normal completion/error/Ctrl-C, and crash recovery through the next work call or doctor. Complete that walkthrough and record its outcomes in the required commit-message paragraph.",
@@ -19,10 +24,10 @@
         "title": "Simpler: unrelated doctor changes \u2192 existing setup behavior"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "948c946afb1afce1a637119699767d00ec8a874f9e84945b81717ade423f8262"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T07:21:01+00:00",
