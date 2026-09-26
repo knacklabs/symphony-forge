@@ -8,11 +8,12 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, repo, task
+from forge import codex, doctor, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -22,6 +23,8 @@ CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
               ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
 SERIOUS = ("P0", "P1")
+# The bytes of change a continued conversation is shown in full; a larger one is listed by file.
+LARGE = 200 * 1024
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
@@ -30,6 +33,9 @@ REFUSALS = {
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
                   "no Codex worker here.", "forge doctor"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
+    "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
+              "what story {key} approved, so Forge sends no brief from it.",
+              "git -C {top} checkout {base} -- {doc}, commit it, then forge work {item}"),
 }
 
 
@@ -42,22 +48,34 @@ def work(args: argparse.Namespace) -> None:
                     else [f"fix/{item}", f"forge/{item}"])
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     on_codex = config["workers"] == "codex"
-    kind = "Build" if match["task"] else "Lite"
+    # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
+    # round: it continues the item's conversation.
+    later = on_codex and bool(codex.record(top, item).get("start") or (
+        repo.read_state(item, top) or {}).get("status", "started") != "started")
+    kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
+    approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex)
-    # Codex workers take the item's lock and stop a leftover Codex process before the status
-    # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
+    # Codex workers take the item's lock, stop a leftover Codex process and read back a turn it
+    # left before the status commit, and leave none running when this ends, whether it succeeds,
+    # fails or is interrupted.
     with codex.hold(top, item, kind) if on_codex else contextlib.nullcontext():
+        if on_codex:
+            codex.recover(top, item)
+        thread, fresh = codex.conversation(top, item, approval) if later else (None, "first turn")
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         brief, subject = _brief(match, top, state, findings, failing)
+        if thread:
+            brief += _changes(top, codex.record(top, item)["start"])
         state["status"] = "fixing" if findings or failing else "working"
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         if not on_codex:
             _run(item, top, brief, claude)
             return
-        result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access")
+        result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
+                           thread, fresh, approval)
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
@@ -84,6 +102,57 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     if not doctor._codex_trusts(top, codex_config):
         refuse(REFUSALS["untrusted"])
     return []
+
+
+def _approval(key: str, item: str, top: Path) -> str:
+    """The story's approval, read from its own branch, where approvals are committed, else from the
+    default branch once that branch is gone; refused when the story's record has none, when the
+    approved part of the story doc changed since, until it is approved again, and when the
+    checkout's own story doc, which the brief is made from, isn't the approved one."""
+    doc = f"plans/{key}.md"
+    base = f"story/{key}"
+    # Only a gone branch falls back: a doc deleted on the branch refuses below as a change.
+    if repo.run("git", "rev-parse", "--verify", "-q", f"{base}^{{commit}}").returncode:
+        base = task.main_ref()
+    state = task.show(base, repo.state_path(key))
+    approved = (json.loads(state or "{}").get("approval") or {}).get("hash")
+    if not approved:
+        refuse(task.REFUSALS["not_approved"], key=key)
+    if approved != task.approval_hash(task.show(base, doc) or ""):
+        refuse(task.REFUSALS["changed"], key=key)
+    # The story's own worktree holds the doc its next approval reads, uncommitted edits included.
+    planning = story.stories_here(top).get(key)
+    if planning and approved != task.approval_hash(
+            (planning / doc).read_text(encoding="utf-8") if (planning / doc).is_file() else ""):
+        refuse(task.REFUSALS["changed"], key=key)
+    brief = top / doc
+    if approved != task.approval_hash(
+            brief.read_text(encoding="utf-8") if brief.is_file() else ""):
+        refuse(REFUSALS["brief"], item=item, key=key, top=top, base=base, doc=doc)
+    return approved
+
+
+def _changes(top: Path, start: str) -> str:
+    """For a continued conversation: the commits since its last turn started, and every change git
+    sees in the checkout since then, untracked files included through a temporary index, so git's
+    own index stays as it is. A very large change is listed by file."""
+    commits = git("log", "--oneline", f"{start}..HEAD", cwd=top) or "None."
+    with tempfile.TemporaryDirectory() as folder:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(folder) / "index")}
+        shutil.copy(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top),
+                    env["GIT_INDEX_FILE"])
+
+        def cached(*args: str) -> str:
+            return subprocess.run(["git", *args], cwd=top, env=env, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace", check=True).stdout
+        cached("add", "-A")
+        diff = cached("diff", "--cached", start)
+        if len(diff.encode("utf-8")) > LARGE:
+            diff = ("The change is over 200 KB, so here are the files it touches:\n"
+                    + cached("diff", "--cached", "--name-status", start))
+    return (f"\n## Since your last turn\n\nThe new commits:\n\n{commits}\n\nEvery change in "
+            "the checkout since your last turn started, new files included:\n\n"
+            f"```diff\n{diff}```\n")
 
 
 def _checkout(item: str, branches: list[str]) -> Path:

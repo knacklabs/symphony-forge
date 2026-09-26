@@ -1,13 +1,16 @@
 """One Codex turn for Forge, run by the Codex SDK's own Python; Forge itself never imports the SDK.
 
 This prints its own process id first, and once Forge has it on record, Forge sends one JSON
-request line on stdin: the checkout (cwd), the conversation's name, the prompt, the sandbox and the
-kind's settings (config). This then prints one JSON line per step, in order: the app-server's
-process id, before Codex starts; the thread; the turn; each event and each declined
-request; then the turn's end with its status, error, final text and token usage, only when Codex
-reports it. After the app-server's id and after the thread's, this waits for Forge to answer with
-a line saying it has them on record, so nothing starts that Forge hasn't recorded. Codex gets two
-minutes to start, or this prints a refusal and ends.
+request line on stdin: the checkout (cwd), the conversation's name, the prompt, the sandbox, the
+kind's settings (config), and the conversation to continue (thread), if any. This then prints one
+JSON line per step, in order: the app-server's process id, before Codex starts; why a new
+conversation starts when Codex can't resume that one; the thread, and whether it continued; the
+turn; each event and each declined request; then the turn's end with its status, error, final text
+and token usage, only when Codex reports it. With read, this runs no turn: after the app-server's
+id it prints each turn of the conversation with its status as Codex reports it. After the
+app-server's id and after the thread's, this waits for Forge to answer with a line saying it has
+them on record, so nothing starts that Forge hasn't recorded. Codex gets two minutes to start, or
+this prints a refusal and ends.
 
 Forge starts this in its own process group and keeps stdin open while it runs. Once stdin closes,
 Forge has gone, and this ends the whole group, itself and the app-server it started, even while
@@ -26,6 +29,7 @@ from typing import Any
 
 from openai_codex import ApprovalMode, Codex, Sandbox, api
 from openai_codex.client import CodexClient
+from openai_codex.errors import InvalidRequestError, JsonRpcError
 from openai_codex._run import _final_assistant_response_from_items
 from openai_codex.models import (ItemCompletedNotification, ThreadTokenUsageUpdatedNotification,
                                  TurnCompletedNotification, UnknownNotification)
@@ -107,9 +111,28 @@ def main() -> int:
             emit(refused="handler")
             return 3
         client._approval_handler = decline
-        thread = codex.thread_start(approval_mode=ApprovalMode.deny_all, sandbox=sandbox,
-                                    cwd=request["cwd"], config=request["config"] or None)
-        emit(thread=thread.id)
+        if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
+            try:
+                turns = client.thread_read(request["thread"], include_turns=True).thread.turns
+            except InvalidRequestError as error:
+                # Only Codex saying it has no such conversation means it reports no status. Its
+                # other failures, such as history it can't load, name the id too but prove
+                # nothing, so they end this with no read line and Forge refuses.
+                if error.message != f"thread not loaded: {request['thread']}":
+                    raise
+                turns = []
+            emit(read=[[turn.id, turn.status.value] for turn in turns])
+            return 0
+        settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
+                    "cwd": request["cwd"], "config": request["config"] or None}
+        resumed = None
+        if request.get("thread"):
+            try:
+                resumed = codex.thread_resume(request["thread"], **settings)
+            except JsonRpcError as error:
+                emit(fresh=f"Codex couldn't resume its conversation: {error.message}")
+        thread = resumed or codex.thread_start(**settings)
+        emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
         thread.set_name(request["name"])
         turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
