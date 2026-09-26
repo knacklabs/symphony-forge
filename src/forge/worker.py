@@ -21,8 +21,6 @@ CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
               ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
 SERIOUS = ("P0", "P1")
-# The worker edits files in its checkout and may run only these commands, plus the repo's test.
-COMMANDS = ["git add", "git commit", "git status", "git diff", "git log"]
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
@@ -52,7 +50,7 @@ def work(args: argparse.Namespace) -> None:
     state["status"] = "fixing" if findings or failing else "working"
     repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top), top=top)
     if not on_codex:
-        _run(item, top, config, brief, claude)
+        _run(item, top, brief, claude)
         return
     result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access")
     if result["status"] != "completed":
@@ -175,15 +173,15 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in found) or "none found"
 
 
-def _run(item: str, top: Path, config: dict[str, Any], brief: str, models: list[str]) -> None:
+def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
     """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
     exe = shutil.which("claude")
     if exe is None:
         refuse(repo.REFUSALS["missing_tool"], tool="claude")
     log = repo.work_log(top, item)
-    allowed = [f"Bash({command}:*)" for command in [*COMMANDS, config["test"]] if command]
-    command = [exe, "-p", *models, "--permission-mode", "acceptEdits",
-               "--add-dir", str(CONVENTIONS), "--allowedTools", *allowed]
+    # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
+    command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
+               "--add-dir", str(CONVENTIONS)]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:

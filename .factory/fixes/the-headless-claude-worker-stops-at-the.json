@@ -1,0 +1,25 @@
+{
+  "base": "64b4e59b565e18666908963043ff2ee3d2b338da",
+  "branch": "fix/the-headless-claude-worker-stops-at-the",
+  "done_when": "Claude workers run with full access like Codex workers (bypassPermissions, no allow-list), with Forge's deny hook still blocking destructive commands and merges",
+  "kind": "fix",
+  "review": {
+    "commit": "c972662b5ea07f5fe8245da2f8a66a0bf626beb2",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "df38a10c463252c8b637cee6b494723ada4cfbc513f10de32db1bb92568e1348"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-26T07:31:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-26T07:45:09+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The headless Claude worker stops at the first command outside a short allow-list"
+}

@@ -54,8 +54,8 @@ def test_17_worker(repo, gh, monkeypatch):
     assert "stub claude: built it" in built.stdout
     call = calls(log)[-1]
     assert call["args"][:7] == ["-p", "--model", "sonnet", "--effort", "medium",
-                                "--permission-mode", "acceptEdits"]
-    assert "Bash(git commit:*)" in call["args"] and "Bash(pytest -q:*)" in call["args"]
+                                "--permission-mode", "bypassPermissions"]
+    assert "--allowedTools" not in call["args"]  # full access; the deny hook guards
     assert Path(call["cwd"]).resolve() == folder.resolve()
     brief = call["brief"]
     for text in ("Board shows each story in plain English", "Anyone can open one page",
