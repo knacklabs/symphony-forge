@@ -5,7 +5,12 @@
   "kind": "fix",
   "review": {
     "commit": "7cc201d5f06d3344dad5be65e6b3be38900cff31",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/story.py:445 the machine-specific checkout prefix is removed for every path in either separator form, which is this fix's purpose; a backslash left after a space inside a quoted Windows path is repo-relative, leaks nothing, and is an edge case not worth more parsing",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "The suffix regex stops at whitespace, so Windows separators after a space remain unchanged. For checkout `C:\\work\\repo`, the quoted citation `\"C:\\work\\repo\\docs\\design notes\\a.md\"` becomes `\"/docs/design notes\\a.md\"`, rather than `\"/docs/design notes/a.md\"`. Windows is supported by `.github/workflows/forge-next.yml:22`. Removing the machine-specific prefix alone does not satisfy the required repo-root path conversion. Normalize the complete cited path and extend the stub-reader test with a directory containing spaces.",
@@ -15,10 +20,10 @@
         "title": "Not done: forge read rewrites every path under the checkout in the reader's output to a repo-root path (/docs/..., which GitHub resolves \u0645\u0646?"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "809221808d83134f81f24411053dbc14b48ddad1159e6762641f45c000b6d744"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T09:54:15+00:00",
