@@ -1,0 +1,14 @@
+{
+  "base": "1e78908bed76ac24aab8bc647b87b5ea0149c9b1",
+  "branch": "fix/fix-workers-add-their-tests-to-a-story-s",
+  "done_when": "test_12_a_dead_driver_leaves_no_app_server_behind moves unchanged to its own test file with its own STORY key for the macOS process fix; the worker brief for a fix says its tests go in their own file with the fix's own STORY key, never into a story's test file; a test pins that brief line",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T17:50:26+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Fix workers add their tests to a story's test file, where the test name reads as one of that story's criteria, so the one-test-per-rule check fails the story's real test for that number (PR 307's test_12 in tests/test_codex_record.py now blocks FORGE-WARM-1 criterion 12, as PR 298's tests blocked criterion 7)"
+}
