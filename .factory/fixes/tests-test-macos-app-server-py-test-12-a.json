@@ -4,21 +4,13 @@
   "done_when": "Find why the test hits Permission denied on Windows and fix it at the cause (a file still held open, or a POSIX-only step run on Windows); the test passes on Windows, macOS and Linux in CI; nothing is skipped or loosened",
   "kind": "fix",
   "review": {
-    "commit": "854fb4735b83cea738f30409c4a8f217a57b9499",
+    "commit": "5eaae851f90c647838be8d73d2bc7afd1cdbfe6b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The renamed lifecycle test does not arrange a sharing violation or verify that one occurred, so removing this retry can still leave it passing whenever polling misses the race. The existing tests in tests/test_codex_record_retry.py:25 exercise failures of os.replace in the writer, not this reader. Add a controlled regression that makes the record temporarily unreadable, releases it, and verifies that the real polling path reaches the existing cleanup assertions. It should fail with the pre-fix reader and pass with this change; otherwise the Windows failure this branch addresses remains unguarded under the requested test audit.",
-        "file": "tests/test_codex_record.py",
-        "line": 157,
-        "priority": "P1",
-        "title": "Not done: Regression test for Windows record-read sharing violations"
-      }
-    ],
-    "status": "blocked",
-    "tree": "739b656e40c99a2a916737d3b0dec1e6cda54fcc2e5f9f26147c4b7f8bdbfe8d"
+    "findings": [],
+    "status": "clean",
+    "tree": "377253314bbc4678dfcc99ee48ddca2f99f35ad09b28795aefd2c2b1962421bc"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T19:43:59+00:00",
@@ -26,6 +18,10 @@
     },
     {
       "at": "2026-09-26T19:51:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T20:02:33+00:00",
       "step": "review"
     }
   ],
