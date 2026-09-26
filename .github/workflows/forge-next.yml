@@ -24,7 +24,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       # 3.11 is the oldest Python Forge supports.
-      - run: uv run --python 3.11 --with pytest python -m pytest tests -q
+      # Parallel across the runner's cores: Windows runs the suite 2-3x slower than Linux.
+      - run: uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto
 
   net-lines:
     if: github.event_name == 'pull_request'
