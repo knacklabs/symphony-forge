@@ -1,19 +1,40 @@
 {
   "branch": "task/FORGE-WARM-1-RESUME",
   "review": {
-    "commit": "b2f4faa80458f4b8ee6e8cf00890524c00ae53d5",
+    "commit": "cdf56bd1481356c819b3997c0c6ab0624d96fe65",
     "dismissals": [],
     "findings": [
       {
-        "body": "If approval is revoked and that story-state change reaches the task checkout, both the canonical and checkout approvals are absent. This condition then falls through, and both subsequent hash checks are skipped because `approved` is false. `forge work` can consequently commit its status and start a full-access worker on the changed, unapproved brief. Refuse missing canonical approval unconditionally, as `src/forge/task.py:137\u2013139` already does. Extend the approval test to remove the checkout's approval too; its current case preserves that old copy.",
+        "body": "If the canonical story record and the checkout's copy are deleted while the task and story document remain, this condition permits work without approval. Both hash checks are then skipped, allowing a changed brief to reach a full-access worker after a status commit. Missing approval must refuse unconditionally, as `src/forge/task.py:137\u2013139` already does. Remove the test-fixture exception and cover deletion of both records.",
         "file": "src/forge/worker.py",
         "line": 120,
         "priority": "P1",
-        "title": "Not done: 8. Refuse missing approval even when the checkout's copy is gone"
+        "title": "Not done: 8. Refuse work when both story approval records are absent"
+      },
+      {
+        "body": "Recovery returns immediately when the log is empty or its last entry describes a completed turn. However, `src/forge/codex_turn.py:139` starts the next turn before Forge appends its started line at `src/forge/codex.py:280`. A crash between those operations leaves a recorded conversation with an unlogged turn. The next call stops the processes but skips reading that conversation, so it neither reconciles the missing end nor refuses if Codex still reports the turn as running. Reconcile this pending-start case before allowing another turn, and test a crash before the started line is appended.",
+        "file": "src/forge/codex.py",
+        "line": 166,
+        "priority": "P1",
+        "title": "Not done: 9. Recover turns started before their log line was written"
+      },
+      {
+        "body": "The supplied Functional check exercises only the approval refusal from item 8. It does not exercise continued fix rounds from item 7 or crash recovery from item 9, both covered by this part. The statement that the suite passes does not supply the required user-facing walkthrough. Exercise those paths through `forge work` and record what happened in a Functional check paragraph.",
+        "file": "src/forge/worker.py",
+        "line": 64,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      },
+      {
+        "body": "This change adds a repository lockfile without changing dependencies or needing it for conversation continuation, approval checks, or recovery. It is outside this part's permitted scope and has no demonstrated role in its requirements. Remove it from this branch.",
+        "file": "uv.lock",
+        "line": 1,
+        "priority": "P2",
+        "title": "Simpler: new uv.lock \u2192 existing package configuration"
       }
     ],
     "status": "blocked",
-    "tree": "337fadcb2368ad306439fdf35705491898b067cc4d05eb5bc3247f6b734cfb47"
+    "tree": "8765421c3bd879f6acd2df95cbc3d6e958783f57da0a9546232b785ed2a36626"
   },
   "status": "fixing",
   "steps": [
@@ -31,6 +52,10 @@
     },
     {
       "at": "2026-09-26T11:40:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-26T11:51:21+00:00",
       "step": "review"
     }
   ]
