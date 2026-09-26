@@ -153,7 +153,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (worktree / "left-behind.txt").write_text("from the stopped run\n", "utf-8")
     flag.unlink()
     unsaved = repo.forge("migrate")
-    assert unsaved.returncode == 1 and "has changes that aren't committed" in unsaved.stderr
+    assert unsaved.returncode == 1 and (", the folder of forge/migrate-v1, has changes that aren't "
+                                        "committed, so forge migrate won't start that branch "
+                                        "again.") in unsaved.stderr
     assert str(worktree) in unsaved.stderr and "\nNext: look at them in " in unsaved.stderr
     assert (worktree / "left-behind.txt").is_file()
     repo.git("worktree", "remove", "--force", str(worktree))
@@ -182,7 +184,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     amended = repo.git("rev-parse", "forge/migrate-v1")
     kept_amend = repo.forge("migrate")
     assert kept_amend.returncode == 1, kept_amend.stdout
-    assert "holds work that forge migrate didn't make" in kept_amend.stderr
+    assert ("forge/migrate-v1 holds work that forge migrate didn't make, so it won't start the "
+            "branch again.") in kept_amend.stderr
     assert repo.git("rev-parse", "forge/migrate-v1") == amended
     repo.git("reset", "-q", "--hard", made, cwd=worktree)
     assert ("The fix migrate-v1 moves this repo to the new Forge.\nNext: forge close migrate-v1"
@@ -277,23 +280,177 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert "stay signed in" not in after
 
 
+# Forge's own repo: its plans have no frontmatter; the old plan metadata names and approves them.
+NEXT_PLAN = """# Forge v1: a lean rebuild
+
+## What and why
+
+Forge is heavier than the work it manages.
+
+## What changes for you
+
+- Forge becomes one small tool.
+
+## Done when
+
+1. A fix is merged the new way.
+2. The old Forge is deleted.
+
+## Risks
+
+- The old Forge runs this repo until the switch.
+
+## Technical approach
+
+Code goes in `src/forge/`.
+
+## Task decomposition
+
+| Label / exact task ID | What it delivers | Covers | Scope | Tests | Depends on | user_facing |
+|---|---|---|---|---|---|---|
+| Core / CORE | The package | 1 | `src/forge/cli.py` | `tests/test_rules.py` | none | false |
+| Switch / SWITCH | The old tree deleted | 2 | `factory/` | the full suite | CORE | false |
+
+New moving parts:
+- the v1 package (Done when 1);
+- git hooks (1).
+"""
+# Already a story doc: it carries over word for word.
+WARM_DOC = """# Codex builds your tasks
+
+## What changes for you
+
+Codex builds each task.
+
+## Why
+
+Every hand-off started cold.
+
+## Done when
+
+1. `forge work` builds a task with Codex.
+
+## Tasks
+
+| ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
+|---|---|---|---|---|---|---|---|
+| SDK | Codex SDK set up | The pinned SDK | 1 | `src/forge/codex.py` | `tests/test_sdk.py` | — | no |
+| BUILD | Codex builds a task | Codex builds it | 1 | `src/forge/worker.py` | `tests/test_work.py` | SDK | no |
+
+New moving parts: the pinned Codex SDK (1).
+
+## Risks
+
+Risks: none
+"""
+FDE_PLAN = """# The agent works as a forward deployed engineer
+
+## What and why
+
+Customers often don't know what to build.
+
+## What changes for you
+
+- The agent interviews you one question at a time.
+
+## Done when
+
+- A vague ask turns into discovery, one question at a time.
+
+## Risks
+
+- Cost figures end up in client repos.
+
+## Task decomposition
+
+| Label / exact task ID | What it delivers | Depends on | user_facing |
+|---|---|---|---|
+| Skill / FDE | The FDE skill section | none | false |
+"""
+SOURCE_TEST = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
+
+
 def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
-                             'checks = ["tests", "forge-pr-check"]\n')
+    repo.write("src/forge/cli.py", "print('forge')\n")  # it holds Forge's own source
+    for key, name, text in (("FORGE-NEXT-1", "lean-rebuild", NEXT_PLAN),
+                            ("FORGE-WARM-1", "warm-threads", WARM_DOC),
+                            ("FORGE-FDE-1", "fde", FDE_PLAN)):
+        rel = f"plans/active/{key}-{name}.md"
+        repo.write(rel, text)
+        repo.write(f".factory/stories/{key}/plan-meta.json", json.dumps(
+            {"story": key, "status": "approved", "saved": "2026-09-24T09:00:00+00:00",
+             "plan_file": rel}))
+        repo.write(f".factory/stories/{key}/plan-approval.json",
+                   json.dumps({"approved_at": "2026-09-26T01:29:20+00:00"}))
     _land(repo, "Forge's own repo")
+    # Its tasks were closed by pull request: without gh, Forge can't tell which are done.
+    gh.respond("pr", "list", "--state", "merged", exit=1)
+    blind = repo.forge("migrate", "--dry-run")
+    assert blind.returncode == 1 and blind.stderr == (
+        "Forge can't list the merged pull requests (gh exited with code 1), so it can't tell which "
+        "tasks are done.\nNext: gh auth status, then forge migrate --dry-run\n")
+    # A task is done when a pull request from exactly feat/<KEY>-<TASK> merged; near misses aren't.
+    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
+        {"headRefName": "feat/FORGE-NEXT-1-CORE", "mergedAt": "2026-09-25T10:00:00Z"},
+        {"headRefName": "feat/FORGE-WARM-1-SDK", "mergedAt": "2026-09-26T08:00:00Z"},
+        {"headRefName": "feat/FORGE-NEXT-1-SWITCH-docs", "mergedAt": "2026-09-26T09:00:00Z"},
+        {"headRefName": "FORGE-NEXT-1-SWITCH", "mergedAt": "2026-09-26T09:00:00Z"},
+        {"headRefName": "feat/FORGE-WARM-1-BUILD", "mergedAt": None}]))
+
     done = repo.forge("migrate")
     assert done.returncode == 0, done.stderr
-    assert "nothing is deleted" in done.stdout
-    assert repo.git("diff", "--name-only", "--diff-filter=D", "main", "forge/migrate-v1") == ""
+    # Nothing is deleted: the old tree, its records and every old plan stay as they are, and only
+    # the adapters change.
+    assert "so nothing is deleted" in done.stdout
+    changed = dict(line.split("\t")[::-1] for line in repo.git(
+        "diff", "--name-status", "--no-renames", "main", "forge/migrate-v1").splitlines())
+    assert {path for path, status in changed.items() if status != "A"} <= LISTED, changed
+    # Only the three plans the switch carries are converted; the others wait for the switch.
+    for line in ("Converts 3 active plans into story docs:",
+                 "- Forge v1: a lean rebuild (FORGE-NEXT-1): its approval on main carries over; "
+                 "1 of 2 parts done.",
+                 "- Codex builds your tasks (FORGE-WARM-1): its approval on main carries over; "
+                 "1 of 2 parts done.",
+                 "- The agent works as a forward deployed engineer (FORGE-FDE-1): not carried over, "
+                 "because the new Forge re-plans it with one fresh approval. Its draft is "
+                 ".forge-migrate/replan/FORGE-FDE-1.md; re-plan it with forge story new FORGE-FDE-1.",
+                 "Leaves 5 other active plans as they are, superseded at the switch:",
+                 f"\n- {SHIP}\n", f"\n- {TIDY}\n",
+                 "Replaces AGENTS.md and CLAUDE.md wholly with the Forge block."):
+        assert line in done.stdout, done.stdout
     listing = repo.git("ls-tree", "-r", "--name-only", "forge/migrate-v1").splitlines()
-    assert {"factory/scripts/forge.py", SHIP, "plans/SEARCH-1.md", *LISTED} <= set(listing)
-    # The old records stay here, and tidy-up's folder would clash with TIDY-UP's on a disk that
-    # ignores capitals, so that plan stays as it is.
-    assert (f"- {TIDY} stays as it is: .factory/stories/TIDY-UP is taken by a name that differs "
-            "only in capitals") in done.stdout
-    assert "plans/TIDY-UP.md" not in listing
-    assert "<!-- forge:begin -->" in repo.git("show", "forge/migrate-v1:AGENTS.md")
+    assert {"plans/FORGE-NEXT-1.md", "plans/FORGE-WARM-1.md", ".forge-migrate/replan/FORGE-FDE-1.md",
+            *LISTED} <= set(listing)
+    assert "plans/SHIP-1.md" not in listing
+    assert repo.git("show", "forge/migrate-v1:plans/FORGE-WARM-1.md") == WARM_DOC.strip()
+    assert ("\nNew moving parts: the v1 package (Done when 1); git hooks (1).\n"
+            in repo.git("show", "forge/migrate-v1:plans/FORGE-NEXT-1.md"))
+    # AGENTS.md and CLAUDE.md hold only the Forge block now.
+    for name in ("AGENTS.md", "CLAUDE.md"):
+        text = repo.git("show", f"forge/migrate-v1:{name}")
+        assert text.startswith("<!-- forge:begin -->") and text.endswith("<!-- forge:end -->"), text
+    toml = repo.git("show", "forge/migrate-v1:forge.toml")
+    for setting in (f'version = "{version}"', 'repo = "forge-source"',
+                    f"test = {json.dumps(SOURCE_TEST)}", 'checks = ["tests", "forge-pr-check"]',
+                    '"**/routes/**"', "\n[models.build]\n", "\n[models.grill.claude]\n",
+                    "\n[models.review]\n"):  # forge init's defaults
+        assert setting in toml, toml
+
+    assert "2026-09-25T10:00:00Z" in repo.git(
+        "show", "forge/migrate-v1:.factory/stories/FORGE-NEXT-1/tasks/CORE.json")
+
+    # Merged, the carried-over approvals hold: the open tasks of both stories start, after the
+    # tasks merged by pull request; those are done, and the draft's tasks don't start.
+    repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#8)", "forge/migrate-v1")
+    repo.git("push", "-q", "--no-verify", "origin", "main")
+    for item in ("FORGE-NEXT-1/SWITCH", "FORGE-WARM-1/BUILD"):
+        started = repo.forge("task", "start", item)
+        assert started.returncode == 0, started.stderr
+    for item in ("FORGE-NEXT-1/CORE", "FORGE-WARM-1/SDK"):
+        assert "is already started" in repo.forge("task", "start", item).stderr
+    refused = repo.forge("task", "start", "FORGE-FDE-1/FDE")
+    assert refused.stderr.startswith("Story FORGE-FDE-1 has no story doc on main"), refused.stderr
 
 
 def _changed_agents(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -397,10 +554,11 @@ CASES = {
         "commit or drop them, then forge migrate --dry-run",
         lambda repo, tmp_path: repo.write("src/app.js", "console.log('changed');\n")),
     "a checkout behind origin": _refusal(
-        "This checkout isn't at origin/main, which forge migrate moves",
+        "This checkout isn't at origin/main, which forge migrate moves, so it can't check that "
+        "tree here.",
         "git switch main && git pull, then forge migrate", _behind),
     "a folder already at a set-aside path": _refusal(
-        ".forge-migrate/kept/harness.yaml is already there",
+        ".forge-migrate/kept/harness.yaml is already there, so forge migrate won't write over it.",
         "move .forge-migrate/ aside, then forge migrate", _kept_taken),
     "a draft already there": _refusal(
         ".forge-migrate/replan/SHIP-1.md is already there",
@@ -420,10 +578,12 @@ CASES = {
         ".claude/settings.json is a link, and forge migrate never follows one.",
         "remove that link, then forge migrate --dry-run", _linked_adapter),
     "an .agents/-era layout": _refusal(
-        "origin/main has no copied-in factory/ layout to move", "forge next", _agents_era),
+        "origin/main has no copied-in factory/ layout to move; a client from before it (the "
+        '.agents/ layout) moves with the "move vendored clients" story.', "forge next", _agents_era),
     "no copied-in commit": _refusal(
         "Forge can't read the copied-in version (constitution/VENDORED_FROM names no copied-in "
-        "commit)", "check the network and constitution/VENDORED_FROM", _no_source),
+        "commit), so it can't tell your changes from its own.",
+        "check the network and constitution/VENDORED_FROM", _no_source),
 }
 
 

@@ -46,28 +46,59 @@ Each principle has a check; the check is an acceptance criterion, a CI check or 
 - A release is a git tag `vX.Y.Z` on the public repo. Install or upgrade with
   `uv tool install git+https://github.com/knacklabs/symphony-forge@vX.Y.Z`. `forge --version`
   prints the installed version.
-- The standards page (`docs/standards.md`) is shipped inside the package, so every worker brief
-  can include it in any repo.
+- The standards page (`src/forge/standards.md`, package data) is shipped inside the package, so
+  every worker brief can include it in any repo.
 
 ### Configuration: `forge.toml`
 
-Each repo that uses Forge has one committed `forge.toml` at its root:
+Each repo that uses Forge has one committed `forge.toml` at its root. It is the one settings file,
+and the coding agent keeps it: it asks the human, then makes the change in a normal fix, upgrades
+included.
 
 ```toml
 version = "v1.0.0"      # the Forge release this repo runs; upgrading = bump this, install, forge sync
 repo = "client"         # client | forge-source (Forge's own repo)
 workers = "claude"      # claude | codex (codex arrives with the warm-threads story)
-model = "opus"          # the worker model
 test = "npm test"       # the full test command; the generated CI workflow runs it
 checks = ["tests", "forge-pr-check"]  # the CI checks close waits for, by name
 interfaces = ["**/routes/**", "**/migrations/**", "**/schema.*"]  # interface paths for the fix lane
+
+# The model per kind of work.
+[models.build]
+model = "gpt-6-luna"
+effort = "max"
+
+[models.fix]
+model = "gpt-6-luna"
+effort = "max"
+
+[models.lite]
+model = "gpt-6-sol"
+effort = "medium"
+
+# The cold read runs on the family that didn't coordinate.
+[models.grill.codex]
+model = "gpt-6-sol"
+effort = "high"
+
+[models.grill.claude]
+model = "opus"
+
+[models.review]
+model = "gpt-6-astra"
 ```
+
+Note (2026-09-26, owner decision): the models per kind of work live in the `[models.<kind>]`
+table instead of one `model` key. The story FORGE-WARM-1 built it, and `forge init` and `forge
+migrate` write its defaults.
 
 - `forge init` fills `interfaces` with defaults for the repo's stack: API routes, the database
   schema and migrations, a CLI command table, and the config schema.
 - When `interfaces` is empty, the review instructions tell the reviewer to report any interface
   change as a P1 `Promote` finding.
-- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist.
+- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist,
+  except by `forge migrate`: before this repo has a `forge.toml`, its source-repo mode runs in the
+  repo that holds `src/forge/cli.py` (note, 2026-09-26).
 
 Every command that changes state refuses when the installed Forge differs from `version`, and
 prints the exact `uv tool install` line. `forge --version`, `forge doctor` and `forge next` still
@@ -191,6 +222,9 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
 - **Client sign-off.** In a client repo, approval is refused (nothing is recorded) until the
   client's sign-off is recorded: an accepted decision whose slug ends in `client-signoff`.
   `forge next` names the sign-off step. A repo with `repo = "forge-source"` is exempt, as today.
+  Note (2026-09-26): the sign-off record is pinned in `forge.toml` (`signoff` names it; `forge
+  migrate` carries it over from `harness.yaml`'s `signoff_record`), and approval needs exactly that
+  record accepted. The FIXES task builds it.
 - The approval hook also counts every other question the human answers while working in a story,
   task or fix worktree. Each state file counts its own touches, and the board adds them up. Those
   counts are the "human touches" measure.
@@ -250,6 +284,9 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
   3. run the Autoreview loop;
   4. wait for the checks named in `checks`;
   5. mark the item ready.
+
+  Note (2026-09-26): close needs every check on the head green, and the checks named in `checks`
+  present. The FIXES task builds it; until then a check `checks` doesn't name never blocks.
 - A merge conflict stops close with a plain message that names the conflicting files and the next
   step.
 - Autoreview is run with today's read-only worktree launcher at a pinned helper version. Forge
@@ -532,9 +569,12 @@ and `forge close` works on it.
 Clients from before the `factory/` layout (Gantry-fork, openclaw) are refused with a pointer to the
 "move vendored clients" story.
 
-In a repo whose `forge.toml` says `repo = "forge-source"`, `forge migrate` converts the active
-plans, writes the adapter and deletes nothing. The switch deletes the old tree after the switch
-checks pass.
+In Forge's own repo (it holds `src/forge/cli.py`), `forge migrate` deletes nothing. It converts only
+the plans the switch carries, reading their approvals from the old plan metadata
+(`.factory/stories/<KEY>/plan-meta.json`), leaves every other active plan for the switch to
+supersede, replaces `AGENTS.md` and `CLAUDE.md` wholly with the Forge block, and writes
+`forge.toml` (`repo = "forge-source"`) and the adapter. The switch deletes the old tree after the
+switch checks pass.
 
 ### Tests and CI in this repo
 
@@ -555,8 +595,10 @@ checks pass.
 ### The switch
 
 1. **Adopt.** This repo moves onto v1 with a release-candidate tag. Its `forge.toml` says
-   `repo = "forge-source"`, and `forge migrate` runs in its source-repo mode: the active plans
-   become story docs and the old host hooks are replaced. The old tree stays, unused.
+   `repo = "forge-source"`, and `forge migrate` runs in its source-repo mode: this story and the
+   warm-threads story become story docs with their approvals, the FDE story becomes a draft for
+   its re-plan, the other active plans wait for the switch, and the old host hooks are replaced.
+   The old tree stays, unused.
 2. **Switch checks.** All three must pass:
    - The FDE story runs as the pilot on v1: story doc, one read, one approval, its own tasks, each
      closed by the close rule and merged. Those tasks build what the story needs (`payback`,
@@ -569,7 +611,8 @@ checks pass.
    (`tests` and `forge-pr-check`) and delete the old ones. Then delete:
    - the old tree (`factory/`, `forge`, `forge.cmd`, `harness.yaml`, `constitution/`, `install/`,
      `harness/`, `setup`);
-   - every doc other than the guide, the standards page, `docs/specs/` and `docs/decisions/`.
+   - every doc other than the guide, `docs/archive.md`, `docs/product/`, `docs/context/`,
+     `docs/specs/` and `docs/decisions/` (the standards page ships in the package).
 
    Then mark the superseded decisions and tag `v1.0.0`.
 
@@ -743,8 +786,10 @@ checks pass.
     - It refuses while work is in flight, refuses a path outside the repo, and refuses an
       `.agents/`-era layout.
     - After an interrupted run, a second run produces the same branch.
-    - In a repo whose `forge.toml` says `repo = "forge-source"`, it converts plans and writes the
-      adapter but deletes nothing.
+    - In Forge's own repo (it holds `src/forge/cli.py`), it converts only the plans the switch
+      carries, with their approvals from the old plan metadata, leaves the other active plans as
+      they are, replaces `AGENTS.md` and `CLAUDE.md` wholly, and writes `forge.toml` and the
+      adapter, but deletes nothing.
 31. **Speed.** The new suite finishes in under 5 minutes on each CI runner.
 32. **Client sign-off.**
     - In a client repo with no accepted `client-signoff` decision, a matching approval records

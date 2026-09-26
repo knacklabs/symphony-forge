@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from conftest import _install
-from test_setup import _fresh_client, _stub_forge
+from test_setup import _autoreview, _fresh_client, _stub_forge
 
 STORY = "FORGE-WARM-1"
 PIN = "0.156.1"
@@ -65,6 +65,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
+    _autoreview(tmp_path, monkeypatch)
     codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
     codex_home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(codex_home))

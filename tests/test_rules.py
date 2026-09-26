@@ -16,8 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs" / "specs" / "lean-forge-v1.md"
 WORKFLOW = ROOT / ".github" / "workflows" / "forge-next.yml"
 
-# ADOPT turns this on: then every criterion in the spec must have its test.
-EVERY_CRITERION_TESTED = False
+# Every criterion in the spec must have its test (on since ADOPT).
+EVERY_CRITERION_TESTED = True
+# The spec's own story: a test file without a STORY constant cites the spec's criteria too.
+SPEC_STORY = "FORGE-NEXT-1"
 
 
 def test_4_one_test_per_rule():
@@ -27,7 +29,8 @@ def test_4_one_test_per_rule():
         # A story's own test file sets STORY = "<key>"; its numbers cite that story's Done when.
         story = next((node.value.value for node in tree.body if isinstance(node, ast.Assign)
                       and isinstance(node.value, ast.Constant)
-                      and [getattr(target, "id", "") for target in node.targets] == ["STORY"]), "")
+                      and [getattr(target, "id", "") for target in node.targets] == ["STORY"]),
+                     SPEC_STORY)
         for node in ast.walk(tree):
             # ponytail: tests may not import forge, so they can only see command output,
             # git, files and stub calls. A direct JSON read of a state file is left to review.
@@ -49,7 +52,7 @@ def test_4_one_test_per_rule():
     if EVERY_CRITERION_TESTED:
         criteria = SPEC.read_text(encoding="utf-8").split("## Acceptance criteria")[1]
         numbers = {int(n) for n in re.findall(r"^(\d+)\. \*\*", criteria, re.M)}
-        spec = {n for story, n in cited if not story}
+        spec = {n for story, n in cited if story == SPEC_STORY}
         assert not numbers - spec, f"criteria with no test: {sorted(numbers - spec)}"
         assert not spec - numbers, f"tests citing no criterion: {sorted(spec - numbers)}"
 

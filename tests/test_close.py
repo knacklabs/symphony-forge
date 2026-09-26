@@ -428,14 +428,7 @@ def test_18_close(env, kind):
     rounds = env.review_calls()
     assert len(rounds) == 2 and rounds[1]["head"] != rounds[0]["head"]
     assert "dismissed" not in body(env.gh_calls("pr", "edit")[-1])
-
-    if kind == "task":  # once the story's last part is merged, close names `forge story done`
-        env.open_pr("", state="MERGED")
-        env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
-            [{"headRefName": "task/SHOP-T1"}, {"headRefName": "task/SHOP-T2"}]))
-        merged = env.close(item)
-        assert merged.stdout.splitlines()[-2:] == [
-            "Every part of SHOP is merged.", 'Next: forge story done SHOP "<outcome>"']
+    # Once the story's last part merges, close names `forge story done`: criterion 42's test.
 
 
 # --- criterion 19: the functional check -----------------------------------------------------

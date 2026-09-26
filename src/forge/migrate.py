@@ -20,7 +20,11 @@ worktree on forge/migrate-v1:
 - it pins forge.toml to this Forge, runs forge sync, and makes one commit.
 Its fix state (kind migrate) holds an allow-large reason naming who ran it, and the plan as notes
 for the pull request. `forge close` turns on branch protection once that pull request merged.
-With repo = "forge-source" it only converts plans and writes the adapters.
+
+In Forge's own repo (it holds src/forge/cli.py) the old Forge keeps running until the switch, so
+it deletes nothing. It converts only the plans the switch carries, reading their approvals from the
+old plan metadata, replaces AGENTS.md and CLAUDE.md wholly with the Forge block, and writes
+forge.toml (repo = "forge-source") and the adapters.
 """
 from __future__ import annotations
 
@@ -35,7 +39,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, init, repo, story, sync
+from forge import __version__, init, repo, review, story, sync
 
 REFUSALS = {
     "dirty": ("The working tree has changes that aren't committed: {paths}.",
@@ -59,6 +63,8 @@ REFUSALS = {
                 "forge migrate won't start that branch again.",
                 "look at them in {path}; if none are yours, git worktree remove --force {path}, "
                 "then forge migrate"),
+    "no_prs": ("Forge can't list the merged pull requests ({problem}), so it can't tell which "
+               "tasks are done.", "gh auth status, then forge migrate --dry-run"),
 }
 
 BRANCH, ITEM, MESSAGE = "forge/migrate-v1", "migrate-v1", "Move to Forge v1"
@@ -152,11 +158,19 @@ Converted from {old} by forge migrate.
 WHY = "Move this repo from its copied-in Forge to the installed Forge v1."
 DONE = ("Forge v1 runs this repo: forge doctor passes, every active plan is a story doc or a "
         "draft, and every Forge file you changed is set aside for you.")
+# Forge's own repo: the plans the switch carries, each with why it isn't approved ("" carries the
+# approval its old plan metadata records). Every other active plan waits for the switch.
+SOURCE_PLANS = {"FORGE-NEXT-1": "", "FORGE-WARM-1": "",
+                "FORGE-FDE-1": "the new Forge re-plans it with one fresh approval"}
+SOURCE_TEST = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
+SOURCE_WHY = "Move Forge's own repo onto Forge v1, beside the old Forge until the switch."
+SOURCE_DONE = ("Forge v1 runs its own repo: forge doctor passes, and the plans the switch carries "
+               "are story docs.")
 
 
 def migrate(args: argparse.Namespace) -> int:
     top = repo.root()
-    own = (top / "forge.toml").is_file() and repo.config(top)["repo"] == "forge-source"
+    own = (top / "src" / "forge" / "cli.py").is_file()  # Forge's own repo
     dirty = repo.run("git", "status", "--porcelain", cwd=top).stdout.splitlines()
     if dirty:
         repo.refuse(REFUSALS["dirty"], paths=", ".join(line[3:] for line in dirty[:5]))
@@ -167,7 +181,7 @@ def migrate(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["not_current"], ref=ref, default=default)
     if not own and repo.run("git", "cat-file", "-e", f"{ref}:factory", cwd=top).returncode:
         repo.refuse(REFUSALS["no_layout"], ref=ref)
-    busy = _in_flight(top)
+    busy = [] if own else _in_flight(top)  # Forge's own repo keeps its old records and work
     if busy:
         repo.refuse(REFUSALS["in_flight"], items="; ".join(busy))
     plan = _plan(top, ref, own)
@@ -232,15 +246,20 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     unsafe = any(re.search(r"[#\r\n]", phase) for phase in phases)
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
-    return {"ref": ref, "own": own, "kept": kept, "stories": _stories(top, ref, own),
+    stories = _stories(top, ref, own)
+    converted = {entry.get("old") for entry in stories}
+    return {"ref": ref, "own": own, "kept": kept, "stories": stories,
+            # Forge's own repo: the active plans it leaves for the switch to supersede.
+            "superseded": [rel for rel in _names(top, ref, "plans/active/")
+                           if own and rel.endswith(".md") and rel not in converted],
             "delete": sorted((set(vendored) - set(kept)) | set(records)
                              | (set(store) - {path for path, _ in designs})),
             "moves": [*((path, f"{KEPT}/{path}") for path in kept), *designs],  # (from, to)
             "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
             "gstack_left": left,
             # A phase with its own && or || is grouped, so it fails as one step.
-            "test": "" if unsafe else " && ".join(f"({phase})" if re.search(r"[;&|]", phase)
-                                                  else phase for phase in phases),
+            "test": SOURCE_TEST if own else "" if unsafe else " && ".join(
+                f"({phase})" if re.search(r"[;&|]", phase) else phase for phase in phases),
             "unseeded": ", ".join(json.dumps(phase, ensure_ascii=False) for phase in phases)
                         if unsafe else "",
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
@@ -304,12 +323,12 @@ def _in_flight(top: Path) -> list[str]:
 
 def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
     """Each active plan, converted; one that can't be keeps its place and says why."""
+    if own:
+        return _source_stories(top, ref)
     found: list[dict[str, Any]] = []
     # Lower-cased: a disk that ignores capitals would write plans/CACHE-BUG.md over
-    # plans/cache-bug.md. In Forge's own repo the old records stay, so an old
-    # .factory/stories/cache-bug/ would clash with the new CACHE-BUG/ the same way.
-    taken = {name.lower() for name in [*_names(top, ref, "plans/"),
-                                       *(_names(top, ref, ".factory/stories/") if own else [])]}
+    # plans/cache-bug.md.
+    taken = {name.lower() for name in _names(top, ref, "plans/")}
     for rel in _names(top, ref, "plans/active/"):
         if not rel.endswith(".md"):
             continue
@@ -317,8 +336,7 @@ def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
         fields, body = story._record(story.show(top, ref, rel) or "")  # pyright: ignore[reportPrivateUsage]
         old = fields.get("story") or fields.get("issue") or Path(rel).stem
         key = old.upper()
-        clash = next((path for path in (f"plans/{key}.md", f".factory/stories/{key}")
-                      if path.lower() in taken and path != f".factory/stories/{old}"), "")
+        clash = f"plans/{key}.md" if f"plans/{key}.md".lower() in taken else ""
         problem = (f"{old!r} can't be a story key" if not story.KEY.fullmatch(key)
                    else f"another plan already becomes {key}" if any(
                        entry.get("key") == key for entry in found)
@@ -327,12 +345,48 @@ def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
         if problem:
             found.append({"skip": f"{rel} stays as it is: {problem}"})
             continue
-        found.append(_convert(top, ref, rel, old, key, fields, story.sections(body)))
+        found.append(_convert(top, ref, rel, old, key, fields, body))
+    return found
+
+
+def _source_stories(top: Path, ref: str) -> list[dict[str, Any]]:
+    """Forge's own repo: the plans SOURCE_PLANS names, found and approved through their old plan
+    metadata (its plans have no frontmatter), dated by their old approval. Its tasks were closed by
+    pull request, so a task is done when a merged one came from exactly feat/<KEY>-<TASK>."""
+    # ponytail: one gh call for the newest 10,000; search by branch if Forge ever merges more.
+    done = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "10000", "--json",
+                    "headRefName,mergedAt", cwd=top)
+    try:
+        prs = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        prs = None
+    if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
+        said = done.stderr.strip().splitlines() or [
+            f"gh exited with code {done.returncode}" if done.returncode else "gh's answer isn't a list"]
+        repo.refuse(REFUSALS["no_prs"], problem=said[-1].rstrip("."))
+    merged = {str(pr.get("headRefName")): str(pr["mergedAt"]) for pr in prs if pr.get("mergedAt")}
+    found: list[dict[str, Any]] = []
+    for key, replan in SOURCE_PLANS.items():
+        old = f".factory/stories/{key}"
+        meta = story.json_of(story.show(top, ref, f"{old}/plan-meta.json"))
+        rel = str(meta.get("plan_file") or "")
+        text = story.show(top, ref, rel) if rel else None
+        if text is None:
+            continue  # not a plan in this repo
+        approved = story.json_of(story.show(top, ref, f"{old}/plan-approval.json"))
+        title = re.search(r"^# (.+)$", text, re.M)
+        fields = {"status": str(meta.get("status") or ""), "replan": replan,
+                  "title": title[1].strip() if title else str(meta.get("title") or key),
+                  "saved": str(approved.get("approved_at") or meta.get("saved") or "")}
+        found.append(_convert(top, ref, rel, key, key, fields, text, merged))
     return found
 
 
 def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str, str],
-             found: dict[str, str]) -> dict[str, Any]:
+             body: str, prs: dict[str, str] | None = None) -> dict[str, Any]:
+    """An old plan as a story doc. prs, in Forge's own repo only: merged branch -> merge date."""
+    own = prs is not None
+    found = story.sections(body)
     picked = {name: next((heading for heading in olds if heading in found), None)
               for name, olds in SECTIONS.items()}
     text = {name: found[heading].strip() if heading else "" for name, heading in picked.items()}
@@ -340,20 +394,27 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
     parts = re.split(r"^(\d+)\.[ \t]+", done, flags=re.M)
     items = {int(n): _flat(block) for n, block in zip(parts[1::2], parts[2::2])}
     saved, title = fields.get("saved") or repo.now(), fields.get("title") or key
-    rows, states, needs, waiting = _tasks(top, ref, old, key, items, saved)
+    rows, states, needs, waiting = (_plan_rows(found, key, prs) if prs is not None
+                                    else _tasks(top, ref, old, key, items, saved))
     moving = re.search(r"^New moving parts:.*(?:\n[ \t]*[-*].*)*", "\n".join(found.values()), re.M)
-    notes = [f"### {heading}\n\n{body.strip()}" for heading, body in found.items()
-             if heading not in picked.values() and body.strip()]
+    notes = [f"### {heading}\n\n{part.strip()}" for heading, part in found.items()
+             if heading not in picked.values() and part.strip()]
     doc = DOC.format(title=title, what=text["What changes for you"] or MISSING,
                      why=text["Why"] or MISSING, done=done or MISSING,
                      table="\n".join([*HEADER, *rows]), risks=text["Risks"] or "Risks: none",
-                     moving=moving[0] if moving else "New moving parts: none named in the old plan",
+                     # One line, as a story doc has it; a listed part keeps its words.
+                     moving=re.sub(r"\n[ \t]*[-*][ \t]+", " ", moving[0]) if moving
+                     else "New moving parts: none named in the old plan",
                      old=rel, notes="\n\n".join(notes))
+    if own:
+        with contextlib.suppress(ValueError):
+            story.parse(body)
+            doc = body  # already a story doc: it carries over word for word
     lost = [name for name in ("What changes for you", "Done when") if not text[name]]
     status, where = fields.get("status", ""), ref.removeprefix("origin/")
-    why_not = (f'its plan on {where} says "{status or "nothing"}", not "approved"'
-               if status != "approved" else
-               f'the old plan has no "{lost[0]}" section to approve' if lost else "")
+    why_not = fields.get("replan") or (
+        f'its plan on {where} says "{status or "nothing"}", not "approved"' if status != "approved"
+        else f'the old plan has no "{lost[0]}" section to approve' if lost else "")
     shipped = bool(states) and len(states) == len(rows)  # every part shipped before the move
     if not why_not:
         try:
@@ -420,11 +481,41 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
         if problems:
             needs.append(f"{tid}: {' and '.join(problems)}")
         if done:
-            at = story.merged_at(top, ref, done) or saved
-            states[f"{key}/{tid}"] = {"status": "merged", "branch": f"task/{key}-{tid}",
-                                      "touches": 0, "steps": [{"step": "merged", "at": at}]}
+            states[f"{key}/{tid}"] = _merged(key, tid, story.merged_at(top, ref, done) or saved)
         else:
             waiting.append(row)
+    return rows, states, needs, waiting
+
+
+def _merged(key: str, tid: str, at: str) -> dict[str, Any]:
+    """The state of a task merged before the move."""
+    return {"status": "merged", "branch": f"task/{key}-{tid}", "touches": 0,
+            "steps": [{"step": "merged", "at": at}]}
+
+
+def _plan_rows(found: dict[str, str], key: str, prs: dict[str, str],
+               ) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
+    """Forge's own plans: the Tasks rows from the plan's own table, in the old plan's columns
+    ("Label / exact task ID", "Depends on", "user_facing") or a story doc's. A task is merged
+    when a pull request from exactly feat/<KEY>-<TASK> merged, on that date."""
+    rows: list[str] = []
+    states: dict[str, Any] = {}
+    needs: list[str] = []
+    waiting: list[str] = []
+    for row in review.rows(found.get("Tasks") or found.get("Task decomposition") or ""):
+        name, _, tid = row.get("label / exact task id", "").rpartition(" / ")
+        tid, facing = row.get("id") or tid, row.get("user-facing") or row.get("user_facing", "")
+        rows.append("| " + " | ".join(_cell(cell) for cell in (
+            tid, row.get("name") or name, row.get("what it delivers", ""), row.get("covers", ""),
+            row.get("scope", ""), row.get("tests", ""), row.get("after") or row.get("depends on")
+            or "none", "yes" if facing.lower() in ("yes", "true") else "no")) + " |")
+        if not row.get("scope", "").strip(" `—-"):
+            needs.append(f"{tid}: no Scope")
+        at = prs.get(f"feat/{key}-{tid}")
+        if at:
+            states[f"{key}/{tid}"] = _merged(key, tid, at)
+        else:
+            waiting.append(rows[-1])
     return rows, states, needs, waiting
 
 
@@ -463,7 +554,8 @@ def _report(plan: dict[str, Any], default: str) -> str:
     """The plan in plain English: what --dry-run prints, and the notes of the pull request."""
     lines: list[str] = []
     if plan["own"]:
-        lines.append('This is Forge\'s own repo (repo = "forge-source"), so nothing is deleted.')
+        lines.append("This is Forge's own repo (it holds src/forge/cli.py), so nothing is deleted: "
+                     "the old Forge keeps its files and records until the switch.")
     else:
         lines.append("Deletes the copied-in Forge, these paths and nothing else (git history "
                      "keeps them):")
@@ -506,8 +598,16 @@ def _report(plan: dict[str, Any], default: str) -> str:
             lines += ["  Parts not done yet:", *(f"  {row}" for row in [*HEADER, *entry["waiting"]])]
         if entry["needs"]:
             lines.append(f"  Needs you in {entry['dest']}: {'; '.join(entry['needs'])}.")
+    if plan["superseded"]:
+        count = len(plan["superseded"])
+        lines.append(f"Leaves {count} other active plan{'s' * (count != 1)} as they are, "
+                     "superseded at the switch:")
+        lines += [f"- {rel}" for rel in plan["superseded"]]
     if plan["own"]:
-        lines.append("Writes the adapters for Claude Code and Codex with forge sync.")
+        lines += ["Replaces AGENTS.md and CLAUDE.md wholly with the Forge block.",
+                  f"Writes forge.toml pinned to Forge v{__version__} (repo = \"forge-source\", "
+                  f"test = {json.dumps(plan['test'])}), and the adapters for Claude Code and Codex "
+                  "with forge sync."]
     else:
         if plan["agents"] == "replace":
             lines.append("Replaces AGENTS.md, which is the old Forge's word for word, with the "
@@ -575,16 +675,18 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
         sync.write_file(path, entry["dest"], entry["text"])
         touched += [entry["dest"], *(repo.write_state(item, data, path)
                                      for item, data in entry["states"].items())]
-    toml = (sync.read(top / "forge.toml") if plan["own"]
-            else init._scaffold(path)["forge.toml"])  # pyright: ignore[reportPrivateUsage]
-    if plan["test"]:  # the old verify commands, not the stack's default
+    toml = init._scaffold(path)["forge.toml"]  # pyright: ignore[reportPrivateUsage]
+    if plan["own"]:
+        toml = toml.replace('repo = "client"', 'repo = "forge-source"')
+    if plan["test"]:  # the old verify commands (Forge's own suite here), not the stack's default
         toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml,
                       count=1, flags=re.M)
     sync.write_file(path, "forge.toml", toml)
     touched.append("forge.toml")
-    if plan["agents"] == "replace":  # sync then writes only the Forge block
-        sync.write_file(path, "AGENTS.md", "")
-        touched.append("AGENTS.md")
+    for name in (("AGENTS.md", "CLAUDE.md") if plan["own"]
+                 else ("AGENTS.md",) if plan["agents"] == "replace" else ()):
+        sync.write_file(path, name, "")  # sync then writes only the Forge block
+        touched.append(name)
     if plan["claude_import"]:
         sync.write_file(path, "CLAUDE.md", IMPORT.sub("", sync.read(path / "CLAUDE.md")))
         touched.append("CLAUDE.md")
@@ -594,8 +696,9 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
     cfg = repo.config(path)
     touched += sync.write(path, cfg)
     who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=path).split("<")[0].strip()
-    fix = {"kind": "migrate", "why": WHY, "done_when": DONE, "branch": BRANCH, "status": "started",
-           "allow_large": f"Moving to Forge v1 replaces the copied-in Forge in one change; {who} "
+    why, done_when = (SOURCE_WHY, SOURCE_DONE) if plan["own"] else (WHY, DONE)
+    fix = {"kind": "migrate", "why": why, "done_when": done_when, "branch": BRANCH,
+           "status": "started", "allow_large": f"Moving to Forge v1 replaces the copied-in Forge in one change; {who} "
                           "allowed it by running forge migrate.",
            "base": repo.git("rev-parse", plan["ref"], cwd=path), "touches": 0, "notes": report}
     touched.append(repo.write_state(ITEM, repo.add_step(fix, "start"), path))
