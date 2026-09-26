@@ -2,7 +2,12 @@
   "branch": "task/FORGE-FDE-1-MEASURE",
   "review": {
     "commit": "2bbc20096d9492aadf77b96092db1fab34e7e0ba",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/nextstep.py:1 forge next has no discovery prompt yet; DISCOVER adds it, so the crossing test that orders the due check before discovery is written in DISCOVER's tests/test_discovery.py",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "The explicitly required test crossing the due check and discovery prompt is missing. This assertion checks ordering only against generic idle output; it never exercises discovery, so it cannot detect discovery suppressing or preceding a due check. Add the required case exercising both outputs and asserting that the due check comes first.",
@@ -12,10 +17,10 @@
         "title": "Not done: due-check precedence over discovery test"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "994b924236777da1dfbc9719ae30bab61f77a24c191eb8dfafbc7a14380f75d0"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T10:24:54+00:00",
