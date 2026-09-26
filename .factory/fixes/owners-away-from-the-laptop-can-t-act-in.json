@@ -1,0 +1,14 @@
+{
+  "base": "eb14a14cb53cff7798c87d3110ad76dc844e84fb",
+  "branch": "fix/owners-away-from-the-laptop-can-t-act-in",
+  "done_when": "forge sync installs a remote-approval skill for Claude Code that starts a plainly named claude remote-control session in a chosen checkout, and doctor's drift check covers it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-26T08:07:15+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Owners away from the laptop can't act in a session that needs another checkout's hooks"
+}
