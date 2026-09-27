@@ -1,0 +1,24 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "task/FORGE-MERGE-1-THE-OWNER-WANTS-THE-AGENT-TO-MERGE-READY",
+  "done_when": "docs/specs/agent-merge.md is confirmed by the owner and on the roadmap as FORGE-MERGE-1",
+  "review": {
+    "commit": "f242804c2f4e336d8860c53406b87e756b2c9014",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "72e0e513d805f8c4b4e39df56c4d1d673be98a00f271649dcca25e9d35c60b74"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T14:52:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:11+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet"
+}

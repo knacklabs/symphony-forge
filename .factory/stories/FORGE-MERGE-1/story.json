@@ -1,0 +1,28 @@
+{
+  "approval": {
+    "at": "2026-09-27T15:03:09+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01QUUyRywxSeQoW4mkNpUeVZ",
+    "hash": "f45f56eeb99add8ca828acc063523ea3578d81e64eab93d6d70990a01c43fa9b",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-MERGE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-27T14:58:52+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:01:43+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-27T15:03:09+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet",
+  "touches": 1
+}
