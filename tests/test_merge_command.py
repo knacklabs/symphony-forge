@@ -195,7 +195,7 @@ def _check_dirty_merge(
     assert "GitHub has not finished merging" in queued.stderr
     assert where.exists()
     _merge_at_github(env)
-    subprocess.run([str(env.repo.bin / "gh"), "pr", "merge", "7", "--squash", "--subject", "Tidy readme",
+    subprocess.run([sys.executable, str(env.repo.bin / "gh"), "pr", "merge", "7", "--squash", "--subject", "Tidy readme",
                     "--match-head-commit", head], cwd=env.repo.path, check=True)
     env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
         [{"headRefName": "fix/tidy-readme"}]))
@@ -278,15 +278,37 @@ def _check_archive_retry(env, sdk_data, tmp_path, monkeypatch):
     assert item not in env.repo.forge("next").stdout
 
 
-@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry"))
+def _check_locked_worktree(env):
+    item, where = _ready(env)
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    _merge_at_github(env)
+    env.repo.git("worktree", "lock", str(where))
+    blocked = env.repo.forge("merge", item)
+    assert blocked.returncode != 0
+    assert blocked.stderr == (f"Forge could not remove the worktree for {item}.\n"
+                              f"Next: unlock it or close programs using it, then forge merge {item}\n")
+    assert where.is_dir()
+    assert (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").is_file()
+    env.repo.git("worktree", "unlock", str(where))
+    retried = env.repo.forge("merge", item)
+    assert retried.returncode == 0, retried.stderr
+    assert not where.exists()
+
+
+@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry", "locked_worktree"))
 def test_5_merge_cleans_up_only_after_archiving_and_preserves_local_work(
         env, sdk_data, tmp_path, monkeypatch, scenario):
     if scenario == "dirty":
         _check_dirty_merge(env, sdk_data, tmp_path, monkeypatch)
     elif scenario == "local_commit":
         _check_later_local_commit(env)
-    else:
+    elif scenario == "archive_retry":
         _check_archive_retry(env, sdk_data, tmp_path, monkeypatch)
+    else:
+        _check_locked_worktree(env)
 
 
 def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(

@@ -19,6 +19,8 @@ REFUSALS = {
                       "check the branch on GitHub, then forge merge {item}"),
     "archive": ("Forge could not archive every Codex conversation for {item}.",
                 "try forge merge {item} again"),
+    "worktree": ("Forge could not remove the worktree for {item}.",
+                 "unlock it or close programs using it, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -62,16 +64,18 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
         if not merged:
             repo.refuse(REFUSALS["pending"], item=item)
+    survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
+                     if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
     pending = receipt.get("pending_archives")
     if pending is None:
-        pending = sorted(_conversations(top, item))
+        pending = sorted(_conversations(survivor, item))
         receipt["pending_archives"] = pending
         _save_ready(path, receipt)
     if not isinstance(pending, list) or not all(isinstance(thread, str) for thread in pending):
         repo.refuse(REFUSALS["not_ready"], item=item)
     for thread in pending[:]:
         try:
-            archived = codex.archive(top, item, "Fix", thread)
+            archived = codex.archive(survivor, item, "Fix", thread)
         except Exception:
             archived = False
         if not archived:
@@ -91,8 +95,6 @@ def merge(args: argparse.Namespace) -> int:
         if deleted.returncode:
             repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
-    survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
-                     if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
     dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
     advanced = repo.git("rev-parse", branch, cwd=worktree) != head
     if advanced:
@@ -100,7 +102,11 @@ def merge(args: argparse.Namespace) -> int:
     elif dirty:
         print(f"Merged {item}. Its worktree at {worktree} has uncommitted changes, so Forge left it and its local branch in place.")
     else:
-        repo.git("worktree", "remove", str(worktree), cwd=survivor)
+        if top == worktree:
+            os.chdir(survivor)
+        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=survivor)
+        if removed.returncode:
+            repo.refuse(REFUSALS["worktree"], item=item)
         if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=survivor).returncode == 0:
             repo.git("branch", "-D", branch, cwd=survivor)
         print(f"Merged {item} and removed its worktree and local branch.")
