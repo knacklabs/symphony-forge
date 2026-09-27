@@ -4,26 +4,19 @@
   "done_when": "each forge work round and each forge close appends one JSON line per step (worker round, review, CI wait) to .git/forge/timings.jsonl, never committed, with the item, the step, the model and effort where one ran, start time, seconds taken and outcome; a failed write never fails the command; a test through the real commands proves the lines",
   "kind": "fix",
   "review": {
-    "commit": "838137522358fb172c766d56f1392f2c75fe1152",
+    "commit": "75ac8e4d9531deaa25897a8fda675e40ba039620",
     "dismissals": [],
     "findings": [
       {
-        "body": "Both new tests use the Claude-only fixture (`tests/test_close.py:229`). No test reads timings.jsonl after a Codex worker round, although that path has separate completion handling and switches subsequent rounds to the Fix model (`src/forge/worker.py:62\u201364`). Omitting timing records for Codex, or recording the wrong outcome or model on subsequent rounds, would pass the suite's timing assertions. Add command-level coverage using the existing Codex service stub for initial and subsequent rounds, including an unsuccessful turn.",
+        "body": "The timing tests exercise successful Claude workers and unsuccessful Codex turns, but never assert a timing record after Claude fails. These use different failure paths: `src/forge/worker.py:303\u2013304` raises a refusal for Claude, whereas the tested Codex failure returns a status. The existing failure test at `tests/test_worker.py:122\u2013126` checks only command output. Losing the timing record or recording a successful outcome on Claude failure would therefore pass the suite. Add a real `forge work` failure scenario using `STUB_CLAUDE_EXIT`, and assert that it appends a failed worker-round record with the required timing and model fields.",
         "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-        "line": 33,
+        "line": 34,
         "priority": "P1",
-        "title": "Not done: prove Codex worker-round timings through forge work"
-      },
-      {
-        "body": "The timing assertions exercise only a clean review and passing CI; the sole unsuccessful timing case is a Claude worker failure. Existing close failure tests (`tests/test_close.py:411\u2013438`) do not inspect timings.jsonl. Consequently, dropping review or CI timing records on exceptions, or always reporting successful outcomes, would escape these tests. Extend the real-command tests to assert appended records and outcomes for a blocked review, an unsuccessful review, and failed CI checks.",
-        "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-        "line": 58,
-        "priority": "P1",
-        "title": "Not done: prove timing records for blocked and failed close steps"
+        "title": "Not done: prove failed Claude worker timings through forge work"
       }
     ],
     "status": "blocked",
-    "tree": "8535558421f6f5586796210ca517c04e8eabeb4b4543287d39becc6a6b4da0bc"
+    "tree": "efcb72726cfc550253bc19df961107299cbe9f4086a2534998f5ef3d38720124"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +30,10 @@
     },
     {
       "at": "2026-09-27T18:19:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:41:02+00:00",
       "step": "review"
     }
   ],
