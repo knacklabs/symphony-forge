@@ -212,10 +212,18 @@ Open one only when your task touches its concern; the rules on this page apply e
   for client apps, the running API with a real database and user flows in a browser through
   Playwright. Each bug fix adds a test that fails without the fix. Fake only third-party services
   at their edge.
+- Each user-facing Done-when item gets one Playwright browser test; an item with no UI gets an HTTP
+  test against the running app and a real database.
 - Unit tests are only for pure logic with many cases, never an item's only proof. Review reports
   an item proven only by unit tests as a P1 `Not done` and never asks for unit tests of helpers.
 - Tests build their own data with factories, own that data, don't depend on order, and never sleep.
   A skipped test names the reason next to it.
+- Client tests create their data through the app's API on a fresh database per run, with no shared
+  seed or direct database inserts.
+- Playwright retries are zero; fix intermittent failures by waiting for real app state, never by
+  adding a fixed sleep.
+- New and changed flows get browser tests now; an untouched old flow gets one when a story first
+  changes it, with no backfill.
 - Test behaviour, not markup or internals. There is no coverage target: a number invites tests
   that prove nothing, and the review's test audit judges each test instead.
 - forge.toml's `test` command runs everything CI needs (install, lint, typecheck, all tests), so a
