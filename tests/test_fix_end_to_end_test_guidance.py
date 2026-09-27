@@ -20,6 +20,10 @@ def assert_end_to_end_rule(text: str) -> None:
         "never an item's only proof",
     ):
         assert phrase in text, phrase
+    assert "an item proven only by unit tests as a P1" in text
+    assert "`Not done`" in text or "`Not done: <the item>`" in text
+    assert ("never asks for unit tests of helpers" in text
+            or "Never ask for unit tests of helpers" in text)
 
 
 def test_1_standards_require_end_to_end_proof_for_every_item():
