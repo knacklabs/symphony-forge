@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-27T04:58:34+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01EgtxWwDZcbh69J5uKD2gZZ",
+    "hash": "f3099d01e88d8d7881a25da2539f267aaabc73befe15195cb6179aab02737c7f",
+    "runtime": "claude",
+    "session": "8f76f857-9f92-5339-9117-6303dd206a9a"
+  },
   "doc": "plans/FORGE-STEER-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-27T04:51:24+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:55:02+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-27T04:58:34+00:00",
+      "step": "approved"
     }
   ],
   "title": "The coordinator can steer and question its Codex workers",
-  "touches": 0
+  "touches": 1
 }
