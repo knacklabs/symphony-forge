@@ -4,28 +4,13 @@
   "done_when": "forge close accepts a --because file:line that is a line of the base commit when the branch deletes that file, and says in the review block that the evidence is from the base; any other path still needs a line of the reviewed commit; a test covers a deleted file, a present file and a missing line",
   "kind": "fix",
   "review": {
-    "commit": "9a7b340d0a6163f71c305ef7ee77759bc2f8324f",
+    "commit": "7d8c7ae044a76d71901720954ecc21b29ad21e3b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The present-file case only cites a valid reviewed line. It never checks a file shortened by the branch whose cited line still exists in the base. The existing rejection test at tests/test_close.py:375 also lacks that setup. Consequently, an implementation that falls back to any valid base line would pass these tests while violating \u201cany other path still needs a line of the reviewed commit.\u201d Add a case retaining the file, removing a line, and asserting that citing that base-only line is refused.",
-        "file": "tests/test_fix_forge_close_deleted_evidence.py",
-        "line": 12,
-        "priority": "P1",
-        "title": "Not done: test rejects base-only lines for files still present"
-      },
-      {
-        "body": "For a deleted filename containing non-ASCII characters, such as `caf\u00e9.txt`, Git's default quoting makes the emitted name differ from `path`. The membership check returns false, so a valid base citation is rejected against the reviewed commit. Git documents this behavior for [`--name-only` without `-z`](https://git-scm.com/docs/git-diff). Use NUL-delimited output and split on NUL so deletion detection compares literal filenames.",
-        "file": "src/forge/close.py",
-        "line": 118,
-        "priority": "P2",
-        "title": "Handle quoted filenames when detecting deletions"
-      }
-    ],
-    "status": "blocked",
-    "tree": "09b7681f3520a744512acf0aaa65b1d0a613a24cee1b226362c402f6fcfb4d08"
+    "findings": [],
+    "status": "clean",
+    "tree": "047a18310cb7ed644bef128c3798ef7986aa94535ba5ab326a06ac70f59a73f2"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T05:54:24+00:00",
@@ -33,6 +18,10 @@
     },
     {
       "at": "2026-09-27T06:05:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T06:13:47+00:00",
       "step": "review"
     }
   ],
