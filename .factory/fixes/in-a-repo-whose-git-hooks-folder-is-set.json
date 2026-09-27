@@ -3,7 +3,7 @@
   "branch": "fix/in-a-repo-whose-git-hooks-folder-is-set",
   "done_when": "forge sync installs Forge's git hooks in the folder git actually uses (core.hooksPath when set) and still runs the hooks already there, forge doctor reports a hooks folder without them, and a test proves both with a Husky-style hooks path",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T15:22:27+00:00",
