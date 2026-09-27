@@ -7,6 +7,24 @@ charge of the decisions: what gets built, which option to pick, and when it goes
 A *pull request* is a proposed change to the code that gets checked before it is added.
 *Merging* it is the moment the change becomes part of the real project.
 
+## Where it comes from
+
+In April 2026 OpenAI published
+[*An open-source spec for Codex orchestration: Symphony*](https://openai.com/index/open-source-codex-orchestration-symphony/)
+([openai/symphony](https://github.com/openai/symphony)). Its idea: the slow part of building with
+AI agents was never the agents, it was people watching them. So stop supervising agent sessions
+one by one and hand them whole pieces of work instead. The spec is a description of the idea, not
+a tool.
+
+Symphony Forge is that idea made into a working tool. It keeps the core (you assign work, agents
+do it) and differs in three ways:
+
+| | Symphony (the spec) | Symphony Forge |
+|---|---|---|
+| **Who runs it** | Codex only | Claude Code or Codex plans with you; Codex workers build |
+| **Where the truth lives** | The issue tracker | The repo: plans, specs, decisions and each change's state |
+| **Checks before a change goes in** | Left open on purpose | One approval of the plan, an automatic review and green tests on every change |
+
 ## Who it's for
 
 - **Developers:** every change runs in its own branch, and it isn't ready until the tests pass
@@ -36,6 +54,27 @@ There are two sizes of change:
   the plan, the independent read and your approval.
 - **Fix:** a small change. It needs only a one-line reason and a "done when", but still gets its
   own branch, the tests and the review.
+
+## From idea to production
+
+This is the whole path a piece of work takes, from a first conversation to running in
+production. There is no separate prototype step: the first story is already the smallest version
+the client can really use.
+
+| Stage | What happens | Who | Where it's kept |
+|---|---|---|---|
+| 1. Find the problem | The agent interviews you (and, through you, the customer) about what really happens today, and writes it as a problem card: the job, today's workaround, what it costs, who feels it | Agent asks, you answer | `docs/product/DISCOVERY.md` |
+| 2. Pick an option | Two to four options, always including "don't build" and "smallest slice", each with an estimate of when it pays back | Agent proposes, you choose | `forge spec payback` |
+| 3. Write the spec | What it should do, how you'll know it worked, and what's out of scope. One independent read, then you confirm it | Agent writes, you confirm | `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm` |
+| 4. Client sign-off | In a client's repo, no story can be approved until the client's sign-off is recorded | Client and you | `forge decision new client-signoff`, `forge decision accept` |
+| 5. Plan the stories | The spec becomes stories on the roadmap, the smallest usable slice first, with no setup-only stories | Agent plans, you approve each story once | `plans/roadmap.json`, `forge roadmap add`, `forge story new` |
+| 6. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
+| 7. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
+| 8. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge | GitHub |
+| 9. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
+
+A small change is a fix: it gets a short version of stage 1 (at most two questions), then goes
+straight to build, check and ship.
 
 ## What you do vs what the agent does
 
