@@ -1,19 +1,26 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
   "review": {
-    "commit": "ee4caaf84e21f6744ab26edfc665b9b6dd762047",
+    "commit": "0261d562c534c3bcab5a3ae3ad52ecadb4e1d310",
     "dismissals": [],
     "findings": [
       {
-        "body": "The stub releases the writer based only on attempt count, so successful recovery does not establish that Forge waited a few seconds. The later concurrent-command check verifies lock exclusion but imposes no minimum retry delay; a subsecond wait can still pass. Add command-level coverage that records timestamps at the app-server boundary and asserts the interval between resume attempts, or keeps the simulated writer active for a measured interval. This is required coverage for item 3 under the test-audit contract.",
+        "body": "The survival assertion checks only the unrelated Python sleeper created on line 74. That process neither represents Codex nor holds the resumed conversation, so code that selectively terminates the competing Codex writer could still pass this test. The stub returns the active-writer error without any corresponding holder. Add command-level coverage with a separate simulated Codex holder and verify that it survives both retry recovery and fresh-start fallback. Item 3 explicitly requires this protection.",
         "file": "tests/test_steer_resume.py",
-        "line": 22,
+        "line": 89,
         "priority": "P1",
-        "title": "Not done: test the few-second delay before the active-writer retry"
+        "title": "Not done: test that active-writer recovery leaves the holder running"
+      },
+      {
+        "body": "This added file persists workflow status and a previous review report. Neither the driver change nor its required tests need it, and it falls outside the expressly permitted production path and required test file. Remove it from the selected change.",
+        "file": ".factory/stories/FORGE-STEER-1/tasks/RESUME.json",
+        "line": 1,
+        "priority": "P2",
+        "title": "Remove the out-of-scope task review record"
       }
     ],
     "status": "blocked",
-    "tree": "ee94039d2c1b7e672a6d056b2e886261ea28744a5042a73cbf94def9453aa966"
+    "tree": "9bc89c9c0bad783a5b518be52f3f99f700f2312350b1c1e7a9eaa3b8e74700e6"
   },
   "status": "fixing",
   "steps": [
@@ -27,6 +34,10 @@
     },
     {
       "at": "2026-09-27T14:57:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:05:49+00:00",
       "step": "review"
     }
   ]
