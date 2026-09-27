@@ -3,11 +3,37 @@
   "branch": "fix/forge-records-no-timings-so-nobody-can-t",
   "done_when": "each forge work round and each forge close appends one JSON line per step (worker round, review, CI wait) to .git/forge/timings.jsonl, never committed, with the item, the step, the model and effort where one ran, start time, seconds taken and outcome; a failed write never fails the command; a test through the real commands proves the lines",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "452f2ecb25737bcbeee5d25359c38a92da5608c8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Review timings record only explicit configuration overrides. This repository's forge.toml:33\u201334 specifies a review model without effort, and src/forge/review.py:218\u2013221 allows both settings to come from Autoreview defaults. Consequently, ordinary reviews omit effort, and configurations without models.review omit both fields even though a model ran. This fails the Done-when requirement and prevents comparing review costs by model and effort. Record the effective settings and cover defaulted settings through forge close.",
+        "file": "src/forge/close.py",
+        "line": 76,
+        "priority": "P1",
+        "title": "Not done: record the effective review model and effort"
+      },
+      {
+        "body": "The timing assertions accept a fixed parseable timestamp and seconds permanently set to zero. Such an implementation would pass every new test while defeating the stated purpose of measuring how long steps take. Extend the command-level test with controlled delays at the external service boundaries and assert that recorded durations include those delays and start timestamps correspond to the command's execution window.",
+        "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+        "line": 38,
+        "priority": "P1",
+        "title": "Not done: prove elapsed time and start time through the real commands"
+      }
+    ],
+    "status": "blocked",
+    "tree": "8622e12c5a82bfd684ec3511ebb84c7b745e33e7c89d99a401e86d578338e62d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T17:51:49+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T18:01:22+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge records no timings, so nobody can tell how long worker rounds, reviews and CI waits take or which models and steps are worth tuning"
