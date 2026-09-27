@@ -3,7 +3,7 @@
   "branch": "fix/forge-migrate-marks-an-active-plan-finis",
   "done_when": "forge migrate calls a story finished only when every Tasks row is done in the old Forge's records (.factory/stages.json and task markers); a story with a pending part is not converted as finished and gets a replan draft under .forge-migrate/replan/ like a malformed one, and the dry run says which parts are pending; a test covers a story with one pending part",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T03:14:26+00:00",
