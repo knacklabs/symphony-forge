@@ -134,7 +134,8 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
 
     Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
     """
-    return {OVERRIDES[key]: value for key, value in repo.models(cfg, kind.lower(), "codex").items()}
+    return {OVERRIDES[key]: value for key, value in repo.models(
+        cfg, "lite" if kind == "Ask" else kind.lower(), "codex").items()}
 
 
 def record(checkout: Path, item: str) -> dict[str, Any]:
@@ -186,7 +187,7 @@ def recover(checkout: Path, item: str) -> None:
             _record(path, pending=None)
             return
         last = {"conversation": conversation, "turn": unlogged[-1], "kind": pending["kind"],
-                "started": None}
+                "started": None, **({"note": pending["note"]} if "note" in pending else {})}
     if reported.get(last["turn"]) == "inProgress":
         repo.refuse(REFUSALS["running"], item=item, command="work")
     status = reported.get(last["turn"]) or "lost"
@@ -204,7 +205,7 @@ def recover(checkout: Path, item: str) -> None:
 
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
-        read: bool = False) -> dict[str, Any]:
+        read: bool = False, note: str | None = None, echo: bool = True) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. `fresh` says why a new one
     starts, and the conversation is recorded with the story's `approval`. With `read`, run no
@@ -225,9 +226,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     """
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": settings(repo.config(checkout), kind), "thread": thread, "read": read}
-    log = repo.work_log(checkout, item)
+    log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
+           repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
-    command = "read" if kind == "Grill" else "work"
+    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
     started: dict[str, Any] = {}
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
@@ -240,7 +242,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace", **GROUP) as driver:
-        out.write(f"--- forge work {item} at {repo.now()}\n")
+        out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
         def recorded() -> None:
@@ -297,7 +299,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     begun = repo.git("rev-parse", "HEAD", cwd=checkout)
                     ended = {} if said["continued"] else {"head": None}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending={"kind": kind, "start": begun, **continued},
+                            approval=approval, pending={"kind": kind, "start": begun, **continued,
+                                                        **({"note": note} if note is not None else {})},
                             **ended)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
@@ -306,7 +309,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "turn" in said:
                     result["turn"] = said["turn"]
                     started = {"conversation": result["conversation"], "turn": said["turn"],
-                               "kind": kind, "started": repo.now()}
+                               "kind": kind, "started": repo.now(),
+                               **({"note": note} if note is not None else {})}
                     _append(turns, started)
                     _record(record, start=begun, pending=None, **continued)
                     text = ""
@@ -326,7 +330,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 else:
                     text = _event(said)
                 if text:
-                    print(text, flush=True)
+                    if echo:
+                        print(text, flush=True)
                     out.write(text + "\n")
         finally:  # on an error or Ctrl-C too: the driver ends its group once stdin closes
             with contextlib.suppress(OSError):  # a driver that has gone already can't be told
@@ -383,10 +388,12 @@ def _append(path: Path, line: dict[str, Any]) -> None:
 
 def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
-    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name> or threads/read/<item>."""
+    worktree shares: threads/task/<STORY>/<TASK>, threads/fix/<name>, threads/read/<item>
+    or threads/ask/ask."""
     # A cold read's item is its story key or spec slug, so reads get their own folder: a spec and
     # a fix of one name never share a conversation.
-    folder = "read" if kind == "Grill" else "task" if "/" in item else "fix"
+    folder = ("read" if kind == "Grill" else "ask" if kind == "Ask" else
+              "task" if "/" in item else "fix")
     path = repo.forge_dir(checkout) / "threads" / folder / f"{item}{suffix}"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
@@ -524,7 +531,7 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     if any still run and give the lock back. A lock whose owner is gone is cleared; a live one
     refuses."""
     lock, record = (_item_file(checkout, item, suffix, kind) for suffix in (".lock", ".json"))
-    command = "read" if kind == "Grill" else "work"
+    command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
     held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
     if held:
         owner, alive = held
