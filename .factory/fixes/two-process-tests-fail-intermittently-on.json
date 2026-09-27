@@ -1,0 +1,33 @@
+{
+  "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
+  "branch": "fix/two-process-tests-fail-intermittently-on",
+  "done_when": "the root cause of each intermittent failure is found and fixed in the test or the code, never by skipping or retrying, and each test passes 30 times in a row under pytest-xdist on this machine",
+  "kind": "fix",
+  "review": {
+    "commit": "573a91afd4e3c524be870865cc56f0d187289ae0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The added scenarios repeat existing command-level coverage: tests/test_codex_record.py:209\u2013227 already checks SIGINT cleanup of the lock, driver and server, and tests/test_codex_reader.py:94\u201398 already checks crashed-read cleanup through `forge doctor`. Both already exercise the modified helpers. The new file adds repeated repository setup and process launches without independently guarding either fix. Move the additional pre-cleanup liveness assertion into the existing cold-read test and remove the duplicate scenarios, consistent with the requested complexity and test-audit constraints.",
+        "file": "tests/test_fix_two_process_tests_fail_intermittently_on.py",
+        "line": 19,
+        "priority": "P2",
+        "title": "Simpler: duplicate process tests \u2192 extend the existing tests"
+      }
+    ],
+    "status": "clean",
+    "tree": "6edace728d361d51213f6ff6bd917a93307eda86582d56fc2be825c42c0bebf3"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T15:29:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:14:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Two process tests fail intermittently on CI and block unrelated pull requests: tests/test_codex_record.py::test_5_one_worker_per_item and tests/test_codex_reader.py::test_10_the_cold_read_runs_on_the_other_family"
+}

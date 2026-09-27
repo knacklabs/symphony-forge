@@ -131,10 +131,16 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
     the stub's process id (on Windows the record's app-server is the .cmd that started it)."""
     stuck = {"stall": "initialize", "hold": "thread/start"}[status]
     servers = len([call for call in _stub(calls) if "pid" in call])
-    work = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
-                             *(args or ("work", "BOARD/PAGE"))], cwd=cwd or repo.path,
-                            env={**os.environ, "STUB_CODEX_STATUS": status},
-                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    # xdist may ignore SIGINT; the child must start with Ctrl-C enabled.
+    interrupt = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    try:
+        work = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
+                                 *(args or ("work", "BOARD/PAGE"))], cwd=cwd or repo.path,
+                                env={**os.environ, "STUB_CODEX_STATUS": status},
+                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    finally:
+        signal.signal(signal.SIGINT, interrupt)
     for _ in range(600):
         try:  # the stub may be halfway through a line
             said = _stub(calls)
@@ -158,7 +164,13 @@ def _freeze(pid: int) -> None:
     every process it started."""
     if os.name != "nt":
         os.kill(pid, signal.SIGSTOP)
-        return
+        for _ in range(200):
+            state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True,
+                                   text=True).stdout.strip()
+            if state.startswith("T"):
+                return
+            time.sleep(0.05)
+        pytest.fail(f"process {pid} never stopped")
     import ctypes
     listed = subprocess.run(["powershell", "-NoProfile", "-Command",
                              "Get-CimInstance Win32_Process | ForEach-Object "
@@ -231,11 +243,12 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
         before = len(_sent(calls, "thread/start"))
         unknown = repo.forge("work", "BOARD/PAGE")
         (repo.bin / "ps").unlink()
-        stub = [call["pid"] for call in _stub(calls) if "pid" in call][-1]
-        assert unknown.stderr == ("Forge can't read the start time and command of the Codex "
-                                  f"app-server, process {stub}, so it stopped Codex before any "
-                                  "conversation.\nNext: forge work BOARD/PAGE\n")
-        assert len(_sent(calls, "thread/start")) == before and _down(stub)
+        prefix = "Forge can't read the start time and command of the Codex app-server, process "
+        suffix = ", so it stopped Codex before any conversation.\nNext: forge work BOARD/PAGE\n"
+        assert unknown.stderr.startswith(prefix) and unknown.stderr.endswith(suffix), unknown.stderr
+        stopped = unknown.stderr.removeprefix(prefix).removesuffix(suffix)
+        assert stopped.isdecimal()
+        assert len(_sent(calls, "thread/start")) == before and _down(int(stopped))
         assert _saved(record)["app_server"] is None and not lock.exists()
 
     # The app-server, the conversation, and HEAD once the turn ends, join the record.

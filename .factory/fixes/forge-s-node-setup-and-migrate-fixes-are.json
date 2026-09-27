@@ -26,5 +26,5 @@
       "step": "review"
     }
   ],
-  "why": "Forge's Node-setup and migrate fixes are on main but not in a release, so clients pinned to v1.0.0 (myclaw) don't get them"
+  "why": "Forge's Node-setup and migrate fixes are on main but not in a release, so clients pinned to v1.0.0 (a copied-in client) don't get them"
 }
