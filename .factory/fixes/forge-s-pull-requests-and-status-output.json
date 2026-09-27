@@ -5,39 +5,32 @@
   "done_when": "PR titles are short (a task: story title: task name; a fix: the why's first clause, 70 characters at most), a promoted spec task's ID is SPEC, the PR body labels Why and Done when and the review block opens with a plain verdict and no hash, the board's GitHub call succeeds on this repo and links each item to its PR, and forge next says which items are ready to merge with their PR link and names the findings a close stopped on; tests through the real commands prove each; the board also lists active stories first, folds finished fixes into one collapsed line with their count, and uses plainer status words; existing tests that expect the old titles, IDs, PR body or output are updated to the new wording, since that change is deliberate",
   "kind": "fix",
   "review": {
-    "commit": "d4e5f8a9ba32240e29d9cd3c7886661db5dd6895",
+    "commit": "6a2611443c3a3998108589ad8ffb90b32b55f1e7",
     "dismissals": [],
     "findings": [
       {
-        "body": "The first clause supplied here is shorter than 70 characters. Removing `[:70]` from production would therefore leave this test passing, so the explicitly required length limit has no effective regression test. Exercise `forge close` with a first clause longer than 70 characters and assert the resulting title's exact content and length.",
+        "body": "The comma in this test occurs after character 70, so replacing production's clause splitting with `why[:70]` would still pass both assertions. The other title tests use single-clause inputs. Add a `forge close` case with a short first clause followed by more text, and assert that only the first clause becomes the title. The explicit first-clause requirement currently lacks effective regression coverage.",
         "file": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
         "line": 19,
         "priority": "P1",
-        "title": "Not done: command-level proof of the 70-character fix-title limit"
+        "title": "Not done: command-level proof that fix titles stop at the first clause"
       },
       {
-        "body": "The stub returns the same successful response for every `pr list` request, and the assertion checks only the last request's limit. Restoring `files,statusCheckRollup` to the initial 1,000-PR query would leave this test passing while restoring the reported timeout trigger. Add an edge stub that rejects the expensive bulk request and returns distinct metadata/detail responses, then verify the real board command renders successfully with links.",
-        "file": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
-        "line": 65,
-        "priority": "P1",
-        "title": "Not done: command-level proof that the board avoids the expensive GitHub query"
-      },
-      {
-        "body": "Only 25 PRs across all states receive files and checks, but downstream consumers still use the larger listing. `board.py:248\u2013257` selects the last 25 merged PRs and treats missing files as no Forge changes; open or closed PRs occupying the detail window therefore cause undercounting. An older open PR also loses its green-check readiness through `board.py:215\u2013223`. Fetch bounded details for the relevant open and merged PRs instead of silently treating omitted details as negative results.",
+        "body": "Only the newest 25 PRs across all states receive files and checks, but downstream consumers still process the larger listing. In `src/forge/board.py:248\u2013257`, the last 25 merged PRs are counted and missing files are treated as no Forge changes. Newer open or closed PRs therefore cause that metric to undercount. Older open PRs also lose their green-check status through `src/forge/board.py:215\u2013223`. Fetch bounded details for the relevant PRs instead of treating omitted details as negative results.",
         "file": "src/forge/board.py",
         "line": 152,
         "priority": "P2",
-        "title": "Fetch details for the PRs whose status and metrics the board displays"
+        "title": "Fetch details for the PRs whose status and metrics are displayed"
       },
       {
-        "body": "After a clean review, `forge close` can stop because an additional check such as `lint` failed: `checks.py:38\u201350` includes checks outside the configured names and rejects failures. The saved status remains `waiting for checks`. This new path nevertheless announces 'ready to merge' when the named checks pass, because `board._green_at` examines only those names (`board.py:269\u2013274`). Use readiness criteria consistent with close so a rejected item is not presented as ready.",
+        "body": "If configured checks pass but an additional check such as `lint` fails, close rejects the PR: `src/forge/checks.py:34\u201350` considers additional checks too, while `src/forge/close.py:81\u201395` leaves the saved status as `waiting for checks`. This new path nevertheless announces readiness because `src/forge/board.py:269\u2013274` examines only configured names. Apply the same check policy as close before instructing the owner to merge.",
         "file": "src/forge/nextstep.py",
         "line": 247,
         "priority": "P2",
         "title": "Apply close's check policy before announcing readiness"
       },
       {
-        "body": "This second read uses the platform's default encoding, whereas `review.task` already reads the same document explicitly as UTF-8 (`review.py:85\u201391`). On supported Python versions running Windows without UTF-8 mode, non-ASCII story text can produce a corrupted PR title or a `UnicodeDecodeError`, stopping close before PR creation. Reuse the text returned by `review.task`, or specify UTF-8 explicitly.",
+        "body": "This second read uses the platform's default encoding, although `src/forge/review.py:85\u201391` already reads and returns the document explicitly as UTF-8. On supported Windows/Python configurations without UTF-8 mode, non-ASCII story content can corrupt the PR title or raise `UnicodeDecodeError`, stopping close before PR creation. Use the text returned by `review.task`, or specify UTF-8 explicitly.",
         "file": "src/forge/close.py",
         "line": 243,
         "priority": "P2",
@@ -45,7 +38,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "91dbf80980fd51b678f3a9fa99f1cb3ddceebf5d0413c5a9cf022e44d784aeaa"
+    "tree": "c28f74897b09c034fea41f13fe2e682b09edc288c62adc6d339cbfd5988465d6"
   },
   "status": "fixing",
   "steps": [
@@ -55,6 +48,10 @@
     },
     {
       "at": "2026-09-27T18:09:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:31:41+00:00",
       "step": "review"
     }
   ],
