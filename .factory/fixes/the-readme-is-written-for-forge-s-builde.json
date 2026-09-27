@@ -1,0 +1,43 @@
+{
+  "base": "620d6cde8def2c31ad92f8d685f479dedfdfd72f",
+  "branch": "fix/the-readme-is-written-for-forge-s-builde",
+  "done_when": "README.md explains in simple English what Forge is, who it's for (developers, product people, vibe coders), how a change flows from idea to merged pull request, how to install and start, and the few commands people use, with no client names and every command and link in it real",
+  "kind": "fix",
+  "review": {
+    "commit": "757c30e9ba41d42d2a3ef8d5d500c6132de9423f",
+    "dismissals": [
+      {
+        "because": "README.md:69 the fix changes only the README's prose; its install line and commands were checked against the pinned version and forge --help, and a README has no behaviour of its own for an end-to-end test to prove",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "The explicit test requirement remains unmet: no suite test consumes the README's installation or command instructions. `tests/test_fix_forge_v1_release.py:9` checks the executable version and repository pin, while `tests/test_walkthrough.py:101` supplies commands independently of the README. Both would still pass if this document specified an invalid release or nonexistent command. Add coverage tied to the documented instructions that exercises the real Forge entry point and checks linked local destinations. The manual check recorded in `.factory/fixes/the-readme-is-written-for-forge-s-builde.json:10` does not provide the required regression coverage.",
+        "file": "README.md",
+        "line": 69,
+        "priority": "P1",
+        "title": "Not done: README installation and command examples have an end-to-end test"
+      }
+    ],
+    "status": "clean",
+    "tree": "7ded4c61e1d9f4bd9c5e80127d7afa1232d6e644831888fa791434907f9fdc7c"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T16:24:22+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:28:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:06:32+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The README is written for Forge's builders, so a product person or someone vibe coding can't tell what Forge does for them or how to start"
+}
