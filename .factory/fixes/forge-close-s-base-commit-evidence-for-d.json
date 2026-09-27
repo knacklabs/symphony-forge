@@ -1,0 +1,34 @@
+{
+  "allow_large": "The owner allowed release bumps to go over the fix limit on 2026-09-27 (version, pin, CI header and version tests)",
+  "base": "d33fd6097649d5541c781303a0cae574b71cf5cb",
+  "branch": "fix/forge-close-s-base-commit-evidence-for-d",
+  "done_when": "Forge's version is 1.0.2 in src/forge/__init__.py (release tag v1.0.2), this repo's forge.toml pins v1.0.2, and every test that checks the version expects 1.0.2",
+  "kind": "fix",
+  "review": {
+    "commit": "40be398895e98c919f4ba11cd05af75224281018",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The two new tests repeat the CLI-version and repository-pin assertions already present in `tests/test_fix_forge_v1_release.py:9\u201311`, which this branch updates to v1.0.2. They exercise the same entry point and configuration with identical expectations, adding another Git-backed fixture invocation and hard-coded version locations without detecting an additional failure. Remove the duplicate tests and retain the updated existing release test as the primary proof.",
+        "file": "tests/test_fix_forge_close_base_commit_release.py",
+        "line": 11,
+        "priority": "P2",
+        "title": "Simpler: duplicate release tests \u2192 existing release test"
+      }
+    ],
+    "status": "clean",
+    "tree": "2197e084e5b9ef6299072d4e4d3ab7717e2e65b9b2758da5bc70bc67b73328c9"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T06:19:38+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T06:33:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge close's base-commit evidence for deleted files is on main but not released, so myclaw (pinned to v1.0.1) can't dismiss the finding about a password in a file its migration deletes"
+}

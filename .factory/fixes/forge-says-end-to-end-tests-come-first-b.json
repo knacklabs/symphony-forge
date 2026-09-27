@@ -1,0 +1,33 @@
+{
+  "base": "a3bf3e378ac2f9d4786a753f4fc989db4b1fac8b",
+  "branch": "fix/forge-says-end-to-end-tests-come-first-b",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/e2e-plan.md is in the file it names, as the owner decided on 2026-09-27; the full suite passes",
+  "kind": "fix",
+  "review": {
+    "commit": "74780e6c1a767bf840b58c13a5bd03e0a350200b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With this configuration at the repository root, Playwright also discovers the workspace's Vitest unit and API tests: its defaults recursively scan the configuration directory for `.test` and `.spec` files ([Playwright documentation](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir)). In the mixed-runner stack prescribed by this change, those files use Vitest APIs and cannot execute under Playwright, so the documented root command fails during collection. Add a browser-only `testDir` or `testMatch` and specify where browser tests belong.",
+        "file": "src/forge/templates/conventions/testing.md",
+        "line": 64,
+        "priority": "P2",
+        "title": "Scope Playwright discovery to browser tests"
+      }
+    ],
+    "status": "clean",
+    "tree": "9aef112b4d073de0638101d0b360465d138e3c39ba40253b2247832c477a7fe8"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T05:52:31+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T06:00:14+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge says end-to-end tests come first but doesn't say how a client app runs them: which items get browser tests, where they run in CI, how tests get data, what to do with flaky tests, the time budget, and what happens to existing flows"
+}
