@@ -1,0 +1,14 @@
+{
+  "base": "a6d2b13ba630403445e2c6a27bf23853d1445655",
+  "branch": "fix/the-owner-wants-every-forge-repo-s-stori",
+  "done_when": "docs/specs/one-chat-approval.md is confirmed by the owner and on the roadmap as FORGE-ONECHAT-1",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:18:18+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in"
+}
