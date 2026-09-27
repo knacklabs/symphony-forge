@@ -1,0 +1,33 @@
+{
+  "base": "b623c9c392946958b4486f9e4f4283cd921894d3",
+  "branch": "fix/the-ci-workflow-forge-generates-runs-a-n",
+  "done_when": "When the repo has a package.json, the generated forge.yml tests job sets up Node with actions/setup-node before the test command, taking the version from .nvmrc or .node-version when present, else from package.json's engines.node, else leaving the runner's default; a Python-only repo's workflow is unchanged; a test covers the three cases",
+  "kind": "fix",
+  "review": {
+    "commit": "5c0782613c9381e18ed272ae6edf594ead4068ce",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "For a repository declaring `packageManager: \"npm@\u2026\"` without a committed lockfile, this step fails before reaching the test command\u2014even when that command legitimately uses `npm install && npm test` or runs dependency-free tests. setup-node v7 automatically enables npm caching and [throws when no lockfile exists](https://github.com/actions/setup-node/blob/v7/src/cache-restore.ts#L70-L80). Emit `package-manager-cache: false` so selecting Node does not introduce an unrelated lockfile requirement.",
+        "file": "src/forge/sync.py",
+        "line": 247,
+        "priority": "P2",
+        "title": "Disable implicit npm caching in the setup-node step"
+      }
+    ],
+    "status": "clean",
+    "tree": "b1d00f3b4ef99592a745065b952f79f8f68c42125f0843a41734a3a11748cb39"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T04:51:16+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:57:59+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The CI workflow Forge generates runs a Node client's tests on the runner's default Node, so a client that requires another version fails npm ci (myclaw needs Node 24, the runner has 22)"
+}
