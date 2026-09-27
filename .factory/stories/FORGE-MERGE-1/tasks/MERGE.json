@@ -1,25 +1,19 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
-    "commit": "ab1afa26f93c483f2c83685a29d29113bfc422cb",
-    "dismissals": [
-      {
-        "because": "src/forge/merge.py:128 archiving exists to tidy the owner's chat list; merge archives every conversation in the item's record and turn log, and the one it can miss is a conversation that was created but never ran a turn before a retry, which holds no work; leaving that empty chat unarchived is harmless, and recording every created conversation would change how every worker round records chats, outside this task",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "commit": "ec4dd02fe406dac45afe02fee19169ef36ee3cce",
+    "dismissals": [],
     "findings": [
       {
-        "body": "A conversation is missed when the first worker attempt stops after creating its thread but before starting a turn, and the worker is then retried. `codex.py:192\u2013194` clears the pending record without logging that conversation; `codex.py:156\u2013157` then requests a fresh conversation, and `codex.py:311` overwrites the previous ID. This collector reads only the latest record and turn log, so merge succeeds while leaving the earlier recorded conversation unarchived. Preserve conversation IDs independently of whether a turn starts, and extend the CLI test to retry the interrupted worker with a different conversation before merging.",
+        "body": "An interrupted first worker attempt can leave a recorded conversation that this collector misses after a retry. In src/forge/codex.py:192\u2013194, recovery clears the pending turn without logging its conversation; lines 156\u2013157 then select a fresh conversation because no turn started, and line 311 overwrites the previous ID. This collector therefore archives only the replacement conversation, leaving the earlier recorded one active. Preserve every created conversation ID independently of turn completion. Extend tests/test_merge_command.py:306 to retry the worker with a different conversation before closing and merging, and assert that both conversations are archived.",
         "file": "src/forge/merge.py",
         "line": 128,
         "priority": "P1",
         "title": "Not done: 5. Archive every recorded Codex conversation"
       }
     ],
-    "status": "clean",
-    "tree": "0268c15a2cc2eec1add3a9d1e998200dfedb7654afa825d9bb4aa28aa0f7e8dc"
+    "status": "blocked",
+    "tree": "88309e1be0a35c1838821bc7e509e61a170aa1eb1f79895b78bae30057732c88"
   },
   "status": "fixing",
   "steps": [
@@ -53,6 +47,10 @@
     },
     {
       "at": "2026-09-27T19:43:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T20:04:41+00:00",
       "step": "review"
     }
   ]
