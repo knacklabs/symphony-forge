@@ -1,0 +1,47 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/forge-migrate-sets-aside-client-owned-fi",
+  "done_when": "forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a test proves it",
+  "kind": "fix",
+  "review": {
+    "commit": "af9176f34e90bf6eb612ed0af746f71e5b902d8f",
+    "dismissals": [
+      {
+        "because": "src/forge/sync.py:271 .codex/skills/forge/SKILL.md is Forge's own generated adapter, not a client-owned file; migrate backs up its old content to .forge-migrate/kept/ before sync rewrites it, which is the intended handling, and this fix is about client files under old-Forge folders",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "A tracked package.json referencing customized `.codex/skills/forge/SKILL.md` still loses access to that content after migration: this exclusion prevents preservation, so the customized file moves into `.forge-migrate/kept/`. Migration then calls `sync.write` at src/forge/migrate.py:746; src/forge/sync.py:271 supplies replacement content and :305 writes it at the original path. The package consequently reads different content despite its unchanged reference. The new command-level test explicitly expects this failure at tests/test_fix_forge_migrate_sets_aside_client_owned_fi.py:27\u201328. Preserve referenced client content through synchronization and change that test case to require the original content at its original path.",
+        "file": "src/forge/migrate.py",
+        "line": 242,
+        "priority": "P1",
+        "title": "Not done: forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a"
+      }
+    ],
+    "status": "clean",
+    "tree": "60655b3d3aafd49c52465ae9da03db10806791252d215b09a0efc0c5a47d8e1e"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:22:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:30:59+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge migrate sets aside client-owned files that live under old-Forge folders, such as myclaw's bundled factory/skills/gantry-admin/SKILL.md, even when the client's code or package still references them"
+}

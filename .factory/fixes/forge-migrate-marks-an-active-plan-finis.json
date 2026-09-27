@@ -37,5 +37,5 @@
       "step": "review"
     }
   ],
-  "why": "forge migrate marks an active plan finished whenever its approval is on main, even when its old-Forge stages still have parts pending (myclaw's GRANTED-1 has T1 pending, yet the dry run says every part was done)"
+  "why": "forge migrate marks an active plan finished whenever its approval is on main, even when its old-Forge stages still have parts pending (a copied-in client's active story has T1 pending, yet the dry run says every part was done)"
 }
