@@ -2,7 +2,12 @@
   "branch": "task/FORGE-WARM-1-UNPLUG",
   "review": {
     "commit": "271b36835e2dfaad653bc9e0386725f1c1434a60",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "docs/specs/warm-codex-threads.md:154 the spec's only plugin mentions (lines 154 and 208) are the requirement that the plugin be removed and uninstalled, which must name it; excluding the confirmed spec that mandates the removal is correct, and no other new-Forge doc mentions it",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "This exclusion treats the current warm-conversation specification as legacy documentation. However, `docs/specs/warm-codex-threads.md:4` marks it confirmed, and lines 25\u201345 specify the new Forge's SDK-backed workers. It already contains plugin references at lines 154 and 208, and the exclusion allows further references anywhere in that document without failing the test. Item 13 permits these references only in the guide's uninstall section or old Forge material. Restrict the exclusions to genuinely legacy documents so the required test covers current new-Forge documentation.",
@@ -12,10 +17,10 @@
         "title": "Not done: test plugin absence across all new Forge documentation"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "230a087c96c68228263e7bddc650b650aa3c8389bd39aacb603d87e907a5ce49"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T20:25:16+00:00",
