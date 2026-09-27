@@ -8,12 +8,15 @@ import time
 
 from conftest import _install
 from test_codex_resume import RESUMING, _resuming
-from test_codex_worker import _lines, _sent, sdk_data
+from test_codex_worker import _lines, _sent, _stub, sdk_data
 
 STORY = "FORGE-STEER-1"
 
 ACTIVE_WRITER = RESUMING.replace(
     "    for line in sys.stdin:\n", "    resume_attempts = 0\n    for line in sys.stdin:\n", 1
+).replace(
+    "        log(method=method, params=params)\n",
+    "        log(method=method, params=params, at=time.monotonic())\n", 1
 ).replace(
     "        result = {}\n",
     '''        if method == "thread/resume" and os.environ.get("STUB_RESUME_ERROR"):
@@ -43,6 +46,8 @@ def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatc
     resumed = repo.forge("work", "BOARD/PAGE")
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-1"] * 2
+    attempts = [call["at"] for call in _stub(calls) if call.get("method") == "thread/resume"]
+    assert attempts[1] - attempts[0] >= 1.8
     assert len(_sent(calls, "thread/start")) == 1
     assert "Starting a new Codex conversation" not in resumed.stdout
     assert "stub codex: turn-stub-2 on thr-stub-1" in resumed.stdout
