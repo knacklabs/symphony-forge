@@ -4,26 +4,26 @@
   "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
   "kind": "fix",
   "review": {
-    "commit": "d5abff4fc5b62f849e21b9ee9b59adf912b7922e",
+    "commit": "3a8a864abebdb7442a4d0d950e41ba6969e2ecc6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The workflow scan counts every job ID as a produced check, including jobs with an explicit different name. For example, if migration deletes a workflow producing `lint`, while a remaining workflow contains job ID `lint` with `name: frontend-lint`, `remaining` still contains `lint`. Consequently, the orphaned required check survives and blocks subsequent merges. GitHub distinguishes [job identifiers from job names](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs). Use the effective check name, falling back to the ID only when appropriate, and extend the command-level migration test to cover named jobs.",
+        "body": "A trailing YAML comment defeats named-job detection. In the new migration test's remaining workflow, changing `name: frontend-lint` to `name: frontend-lint # client check` makes this regex reject the name and record `lint` instead. Consequently, the deleted workflow's required `lint` check survives even though no remaining workflow produces it, blocking subsequent merges. GitHub uses the [job name](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idname), not the comment or overridden job ID. Handle commented names correctly and extend the command-level regression test with this case.",
         "file": "src/forge/init.py",
-        "line": 137,
+        "line": 132,
         "priority": "P1",
-        "title": "Not done: init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every\u2002"
+        "title": "Not done: init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every\u0002"
       },
       {
-        "body": "GitHub's [documented SSH-over-443 origin](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port), such as `ssh://git@ssh.github.com:443/acme/shop.git`, fails the hostname check and falls back to `{owner}/{repo}` for both API requests. Those [placeholders use gh's repository selection](https://cli.github.com/manual/gh_api), restoring the wrong-repository risk with multiple remotes. Recognize this GitHub transport and fail explicitly for unresolved origins instead of silently restoring ambiguous selection.",
+        "body": "An absolute local origin bypasses refusal and restores `{owner}/{repo}` in both protection requests. These [gh API placeholders](https://cli.github.com/manual/gh_api) resolve through repository selection or `GH_REPO`, so an unrelated GitHub remote can receive the protection update. The production exception exists solely for tests. Remove it and give command fixtures an explicit GitHub fetch URL with a local push URL, as the new origin-targeting test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
         "file": "src/forge/init.py",
-        "line": 96,
+        "line": 88,
         "priority": "P2",
-        "title": "Keep SSH-over-443 origins bound to their repository"
+        "title": "Simpler: test-only repository fallback \u2192 refuse unresolved origins"
       }
     ],
     "status": "blocked",
-    "tree": "8d83c61873d3ba8e3415a807aa2473a4c2cf4966d2bbf9bf2446f9d7c6529cd2"
+    "tree": "027584e3fab4c7e7e39951b6b769e459f6fa8721436dc31adfd1e5b68b353ebd"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-09-27T15:05:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:23:36+00:00",
       "step": "review"
     }
   ],
