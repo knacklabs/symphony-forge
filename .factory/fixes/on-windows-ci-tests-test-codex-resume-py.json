@@ -3,11 +3,30 @@
   "branch": "fix/on-windows-ci-tests-test-codex-resume-py",
   "done_when": "Find with evidence what kills the test worker on Windows (for example a process-group or console signal that reaches the test process) and fix it at the cause so recovery stops only the recorded Codex processes; test_9 passes on Windows CI three runs in a row; nothing is skipped or loosened",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "b491b1e4ca31009b46d87bd7d561a6d7a4097594",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The entire branch change adds a tracking record; it provides no root-cause evidence, executable repair, or Windows CI results. The recovery termination logic remains unchanged at src/forge/codex.py:475\u2013491, and the existing crash-recovery scenario remains at tests/test_codex_resume.py:431 onward. Consequently, this branch does not implement the requested fix. Identify what terminates the pytest worker, repair that cause so recovery stops only the recorded Codex processes, and demonstrate three consecutive Windows CI passes of test_9 without skips or weakened assertions.",
+        "file": ".factory/fixes/on-windows-ci-tests-test-codex-resume-py.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: Fix Windows crash recovery and verify test_9 passes on Windows CI three runs in a row"
+      }
+    ],
+    "status": "blocked",
+    "tree": "cb248e544a7e2230fab6e6f0c0aef9788c075cfb72414a93c81cbe5602a847f9"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T04:42:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:52:12+00:00",
+      "step": "review"
     }
   ],
   "why": "On Windows CI, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back sometimes crashes the pytest-xdist worker running it, which suggests Forge's crash recovery on Windows stops more than the recorded Codex processes"
