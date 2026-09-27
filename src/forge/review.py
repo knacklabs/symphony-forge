@@ -26,7 +26,7 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 HELPER = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
 PRIORITIES = ("P0", "P1", "P2", "P3")
 SERIOUS = ("P0", "P1")
-# Bookkeeping, not product: recording state or notes never makes a review stale.
+# Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 
 REFUSALS = {
@@ -95,10 +95,8 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
-    """What a clean review covers: the product tree at commit (everything outside .factory/ and
-    plans/), plus what the change must do: a task's story doc Done when, Tasks, Risks and New
-    moving parts, or a fix's why and done-when lines from its state, plus the worker's functional
-    check, so a changed check makes an earlier review stale. Read through git, so a pull
+    """What a clean review covers: product files, the item's story doc and roadmap entry, its
+    fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
@@ -106,9 +104,10 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     key, _, name = item.partition("/")
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
-        doc = sections(text)
-        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
-                 moving_parts(text)]
+        roadmap = repo.run("git", "show", f"{commit}:plans/roadmap.json", cwd=top)
+        items = json.loads(roadmap.stdout).get("items", []) if roadmap.returncode == 0 else []
+        entry = next((value for value in items if value.get("key") == key), {})
+        parts = [text, json.dumps(entry, sort_keys=True)]
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))

@@ -139,7 +139,8 @@ def read(args: Any) -> int:
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
                                capture_output=True, check=True).stdout.decode().strip()
-    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"))
+    prompt = Template(prompt).safe_substitute(
+        path=rel, doc=text.decode("utf-8"), spec=_confirmed_spec(top, target) if is_story else "")
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
@@ -416,6 +417,32 @@ def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", target) or not doc.is_file():
         repo.refuse(REFUSALS["no_spec"], slug=target)
     return top, doc, doc.with_name(f"{target}.read.md"), False
+
+
+def _confirmed_spec(top: Path, key: str) -> str:
+    """The confirmed spec for a story, including one still on its promoted task branch."""
+    entry = next((item for item in repo.roadmap(top) if item["key"] == key), {})
+    linked = entry.get("spec", "")
+    refs = repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads",
+                    "refs/remotes/origin", cwd=top).splitlines()
+    refs.sort(key=lambda ref: (not ref.startswith(f"task/{key}-"), ref))
+    for ref in refs:
+        paths = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/specs", cwd=top).splitlines()
+        for path in paths:
+            if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
+                continue
+            spec = show(top, ref, path) or ""
+            match = FRONTMATTER.match(spec)
+            if not match:
+                continue
+            fields = dict(line.partition(":")[::2] for line in match[1].splitlines() if ":" in line)
+            fields = {name.strip(): value.strip().strip('"\'') for name, value in fields.items()}
+            body = spec[match.end():]
+            if (fields.get("status") == "confirmed"
+                    and fields.get("confirmed_hash") == hashlib.sha256(body.encode("utf-8")).hexdigest()
+                    and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
+                return f"\nConfirmed spec at `{path}` on `{ref}`:\n\n{spec}\n"
+    return "\nNo linked confirmed spec was found in the local branches.\n"
 
 
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:

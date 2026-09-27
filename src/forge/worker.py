@@ -240,7 +240,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     else:
         on.add("fix")
         subject = state.get("why", "")
-        values.update(why=subject, done=state.get("done_when", ""))
+        values.update(why=subject, done=state.get("done_when", ""),
+                      interfaces=", ".join(f"`{pattern}`" for pattern in
+                                           repo.config(top)["interfaces"]) or "none",
+                      allowance=state.get("allow_large") or "No recorded allowance")
     if findings or failing:
         on.add("fix-round")
         values["findings"] = "\n".join(

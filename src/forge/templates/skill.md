@@ -87,6 +87,8 @@ choice and one line of why into the spec's Behaviour.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. "Code exists" is not a result.
+- Done-when or Notes names supported inputs and exclusions. A dismissal that narrows those
+  inputs needs an amendment to the story doc before the review can close.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each.
@@ -145,6 +147,10 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 `Not done: <item>` (P1). A missing rule-11 basic is its own P1, never `Simpler:`.
 
 ## Closing
+
+Before building a fix, check its brief for the five-code-file limit, interface globs and any
+recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
+recorded before editing.
 
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
