@@ -80,6 +80,10 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     stub = (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8")
     stub = stub.replace('THREAD, TURN = "thr-stub-1", "turn-stub-1"',
                         'THREAD, TURN = os.environ.get("STUB_THREAD", "thr-stub-1"), "turn-stub-1"')
+    stub = stub.replace('        elif method == "turn/start":',
+                        '        elif method == "turn/start":\n'
+                        '            if os.environ.get("STUB_NO_TURN"):\n'
+                        '                return')
     stub = stub.replace('        elif method == "thread/name/set":',
                         '        elif method == "thread/archive":\n'
                         '            if os.environ.get("STUB_NOTES"):\n'
@@ -257,7 +261,7 @@ def _check_archive_retry(env, sdk_data, tmp_path, monkeypatch):
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
-    _merge_at_github(env)
+    _merge_at_github(env, local_commit=where)
     monkeypatch.setenv("STUB_ARCHIVE_FAIL_THREAD", "thr-two")
     failed = env.repo.forge("merge", item)
     assert failed.returncode != 0
@@ -265,17 +269,53 @@ def _check_archive_retry(env, sdk_data, tmp_path, monkeypatch):
                              f"Next: try forge merge {item} again\n")
     assert where.is_dir()
     assert env.repo.git("ls-remote", "--heads", "origin", "fix/tidy-readme")
+    env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
+        [{"headRefName": "fix/tidy-readme"}]))
     assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
     monkeypatch.delenv("STUB_ARCHIVE_FAIL_THREAD")
     retried = env.repo.forge("merge", item)
     assert retried.returncode == 0, retried.stderr
-    assert not where.exists()
+    assert where.is_dir()
+    assert env.repo.git("status", "--porcelain", cwd=where) == ""
+    assert env.repo.git("log", "-1", "--format=%s", "fix/tidy-readme") == "Keep this local work"
+    assert "local commits" in retried.stdout.lower()
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
     archived = [call["params"]["threadId"] for call in calls
                 if call.get("method") == "thread/archive"]
     assert archived.count("thr-one") == 1
     assert archived.count("thr-two") == 2
     assert item not in env.repo.forge("next").stdout
+
+
+def _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch):
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", config.replace('workers = "claude"', 'workers = "codex"')
+               + 'merge = "agent"\n'
+               + 'models.fix = { model = "gpt-6-sol", effort = "low" }\n')
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix()
+    stub = _archiving_codex(env.repo, sdk_data, tmp_path, monkeypatch)
+    (Path(os.environ["CODEX_HOME"]) / "config.toml").write_text(
+        f'[projects.{json.dumps(str(where))}]\ntrust_level = "trusted"\n', encoding="utf-8")
+    monkeypatch.setenv("STUB_NO_TURN", "1")
+    interrupted = env.repo.forge("work", item, cwd=where)
+    assert interrupted.returncode != 0
+    assert 'Codex conversation "Fix' in interrupted.stdout
+    monkeypatch.delenv("STUB_NO_TURN")
+    env.open_pr("")
+    env.checks(GREEN)
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stderr
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    _merge_at_github(env)
+    merged = env.repo.forge("merge", item)
+    assert merged.returncode == 0, merged.stderr
+    calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
+    assert [call["params"]["threadId"] for call in calls
+            if call.get("method") == "thread/archive"] == ["thr-stub-1"]
 
 
 def _check_locked_worktree(env):
@@ -298,7 +338,8 @@ def _check_locked_worktree(env):
     assert not where.exists()
 
 
-@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry", "locked_worktree"))
+@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry", "locked_worktree",
+                                     "record_without_turn"))
 def test_5_merge_cleans_up_only_after_archiving_and_preserves_local_work(
         env, sdk_data, tmp_path, monkeypatch, scenario):
     if scenario == "dirty":
@@ -307,6 +348,8 @@ def test_5_merge_cleans_up_only_after_archiving_and_preserves_local_work(
         _check_later_local_commit(env)
     elif scenario == "archive_retry":
         _check_archive_retry(env, sdk_data, tmp_path, monkeypatch)
+    elif scenario == "record_without_turn":
+        _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch)
     else:
         _check_locked_worktree(env)
 

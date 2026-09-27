@@ -38,8 +38,6 @@ def merge(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["not_ready"], item=item)
     worktree = close._worktree(item)
     branch = repo.current_branch(worktree)
-    if repo.git("rev-parse", branch, cwd=top) != head:
-        repo.refuse(REFUSALS["changed"], item=item)
     default = repo.default_branch(top)
     shown = repo.run("gh", "pr", "view", branch, "--json",
                      "number,state,baseRefName,headRefName,headRefOid,title,isDraft", cwd=top)
@@ -54,6 +52,8 @@ def merge(args: argparse.Namespace) -> int:
     if pr.get("headRefOid") != head:
         repo.refuse(REFUSALS["changed"], item=item)
     if pr["state"] == "OPEN":
+        if repo.git("rev-parse", branch, cwd=top) != head:
+            repo.refuse(REFUSALS["changed"], item=item)
         checks.wait(top, item, head, config["checks"])
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], "--match-head-commit", head, cwd=top)
