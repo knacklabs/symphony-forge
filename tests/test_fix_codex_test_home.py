@@ -19,7 +19,16 @@ THREADS = """import json
 from openai_codex import Codex
 codex = Codex()
 try:
-    print(json.dumps(sorted((thread.id, thread.name) for thread in codex.thread_list().data)))
+    threads = []
+    for archived in (False, True):
+        cursor = None
+        while True:
+            page = codex.thread_list(archived=archived, cursor=cursor, limit=100)
+            threads.extend((thread.id, thread.name, archived) for thread in page.data)
+            cursor = page.next_cursor
+            if cursor is None:
+                break
+    print(json.dumps(sorted(threads)))
 finally:
     codex.close()
 """
@@ -49,6 +58,7 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n'
                '[models.lite]\nmodel = "gpt-6-sol"\neffort = "low"\n')
+    real_before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)}))
     configured_before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)}))
     smoke = subprocess.run(
         [sys.executable, "-m", "pytest", "tests/test_codex_smoke.py::test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops", "-q"],
@@ -58,9 +68,7 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
     assert smoke.returncode == 0 and "1 passed" in smoke.stdout, smoke.stdout + smoke.stderr
     asked = repo.forge("ask", "Reply with just OK.")
     assert asked.returncode == 0, asked.stdout + asked.stderr
+    assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})) == real_before
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)})) == configured_before
     ask_threads = json.loads(_sdk(THREADS))
-    assert any(name == "Ask · this checkout" for _, name in ask_threads)
-    created = {thread for thread, _ in ask_threads}
-    assert created.isdisjoint(thread for thread, _ in
-                              json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})))
+    assert any(name == "Ask · this checkout" for _, name, archived in ask_threads if not archived)
