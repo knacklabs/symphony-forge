@@ -3,11 +3,22 @@
   "branch": "fix/the-codex-steering-spec-says-resume-stop",
   "done_when": "docs/specs/codex-steering.md describes the wait-and-retry resume, matching the amended story, and is confirmed again",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "dfb1944158aad27c3b665c780447acd2adc009cd",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "86c01e547de89ba2069ab1129498eb053b02f021f9372e62a91959594e5ad75f"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T14:18:46+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T14:45:11+00:00",
+      "step": "review"
     }
   ],
   "why": "The codex-steering spec says resume stops a leftover Codex process, but the approved story now waits and retries instead, because the holder can't be proven to be the item's own"
