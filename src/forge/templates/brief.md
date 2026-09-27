@@ -10,6 +10,24 @@ nothing more.
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a path outside your Scope, a new moving part, or
   Done-when items that contradict each other; then say plainly what is wrong and what you need.
+- When finishing needs a path outside Scope or a choice this item does not settle, end your final
+  message with a paragraph starting `Question:` on its own line. Ask plainly and wait for the
+  coordinator's answer.
+
+<!-- if coordinator -->
+## From the coordinator
+
+$coordinator
+
+<!-- end -->
+<!-- if answer -->
+## Your pending question
+
+$question
+
+The coordinator answered: $answer
+
+<!-- end -->
 
 <!-- if task -->
 ## The story: $title
