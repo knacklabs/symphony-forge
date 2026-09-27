@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed release bumps to go over the fix limit on 2026-09-27 (version, pin, CI header and version tests)",
   "base": "d33fd6097649d5541c781303a0cae574b71cf5cb",
   "branch": "fix/forge-close-s-base-commit-evidence-for-d",
   "done_when": "Forge's version is 1.0.2 in src/forge/__init__.py (release tag v1.0.2), this repo's forge.toml pins v1.0.2, and every test that checks the version expects 1.0.2",
