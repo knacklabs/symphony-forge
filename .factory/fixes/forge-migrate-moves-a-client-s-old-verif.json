@@ -3,7 +3,7 @@
   "branch": "fix/forge-migrate-moves-a-client-s-old-verif",
   "done_when": "When the client has a package.json, the test command forge migrate writes starts with npm ci (the same install forge init's default test uses) before the moved verify commands; a test covers a client with package.json and one without",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T04:31:01+00:00",
