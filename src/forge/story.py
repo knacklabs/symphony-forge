@@ -91,7 +91,7 @@ def new(args: Any) -> int:
         base = repo.git("merge-base", repo.default_branch(top), "HEAD", cwd=fix_top)
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
-        row = f"| {fix.upper()} | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
+        row = f"| SPEC | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
     elif key not in {item["key"] for item in repo.roadmap(top)}:
         repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
@@ -480,7 +480,7 @@ def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
 
 def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> str:
     """Turn a fix's branch into the story's first task branch, keeping its commits."""
-    task, branch, old = f"{key}/{fix.upper()}", f"task/{key}-{fix.upper()}", repo.state_path(fix)
+    task, branch, old = f"{key}/SPEC", f"task/{key}-SPEC", repo.state_path(fix)
     repo.git("branch", "-m", branch, cwd=fix_top)
     tracked = repo.run("git", "ls-files", "--error-unmatch", "--", old, cwd=fix_top).returncode == 0
     (fix_top / old).unlink()

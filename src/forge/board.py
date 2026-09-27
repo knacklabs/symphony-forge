@@ -139,14 +139,24 @@ def _prs(top: Path) -> list[Item] | None:
     """Every pull request gh can see, newest first, or None without a working gh."""
     if not shutil.which("gh"):
         return None
-    # ponytail: the newest 1,000 pull requests in one call; page by date once a repo outgrows it.
+    # GitHub times out on this repo when it resolves files and checks for every pull request.
     done = repo.run("gh", "pr", "list", "--state", "all", "--limit", "1000", "--json",
-                    "headRefName,state,title,body,mergedAt,files,statusCheckRollup", cwd=top)
+                    "headRefName,state,title,body,mergedAt,url", cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError:
         prs = None
-    return prs if isinstance(prs, list) and all(isinstance(pr, dict) for pr in prs) else None
+    if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
+        return None
+    recent = repo.run("gh", "pr", "list", "--state", "all", "--limit", "25", "--json",
+                      "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup", cwd=top)
+    try:
+        details = json.loads(recent.stdout) if recent.returncode == 0 else []
+    except ValueError:
+        details = []
+    by_branch = {pr["headRefName"]: pr for pr in details if isinstance(pr, dict)
+                 and isinstance(pr.get("headRefName"), str)}
+    return [{**pr, **by_branch.get(pr.get("headRefName"), {})} for pr in prs]
 
 
 def _read(top: Path, where: Path | str, rel: str) -> str:
@@ -316,8 +326,10 @@ def _day(when: datetime | None) -> str:
 
 
 def _summary(pr: Item) -> str:
-    """A pull request's summary: the first line of its body, which close writes in plain English."""
-    line = (str(pr.get("body") or "").strip().splitlines() or [""])[0].strip()
+    """A pull request's done-when line, or the first line of an older body."""
+    lines = str(pr.get("body") or "").strip().splitlines()
+    line = next((line.removeprefix("Done when: ") for line in lines
+                 if line.startswith("Done when: ")), lines[0].strip() if lines else "")
     return "" if line.startswith("<!--") else line
 
 
@@ -337,7 +349,9 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
         lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
         lines += [f'<p class="took">{esc(_cap("; ".join(item["took"])))}.</p>'] if item["took"] else []
         lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]]
-        return f'<li><b>{esc(name)}</b>: <span class="status">{esc(item["status"])}.</span>{"".join(lines)}</li>'
+        url = (item.get("pr") or {}).get("url")
+        label = (f'<a href="{esc(url, quote=True)}">{esc(name)}</a>' if url else esc(name))
+        return f'<li><b>{label}</b>: <span class="status">{esc(item["status"])}.</span>{"".join(lines)}</li>'
 
     def card(s: Item) -> str:
         body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(s["sentence"])}</p>']
