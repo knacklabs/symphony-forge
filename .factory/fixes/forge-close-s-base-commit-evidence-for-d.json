@@ -1,0 +1,14 @@
+{
+  "base": "d33fd6097649d5541c781303a0cae574b71cf5cb",
+  "branch": "fix/forge-close-s-base-commit-evidence-for-d",
+  "done_when": "Forge's version is 1.0.2 in src/forge/__init__.py (release tag v1.0.2), this repo's forge.toml pins v1.0.2, and every test that checks the version expects 1.0.2",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T06:19:38+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge close's base-commit evidence for deleted files is on main but not released, so myclaw (pinned to v1.0.1) can't dismiss the finding about a password in a file its migration deletes"
+}
