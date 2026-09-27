@@ -6,7 +6,13 @@
   "kind": "fix",
   "review": {
     "commit": "9fb818a060aed517e362a745c89f5d149b502b42",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "tests/test_migrate.py:3 a test that names the client repos would itself put client names back in the repo; the owner chose a local commit-hook guard fed by the per-machine repo list instead, which follows the one-chat story's repo list",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The only test changes are comments; no assertion checks the client-reference cleanup. The existing repository scan in tests/test_no_plugin.py:35 checks plugin references, while tests/test_fix_old_forge_records.py:13 checks record filenames, so restoring the removed client names or paths would pass both. Add a regression check covering tracked docs, records, plans and tests, run it through the repository's existing verification flow, and demonstrate that it fails before this cleanup and passes afterward. This is missing coverage under the requested test audit.",
@@ -16,10 +22,10 @@
         "title": "Not done: regression test for client references in tracked files"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "ab24e54a45fe2228006fcfb4fa2f031125619907b22e57f3e787f3e623400531"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T15:31:29+00:00",
