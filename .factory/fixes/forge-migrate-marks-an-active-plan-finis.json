@@ -3,11 +3,30 @@
   "branch": "fix/forge-migrate-marks-an-active-plan-finis",
   "done_when": "forge migrate calls a story finished only when every Tasks row is done in the old Forge's records (.factory/stages.json and task markers); a story with a pending part is not converted as finished and gets a replan draft under .forge-migrate/replan/ like a malformed one, and the dry run says which parts are pending; a test covers a story with one pending part",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "74a7cd3e7704c3f5a50fd136cd1454c39b6af490",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The replan condition only covers tasks with an explicitly non-done stage. When a task lacks both a completion marker and a stage record, `_tasks` adds it to `waiting` but leaves `pending` empty, so an otherwise valid story still carries over its approval instead of becoming a replan draft. The existing TIDY-UP fixture demonstrates this: its decomposition declares T2 at tests/fixtures/copied-client/client/.factory/stories/tidy-up/decomposition.json:23, but only T1 has a completion marker; tests/test_migrate.py:127\u2013128 still expects its approval to carry over with only one of two parts done. This violates the Done-when requirement that a story with a pending part gets a draft under `.forge-migrate/replan/`. Base that decision on all unfinished task rows and update coverage for the missing-marker case.",
+        "file": "src/forge/migrate.py",
+        "line": 443,
+        "priority": "P1",
+        "title": "Not done: pending parts without completion markers must also produce a replan draft"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e80de808719886bf0a86f20ae3be9e992629642c420a9a9ce0c9515ea60f209b"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T03:14:26+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:23:17+00:00",
+      "step": "review"
     }
   ],
   "why": "forge migrate marks an active plan finished whenever its approval is on main, even when its old-Forge stages still have parts pending (myclaw's GRANTED-1 has T1 pending, yet the dry run says every part was done)"
