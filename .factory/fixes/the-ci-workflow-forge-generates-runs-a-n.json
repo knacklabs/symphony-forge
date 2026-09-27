@@ -3,7 +3,7 @@
   "branch": "fix/the-ci-workflow-forge-generates-runs-a-n",
   "done_when": "When the repo has a package.json, the generated forge.yml tests job sets up Node with actions/setup-node before the test command, taking the version from .nvmrc or .node-version when present, else from package.json's engines.node, else leaving the runner's default; a Python-only repo's workflow is unchanged; a test covers the three cases",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T04:51:16+00:00",
