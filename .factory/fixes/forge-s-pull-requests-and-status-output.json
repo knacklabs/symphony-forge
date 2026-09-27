@@ -1,0 +1,14 @@
+{
+  "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
+  "branch": "fix/forge-s-pull-requests-and-status-output",
+  "done_when": "PR titles are short (a task: story title: task name; a fix: the why's first clause, 70 characters at most), a promoted spec task's ID is SPEC, the PR body labels Why and Done when and the review block opens with a plain verdict and no hash, the board's GitHub call succeeds on this repo and links each item to its PR, and forge next says which items are ready to merge with their PR link and names the findings a close stopped on; tests through the real commands prove each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T17:02:23+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's pull requests and status output bury what the owner must do: titles run to 300 characters, promoted spec tasks get 40-character IDs, PR bodies and review blocks carry hashes and jargon, the board times out on GitHub and has no links, and forge next never says what is ready to merge or why a close stopped"
+}
