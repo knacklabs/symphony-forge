@@ -3,11 +3,22 @@
   "branch": "fix/main-s-suite-fails-the-no-plugin-test-sc",
   "done_when": "tests/test_no_plugin.py skips docs/context/ (context notes and office-hours design docs are copied in unchanged and never edited), keeps every other check, and the full suite passes on main",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "2cfe5053b87386c5d25bee9718b8ce47bdd790ae",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "486794b2a150fc8b0b90d64a6e4d3fbebf257a8f7512a5b2cbccfc1cfa5fa1b4"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T03:23:28+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:28:18+00:00",
+      "step": "review"
     }
   ],
   "why": "Main's suite fails: the no-plugin test scans docs/context/, where the switch copied an old office-hours design doc that mentions the plugin, and those docs are kept unchanged by rule"
