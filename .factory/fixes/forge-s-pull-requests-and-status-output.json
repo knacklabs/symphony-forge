@@ -5,32 +5,32 @@
   "done_when": "PR titles are short (a task: story title: task name; a fix: the why's first clause, 70 characters at most), a promoted spec task's ID is SPEC, the PR body labels Why and Done when and the review block opens with a plain verdict and no hash, the board's GitHub call succeeds on this repo and links each item to its PR, and forge next says which items are ready to merge with their PR link and names the findings a close stopped on; tests through the real commands prove each; the board also lists active stories first, folds finished fixes into one collapsed line with their count, and uses plainer status words; existing tests that expect the old titles, IDs, PR body or output are updated to the new wording, since that change is deliberate",
   "kind": "fix",
   "review": {
-    "commit": "6a2611443c3a3998108589ad8ffb90b32b55f1e7",
+    "commit": "d69c37c37fcdb070948af1802ebaf3946145b9a5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The comma in this test occurs after character 70, so replacing production's clause splitting with `why[:70]` would still pass both assertions. The other title tests use single-clause inputs. Add a `forge close` case with a short first clause followed by more text, and assert that only the first clause becomes the title. The explicit first-clause requirement currently lacks effective regression coverage.",
+        "body": "This test checks only a clean review and excludes the old introductory phrase, not the commit hash. Always emitting the clean verdict, or putting the hash on a separate line, would still pass. The blocked-close tests in tests/test_close.py:491\u2013494 check finding text but not the verdict. Extend the real-command coverage to assert the blocked verdict and absence of the reviewed hash in both cases.",
         "file": "tests/test_fix_forge_s_pull_requests_and_status_output.py",
-        "line": 19,
+        "line": 41,
         "priority": "P1",
-        "title": "Not done: command-level proof that fix titles stop at the first clause"
+        "title": "Not done: command-level proof of blocked verdicts and hash-free review blocks"
       },
       {
-        "body": "Only the newest 25 PRs across all states receive files and checks, but downstream consumers still process the larger listing. In `src/forge/board.py:248\u2013257`, the last 25 merged PRs are counted and missing files are treated as no Forge changes. Newer open or closed PRs therefore cause that metric to undercount. Older open PRs also lose their green-check status through `src/forge/board.py:215\u2013223`. Fetch bounded details for the relevant PRs instead of treating omitted details as negative results.",
+        "body": "When configured checks pass but an additional check such as lint fails or remains pending, this path announces that the PR is ready to merge. board._green_at only examines configured names (src/forge/board.py:269\u2013274), whereas close checks additional jobs too (src/forge/checks.py:34\u201350). A rejected close leaves the saved status as waiting for checks (src/forge/close.py:81\u201395), so this scenario reaches the new readiness path. Use the same check policy before recommending a merge.",
+        "file": "src/forge/nextstep.py",
+        "line": 247,
+        "priority": "P2",
+        "title": "Apply close's check policy before announcing merge readiness"
+      },
+      {
+        "body": "Only the newest 25 PRs across all states now receive files and checks, but consumers still use the larger listing. The last 25 merged changes are counted in src/forge/board.py:248\u2013257, where omitted files count as no Forge changes. Newer open or closed PRs therefore make that metric undercount. Older open PRs also lose their check-derived readiness at lines 215\u2013223. Fetch bounded details for the relevant PRs instead of treating omitted details as negative results.",
         "file": "src/forge/board.py",
         "line": 152,
         "priority": "P2",
         "title": "Fetch details for the PRs whose status and metrics are displayed"
       },
       {
-        "body": "If configured checks pass but an additional check such as `lint` fails, close rejects the PR: `src/forge/checks.py:34\u201350` considers additional checks too, while `src/forge/close.py:81\u201395` leaves the saved status as `waiting for checks`. This new path nevertheless announces readiness because `src/forge/board.py:269\u2013274` examines only configured names. Apply the same check policy as close before instructing the owner to merge.",
-        "file": "src/forge/nextstep.py",
-        "line": 247,
-        "priority": "P2",
-        "title": "Apply close's check policy before announcing readiness"
-      },
-      {
-        "body": "This second read uses the platform's default encoding, although `src/forge/review.py:85\u201391` already reads and returns the document explicitly as UTF-8. On supported Windows/Python configurations without UTF-8 mode, non-ASCII story content can corrupt the PR title or raise `UnicodeDecodeError`, stopping close before PR creation. Use the text returned by `review.task`, or specify UTF-8 explicitly.",
+        "body": "This second read uses the platform's default encoding, although review.task already reads and returns the document as UTF-8 (src/forge/review.py:85\u201391). On supported Windows/Python configurations without UTF-8 mode, non-ASCII story content can corrupt the title or raise UnicodeDecodeError, stopping close before PR creation. Use the returned text or specify encoding=\"utf-8\".",
         "file": "src/forge/close.py",
         "line": 243,
         "priority": "P2",
@@ -38,7 +38,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "c28f74897b09c034fea41f13fe2e682b09edc288c62adc6d339cbfd5988465d6"
+    "tree": "e60c037d7d25458f29a1f2b2e4e67264ac66bec7ecc38d5c028f83e32ebb22e8"
   },
   "status": "fixing",
   "steps": [
@@ -52,6 +52,10 @@
     },
     {
       "at": "2026-09-27T18:31:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:57:10+00:00",
       "step": "review"
     }
   ],
