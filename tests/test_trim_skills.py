@@ -25,7 +25,8 @@ OLD_COPIES = (
 
 def test_2_sync_ships_one_source_copy_in_wheel_sdist_and_editable(repo, tmp_path):
     assert all(not (ROOT / rel).exists() for rel in OLD_COPIES)
-    expected = {target: (ROOT / source).read_bytes() for target, source in SOURCES.items()}
+    expected = {target: (ROOT / source).read_text(encoding="utf-8").encode("utf-8")
+                for target, source in SOURCES.items()}
     dist = tmp_path / "dist"
     subprocess.run(["uv", "build", "--wheel", "--sdist", "--out-dir", str(dist), str(ROOT)],
                    check=True, capture_output=True, text=True)
