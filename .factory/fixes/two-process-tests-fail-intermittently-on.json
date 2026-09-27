@@ -3,7 +3,7 @@
   "branch": "fix/two-process-tests-fail-intermittently-on",
   "done_when": "the root cause of each intermittent failure is found and fixed in the test or the code, never by skipping or retrying, and each test passes 30 times in a row under pytest-xdist on this machine",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T15:29:43+00:00",
