@@ -1,0 +1,14 @@
+{
+  "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
+  "branch": "fix/two-process-tests-fail-intermittently-on",
+  "done_when": "the root cause of each intermittent failure is found and fixed in the test or the code, never by skipping or retrying, and each test passes 30 times in a row under pytest-xdist on this machine",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:29:43+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Two process tests fail intermittently on CI and block unrelated pull requests: tests/test_codex_record.py::test_5_one_worker_per_item and tests/test_codex_reader.py::test_10_the_cold_read_runs_on_the_other_family"
+}
