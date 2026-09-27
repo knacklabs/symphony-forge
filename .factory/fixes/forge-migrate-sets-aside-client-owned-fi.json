@@ -4,19 +4,19 @@
   "done_when": "forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a test proves it",
   "kind": "fix",
   "review": {
-    "commit": "303ad580a1f81c7e0572be2c4e27bebcd438cbc5",
+    "commit": "af9176f34e90bf6eb612ed0af746f71e5b902d8f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The adapter exclusion leaves the requested behavior broken for referenced client content at `.codex/skills/forge/SKILL.md`. When tracked `package.json` references that customized file, migration still moves its content into `.forge-migrate/kept/` and replaces the original path. `_apply` calls `sync.write` at src/forge/migrate.py:746; src/forge/sync.py:271 supplies the replacement and :305 writes it. The package therefore reads different content after migration despite its reference remaining unchanged. The new test explicitly expects this failure at tests/test_fix_forge_migrate_sets_aside_client_owned_fi.py:27\u201328. Preserve the referenced content at its original path through sync and update the command-level test to require that outcome.",
+        "body": "A tracked package.json referencing customized `.codex/skills/forge/SKILL.md` still loses access to that content after migration: this exclusion prevents preservation, so the customized file moves into `.forge-migrate/kept/`. Migration then calls `sync.write` at src/forge/migrate.py:746; src/forge/sync.py:271 supplies replacement content and :305 writes it at the original path. The package consequently reads different content despite its unchanged reference. The new command-level test explicitly expects this failure at tests/test_fix_forge_migrate_sets_aside_client_owned_fi.py:27\u201328. Preserve referenced client content through synchronization and change that test case to require the original content at its original path.",
         "file": "src/forge/migrate.py",
         "line": 242,
         "priority": "P1",
-        "title": "Not done: forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a "
+        "title": "Not done: forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a"
       }
     ],
     "status": "blocked",
-    "tree": "f5a318ea1b6dd1e1ca403c19829ad22aaacda1048ee4f6161d05e3b09ae024d4"
+    "tree": "60655b3d3aafd49c52465ae9da03db10806791252d215b09a0efc0c5a47d8e1e"
   },
   "status": "fixing",
   "steps": [
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-09-27T15:22:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:30:59+00:00",
       "step": "review"
     }
   ],
