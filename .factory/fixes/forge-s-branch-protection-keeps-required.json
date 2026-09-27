@@ -4,32 +4,26 @@
   "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
   "kind": "fix",
   "review": {
-    "commit": "9cacee4ad053c178e91adea8594bc1688a4cfcd4",
-    "dismissals": [
-      {
-        "because": "src/forge/init.py:124 a comment on a workflow's top-level jobs: line or non-two-space indentation is an edge case no generated or migrated workflow has; the fix's purpose, dropping required checks of workflows the migration deletes, holds for real workflows, and chasing hand-written YAML variants needs a YAML parser Forge doesn't carry",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "commit": "ab2a7ab91b1a49edcc4d26dab1597701e317ccd1",
+    "dismissals": [],
     "findings": [
       {
-        "body": "The scanner only recognizes the exact line `jobs:` and fixed two-space indentation. With `jobs: # required checks` in the deleted workflow, it discovers no removed jobs, leaving `old-check` and `lint` required and blocking later PRs. The same formatting in a surviving workflow can instead remove a live requirement. These are ordinary valid [GitHub workflow YAML](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax). Handle comments and valid indentation, and extend the command-level regression test to cover them.",
-        "file": "src/forge/init.py",
-        "line": 124,
-        "priority": "P1",
-        "title": "Not done: init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every"
-      },
-      {
-        "body": "An absolute local origin bypasses the refusal and restores `{owner}/{repo}` in both protection requests. With another GitHub remote or `GH_REPO` configured, those requests can modify an unrelated repository: [gh resolves these placeholders from its repository context](https://cli.github.com/manual/gh_api). This production exception exists to accommodate test fixtures. Remove it and use explicit GitHub fetch URLs with local push URLs in those fixtures, as the new test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
+        "body": "An absolute local origin bypasses the refusal and sends both protection requests using `{owner}/{repo}`. With `GH_REPO` pointing elsewhere, this can modify an unrelated repository because [gh resolves those placeholders from its repository context](https://cli.github.com/manual/gh_api). Remove the production exception and refuse unresolved origins. Tests can use GitHub fetch URLs with local push URLs, as the new test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
         "file": "src/forge/init.py",
         "line": 88,
         "priority": "P2",
         "title": "Simpler: test-only repository fallback \u2192 refuse unresolved origins"
+      },
+      {
+        "body": "The exact comparison rejects `jobs: # required checks`, although comments are valid [YAML syntax](https://yaml.org/spec/1.2.2/#66-comments). If a deleted workflow declares `keep-check` and a surviving workflow uses that commented header to declare the same job, the surviving producer is invisible and protection drops a live requirement. Conversely, a commented header in the deleted workflow leaves its obsolete checks required. Handle comments and valid indentation when discovering jobs. This is P2 under the requested edge-case rule; the supplied generated-workflow scenario is covered.",
+        "file": "src/forge/init.py",
+        "line": 124,
+        "priority": "P2",
+        "title": "Recognize commented jobs headers before removing required checks"
       }
     ],
     "status": "clean",
-    "tree": "6b848d84577a75902a43e6b6ff658bb61f140545dd205d60203fd6862ae2e5a7"
+    "tree": "eece6aa9d8a4401f04ecc842eb2bf16526788b22bd95e2f1ea2729732f58d06b"
   },
   "status": "waiting for checks",
   "steps": [
@@ -51,6 +45,10 @@
     },
     {
       "at": "2026-09-27T16:23:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:06:56+00:00",
       "step": "review"
     }
   ],
