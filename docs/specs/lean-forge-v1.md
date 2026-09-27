@@ -96,9 +96,9 @@ migrate` write its defaults.
   schema and migrations, a CLI command table, and the config schema.
 - When `interfaces` is empty, the review instructions tell the reviewer to report any interface
   change as a P1 `Promote` finding.
-- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist,
-  except by `forge migrate`: before this repo has a `forge.toml`, its source-repo mode runs in the
-  repo that holds `src/forge/cli.py` (note, 2026-09-26).
+- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist.
+  `forge migrate` refuses there because the repo already moved at the switch. Its source-repo
+  migration mode was needed only for that switch and is gone.
 
 Every command that changes state refuses when the installed Forge differs from `version`, and
 prints the exact `uv tool install` line. `forge --version`, `forge doctor` and `forge next` still
@@ -575,12 +575,8 @@ and `forge close` works on it.
 Clients from before the `factory/` layout are refused with a pointer to the
 "move vendored clients" story.
 
-In Forge's own repo (it holds `src/forge/cli.py`), `forge migrate` deletes nothing. It converts only
-the plans the switch carries, reading their approvals from the old plan metadata
-(`.factory/stories/<KEY>/plan-meta.json`), leaves every other active plan for the switch to
-supersede, replaces `AGENTS.md` and `CLAUDE.md` wholly with the Forge block, and writes
-`forge.toml` (`repo = "forge-source"`) and the adapter. The switch deletes the old tree after the
-switch checks pass.
+In Forge's own repo, `forge migrate` refuses before planning or changing anything. That repo
+already moved at the switch; the command tells the user to run `forge next`.
 
 ### Tests and CI in this repo
 
@@ -601,9 +597,9 @@ switch checks pass.
 ### The switch
 
 1. **Adopt.** This repo moves onto v1 with a release-candidate tag. Its `forge.toml` says
-   `repo = "forge-source"`, and `forge migrate` runs in its source-repo mode: this story and the
-   warm-threads story become story docs with their approvals, the FDE story becomes a draft for
-   its re-plan, the other active plans wait for the switch, and the old host hooks are replaced.
+   `repo = "forge-source"`. The one-time source-repo migration converted this story and the
+   warm-threads story to story docs with their approvals; the FDE story became a draft for
+   its re-plan, the other active plans waited for the switch, and the old host hooks were replaced.
    The old tree stays, unused.
 2. **Switch checks.** All three must pass:
    - The FDE story runs as the pilot on v1: story doc, one read, one approval, its own tasks, each
@@ -792,10 +788,8 @@ switch checks pass.
     - It refuses while work is in flight, refuses a path outside the repo, and refuses an
       `.agents/`-era layout.
     - After an interrupted run, a second run produces the same branch.
-    - In Forge's own repo (it holds `src/forge/cli.py`), it converts only the plans the switch
-      carries, with their approvals from the old plan metadata, leaves the other active plans as
-      they are, replaces `AGENTS.md` and `CLAUDE.md` wholly, and writes `forge.toml` and the
-      adapter, but deletes nothing.
+    - In Forge's own repo (`repo = "forge-source"`), it refuses before planning or changing
+      anything because that repo already moved at the switch, and points to `forge next`.
 31. **Speed.** The new suite finishes in under 5 minutes on each CI runner.
 32. **Client sign-off.**
     - In a client repo with no accepted `client-signoff` decision, a matching approval records
