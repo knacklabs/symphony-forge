@@ -1,0 +1,14 @@
+{
+  "base": "9ed2a1e7e0ad30c4694ecba50b6231d180a17d90",
+  "branch": "fix/codex-workers-can-only-be-told-things-th",
+  "done_when": "docs/specs/codex-steering.md is saved, read once, and confirmed, and its story FORGE-STEER-1 is on the roadmap",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T03:27:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex workers can only be told things through the brief: the coordinator can't pass a one-off pointer, a worker can't ask and wait, a resume held by a leftover process starts fresh, and there's no read-only question to Codex, so fixes take extra full rounds"
+}
