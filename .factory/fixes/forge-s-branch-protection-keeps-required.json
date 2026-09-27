@@ -3,11 +3,37 @@
   "branch": "fix/forge-s-branch-protection-keeps-required",
   "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "d5abff4fc5b62f849e21b9ee9b59adf912b7922e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The workflow scan counts every job ID as a produced check, including jobs with an explicit different name. For example, if migration deletes a workflow producing `lint`, while a remaining workflow contains job ID `lint` with `name: frontend-lint`, `remaining` still contains `lint`. Consequently, the orphaned required check survives and blocks subsequent merges. GitHub distinguishes [job identifiers from job names](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs). Use the effective check name, falling back to the ID only when appropriate, and extend the command-level migration test to cover named jobs.",
+        "file": "src/forge/init.py",
+        "line": 137,
+        "priority": "P1",
+        "title": "Not done: init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every\u2002"
+      },
+      {
+        "body": "GitHub's [documented SSH-over-443 origin](https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port), such as `ssh://git@ssh.github.com:443/acme/shop.git`, fails the hostname check and falls back to `{owner}/{repo}` for both API requests. Those [placeholders use gh's repository selection](https://cli.github.com/manual/gh_api), restoring the wrong-repository risk with multiple remotes. Recognize this GitHub transport and fail explicitly for unresolved origins instead of silently restoring ambiguous selection.",
+        "file": "src/forge/init.py",
+        "line": 96,
+        "priority": "P2",
+        "title": "Keep SSH-over-443 origins bound to their repository"
+      }
+    ],
+    "status": "blocked",
+    "tree": "8d83c61873d3ba8e3415a807aa2473a4c2cf4966d2bbf9bf2446f9d7c6529cd2"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T14:49:42+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:54+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's branch protection keeps required checks whose workflows a migration deletes, which blocks every later pull request once admins are enforced, and with two remotes and no gh default it can protect the wrong repo"
