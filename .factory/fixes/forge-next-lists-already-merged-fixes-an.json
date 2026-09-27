@@ -3,11 +3,30 @@
   "branch": "fix/forge-next-lists-already-merged-fixes-an",
   "done_when": "forge next says an item whose pull request merged is merged and names the cleanup, instead of waiting for checks, and a test proves it",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "98d142bc261d98b85a7c11c39cdd419758b252bf",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "On Windows, `str(task)` contains backslashes, so `shlex.quote(str(path))` in `src/forge/nextstep.py:215` wraps the path in single quotes. This assertion expects an unquoted path and therefore fails; the fix-path assertion immediately below has the same problem. Windows runs the repository suite in `.github/workflows/forge-next.yml:23\u201336`, so this introduces a deterministic CI failure. Make the assertions accept correctly quoted paths while still verifying the cleanup command and its target.",
+        "file": "tests/test_fix_forge_next_lists_already_merged_fixes_an.py",
+        "line": 38,
+        "priority": "P1",
+        "title": "[P1] Account for quoted Windows paths in the regression test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e9c5a3aeb14660c3c01fef4c7a5612b9c2350f1cc9574c36e443e806de5bfd19"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T14:49:44+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:16+00:00",
+      "step": "review"
     }
   ],
   "why": "forge next lists already-merged fixes and tasks as waiting for their checks while their worktrees still exist"
