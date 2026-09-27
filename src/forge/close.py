@@ -115,8 +115,8 @@ def _dismissals(args: argparse.Namespace, item: str) -> list[tuple[int, str]]:
 def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> bool:
     """Use the base only when the branch deleted the cited file."""
     path, _, line = where.rpartition(":")
-    from_base = path in repo.git("diff", "--name-only", "--diff-filter=D", "--no-renames",
-                                 base, commit, "--", path, cwd=top).splitlines()
+    from_base = path in repo.git("diff", "--name-only", "-z", "--diff-filter=D", "--no-renames",
+                                 base, commit, "--", path, cwd=top).split("\0")
     shown = repo.run("git", "show", f"{base if from_base else commit}:{path}", cwd=top)
     if shown.returncode or not 1 <= int(line) <= len(shown.stdout.splitlines()):
         repo.refuse(REFUSALS["no_such_base_line" if from_base else "no_such_line"],
