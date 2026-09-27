@@ -1,8 +1,10 @@
 ---
 slug: forge-trim
 title: Forge sheds dead and duplicated code before it grows again
-status: draft
+status: confirmed
 saved: 2026-09-27T16:10:53+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 1a35b69019ad8513b4a1a65a323f11f11795f7634edcb174e4b6bda6aeacc310
 ---
 
 # Forge sheds dead and duplicated code before it grows again
