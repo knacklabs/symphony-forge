@@ -41,7 +41,7 @@ builds the confirmed spec `docs/specs/codex-chat-view.md`.
 | FORGE-S-CODEX-CHATS-SHOW-AS-ONE-PROJECT | The spec | The confirmed spec and its roadmap item | 1 | `docs/specs/codex-chat-view.md`, `docs/specs/codex-chat-view.read.md`, `plans/roadmap.json` | | none | no |
 | START | Chat start | In the driver: the project lookup and assignment after start or resume, naming only on a fresh start, and the `attach` request the close uses; the main checkout passed from Forge | 2, 3, 6 | `src/forge/codex_turn.py`, `src/forge/codex.py` | `tests/test_chatview_start.py` | none | yes |
 | WORDS | Names and previews | The name formats and the summary lines in the worker's and cold read's prompts | 3, 4 | `src/forge/worker.py`, `src/forge/story.py`, `src/forge/templates/brief.md`, `src/forge/templates/cold-read.md` | `tests/test_chatview_words.py` | none | yes |
-| ATTACH | Pull request link | `forge close` attaching the pull request to the item's chat through the driver's `attach` request | 5, 6 | `src/forge/close.py` | `tests/test_chatview_attach.py` | START | yes |
+| ATTACH | Pull request link | `forge close` reading its pull request and attaching it to the item's chat through `codex.attach` | 5, 6 | `src/forge/close.py` | `tests/test_chatview_attach.py` | START | yes |
 
 New moving parts: none
 
@@ -60,7 +60,16 @@ Risks: none
   caller passes, so the two share only the existing `name` field of the request.
 - `project/list` and the `projectId` field are experimental in the app-server; the SDK sends the
   experimental flag already, and every call's failure is non-fatal.
-- The work waits for FORGE-STEER-1's and FORGE-MERGE-1's tasks that change `codex_turn.py`,
-  `codex.py`, `close.py` and `worker.py`; Forge's Scope overlap rule orders them.
+- START picks the project from `project/list` pages (following `nextCursor` until none), matching a
+  project when any of its `roots` equals the main checkout, both compared as resolved paths; one
+  match assigns its `id`, none or several assign nothing.
+- ATTACH reads the pull request with `gh pr view <branch> --json number,url,headRefName`, takes the
+  owner and repo from its URL, and calls `codex.attach(top, item, pr)` with that dict; the
+  app-server keeps one attachment per identity, so a repeat is harmless.
+- "Fix round <n>": n is the item's number of recorded turns plus one, counted from its turn log, so
+  it keeps counting when a later round starts a fresh chat; a first round is never a fix round.
+- The coordinator starts START only after FORGE-STEER-1/ASK-MODEL and FORGE-MERGE-1/MERGE have
+  merged, and ATTACH only after FORGE-MERGE-1/READY has merged, since those change the same files
+  and Forge's overlap check sees only tasks already started. WORDS can start at once.
 - Each test file starts with `STORY = "FORGE-CHATVIEW-1"`, and its `test_<n>_` names cite the
   Done-when items its task covers.
