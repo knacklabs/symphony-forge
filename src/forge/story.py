@@ -139,14 +139,19 @@ def read(args: Any) -> int:
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
                                capture_output=True, check=True).stdout.decode().strip()
-    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"))
+    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"), target=target)
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
-            ran = codex.run(top, target, "Grill", f"Grill · {target} · {rel}", prompt, "read-only")
+            name = f"Read · {target}"
+            if len(name) > 60:
+                prefix = name[:59]
+                name = (prefix.rstrip() if name[59].isspace() else
+                        prefix.rsplit(" ", 1)[0] or prefix) + "…"
+            ran = codex.run(top, target, "Grill", name, prompt, "read-only")
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
