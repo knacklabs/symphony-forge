@@ -166,8 +166,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
     assert written["models"] == {
-        "build": {"model": "opus", "effort": "high"}, "fix": {"model": "opus", "effort": "high"},
-        "lite": {"model": "sonnet", "effort": "medium"},
+        "build": {"model": "gpt-6-sol", "effort": "medium"},
+        "fix": {"model": "gpt-6-sol", "effort": "medium"},
+        "lite": {"model": "gpt-6-sol", "effort": "medium"},
         "grill": {"codex": {"model": "gpt-6-sol", "effort": "high"},
                   "claude": {"model": "opus", "effort": "high"}},
         "review": {"model": "gpt-6-astra"}}
