@@ -31,9 +31,7 @@ REFUSALS = {
     "no_reason": ("The permission needs a one-line reason.", 'forge fix allow-large "<reason>"'),
 }
 
-
 # --- the story doc ---------------------------------------------------------------------
-
 
 def sections(text: str) -> dict[str, str]:
     """A story doc's `## ` sections by heading; "#" holds the title."""
@@ -42,7 +40,6 @@ def sections(text: str) -> dict[str, str]:
     title = re.search(r"^# +(.+?) *$", parts[0], re.M)
     found["#"] = title[1] if title else ""
     return found
-
 
 def rows(doc: dict[str, str]) -> dict[str, dict[str, str]]:
     """The Tasks table's rows by ID, each cell under its column name."""
@@ -55,12 +52,10 @@ def rows(doc: dict[str, str]) -> dict[str, dict[str, str]]:
     table = (dict(zip(header, (cell.strip() for cell in line.split("|")))) for line in lines[2:])
     return {row.get("ID", ""): row for row in table}
 
-
 def cell_list(cell: str) -> list[str]:
     """A comma-separated cell (Scope, Tests, After) as a list; "none" and "—" are empty."""
     items = (part.strip().strip("`").strip() for part in cell.split(","))
     return [item for item in items if item.lower() not in ("", "none", "—", "-")]
-
 
 def approval_hash(text: str) -> str:
     """The hash an approval binds: "What changes for you" and "Done when", nothing else."""
@@ -68,9 +63,7 @@ def approval_hash(text: str) -> str:
     both = f"{doc.get('What changes for you', '')}\n{doc.get('Done when', '')}"
     return hashlib.sha256(both.encode("utf-8")).hexdigest()
 
-
 # --- branches, checkouts and the default branch ----------------------------------------
-
 
 def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     """The story, task or fix whose state in this checkout marks the branch as Forge's."""
@@ -84,38 +77,31 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
             return item, state
     return None
 
-
 def main_ref() -> str:
     """The default branch as the remote has it, freshly fetched: merged work lives there."""
     git("fetch", "-q", "--prune", "origin")
     return f"origin/{repo.default_branch()}"
-
 
 def show(ref: str, rel: str) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
     done = run("git", "show", f"{ref}:{rel}")
     return done.stdout if done.returncode == 0 else None
 
-
 def _folder(name: str) -> Path:
     """A new worktree folder next to the main checkout, named <repo>-<name>."""
     main = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir")).parent
     return main.parent / f"{main.name}-{name}"
-
 
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
                   message: str) -> Path:
     """Make the branch in its own worktree and commit the item's state there."""
     path = _folder(folder)
     git("worktree", "add", "-q", "--no-track", "-b", branch, str(path), base)
-    rel = repo.write_state(item, repo.add_step({**state, "status": "started", "branch": branch},
-                                               "start"), path)
+    rel = repo.write_state(item, repo.add_step({**state, "status": "started", "branch": branch}, "start"), path)
     repo.commit_state(message, rel, top=path)
     return path
 
-
 # --- forge task start ------------------------------------------------------------------
-
 
 def start(args: argparse.Namespace) -> None:
     item = args.item
@@ -144,8 +130,7 @@ def start(args: argparse.Namespace) -> None:
     started = _started(main)
     if item in started or _merged(main, item):
         refuse(REFUSALS["started"], item=item, branch=branch)
-    waiting = [dep for dep in cell_list(tasks[task].get("After", ""))
-               if not _merged(main, f"{key}/{dep}")]
+    waiting = [dep for dep in cell_list(tasks[task].get("After", "")) if not _merged(main, f"{key}/{dep}")]
     if waiting:
         refuse(REFUSALS["waiting"], item=item, deps=", ".join(f"{key}/{dep}" for dep in waiting))
     scope = cell_list(tasks[task].get("Scope", ""))
@@ -158,28 +143,23 @@ def start(args: argparse.Namespace) -> None:
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")
 
-
 def _merged(main: str, item: str) -> bool:
     """An item's state reaches the default branch only with its merged pull request."""
     return show(main, repo.state_path(item)) is not None
-
 
 def _started(main: str) -> dict[str, list[str]]:
     """Every story's started, unmerged tasks, each with its Scope."""
     # ponytail: a few git calls per task branch; fine for the handful of tasks in flight.
     found: dict[str, list[str]] = {}
-    refs = git("for-each-ref", "--format=%(refname)", "refs/heads/task/",
-               "refs/remotes/origin/task/").splitlines()
+    refs = git("for-each-ref", "--format=%(refname)", "refs/heads/task/", "refs/remotes/origin/task/").splitlines()
     for ref in refs:
         branch = "task/" + ref.split("/task/", 1)[1]
         for rel in git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories").splitlines():
             match = re.fullmatch(r"\.factory/stories/([^/]+)/tasks/([^/]+)\.json", rel)
-            if match and f"task/{match[1]}-{match[2]}" == branch and not _merged(
-                    main, f"{match[1]}/{match[2]}"):
+            if match and f"task/{match[1]}-{match[2]}" == branch and not _merged( main, f"{match[1]}/{match[2]}"):
                 doc = rows(sections(show(ref, f"plans/{match[1]}.md") or ""))
                 found[f"{match[1]}/{match[2]}"] = cell_list(doc.get(match[2], {}).get("Scope", ""))
     return found
-
 
 def _overlap(a: str, b: str) -> bool:
     """Two Scope entries (files, folders or globs) that may touch the same file: their literal
@@ -188,13 +168,10 @@ def _overlap(a: str, b: str) -> bool:
     a, b = (re.split(r"[*?[]", entry, maxsplit=1)[0] for entry in (a, b))
     return a.startswith(b) or b.startswith(a)
 
-
 # --- forge fix start / forge fix allow-large -------------------------------------------
-
 
 def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
-
 
 def fix_start(args: argparse.Namespace) -> None:
     if not (_one_line(args.why) and _one_line(args.done)):
@@ -212,7 +189,6 @@ def fix_start(args: argparse.Namespace) -> None:
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", main, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
     print(f"Next: forge work {name}")
-
 
 def allow_large(args: argparse.Namespace) -> None:
     if not _one_line(args.reason):

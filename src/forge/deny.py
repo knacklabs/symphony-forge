@@ -28,7 +28,6 @@ REFUSALS = {
 OPERATORS = set(";&|()<>")
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "eval"}
 
-
 def hook(args: argparse.Namespace) -> None:
     try:
         payload = json.loads(sys.stdin.read())
@@ -45,7 +44,6 @@ def hook(args: argparse.Namespace) -> None:
             rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:])
             if rule:
                 refuse(REFUSALS[rule], code=2, found=" ".join(words))
-
 
 def _commands(text: str, depth: int = 0) -> Iterator[list[str]]:
     """Each simple command's words, including those run by sh -c, eval, $(...) and backticks."""
@@ -67,7 +65,6 @@ def _commands(text: str, depth: int = 0) -> Iterator[list[str]]:
             if "$(" in word and depth < 4:  # a quoted $(...) still runs
                 yield from _commands(word, depth + 1)
 
-
 def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
     """The commands in the script that a shell or eval in this command runs."""
     for i, word in enumerate(command):
@@ -75,14 +72,12 @@ def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
             yield from _commands(" ".join(command[i + 1:]), depth + 1)
             return
 
-
 def _rule(program: str, args: list[str]) -> str | None:
     """The rule a program and its arguments break, if any."""
     if "--no-verify" in args:
         return "no_verify"
     short = _short(args)
-    if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and (
-            "f" in short or "--force" in args):
+    if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and ( "f" in short or "--force" in args):
         return "destructive"
     if program == "git":
         # -c core.hooksPath=... (or --config-env) turns every git hook off, like --no-verify.
@@ -97,18 +92,15 @@ def _rule(program: str, args: list[str]) -> str | None:
         # --force, --force-with-lease, --force-if-includes, -f, and a +refspec all force.
         if sub == "push" and ("f" in short or any(a.startswith(("--force", "+")) for a in rest)):
             return "destructive"
-    if (program == "terraform" and {"destroy", "-destroy"} & set(args)
-            or program == "kubectl" and "delete" in args):
+    if (program == "terraform" and {"destroy", "-destroy"} & set(args) or program == "kubectl" and "delete" in args):
         return "destructive"
     if program == "gh" and any(args[i:i + 2] == ["pr", "merge"] for i in range(len(args))):
         return "merge"
     return None
 
-
 def _short(args: list[str]) -> set[str]:
     """The letters of short options, so -fr, -r -f and -Rf read alike."""
     return {letter for arg in args if arg[:1] == "-" and arg[:2] != "--" for letter in arg[1:]}
-
 
 def _subcommand(args: list[str]) -> tuple[str, list[str]]:
     """git's subcommand and its arguments, after options such as -C <dir> and -c <key=value>."""

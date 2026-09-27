@@ -120,8 +120,7 @@ OLD_COMMENTS = frozenset("""\
 # prevent. VENDORED_FROM is written into every scaffolded/upgraded target and
 # never exists here, so it is the discriminator. Client repos: set your own
 # three commands below this block.""".splitlines())
-HARNESS_ONLY = re.compile(r"^[ \t]*if \[ ! -f constitution/VENDORED_FROM \].*?^[ \t]*fi[ \t]*$",
-                          re.M | re.S)
+HARNESS_ONLY = re.compile(r"^[ \t]*if \[ ! -f constitution/VENDORED_FROM \].*?^[ \t]*fi[ \t]*$", re.M | re.S)
 # gstack's store, which the old Forge kept in the repo: only office-hours design docs stay.
 DESIGN = re.compile(r"\.gstack/projects/[^/]+/[^/]*-design-[^/]*\.md")
 GSTACK_LINES = {  # the old Forge's own gstack lines; the client's other gstack lines stay
@@ -169,9 +168,7 @@ SOURCE_PLANS = {"FORGE-NEXT-1": "", "FORGE-WARM-1": "",
                 "FORGE-FDE-1": "the new Forge re-plans it with one fresh approval"}
 SOURCE_TEST = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
 SOURCE_WHY = "Move Forge's own repo onto Forge v1, beside the old Forge until the switch."
-SOURCE_DONE = ("Forge v1 runs its own repo: forge doctor passes, and the plans the switch carries "
-               "are story docs.")
-
+SOURCE_DONE = "Forge v1 runs its own repo: forge doctor passes, and the plans the switch carries are story docs."
 
 def migrate(args: argparse.Namespace) -> int:
     top = repo.root()
@@ -204,8 +201,7 @@ def migrate(args: argparse.Namespace) -> int:
     there = {path.casefold() for rel in repo.git("ls-files", "-z", cwd=top).split("\0") if rel
              for path in (rel, *map(str, Path(rel).parents))}
     landed: dict[str, str] = {}
-    for rel, dest in [*plan["moves"], *((entry["old"], entry["dest"])
-                                        for entry in plan["stories"] if "dest" in entry)]:
+    for rel, dest in [*plan["moves"], *((entry["old"], entry["dest"]) for entry in plan["stories"] if "dest" in entry)]:
         if dest.casefold() in landed or dest.casefold() in there or os.path.lexists(top / dest):
             first = landed.get(dest.casefold(), "")
             repo.refuse(REFUSALS["taken"], path=f"{dest} (from {first})" if first else dest,
@@ -213,8 +209,7 @@ def migrate(args: argparse.Namespace) -> int:
         landed[dest.casefold()] = rel
     report = _report(plan, default)
     if args.dry_run:
-        print(f"Nothing was changed. forge migrate would do this, on its own branch {BRANCH}:\n\n"
-              f"{report}")
+        print(f"Nothing was changed. forge migrate would do this, on its own branch {BRANCH}:\n\n{report}")
         return 0
     path = _fresh_branch(top, ref)
     _apply(top, path, plan, report)
@@ -224,17 +219,14 @@ def migrate(args: argparse.Namespace) -> int:
           f"Next: forge doctor and your tests in {path}, then forge close {ITEM}")
     return 0
 
-
 # --- the plan: computed from the default branch, before anything changes -------------------
-
 
 def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     vendored = {} if own else _tree(top, ref, *VENDORED)
     records = {} if own else _tree(top, ref, ".factory", *LEDGERS)
     source = _source(top, ref) if vendored else {}
     envrc = (story.show(top, ref, ".envrc") or "") if vendored else ""
-    ours = any(line.strip() not in OLD_COMMENTS and not OLD_ENVRC.fullmatch(line)
-               for line in envrc.splitlines())
+    ours = any(line.strip() not in OLD_COMMENTS and not OLD_ENVRC.fullmatch(line) for line in envrc.splitlines())
     kept = sorted(path for path, blob in vendored.items() if path not in FORGE_MADE
                   and (ours if path == ".envrc" else source.get(path) != blob))
     # Outside the harness-only block; the last export of each wins, as in the shell.
@@ -243,15 +235,13 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     store = {} if own else _tree(top, ref, ".gstack")
     designs = [(path, f"docs/context/{Path(path).name}") for path in store if DESIGN.fullmatch(path)]
     texts = {} if own else {name: story.show(top, ref, name) or "" for name in GSTACK_LINES}
-    edits = {name: GSTACK_LINES[name].sub("", text) for name, text in texts.items()
-             if GSTACK_LINES[name].search(text)}
+    edits = {name: GSTACK_LINES[name].sub("", text) for name, text in texts.items() if GSTACK_LINES[name].search(text)}
     left = {name: lines for name, text in texts.items()
             if (lines := [line for line in edits.get(name, text).splitlines() if "gstack" in line])}
     phases = [said[name] for name in VERIFY if said.get(name)]
     # ponytail: no shell parsing; a # or a line break could hide the phases after it, so none go.
     unsafe = any(re.search(r"[#\r\n]", phase) for phase in phases)
-    test = "" if unsafe else " && ".join(
-        f"({phase})" if re.search(r"[;&|]", phase) else phase for phase in phases)
+    test = "" if unsafe else " && ".join( f"({phase})" if re.search(r"[;&|]", phase) else phase for phase in phases)
     if test and not own and "package.json" in _tree(top, ref, "package.json"):
         test = f"npm ci && {test}"
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
@@ -282,7 +272,6 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "claude_import": ".claude/CLAUDE.md" in vendored
                              and bool(IMPORT.search(story.show(top, ref, "CLAUDE.md") or ""))}
 
-
 def _touched(plan: dict[str, Any]) -> list[str]:
     """Every path the run removes, moves or writes, but the adapters sync.files lists."""
     written = [path for entry in plan["stories"] if "dest" in entry
@@ -290,17 +279,14 @@ def _touched(plan: dict[str, Any]) -> list[str]:
     return [*plan["delete"], *(path for move in plan["moves"] for path in move),
             *plan["gstack_edits"], *written, "forge.toml", repo.state_path(ITEM)]
 
-
 def _tree(top: Path, ref: str, *paths: str) -> dict[str, str]:
     """Each file under these paths at ref, with its blob id."""
     listing = repo.git("ls-tree", "-r", "-z", ref, "--", *paths, cwd=top)
     return {entry.partition("\t")[2]: entry.split()[2] for entry in listing.split("\0")
             if entry and entry.split()[1] == "blob"}
 
-
 def _names(top: Path, ref: str, folder: str) -> list[str]:
     return repo.git("ls-tree", "--name-only", ref, "--", folder, cwd=top).splitlines()
-
 
 def _source(top: Path, ref: str) -> dict[str, str]:
     """The copied-in version of the listed paths: the Forge source at VENDORED_FROM's commit."""
@@ -318,7 +304,6 @@ def _source(top: Path, ref: str) -> dict[str, str]:
             repo.refuse(REFUSALS["no_source"], problem=f"fetching it from {url} failed: {said}")
         return _tree(Path(tmp), "FETCH_HEAD", *VENDORED, "AGENTS.md")
 
-
 def _in_flight(top: Path) -> list[str]:
     """Old Forge work not finished in any checkout of this repo: an open window, an active stage."""
     found = set()
@@ -326,8 +311,7 @@ def _in_flight(top: Path) -> list[str]:
         factory = path / ".factory"
         window = story.json_of(sync.read(factory / "quickfix.json"))
         if window:
-            found.add(f"the {window.get('profile', 'quickfix')} window {window.get('id', '')} "
-                      f"in {path}")
+            found.add(f"the {window.get('profile', 'quickfix')} window {window.get('id', '')} in {path}")
         for file in (factory / "stages.json", *factory.glob("stories/*/stages.json"),
                      *factory.glob("stories/*/stages/*.json")):
             data = story.json_of(sync.read(file))
@@ -335,7 +319,6 @@ def _in_flight(top: Path) -> list[str]:
                          for stage in data.get("stages", [data])
                          if isinstance(stage, dict) and stage.get("status") == "active")
     return sorted(found)
-
 
 def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
     """Each active plan, converted; one that can't be keeps its place and says why."""
@@ -363,7 +346,6 @@ def _stories(top: Path, ref: str, own: bool) -> list[dict[str, Any]]:
             continue
         found.append(_convert(top, ref, rel, old, key, fields, body))
     return found
-
 
 def _source_stories(top: Path, ref: str) -> list[dict[str, Any]]:
     """Forge's own repo: the plans SOURCE_PLANS names, found and approved through their old plan
@@ -397,14 +379,12 @@ def _source_stories(top: Path, ref: str) -> list[dict[str, Any]]:
         found.append(_convert(top, ref, rel, key, key, fields, text, merged))
     return found
 
-
 def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str, str],
              body: str, prs: dict[str, str] | None = None) -> dict[str, Any]:
     """An old plan as a story doc. prs, in Forge's own repo only: merged branch -> merge date."""
     own = prs is not None
     found = story.sections(body)
-    picked = {name: next((heading for heading in olds if heading in found), None)
-              for name, olds in SECTIONS.items()}
+    picked = {name: next((heading for heading in olds if heading in found), None) for name, olds in SECTIONS.items()}
     text = {name: found[heading].strip() if heading else "" for name, heading in picked.items()}
     done = _numbered(text["Done when"])
     parts = re.split(r"^(\d+)\.[ \t]+", done, flags=re.M)
@@ -446,19 +426,16 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
              "waiting": waiting, "done": len(states), "total": len(rows), "outcome": ""}
     if why_not:
         return {**entry, "dest": f"{REPLAN}/{key}.md", "text": doc, "states": {}}
-    approval = {"by": "carried over from the copied-in Forge", "at": saved,
-                "hash": story.approval_hash(doc)}
+    approval = {"by": "carried over from the copied-in Forge", "at": saved, "hash": story.approval_hash(doc)}
     state = {"title": title, "doc": f"plans/{key}.md", "status": "approved", "touches": 0,
              "approval": approval, "steps": [{"step": "approved", "at": saved}]}
     if shipped:  # it is finished
         merged = {item.partition("/")[2]: data["steps"][0]["at"] for item, data in states.items()}
         said = story.json_of(story.show(top, ref, f".factory/stories/{old}/outcome.json")).get("outcome")
         entry["outcome"] = _flat(said) if isinstance(said, str) and said.strip() else FINISHED
-        state.update(status="done", outcome=entry["outcome"], merged=merged,
-                     finished=max(merged.values()))
+        state.update(status="done", outcome=entry["outcome"], merged=merged, finished=max(merged.values()))
         state["steps"].append({"step": "done", "at": state["finished"]})
     return {**entry, "dest": f"plans/{key}.md", "text": doc, "states": {key: state, **states}}
-
 
 def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
            saved: str) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
@@ -466,8 +443,7 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     the rows, and the rows not done yet."""
     base = f".factory/stories/{old}"
     decomposition = story.json_of(story.show(top, ref, f"{base}/decomposition.json"))
-    tasks = [task for task in decomposition.get("tasks") or []
-             if isinstance(task, dict) and isinstance(task.get("id"), str)]
+    tasks = [task for task in decomposition.get("tasks") or [] if isinstance(task, dict) and isinstance(task.get("id"), str)]
     ids = {task["id"]: re.sub(r"[^A-Z0-9]+", "-", task["id"].removeprefix(f"{old}-").upper())
            .strip("-") or "T" for task in tasks}
     # A story shipped whole in one pull request (the older layout) marked the story, not a task.
@@ -483,8 +459,7 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     for task in tasks:
         tid, marker = ids[task["id"]], f"{base}/tasks/{task['id']}/pr-ready.json"
         done = marker if story.show(top, ref, marker) is not None else shipped
-        if any(stage.get("id") == task["id"] and stage.get("status") != "done"
-               for stage in stages):
+        if any(stage.get("id") == task["id"] and stage.get("status") != "done" for stage in stages):
             done = ""
         said = [str(text) for text in task.get("acceptance_criteria") or []] + [
             str(contract.get("statement", "")) for contract in task.get("plan_contracts") or []
@@ -494,8 +469,7 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
         tests = list(dict.fromkeys(str(test.get("path") if isinstance(test, dict) else test)
                                    for test in task.get("required_tests") or []
                                    if (test.get("path") if isinstance(test, dict) else test)))
-        after = [ids[dep] for dep in task.get("depends_on") or task.get("dependencies") or []
-                 if dep in ids]
+        after = [ids[dep] for dep in task.get("depends_on") or task.get("dependencies") or [] if dep in ids]
         row = "| " + " | ".join(_cell(cell) for cell in (
             tid, task.get("title", ""), task.get("objective", ""), ", ".join(map(str, covers)),
             ", ".join(f"`{path}`" for path in scope), ", ".join(f"`{path}`" for path in tests),
@@ -510,12 +484,9 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
             waiting.append(row)
     return rows, states, needs, waiting
 
-
 def _merged(key: str, tid: str, at: str) -> dict[str, Any]:
     """The state of a task merged before the move."""
-    return {"status": "merged", "branch": f"task/{key}-{tid}", "touches": 0,
-            "steps": [{"step": "merged", "at": at}]}
-
+    return {"status": "merged", "branch": f"task/{key}-{tid}", "touches": 0, "steps": [{"step": "merged", "at": at}]}
 
 def _plan_rows(found: dict[str, str], key: str, prs: dict[str, str],
                ) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
@@ -542,7 +513,6 @@ def _plan_rows(found: dict[str, str], key: str, prs: dict[str, str],
             waiting.append(rows[-1])
     return rows, states, needs, waiting
 
-
 def _numbered(text: str) -> str:
     """Done-when items, word for word, as the numbered list a story doc needs."""
     if re.search(r"^\d+\.[ \t]", text, re.M):
@@ -550,18 +520,14 @@ def _numbered(text: str) -> str:
     count = iter(range(1, 10_000))
     return re.sub(r"^[-*][ \t]+", lambda _: f"{next(count)}. ", text, flags=re.M)
 
-
 def _flat(text: str) -> str:
     return " ".join(text.split())
-
 
 def _cell(value: object) -> str:
     return _flat(str(value)).replace("|", "/")
 
-
 def _files(count: int) -> str:
     return f"{count:,} file{'s' * (count != 1)}"
-
 
 def _story_line(entry: dict[str, Any], default: str) -> str:
     if entry["why_not"]:
@@ -570,9 +536,7 @@ def _story_line(entry: dict[str, Any], default: str) -> str:
     if entry["outcome"]:
         return (f"its approval on {default} carries over, and it is finished: every part was "
                 f"done before the move. Outcome: {entry['outcome']}")
-    return (f"its approval on {default} carries over; {entry['done']} of {entry['total']} parts "
-            "done.")
-
+    return f"its approval on {default} carries over; {entry['done']} of {entry['total']} parts done."
 
 def _report(plan: dict[str, Any], default: str) -> str:
     """The plan in plain English: what --dry-run prints, and the notes of the pull request."""
@@ -581,14 +545,11 @@ def _report(plan: dict[str, Any], default: str) -> str:
         lines.append("This is Forge's own repo (it holds src/forge/cli.py), so nothing is deleted: "
                      "the old Forge keeps its files and records until the switch.")
     else:
-        lines.append("Deletes the copied-in Forge, these paths and nothing else (git history "
-                     "keeps them):")
+        lines.append("Deletes the copied-in Forge, these paths and nothing else (git history keeps them):")
         for listed in VENDORED:
-            count = sum(1 for path in plan["delete"]
-                        if path == listed or path.startswith(listed + "/"))
+            count = sum(1 for path in plan["delete"] if path == listed or path.startswith(listed + "/"))
             if count:
-                lines.append(f"- {listed}" if listed in plan["delete"]
-                             else f"- {listed}/ ({_files(count)})")
+                lines.append(f"- {listed}" if listed in plan["delete"] else f"- {listed}/ ({_files(count)})")
         records = sum(1 for path in plan["delete"] if path.startswith(".factory/"))
         ledgers = sum(1 for path in plan["delete"] if path.startswith("plans/"))
         lines += [f"Deletes {records:,} old Forge records under .factory/; git history keeps them.",
@@ -607,8 +568,7 @@ def _report(plan: dict[str, Any], default: str) -> str:
                          f"Forge, in {KEPT}/, for you to decide on:")
             lines += [f"- {path}" for path in plan["kept"]]
             if ".envrc" in plan["kept"]:
-                lines.append(".envrc has lines of your own besides the old Forge's, so it is set "
-                             "aside, not deleted.")
+                lines.append(".envrc has lines of your own besides the old Forge's, so it is set aside, not deleted.")
         else:
             lines.append("Sets nothing aside: every copied-in Forge file is as it was copied in.")
     count = sum(1 for entry in plan["stories"] if "key" in entry)
@@ -624,8 +584,7 @@ def _report(plan: dict[str, Any], default: str) -> str:
             lines.append(f"  Needs you in {entry['dest']}: {'; '.join(entry['needs'])}.")
     if plan["superseded"]:
         count = len(plan["superseded"])
-        lines.append(f"Leaves {count} other active plan{'s' * (count != 1)} as they are, "
-                     "superseded at the switch:")
+        lines.append(f"Leaves {count} other active plan{'s' * (count != 1)} as they are, superseded at the switch:")
         lines += [f"- {rel}" for rel in plan["superseded"]]
     if plan["own"]:
         lines += ["Replaces AGENTS.md wholly with the Forge block and deletes CLAUDE.md.",
@@ -634,16 +593,14 @@ def _report(plan: dict[str, Any], default: str) -> str:
                   "with forge sync."]
     else:
         if plan["agents"] == "replace":
-            lines.append("Replaces AGENTS.md, which is the old Forge's word for word, with the "
-                         "Forge block.")
+            lines.append("Replaces AGENTS.md, which is the old Forge's word for word, with the Forge block.")
         elif plan["agents"] == "keep":
             lines.append("Needs you in AGENTS.md: it differs from the old Forge's, so its text "
                          "stays above the Forge block; take the old Forge instructions out of it.")
         if plan["claude_import"]:
             lines.append("Drops CLAUDE.md's import of .claude/CLAUDE.md, the old Claude adapter.")
         if plan["test"]:
-            lines.append(f"Moves the old verify commands from .envrc into forge.toml's test: "
-                         f"{plan['test']}")
+            lines.append(f"Moves the old verify commands from .envrc into forge.toml's test: {plan['test']}")
         if plan["unseeded"]:
             lines.append("Couldn't carry your old verify commands into forge.toml's test "
                          f"automatically: {plan['unseeded']}. Ask your agent to set test.")
@@ -658,9 +615,7 @@ def _report(plan: dict[str, Any], default: str) -> str:
                   "forge-pr-check checks pass, and nobody can push to it directly."]
     return "\n".join(lines)
 
-
 # --- the run: its own branch and worktree, one commit ---------------------------------------
-
 
 def _fresh_branch(top: Path, ref: str) -> Path:
     """forge/migrate-v1 in its own worktree, from ref. A branch holding nothing past ref but the
@@ -678,7 +633,6 @@ def _fresh_branch(top: Path, ref: str) -> Path:
             repo.git("worktree", "remove", "--force", str(path), cwd=top)
         repo.git("branch", "-D", BRANCH, cwd=top)
     return story.add_worktree(top, BRANCH, ref)
-
 
 def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
     touched = [*plan["delete"], *(rel for rel, _ in plan["moves"])]
@@ -701,14 +655,12 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
             (path / entry["old"]).unlink()
             touched.append(entry["old"])
         sync.write_file(path, entry["dest"], entry["text"])
-        touched += [entry["dest"], *(repo.write_state(item, data, path)
-                                     for item, data in entry["states"].items())]
+        touched += [entry["dest"], *(repo.write_state(item, data, path) for item, data in entry["states"].items())]
     toml = init._scaffold(path)["forge.toml"]  # pyright: ignore[reportPrivateUsage]
     if plan["own"]:
         toml = toml.replace('repo = "client"', 'repo = "forge-source"')
     if plan["test"]:  # the old verify commands (Forge's own suite here), not the stack's default
-        toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml,
-                      count=1, flags=re.M)
+        toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml, count=1, flags=re.M)
     if plan["signoff"]:
         toml = re.sub(r"^repo = .*$", lambda found: f"{found[0]}\nsignoff = "
                       f"{json.dumps(plan['signoff'])}", toml, count=1, flags=re.M)
@@ -746,8 +698,7 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
         raise subprocess.CalledProcessError(done.returncode or 1, ["git", "add"], done.stdout,
                                             done.stderr or f"git didn't take in {lost}")
     repo.git("commit", "-q", "-m", MESSAGE, cwd=path)
-    (repo.forge_dir(path) / MADE).write_text(repo.git("rev-parse", "HEAD", cwd=path) + "\n",
-                                             encoding="utf-8")
+    (repo.forge_dir(path) / MADE).write_text(repo.git("rev-parse", "HEAD", cwd=path) + "\n", encoding="utf-8")
     # Every worktree shares one hooks folder, and in Forge's own repo the old Forge's branches may
     # still be in flight: v1's hooks would stop their commits, so none go in until the switch.
     if not plan["own"]:

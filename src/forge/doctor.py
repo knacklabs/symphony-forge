@@ -37,7 +37,6 @@ SAMPLES = {
     "PostToolUse": {"tool_name": "forge-doctor", "tool_input": {}, "tool_response": {}},
 }
 
-
 def _forge_hooks(text: str) -> list[tuple[str, str]]:
     """(event, command) for each Forge hook in a host's hook file. A broken file shows as drift."""
     try:
@@ -46,7 +45,6 @@ def _forge_hooks(text: str) -> list[tuple[str, str]]:
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError):
         return []
-
 
 def _codex_trusts(top: Path, config: Path) -> bool:
     """Whether the user's Codex config trusts this checkout or its main repo."""
@@ -58,7 +56,6 @@ def _codex_trusts(top: Path, config: Path) -> bool:
                    for path, project in projects.items())
     except (tomllib.TOMLDecodeError, AttributeError):
         return False
-
 
 def doctor(args: argparse.Namespace) -> None:
     top = repo.root()
@@ -80,8 +77,7 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append(("gh is not signed in to GitHub.", "gh auth login"))
     pinned = "v" + cfg["version"].removeprefix("v")
     if pinned != f"v{__version__}":
-        rows.append((repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned),
-                     install))
+        rows.append((repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned), install))
     if needs_sdk and (problem := codex.sdk_problem()):
         rows.append((problem, "forge doctor --fix"))
     try:  # the reviewer close runs, at the version Forge pins
@@ -104,8 +100,7 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append(("The git hooks that check each commit and push aren't installed.", "forge sync"))
 
     if not shutil.which("sh"):
-        rows.append(("sh isn't on PATH, so no host hook can run.",
-                     "install Git, which brings sh, and put it on PATH"))
+        rows.append(("sh isn't on PATH, so no host hook can run.", "install Git, which brings sh, and put it on PATH"))
     else:
         for rel in sync.HOSTS:
             # Only a command exactly as forge sync writes it ever runs. Any other one makes the
@@ -114,25 +109,21 @@ def doctor(args: argparse.Namespace) -> None:
             for event, command in _forge_hooks(sync.read(top / rel)):
                 if (event, command) not in generated:
                     continue
-                payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event,
-                           **SAMPLES.get(event, {})}
+                payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event, **SAMPLES.get(event, {})}
                 done = repo.run("sh", "-c", command, cwd=top, input=json.dumps(payload))
                 if done.returncode:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     # Forge's own Next line when forge ran and refused; else it couldn't launch.
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
-                    rows.append((f"The {event} hook in {rel} fails with exit code "
-                                 f"{done.returncode}: {said[0]}", fix))
+                    rows.append((f"The {event} hook in {rel} fails with exit code {done.returncode}: {said[0]}", fix))
 
     if not cfg["checks"]:
         rows.append(("forge.toml names no checks, so close has nothing to wait for.",
                      "ask your agent to set checks in forge.toml"))
     if not cfg["test"]:
-        rows.append(("forge.toml has no test command.",
-                     "ask your agent to set test in forge.toml, then run forge sync"))
+        rows.append(("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync"))
     elif f"run: {json.dumps(cfg['test'])}" not in sync.read(top / sync.WORKFLOW_PATH):
-        rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
-                     "command.", "forge sync"))
+        rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test command.", "forge sync"))
 
     # Codex skips the project hooks (the deny hook included) and the project's Codex settings
     # until the user trusts the project in their own Codex config. That fails Codex workers; with
@@ -151,8 +142,7 @@ def doctor(args: argparse.Namespace) -> None:
                          top / ".claude"],
               "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
                         top / ".agents"]}
-    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file()
-               for folder in skills[cfg["workers"]]):
+    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file() for folder in skills[cfg["workers"]]):
         rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
                      f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
 

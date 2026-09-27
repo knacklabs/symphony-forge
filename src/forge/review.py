@@ -50,16 +50,13 @@ for i in range(len(argv) - 1):
 sys.exit(subprocess.call([{real!r}, *argv]))
 '''
 
-
 # --- the story doc ---------------------------------------------------------------------
 # ponytail: STORY's story.py owns full doc parsing; these read only what review and close need.
-
 
 def sections(text: str) -> dict[str, str]:
     """A story doc's `## ` sections, by heading."""
     parts = re.split(r"^## +(.+?) *$", text, flags=re.M)
     return {parts[i].strip(): parts[i + 1].strip() for i in range(1, len(parts), 2)}
-
 
 def rows(tasks: str) -> list[dict[str, str]]:
     """The Tasks table's rows, keyed by lower-case header."""
@@ -68,16 +65,13 @@ def rows(tasks: str) -> list[dict[str, str]]:
     header = [cell.lower() for cell in table[0]] if table else []
     return [dict(zip(header, cells)) for cells in table[2:]]  # [1] is the |---| line
 
-
 def cells(value: str) -> list[str]:
     """The paths in one table cell, such as "`a.py`, `b/`"; "—" is none."""
     return [part.strip(" `") for part in value.split(",") if part.strip(" `—-")]
 
-
 def moving_parts(text: str) -> str:
     found = re.search(r"^New moving parts:.*$", text, re.M)
     return found[0].strip() if found else "New moving parts: (the story doc has no such line)"
-
 
 def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
     """A task's story doc text, its sections and the task's row; refused when the row is missing."""
@@ -90,9 +84,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
         repo.refuse(REFUSALS["bad_doc"], key=key, task=name, item=item)
     return text, doc, row
 
-
 # --- what a review covers --------------------------------------------------------------
-
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
     """What a clean review covers: the product tree at commit (everything outside .factory/ and
@@ -107,8 +99,7 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
         doc = sections(text)
-        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
-                 moving_parts(text)]
+        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""), moving_parts(text)]
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
@@ -116,16 +107,13 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
 
-
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
     """The numbered P0 and P1 findings of a review result that no one dismissed."""
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
             if not isinstance(f, dict) or f.get("priority") in SERIOUS and n not in dismissed]
 
-
 # --- the instructions ------------------------------------------------------------------
-
 
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  base: str) -> str:
@@ -162,7 +150,6 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
-
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     """The worker's functional check: the `Functional check:` paragraph of its last commit message,
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
@@ -172,23 +159,18 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
         files = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, cwd=top).split()
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^Functional check:.*", repo.git("show", "-s", "--format=%B", sha,
-                                                            cwd=top), re.M | re.S)
+        found = re.search(r"^Functional check:.*", repo.git("show", "-s", "--format=%B", sha, cwd=top), re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
-
 def _bullets(items: Any) -> str:
     return "\n".join(f"- {item}" for item in items) or "- none"
-
 
 def _within(path: str, entry: str) -> bool:
     """A changed path is inside a Scope entry: the same file, under the folder, or a glob match."""
     return path == entry or path.startswith(entry.rstrip("/") + "/") or fnmatch(path, entry)
 
-
 # --- the round -------------------------------------------------------------------------
-
 
 def helper() -> Path:
     """The Autoreview helper ($AUTOREVIEW, else the standard install), refused unless pinned."""
@@ -198,7 +180,6 @@ def helper() -> Path:
     if found != AUTOREVIEW_PIN:
         repo.refuse(REFUSALS["helper"], path=path, pin=AUTOREVIEW_PIN, found=found or "nothing")
     return path
-
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str) -> dict[str, Any]:
@@ -233,15 +214,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.run("git", "worktree", "remove", "--force", str(tree), cwd=top)
         shutil.rmtree(tmp, ignore_errors=True)
         repo.run("git", "worktree", "prune", cwd=top)
-    return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
-            "dismissals": []}
-
+    return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings, "dismissals": []}
 
 def _attempt(argv: list[str], cwd: Path, out: Path) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
-    proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
         sys.stderr.buffer.write(line)
@@ -262,14 +240,12 @@ def _attempt(argv: list[str], cwd: Path, out: Path) -> tuple[list[dict[str, Any]
     if not rejected and (code == 2 or report.get("review_status") == "incomplete"):
         return [], "it reported the review as incomplete"
     raw = report.get("findings")
-    findings = ([_finding(f) for f in [*raw, *rejected]]
-                if isinstance(raw, list) and isinstance(rejected, list) else [None])
+    findings = ([_finding(f) for f in [*raw, *rejected]] if isinstance(raw, list) and isinstance(rejected, list) else [None])
     if None in findings:
         return [], "it wrote findings Forge cannot read"
     if not findings and report.get("overall_correctness") == "patch is incorrect":
         return [], "it called the patch incorrect without naming a finding"
     return findings, ""  # type: ignore[return-value]
-
 
 def _finding(raw: Any) -> dict[str, Any] | None:
     """The fields Forge uses from one finding, or None when they can't be read."""
@@ -279,7 +255,6 @@ def _finding(raw: Any) -> dict[str, Any] | None:
     return {"priority": raw["priority"], "title": str(raw.get("title", "")),
             "body": str(raw.get("body", "")), "file": str(where.get("file_path", "")),
             "line": where.get("line", 0)}
-
 
 def _launcher(folder: Path, tree: Path) -> Path | None:
     """A `codex` for the helper that runs the real one inside the reviewed worktree."""

@@ -22,7 +22,6 @@ REFUSALS = {
                      "forge close <item>"),
 }
 
-
 def pre_commit(args: argparse.Namespace) -> None:
     top = repo.root()
     branch = repo.current_branch(top)
@@ -36,7 +35,6 @@ def pre_commit(args: argparse.Namespace) -> None:
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
         _promote(item, state, repo.config(top)["interfaces"], "--cached", _base("HEAD", *merging))
-
 
 def pre_push(args: argparse.Namespace) -> None:
     default = repo.default_branch()
@@ -54,7 +52,6 @@ def pre_push(args: argparse.Namespace) -> None:
         _promote(fix, json.loads(state) if state else {}, repo.config()["interfaces"],
                  _base(sha), sha)
 
-
 def _base(*tips: str) -> str:
     """Where a fix's own changes start: its merge base with the default branch."""
     default = repo.default_branch()
@@ -62,7 +59,6 @@ def _base(*tips: str) -> str:
     main = remote if run("git", "rev-parse", "-q", "--verify", remote).returncode == 0 else default
     # With several tips, git takes the merge base with a merge of all of them.
     return git("merge-base", main, *tips)
-
 
 def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str) -> None:
     """Refuse a fix over the limit or touching an interface, unless the human allowed it."""
@@ -78,5 +74,4 @@ def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str)
     if touched:
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
     if len(code) > LIMIT:
-        refuse(REFUSALS["promote"], fix=fix,
-               problem=f"changes {len(code)} code files, over the limit of {LIMIT}")
+        refuse(REFUSALS["promote"], fix=fix, problem=f"changes {len(code)} code files, over the limit of {LIMIT}")

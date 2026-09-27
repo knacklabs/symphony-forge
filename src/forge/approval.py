@@ -43,7 +43,6 @@ QUESTIONS = ("AskUserQuestion", "request_user_input")
 SUCCESS = {"success", "succeeded", "completed"}
 CHOICES = ["Approve plan", "Request changes", "Stop"]
 
-
 def hook(args: Any) -> int:
     try:
         payload = json.loads(sys.stdin.read() or "null")
@@ -70,7 +69,6 @@ def hook(args: Any) -> int:
         _touch(top)
     return 0
 
-
 def waiting_digest(key: str, top: Path) -> str | None:
     """The story doc's section hash when the story waits for a first or renewed approval."""
     state, doc = repo.read_state(key, top), top / "plans" / f"{key}.md"
@@ -78,7 +76,6 @@ def waiting_digest(key: str, top: Path) -> str | None:
         return None
     digest = story.approval_hash(doc.read_text(encoding="utf-8"))
     return None if (state.get("approval") or {}).get("hash") == digest else digest
-
 
 def signed_off(top: Path) -> bool:
     """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
@@ -100,11 +97,9 @@ def signed_off(top: Path) -> bool:
     return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
                for text in texts if text.startswith("---"))
 
-
 def last_refusal(top: Path) -> Path:
     """Why the last approval recorded nothing, for `forge next`. Local, never committed."""
     return repo.forge_dir(top) / "approval-refused.txt"
-
 
 def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     runtime = "codex" if "turn_id" in payload else "claude"  # ponytail: only Codex payloads carry turn_id
@@ -116,12 +111,10 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     session, event = _text(payload.get("session_id")), _text(payload.get("tool_use_id"))
     if not session or not event:
         repo.refuse(REFUSALS["no_identity"])
-    used = repo.forge_dir(top) / "approvals" / hashlib.sha256(
-        f"{runtime}\0{session}\0{event}".encode("utf-8")).hexdigest()
+    used = repo.forge_dir(top) / "approvals" / hashlib.sha256( f"{runtime}\0{session}\0{event}".encode("utf-8")).hexdigest()
     if used.exists():
         repo.refuse(REFUSALS["replay"])
-    matches = [(key, path) for key, path in story.stories_here(top).items()
-               if waiting_digest(key, path) == digest]
+    matches = [(key, path) for key, path in story.stories_here(top).items() if waiting_digest(key, path) == digest]
     if not matches:
         repo.refuse(REFUSALS["no_match"])
     if len(matches) > 1:
@@ -136,12 +129,10 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     state.update(status="approved", approval=approval, touches=state.get("touches", 0) + 1)
     rel = repo.write_state(key, repo.add_step(state, "approved"), path)
     title = state.get("title") or key
-    repo.commit_state(f"Approve the plan: {title}", f"plans/{key}.md", f"plans/{key}.read.md", rel,
-                      top=path)
+    repo.commit_state(f"Approve the plan: {title}", f"plans/{key}.md", f"plans/{key}.read.md", rel, top=path)
     used.parent.mkdir(exist_ok=True)
     used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
-
 
 def _completed(payload: dict[str, Any]) -> bool:
     """The call finished: it didn't fail or get cancelled, and any status it gives is a success."""
@@ -151,14 +142,12 @@ def _completed(payload: dict[str, Any]) -> bool:
         return False
     return response.get("status") is None or _text(response.get("status")).lower() in SUCCESS
 
-
 def _answered(payload: dict[str, Any]) -> bool:
     """The human answered: the call completed with a response, and a question's response holds an
     answer. A plan that ExitPlanMode completed was accepted by the human."""
     response = payload.get("tool_response")
     return (_completed(payload) and isinstance(response, dict)
             and (payload.get("tool_name") == "ExitPlanMode" or bool(response.get("answers"))))
-
 
 def _claude_digest(payload: dict[str, Any]) -> str:
     """The section hash of the plan text a successful ExitPlanMode showed."""
@@ -175,7 +164,6 @@ def _claude_digest(payload: dict[str, Any]) -> str:
     if digest is None:
         repo.refuse(REFUSALS["no_match"])
     return digest
-
 
 def _codex_digest(payload: dict[str, Any]) -> str:
     """The digest a completed Codex approval question carries in its id, when it follows the contract."""
@@ -201,14 +189,12 @@ def _codex_digest(payload: dict[str, Any]) -> str:
         repo.refuse(REFUSALS["not_approved"], answer=chosen[0])
     return match[1]
 
-
 def _asks_approval(payload: dict[str, Any]) -> bool:
     tool_input = payload.get("tool_input")
     questions = tool_input.get("questions") if isinstance(tool_input, dict) else None
     return isinstance(questions, list) and any(
         isinstance(question, dict) and _text(question.get("id")).startswith("approve_plan_")
         for question in questions)
-
 
 def _touch(top: Path) -> None:
     """Add a human touch to the story, task or fix this checkout works on; elsewhere, nothing."""
@@ -218,7 +204,6 @@ def _touch(top: Path) -> None:
         state["touches"] = state.get("touches", 0) + 1
         repo.write_state(item, state, top)
 
-
 def _item_here(top: Path) -> str:
     kind, _, name = repo.current_branch(top).partition("/")
     if kind == "task":  # KEY and TASK both hold hyphens, so match the task state files here
@@ -227,7 +212,6 @@ def _item_here(top: Path) -> str:
                      if f"{path.parent.parent.name}-{path.stem}" == name), "")
     ok = {"story": story.KEY, "fix": re.compile(r"[a-z0-9][a-z0-9-]*")}.get(kind)
     return name if ok and ok.fullmatch(name) else ""
-
 
 def _text(value: object) -> str:
     return str(value).strip() if value is not None else ""

@@ -111,9 +111,7 @@ supersedes: ""
 <!-- What follows: tradeoffs accepted, doors closed, work implied. -->
 """
 
-
 # --- specs -----------------------------------------------------------------------------
-
 
 def spec_save(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
@@ -135,7 +133,6 @@ def spec_save(args: argparse.Namespace) -> None:
                           confirmed_by=None, confirmed_hash=None))
     repo.commit_state(f"Save the {args.slug} spec as a draft", rel, top=top)
     print(f"Saved {rel} as a draft. Next: forge read {args.slug}")
-
 
 def spec_confirm(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
@@ -160,11 +157,9 @@ def spec_confirm(args: argparse.Namespace) -> None:
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
             repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
-    _write(top, rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
-                          confirmed_hash=_digest(body)))
+    _write(top, rel, _set(text, status="confirmed", confirmed_by=f'"{by}"', confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
     print(f"{rel} is confirmed by {by}. Next: forge roadmap add {args.slug}")
-
 
 def spec_measure(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
@@ -175,8 +170,7 @@ def spec_measure(args: argparse.Namespace) -> None:
     if not text:
         repo.refuse(REFUSALS["no_spec"], slug=args.slug)
     if fields.get("status") != "confirmed":
-        repo.refuse(REFUSALS["measure_unconfirmed"], slug=args.slug,
-                    status=fields.get("status") or "none")
+        repo.refuse(REFUSALS["measure_unconfirmed"], slug=args.slug, status=fields.get("status") or "none")
     if fields.get("confirmed_hash") != _digest(body):
         repo.refuse(REFUSALS["not_confirmed_text"], slug=args.slug)
     _check_measure(args.slug, body)
@@ -190,7 +184,6 @@ def spec_measure(args: argparse.Namespace) -> None:
     repo.commit_state(f"Record the result of the {args.slug} spec's success measure", rel, top=top)
     print(f"Added the result to the Success measure of {rel}; it stays confirmed.")
 
-
 def due_check(text: str, today: str) -> tuple[str, str] | None:
     """A confirmed spec's title and metric when its check date has come and it has no result yet.
 
@@ -203,15 +196,12 @@ def due_check(text: str, today: str) -> tuple[str, str] | None:
         return None
     return fields.get("title") or "", measure["Metric"].rstrip(".")
 
-
 def success_measure(body: str) -> dict[str, str]:
     """The fields of a spec's Success measure, each on one line; {} when it has none."""
     return {match[1]: " ".join(match[2].split())
             for match in MEASURE_LINE.finditer(_sections(body).get("Success measure", ""))}
 
-
 # --- decisions -------------------------------------------------------------------------
-
 
 def decision_new(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
@@ -220,12 +210,10 @@ def decision_new(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["decision_exists"], rel=existing, slug=args.slug)
     number = max(_decision_numbers(top), default=0) + 1
     rel = f"docs/decisions/{number:04d}-{args.slug}.md"
-    _write(top, rel, DECISION.format(date=repo.now()[:10],
-                                     title=args.slug.replace("-", " ").capitalize()))
+    _write(top, rel, DECISION.format(date=repo.now()[:10], title=args.slug.replace("-", " ").capitalize()))
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
           f'confirms in chat: forge decision accept {args.slug} --by "<name>"')
-
 
 def decision_accept(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
@@ -245,26 +233,21 @@ def decision_accept(args: argparse.Namespace) -> None:
     unfilled = [name for name in DECISION_SECTIONS
                 if not re.sub(r"<!--.*?-->", "", sections.get(name, ""), flags=re.S).strip()]
     if unfilled:
-        repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
-                    by=by)
+        repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug, by=by)
     changed = [rel]
     old = fields.get("supersedes")
     if old:
-        old_rel = _decision(top, old, f'forge decision accept {args.slug} --by "{by}"',
-                            f"supersedes: {old} in {rel}")
+        old_rel = _decision(top, old, f'forge decision accept {args.slug} --by "{by}"', f"supersedes: {old} in {rel}")
         if not old_rel or old_rel == rel:
             repo.refuse(REFUSALS["no_superseded"], rel=rel, old=old, slug=args.slug, by=by)
-        _write(top, old_rel, _set(_text(top, old_rel), status="superseded",
-                                  superseded_by=Path(rel).stem))
+        _write(top, old_rel, _set(_text(top, old_rel), status="superseded", superseded_by=Path(rel).stem))
         changed.append(old_rel)
     _write(top, rel, _set(text, status="accepted", confirmed_by=f'"{by}"'))
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
 
-
 # --- the roadmap -----------------------------------------------------------------------
-
 
 def roadmap_add(args: argparse.Namespace) -> None:
     slug = args.spec
@@ -295,9 +278,7 @@ def roadmap_add(args: argparse.Namespace) -> None:
     repo.commit_state(f"Add {', '.join(new)} to the roadmap from the {slug} spec", ROADMAP, top=top)
     print(f"Added {', '.join(new)} to {ROADMAP} from {rel}.")
 
-
 # --- helpers ---------------------------------------------------------------------------
-
 
 def _start(args: argparse.Namespace, slug: str) -> Path:
     """The checkout's top, once the slug is sound and the branch is a Forge fix or story."""
@@ -313,13 +294,11 @@ def _start(args: argparse.Namespace, slug: str) -> Path:
         repo.refuse(REFUSALS["not_lane"], branch=branch)
     return top
 
-
 def _name(args: argparse.Namespace, slug: str) -> str:
     by = args.by.strip()
     if not by or not by.isprintable():
         repo.refuse(REFUSALS["bad_name"], words=args.words, slug=slug)
     return by
-
 
 def _spec(top: Path, slug: str) -> tuple[str, str, dict[str, str], str]:
     """A spec's path, text, frontmatter and body; the text is empty when there is no spec."""
@@ -327,10 +306,8 @@ def _spec(top: Path, slug: str) -> tuple[str, str, dict[str, str], str]:
     text = _text(top, rel)
     return (rel, text, *_front(text))
 
-
 def _digest(body: str) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
-
 
 def _measure_gaps(measure: dict[str, str]) -> list[str]:
     """The Success measure lines that are missing, empty or (the check date) not a real date."""
@@ -343,12 +320,10 @@ def _measure_gaps(measure: dict[str, str]) -> list[str]:
             gaps.append(MEASURE_FIELDS["Check date"])
     return gaps
 
-
 def _check_measure(slug: str, body: str) -> None:
     gaps = _measure_gaps(success_measure(body))
     if gaps:
         repo.refuse(REFUSALS["no_measure"], slug=slug, missing=", ".join(gaps))
-
 
 def _roadmap_items(slug: str, body: str) -> dict[str, str]:
     """The `- KEY: title` lines of a spec's Roadmap section, by key; refuses any other line."""
@@ -361,7 +336,6 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
         items[match[1]] = match[2]
     return items
 
-
 def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
     """The one decision named NNNN-slug (that exact file) or slug, or "" when there is none."""
     folder = top / "docs" / "decisions"
@@ -369,13 +343,10 @@ def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
         return ""
     if re.match(r"\d{4}-", name) and (folder / f"{name}.md").is_file():
         return f"docs/decisions/{name}.md"
-    found = sorted(f"docs/decisions/{path.name}"
-                   for path in folder.glob(f"[0-9][0-9][0-9][0-9]-{name}.md"))
+    found = sorted(f"docs/decisions/{path.name}" for path in folder.glob(f"[0-9][0-9][0-9][0-9]-{name}.md"))
     if len(found) > 1:
-        repo.refuse(REFUSALS["ambiguous"], name=called or name, found=", ".join(found),
-                    next=next_step)
+        repo.refuse(REFUSALS["ambiguous"], name=called or name, found=", ".join(found), next=next_step)
     return found[0] if found else ""
-
 
 def _decision_numbers(top: Path) -> set[int]:
     """Decision numbers in this checkout or ever on any branch, local or fetched."""
@@ -384,7 +355,6 @@ def _decision_numbers(top: Path) -> set[int]:
                      cwd=top).splitlines()
     names += [path.name for path in (top / "docs" / "decisions").glob("*.md")]
     return {int(match[1]) for name in names if (match := re.match(r"(\d{4})-", Path(name).name))}
-
 
 def _front(text: str) -> tuple[dict[str, str], str]:
     """A doc's frontmatter fields and the body after them."""
@@ -397,7 +367,6 @@ def _front(text: str) -> tuple[dict[str, str], str]:
         if colon:
             fields[key.strip()] = value.strip().strip("\"'")
     return fields, text[match.end():]
-
 
 def _set(text: str, **changes: str | None) -> str:
     """The doc with these frontmatter fields set (None removes one); other lines stay as they are."""
@@ -413,18 +382,15 @@ def _set(text: str, **changes: str | None) -> str:
     body = text[match.end():] if match else "\n" + text
     return "---\n" + "\n".join(lines) + "\n---\n" + body
 
-
 def _sections(body: str) -> dict[str, str]:
     """A Markdown body's `## ` sections, by title."""
     # ponytail: fenced code isn't skipped, so a `## ` line inside a code block starts a section.
     parts = re.split(r"^## +(.+?)(?:[ \t]+#+)?[ \t]*$", body, flags=re.M)
     return dict(zip(parts[1::2], parts[2::2]))
 
-
 def _text(top: Path, rel: str) -> str:
     path = top / rel
     return path.read_text(encoding="utf-8") if path.is_file() else ""
-
 
 def _write(top: Path, rel: str, text: str) -> None:
     path = top / rel

@@ -40,7 +40,6 @@ REFUSALS = {
     ),
 }
 
-
 class Refused(Exception):
     """A refusal: the problem in one sentence, then the next command."""
 
@@ -48,15 +47,12 @@ class Refused(Exception):
         super().__init__(f"{problem}\nNext: {next_step}")
         self.code = code
 
-
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
     raise Refused(problem.format(**values), next_step.format(**values), code)
 
-
 # --- git -------------------------------------------------------------------------------
-
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -68,14 +64,12 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
                           text=True, encoding="utf-8", errors="replace")
 
-
 def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
     """Run git and return its trimmed output. A failure raises CalledProcessError."""
     done = run("git", *args, cwd=cwd)
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
-
 
 def root(cwd: str | os.PathLike[str] | None = None) -> Path:
     """The top of the current checkout (a worktree's own folder inside a worktree)."""
@@ -84,17 +78,14 @@ def root(cwd: str | os.PathLike[str] | None = None) -> Path:
         refuse(REFUSALS["no_repo"])
     return Path(done.stdout.strip())
 
-
 def current_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     """The checked-out branch, or "" on a detached HEAD."""
     return git("branch", "--show-current", cwd=cwd)
-
 
 def default_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     # ponytail: origin/HEAD, else "main". A remote-less repo on another name needs origin/HEAD set.
     done = run("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=cwd)
     return done.stdout.strip().removeprefix("origin/") if done.returncode == 0 else "main"
-
 
 def forge_dir(cwd: str | os.PathLike[str] | None = None) -> Path:
     """`.git/forge/`, shared by every worktree, for logs and the board. Never committed."""
@@ -103,18 +94,15 @@ def forge_dir(cwd: str | os.PathLike[str] | None = None) -> Path:
     path.mkdir(exist_ok=True)
     return path
 
-
 def work_log(top: Path, item: str) -> Path:
     """The item's work log in `.git/forge/`, where its worker's progress goes."""
     return forge_dir(top) / f"work-{item.replace('/', '-')}.log"
-
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
 KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str,
         "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "",
-            "checks": [], "interfaces": [], "models": {}}
+DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
@@ -125,7 +113,6 @@ SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 KINDS = ("build", "fix", "lite", "grill", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
-
 
 def config(top: Path | None = None) -> dict[str, Any]:
     """Read and check forge.toml at the top of the checkout; missing keys get their defaults."""
@@ -146,7 +133,6 @@ def config(top: Path | None = None) -> dict[str, Any]:
         refuse(REFUSALS["models"], problem=problem)
     return {**DEFAULTS, **data}
 
-
 def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
     """One kind's models from forge.toml's [models] table, the family's entry for the grill kind;
     refused when the table lacks it."""
@@ -156,7 +142,6 @@ def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
     if chosen is None:
         refuse(REFUSALS["models"], problem=f"it has no [models.{kind}], which this work uses")
     return chosen
-
 
 def _models_problem(table: Any) -> str:
     if not isinstance(table, dict):
@@ -169,8 +154,7 @@ def _models_problem(table: Any) -> str:
         wrong = [key for key in chosen if key not in FAMILIES] if kind == "grill" else []
         if wrong:
             return f"models.grill has one entry per family, codex and claude, so it can't set {wrong[0]}"
-        entries = ({f"grill.{family}": entry for family, entry in chosen.items()} if kind == "grill"
-                   else {kind: chosen})
+        entries = ({f"grill.{family}": entry for family, entry in chosen.items()} if kind == "grill" else {kind: chosen})
         for name, entry in entries.items():
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
@@ -186,7 +170,6 @@ def _models_problem(table: Any) -> str:
                 return f"models.{name} sets only one of subagents and subagent_effort; set both or neither"
     return ""
 
-
 def _config_problem(data: dict[str, Any]) -> str:
     if "version" not in data:
         return "it has no version"
@@ -201,10 +184,8 @@ def _config_problem(data: dict[str, Any]) -> str:
         if key in CHOICES and value not in CHOICES[key]:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
-            return ("signoff must name the client's sign-off record, "
-                    "docs/decisions/NNNN-client-signoff.md")
+            return "signoff must name the client's sign-off record, docs/decisions/NNNN-client-signoff.md"
     return ""
-
 
 def check_pin(cwd: str | os.PathLike[str] | None = None) -> None:
     """Refuse when the installed Forge isn't the one forge.toml pins.
@@ -218,7 +199,6 @@ def check_pin(cwd: str | os.PathLike[str] | None = None) -> None:
     pinned = config(top)["version"].removeprefix("v")
     if pinned != __version__:
         refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
-
 
 def roadmap(top: Path | None = None) -> list[dict[str, Any]]:
     """The items of plans/roadmap.json (each has a key), or [] when there is no roadmap yet."""
@@ -235,11 +215,9 @@ def roadmap(top: Path | None = None) -> list[dict[str, Any]]:
         refuse(REFUSALS["bad_roadmap"], problem="it needs an items list where every item has a key")
     return items
 
-
 # --- .factory state: one file per story, task or fix -----------------------------------
 
 ITEM = re.compile(r"(?P<key>[A-Z][A-Z0-9-]*)(?:/(?P<task>[A-Z0-9][A-Z0-9-]*))?|(?P<fix>[a-z0-9][a-z0-9-]*)")
-
 
 def state_path(item: str) -> str:
     """The repo-relative state file of a story (KEY), a task (KEY/TASK) or a fix (its name)."""
@@ -253,7 +231,6 @@ def state_path(item: str) -> str:
         # case-insensitive disk (macOS, Windows).
         return f".factory/stories/{match['key']}/tasks/{match['task']}.json"
     return f".factory/stories/{item}/story.json"
-
 
 def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
     """An item's state in this checkout, or None when Forge never started it here."""
@@ -269,7 +246,6 @@ def read_state(item: str, top: Path | None = None) -> dict[str, Any] | None:
         refuse(REFUSALS["bad_state"], path=rel, problem="it is not a JSON object")
     return data
 
-
 def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str:
     """Write an item's state in a checkout on a work branch. Returns the repo-relative path."""
     top = top or root()
@@ -283,18 +259,15 @@ def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str
     os.replace(tmp, path)
     return rel
 
-
 def now() -> str:
     """The current UTC time. FORGE_NOW overrides it, so tests can drive dated steps."""
     # ponytail: an env override is the whole clock seam.
     return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-
 def add_step(data: dict[str, Any], step: str) -> dict[str, Any]:
     """Add a dated step (start, review, ci-green, ready, merged) to an item's state."""
     data.setdefault("steps", []).append({"step": step, "at": now()})
     return data
-
 
 def commit_state(message: str, *paths: str, top: Path | None = None) -> bool:
     """Commit these repo-relative paths (state and the docs that go with it) on the work branch.
@@ -308,7 +281,6 @@ def commit_state(message: str, *paths: str, top: Path | None = None) -> bool:
         return False
     git("commit", "-q", "-m", message, "--", *paths, cwd=top)
     return True
-
 
 def _work_branch(top: Path) -> str:
     """The checkout's branch. Refuses the default branch (once it has a commit) and a detached HEAD."""

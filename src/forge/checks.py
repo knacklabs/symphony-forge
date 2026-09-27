@@ -21,7 +21,6 @@ REFUSALS = {
 }
 PASS, PENDING, RED, SKIPPED = "pass", "pending", "red", "skipped"
 
-
 def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
     """Return once every check on sha passed and every named one is there; refuse when one is red
     or time runs out."""
@@ -58,7 +57,6 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         time.sleep(min(15, left))
 
-
 def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
     """Each check run and commit status on sha, as (name, pass/pending/red/skipped)."""
     # Every page: a failed matrix job on page two must still count.
@@ -72,7 +70,6 @@ def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
             + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
                 status.get("state"), RED)) for status in statuses])
 
-
 def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]]:
     # --paginate with "<field>[]" prints one JSON object per line across all pages.
     done = repo.run("gh", "api", "--paginate", "--jq", f"{field}[]", endpoint, cwd=top)
@@ -85,6 +82,5 @@ def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]
         found = None
     if not isinstance(found, list) or not all(isinstance(entry, dict) for entry in found):
         said = (done.stderr.strip() or done.stdout.strip() or "no readable answer").splitlines()[-1]
-        repo.refuse(REFUSALS["not_green"], reason=f"GitHub did not answer: {said.rstrip('.')}",
-                    item=item)
+        repo.refuse(REFUSALS["not_green"], reason=f"GitHub did not answer: {said.rstrip('.')}", item=item)
     return found
