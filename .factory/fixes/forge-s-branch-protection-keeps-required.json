@@ -4,18 +4,18 @@
   "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
   "kind": "fix",
   "review": {
-    "commit": "9d94a1fd49512d4881ae32981e287e06d0970d04",
+    "commit": "9cacee4ad053c178e91adea8594bc1688a4cfcd4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The workflow scanner recognizes only a literal `jobs:` line. Changing the deleted workflow fixture's header to `jobs: # required checks` makes it discover no removed jobs, so `old-check` and `lint` remain required after migration and block subsequent PRs. A commented header in a surviving workflow instead causes live checks to be removed. These are valid YAML workflow declarations ([GitHub syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)). Handle ordinary YAML comments and indentation when identifying jobs, and extend the command-level regression test to cover them.",
+        "body": "The scanner only recognizes the exact line `jobs:` and fixed two-space indentation. With `jobs: # required checks` in the deleted workflow, it discovers no removed jobs, leaving `old-check` and `lint` required and blocking later PRs. The same formatting in a surviving workflow can instead remove a live requirement. These are ordinary valid [GitHub workflow YAML](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax). Handle comments and valid indentation, and extend the command-level regression test to cover them.",
         "file": "src/forge/init.py",
         "line": 124,
         "priority": "P1",
         "title": "Not done: init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every"
       },
       {
-        "body": "An absolute local origin bypasses the refusal and restores `{owner}/{repo}` in both protection requests. With another GitHub remote or `GH_REPO` set, these placeholders can target an unrelated repository ([gh API contract](https://cli.github.com/manual/gh_api)). The production exception exists solely to accommodate command fixtures. Remove it and configure those fixtures with explicit GitHub fetch URLs and local push URLs, as the new origin-targeting test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
+        "body": "An absolute local origin bypasses the refusal and restores `{owner}/{repo}` in both protection requests. With another GitHub remote or `GH_REPO` configured, those requests can modify an unrelated repository: [gh resolves these placeholders from its repository context](https://cli.github.com/manual/gh_api). This production exception exists to accommodate test fixtures. Remove it and use explicit GitHub fetch URLs with local push URLs in those fixtures, as the new test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
         "file": "src/forge/init.py",
         "line": 88,
         "priority": "P2",
@@ -23,7 +23,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "94746dc0912a2071b0df2a363f70e9849bc9d293f37ae996ba1d838a6a50ab6b"
+    "tree": "6b848d84577a75902a43e6b6ff658bb61f140545dd205d60203fd6862ae2e5a7"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-27T16:14:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:23:27+00:00",
       "step": "review"
     }
   ],
