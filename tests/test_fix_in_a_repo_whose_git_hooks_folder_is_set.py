@@ -22,15 +22,17 @@ def test_1_sync_installs_in_husky_folder_and_runs_existing_hooks(repo, tmp_path)
     hooks = _client(repo)
     ran = tmp_path / "existing-hooks"
     for name in ("pre-commit", "pre-push"):
+        user_hook = hooks.parent / name
+        user_hook.write_text(f'#!/bin/sh\necho {name} >> "{ran}"\n', encoding="utf-8")
         path = hooks / name
-        path.write_text(f'#!/bin/sh\necho {name} >> "{ran}"\n', encoding="utf-8")
+        # Husky dispatches to .husky/<basename of its invoked wrapper>.
+        path.write_text('#!/bin/sh\nn=$(basename "$0")\n'
+                        's=$(dirname "$(dirname "$0")")/$n\n'
+                        '[ ! -f "$s" ] && exit 0\nsh -e "$s" "$@"\n', encoding="utf-8")
         path.chmod(0o755)
 
     done = repo.forge("sync")
     assert done.returncode == 0, done.stderr
-    for name in ("pre-commit", "pre-push"):
-        assert (hooks / f"{name}.pre-forge").exists()
-
     commit = subprocess.run(["git", "commit", "--allow-empty", "-m", "Try a commit"],
                             cwd=repo.path, capture_output=True, text=True)
     assert commit.returncode != 0

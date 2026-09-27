@@ -67,7 +67,7 @@ SHIM = """\
 if [ -x "$0.pre-forge" ]; then
   input=$(mktemp) || exit 1
   cat > "$input"
-  "$0.pre-forge" "$@" < "$input" || { status=$?; rm -f "$input"; exit "$status"; }
+  <run-prior> < "$input" || { status=$?; rm -f "$input"; exit "$status"; }
   exec < "$input"
   rm -f "$input"
 fi
@@ -289,9 +289,18 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     # Asked from the checkout's top: git gives core.hooksPath when set, and resolves a relative
     # one from the worktree's root, where git runs its hooks (checked with git 2.47).
     folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
-    return {folder / hook: SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
-            .replace("<what>", what).replace("<install>", install_line(cfg["version"]))
-            for hook, what in (("pre-commit", "commit"), ("pre-push", "push"))}
+    wanted = {}
+    for hook, what in (("pre-commit", "commit"), ("pre-push", "push")):
+        path = folder / hook
+        prior = read(path.with_name(f"{hook}.pre-forge")) or read(path)
+        # Husky's dispatcher derives its user-script path from $0, which a rename changes.
+        husky = 'n=$(basename "$0")' in prior and 's=$(dirname "$(dirname "$0")")/$n' in prior
+        run_prior = ('sh -c \'. "$0.pre-forge"\' "$0" "$@"' if husky
+                     else '"$0.pre-forge" "$@"')
+        wanted[path] = (SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
+                        .replace("<what>", what).replace("<install>", install_line(cfg["version"]))
+                        .replace("<run-prior>", run_prior))
+    return wanted
 
 
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
