@@ -1,28 +1,13 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
-    "commit": "68edbc4669d002d41599741522ce98e8a069c5cb",
+    "commit": "a0ce6266c6e73439df3c26b93442c10ad360f5c0",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Both merge-archive scenarios manually populate only the `.log` file. Neither exercises a conversation present only in the current `.json` record, so removing that source from `src/forge/merge.py:129` would leave all these tests passing while violating item 5. This is a real recording state: `src/forge/codex.py:311` records the conversation before the turn is appended at line 324. Add coverage through Forge's commands, with the Codex service stubbed at its edge, proving that such a recorded conversation is also archived.",
-        "file": "tests/test_merge_command.py",
-        "line": 187,
-        "priority": "P1",
-        "title": "Not done: merge archives conversations recorded outside the turn log"
-      },
-      {
-        "body": "If the local branch advances during merging and archiving subsequently fails, the instructed `forge merge` retry always stops at this local-head check. It cannot reach the MERGED path to archive outstanding conversations and preserve the advanced branch. The suggested `forge close` cannot repair this: `src/forge/close.py:57\u201360` returns through `_merged`, which only prints guidance at lines 247\u2013258. Apply the local-head gate to open pull requests; permit cleanup retries after verifying that the merged PR has the recorded head.",
-        "file": "src/forge/merge.py",
-        "line": 41,
-        "priority": "P2",
-        "title": "Allow cleanup retries after the local branch advances"
-      }
-    ],
-    "status": "blocked",
-    "tree": "4356f76612ee8c4ebffbe2e862533fa9d1a3f2244f56c72dc700e43a9da542b2"
+    "findings": [],
+    "status": "clean",
+    "tree": "484fb9af7e0fde4fe7b2903d70731ec92a71564a3eed63a7dd947d2ba4e8939c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T17:28:37+00:00",
@@ -46,6 +31,10 @@
     },
     {
       "at": "2026-09-27T19:20:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T19:30:52+00:00",
       "step": "review"
     }
   ]
