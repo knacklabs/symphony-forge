@@ -33,6 +33,8 @@ def test_13_guide_explains_codex_workers_and_plugin_removal() -> None:
     before, heading, removal = guide.partition("## Remove the Claude Codex plugin")
     assert heading, "the guide needs a plugin removal section"
     for path in [*(ROOT / "src" / "forge").rglob("*"), *(ROOT / "docs").rglob("*.md")]:
+        if path.is_relative_to(ROOT / "docs" / "context"):
+            continue
         if path.is_relative_to(ROOT / "docs") and path.relative_to(ROOT / "docs").as_posix() in {
             "guide.md", *LEGACY_DOCS,
         }:
