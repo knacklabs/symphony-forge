@@ -3,11 +3,44 @@
   "branch": "fix/on-windows-forge-s-process-check-codex-i",
   "done_when": "On Windows, codex.identity reads a process's start time and executable path through the Windows API with ctypes (OpenProcess, GetProcessTimes, QueryFullProcessImageNameW) instead of running PowerShell, so no child process is started; identity keeps its contract (None when no process has the id, a matching record otherwise, and a reused id never matches); POSIX is unchanged; a test on Windows exercises a live process, an exited one and a mismatch",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "7734f740f8767f12fb8e2f5340fc732beab5fd31",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "On Windows, removing this guard lets an empty record reach `_alive({})`, which returns `None` (src/forge/codex.py:472\u2013475), followed by `recorded[\"pid\"]` at line 495, raising `KeyError`. This happens on the first `forge work`/`read`, because `hold()` calls `_stop_leftover()` before any record exists (line 532), and when `app_server` is null. The exception also interrupts lock cleanup in `hold()`'s finally block. Keep an explicit check for absent process records when bypassing the command-name check.",
+        "file": "src/forge/codex.py",
+        "line": 488,
+        "priority": "P1",
+        "title": "Handle absent process records before checking Windows leftovers"
+      },
+      {
+        "body": "The existing Windows suite still requires the old command-line representation and PowerShell interception. In tests/test_codex_record.py:255, `test_5_one_worker_per_item` unconditionally expects `codex_turn` in the driver's command, but this return now supplies the Python executable path. Lines 263\u2013269 also expect a PowerShell stub to create an observation file, and lines 275\u2013283 use PowerShell failures to test unreadable identities; those stubs are no longer called. These cases run in the Windows suite (.github/workflows/forge-next.yml:23\u201336). Update their assertions and failure scenarios for native identity, preserving the behaviors they protect; fixing the empty-record crash alone will still leave CI failing.",
+        "file": "src/forge/codex.py",
+        "line": 453,
+        "priority": "P1",
+        "title": "Not done: Windows process-record tests exercise native identity"
+      },
+      {
+        "body": "The mismatch and exited-process cases inspect only missing output and a deleted lock, so both accept an unexpected exception as success. In this branch, neither case creates a process-record JSON file, so `doctor` reaches the empty-record `KeyError` in `_stop_leftover()`. `tidy()` nevertheless deletes the lock in its finally block (src/forge/codex.py:597\u2013607), satisfying these assertions while recovery crashes. Assert that doctor completes its normal reporting path and has no unexpected traceback, accounting for the fixture's expected configuration diagnostics.",
+        "file": "tests/test_fix_windows_process_identity.py",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: Windows identity test rejects doctor crashes"
+      }
+    ],
+    "status": "blocked",
+    "tree": "66d971076ee2bdfd62b075b23d0f79f63a83a7bf3eb5d21f7a48442226a19b03"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T04:54:04+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T05:04:39+00:00",
+      "step": "review"
     }
   ],
   "why": "On Windows, Forge's process check (codex.identity) shells out to PowerShell Get-CimInstance, and CI shows that call sometimes never returns: a pytest worker hung in subprocess communicate() during crash recovery (test_codex_resume.py test_9), like the earlier Windows hang in test_4"
