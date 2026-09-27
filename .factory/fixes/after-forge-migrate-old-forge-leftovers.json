@@ -3,11 +3,22 @@
   "branch": "fix/after-forge-migrate-old-forge-leftovers",
   "done_when": "src/forge/templates/migrate-skill.md gains a leftover-audit step after the migrate pull request merges: question every top-level file and folder and keep one only when a reader can be named (the new Forge's code, a test, CI, forge.toml, or a doc people use); delete what nothing reads in one cleanup fix; ask the owner, as a question with options, before deleting product history (decisions, specs, briefs, design docs); rewrite docs that describe the old Forge and trim dead ignore and attribute rules; settle every file in .forge-migrate/kept/ and remove the folder; never delete binary files, list them for the owner; a test pins the step's rules",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "797f8d1a62d12ff23784ac0021ed94abaeba5b08",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e85fa5d17f864a82015979020d78f19e4fa569a1ccb2c7cf1813a75f9ccfd6e6"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T04:39:42+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:45:07+00:00",
+      "step": "review"
     }
   ],
   "why": "After forge migrate, old-Forge leftovers its fixed list can't know stay in a client (dead .gitignore and .gitattributes rules, config pointing at deleted folders, docs and a README that describe the old Forge, old roadmap items, unlinked decisions and specs, .forge-migrate/kept/), and the migration skill says nothing about them"
