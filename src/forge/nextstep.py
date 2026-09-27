@@ -64,7 +64,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state is not None:
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
-            lines += _item(name, f"The fix {name}", state, path)
+            lines += _item(name, f"The fix {name}", state, top, path)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
@@ -152,7 +152,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
-                                 states[task["id"]], tree)]
+                                 states[task["id"]], top, tree)]
     if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -163,7 +163,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]])
+            lines += _item(item, item, states[task["id"]], top)
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -208,12 +208,27 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
-def _item(item: str, label: str, state: dict[str, Any], path: Path | None = None) -> list[str]:
+def _item(item: str, label: str, state: dict[str, Any], top: Path,
+          path: Path | None = None) -> list[str]:
     status = state.get("status") or "started"
     if status == "merged" and path:
         return [f"{label} is merged; clean up its worktree.",
                 f"Next: git worktree remove {shlex.quote(str(path))}"]
+    ready = repo.ready_path(item, top)
+    if ready.is_file():
+        try:
+            receipt = json.loads(ready.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            receipt = {}
+        branch = state.get("branch")
+        if (branch and receipt.get("review") == "clean" and
+                repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
+                == receipt.get("commit")):
+            status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
+    if (status == "ready" and state.get("kind") != "migrate"
+            and repo.default_config(top)["merge"] == "agent"):
+        sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already

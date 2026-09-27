@@ -50,6 +50,10 @@ Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...
 
 ## New directions
 
+Grill any request with more than one reasonable reading or no stated done-when before starting a
+fix or story. Ask one question at a time with your recommendation and why; look up facts in the
+repo instead of asking the human. A clear request with a stated done-when can go straight ahead.
+
 When the human states a new direction, principle or value, grill how it applies before changing
 anything. Ask one question at a time with your recommended answer and why; look up facts in the
 repo instead of asking the human. Continue until the plan for applying it is agreed, then make
