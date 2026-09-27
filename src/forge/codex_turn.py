@@ -25,6 +25,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from typing import Any
 
 from openai_codex import ApprovalMode, Codex, Sandbox, api
@@ -130,7 +131,15 @@ def main() -> int:
             try:
                 resumed = codex.thread_resume(request["thread"], **settings)
             except JsonRpcError as error:
-                emit(fresh=f"Codex couldn't resume its conversation: {error.message}")
+                reason = error.message
+                if "already has an active writer" in reason:
+                    time.sleep(2)
+                    try:
+                        resumed = codex.thread_resume(request["thread"], **settings)
+                    except JsonRpcError as retry_error:
+                        reason = retry_error.message
+                if resumed is None:
+                    emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
