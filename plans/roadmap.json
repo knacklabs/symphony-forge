@@ -85,6 +85,13 @@
       "spec": "docs/specs/one-chat-approval.md",
       "status": "pending",
       "order": 55
+    },
+    {
+      "key": "FORGE-CHATVIEW-1",
+      "title": "Forge's Codex chats are easy to follow in the Codex app",
+      "spec": "docs/specs/codex-chat-view.md",
+      "status": "pending",
+      "order": 56
     }
   ],
   "epics": [
