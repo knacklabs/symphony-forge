@@ -1,18 +1,18 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
   "review": {
-    "commit": "0261d562c534c3bcab5a3ae3ad52ecadb4e1d310",
+    "commit": "d0025bfaed32afe5ef9fc100ec807ecd082795cc",
     "dismissals": [],
     "findings": [
       {
-        "body": "The survival assertion checks only the unrelated Python sleeper created on line 74. That process neither represents Codex nor holds the resumed conversation, so code that selectively terminates the competing Codex writer could still pass this test. The stub returns the active-writer error without any corresponding holder. Add command-level coverage with a separate simulated Codex holder and verify that it survives both retry recovery and fresh-start fallback. Item 3 explicitly requires this protection.",
+        "body": "The holder is launched by executing an extensionless Python script directly. Windows cannot execute its shebang, so this raises an OSError before any recovery assertions run. The suite includes Windows runners (.github/workflows/forge-next.yml:23), and the harness explicitly handles Windows script launching (tests/conftest.py:50). Launch the holder with `sys.executable` followed by the script path, as the test already does for Forge.",
         "file": "tests/test_steer_resume.py",
-        "line": 89,
+        "line": 72,
         "priority": "P1",
-        "title": "Not done: test that active-writer recovery leaves the holder running"
+        "title": "Not done: active-writer recovery test runs on Windows"
       },
       {
-        "body": "This added file persists workflow status and a previous review report. Neither the driver change nor its required tests need it, and it falls outside the expressly permitted production path and required test file. Remove it from the selected change.",
+        "body": "This new file stores workflow status and a previous review report. Neither the retry implementation nor its required tests need it, and it falls outside the permitted production path and explicitly required test file. Remove it from the branch change.",
         "file": ".factory/stories/FORGE-STEER-1/tasks/RESUME.json",
         "line": 1,
         "priority": "P2",
@@ -20,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "9bc89c9c0bad783a5b518be52f3f99f700f2312350b1c1e7a9eaa3b8e74700e6"
+    "tree": "7b6a895b7dd9f3ea2d3cc13cdc6b687bc220ce34b5abb893d4957766c4ee251b"
   },
   "status": "fixing",
   "steps": [
@@ -38,6 +38,10 @@
     },
     {
       "at": "2026-09-27T15:05:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:22:50+00:00",
       "step": "review"
     }
   ]
