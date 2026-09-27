@@ -8,8 +8,9 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 ## Install
 
-You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv` and Claude Code, which
-runs Forge's workers. Codex can coordinate the work too; Codex workers come in a later release.
+You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, Claude Code and Codex.
+Either agent can coordinate the work; the first cold read of a story or spec runs on the other one.
+`forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
@@ -26,7 +27,8 @@ the install line to fix it.
 - **A repo that copied in the old Forge:** `forge migrate` moves it over in one pull request.
 - **Every clone:** run `forge sync` once, because the git hooks are installed, not committed.
   Then `forge doctor` checks the tools, the pin, the hooks and CI, and prints a fix for each
-  problem it finds.
+  problem it finds. With Codex workers, it also checks the pinned Codex SDK, project trust and
+  hook health; `forge doctor --fix` installs the SDK when needed.
 
 ## Where to start
 
@@ -84,6 +86,22 @@ You never run the hook commands yourself: git, the host hooks and CI call them.
 
 Only the human approves a story, chooses between options and merges. The agent does the rest.
 
+## Workers and conversations
+
+Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to build tasks and fixes.
+The same file holds a `[models]` table: `[models.build]` for the first task build,
+`[models.fix]` for later fix rounds, `[models.lite]` for quick fixes,
+`[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
+Autoreview. Build, fix, lite and grill set a model and reasoning effort; review sets its model.
+Building and fixing can also set the subagents' model and effort. Ask your agent to change these
+settings in a fix.
+
+Forge names task conversations `Build · <story>/<task> · <task name>` and later turns
+`Fix · <story>/<task> · <task name>`. Quick fixes use `Lite · <fix name> · <why>` and cold reads
+use `Grill · <story or spec> · <name>`. A later turn continues the item's conversation when it
+can. For conversations you start yourself, names such as `Review`, `Explore` and `Debug` make
+them easier to find in the Codex app.
+
 ## The two lanes
 
 - **Story:** any change that touches an interface or more than five code files.
@@ -135,3 +153,13 @@ For Forge's maintainers:
 
 What the switch to this Forge removed from the repo, and where to find it, is in
 `docs/archive.md`.
+
+## Remove the Claude Codex plugin
+
+The new Forge uses Codex directly. If you installed the old Claude Codex plugin, remove its
+installation and marketplace from your own machine:
+
+```
+claude plugin uninstall codex@openai-codex
+claude plugin marketplace remove openai-codex
+```
