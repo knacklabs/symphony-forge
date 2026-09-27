@@ -32,15 +32,15 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
 MODELS = """
 [models.build]
-model = "opus"
-effort = "high"
+model = "gpt-6-sol"
+effort = "medium"
 
 [models.fix]
-model = "opus"
-effort = "high"
+model = "gpt-6-sol"
+effort = "medium"
 
 [models.lite]
-model = "sonnet"
+model = "gpt-6-sol"
 effort = "medium"
 
 [models.grill.codex]
@@ -64,7 +64,7 @@ def _scaffold(top: Path) -> dict[str, str]:
         "forge.toml": (
             "# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
-            f'version = "v{__version__}"\nrepo = "client"\nworkers = "claude"\n'
+            f'version = "v{__version__}"\nrepo = "client"\nworkers = "codex"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(['tests', 'forge-pr-check'])}\n"
             f"interfaces = {json.dumps(INTERFACES)}\n{MODELS}"),

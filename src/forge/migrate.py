@@ -3,7 +3,8 @@
 Everything is worked out from the default branch as last fetched, which the checkout must be at,
 before anything changes, and `--dry-run` prints that plan and stops. The run works in its own
 worktree on forge/migrate-v1:
-- it deletes the copied-in Forge's listed paths, except files that differ from the copied-in
+- it deletes the copied-in Forge's listed paths, except files referenced by tracked client files,
+  which stay in place unless Forge sync writes that path, and files that differ from the copied-in
   version (the Forge source at the commit constitution/VENDORED_FROM names), which move to
   .forge-migrate/kept/. .envrc is set aside only when it has lines besides the old Forge's, and
   its old verify commands become forge.toml's test;
@@ -178,9 +179,9 @@ def migrate(args: argparse.Namespace) -> int:
     busy = _in_flight(top)
     if busy:
         repo.refuse(REFUSALS["in_flight"], items="; ".join(busy))
-    plan = _plan(top, ref)
     # sync's own list of the adapters it will write (their text is not needed here).
-    adapters = sync.files(top, {"version": f"v{__version__}", "test": plan["test"]})
+    adapters = sync.files(top, {"version": f"v{__version__}", "test": ""})
+    plan = _plan(top, ref, set(adapters))
     # Never through a link, even one inside the repo: the run works in another folder.
     for rel in [*_touched(plan), *adapters]:
         parts = Path(rel).parts
@@ -216,14 +217,26 @@ def migrate(args: argparse.Namespace) -> int:
 # --- the plan: computed from the default branch, before anything changes -------------------
 
 
-def _plan(top: Path, ref: str) -> dict[str, Any]:
+def _plan(top: Path, ref: str, adapters: set[str]) -> dict[str, Any]:
     vendored = _tree(top, ref, *VENDORED)
     records = _tree(top, ref, ".factory", *LEDGERS)
     source = _source(top, ref) if vendored else {}
+    agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
+    outside = [".", *(f":(exclude){path}" for path in (*VENDORED, ".factory", ".gstack", "plans"))]
+    if agents and agents == source.get("AGENTS.md"):
+        outside.append(":(exclude)AGENTS.md")  # sync replaces the old instructions
+    # The old Claude adapter import is removed; other tracked references still count.
+    referenced = sorted(path for path in vendored if "/" in path and path not in FORGE_MADE
+                        and path not in adapters
+                        and repo.run("git", "grep", "-q", "-F", "-e", path, ref, "--", *outside,
+                                     *((":(exclude)CLAUDE.md",) if path == ".claude/CLAUDE.md"
+                                       else ()),
+                                     cwd=top).returncode == 0)
     envrc = (story.show(top, ref, ".envrc") or "") if vendored else ""
     ours = any(line.strip() not in OLD_COMMENTS and not OLD_ENVRC.fullmatch(line)
                for line in envrc.splitlines())
     kept = sorted(path for path, blob in vendored.items() if path not in FORGE_MADE
+                  and path not in referenced
                   and (ours if path == ".envrc" else source.get(path) != blob))
     # Outside the harness-only block; the last export of each wins, as in the shell.
     said = dict(word.partition("=")[::2]
@@ -243,7 +256,6 @@ def _plan(top: Path, ref: str) -> dict[str, Any]:
     if test and "package.json" in _tree(top, ref, "package.json"):
         test = f"npm ci && {test}"
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
-    agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
     # The client's sign-off record, which harness.yaml pinned; forge.toml's signoff pins it now.
     pinned = re.search(r"^signoff_record:[ \t]*[\"']?([^\"'\s#]*)",
                        story.show(top, ref, "harness.yaml") or "", re.M)
@@ -251,8 +263,8 @@ def _plan(top: Path, ref: str) -> dict[str, Any]:
     if signoff and not repo.SIGNOFF.fullmatch(signoff):  # an empty pin would let any record count
         repo.refuse(REFUSALS["signoff"], pin=signoff)
     stories = _stories(top, ref)
-    return {"ref": ref, "kept": kept, "stories": stories,
-            "delete": sorted((set(vendored) - set(kept)) | set(records)
+    return {"ref": ref, "kept": kept, "referenced": referenced, "stories": stories,
+            "delete": sorted((set(vendored) - set(kept) - set(referenced)) | set(records)
                              | (set(store) - {path for path, _ in designs})),
             "moves": [*((path, f"{KEPT}/{path}") for path in kept), *designs],  # (from, to)
             "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
@@ -523,7 +535,11 @@ def _report(plan: dict[str, Any], default: str) -> str:
             lines.append(".envrc has lines of your own besides the old Forge's, so it is set "
                          "aside, not deleted.")
     else:
-        lines.append("Sets nothing aside: every copied-in Forge file is as it was copied in.")
+        lines.append("Sets nothing aside.")
+    if plan["referenced"]:
+        lines.append(f"Leaves {_files(len(plan['referenced']))} referenced by tracked client "
+                     "files at their original paths:")
+        lines += [f"- {path}" for path in plan["referenced"]]
     count = sum(1 for entry in plan["stories"] if "key" in entry)
     lines.append(f"Converts {count} active plan{'s' * (count != 1)} into story docs:")
     for entry in plan["stories"]:
