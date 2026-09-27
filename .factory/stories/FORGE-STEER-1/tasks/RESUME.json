@@ -1,28 +1,21 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
   "review": {
-    "commit": "d0025bfaed32afe5ef9fc100ec807ecd082795cc",
+    "commit": "6bab4d678284f3e81e6e390aca7a5356b3fc8587",
     "dismissals": [],
     "findings": [
       {
-        "body": "The holder is launched by executing an extensionless Python script directly. Windows cannot execute its shebang, so this raises an OSError before any recovery assertions run. The suite includes Windows runners (.github/workflows/forge-next.yml:23), and the harness explicitly handles Windows script launching (tests/conftest.py:50). Launch the holder with `sys.executable` followed by the script path, as the test already does for Forge.",
-        "file": "tests/test_steer_resume.py",
-        "line": 72,
-        "priority": "P1",
-        "title": "Not done: active-writer recovery test runs on Windows"
-      },
-      {
-        "body": "This new file stores workflow status and a previous review report. Neither the retry implementation nor its required tests need it, and it falls outside the permitted production path and explicitly required test file. Remove it from the branch change.",
+        "body": "This file adds workflow status and a previous review report, neither of which is needed for active-writer recovery or its required tests. It falls outside the permitted production path and explicitly required test file. Remove it from the branch change.",
         "file": ".factory/stories/FORGE-STEER-1/tasks/RESUME.json",
         "line": 1,
         "priority": "P2",
         "title": "Remove the out-of-scope task review record"
       }
     ],
-    "status": "blocked",
-    "tree": "7b6a895b7dd9f3ea2d3cc13cdc6b687bc220ce34b5abb893d4957766c4ee251b"
+    "status": "clean",
+    "tree": "a6a42c555b5c378b417fb87db2f1bdc4d9ddbaf07393a29df69c5cc74dbd020f"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T04:59:02+00:00",
@@ -42,6 +35,10 @@
     },
     {
       "at": "2026-09-27T15:22:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:14:07+00:00",
       "step": "review"
     }
   ]
