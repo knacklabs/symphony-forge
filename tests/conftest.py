@@ -152,6 +152,14 @@ Builder = Callable[..., dict[str, Any]]
 
 
 @pytest.fixture
+def isolated_codex_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    home = tmp_path / "isolated-codex-home"
+    home.mkdir(mode=0o700)
+    monkeypatch.setenv("CODEX_HOME", str(home))
+    return home
+
+
+@pytest.fixture
 def claude_payload(repo: Repo) -> Builder:
     """A Claude Code hook payload: claude_payload("PreToolUse", "Bash", {"command": "ls"})."""
     def build(event: str, tool: str | None = None, tool_input: dict[str, Any] | None = None,

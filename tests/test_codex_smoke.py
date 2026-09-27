@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import threading
 import uuid
@@ -94,9 +95,10 @@ def _drive(cwd: Path, name: str, prompt: str, thread: str | None = None) -> list
     return lines
 
 
-def _sdk(*args: str) -> str:
+def _sdk(*args: str, env: dict[str, str] | None = None) -> str:
     done = subprocess.run([str(PYTHON), "-c", *args], capture_output=True, text=True,
-                          encoding="utf-8", timeout=WAIT)
+                          encoding="utf-8", timeout=WAIT,
+                          env={**os.environ, **env} if env else None)
     assert done.returncode == 0, done.stdout + done.stderr
     return done.stdout
 
@@ -121,7 +123,10 @@ def _one(lines: list[dict], key: str) -> dict:
 
 @pytest.mark.skipif(not (ENV / "forge-sdk-ready").is_file(),
                     reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
-def test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops(tmp_path):
+def test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops(tmp_path,
+                                                                         isolated_codex_home):
+    shutil.copyfile(Path.home() / ".codex" / "auth.json", isolated_codex_home / "auth.json")
+    (isolated_codex_home / "auth.json").chmod(0o600)
     word = f"smoke-{uuid.uuid4().hex[:8]}"
     name = f"Smoke · Forge SDK check · {word}"
 
