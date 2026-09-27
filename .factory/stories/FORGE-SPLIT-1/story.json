@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SPLIT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-27T16:47:35+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others",
+  "touches": 0
+}

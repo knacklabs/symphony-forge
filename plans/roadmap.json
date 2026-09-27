@@ -85,6 +85,12 @@
       "spec": "docs/specs/one-chat-approval.md",
       "status": "pending",
       "order": 55
+    },
+    {
+      "key": "FORGE-SPLIT-1",
+      "title": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others",
+      "status": "pending",
+      "order": 56
     }
   ],
   "epics": [
