@@ -3,7 +3,7 @@
   "branch": "fix/after-forge-migrate-old-forge-leftovers",
   "done_when": "src/forge/templates/migrate-skill.md gains a leftover-audit step after the migrate pull request merges: question every top-level file and folder and keep one only when a reader can be named (the new Forge's code, a test, CI, forge.toml, or a doc people use); delete what nothing reads in one cleanup fix; ask the owner, as a question with options, before deleting product history (decisions, specs, briefs, design docs); rewrite docs that describe the old Forge and trim dead ignore and attribute rules; settle every file in .forge-migrate/kept/ and remove the folder; never delete binary files, list them for the owner; a test pins the step's rules",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T04:39:42+00:00",
