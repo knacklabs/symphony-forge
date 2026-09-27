@@ -71,6 +71,12 @@
       "spec": "docs/specs/codex-steering.md",
       "status": "pending",
       "order": 53
+    },
+    {
+      "key": "FORGE-ONECHAT-1",
+      "title": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in",
+      "status": "pending",
+      "order": 54
     }
   ],
   "epics": [

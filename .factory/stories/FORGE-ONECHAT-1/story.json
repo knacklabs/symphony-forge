@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ONECHAT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-27T15:23:02+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in",
+  "touches": 0
+}
