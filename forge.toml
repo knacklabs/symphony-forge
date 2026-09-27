@@ -8,13 +8,13 @@ interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schem
 
 [models.build]
 model = "gpt-6-sol"
-effort = "high"
+effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
 [models.fix]
 model = "gpt-6-sol"
-effort = "high"
+effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
