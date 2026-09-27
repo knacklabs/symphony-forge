@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "A plan is now refused unless it carries all nine sections the planner prompt mandates, checked with the shared parser instead of a substring that a fenced example could satisfy. A decomposition is bound to the plan it was built from: the recorder stamps project, story, epic, plan_file and the plan digest from trusted state and drops whatever an agent claimed, and stage start refuses when that plan has changed since \u2014 or when the binding cannot be verified at all. And build_waves stops being authored anywhere: prompts, the Codex agent contract, the doc and the scaffold check all let go of it together with its only reader, so ordering is derived from dependencies rather than written twice.",
-  "issue": "PH-3",
-  "commit": "a70625f227c8763cc77b07c1d842f7c3f1f24782",
-  "recorded_at": "2026-08-05T12:45:01+00:00"
-}

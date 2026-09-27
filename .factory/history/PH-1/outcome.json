@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "A brief or spec that is missing a required section is now refused at the gate that records it, instead of reaching sign-off half-written. Sign-off names every absent BRIEF heading, spec confirm requires Why, Behaviour and Acceptance criteria, and doctor reports legacy documents without blocking anyone. One shared parser answers 'does this document have this section' for all three, and it reads an example as an example: headings inside fenced blocks, HTML comments, raw blocks and container blocks no longer count as structure.",
-  "issue": "PH-1",
-  "commit": "2b9ce1dbd8b192467f8deb09423251ef99dbceac",
-  "recorded_at": "2026-08-04T17:40:06+00:00"
-}

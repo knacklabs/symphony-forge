@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Editing a context doc no longer reds CI: any git commit through an agent session (either runtime) re-scans docs/context in-process, auto-stages the refreshed ledger.json so the diff rides that same commit, and blocks the commit with the reason while a secret-shaped or oversized context file is unfixed. The write-time hook is deferred with a recorded trigger (D-0015); decision 0035 captures the belt contract.",
-  "issue": "FORGE-ALIGN-1",
-  "commit": "787d8224aa53d1f38061ca5c0c2ae1262d499f7c",
-  "recorded_at": "2026-08-10T09:26:07+00:00"
-}

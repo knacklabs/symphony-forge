@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Windows machines are first-class harness hosts with zero user setup: every registered hook resolves through the forge launcher and BLOCKS (exit 2) instead of silently disarming when anything in its chain is missing; cmd/PowerShell users get a native forge.cmd that only trusts real executables (an argument-injection class was found and eliminated in review); doctor executes all eight registered hook commands verbatim and names exactly what is broken; recorders and the delegation lock work on Windows (lazy fcntl, msvcrt); CRLF and cp1252 encodings can no longer corrupt the launcher or crash output; and a windows-latest CI job now proves the armed lockout path on every PR. New clients get all of it at init; existing clients on their next forge upgrade.",
-  "issue": "FORGE-WIN-1",
-  "commit": "95062be52172bc5c40449e7b85d9b2760000e81a",
-  "recorded_at": "2026-08-12T08:00:32+00:00"
-}

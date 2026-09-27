@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Symphony Forge gains a one-command repo-hygiene pass, `forge sanitise` (and `--check`): it heals only the safe (roadmap drift, committed cruft) and REPORTS what needs judgment (board gaps, missing PR links, secrets, stale task-state, open windows, advisories) without deleting evidence or fabricating; `--check` is read-only. Three primitives back it: `forge mode abandon` (ledgered close of a crashed window, keeping the harness-marker guard), a pure stale-task-state reporter, and a repo-wide secret/cruft scan. A `knacklabs-sanitise-project` skill wraps it on demand. The daily harness-health cron is gone \u2014 the client update check now runs only on `workflow_dispatch` and `push: main` with the cheap version short-circuit, so devs audit on demand and clients stop burning tokens daily.",
-  "issue": "FORGE-BOARD-7",
-  "commit": "58cd2f9ed45883b62862ebc601228a64d78161a4",
-  "recorded_at": "2026-08-09T04:27:57+00:00"
-}

@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Plan approval is now a human gate an agent cannot forge. forge plan save no longer records a plan as approved on its own \u2014 it saves the plan as awaiting-approval and approves only when a fresh approval marker matches that exact plan body under the same issue and story. A human creates that marker with forge plan approve --by \"<name>\" after reviewing the plan in plan mode, and the marker is consumed on the approved save so it authorizes exactly one save. The result: no product code can be written without a plan a human actually approved, closing the self-approval hole where an agent could plan, grill, and approve its own work. It carries the same trust model as decision accept and client sign-off, with a committed plan-human-approved audit event recording who approved and when.",
-  "issue": "FORGE-APPROVE-1",
-  "commit": "7432d284cc60c9637786e6355df412f1270958c3",
-  "recorded_at": "2026-08-06T10:45:07+00:00"
-}

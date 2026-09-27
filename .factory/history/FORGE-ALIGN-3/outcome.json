@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Clients now have the same CI teeth as the harness: the vendored roadmap-gate.yml blocks any PR that lands work without declaring its completed story or ledgered window, and runs the full project audit on every push to the default branch - but only once the client has opted in by authoring a roadmap with at least one epic (decision 0036); unprepared repos and the harness itself stay green. Two Gate A day-one defects fixed at the root: a client's first roadmap PR no longer crashes on the missing base-ref file, and Git Flow feature/<key> branches infer their ticket.",
-  "issue": "FORGE-ALIGN-3",
-  "commit": "a810ddb8863fa010cc25ff2c7fd2736849e6918e",
-  "recorded_at": "2026-08-10T12:32:42+00:00"
-}

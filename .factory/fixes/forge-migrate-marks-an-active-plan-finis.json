@@ -1,0 +1,41 @@
+{
+  "base": "c7be07d3a55f2e3986de886f58f1562bec455cf9",
+  "branch": "fix/forge-migrate-marks-an-active-plan-finis",
+  "done_when": "forge migrate calls a story finished only when every Tasks row is done in the old Forge's records (.factory/stages.json and task markers); a story with a pending part is not converted as finished and gets a replan draft under .forge-migrate/replan/ like a malformed one, and the dry run says which parts are pending; a test covers a story with one pending part",
+  "kind": "fix",
+  "review": {
+    "commit": "e23f12028324de6db2da6e23a2587078a5f61ab7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The global stage list is applied to every story without checking its `issue` field. Legacy task IDs can repeat between stories: `.factory/stages.json:2` identifies its owner, while `.factory/stories/FORGE-NEXT-1/decomposition.json:6` and `.factory/stories/FORGE-UPG-2/decomposition.json:6` both use `CORE`. In a copied-in client with this layout, a pending `CORE` in one story overrides another story's completed task marker, incorrectly sending that finished story to replan. Filter the global record by its owning story before matching task IDs.",
+        "file": "src/forge/migrate.py",
+        "line": 473,
+        "priority": "P2",
+        "title": "Scope global stages to their owning story"
+      }
+    ],
+    "status": "clean",
+    "tree": "17f6a616dc77ca5db75eae8f2104d9920b285fca335bd16b9ee282d349c9fcc4"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T03:14:26+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:23:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T03:31:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T04:00:55+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge migrate marks an active plan finished whenever its approval is on main, even when its old-Forge stages still have parts pending (myclaw's GRANTED-1 has T1 pending, yet the dry run says every part was done)"
+}

@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Emptiness and coverage are now audit failures, not silence: a repo with discovery material (harvested context, decisions, or confirmed specs) but no roadmap, no stories, or no epics fails forge project audit and sanitise --check with a named no-roadmap gap citing the authoring commands; a confirmed spec no story references is a continuous spec-coverage gap, not a one-time sign-off check; doctor reports the absent-roadmap state; migration (step 7c) and adoption now name capability gaps instead of staying silent - never fabricating content.",
-  "issue": "FORGE-ALIGN-2",
-  "commit": "40811bb1f802835b0d4f3b89f140a9a221446bfc",
-  "recorded_at": "2026-08-10T10:47:42+00:00"
-}

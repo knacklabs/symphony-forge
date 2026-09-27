@@ -24,8 +24,8 @@ jobs:
           - {os: windows-latest, group: 2, groups: 3}
           - {os: windows-latest, group: 3, groups: 3}
     runs-on: ${{ matrix.os }}
-    # The whole suite must finish in under five minutes on every runner.
-    timeout-minutes: 5
+    # Windows needs time for pytest-timeout to name a slow test before the job ends.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 10 || 5 }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6

@@ -124,8 +124,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
                  'says "awaiting-approval", not "approved". Its draft is '
                  ".forge-migrate/replan/DRAFT-1.md; re-plan it with forge story new DRAFT-1.",
                  "Converts 5 active plans into story docs:",
-                 "The shop code is easy to change (TIDY-UP): its approval on main carries over; "
-                 "1 of 2 parts done.",
+                 "The shop code is easy to change (TIDY-UP): not carried over, because parts "
+                 "are still pending in the old Forge's records. Its draft is "
+                 ".forge-migrate/replan/TIDY-UP.md; re-plan it with forge story new TIDY-UP.",
                  "Shoppers can search the shop (SEARCH-1): its approval on main carries over, and "
                  "it is finished: every part was done before the move. Outcome: Shoppers now find "
                  "any product by name from every page.",
@@ -205,7 +206,7 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         | {"constitution/VENDORED_FROM", ".envrc", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})
     added = {path for path, status in changed.items() if status != "D"}
     written = {*(f".forge-migrate/kept/{path}" for path in KEPT), ".forge-migrate/replan/SHIP-1.md",
-               "plans/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
+               ".forge-migrate/replan/TIDY-UP.md", "plans/SEARCH-1.md", "plans/SIGNIN-1.md",
                ".forge-migrate/replan/DRAFT-1.md", f"docs/context/{DESIGN}", ".gitignore",
                ".gitattributes", "forge.toml", "CLAUDE.md", *LISTED}
     assert written <= added and all(path.startswith(".factory/") for path in added - written)
@@ -307,13 +308,12 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         "required_linear_history": True, "allow_force_pushes": False,
         "required_conversation_resolution": True}
 
-    # On the default branch the carried-over approval and the merged task hold for v1's commands.
+    # The unfinished plan needs re-planning before its tasks can start.
     repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#7)", "forge/migrate-v1")
     repo.git("push", "-q", "--no-verify", "origin", "main")
-    started = repo.forge("task", "start", "TIDY-UP/T2")
-    assert started.returncode == 0, started.stderr
-    finished = repo.forge("task", "start", "TIDY-UP/T1")
-    assert finished.returncode == 1 and "is already started" in finished.stderr
+    for item in ("TIDY-UP/T2", "TIDY-UP/T1"):
+        refused = repo.forge("task", "start", item)
+        assert refused.stderr.startswith("Story TIDY-UP has no story doc on main"), refused.stderr
     # Stories shipped before the move are finished: forge next asks no bookkeeping about them, and
     # no story doc it reads is malformed.
     after = repo.forge("next").stdout

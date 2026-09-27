@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "The narration budget is contract, not preference: conduct \u00a78 carries the full rule (one line per state change; findings, contradictions, refusals, and gate results never rationed; full prose only at gates and deliverables), AGENTS.md pins it as a strict non-negotiable at exactly the 110-line cap, and the implementer/planner/harvester prompts carry self-sufficient clauses so every delegated worker's brief includes it. Constitution and prompts reach all clients on forge upgrade; the AGENTS.md bullet reaches new clients at init, and existing pilots get it by hand. Enforcement is instruction+review like the rest of the conduct canon - the deterministic half of this epic is TERSE-1's budget test.",
-  "issue": "FORGE-TERSE-2",
-  "commit": "737177d4a64dc27ae98eb894c1fd614571cde1f4",
-  "recorded_at": "2026-08-10T16:13:14+00:00"
-}

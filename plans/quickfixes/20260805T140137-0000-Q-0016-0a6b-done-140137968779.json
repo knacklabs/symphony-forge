@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0016-0a6b",
-  "reason": "audit+review fixes: gstack blanket ignore, run.json preflight, opt-out-consistent untracking",
-  "started_at": "2026-08-05T13:59:07+00:00",
-  "completed_at": "2026-08-05T14:01:37+00:00",
-  "files": []
-}

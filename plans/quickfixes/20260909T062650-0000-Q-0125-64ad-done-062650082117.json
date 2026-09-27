@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0125-64ad",
-  "profile": "quickfix",
-  "reason": "seal measures, bounded coordinator fixes, plan review records",
-  "started_at": "2026-09-09T05:48:42+00:00",
-  "completed_at": "2026-09-09T06:26:50+00:00",
-  "files": []
-}

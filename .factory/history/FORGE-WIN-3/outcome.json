@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Symphony Forge delegations now run end-to-end on native Windows: forge delegate launches, supervises, and reaps Codex workers through a single psutil-based process model (decision 0042) on both Windows and POSIX \u2014 retiring the ps/killpg machinery and its lstart fragility. psutil ships as the harness's first runtime Python dependency, gated by a required doctor row and installed by doctor --fix (venv-aware, PEP-668-honest, converges in one run). Windows workers record the workspace-write sandbox; the unelevated tightening stays deferred (D-0021). The windows-hook-gates CI selector gains a real Windows launch/reap E2E.",
-  "issue": "FORGE-WIN-3",
-  "commit": "8ace410e77c67720d7b7c512d9c2ac6d1a625dfb",
-  "recorded_at": "2026-08-13T10:25:26+00:00"
-}
