@@ -4,28 +4,13 @@
   "done_when": "On Windows, codex.identity reads a process's start time and executable path through the Windows API with ctypes (OpenProcess, GetProcessTimes, QueryFullProcessImageNameW) instead of running PowerShell, so no child process is started; identity keeps its contract (None when no process has the id, a matching record otherwise, and a reused id never matches); POSIX is unchanged; a test on Windows exercises a live process, an exited one and a mismatch",
   "kind": "fix",
   "review": {
-    "commit": "d3c87d5a741608a29bd335be510c377ddbe8d616",
+    "commit": "a93a91e60247d9866561fc934e68f34e15276ada",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This assertion now expects `it counts as held`, but the production message in `src/forge/codex.py:75` remains `it counts it as held`. Consequently, `test_5_one_worker_per_item` fails on Linux and macOS whenever it reaches this case. Restore the original expected text to preserve the unchanged POSIX behavior and keep CI passing.",
-        "file": "tests/test_codex_record.py",
-        "line": 271,
-        "priority": "P1",
-        "title": "Restore the expected POSIX refusal message"
-      },
-      {
-        "body": "Returning the executable path also changes the driver's record for cold reads: `src/forge/codex.py:263\u2013268` saves this identity directly. However, `tests/test_codex_reader.py:129` still unconditionally requires `codex_turn` in that record's command. On Windows the value is now the Python executable path, so `test_10_the_cold_read_runs_on_the_other_family` fails. This test runs in the Windows suite configured at `.github/workflows/forge-next.yml:23\u201336`. Update its assertion for the native Windows representation, as this branch already does for the worker test.",
-        "file": "src/forge/codex.py",
-        "line": 453,
-        "priority": "P1",
-        "title": "Update the cold-reader test for Windows executable-path records"
-      }
-    ],
-    "status": "blocked",
-    "tree": "e9b3907192d730ca66e3c3c898e3433a58f14e386accbb0e15f95d9eca8a5e1e"
+    "findings": [],
+    "status": "clean",
+    "tree": "9df1f802ad97bd3fc5d5f189e1c792c666d646ea627238087a473cdfb8cd3701"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T04:54:04+00:00",
@@ -37,6 +22,10 @@
     },
     {
       "at": "2026-09-27T05:16:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:33:51+00:00",
       "step": "review"
     }
   ],
