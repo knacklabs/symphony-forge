@@ -41,26 +41,32 @@ builds the confirmed spec `docs/specs/codex-steering.md`.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| RESUME | Resume past a leftover writer | On the exact "already has an active writer" resume error: stop the item's matching recorded Codex processes, restart the driver, retry once; every other resume error unchanged | 3 | `src/forge/codex_turn.py`, `src/forge/codex.py` | `tests/test_steer_resume.py` | — | no |
-| ASK | Read-only question | `forge ask "<question>"`: one read-only Codex turn under the name `ask` with `[models.lite]`, answer printed, discarded if files changed; its row in the command table | 4 | `src/forge/ask.py`, `src/forge/cli.py` | `tests/test_steer_ask.py` | — | yes |
-| NOTE | A note for one round | `forge work --note`: the "From the coordinator" section in that round's brief, the note in the turn log, empty note refused | 1 | `src/forge/cli.py`, `src/forge/worker.py`, `src/forge/codex.py`, `src/forge/templates/brief.md` | `tests/test_steer_note.py` | RESUME, ASK | yes |
-| QUESTION | Ask and wait | The `Question:` contract: printed, kept in the thread record, `forge work` without a note and `forge close` refuse while unanswered, the answer continues the conversation or rides a fresh start's brief; the brief says when to ask | 2 | `src/forge/worker.py`, `src/forge/close.py`, `src/forge/codex.py`, `src/forge/templates/brief.md` | `tests/test_steer_question.py` | NOTE | yes |
-| DOCS | Tell the coordinator | The Forge skill's rules for notes, questions and `forge ask`, and the guide's section on them | 5 | `src/forge/templates/skill.md`, `docs/guide.md` | `tests/test_steer_docs.py` | NOTE, QUESTION, ASK | yes |
+| RESUME | Resume past a leftover writer | In the driver, on the exact "already has an active writer" resume error: stop the item's matching recorded Codex processes with Forge's existing stop code, restart the app-server, retry once; every other resume error unchanged | 3 | `src/forge/codex_turn.py` | `tests/test_steer_resume.py` | — | no |
+| STEER | Notes, questions and ask | `forge work --note` and its "From the coordinator" brief section and turn-log `note`; the `Question:` contract with the thread-record `question`, the refusals and the answer round; `forge ask` under its own `ask` records; the `--note` flag and the `ask` command row | 1, 2, 4 | `src/forge/cli.py`, `src/forge/worker.py`, `src/forge/close.py`, `src/forge/codex.py`, `src/forge/ask.py`, `src/forge/templates/brief.md` | `tests/test_steer_note.py`, `tests/test_steer_question.py`, `tests/test_steer_ask.py` | — | yes |
+| DOCS | Tell the coordinator | The Forge skill's rules for notes, questions and `forge ask`, and the guide's section on them | 5 | `src/forge/templates/skill.md`, `docs/guide.md` | `tests/test_steer_docs.py` | STEER | yes |
 
 New moving parts: none
 
 ## Risks
 
-Risks: none
+- RESUME stops Codex processes that still hold a conversation, which could cut off work in
+  progress. It stops one only while this `forge work` holds the item's one-worker lock (so no
+  other `forge work` for the item can be running a turn), only when it was recorded for this item,
+  and only when its start time and command still match; anything else keeps today's behaviour.
 
 ## Notes
 
-- RESUME and ASK start together; they share no file. NOTE waits for both because it also changes
-  `src/forge/codex.py` (the turn log's note field) and `src/forge/cli.py` (the `--note` flag).
-  QUESTION builds on NOTE's flag and brief section. DOCS goes last so every command it names
-  exists.
-- NOTE pins the shared names: the `--note` flag, the brief heading "From the coordinator", and the
-  turn-log field `note`. QUESTION pins the thread-record field `question` and the refusal wording.
+- RESUME and STEER start together: RESUME changes only `src/forge/codex_turn.py` and calls the
+  stop code that already exists in `src/forge/codex.py`; STEER owns every change to `codex.py`,
+  `cli.py`, `worker.py` and `close.py`. DOCS goes last so every command it names exists.
+- STEER pins the names: the `--note` flag, the brief heading "From the coordinator", the turn-log
+  field `note`, the thread-record field `question`, and `threads/ask/` for `forge ask`'s records
+  (a kind of its own, never `threads/fix/`).
+- The answering round's brief always carries the question and its answer, whether the conversation
+  continues or starts fresh, so no fresh-start signal is needed.
+- A question clears only after the answering turn completes. If the answering turn fails or is
+  interrupted, the question stays unanswered, and `forge work` without `--note` and `forge close`
+  keep refusing.
 - RESUME's trigger is the error text Codex returns ("already has an active writer"); it never stops
   an unrecorded process or one whose start time and command no longer match.
 - `forge ask` reuses `codex.run` with a read-only sandbox, like the cold reader, and the cold read's
