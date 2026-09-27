@@ -36,11 +36,17 @@ REFUSALS = {
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
               "git -C {top} checkout {base} -- {doc}, commit it, then forge work {item}"),
+    "empty_note": ("The --note text is empty.", 'forge work {item} --note "<text>"'),
+    "question": ("The worker is waiting for an answer:\n{question}",
+                 'forge work {item} --note "<answer>"'),
 }
 
 
 def work(args: argparse.Namespace) -> None:
     item = args.item
+    note = getattr(args, "note", None)
+    if note is not None and not note.strip():
+        refuse(REFUSALS["empty_note"], item=item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -48,6 +54,8 @@ def work(args: argparse.Namespace) -> None:
                     else [f"fix/{item}", f"forge/{item}"])
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     on_codex = config["workers"] == "codex"
+    if on_codex and note is None and (question := codex.record(top, item).get("question")):
+        refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
     # round: it continues the item's conversation.
     later = on_codex and bool(codex.record(top, item).get("start") or (
@@ -62,10 +70,15 @@ def work(args: argparse.Namespace) -> None:
     with codex.hold(top, item, kind) if on_codex else contextlib.nullcontext():
         if on_codex:
             codex.recover(top, item)
+            question = codex.record(top, item).get("question")
+            if question and note is None:
+                refuse(REFUSALS["question"], item=item, question=question)
+        else:
+            question = None
         thread, fresh = codex.conversation(top, item, approval) if later else (None, "first turn")
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
-        brief, subject = _brief(match, top, state, findings, failing)
+        brief, subject = _brief(match, top, state, findings, failing, note, question)
         if thread:
             brief += _changes(top, codex.record(top, item)["start"])
         state["status"] = "fixing" if findings or failing else "working"
@@ -75,11 +88,17 @@ def work(args: argparse.Namespace) -> None:
             _run(item, top, brief, claude)
             return
         result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
-                           thread, fresh, approval)
+                           thread, fresh, approval, note=note)
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+        final = (result.get("text") or "").strip()
+        asked = re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", final, re.S)
+        codex._record(codex._item_file(top, item, ".json", kind),
+                      question=asked[1] if asked else None)
+        if asked:
+            print(f"{asked[1]}\nNext: forge work {item} --note \"<answer>\"")
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[str]:
@@ -191,11 +210,18 @@ def _failing(branch: str) -> list[tuple[str, str]]:
 
 
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
-           findings: list[dict[str, Any]], failing: list[tuple[str, str]]) -> tuple[str, str]:
+           findings: list[dict[str, Any]], failing: list[tuple[str, str]],
+           note: str | None = None, question: str | None = None) -> tuple[str, str]:
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {}
+    if note is not None:
+        on.add("coordinator")
+        values["coordinator"] = note
+    if question:
+        on.add("answer")
+        values.update(question=question, answer=note or "")
     if match["task"]:
         doc = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
         row = task.rows(doc).get(match["task"], {})
