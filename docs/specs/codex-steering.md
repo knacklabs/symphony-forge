@@ -2,7 +2,7 @@
 slug: codex-steering
 title: The coordinator can steer and question its Codex workers
 status: draft
-saved: 2026-09-27T04:36:53+00:00
+saved: 2026-09-27T04:41:44+00:00
 ---
 
 # The coordinator can steer and question its Codex workers
