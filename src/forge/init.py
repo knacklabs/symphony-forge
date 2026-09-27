@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shlex
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, NoReturn
+from urllib.parse import urlparse
 
 from forge import __version__, repo, sync
 
@@ -77,10 +79,21 @@ def _scaffold(top: Path) -> dict[str, str]:
 def protect(top: Path, branch: str, checks: list[str]) -> None:
     """Allow changes to branch only through a pull request with these checks green, and say so.
 
-    It never weakens a rule already there: it reads the branch's protection, adds the pull request
-    requirement, these checks and admins included, and keeps everything else as it was.
+    It reads the branch's protection, drops checks from deleted workflows, adds the pull request
+    requirement, these checks and admins included, and keeps other rules as they were.
     """
-    endpoint = f"repos/{{owner}}/{{repo}}/branches/{branch}/protection"
+    origin = repo.git("remote", "get-url", "origin", cwd=top)
+    # Local bare remotes are used by Forge's command tests; gh resolves their placeholders.
+    match = re.fullmatch(r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?", origin)
+    parts = urlparse(origin)
+    if match:
+        owner, name = match.groups()
+    elif parts.hostname == "github.com" and parts.scheme in ("https", "http", "ssh"):
+        owner, _, name = parts.path.strip("/").removesuffix(".git").partition("/")
+    else:
+        owner = name = ""
+    endpoint = f"repos/{owner}/{name}/branches/{branch}/protection" if owner and name else (
+        f"repos/{{owner}}/{{repo}}/branches/{branch}/protection")
     read = ["gh", "api", endpoint]
     done = repo.run(*read, cwd=top)
     try:
@@ -92,7 +105,7 @@ def protect(top: Path, branch: str, checks: list[str]) -> None:
     if not isinstance(current, dict) or (
             done.returncode and "Branch not protected" not in done.stdout + done.stderr):
         _protect_failed(done, branch, read)
-    body = _stronger(current, checks)
+    body = _stronger(current, checks, _removed_workflow_checks(top))
     path = repo.forge_dir(top) / "branch-protection.json"
     path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
     args = ["gh", "api", "--method", "PUT", endpoint, "--input", str(path)]
@@ -109,7 +122,40 @@ def _protect_failed(done: subprocess.CompletedProcess[str], branch: str, args: l
     repo.refuse(REFUSALS["protect"], branch=branch, problem=said.rstrip("."), command=shlex.join(args))
 
 
-def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
+def _removed_workflow_checks(top: Path) -> set[str]:
+    """Job names removed in history, unless a workflow in this tree still produces them."""
+    def jobs(source: str) -> set[str]:
+        found: set[str] = set()
+        in_jobs = False
+        for line in source.splitlines():
+            if line == "jobs:":
+                in_jobs = True
+            elif in_jobs and line and not line[0].isspace() and not line.startswith("#"):
+                in_jobs = False
+            elif in_jobs:
+                if job := re.match(r"^  ([\w-]+):\s*(?:#.*)?$", line):
+                    found.add(job[1])
+                if named := re.match(r"^    name:\s*([^#]+?)\s*$", line):
+                    found.add(named[1].strip('"\''))
+        return found
+
+    removed: set[str] = set()
+    commits = repo.git("log", "--format=%H", "--diff-filter=D", "HEAD", "--",
+                       ".github/workflows", cwd=top).splitlines()
+    for commit in commits:
+        changed = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z",
+                           "--diff-filter=D", commit, "--", ".github/workflows", cwd=top)
+        for path in changed.split("\0"):
+            if path.endswith((".yml", ".yaml")):
+                old = repo.run("git", "show", f"{commit}^:{path}", cwd=top)
+                if old.returncode == 0:
+                    removed.update(jobs(old.stdout))
+    remaining = {name for path in (top / ".github/workflows").glob("*.y*ml")
+                 for name in jobs(path.read_text(encoding="utf-8"))}
+    return removed - remaining
+
+
+def _stronger(current: dict[str, Any], checks: list[str], removed: set[str]) -> dict[str, Any]:
     """The protection GitHub reported (its read shape), in the shape it takes, with Forge's rules
     added: a pull request, the named checks and admins included."""
     def on(block: Any) -> bool:
@@ -125,7 +171,8 @@ def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
     kept = status.get("checks") or [{"context": name} for name in status.get("contexts") or []]
     required = [{"context": entry["context"], **({"app_id": entry["app_id"]}
                                                 if isinstance(entry.get("app_id"), int) else {})}
-                for entry in kept if isinstance(entry, dict) and "context" in entry]
+                for entry in kept if isinstance(entry, dict) and "context" in entry
+                and (entry["context"] not in removed or entry["context"] in checks)]
     required += [{"context": name} for name in checks
                  if name not in {entry["context"] for entry in required}]
     reviews = current.get("required_pull_request_reviews") or {}
