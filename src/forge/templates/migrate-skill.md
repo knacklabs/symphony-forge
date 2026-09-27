@@ -63,6 +63,23 @@ stop and ask the human whenever one fails; never work around it.
 - Run `forge close migrate-v1` once more: it turns on branch protection and says so.
 - Run `git fetch origin` and `forge next`: the converted stories show.
 
+## 7. Audit leftovers after the merge
+
+- Question every top-level file and folder, including hidden ones. Keep one only when you can
+  name its reader: the new Forge's code, a test, CI, forge.toml, or a doc people use. Check inside
+  surviving folders for old Forge files that the migration's fixed list could not know about.
+- Never delete binary files; list them for the owner.
+- Ask the owner one question with options before deleting product history (decisions, specs,
+  briefs, and design docs): keep and link it from a current doc, or delete it. Recommend the option
+  supported by the reader audit and wait for their choice.
+- In one cleanup fix, delete files nothing reads, rewrite docs that describe the old Forge, and
+  trim dead .gitignore and .gitattributes rules. Include the README, old roadmap items, and
+  unlinked decisions and specs in the audit. Check config for paths to deleted folders and remove
+  or update those references.
+- Settle every file in `.forge-migrate/kept/`: put each still-used client change in its proper
+  home or delete it under the rules above. Settle any other files left under `.forge-migrate/`,
+  including replan drafts, then remove .forge-migrate/ from the cleanup fix.
+
 ## Going back
 
 - Before the merge: close the pull request. Nothing else changed.
