@@ -97,10 +97,11 @@ def doctor(args: argparse.Namespace) -> None:
         wanted = {}
     rows += [(f"{rel} differs from what forge sync writes for Forge {cfg['version']}.", "forge sync")
              for rel, text in wanted.items() if sync.read(top / rel) != text]
-    # Forge's own repo runs without them until the switch: every worktree shares the hooks folder,
-    # and the old Forge's branches may still be in flight there (forge migrate installs none).
-    if cfg["repo"] != "forge-source" and any(sync.read(path) != text
-                                             for path, text in sync.shims(top, cfg).items()):
+    # Forge's own repo runs without the default hooks until the switch: every worktree shares
+    # that folder. An explicitly configured hooks folder must still be checked.
+    checks_hooks = (cfg["repo"] != "forge-source" or
+                    repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
+    if checks_hooks and any(sync.read(path) != text for path, text in sync.shims(top, cfg).items()):
         rows.append(("The git hooks that check each commit and push aren't installed.", "forge sync"))
 
     if not shutil.which("sh"):

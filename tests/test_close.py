@@ -226,7 +226,8 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     monkeypatch.delenv("CODEX_BIN", raising=False)
     conftest._install(repo.bin, "codex", CODEX_STUB.format(python=sys.executable))
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nchecks = ["tests", "forge-pr-check"]\n'
+    repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
+                             'checks = ["tests", "forge-pr-check"]\n'
                              'interfaces = ["**/routes/**"]\n'
                              'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
