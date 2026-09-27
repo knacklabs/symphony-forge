@@ -49,6 +49,8 @@ if sys.argv[1:3] == ["pr", "merge"]:
     args = sys.argv[1:]
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
+    if "--squash" not in args or "--delete-branch" in args:
+        sys.exit(1)
     remote = pathlib.Path(REMOTE)
     checkout = here / "github-merge"
     subprocess.run(["git", "clone", "-q", str(remote), str(checkout)], check=True)
@@ -62,12 +64,9 @@ if sys.argv[1:3] == ["pr", "merge"]:
     subprocess.run(["git", "commit", "-q", "-m", args[args.index("--subject") + 1]],
                    cwd=checkout, check=True)
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
-    subprocess.run(["git", "push", "-q", "origin", "--delete", "fix/tidy-readme"],
-                   cwd=checkout, check=True)
-    subprocess.run(["git", "-C", LOCAL, "fetch", "-q", "--prune", "origin"], check=True)
     (here / "github-merged").write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head)).replace("LOCAL", repr(str(env.repo.path)))
+'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head))
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + stub.split("\n", 1)[1])
 
 
@@ -101,6 +100,11 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     missing = env.repo.forge("merge", item)
     assert missing.stderr == (f"Forge has no clean ready record for {item}.\n"
                               f"Next: forge close {item}\n")
+    ready.write_text(saved.replace('"clean"', '"blocked"'), encoding="utf-8")
+    unclean = env.repo.forge("merge", item)
+    assert unclean.stderr == (f"Forge has no clean ready record for {item}.\n"
+                              f"Next: forge close {item}\n")
+    assert not env.gh_calls("pr", "merge")
     ready.write_text(saved, encoding="utf-8")
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": "wrong",
@@ -109,6 +113,15 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     assert changed.returncode != 0
     assert changed.stderr == (f"The pull request's head changed since Forge recorded {item} ready.\n"
                               f"Next: forge close {item}\n")
+    assert not env.gh_calls("pr", "merge")
+
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "CLOSED", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    closed_pr = env.repo.forge("merge", item)
+    assert closed_pr.stderr == (f"Forge needs an open pull request for {item} targeting main "
+                                f"from fix/tidy-readme.\nNext: open or correct its pull request, "
+                                f"then forge close {item}\n")
     assert not env.gh_calls("pr", "merge")
 
     env.gh.respond("pr", "view", stdout=json.dumps({
@@ -166,25 +179,39 @@ def test_5_merge_leaves_dirty_worktree_and_archives_recorded_conversations(
     assert "GitHub has not finished merging" in queued.stderr
     assert where.exists()
     _merge_at_github(env)
-    subprocess.run([str(env.repo.bin / "gh"), "pr", "merge", "7", "--subject", "Tidy readme",
+    subprocess.run([str(env.repo.bin / "gh"), "pr", "merge", "7", "--squash", "--subject", "Tidy readme",
                     "--match-head-commit", head], cwd=env.repo.path, check=True)
     env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
         [{"headRefName": "fix/tidy-readme"}]))
     assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
     merge_calls = len(env.gh_calls("pr", "merge"))
     (where / "unsaved.txt").write_text("keep me\n", encoding="utf-8")
+    remote = env.tmp / "remote.git"
+    subprocess.run(["git", "-C", str(remote), "config", "receive.denyDeletes", "true"], check=True)
+    blocked = env.repo.forge("merge", item)
+    assert blocked.returncode != 0
+    assert blocked.stderr == (f"Forge could not delete the remote branch for {item}.\n"
+                              f"Next: check the branch on GitHub, then forge merge {item}\n")
+    assert env.repo.git("ls-remote", "--heads", "origin", "fix/tidy-readme")
+    assert (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").is_file()
+    assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
+    subprocess.run(["git", "-C", str(remote), "config", "receive.denyDeletes", "false"], check=True)
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
     assert len(env.gh_calls("pr", "merge")) == merge_calls
     assert where.is_dir() and (where / "unsaved.txt").read_text("utf-8") == "keep me\n"
     assert "uncommitted" in merged.stdout.lower()
-    assert any("--delete-branch" in call for call in env.gh_calls("pr", "merge"))
+    assert all("--delete-branch" not in call for call in env.gh_calls("pr", "merge"))
+    assert env.repo.git("ls-remote", "--heads", "origin", "fix/tidy-readme") == ""
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
     assert {call["params"]["threadId"] for call in calls
             if call.get("method") == "thread/archive"} == {"thr-one", "thr-two"}
     next_step = env.repo.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert item not in next_step.stdout
+    (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").unlink()
+    legacy = env.repo.forge("next")
+    assert f"Next: git worktree remove {where}" in legacy.stdout
 
 
 def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(

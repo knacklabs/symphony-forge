@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 from forge import checks, close, codex, repo
@@ -14,6 +15,8 @@ REFUSALS = {
            "open or correct its pull request, then forge close {item}"),
     "merge_failed": ("GitHub did not merge the pull request for {item}: {reason}.", "check the pull request, then forge merge {item}"),
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
+    "remote_branch": ("Forge could not delete the remote branch for {item}.",
+                      "check the branch on GitHub, then forge merge {item}"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -48,7 +51,7 @@ def merge(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["changed"], item=item)
     if pr["state"] == "OPEN":
         checks.wait(top, item, head, config["checks"])
-        done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash", "--delete-branch",
+        done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], "--match-head-commit", head, cwd=top)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
@@ -57,10 +60,23 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
         if not merged:
             repo.refuse(REFUSALS["pending"], item=item)
+    remote_ref = f"refs/heads/{branch}"
+    remote = repo.run("git", "ls-remote", "--heads", "origin", remote_ref, cwd=top)
+    if remote.returncode:
+        repo.refuse(REFUSALS["remote_branch"], item=item)
+    remote_head = remote.stdout.split()[0] if remote.stdout.strip() else None
+    if remote_head and remote_head != head:
+        repo.refuse(REFUSALS["remote_branch"], item=item)
+    if remote_head:
+        deleted = repo.run("git", "push", f"--force-with-lease={remote_ref}:{head}",
+                           "origin", "--delete", branch, cwd=top)
+        if deleted.returncode:
+            repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
                      if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
-    if repo.git("status", "--porcelain", cwd=worktree):
+    dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
+    if dirty:
         print(f"Merged {item}. Its worktree at {worktree} has uncommitted changes, so Forge left it and its local branch in place.")
     else:
         repo.git("worktree", "remove", str(worktree), cwd=survivor)
@@ -74,7 +90,12 @@ def merge(args: argparse.Namespace) -> int:
             archived = False
         if not archived:
             print(f"Forge could not archive a Codex conversation for {item}; archive it in Codex.")
-    path.unlink(missing_ok=True)
+    if dirty:
+        saved = path.with_suffix(".tmp")
+        saved.write_text(json.dumps({**receipt, "tidied": True}) + "\n", encoding="utf-8")
+        os.replace(saved, path)
+    else:
+        path.unlink(missing_ok=True)
     return 0
 def _conversations(top: Path, item: str) -> set[str]:
     base = repo.forge_dir(top) / "threads" / ("task" if "/" in item else "fix") / item

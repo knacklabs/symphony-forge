@@ -211,17 +211,22 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None = None) -> list[str]:
     status = state.get("status") or "started"
+    ready = repo.ready_path(item, top)
+    try:
+        receipt = json.loads(ready.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        receipt = {}
+    if not isinstance(receipt, dict):
+        receipt = {}
+    if receipt.get("tidied") is True:
+        return []
     if status == "merged" and path:
-        if repo.default_config(top)["merge"] == "agent":
-            return [f"{label} is merged; Forge needs to finish tidying up.", f"Next: forge merge {item}"] if repo.ready_path(item, top).is_file() else []
+        if repo.default_config(top)["merge"] == "agent" and receipt.get("review") == "clean":
+            return [f"{label} is merged; Forge needs to finish tidying up.",
+                    f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
                 f"Next: git worktree remove {shlex.quote(str(path))}"]
-    ready = repo.ready_path(item, top)
     if ready.is_file():
-        try:
-            receipt = json.loads(ready.read_text(encoding="utf-8"))
-        except (ValueError, UnicodeDecodeError):
-            receipt = {}
         branch = state.get("branch")
         if (branch and receipt.get("review") == "clean" and
                 repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
