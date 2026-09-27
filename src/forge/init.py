@@ -9,7 +9,6 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, NoReturn
-from urllib.parse import urlparse
 
 from forge import __version__, repo, sync
 
@@ -18,6 +17,7 @@ REFUSALS = {
                     "the copied-in Forge moves over with forge migrate.", "forge migrate"),
     "no_origin": ("This repo has no origin remote, so Forge can't push the first commit or protect "
                   "the default branch.", "gh repo create <name> --private --source . --remote origin"),
+    "origin_repo": ("Forge cannot identify a GitHub repository from origin.", "git remote set-url origin <GitHub repository URL>"),
     "protect": ("Branch protection on {branch} was not set: {problem}.", "{command}"),
 }
 
@@ -77,22 +77,14 @@ def _scaffold(top: Path) -> dict[str, str]:
 
 
 def protect(top: Path, branch: str, checks: list[str]) -> None:
-    """Allow changes to branch only through a pull request with these checks green, and say so.
-
-    It reads the branch's protection, drops checks from deleted workflows, adds the pull request
-    requirement, these checks and admins included, and keeps other rules as they were.
-    """
+    """Require pull requests, live checks and admin enforcement while keeping other rules."""
     origin = repo.git("remote", "get-url", "origin", cwd=top)
     # Local bare remotes are used by Forge's command tests; gh resolves their placeholders.
-    match = re.fullmatch(r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?", origin)
-    parts = urlparse(origin)
-    if match:
-        owner, name = match.groups()
-    elif parts.hostname == "github.com" and parts.scheme in ("https", "http", "ssh"):
-        owner, _, name = parts.path.strip("/").removesuffix(".git").partition("/")
-    else:
-        owner = name = ""
-    endpoint = f"repos/{owner}/{name}/branches/{branch}/protection" if owner and name else (
+    match = re.fullmatch(r"(?:https?://github\.com/|ssh://git@(?:ssh\.)?github\.com(?::443)?/|"
+                         r"git@github\.com:)([^/]+)/([^/]+?)(?:\.git)?", origin)
+    if not match and not Path(origin).is_absolute():
+        repo.refuse(REFUSALS["origin_repo"])
+    endpoint = f"repos/{match[1]}/{match[2]}/branches/{branch}/protection" if match else (
         f"repos/{{owner}}/{{repo}}/branches/{branch}/protection")
     read = ["gh", "api", endpoint]
     done = repo.run(*read, cwd=top)
@@ -125,7 +117,8 @@ def _protect_failed(done: subprocess.CompletedProcess[str], branch: str, args: l
 def _removed_workflow_checks(top: Path) -> set[str]:
     """Job names removed in history, unless a workflow in this tree still produces them."""
     def jobs(source: str) -> set[str]:
-        found: set[str] = set()
+        found: dict[str, str] = {}
+        job_id = ""
         in_jobs = False
         for line in source.splitlines():
             if line == "jobs:":
@@ -134,21 +127,20 @@ def _removed_workflow_checks(top: Path) -> set[str]:
                 in_jobs = False
             elif in_jobs:
                 if job := re.match(r"^  ([\w-]+):\s*(?:#.*)?$", line):
-                    found.add(job[1])
-                if named := re.match(r"^    name:\s*([^#]+?)\s*$", line):
-                    found.add(named[1].strip('"\''))
-        return found
+                    job_id = job[1]
+                    found[job_id] = job_id
+                if job_id and (named := re.match(r"^    name:\s*([^#]+?)\s*$", line)):
+                    found[job_id] = named[1].strip('"\'')
+        return set(found.values())
 
     removed: set[str] = set()
-    commits = repo.git("log", "--format=%H", "--diff-filter=D", "HEAD", "--",
-                       ".github/workflows", cwd=top).splitlines()
-    for commit in commits:
-        changed = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z",
-                           "--diff-filter=D", commit, "--", ".github/workflows", cwd=top)
-        for path in changed.split("\0"):
+    for commit in repo.git("log", "--format=%H", "--diff-filter=D", "HEAD", "--",
+                           ".github/workflows", cwd=top).splitlines():
+        for path in repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z",
+                             "--diff-filter=D", commit, "--", ".github/workflows",
+                             cwd=top).split("\0"):
             if path.endswith((".yml", ".yaml")):
-                old = repo.run("git", "show", f"{commit}^:{path}", cwd=top)
-                if old.returncode == 0:
+                if (old := repo.run("git", "show", f"{commit}^:{path}", cwd=top)).returncode == 0:
                     removed.update(jobs(old.stdout))
     remaining = {name for path in (top / ".github/workflows").glob("*.y*ml")
                  for name in jobs(path.read_text(encoding="utf-8"))}
