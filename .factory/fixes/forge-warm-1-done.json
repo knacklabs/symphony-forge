@@ -5,11 +5,11 @@
   "kind": "story-done",
   "outcome": "Codex now builds this repo's tasks as named, resumable conversations with per-kind models, recovers after a crash, and the old Codex plugin is gone.",
   "review": {
-    "commit": "41975648f2613ea53df8237c6c37c9381ac48897",
+    "commit": "cc31c519187b18feac10a774579f90e2256c291d",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "2862c1c2981a200908df9dce832b6c250017226c7b582581faeb41dc436fc32a"
+    "tree": "8e08f1c253974a04d060046cdcb1f41c1052e946894a05069ffa3ea465e844d6"
   },
   "status": "waiting for checks",
   "steps": [
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-27T04:00:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:04:39+00:00",
       "step": "review"
     }
   ],
