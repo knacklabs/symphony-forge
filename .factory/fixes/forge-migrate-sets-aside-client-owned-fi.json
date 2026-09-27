@@ -1,0 +1,14 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/forge-migrate-sets-aside-client-owned-fi",
+  "done_when": "forge migrate keeps a file under an old-Forge folder when a tracked file outside the old-Forge folders references its path, and a test proves it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:43+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge migrate sets aside client-owned files that live under old-Forge folders, such as myclaw's bundled factory/skills/gantry-admin/SKILL.md, even when the client's code or package still references them"
+}
