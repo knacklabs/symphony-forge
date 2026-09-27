@@ -29,6 +29,8 @@ REFUSALS = {
                       "forge close {item}"),
     "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
                      "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
+    "no_such_base_line": ("{where} is not a line of the base commit, so it can't prove a finding "
+                          "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
@@ -62,9 +64,11 @@ def close(args: argparse.Namespace) -> int:
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
-        _check_line(top, item, result["commit"], because.split()[0])
+        from_base = _check_line(top, item, result["commit"], f"origin/{default}",
+                                because.split()[0])
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
-        result["dismissals"].append({"finding": number, "because": because})
+        result["dismissals"].append({"finding": number, "because": because,
+                                     "from_base": from_base})
     serious = review.blocking(result)
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
@@ -108,12 +112,16 @@ def _dismissals(args: argparse.Namespace, item: str) -> list[tuple[int, str]]:
     return list(zip(numbers, reasons))
 
 
-def _check_line(top: Path, item: str, commit: str, where: str) -> None:
-    """A dismissal's file:line must be a real line of the reviewed commit."""
+def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> bool:
+    """Use the base only when the branch deleted the cited file."""
     path, _, line = where.rpartition(":")
-    shown = repo.run("git", "show", f"{commit}:{path}", cwd=top)
+    from_base = path in repo.git("diff", "--name-only", "--diff-filter=D", "--no-renames",
+                                 base, commit, "--", path, cwd=top).splitlines()
+    shown = repo.run("git", "show", f"{base if from_base else commit}:{path}", cwd=top)
     if shown.returncode or not 1 <= int(line) <= len(shown.stdout.splitlines()):
-        repo.refuse(REFUSALS["no_such_line"], where=where, item=item)
+        repo.refuse(REFUSALS["no_such_base_line" if from_base else "no_such_line"],
+                    where=where, item=item)
+    return from_base
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
@@ -198,10 +206,12 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
 def _block(result: dict[str, Any], check: str) -> str:
     """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
     worker's functional check from its commit message."""
-    because = {d["finding"]: d["because"] for d in result["dismissals"]}
+    because = {d["finding"]: d for d in result["dismissals"]}
     lines = [BEGIN, f"Forge review of {result['commit'][:12]}: {result['status']}.", ""]
     for n, finding in enumerate(result["findings"], 1):
-        note = (f"dismissed because {because[n]}" if n in because
+        note = (f"dismissed because {because[n]['because']}"
+                + (" (evidence from the base)" if because[n].get("from_base") else "")
+                if n in because
                 else "blocks the merge" if finding["priority"] in review.SERIOUS else "advisory")
         lines.append(f"{n}. {finding['priority']} {finding['title']} "
                      f"({finding['file']}:{finding['line']}): {note}")
