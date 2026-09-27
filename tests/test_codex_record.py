@@ -268,7 +268,7 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
         _install(repo.bin, "ps", BLIND)
         blind = repo.forge("work", "BOARD/PAGE")
         assert blind.stderr == (f"Forge can't read the start time and command of process {os.getpid()}"
-                                f", so it can't tell who holds {lock}; it counts as held.\n"
+                                f", so it can't tell who holds {lock}; it counts it as held.\n"
                                 f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
         (repo.bin / "ps").unlink()
 

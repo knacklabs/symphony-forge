@@ -126,7 +126,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         ("Grill", None), ("Grill", "completed")]
     # Its record sits beside the turn log, and the lock it held is given back.
     grill = json.loads(turn_log.with_suffix(".json").read_text("utf-8"))
-    assert grill["conversation"] == "thr-stub-1" and "codex_turn" in grill["driver"]["command"]
+    assert grill["conversation"] == "thr-stub-1"
+    if os.name == "nt":
+        assert Path(grill["driver"]["command"]).is_file()
+    else:
+        assert "codex_turn" in grill["driver"]["command"]
     assert not turn_log.with_suffix(".lock").exists()
     assert not claude.exists()
 
