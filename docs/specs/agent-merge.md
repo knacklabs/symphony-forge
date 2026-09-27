@@ -19,18 +19,25 @@ has to be the owner's choice, per repo.
 
 **The owner's setting.** `forge.toml` takes `merge = "agent"`; without it, or with
 `merge = "human"`, nothing changes from today. Any other value is refused as an unusable
-forge.toml. The owner asks the agent to change the setting, like every other setting.
+forge.toml. The owner asks the agent to change the setting, like every other setting. Only the
+default branch's `forge.toml`, as last fetched from origin, grants it: a branch that turns the
+setting on for itself grants nothing until a human merges it.
 
-**`forge merge <item>`.** It refuses unless the repo's setting is `merge = "agent"`, naming the
-setting. It refuses unless the item's last `forge close` ended Ready (a clean review) and the
-pull request's head is still the commit that close pushed, and it waits on the required checks on
-that head the same way close does, refusing if one fails. Then it squash-merges the pull request
-with its title as the subject, deletes the remote branch, removes the item's worktree and local
-branch, and prints what merged. A task whose merge is its story's last one still leaves
-`forge story done` to the coordinator.
+**Close records Ready.** When `forge close` ends Ready, it records in the item's state that the
+item is ready and the commit it pushed, next to the review it already records.
 
-**The agent never merges any other way.** The hook keeps refusing a raw `gh pr merge` in every
-repo; `forge merge` is the only path, so the close rule always holds.
+**`forge merge <item>`.** It refuses unless the default branch's setting is `merge = "agent"`,
+naming the setting. It refuses unless the item's recorded state is ready, the pull request is
+open, targets the default branch, and its head is still the commit close recorded. It waits on
+every check named in `forge.toml` on that commit, with no exception, refusing if one fails. It
+then squash-merges with the pull request's title as the subject, tied to that head commit so the
+merge fails if the head moved in between, deletes the remote branch, fetches the default branch,
+removes the item's worktree and local branch, and prints what merged. Removing the worktree
+refuses, leaving it in place and saying so, when it has uncommitted changes. A task whose merge
+is its story's last one still leaves `forge story done` to the coordinator.
+
+**The agent merges only through `forge merge`.** The generated AGENTS.md and the Forge skill say
+so, and the hook keeps refusing the agent's raw merge command in every repo, as today.
 
 **Forge says the right next step.** With `merge = "agent"`, `forge close` ends with
 "Ready: … Next: forge merge <item>" and `forge next` names `forge merge <item>` for a ready item;
@@ -44,11 +51,14 @@ the agent runs `forge merge` once close says Ready. The guide lists `forge merge
 
 - Without `merge = "agent"`, `forge merge` refuses and names the setting; close and next keep
   saying a human merges.
-- With it, `forge merge` merges only an item whose close ended Ready, whose pull request head is
-  the commit close pushed and whose required checks are green on it; any of those failing
-  refuses and merges nothing.
-- A merge squashes with the pull request's title, deletes the remote branch, and removes the
-  item's worktree and local branch; `forge next` no longer lists the item.
+- Only the default branch's `forge.toml` grants the setting; an item's own branch can't.
+- `forge close` records a Ready item's state and pushed commit. With the setting, `forge merge`
+  merges only an item recorded ready whose open pull request targets the default branch, whose
+  head is that commit, and whose configured checks are all green on it; any of those failing
+  refuses and merges nothing, and the merge itself is tied to that head commit.
+- A merge squashes with the pull request's title, deletes the remote branch, fetches the default
+  branch, and removes the item's worktree and local branch, leaving a worktree with uncommitted
+  changes in place; `forge next` no longer lists the item.
 - A raw `gh pr merge` from the agent is still refused in every repo.
 - The generated AGENTS.md, the Forge skill and the guide describe the setting and `forge merge`;
   this repo's `forge.toml` has `merge = "agent"`.
