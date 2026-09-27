@@ -1,19 +1,19 @@
 {
   "branch": "task/FORGE-WARM-1-UNPLUG",
   "review": {
-    "commit": "97f0d92fb0528d6920e24e05e4e06febc48b68c8",
+    "commit": "271b36835e2dfaad653bc9e0386725f1c1434a60",
     "dismissals": [],
     "findings": [
       {
-        "body": "The scan covers only three documentation files, leaving current new-Forge docs unchecked. For example, `docs/specs/fde-discovery.md:4` marks that spec confirmed, and lines 18\u201327 explicitly describe the new Forge. Adding a plugin reference there would leave this test passing. `docs/archive.md:31\u201333` also identifies retained documentation beyond this list. Extend the scan to cover the new Forge documentation, with explicit exclusions for legacy material, so the required item-13 guard detects references outside the guide\u2019s uninstall section.",
+        "body": "This exclusion treats the current warm-conversation specification as legacy documentation. However, `docs/specs/warm-codex-threads.md:4` marks it confirmed, and lines 25\u201345 specify the new Forge's SDK-backed workers. It already contains plugin references at lines 154 and 208, and the exclusion allows further references anywhere in that document without failing the test. Item 13 permits these references only in the guide's uninstall section or old Forge material. Restrict the exclusions to genuinely legacy documents so the required test covers current new-Forge documentation.",
         "file": "tests/test_no_plugin.py",
-        "line": 19,
+        "line": 26,
         "priority": "P1",
         "title": "Not done: test plugin absence across all new Forge documentation"
       }
     ],
     "status": "blocked",
-    "tree": "b695137350623f28eb6c024aef8ee9656973b084785f4e4ebfe64d2310cc21d9"
+    "tree": "230a087c96c68228263e7bddc650b650aa3c8389bd39aacb603d87e907a5ce49"
   },
   "status": "fixing",
   "steps": [
@@ -27,6 +27,10 @@
     },
     {
       "at": "2026-09-27T02:48:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T03:09:56+00:00",
       "step": "review"
     }
   ]
