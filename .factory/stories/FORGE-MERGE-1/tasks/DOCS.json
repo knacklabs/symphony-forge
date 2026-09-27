@@ -1,11 +1,11 @@
 {
   "branch": "task/FORGE-MERGE-1-DOCS",
   "review": {
-    "commit": "acd3e5fa207ce6081ff4b800d20a33f1597ea372",
+    "commit": "b5f27a4a9c34ccf6e567bc9924cb9a66b519f62e",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "81f786ba295fb46a37895881ef3c868dad7a5096c25fa8cf2abb1c2c20cb9198"
+    "tree": "688f5e9b5e1a424d6b79c1901b0e52405b23e838d0e7812fae10d1e6abc28af9"
   },
   "status": "waiting for checks",
   "steps": [
@@ -19,6 +19,10 @@
     },
     {
       "at": "2026-09-27T17:50:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:57:48+00:00",
       "step": "review"
     }
   ]
