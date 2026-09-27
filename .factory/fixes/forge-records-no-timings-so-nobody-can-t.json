@@ -3,7 +3,7 @@
   "branch": "fix/forge-records-no-timings-so-nobody-can-t",
   "done_when": "each forge work round and each forge close appends one JSON line per step (worker round, review, CI wait) to .git/forge/timings.jsonl, never committed, with the item, the step, the model and effort where one ran, start time, seconds taken and outcome; a failed write never fails the command; a test through the real commands proves the lines",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T17:51:49+00:00",
