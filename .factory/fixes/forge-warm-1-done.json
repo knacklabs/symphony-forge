@@ -1,0 +1,16 @@
+{
+  "base": "9ed2a1e7e0ad30c4694ecba50b6231d180a17d90",
+  "branch": "fix/forge-warm-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Codex now builds this repo's tasks as named, resumable conversations with per-kind models, recovers after a crash, and the old Codex plugin is gone.",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T03:17:12+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Codex builds your tasks and picks up where it left off is finished, and what it achieved."
+}
