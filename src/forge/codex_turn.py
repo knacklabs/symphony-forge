@@ -65,6 +65,13 @@ class Client(CodexClient):
         emit(pid=self._proc.pid)
         RECORDED.acquire()
 
+    def close(self) -> None:
+        if os.name == "nt" and self._proc is not None:
+            # The SDK stops only the .cmd launcher; stop its app-server child first.
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(self._proc.pid)],
+                           capture_output=True)
+        super().close()
+
 
 # ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
 api.CodexClient = Client
