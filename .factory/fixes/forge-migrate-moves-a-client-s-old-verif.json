@@ -3,11 +3,22 @@
   "branch": "fix/forge-migrate-moves-a-client-s-old-verif",
   "done_when": "When the client has a package.json, the test command forge migrate writes starts with npm ci (the same install forge init's default test uses) before the moved verify commands; a test covers a client with package.json and one without",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "5eeda29a574533b0aaae43461da5e498969471b8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "4aa274a96dc365e9a9f5d91fb3ddedab6efe8bd6bde1dda93f0fa3166b59bd15"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T04:31:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:36:53+00:00",
+      "step": "review"
     }
   ],
   "why": "forge migrate moves a client's old verify commands into forge.toml's test without installing the project's dependencies first, so a Node client's CI runs npm checks on a fresh runner with no node_modules (myclaw's migration PR)"
