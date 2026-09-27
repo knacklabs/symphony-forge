@@ -69,7 +69,7 @@ def _writer(repo, mode, conversation="thr-stub-1"):
     held = repo.bin / f"writer-{conversation}"
     release = repo.bin / f"release-{conversation}"
     release.unlink(missing_ok=True)
-    holder = subprocess.Popen([str(repo.bin / "codex-app-server"), "--hold-writer",
+    holder = subprocess.Popen([sys.executable, str(repo.bin / "codex-app-server"), "--hold-writer",
                                conversation, mode], stdout=subprocess.DEVNULL)
     try:
         for _ in range(100):
