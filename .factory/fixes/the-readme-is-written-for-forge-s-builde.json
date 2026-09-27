@@ -3,11 +3,30 @@
   "branch": "fix/the-readme-is-written-for-forge-s-builde",
   "done_when": "README.md explains in simple English what Forge is, who it's for (developers, product people, vibe coders), how a change flows from idea to merged pull request, how to install and start, and the few commands people use, with no client names and every command and link in it real",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "9974ced63f24919e76bdbcd07f1cfa6dd9f2d89e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required test coverage does not protect the README's executable instructions. The branch adds no tests, and the existing release test (`tests/test_fix_forge_v1_release.py:9`) checks the installed version and repository pin without reading the README. The CLI walkthrough (`tests/test_walkthrough.py:79`) likewise uses independently supplied commands. Both would still pass if the README named an invalid release or command. Add suite coverage tied to the documented instructions that exercises the real Forge entry point and validates the linked local destinations, so breaking this documentation contract fails a test.",
+        "file": "README.md",
+        "line": 69,
+        "priority": "P1",
+        "title": "Not done: README installation and command examples have an end-to-end test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c951bbe757f816571343799944b1979dbd4e4a75e356fa63e9187bb4be43a57c"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T16:24:22+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:28:32+00:00",
+      "step": "review"
     }
   ],
   "why": "The README is written for Forge's builders, so a product person or someone vibe coding can't tell what Forge does for them or how to start"
