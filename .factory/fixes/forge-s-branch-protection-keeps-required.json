@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-branch-protection-keeps-required",
   "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T14:49:42+00:00",
