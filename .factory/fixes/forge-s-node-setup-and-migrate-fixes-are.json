@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-node-setup-and-migrate-fixes-are",
   "done_when": "Forge's version is 1.0.1 in src/forge/__init__.py (release tag v1.0.1), this repo's forge.toml pins v1.0.1, and the version test passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T05:07:51+00:00",
