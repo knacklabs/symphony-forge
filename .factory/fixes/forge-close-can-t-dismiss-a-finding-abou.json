@@ -3,7 +3,7 @@
   "branch": "fix/forge-close-can-t-dismiss-a-finding-abou",
   "done_when": "forge close accepts a --because file:line that is a line of the base commit when the branch deletes that file, and says in the review block that the evidence is from the base; any other path still needs a line of the reviewed commit; a test covers a deleted file, a present file and a missing line",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T05:54:24+00:00",
