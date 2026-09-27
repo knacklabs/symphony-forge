@@ -85,6 +85,13 @@
       "spec": "docs/specs/one-chat-approval.md",
       "status": "pending",
       "order": 55
+    },
+    {
+      "key": "FORGE-SPLIT-1",
+      "title": "Each Forge behaviour owns its own entry",
+      "spec": "docs/specs/own-your-entry.md",
+      "status": "pending",
+      "order": 56
     }
   ],
   "epics": [
