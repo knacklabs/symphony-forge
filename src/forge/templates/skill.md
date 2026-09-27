@@ -146,6 +146,7 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 
 ## Closing
 
+Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run

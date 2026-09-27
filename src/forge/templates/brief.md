@@ -89,6 +89,10 @@ pass; if a test is wrong, say so. A test whose result a stub or fake decides pro
 the test-audit skill whenever you write or change a test. Run the repo's test command before you
 stop.
 
+You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
+the test and handoff, and never weaken a test to hide a defect. Call a test failure
+unrelated only with a matching failure on the default branch; otherwise treat it as unresolved.
+
 Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
 for client apps, the running API with a real database and user flows in a browser through
 Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
@@ -97,7 +101,8 @@ many cases, never an item's only proof. Review reports an item proven only by un
 When changing a user-facing flow, add or update its Playwright test, including an old flow a story
 touches for the first time.
 
-A change to documentation only needs no test.
+A change to documentation only needs no test. Documentation-only changes need no new behaviour test;
+check claims, commands and links.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
 
 <!-- if user-facing -->
@@ -138,6 +143,7 @@ $checks
 Take the first rung that holds: don't build it; reuse what the repo has; the standard library; the
 platform; an installed dependency; one line; then the least code that works. Never simplify away
 validation, security, data-loss protection or accessibility.
+Joining lines or removing blank lines never counts as a reduction.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
