@@ -4,7 +4,7 @@
   "branch": "fix/five-process-gaps-waste-rounds-cold-read",
   "done_when": "forge read gives the cold reader the confirmed spec's path and text from whichever branch holds it, and the cold-read template says to check it before calling a spec missing; a review's freshness covers the item's story doc and roadmap entry, not bookkeeping files; a fix's brief states the file limit, the interface globs and any recorded allowance, and the skill says to check them before building; the skill says Done-when or Notes name supported inputs and exclusions, and a dismissal that narrows them needs an amendment; forge.toml's [models.build] and [models.fix] effort is high; tests through the real commands prove each",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T17:15:08+00:00",
