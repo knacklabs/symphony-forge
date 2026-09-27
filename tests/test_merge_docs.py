@@ -18,13 +18,18 @@ def test_6_sync_explains_when_the_agent_may_merge(repo):
     for path in ("AGENTS.md", ".claude/skills/forge/SKILL.md",
                  ".codex/skills/forge/SKILL.md"):
         guidance = (repo.path / path).read_text(encoding="utf-8")
+        words = " ".join(guidance.split())
         assert 'merge = "agent"' in guidance
         assert 'merge = "human"' in guidance
         assert "`forge merge <item>`" in guidance
-        assert "gh pr merge" in guidance
+        assert "Never run `gh pr merge`" in words
+        assert "the agent merges only through `forge merge" in words.lower()
 
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
+    guide_words = " ".join(guide.split())
     assert 'merge = "agent"' in guide
     assert 'merge = "human"' in guide
     assert "`forge merge <item>`" in guide
+    assert "The agent merges only through `forge merge <item>`" in guide_words
+    assert "the hook still refuses a raw `gh pr merge` command" in guide_words
     assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["merge"] == "agent"
