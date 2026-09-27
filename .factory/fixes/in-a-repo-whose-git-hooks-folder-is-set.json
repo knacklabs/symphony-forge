@@ -4,21 +4,13 @@
   "done_when": "forge sync installs Forge's git hooks in the folder git actually uses (core.hooksPath when set) and still runs the hooks already there, forge doctor reports a hooks folder without them, and a test proves both with a Husky-style hooks path",
   "kind": "fix",
   "review": {
-    "commit": "fc63408f9e76017bcd4148543a2726641c1eb6c2",
+    "commit": "8ac4bc24ae95614a103d370f8f877480c4f89e0b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Real Husky hooks do not contain either searched expression. [Husky v9.1.7's installer](https://github.com/typicode/husky/blob/v9.1.7/index.js#L18-L19) generates wrappers that source `.husky/_/h`; the basename-based dispatch lives in that separate file. Consequently, `husky` is false for actual Husky wrappers. After `install_shims` renames them (`src/forge/sync.py:332\u2013336`), Forge executes them with the `.pre-forge` basename. [Husky's dispatcher](https://github.com/typicode/husky/blob/v9.1.7/husky#L3-L6) then looks for `.husky/pre-commit.pre-forge` or `.husky/pre-push.pre-forge` and silently exits when absent, skipping existing checks. The new test at `tests/test_fix_in_a_repo_whose_git_hooks_folder_is_set.py:29\u201331` inlines the dispatcher into each wrapper, concealing this failure. Handle the actual wrapper/shared-dispatcher layout and exercise that layout through the CLI test to satisfy the hook-preservation requirement.",
-        "file": "src/forge/sync.py",
-        "line": 297,
-        "priority": "P1",
-        "title": "Not done: preserve existing Husky hooks and prove preservation through the CLI"
-      }
-    ],
-    "status": "blocked",
-    "tree": "126506d46935733e5ec96c438fdb00bcb965d3aad918c0bb03bb945debbdd2eb"
+    "findings": [],
+    "status": "clean",
+    "tree": "8d3936f7b66583e40dfd103748873a84f0247228f24ee0a0dddbf88ea6ac180d"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T15:22:27+00:00",
@@ -30,6 +22,10 @@
     },
     {
       "at": "2026-09-27T15:53:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:02:21+00:00",
       "step": "review"
     }
   ],
