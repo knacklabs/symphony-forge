@@ -3,11 +3,22 @@
   "branch": "fix/forge-v1-is-ready-for-its-1-0-0-release",
   "done_when": "Forge's version is 1.0.0 in src/forge/__init__.py (the release tag becomes v1.0.0), this repo's forge.toml pins v1.0.0, and tests/test_version.py passes; the comment about the switch bumping the version is updated to say this fix did",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "5fead7e1c1ae39a6c516e4eff4c250d426e20287",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "793e212296746ed7e7306c1d590dfa79aa5efc39365f5d1dd42c83ed2d022543"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T02:34:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T02:40:55+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge v1 is ready for its 1.0.0 release, but its version still reads 1.0.0-rc.2, and the switch's approved scope doesn't cover forge.toml's pin or the version test"
