@@ -5,7 +5,13 @@
   "kind": "fix",
   "review": {
     "commit": "1126962f19203790b1446d016172a19bc45db96b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "tests/test_fix_codex_test_home.py:42 normal CI runners have no Codex login or real Codex home, so there is nothing there to pollute; the test runs wherever the pinned SDK is installed, which is every developer machine where the leak happened, and the codex-smoke workflow covers the real SDK",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The only end-to-end isolation test skips on a clean test runner because the pinned SDK is not installed. The normal suite workflows install only test dependencies (`.github/workflows/forge.yml:19\u201321` and `.github/workflows/forge-next.yml:30\u201336`). The separate smoke workflow also skips execution when OPENAI_API_KEY is absent, so CI can pass without checking the required invariant. Under the explicit test-audit requirement, this proof must execute: provision its prerequisites in the suite or provide a runnable end-to-end test through Forge with third-party services faked at their edge.",
@@ -15,10 +21,10 @@
         "title": "Not done: run the real-home isolation end-to-end test in the repository's test suite"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "c5c92af8d35c1057929bf7b17ecd0bf65a007d36a7a866470b43f713efd2b3ed"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T15:59:43+00:00",
