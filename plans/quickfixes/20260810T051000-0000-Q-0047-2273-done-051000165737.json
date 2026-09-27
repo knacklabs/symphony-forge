@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0047-2273",
-  "profile": "quickfix",
-  "reason": "accept decision 0034 vendored-docs-are-client-safe (human-confirmed in chat)",
-  "started_at": "2026-08-10T05:09:49+00:00",
-  "completed_at": "2026-08-10T05:10:00+00:00",
-  "files": []
-}

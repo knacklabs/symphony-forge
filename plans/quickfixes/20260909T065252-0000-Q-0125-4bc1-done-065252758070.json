@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0125-4bc1",
-  "profile": "quickfix",
-  "reason": "CI: run the gate suite in parallel with pytest-xdist (loadfile) \u2014 the 30-minute serial scaffold check is the slowest step of every harness PR",
-  "started_at": "2026-09-09T06:52:52+00:00",
-  "completed_at": "2026-09-09T06:52:52+00:00",
-  "files": []
-}

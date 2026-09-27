@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0013-a889",
-  "reason": "0025 review fix: append each missing ignore rule independently",
-  "started_at": "2026-08-05T13:43:22+00:00",
-  "completed_at": "2026-08-05T13:44:03+00:00",
-  "files": []
-}

@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0125-3d73",
-  "profile": "quickfix",
-  "reason": "task-level parallelism inside a story: dependency-gated start, disjoint-scope stages, per-task stage records, frontier",
-  "started_at": "2026-09-09T05:53:28+00:00",
-  "completed_at": "2026-09-09T05:53:28+00:00",
-  "files": []
-}

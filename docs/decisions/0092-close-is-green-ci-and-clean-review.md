@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-25
 stories: []
-supersedes: 0069-combined-review-generation
+supersedes: "old-forge-final:docs/decisions/0069-combined-review-generation.md"
 ---
 
 # A task closes on a green CI run and a clean review

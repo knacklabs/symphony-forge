@@ -250,6 +250,10 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
     phases = [said[name] for name in VERIFY if said.get(name)]
     # ponytail: no shell parsing; a # or a line break could hide the phases after it, so none go.
     unsafe = any(re.search(r"[#\r\n]", phase) for phase in phases)
+    test = "" if unsafe else " && ".join(
+        f"({phase})" if re.search(r"[;&|]", phase) else phase for phase in phases)
+    if test and not own and "package.json" in _tree(top, ref, "package.json"):
+        test = f"npm ci && {test}"
     # AGENTS.md is replaced only when it is the old Forge's word for word; else it is the client's.
     agents = _tree(top, ref, "AGENTS.md").get("AGENTS.md") if vendored else None
     # The client's sign-off record, which harness.yaml pinned; forge.toml's signoff pins it now.
@@ -270,8 +274,7 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
             "gstack": len(store), "designs": len(designs), "gstack_edits": edits,
             "gstack_left": left,
             # A phase with its own && or || is grouped, so it fails as one step.
-            "test": SOURCE_TEST if own else "" if unsafe else " && ".join(
-                f"({phase})" if re.search(r"[;&|]", phase) else phase for phase in phases),
+            "test": SOURCE_TEST if own else test,
             "unseeded": ", ".join(json.dumps(phase, ensure_ascii=False) for phase in phases)
                         if unsafe else "",
             "agents": "" if not agents else "replace" if agents == source.get("AGENTS.md") else "keep",
@@ -437,6 +440,8 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
                 needs.append(str(exc))
             if not shipped:  # a doc that is malformed isn't approved; a finished story stays done
                 why_not = f"the story doc it becomes is malformed: {exc}"
+    if not own and waiting and not why_not:
+        why_not = "parts are still pending in the old Forge's records"
     entry = {"key": key, "title": title, "old": rel, "why_not": why_not, "needs": needs,
              "waiting": waiting, "done": len(states), "total": len(rows), "outcome": ""}
     if why_not:
@@ -468,6 +473,9 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     # A story shipped whole in one pull request (the older layout) marked the story, not a task.
     shipped = f"{base}/shipped.json"
     shipped = shipped if story.show(top, ref, shipped) is not None else ""
+    stages = [stage for path in (".factory/stages.json", f"{base}/stages.json")
+              for stage in story.json_of(story.show(top, ref, path)).get("stages", [])
+              if isinstance(stage, dict)]
     rows: list[str] = []
     states: dict[str, Any] = {}
     needs = [] if tasks else ["the old plan has no tasks to carry over"]
@@ -475,6 +483,9 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     for task in tasks:
         tid, marker = ids[task["id"]], f"{base}/tasks/{task['id']}/pr-ready.json"
         done = marker if story.show(top, ref, marker) is not None else shipped
+        if any(stage.get("id") == task["id"] and stage.get("status") != "done"
+               for stage in stages):
+            done = ""
         said = [str(text) for text in task.get("acceptance_criteria") or []] + [
             str(contract.get("statement", "")) for contract in task.get("plan_contracts") or []
             if isinstance(contract, dict)]

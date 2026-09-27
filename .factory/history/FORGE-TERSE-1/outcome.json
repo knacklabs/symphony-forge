@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Forge output is terse by default: every touched command's success is one line (state change + identifiers), coaching consolidated into forge next as state-triggered steps that appear only when actionable (commit-the-evidence, commit-the-pin, decision hygiene, spec debt), errors and refusals untouched at full fix-it verbosity, and a budget gate test pins the line counts so lectures cannot creep back. Operators read what matters again.",
-  "issue": "FORGE-TERSE-1",
-  "commit": "cb834b26ac46629ea74efb4c38adeb3ee616a2da",
-  "recorded_at": "2026-08-10T13:58:39+00:00"
-}

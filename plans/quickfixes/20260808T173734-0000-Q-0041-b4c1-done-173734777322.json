@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0041-b4c1",
-  "profile": "quickfix",
-  "reason": "resolve #60 roadmap.json merge conflict (union FORGE-BOARD-3/4/5) via roadmap heal",
-  "started_at": "2026-08-08T17:34:58+00:00",
-  "completed_at": "2026-08-08T17:37:34+00:00",
-  "files": []
-}

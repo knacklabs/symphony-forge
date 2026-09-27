@@ -1,0 +1,30 @@
+{
+  "allow_large": "The owner asked on 2026-09-27 to delete the old Forge's leftovers before any new work; it deletes thousands of old record files in one change",
+  "base": "9ed2a1e7e0ad30c4694ecba50b6231d180a17d90",
+  "branch": "fix/the-old-forge-s-records-and-ledgers-are",
+  "done_when": "Only the new Forge's files stay: under .factory/, only stories/<KEY>/tasks/*.json, stories/<KEY>/*.json story states and fixes/*.json that the new Forge reads; under plans/, only the story docs (<KEY>.md), their .read.md notes and roadmap.json; WORKFLOW.md, .review-notes.md, projects/, .forge-migrate/ and .claude/CLAUDE.md are deleted; every path the new Forge's code, tests, CI or docs still reference is kept or the reference is updated; the full suite passes; git history keeps everything",
+  "kind": "fix",
+  "review": {
+    "commit": "2c510d56afbaf721fe362cfb3b65e4c0643784f9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "8a8b5595798d0b64f3b758d61150e4cdaf970b769045232b0fa291ff092bec44"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T03:28:05+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:45:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T04:09:15+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The old Forge's records and ledgers are still on main after the switch (about 1,700 files under .factory/, 700 under plans/, plus WORKFLOW.md, .review-notes.md, projects/, .forge-migrate/ and .claude/CLAUDE.md), so the repo still reads like the old Forge"
+}

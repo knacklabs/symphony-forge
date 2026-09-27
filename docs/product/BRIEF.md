@@ -1,125 +1,36 @@
-# Product Brief
+# Product brief
 
 ## Summary
 
-Symphony Forge is KnackLabs's process harness for building applications with
-either Claude Code or native Codex coordinating and Codex workers executing.
-Claude uses `codex-plugin-cc`; native Codex uses configured host role subagents.
-It turns in-repo architecture and
-decision documents into shipped software through a fixed sequence — discovery,
-confirmed capability specs, a derived roadmap, client sign-off, one planned
-story at a time, bounded tasks, deterministic verification, one independent
-review lifecycle with quality, performance, and security assessments,
-and a recorded outcome — and it enforces that sequence in code rather than in
-instructions an agent can talk itself out of.
-
-It exists because agentic delivery fails quietly. Work gets done that nobody
-planned, tests that were promised are never written, a review is claimed but
-never ran, and six weeks later nothing in the repo says why any of it happened.
-The harness makes each of those a refusal at the moment it would occur, and
-leaves the evidence committed next to the code.
-
-The harness is vendored, never forked: a client repo is born with its own
-history and receives the machinery by copy, then upgrades in place.
+Symphony Forge helps a team turn a planned change into a reviewed pull request. It gives coding agents a clear next step, keeps work on branches, and checks the result before asking a human to merge. Teams use it to make delivery visible and repeatable without maintaining a separate workflow system.
 
 ## Users
 
-- **Developers** running a delivery loop through Claude Code or native Codex, who want
-  the next action to be deterministic rather than remembered.
-- **Maintainers of this repo**, who dogfood the harness on itself — every gate
-  here is exercised by the work that changes it.
-- **KnackLabs client projects**, which vendor the machinery and inherit the
-  gates without inheriting this repository's history.
+- **Developers:** plan changes, run Forge commands, and inspect the work before merging.
+- **Client teams:** see what changed, why it was built, and whether it works.
+- **Forge maintainers:** improve the same workflow they use to build Forge.
 
-## Target Outcome
+## Target outcome
 
-A team can move from confirmed product intent to a PR-ready application change
-through one visible, deterministic path, with every approval, implementation
-boundary, verification result, review, and delivered outcome preserved in the
-repository and reproducible in a fresh worktree.
+A team can move from an approved story or small fix to a tested, reviewed pull request with a clear record of the outcome in its repository.
 
-## Key Flows
+## Key flows
 
-- A developer says "set up a new project"; the harness checks the machine,
-  scaffolds a fresh repo with its own origin, and hands off to that repo.
-- A developer asks "what now?" in any phase and `./forge next` reads recorded
-  state and prints the exact next action, identically in both runtimes.
-- A capability is captured as a spec, grilled, and confirmed; the roadmap is
-  derived from confirmed specs; the client signs off once, and that sign-off
-  gates every later phase.
-- One roadmap story is planned, grilled, and approved, then decomposed into
-  bounded dependency-aware tasks; each task owns a worktree. `forge delegate`
-  validates and prepares its brief; Claude launches the plugin companion and
-  native Codex spawns a configured host role. The worker implements and tests
-  its change, runs deterministic
-  verification, and loops through independent review and fixes until clean.
-- Verification, tests, one review lifecycle with three assessments, and an outcome are recorded through
-  schema-validated commands, and `pr_ready` refuses until all of them exist.
-- Dependency-ready stories fan out into separate worktrees; their roadmap
-  status flips converge deterministically on merge.
-- An existing repo is adopted into the harness, or a client repo is upgraded to
-  a newer harness version, without either forking this one.
-
-## Domain Concepts
-
-- **Capability spec** — what a capability does and how it is judged, confirmed
-  before any roadmap exists.
-- **Epic / story / task** — a business outcome area, one deliverable capability
-  owning a worktree, and one bounded implementation step inside it.
-- **Plan** — the approved, grilled argument for one story, attesting every
-  active decision.
-- **Decomposition and stages** — the immutable task contract and its mutable
-  execution twin.
-- **Gate** — a refusal in code: sign-off, plan approval, decomposition, verify,
-  tests, review, outcome.
-- **Grill** — an interrogation of a handover before it becomes the contract
-  downstream work builds on, bound by digest to the exact artifact.
-- **Decision record** — a durable, human-confirmed choice; the active corpus is
-  attested by every plan.
-- **Evidence** — the recorded proof under `.factory/`, archived per story at
-  ship, written only by the recorder scripts.
-- **Signal** — a contradiction, confusion, blocker, or scope change a worker
-  raises before it guesses.
-- **Lesson, assumption, deferral, quickfix** — the four ledgers that keep what
-  was learned, assumed, parked, and patched.
+1. **Set up:** a developer runs `forge init` in a new repository and sees the files and next step Forge created.
+2. **Plan:** a developer writes a story or fix; Forge shows what needs a cold read or human approval before work starts.
+3. **Build:** an agent works on a task or fix branch, runs the repository's tests, and hands back the result.
+4. **Close:** Forge checks review and CI, opens or updates the pull request, and tells the human when it is ready to merge.
+5. **Continue:** a developer runs `forge next` to see the current state and the exact next command.
 
 ## Constraints
 
-- Two runtimes must stay in lockstep: the same contract in `AGENTS.md` and its
-  Claude adapter, verified by `check_dual_runtime.py`.
-- Claude Code or native Codex coordinates. Claude writes through an admitted
-  plugin companion; native task work uses configured host role subagents after
-  a prepared delegation row. Native enforcement binds the active task,
-  worktree, stage and effective scope without process attribution. Review is
-  one unchanged Forge-managed autoreview operation released by the
-  orchestrating session, never an inline or nested reviewer. Its authenticated,
-  externally maintained helper is a black box and may invoke Codex or agents
-  internally.
-- The vendored gate surface is frozen between vendorings and hash-checked, so
-  client repos cannot drift from the machinery they were given.
-- Evidence enters `.factory/` only through recording commands that validate
-  against `factory/schemas/`, including a pinned `generated_by`.
-- The planning lock is always armed. Full work requires an approved plan and
-  decomposition; bounded ledgered quickfix and Lite windows are the other
-  planning-lock exits. The degraded window is the separate five-file Claude
-  plugin outage valve.
-- Raw, direct, or nested `codex exec` and direct plugin shell launch remain
-  off-contract and hook-denied for general/manual delegation. This does not
-  constrain the authenticated autoreview helper's internal implementation.
-  Native status, cancel, resume, background and other host lifecycle features
-  stay available.
-- One story is planned at a time; each task owns a worktree, and dependency-ready tasks may overlap only with disjoint protected scopes.
-- The board is read-only and derives everything from committed artifacts; it
-  never approves.
-- This repository stays independent of any client source repo.
+- Git and the pull request keep history; `.factory` holds current story, task, and fix state.
+- A human approves stories, chooses between meaningful options, and merges pull requests.
+- Claude Code and Codex can coordinate the same Forge commands. The repository selects its worker in `forge.toml`.
+- Each task or fix runs on its own branch; Forge uses the repository's test command and checks before close.
 
-## Out of Scope
+## Out of scope
 
-- Being a framework, runtime, or application template — the harness ships
-  process machinery, not product code.
-- Hosting, CI, or deployment infrastructure for client applications.
-- A hosted service, database, or multi-user server; the board is localhost and
-  file-backed.
-- Replacing human judgement at the gates that require it: decision acceptance,
-  client sign-off, and plan approval remain human acts.
-- Supporting agent runtimes beyond Claude Code and Codex.
+- A hosted project management service or a database for workflow state.
+- Replacing a team's application stack, CI provider, or deployment system.
+- Automatically approving plans or merging pull requests.

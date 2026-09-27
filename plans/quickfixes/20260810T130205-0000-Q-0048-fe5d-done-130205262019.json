@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0048-fe5d",
-  "profile": "quickfix",
-  "reason": "accept decision 0036 client-gates-arm-on-roadmap (human-confirmed)",
-  "started_at": "2026-08-10T13:01:53+00:00",
-  "completed_at": "2026-08-10T13:02:05+00:00",
-  "files": []
-}

@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Every vendored Codex session in every client now defaults to workspace-write instead of full machine access, and the fail-closed hook wiring (.codex/hooks.json) is frozen vendor surface \u2014 a client edit that disarms a hook fails check_vendor_integrity by name at pr-ready. Broader access remains possible only as a deliberate, diff-visible config edit that forge upgrade reverts (decision 0041). Delegated workers were already workspace-write via the companion; the flip closes the dormant default, and the story's own delegation proved the boundary live when the sandbox refused the worker's .codex write.",
-  "issue": "FORGE-WIN-SBX",
-  "commit": "c34e103b8aa348bab9ccf3aaa215c272c49eb156",
-  "recorded_at": "2026-08-13T07:32:49+00:00"
-}

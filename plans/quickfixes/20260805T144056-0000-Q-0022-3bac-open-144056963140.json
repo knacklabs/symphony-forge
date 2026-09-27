@@ -1,8 +1,0 @@
-{
-  "event": "open",
-  "id": "Q-0022-3bac",
-  "reason": "update gstack setup test to marker contract; find second suite failure",
-  "started_at": "2026-08-05T14:40:56+00:00",
-  "max_files": 5,
-  "files": []
-}

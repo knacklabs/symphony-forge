@@ -1,25 +1,5 @@
-# Product Docs
+# Product docs
 
-This directory is the canonical location for product intent.
+[The product brief](BRIEF.md) describes who Forge serves, the outcome it aims for, its main flows, constraints, and what it does not build. Keep it current when the product changes.
 
-Use it for:
-- the product brief
-- user types
-- key flows
-- vocabulary and domain concepts
-- high-level business constraints
-- explicit non-goals
-
-Start with:
-- `docs/product/BRIEF.md`
-
-Rules:
-- keep product intent separate from architecture mechanics
-- architecture belongs in `docs/architecture/`
-- binding product choices and tradeoffs belong in `docs/decisions/`
-- if a brief becomes stale, update it before planning the next major change
-
-During planning:
-- `docs/product/BRIEF.md` defines what to build
-- `docs/architecture/` defines how the system should behave
-- `docs/decisions/` resolves ambiguity and records overrides
+[The Forge guide](../guide.md) explains how to install and use the current workflow. Detailed behavior belongs in [specs](../specs/); binding choices belong in [decisions](../decisions/).

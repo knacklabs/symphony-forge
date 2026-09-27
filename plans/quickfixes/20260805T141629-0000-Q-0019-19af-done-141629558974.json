@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0019-19af",
-  "reason": "0025 review round 7: gstack block also created when .gitignore absent",
-  "started_at": "2026-08-05T14:15:53+00:00",
-  "completed_at": "2026-08-05T14:16:29+00:00",
-  "files": []
-}

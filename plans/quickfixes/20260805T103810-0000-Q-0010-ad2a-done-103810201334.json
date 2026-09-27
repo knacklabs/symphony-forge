@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0010-ad2a",
-  "reason": "PH-3 branch review P2: the legacy lessons ledger still carries three duplicated records from the union driver; they compound into every generated brief.",
-  "started_at": "2026-08-05T10:38:10+00:00",
-  "completed_at": "2026-08-05T10:38:10+00:00",
-  "files": []
-}

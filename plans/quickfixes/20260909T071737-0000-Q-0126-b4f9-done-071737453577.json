@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0126-b4f9",
-  "profile": "quickfix",
-  "reason": "CI: distribute gate tests per test (worksteal), not per file \u2014 test_gates.py holds ~700 of 890 tests and loadfile pinned it to one worker",
-  "started_at": "2026-09-09T07:17:37+00:00",
-  "completed_at": "2026-09-09T07:17:37+00:00",
-  "files": []
-}

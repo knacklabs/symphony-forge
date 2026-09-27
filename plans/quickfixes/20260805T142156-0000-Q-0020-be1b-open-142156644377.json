@@ -1,8 +1,0 @@
-{
-  "event": "open",
-  "id": "Q-0020-be1b",
-  "reason": "0025 review round 8: refuse non-file run.json in preflight",
-  "started_at": "2026-08-05T14:21:56+00:00",
-  "max_files": 5,
-  "files": []
-}

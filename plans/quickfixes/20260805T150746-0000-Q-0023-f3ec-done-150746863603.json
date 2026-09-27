@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0023-f3ec",
-  "reason": "doctor: advisory check + fix for scaffold-check branch protection",
-  "started_at": "2026-08-05T15:06:05+00:00",
-  "completed_at": "2026-08-05T15:07:46+00:00",
-  "files": []
-}
