@@ -1,5 +1,6 @@
 """Owner-facing output from Forge's pull requests, board, and next command."""
 import json
+import pytest
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
 
@@ -15,16 +16,21 @@ def test_1_pr_title_and_labeled_body(env):
                                    "Done when: Shoppers can save their basket with one click\n")
 
 
-def test_2_fix_title_uses_first_clause_and_seventy_characters(env):
-    why = ("The owner cannot tell which action to take from this very long pull request title "
-           "when the first clause runs beyond the stated limit, with more details afterward")
+@pytest.mark.parametrize("why, expected", [
+    ("The owner cannot tell which action to take from this very long pull request title "
+     "when the first clause runs beyond the stated limit, with more details afterward",
+     "The owner cannot tell which action to take from this very long pull re"),
+    ("Readers cannot tell what to do, because the title buries the action",
+     "Readers cannot tell what to do"),
+])
+def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected):
     item, _ = env.start_fix(why=why)
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
     create = env.gh_calls("pr", "create")[-1]
     title = create[create.index("--title") + 1]
-    assert title == why.split(",", 1)[0][:70]
-    assert len(title) == 70
+    assert title == expected
+    assert len(title) <= 70
 
 
 def test_3_review_block_opens_with_plain_verdict(env):
