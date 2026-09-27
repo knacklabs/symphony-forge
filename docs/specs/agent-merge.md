@@ -1,8 +1,10 @@
 ---
 slug: agent-merge
 title: The agent can merge a ready pull request when the owner allows it
-status: draft
+status: confirmed
 saved: 2026-09-27T14:52:56+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 92a0959ba1414abdcfc488ddf8a2bcadd1e6cde63cc28829d3f631dba56b145e
 ---
 
 # The agent can merge a ready pull request when the owner allows it
