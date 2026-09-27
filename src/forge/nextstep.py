@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -45,20 +47,24 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
+    trees = story.worktrees(top)
+    merged_prs = _merged_prs(top) if trees else set()
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title)
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs)
         lines += found
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
-    for branch, path in sorted(story.worktrees(top).items()):
+    for branch, path in sorted(trees.items()):
         kind, _, name = branch.partition("/")  # forge/<name> is migrate's fix
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
-            lines += _item(name, f"The fix {name}", state, top)
+            if branch in merged_prs:
+                state = {**state, "status": "merged"}
+            lines += _item(name, f"The fix {name}", state, top, path)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
@@ -129,7 +135,8 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
-           title: str) -> tuple[list[str], list[dict[str, Any]]]:
+           title: str, trees: dict[str, Path], merged_prs: set[str]
+           ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     try:
         doc = story.parse(text)
@@ -139,15 +146,19 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
         return _approval(top, key, path, title, digest), []
-    trees = story.worktrees(top)
-    states = {task["id"]: _task(top, key, task["id"], trees) for task in doc["tasks"]}
+    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
+              for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
+    cleanup = [line for task in doc["tasks"]
+               if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
+               for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
+                                 states[task["id"]], top, tree)]
     if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
-            return [], list(states.values())
-        return [f"Every part of {title} is merged; record its outcome.",
+            return cleanup, list(states.values())
+        return cleanup + [f"Every part of {title} is merged; record its outcome.",
                 f'Next: forge story done {key} "<outcome sentence>"'], list(states.values())
-    lines: list[str] = []
+    lines: list[str] = cleanup
     busy = [task["scope"] for task in doc["tasks"] if states[task["id"]] and task["id"] not in merged]
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
@@ -184,18 +195,25 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str) -> list[
             '"Request changes", "Stop"']
 
 
-def _task(top: Path, key: str, task: str, trees: dict[str, Path]) -> dict[str, Any]:
-    """A task's state: merged once on origin/<default>, else from its worktree, else {}."""
+def _task(top: Path, key: str, task: str, trees: dict[str, Path],
+          merged_prs: set[str]) -> dict[str, Any]:
+    """A task's state: merged on the default branch or GitHub, else from its worktree."""
     item = f"{key}/{task}"
     text = story.show(top, story.landed_ref(top), repo.state_path(item))
     if text is not None:
         return {**story.json_of(text), "status": "merged"}
-    path = trees.get(f"task/{key}-{task}")
-    return (repo.read_state(item, path) if path else None) or {}
+    branch = f"task/{key}-{task}"
+    path = trees.get(branch)
+    state = (repo.read_state(item, path) if path else None) or {}
+    return {**state, "status": "merged"} if branch in merged_prs else state
 
 
-def _item(item: str, label: str, state: dict[str, Any], top: Path) -> list[str]:
+def _item(item: str, label: str, state: dict[str, Any], top: Path,
+          path: Path | None = None) -> list[str]:
     status = state.get("status") or "started"
+    if status == "merged" and path:
+        return [f"{label} is merged; clean up its worktree.",
+                f"Next: git worktree remove {shlex.quote(str(path))}"]
     ready = repo.ready_path(item, top)
     if ready.is_file():
         try:
@@ -218,6 +236,20 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path) -> list[str]:
     values = {"item": item, "label": label, "status": status,
               "reason": str(state.get("reason") or "it has serious findings or red checks").rstrip(".")}
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
+
+
+def _merged_prs(top: Path) -> set[str]:
+    """Merged GitHub branches, when gh is available; git's landed state still works offline."""
+    if not shutil.which("gh"):
+        return set()
+    done = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "1000",
+                    "--json", "headRefName", cwd=top)
+    try:
+        prs = json.loads(done.stdout) if done.returncode == 0 else []
+    except ValueError:
+        return set()
+    return {pr["headRefName"] for pr in prs if isinstance(pr, dict)
+            and isinstance(pr.get("headRefName"), str)} if isinstance(prs, list) else set()
 
 
 def _touches(count: int) -> str:

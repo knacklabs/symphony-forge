@@ -29,5 +29,5 @@
       "step": "review"
     }
   ],
-  "why": "The CI workflow Forge generates runs a Node client's tests on the runner's default Node, so a client that requires another version fails npm ci (myclaw needs Node 24, the runner has 22)"
+  "why": "The CI workflow Forge generates runs a Node client's tests on the runner's default Node, so a client that requires another version fails npm ci (a copied-in client needs Node 24, the runner has 22)"
 }

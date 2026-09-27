@@ -113,7 +113,7 @@ def work_log(top: Path, item: str) -> Path:
 
 KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str, "merge": str,
         "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "", "merge": "human",
+DEFAULTS = {"repo": "client", "workers": "codex", "test": "", "signoff": "", "merge": "human",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
            "merge": ("agent", "human")}
