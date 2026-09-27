@@ -96,9 +96,9 @@ migrate` write its defaults.
   schema and migrations, a CLI command table, and the config schema.
 - When `interfaces` is empty, the review instructions tell the reviewer to report any interface
   change as a P1 `Promote` finding.
-- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist,
-  except by `forge migrate`: before this repo has a `forge.toml`, its source-repo mode runs in the
-  repo that holds `src/forge/cli.py` (note, 2026-09-26).
+- `repo = "forge-source"` marks Forge's own repo. Nothing is inferred from which paths exist.
+  `forge migrate` refuses there because the repo already moved at the switch. Its source-repo
+  migration mode was needed only for that switch and is gone.
 
 Every command that changes state refuses when the installed Forge differs from `version`, and
 prints the exact `uv tool install` line. `forge --version`, `forge doctor` and `forge next` still
@@ -533,8 +533,8 @@ The session-start hook prints the same output.
 
 ### `forge migrate` (clients that copied Forge in)
 
-`forge migrate` runs in a client that copied in the `factory/` layout (the myclaw family, copied
-on 12 September). It works only on its own `forge/migrate-v1` branch and ends with one pull request
+`forge migrate` runs in a client that copied in the `factory/` layout. It works only on its own
+`forge/migrate-v1` branch and ends with one pull request
 through the normal close. It writes a fix state of kind `migrate`, so the hooks allow the branch
 and `forge close` works on it.
 
@@ -572,15 +572,11 @@ and `forge close` works on it.
 - **It writes** `forge.toml` pinned to the running version. The client's accepted sign-off
   decision stays in `docs/decisions/`, so the sign-off gate is already met.
 
-Clients from before the `factory/` layout (Gantry-fork, openclaw) are refused with a pointer to the
+Clients from before the `factory/` layout are refused with a pointer to the
 "move vendored clients" story.
 
-In Forge's own repo (it holds `src/forge/cli.py`), `forge migrate` deletes nothing. It converts only
-the plans the switch carries, reading their approvals from the old plan metadata
-(`.factory/stories/<KEY>/plan-meta.json`), leaves every other active plan for the switch to
-supersede, replaces `AGENTS.md` and `CLAUDE.md` wholly with the Forge block, and writes
-`forge.toml` (`repo = "forge-source"`) and the adapter. The switch deletes the old tree after the
-switch checks pass.
+In Forge's own repo, `forge migrate` refuses before planning or changing anything. That repo
+already moved at the switch; the command tells the user to run `forge next`.
 
 ### Tests and CI in this repo
 
@@ -601,9 +597,9 @@ switch checks pass.
 ### The switch
 
 1. **Adopt.** This repo moves onto v1 with a release-candidate tag. Its `forge.toml` says
-   `repo = "forge-source"`, and `forge migrate` runs in its source-repo mode: this story and the
-   warm-threads story become story docs with their approvals, the FDE story becomes a draft for
-   its re-plan, the other active plans wait for the switch, and the old host hooks are replaced.
+   `repo = "forge-source"`. The one-time source-repo migration converted this story and the
+   warm-threads story to story docs with their approvals; the FDE story became a draft for
+   its re-plan, the other active plans waited for the switch, and the old host hooks were replaced.
    The old tree stays, unused.
 2. **Switch checks.** All three must pass:
    - The FDE story runs as the pilot on v1: story doc, one read, one approval, its own tasks, each
@@ -611,8 +607,8 @@ switch checks pass.
      `spec measure`, the doctor rows). The check is that the whole flow completes; the commands
      don't need to exist beforehand.
    - A fresh client made with `forge init` closes one fix.
-   - myclaw's `forge migrate` pull request closes and is merged, and a fix in myclaw then closes
-     on v1.
+   - a copied-in client's `forge migrate` pull request closes and is merged, and a fix in that
+     client then closes on v1.
 3. **Switch.** Tag the last old-tree commit. Replace the old workflows with v1's generated CI
    (`tests` and `forge-pr-check`) and delete the old ones. Then delete:
    - the old tree (`factory/`, `forge`, `forge.cmd`, `harness.yaml`, `constitution/`, `install/`,
@@ -781,7 +777,7 @@ switch checks pass.
       - a `tests` workflow that doesn't run the `test` command.
     - It passes on a repo just made by `forge init`.
 30. **Migrate.**
-    - On a copy of a myclaw-shaped fixture, `forge migrate` makes one branch with a fix state of
+    - On a copy of a copied-in client fixture, `forge migrate` makes one branch with a fix state of
       kind `migrate`. On that branch it:
       - deletes exactly the listed Forge-owned paths and touches nothing else;
       - moves client-changed copies to `.forge-migrate/kept/` and lists them in the pull request;
@@ -792,10 +788,8 @@ switch checks pass.
     - It refuses while work is in flight, refuses a path outside the repo, and refuses an
       `.agents/`-era layout.
     - After an interrupted run, a second run produces the same branch.
-    - In Forge's own repo (it holds `src/forge/cli.py`), it converts only the plans the switch
-      carries, with their approvals from the old plan metadata, leaves the other active plans as
-      they are, replaces `AGENTS.md` and `CLAUDE.md` wholly, and writes `forge.toml` and the
-      adapter, but deletes nothing.
+    - In Forge's own repo (`repo = "forge-source"`), it refuses before planning or changing
+      anything because that repo already moved at the switch, and points to `forge next`.
 31. **Speed.** The new suite finishes in under 5 minutes on each CI runner.
 32. **Client sign-off.**
     - In a client repo with no accepted `client-signoff` decision, a matching approval records
@@ -872,7 +866,7 @@ switch checks pass.
   comes after the switch.
 - The FDE story's own features (discovery questions, payback, success-measure checks). That
   story's tasks build them on v1 during the pilot.
-- Moving clients from before the `factory/` layout, and any client other than myclaw. These belong
+- Moving clients from before the `factory/` layout, and other clients. These belong
   to the "move vendored clients" story.
 - Merging pull requests automatically; a human merges.
 - Lessons, deferrals, audits, outcome files, event export and the old history folders.
