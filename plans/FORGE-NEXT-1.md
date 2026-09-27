@@ -26,7 +26,7 @@
   - The history comes from each finished change's plain-English title and summary, so Forge keeps
     no separate history of its own.
   - When a story finishes, you give it a one-line outcome.
-- Clients that copied Forge in move over in one pull request each, starting with one client right after
+- Clients that copied Forge in move over in one pull request each, starting with myclaw right after
   the switch, where one fresh story is then built and timed end to end. Older clients follow in a
   later story. Moving a client folds its old verify commands into `forge.toml`, keeps only
   office-hours design docs from gstack's store, and pins its client sign-off record.
@@ -60,8 +60,8 @@ tests and a clean review) stays exactly as already agreed.
 
 1. The FDE story, re-planned for the new Forge, is built, reviewed clean, tested green and merged.
 2. A brand-new client set up with the new Forge makes a small fix, and it is merged the same way.
-3. After the switch, a copied-in client moves to the new Forge in one merged pull request, and one
-   fresh story in that client is then built and merged the same way, with its time measured.
+3. After the switch, myclaw moves to the new Forge in one merged pull request, and one fresh story
+   in myclaw is then built and merged the same way, with its time measured.
 4. Claude Code and Codex give the same result on the same steps. Every rule in the spec has one
    automatic test, and Forge's own tests finish in under five minutes on Linux, macOS and Windows.
 5. Forge stays small: no file over 1,200 lines, the whole tool under its size limit, and at most 20
@@ -89,9 +89,9 @@ tests and a clean review) stays exactly as already agreed.
 | ADOPT | Adopt | This repo on v1 (`repo = "forge-source"`, pinned to the release candidate, installed from its own branch commit): three plans converted with approvals read from their plan metadata (this story and warm threads carried over, FDE for re-plan), `AGENTS.md` and `CLAUDE.md` replaced wholly, the walkthrough and contract tests, every criterion tested | 4 | `forge.toml`, `.claude/settings.json`, `.codex/hooks.json`, `.github/workflows/forge.yml`, `src/forge/migrate.py`, `AGENTS.md`, `CLAUDE.md`, `plans/` | `tests/test_walkthrough.py`, `tests/test_contracts.py` | STORY, RECORDS, WORK, CLOSE, SETUP, BOARD, MIGRATE, DOCS-STANDARDS, DOCS-PHASES | no |
 | FIXES | Fixes | Close needs every check green; branch protection never weakens; the client sign-off record pinned in `forge.toml` and carried over by migrate; Forge's own output is UTF-8 on every platform, whatever the console code page; source-repo migrate installs no git hooks, since the old Forge's branches may still be in flight in a repo whose hooks folder every worktree shares, and `forge doctor` doesn't ask for them in Forge's own repo; Ctrl-C ends a command quietly, with no traceback | — | `src/forge/checks.py`, `src/forge/init.py`, `src/forge/migrate.py`, `src/forge/repo.py`, `src/forge/approval.py`, `src/forge/cli.py`, `src/forge/doctor.py` | `tests/test_close.py`, `tests/test_setup.py`, `tests/test_migrate.py`, `tests/test_approval.py`, `tests/test_contracts.py` | ADOPT | no |
 | PILOT-FDE | Pilot | The FDE story and its spec re-planned and approved for v1, and its tasks (skill, `spec payback`, `spec measure`, the impeccable row) closed and merged | 1 | the FDE story's own pull requests | the FDE story's tests | ADOPT, FIXES | no |
-| CLIENT-FIX | Client | A fresh private client made with `forge init` from the release candidate closes and merges one fix | 2 | the trial client repo | its CI | ADOPT, FIXES | no |
+| CLIENT-FIX | Client | A fresh private client, knacklabs/forge-trial-client, made with `forge init` from the release candidate, closes and merges one fix | 2 | the trial client repo | its CI | ADOPT, FIXES | no |
 | SWITCH | Switch | The old workflows replaced by v1's generated CI, branch protection on this repo, the old tree, `.envrc`, gstack's store and old Forge docs deleted (pilot, product and context docs and Codex's role files kept), decisions and old pending stories marked superseded, version 1.0.0 set and tagged on the merge commit | 9 | `.github/workflows/`, `factory/`, `forge`, `forge.cmd`, `harness.yaml`, `constitution/`, `install/`, `harness/`, `setup`, `.envrc`, `.gstack/`, `.codex/` routing, `src/forge/__init__.py`, old Forge docs under `docs/` | the full v1 suite in CI | ADOPT, FIXES, PILOT-FDE, CLIENT-FIX | no |
-| MIGRATE-CLIENT | Copied-in client | After the switch: the copied-in client's open old-Forge work finished or dropped by the owner, its migrate pull request merged, then one fresh small pending story built on v1 end to end and timed | 3 | a copied-in client repo | its CI | SWITCH | no |
+| MIGRATE-MYCLAW | Myclaw | After the switch: myclaw's open old-Forge work finished or dropped by the owner, its migrate pull request merged, then one fresh small pending story built on v1 end to end and timed | 3 | the myclaw repo | its CI | SWITCH | no |
 
 New moving parts: the v1 package (Done when 4, 5); `.factory/` state files (6); git hooks (4); host adapters for both hosts (4); the generated CI workflow with `forge-pr-check` (2); `forge migrate` (3).
 
@@ -111,7 +111,7 @@ New moving parts: the v1 package (Done when 4, 5); `.factory/` state files (6); 
 - In client repos a story still can't be approved until the client's sign-off is recorded. The
   sign-off record is pinned in `forge.toml`, carried over from the old `harness.yaml`. The fuller
   sign-off checks come back with the sign-off story after the switch.
-- The switch deletes the old Forge before a copied-in client moves. A trial on a throwaway copy, plus
+- The switch deletes the old Forge before myclaw moves. The myclaw trial on a throwaway copy, plus
   the migrate tests, stand in for a real client until then.
 - There is no reliable cycle-time number for the old Forge. The pilot and the first two weeks
   after the switch set the baseline.
@@ -359,7 +359,7 @@ This task is user-facing and gets a functional check. Done when:
   plain English.
 
 **MIGRATE: moving copied-in clients.** One code file: `src/forge/migrate.py`. A small
-copied-in client fixture goes under `tests/fixtures/`.
+myclaw-shaped fixture goes under `tests/fixtures/`.
 - **Preflight:**
   - it refuses unless the working tree is clean, the checkout sits exactly at the fetched default
     branch, and no work is in flight;
@@ -397,8 +397,8 @@ copied-in client fixture goes under `tests/fixtures/`.
 Done when:
 
 - Criterion 30 has its test and passes.
-- A trial run on a throwaway copy of a client lists the right deletions, kept copies, conversions and
-  carried-over approvals, and the copied-in client itself is left unchanged.
+- A trial run on a throwaway copy of myclaw lists the right deletions, kept copies, conversions and
+  carried-over approvals, and myclaw itself is left unchanged.
 
 **DOCS-STANDARDS: the standards page, the client stack conventions, one UI skill, the guide and the
 archive list.** One code file: `src/forge/doctor.py`, where impeccable becomes the only required UI
@@ -492,16 +492,16 @@ ADOPT, before CLIENT-FIX:
 
 Done when each has its test and passes.
 
-**CLIENT-FIX: a fresh client closes a fix.** In a new private client repo,
+**CLIENT-FIX: a fresh client closes a fix.** In a new private repo, knacklabs/forge-trial-client,
 set up with `forge init` from the `v1.0.0-rc.1` tag, one fix is started, built, closed and merged.
 Done when:
 
 - The fix's pull request is merged with green checks and a clean review.
 - Branch protection was applied and reported.
 
-**MIGRATE-CLIENT: a copied-in client moves to v1, after the switch.** First the coordinator lists the copied-in client's open
+**MIGRATE-MYCLAW: myclaw moves to v1, after the switch.** First the coordinator lists myclaw's open
 old-Forge stages and windows, for the owner to finish or drop. Then `forge migrate` opens its pull
- request, which closes and is merged. Then one fresh, small pending story is
+request, which closes and is merged. Then one fresh, small pending story (for example SCHED-3) is
 built on v1 end to end, from its story doc to its last merge, and its time is measured. Done when:
 
 - The migrate pull request is merged.
@@ -535,7 +535,7 @@ equals main. Done when:
 CORE comes first. Then six tasks run in parallel, each with its own Scope: STORY, RECORDS, WORK,
 CLOSE, SETUP and BOARD. BOARD waits for STORY because it adds a line to `forge next`.
 - After those, MIGRATE and DOCS-STANDARDS run in parallel, then DOCS-PHASES.
-- ADOPT comes after those; then FIXES; then PILOT-FDE and CLIENT-FIX; then SWITCH; MIGRATE-CLIENT
+- ADOPT comes after those; then FIXES; then PILOT-FDE and CLIENT-FIX; then SWITCH; MIGRATE-MYCLAW
   comes last.
 
 Each task ships its own pull request; every task up to and including ADOPT touches at most five
@@ -557,9 +557,9 @@ itself; building-block tasks show "—" and are judged by their criteria.
 | Adopt / ADOPT | This repo on v1 (`repo = "forge-source"`, pinned to the release candidate, installed from its own branch commit): three plans converted with approvals read from their plan metadata (this story and warm threads carried over, FDE for re-plan), `AGENTS.md` and `CLAUDE.md` replaced wholly, the walkthrough and contract tests, every criterion tested | 4 | `forge.toml`, `.claude/settings.json`, `.codex/hooks.json`, `.github/workflows/forge.yml`, `src/forge/migrate.py`, `AGENTS.md`, `CLAUDE.md`, `plans/` | `tests/test_walkthrough.py`, `tests/test_contracts.py` | STORY, RECORDS, WORK, CLOSE, SETUP, BOARD, MIGRATE, DOCS-STANDARDS, DOCS-PHASES | false |
 | Fixes / FIXES | Close needs every check green; branch protection never weakens; the client sign-off record pinned in `forge.toml` and carried over by migrate | — | `src/forge/checks.py`, `src/forge/init.py`, `src/forge/migrate.py`, `src/forge/repo.py`, `src/forge/approval.py` | `tests/test_close.py`, `tests/test_setup.py`, `tests/test_migrate.py`, `tests/test_approval.py` | ADOPT | false |
 | Pilot / PILOT-FDE | The FDE story and its spec re-planned and approved for v1, and its tasks (skill, `spec payback`, `spec measure`, the impeccable row) closed and merged | 1 | the FDE story's own pull requests | the FDE story's tests | ADOPT, FIXES | false |
-| Client / CLIENT-FIX | A fresh private client made with `forge init` from the release candidate closes and merges one fix | 2 | the trial client repo | its CI | ADOPT, FIXES | false |
+| Client / CLIENT-FIX | A fresh private client, knacklabs/forge-trial-client, made with `forge init` from the release candidate, closes and merges one fix | 2 | the trial client repo | its CI | ADOPT, FIXES | false |
 | Switch / SWITCH | The old workflows replaced by v1's generated CI, branch protection on this repo, the old tree, `.envrc`, gstack's store and old Forge docs deleted (pilot, product and context docs and Codex's role files kept), decisions and old pending stories marked superseded, version 1.0.0 set and tagged on the merge commit | 9 | `.github/workflows/`, `factory/`, `forge`, `forge.cmd`, `harness.yaml`, `constitution/`, `install/`, `harness/`, `setup`, `.envrc`, `.gstack/`, `.codex/` routing, `src/forge/__init__.py`, old Forge docs under `docs/` | the full v1 suite in CI | ADOPT, FIXES, PILOT-FDE, CLIENT-FIX | false |
-| Copied-in client / MIGRATE-CLIENT | After the switch: the copied-in client's open old-Forge work finished or dropped by the owner, its migrate pull request merged, then one fresh small pending story built on v1 end to end and timed | 3 | a copied-in client repo | its CI | SWITCH | false |
+| Myclaw / MIGRATE-MYCLAW | After the switch: myclaw's open old-Forge work finished or dropped by the owner, its migrate pull request merged, then one fresh small pending story built on v1 end to end and timed | 3 | the myclaw repo | its CI | SWITCH | false |
 
 New moving parts:
 - the v1 package (Done when 4, 5);
@@ -573,6 +573,6 @@ New moving parts:
 
 Each task: its behaviour tests, the Autoreview loop until no P0 or P1 finding is left, and green
 CI (the old full suite plus the new suite) on its pull request. The story is done when PILOT-FDE and
-CLIENT-FIX have passed, SWITCH has merged with `v1.0.0` tagged, and MIGRATE-CLIENT has moved a copied-in client
+CLIENT-FIX have passed, SWITCH has merged with `v1.0.0` tagged, and MIGRATE-MYCLAW has moved myclaw
 and timed its story. On 2026-11-15 the coordinator runs the check-back against the three success
 numbers.
