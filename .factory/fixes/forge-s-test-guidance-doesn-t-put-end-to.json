@@ -4,21 +4,13 @@
   "done_when": "src/forge/standards.md, src/forge/templates/conventions/testing.md, src/forge/templates/brief.md and src/forge/templates/review.md all say: every Done-when item is proven by an end-to-end test through the real entry point (Forge's own command; for client apps, the running API with a real database and user flows in a browser through Playwright), faking only third-party services at their edge; unit tests only for pure logic with many cases and never as an item's only proof; review reports an item proven only by unit tests as a P1 Not done and never asks for unit tests of helpers; a test pins each of the four texts",
   "kind": "fix",
   "review": {
-    "commit": "9c587f75c3df8c202889598112db1269538adf2a",
+    "commit": "0733252b5e814025bff30c029fcfa0a7c59e8e2b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The first three tests only call this shared assertion, which omits the requirements to report unit-only proof as P1 `Not done` and never request helper unit tests. Removing that entire sentence from standards.md, templates/conventions/testing.md, or templates/brief.md leaves all four new tests passing; only review.md has assertions protecting it. The Done-when requires these rules in all four texts and tests pinning them. Add the missing assertions for the other three texts.",
-        "file": "tests/test_fix_end_to_end_test_guidance.py",
-        "line": 20,
-        "priority": "P1",
-        "title": "Not done: pin the P1 and helper-unit-test rules in all four guidance texts"
-      }
-    ],
-    "status": "blocked",
-    "tree": "a673df02c2497690bede8373dd8c5ec43baf3207323d5905d5766f19175c007e"
+    "findings": [],
+    "status": "clean",
+    "tree": "78ab111846253939409d5aa3a0053bc839cdc62660fa8c1732bdccbe64a4f470"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T05:14:11+00:00",
@@ -26,6 +18,10 @@
     },
     {
       "at": "2026-09-27T05:20:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:32:14+00:00",
       "step": "review"
     }
   ],
