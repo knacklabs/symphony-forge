@@ -1,0 +1,14 @@
+{
+  "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
+  "branch": "fix/a-few-shared-files-the-command-table-the",
+  "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T16:41:48+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others"
+}
