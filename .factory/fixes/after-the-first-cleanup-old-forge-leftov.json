@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner decided on 2026-09-27 to delete the remaining old-Forge leftovers (superseded decisions, old roadmap items, old roles) in one change",
   "base": "966b9eb7564e5350546f444ce7f678488aced715",
   "branch": "fix/after-the-first-cleanup-old-forge-leftov",
   "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/cleanup-part2.md is done as written; references still resolve; the full suite passes and forge doctor reports no problems",
