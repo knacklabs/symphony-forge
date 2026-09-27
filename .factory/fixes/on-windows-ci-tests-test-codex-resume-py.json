@@ -3,7 +3,7 @@
   "branch": "fix/on-windows-ci-tests-test-codex-resume-py",
   "done_when": "Find with evidence what kills the test worker on Windows (for example a process-group or console signal that reaches the test process) and fix it at the cause so recovery stops only the recorded Codex processes; test_9 passes on Windows CI three runs in a row; nothing is skipped or loosened",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T04:42:59+00:00",
