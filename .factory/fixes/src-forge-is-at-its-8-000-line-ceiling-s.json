@@ -3,7 +3,7 @@
   "branch": "fix/src-forge-is-at-its-8-000-line-ceiling-s",
   "done_when": "src/forge has at least 400 fewer lines than on main, with no behaviour change: the full test suite passes and every Forge command's output is unchanged",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T15:31:28+00:00",
