@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-MERGE-1-DOCS",
-  "status": "working",
+  "review": {
+    "commit": "65022fa001258170020779eddf82b41ccdebacab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Item 6 requires guidance that agents merge only through `forge merge`, but this test checks only command and setting names. Removing that restriction from the guide leaves every assertion passing; changing the skill's prohibition to permit `gh pr merge` also passes. Extend the existing real-command test to verify the exclusive merge rule in each generated instruction file and the guide.",
+        "file": "tests/test_merge_docs.py",
+        "line": 24,
+        "priority": "P1",
+        "title": "Not done: test the exclusive merge-command rule"
+      },
+      {
+        "body": "The command row removes the availability warning, and the new prose describes merging and cleanup as operational. However, `src/forge/merge.py:20` still unconditionally refuses enabled merges as not built. Users following this guide cannot complete the advertised operation. Preserve a temporary availability qualification until FORGE-MERGE-1/MERGE supplies the implementation. This is P2 advice because that implementation belongs to another task.",
+        "file": "docs/guide.md",
+        "line": 57,
+        "priority": "P2",
+        "title": "Later: qualify merge availability until FORGE-MERGE-1/MERGE lands"
+      }
+    ],
+    "status": "blocked",
+    "tree": "4062e9ec0e95c347ec6424c238953b594900dded7d8dc8fbcd3850c314a69064"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T17:26:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:37:53+00:00",
+      "step": "review"
     }
   ]
 }
