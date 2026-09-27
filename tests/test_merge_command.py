@@ -78,6 +78,8 @@ if sys.argv[1:3] == ["pr", "merge"]:
 
 def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     stub = (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8")
+    stub = stub.replace('THREAD, TURN = "thr-stub-1", "turn-stub-1"',
+                        'THREAD, TURN = os.environ.get("STUB_THREAD", "thr-stub-1"), "turn-stub-1"')
     stub = stub.replace('        elif method == "thread/name/set":',
                         '        elif method == "thread/archive":\n'
                         '            if os.environ.get("STUB_NOTES"):\n'
@@ -144,9 +146,16 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
+    before_checks = len(env.gh_calls("api"))
     red = env.repo.forge("merge", item)
     assert red.stderr == (f"Checks failed on the pull request: tests.\n"
                           f"Next: forge work {item}\n")
+    lookups = env.gh_calls("api")[before_checks:]
+    endpoint = f"repos/{{owner}}/{{repo}}/commits/{head}"
+    assert ["api", "--paginate", "--jq", ".check_runs[]",
+            f"{endpoint}/check-runs?per_page=100"] in lookups
+    assert ["api", "--paginate", "--jq", ".statuses[]",
+            f"{endpoint}/status?per_page=100"] in lookups
     assert not env.gh_calls("pr", "merge")
     env.checks(GREEN)
     env.gh.respond("pr", "merge", stderr="merge queue refused the request\n", exit=1)
@@ -292,19 +301,26 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
                                            "claude", GRILL), encoding="utf-8")
     notes = shop / "plans" / "SHOP.read.md"
     monkeypatch.setenv("STUB_NOTES", str(notes))
+    monkeypatch.setenv("STUB_THREAD", "thr-shop-read")
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stderr
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
-    assert any(call.get("method") == "thread/archive" for call in calls)
+    assert any(call.get("method") == "thread/start" for call in calls)
+    assert [call["params"]["threadId"] for call in calls
+            if call.get("method") == "thread/archive"] == ["thr-shop-read"]
     assert any(call.get("notes_exist") is True for call in calls)
 
     wish = new_story(repo, "WISH")
     (wish / "plans" / "WISH.md").write_text(DOC, encoding="utf-8")
     (wish / "forge.toml").write_text((shop / "forge.toml").read_text("utf-8"), encoding="utf-8")
     monkeypatch.setenv("STUB_NOTES", str(wish / "plans" / "WISH.read.md"))
+    monkeypatch.setenv("STUB_THREAD", "thr-wish-read")
     monkeypatch.setenv("STUB_ARCHIVE_FAIL", "1")
     failed_archive = repo.forge("read", "WISH")
     assert failed_archive.returncode == 0, failed_archive.stderr
     assert (wish / "plans" / "WISH.read.md").is_file()
+    wish_calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()][len(calls):]
+    assert [call["params"]["threadId"] for call in wish_calls
+            if call.get("method") == "thread/archive"] == ["thr-wish-read"]
     assert (f"Forge could not archive the cold read's Codex conversation for WISH; "
             "archive it in Codex when it is available.") in failed_archive.stdout
