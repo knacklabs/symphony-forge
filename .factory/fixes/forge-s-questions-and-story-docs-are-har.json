@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-questions-and-story-docs-are-har",
   "done_when": "the Forge skill says each question gets one line of context, a header of 12 characters or less, 1-5 word options that say what happens, the recommended one first, and no IDs, paths or slugs; the story template and skill open each Done-when item with one bold plain sentence before its detail and put Risks right after Done when with a For the builders heading before Tasks; the generated skill copies match; a test through forge sync proves it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T17:02:22+00:00",
