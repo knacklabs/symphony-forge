@@ -4,19 +4,19 @@
   "done_when": "forge sync installs Forge's git hooks in the folder git actually uses (core.hooksPath when set) and still runs the hooks already there, forge doctor reports a hooks folder without them, and a test proves both with a Husky-style hooks path",
   "kind": "fix",
   "review": {
-    "commit": "51453169efb3ee1d6a1104c7d021bf18a27b3162",
+    "commit": "fc63408f9e76017bcd4148543a2726641c1eb6c2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The fixture uses plain echo scripts, so it misses the hook-preservation failure in the motivating Husky setup. In the inspected src/forge/sync.py, lines 324\u2013327 rename existing hooks to `<name>.pre-forge`, and line 70 executes that renamed file. [Husky's dispatcher](https://github.com/typicode/husky/blob/main/husky) derives the user-script name from `basename \"$0\"`. Consequently, the renamed wrapper looks for `.husky/pre-commit.pre-forge` instead of `.husky/pre-commit` and silently exits successfully when it is absent; pre-push behaves likewise. Forge's guards run, but the existing Husky checks are skipped. Preserve Husky's dispatch behavior and extend this CLI test to exercise its wrapper and assert that the actual user hooks execute. The current echo fixture passes despite this unmet Done-when requirement.",
-        "file": "tests/test_fix_in_a_repo_whose_git_hooks_folder_is_set.py",
-        "line": 26,
+        "body": "Real Husky hooks do not contain either searched expression. [Husky v9.1.7's installer](https://github.com/typicode/husky/blob/v9.1.7/index.js#L18-L19) generates wrappers that source `.husky/_/h`; the basename-based dispatch lives in that separate file. Consequently, `husky` is false for actual Husky wrappers. After `install_shims` renames them (`src/forge/sync.py:332\u2013336`), Forge executes them with the `.pre-forge` basename. [Husky's dispatcher](https://github.com/typicode/husky/blob/v9.1.7/husky#L3-L6) then looks for `.husky/pre-commit.pre-forge` or `.husky/pre-push.pre-forge` and silently exits when absent, skipping existing checks. The new test at `tests/test_fix_in_a_repo_whose_git_hooks_folder_is_set.py:29\u201331` inlines the dispatcher into each wrapper, concealing this failure. Handle the actual wrapper/shared-dispatcher layout and exercise that layout through the CLI test to satisfy the hook-preservation requirement.",
+        "file": "src/forge/sync.py",
+        "line": 297,
         "priority": "P1",
-        "title": "Not done: prove forge sync preserves existing Husky hooks"
+        "title": "Not done: preserve existing Husky hooks and prove preservation through the CLI"
       }
     ],
     "status": "blocked",
-    "tree": "e92ef3a84ca66bf95e462e4583964637fa70bb75396b3b62d7bc061d2770b618"
+    "tree": "126506d46935733e5ec96c438fdb00bcb965d3aad918c0bb03bb945debbdd2eb"
   },
   "status": "fixing",
   "steps": [
@@ -26,6 +26,10 @@
     },
     {
       "at": "2026-09-27T15:34:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:53:24+00:00",
       "step": "review"
     }
   ],
