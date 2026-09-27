@@ -113,7 +113,7 @@ def work_log(top: Path, item: str) -> Path:
 
 KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str,
         "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "",
+DEFAULTS = {"repo": "client", "workers": "codex", "test": "", "signoff": "",
             "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
