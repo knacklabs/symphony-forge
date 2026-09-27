@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-STEER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-27T04:51:24+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "The coordinator can steer and question its Codex workers",
+  "touches": 0
+}
