@@ -33,11 +33,11 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 MODELS = """
 [models.build]
 model = "gpt-6-sol"
-effort = "high"
+effort = "medium"
 
 [models.fix]
 model = "gpt-6-sol"
-effort = "high"
+effort = "medium"
 
 [models.lite]
 model = "gpt-6-sol"

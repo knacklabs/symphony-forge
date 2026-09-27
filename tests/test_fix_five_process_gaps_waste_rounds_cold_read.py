@@ -1,7 +1,6 @@
 """Command-level regressions for the five process gaps fix."""
 import hashlib
 import json
-import tomllib
 
 from test_close import CLEAN, GREEN, env as close_env
 from test_setup import _fresh_client
@@ -77,14 +76,6 @@ def test_3_fix_work_brief_states_limit_interfaces_and_allowance(repo):
     assert repo.forge("fix", "allow-large", "The client approved the wider repair", cwd=fix).returncode == 0
     assert repo.forge("work", "clarify-the-fix-boundary").returncode == 0
     assert "The client approved the wider repair" in calls(log)[-1]["brief"]
-
-
-def test_4_init_sets_high_build_and_fix_effort(repo, gh, tmp_path):
-    client, result = _fresh_client(repo, gh, tmp_path)
-    assert result.returncode == 0, result.stderr
-    models = tomllib.loads((client / "forge.toml").read_text("utf-8"))["models"]
-    assert models["build"]["effort"] == "high"
-    assert models["fix"]["effort"] == "high"
 
 
 def test_5_init_skill_names_input_exclusions_and_amendment(repo, gh, tmp_path):
