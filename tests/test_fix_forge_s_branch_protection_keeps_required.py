@@ -23,7 +23,7 @@ def test_1_drops_required_checks_whose_workflows_migration_deletes(
                    "    runs-on: ubuntu-latest\n    steps: []\n", encoding="utf-8")
     (fixture / "client/.github/workflows/ci.yml").write_text(
         "name: ci\non: pull_request\njobs:\n  lint:\n"
-        "    name: frontend-lint\n    runs-on: ubuntu-latest\n    steps: []\n"
+        "    name: frontend-lint # client check\n    runs-on: ubuntu-latest\n    steps: []\n"
         "  keep-check:\n"
         "    runs-on: ubuntu-latest\n    steps: []\n", encoding="utf-8")
     monkeypatch.setattr(test_migrate, "FIXTURE", fixture)

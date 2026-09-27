@@ -129,7 +129,7 @@ def _removed_workflow_checks(top: Path) -> set[str]:
                 if job := re.match(r"^  ([\w-]+):\s*(?:#.*)?$", line):
                     job_id = job[1]
                     found[job_id] = job_id
-                if job_id and (named := re.match(r"^    name:\s*([^#]+?)\s*$", line)):
+                if job_id and (named := re.match(r"^    name:\s*([^#]+?)\s*(?:#.*)?$", line)):
                     found[job_id] = named[1].strip('"\'')
         return set(found.values())
 
