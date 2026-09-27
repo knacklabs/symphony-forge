@@ -46,6 +46,8 @@ questions; write for the human's choice.
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
 
+Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
+
 ## New directions
 
 When the human states a new direction, principle or value, grill how it applies before changing
@@ -88,6 +90,9 @@ build, or find out first when an option's value can't be estimated. The human ch
 choice and one line of why into the spec's Behaviour.
 
 ## Planning a story
+
+Use one framing line before showing a story in Plan Mode:
+`Approving: <title>, <n> parts, <risks>`.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Open each item with one bold plain sentence before its detail.

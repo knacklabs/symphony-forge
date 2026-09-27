@@ -1,5 +1,7 @@
 # $title
 
+<n> parts · Risks: ... · New moving parts: ...
+
 ## What changes for you
 
 <What the people who use this will notice, in plain English. No IDs, codes or jargon.>
