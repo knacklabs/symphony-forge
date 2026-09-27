@@ -4,33 +4,19 @@
   "done_when": "no test creates, names or archives a thread in the user's real Codex home: every test that reaches Codex uses a throwaway Codex home, and a test run leaves the real home's thread list unchanged, proven by an end-to-end test",
   "kind": "fix",
   "review": {
-    "commit": "946039dbdd094f24a94c841068b74201e57eeeae",
+    "commit": "dc316fcb2a59069871708138e3befc9779020bec",
     "dismissals": [],
     "findings": [
       {
-        "body": "The snapshots surround only this test's isolated `forge ask` invocation, not a test run. Removing `isolated_codex_home` from the smoke test would restore the original thread pollution while this test could still pass: its own isolation remains intact, and smoke-test mutations can occur outside this snapshot window. Exercise the actual conversation-producing tests inside the before/after check so the regression proof fails when their isolation breaks.",
+        "body": "The real home is read only after the run, and this assertion checks only that the isolated `forge ask` thread IDs are absent there. It cannot detect other new threads or changes to existing thread names or archive status. The before/after comparison at line 61 covers only the newly created `configured_home`. Add a before/after comparison of the real home's complete thread list around the conversation-producing test run so the explicitly required invariant is actually verified.",
         "file": "tests/test_fix_codex_test_home.py",
-        "line": 43,
+        "line": 65,
         "priority": "P1",
         "title": "Not done: a test run leaves the real home's thread list unchanged, proven by an end-to-end test"
-      },
-      {
-        "body": "This guard skips the new test on the normal CI runner: `.github/workflows/forge.yml:19\u201321` runs pytest without installing Forge's real SDK. The workflow that does install and authenticate that SDK runs only `tests/test_codex_smoke.py` (`.github/workflows/codex-smoke.yml:29\u201338`), excluding this new file. Consequently, neither workflow executes the required end-to-end isolation proof. Include it in a configured test job where its prerequisites are present.",
-        "file": "tests/test_fix_codex_test_home.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: run the Codex-home end-to-end regression test in CI"
-      },
-      {
-        "body": "For users whose login lives under a custom `CODEX_HOME`, this unconditional copy now fails with `FileNotFoundError` when `~/.codex/auth.json` is absent, or copies credentials from a different account when it exists. Forge already honors the configured home (`src/forge/worker.py:120`). Capture that home before the fixture overrides the environment and use it for authentication and the real-home snapshots; the new regression test hardcodes the same incorrect location.",
-        "file": "tests/test_codex_smoke.py",
-        "line": 128,
-        "priority": "P2",
-        "title": "Read authentication from the original configured Codex home"
       }
     ],
     "status": "blocked",
-    "tree": "3857d62e4e153f53cf0cb07dec7af9ce05020ff5b34fbd1f9f0b268d5a861100"
+    "tree": "69c998a9885af5948e94c90bb34bd1fa80108b1bdd09834ab02fc0f176542499"
   },
   "status": "fixing",
   "steps": [
@@ -40,6 +26,10 @@
     },
     {
       "at": "2026-09-27T16:15:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:27:07+00:00",
       "step": "review"
     }
   ],
