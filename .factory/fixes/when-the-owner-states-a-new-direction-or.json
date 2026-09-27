@@ -3,7 +3,7 @@
   "branch": "fix/when-the-owner-states-a-new-direction-or",
   "done_when": "src/forge/templates/skill.md (synced to every repo for Claude Code and Codex) says: when the human states a new direction, principle or value, first grill it before changing anything: ask one question at a time with a recommended answer, looking up facts in the repo instead of asking, until the plan for applying it is agreed; then make the changes; a test pins the rule in the synced skill",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T05:36:27+00:00",
