@@ -7,6 +7,7 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -57,7 +58,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
-            lines += _item(name, f"The fix {name}", state)
+            lines += _item(name, f"The fix {name}", state, top)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
@@ -151,7 +152,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]])
+            lines += _item(item, item, states[task["id"]], top)
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -193,9 +194,23 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path]) -> dict[str, A
     return (repo.read_state(item, path) if path else None) or {}
 
 
-def _item(item: str, label: str, state: dict[str, Any]) -> list[str]:
+def _item(item: str, label: str, state: dict[str, Any], top: Path) -> list[str]:
     status = state.get("status") or "started"
+    ready = repo.ready_path(item, top)
+    if ready.is_file():
+        try:
+            receipt = json.loads(ready.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            receipt = {}
+        branch = state.get("branch")
+        if (branch and receipt.get("review") == "clean" and
+                repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
+                == receipt.get("commit")):
+            status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
+    if (status == "ready" and state.get("kind") != "migrate"
+            and repo.default_config(top)["merge"] == "agent"):
+        sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already

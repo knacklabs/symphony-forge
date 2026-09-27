@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -89,7 +90,17 @@ def close(args: argparse.Namespace) -> int:
                                   if not (migrating and name == "forge-pr-check")])
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-    print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+    merge = "human" if migrating else repo.default_config(top)["merge"]
+    path = repo.ready_path(item, top)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+    if merge == "agent":
+        print(f"Ready: {item} has a clean review and green checks.")
+        print(f"Next: forge merge {item}")
+    else:
+        print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
 
 

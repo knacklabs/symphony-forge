@@ -58,6 +58,8 @@ TABLE = [
     ("close", "close:close", True, "Close a task or fix by the close rule",
      [_arg("item"), _arg("--dismiss", type=int, action="append", metavar="N"),
       _arg("--because", action="append", metavar="FILE:LINE_REASON")]),
+    ("merge", "merge:merge", False, "Merge a ready item when this repo allows it",
+     [_arg("item")]),
     ("spec save", "records:spec_save", True, "Save a spec as a draft", [_arg("slug")]),
     ("spec confirm", "records:spec_confirm", True,
      "Mark a spec confirmed after the human confirms in chat",

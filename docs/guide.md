@@ -53,6 +53,7 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round |
 | `forge close <item>` | Closes a task or fix by the close rule |
+| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; unavailable until the merge gate is built |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |
