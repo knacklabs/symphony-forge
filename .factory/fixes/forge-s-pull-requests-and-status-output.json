@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner added UX items to this fix on 2026-09-27",
   "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
   "branch": "fix/forge-s-pull-requests-and-status-output",
   "done_when": "PR titles are short (a task: story title: task name; a fix: the why's first clause, 70 characters at most), a promoted spec task's ID is SPEC, the PR body labels Why and Done when and the review block opens with a plain verdict and no hash, the board's GitHub call succeeds on this repo and links each item to its PR, and forge next says which items are ready to merge with their PR link and names the findings a close stopped on; tests through the real commands prove each; the board also lists active stories first, folds finished fixes into one collapsed line with their count, and uses plainer status words; existing tests that expect the old titles, IDs, PR body or output are updated to the new wording, since that change is deliberate",
