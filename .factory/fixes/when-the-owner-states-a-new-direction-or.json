@@ -1,0 +1,14 @@
+{
+  "base": "3d02065fe4e768ffccfeef38ed2ca8e03fd8cdde",
+  "branch": "fix/when-the-owner-states-a-new-direction-or",
+  "done_when": "src/forge/templates/skill.md (synced to every repo for Claude Code and Codex) says: when the human states a new direction, principle or value, first grill it before changing anything: ask one question at a time with a recommended answer, looking up facts in the repo instead of asking, until the plan for applying it is agreed; then make the changes; a test pins the rule in the synced skill",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T05:36:27+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When the owner states a new direction or value (for example 'Forge should favour end-to-end tests'), the coordinator turns it straight into changes without first working out how it applies, so plans miss the questions that matter"
+}
