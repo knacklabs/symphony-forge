@@ -42,14 +42,6 @@ description = "Use for bounded read-only codebase exploration and dependency tra
 config_file = "agents/frontend.toml"
 description = "Use for frontend UI and UX implementation."
 
-[agents.griller]
-config_file = "agents/griller.toml"
-description = "Use for independent read-only plan and handover grilling."
-
-[agents.lite]
-config_file = "agents/lite.toml"
-description = "Use only for formal Symphony Forge Lite fixes."
-
 [agents.performance]
 config_file = "agents/performance.toml"
 description = "Use for performance diagnosis and measurement."
@@ -73,18 +65,6 @@ description = "Use for writing and improving automated tests."
 [agents.worker]
 config_file = "agents/worker.toml"
 description = "Use for bounded default implementation work."
-
-[agents.planner-high]
-config_file = "agents/planner-high.toml"
-description = "Use for repository-grounded implementation planning."
-
-[agents.docs-decomposer]
-config_file = "agents/docs-decomposer.toml"
-description = "Use for bounded decomposition from approved plans."
-
-[agents.functional-checker]
-config_file = "agents/functional-checker.toml"
-description = "Use for user-visible functional verification."
 
 [projects."/workspace"]
 trust_level = "trusted"

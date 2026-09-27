@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Nandu (explicit full-access instruction, Codex conversation 2026-09-12)"
 date: 2026-09-16
 stories: [FORGE-COORD-1]
-supersedes: 0041-sandboxed-workers-default
+supersedes: "old-forge-final:docs/decisions/0041-sandboxed-workers-default.md"
 ---
 
 # Full access for Forge-managed Codex chats

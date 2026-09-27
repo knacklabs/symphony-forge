@@ -1,0 +1,30 @@
+{
+  "allow_large": "The owner decided on 2026-09-27 to delete the remaining old-Forge leftovers (superseded decisions, old roadmap items, old roles) in one change",
+  "base": "966b9eb7564e5350546f444ce7f678488aced715",
+  "branch": "fix/after-the-first-cleanup-old-forge-leftov",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/cleanup-part2.md is done as written; references still resolve; the full suite passes and forge doctor reports no problems",
+  "kind": "fix",
+  "review": {
+    "commit": "1538792e78cb46c2d46ff1a799824aaf21512607",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "acef21ba1a88ce154207b8ae7bdd52b96412d9362f8aa385d3057fcb12939f69"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T04:16:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:25:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T04:30:23+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "After the first cleanup, old-Forge leftovers remain: superseded decisions, two unlinked old specs, old debt notes, a dead pyrightconfig, dead .gitattributes and .gitignore rules, 55 old roadmap items, old Codex roles, and a README and product brief that describe the old Forge"
+}

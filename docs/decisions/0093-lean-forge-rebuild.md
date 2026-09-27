@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-25
 stories: []
-supersedes: 0088-simple-upgrade
+supersedes: "old-forge-final:docs/decisions/0088-simple-upgrade.md"
 ---
 
 # Forge is rebuilt lean in the same repo, then switched over
@@ -136,4 +136,4 @@ and the standards page opens with them.
     story adds the fuller checks after the switch.
 - Any other decision that depends on machinery this rebuild removes (stages, recorders, schemas,
   the write lock, vendoring, lessons, deferrals, audits) is superseded to that extent.
-- The `supersedes:` field holds one slug (0088, simple upgrade, replaced outright by the pinned tool and `forge migrate`). The full list above is the record.
+- The `supersedes:` field points to the archived simple-upgrade decision, replaced outright by the pinned tool and `forge migrate`. The full list above is the record.
