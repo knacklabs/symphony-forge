@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "Codex now builds this repo's tasks as named, resumable conversations with per-kind models, recovers after a crash, and the old Codex plugin is gone.",
-  "status": "started",
+  "review": {
+    "commit": "71e78732c148888f56988577ef9d9bf0d8e78e08",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "d2558cf6dc141a41c15c1b2b03a0fa9e5a80ec41a678cbe9254774fc36848680"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T03:17:12+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:18:01+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
