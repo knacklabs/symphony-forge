@@ -1,0 +1,14 @@
+{
+  "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
+  "branch": "fix/symphony-forge-must-carry-no-trace-of-an",
+  "done_when": "no tracked file names a client repo, its GitHub path or a local folder of it; mentions become generic wording such as a client or a copied-in client, and the full test suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:31:29+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Symphony Forge must carry no trace of any client repo, but its docs, records, tests and plans still name client repos and their paths"
+}
