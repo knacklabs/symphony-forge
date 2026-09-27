@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-08-19
 stories: [FORGE-ACC-3]
-supersedes: 0002-concurrency-one-task-per-branch
+supersedes: "old-forge-final:docs/decisions/0002-concurrency-one-task-per-branch.md"
 ---
 
 # Each leaf task ships in its own worktree and PR

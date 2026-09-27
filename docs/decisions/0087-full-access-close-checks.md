@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-24
 stories: []
-supersedes: 0037-strict-role-split
+supersedes: "old-forge-final:docs/decisions/0037-strict-role-split.md"
 ---
 
 # Full access: review and close checks replace the write lock

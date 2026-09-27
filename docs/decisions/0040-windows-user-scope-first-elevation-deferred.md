@@ -3,7 +3,7 @@ status: accepted
 confirmed_by: "Ravi"
 date: 2026-08-12
 stories: [FORGE-WIN-2]
-supersedes: 0039-windows-remediation-via-winget
+supersedes: "old-forge-final:docs/decisions/0039-windows-remediation-via-winget.md"
 ---
 
 # Windows User-Scope-First; Orchestrated Elevation Deferred
