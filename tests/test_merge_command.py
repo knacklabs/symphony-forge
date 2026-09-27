@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from conftest import GH_STUB, _install
 from test_close import GREEN, env, run
 from test_codex_reader import GRILL
@@ -29,7 +31,7 @@ def _ready(env):
     return item, where
 
 
-def _merge_at_github(env):
+def _merge_at_github(env, local_commit=None):
     """The gh edge performs a squash in the fixture's bare remote, as GitHub would."""
     stub = GH_STUB.format(python=sys.executable)
     head = env.repo.git("rev-parse", "fix/tidy-readme")
@@ -51,6 +53,9 @@ if sys.argv[1:3] == ["pr", "merge"]:
         calls.write(json.dumps(args) + "\\n")
     if "--squash" not in args or "--delete-branch" in args:
         sys.exit(1)
+    if LOCAL_COMMIT:
+        subprocess.run(["git", "-C", LOCAL_COMMIT, "commit", "-q", "--allow-empty",
+                        "-m", "Keep this local work"], check=True)
     remote = pathlib.Path(REMOTE)
     checkout = here / "github-merge"
     subprocess.run(["git", "clone", "-q", str(remote), str(checkout)], check=True)
@@ -66,7 +71,8 @@ if sys.argv[1:3] == ["pr", "merge"]:
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     (here / "github-merged").write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head))
+'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head)).replace(
+    "LOCAL_COMMIT", repr(str(local_commit)) if local_commit else "None")
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + stub.split("\n", 1)[1])
 
 
@@ -76,7 +82,8 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
                         '        elif method == "thread/archive":\n'
                         '            if os.environ.get("STUB_NOTES"):\n'
                         '                log(notes_exist=pathlib.Path(os.environ["STUB_NOTES"]).is_file())\n'
-                        '            if os.environ.get("STUB_ARCHIVE_FAIL"):\n'
+                        '            if (os.environ.get("STUB_ARCHIVE_FAIL") or\n'
+                        '                    os.environ.get("STUB_ARCHIVE_FAIL_THREAD") == message["params"]["threadId"]):\n'
                         '                send(id=message["id"], error={"code": -32603, "message": "archive failed"})\n'
                         '            else:\n'
                         '                reply(message, {})\n'
@@ -162,7 +169,7 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     assert "fix/tidy-readme" not in env.repo.git("branch", "--list", "fix/tidy-readme")
 
 
-def test_5_merge_leaves_dirty_worktree_and_archives_recorded_conversations(
+def _check_dirty_merge(
         env, sdk_data, tmp_path, monkeypatch):
     item, where = _ready(env)
     stub = _archiving_codex(env.repo, sdk_data, tmp_path, monkeypatch)
@@ -214,6 +221,65 @@ def test_5_merge_leaves_dirty_worktree_and_archives_recorded_conversations(
     assert f"Next: git worktree remove {where}" in legacy.stdout
 
 
+def _check_later_local_commit(env):
+    item, where = _ready(env)
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    _merge_at_github(env, local_commit=where)
+    merged = env.repo.forge("merge", item)
+    assert merged.returncode == 0, merged.stderr
+    assert where.is_dir()
+    assert env.repo.git("status", "--porcelain", cwd=where) == ""
+    assert env.repo.git("log", "-1", "--format=%s", "fix/tidy-readme") == "Keep this local work"
+    assert "local commits" in merged.stdout.lower()
+    assert env.repo.git("show", "origin/main:app.py") == "print('hello')"
+
+
+def _check_archive_retry(env, sdk_data, tmp_path, monkeypatch):
+    item, where = _ready(env)
+    stub = _archiving_codex(env.repo, sdk_data, tmp_path, monkeypatch)
+    record = env.repo.path / ".git" / "forge" / "threads" / "fix" / f"{item}.log"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(''.join(json.dumps({"conversation": thread}) + "\n"
+                              for thread in ("thr-one", "thr-two")), encoding="utf-8")
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    _merge_at_github(env)
+    monkeypatch.setenv("STUB_ARCHIVE_FAIL_THREAD", "thr-two")
+    failed = env.repo.forge("merge", item)
+    assert failed.returncode != 0
+    assert failed.stderr == (f"Forge could not archive every Codex conversation for {item}.\n"
+                             f"Next: try forge merge {item} again\n")
+    assert where.is_dir()
+    assert env.repo.git("ls-remote", "--heads", "origin", "fix/tidy-readme")
+    assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
+    monkeypatch.delenv("STUB_ARCHIVE_FAIL_THREAD")
+    retried = env.repo.forge("merge", item)
+    assert retried.returncode == 0, retried.stderr
+    assert not where.exists()
+    calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
+    archived = [call["params"]["threadId"] for call in calls
+                if call.get("method") == "thread/archive"]
+    assert archived.count("thr-one") == 1
+    assert archived.count("thr-two") == 2
+    assert item not in env.repo.forge("next").stdout
+
+
+@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry"))
+def test_5_merge_cleans_up_only_after_archiving_and_preserves_local_work(
+        env, sdk_data, tmp_path, monkeypatch, scenario):
+    if scenario == "dirty":
+        _check_dirty_merge(env, sdk_data, tmp_path, monkeypatch)
+    elif scenario == "local_commit":
+        _check_later_local_commit(env)
+    else:
+        _check_archive_retry(env, sdk_data, tmp_path, monkeypatch)
+
+
 def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
         repo, gh, tmp_path, monkeypatch, sdk_data):
     setup(repo, keys=("SHOP", "WISH"))
@@ -240,4 +306,5 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     failed_archive = repo.forge("read", "WISH")
     assert failed_archive.returncode == 0, failed_archive.stderr
     assert (wish / "plans" / "WISH.read.md").is_file()
-    assert "archive" in failed_archive.stdout.lower() and "failed" in failed_archive.stdout.lower()
+    assert (f"Forge could not archive the cold read's Codex conversation for WISH; "
+            "archive it in Codex when it is available.") in failed_archive.stdout

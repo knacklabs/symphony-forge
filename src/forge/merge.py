@@ -17,6 +17,8 @@ REFUSALS = {
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
+    "archive": ("Forge could not archive every Codex conversation for {item}.",
+                "try forge merge {item} again"),
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
@@ -60,6 +62,22 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
         if not merged:
             repo.refuse(REFUSALS["pending"], item=item)
+    pending = receipt.get("pending_archives")
+    if pending is None:
+        pending = sorted(_conversations(top, item))
+        receipt["pending_archives"] = pending
+        _save_ready(path, receipt)
+    if not isinstance(pending, list) or not all(isinstance(thread, str) for thread in pending):
+        repo.refuse(REFUSALS["not_ready"], item=item)
+    for thread in pending[:]:
+        try:
+            archived = codex.archive(top, item, "Fix", thread)
+        except Exception:
+            archived = False
+        if not archived:
+            repo.refuse(REFUSALS["archive"], item=item)
+        pending.remove(thread)
+        _save_ready(path, receipt)
     remote_ref = f"refs/heads/{branch}"
     remote = repo.run("git", "ls-remote", "--heads", "origin", remote_ref, cwd=top)
     if remote.returncode:
@@ -76,27 +94,30 @@ def merge(args: argparse.Namespace) -> int:
     survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
                      if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
     dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
-    if dirty:
+    advanced = repo.git("rev-parse", branch, cwd=worktree) != head
+    if advanced:
+        print(f"Merged {item}. Its worktree at {worktree} has local commits outside the merged pull request, so Forge left it and its local branch in place.")
+    elif dirty:
         print(f"Merged {item}. Its worktree at {worktree} has uncommitted changes, so Forge left it and its local branch in place.")
     else:
         repo.git("worktree", "remove", str(worktree), cwd=survivor)
         if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=survivor).returncode == 0:
             repo.git("branch", "-D", branch, cwd=survivor)
         print(f"Merged {item} and removed its worktree and local branch.")
-    for thread in _conversations(survivor, item):
-        try:
-            archived = codex.archive(survivor, item, "Fix", thread)
-        except Exception:
-            archived = False
-        if not archived:
-            print(f"Forge could not archive a Codex conversation for {item}; archive it in Codex.")
-    if dirty:
-        saved = path.with_suffix(".tmp")
-        saved.write_text(json.dumps({**receipt, "tidied": True}) + "\n", encoding="utf-8")
-        os.replace(saved, path)
+    if dirty or advanced:
+        receipt["tidied"] = True
+        _save_ready(path, receipt)
     else:
         path.unlink(missing_ok=True)
     return 0
+
+
+def _save_ready(path: Path, receipt: dict) -> None:
+    saved = path.with_suffix(".tmp")
+    saved.write_text(json.dumps(receipt) + "\n", encoding="utf-8")
+    os.replace(saved, path)
+
+
 def _conversations(top: Path, item: str) -> set[str]:
     base = repo.forge_dir(top) / "threads" / ("task" if "/" in item else "fix") / item
     found = {saved} if isinstance(saved := codex.record(top, item).get("conversation"), str) else set()
