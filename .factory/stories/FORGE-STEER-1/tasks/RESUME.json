@@ -1,19 +1,19 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
   "review": {
-    "commit": "6bab4d678284f3e81e6e390aca7a5356b3fc8587",
+    "commit": "055e1df6c41d7858b3f8f87e295e7dece0450193",
     "dismissals": [],
     "findings": [
       {
-        "body": "This file adds workflow status and a previous review report, neither of which is needed for active-writer recovery or its required tests. It falls outside the permitted production path and explicitly required test file. Remove it from the branch change.",
-        "file": ".factory/stories/FORGE-STEER-1/tasks/RESUME.json",
-        "line": 1,
+        "body": "RESUME permits changes to the driver and its explicitly required test file. The ASK-MODEL plan additions, approval updates, amended-read hash, and stored review report are unnecessary for active-writer recovery. Remove the changes to `plans/FORGE-STEER-1.md`, `plans/FORGE-STEER-1.read.md`, `.factory/stories/FORGE-STEER-1/story.json`, and `.factory/stories/FORGE-STEER-1/tasks/RESUME.json` from this branch.",
+        "file": "plans/FORGE-STEER-1.md",
+        "line": 40,
         "priority": "P2",
-        "title": "Remove the out-of-scope task review record"
+        "title": "Remove the out-of-scope plan and workflow-record changes"
       }
     ],
     "status": "clean",
-    "tree": "a6a42c555b5c378b417fb87db2f1bdc4d9ddbaf07393a29df69c5cc74dbd020f"
+    "tree": "e4aec6f13230d6fa3ef8f20d3812643e2084b95fd42318bf80a4b94f3700d559"
   },
   "status": "waiting for checks",
   "steps": [
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-09-27T16:14:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:25:08+00:00",
       "step": "review"
     }
   ]
