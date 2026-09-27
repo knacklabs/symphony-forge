@@ -1,11 +1,16 @@
-"""Forge's release version is visible through its command and this repo's pin."""
+"""The base-commit evidence fix is available in the next Forge release."""
+
 import tomllib
 from pathlib import Path
 
-STORY = "FIX-FORGE-V1-IS-READY-FOR-ITS-1-0-0-RELEASE"
+
+STORY = "FIX-FORGE-CLOSE-S-BASE-COMMIT-EVIDENCE-FOR-D"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_release_tag_and_repo_pin_are_v1_0_2(repo):
+def test_1_release_command_reports_v1_0_2(repo):
     assert repo.forge("--version").stdout.split()[-1] == "v1.0.2"
+
+
+def test_2_repo_pins_v1_0_2():
     assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.0.2"

@@ -98,10 +98,10 @@ jobs:
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: ubuntu-latest
-    steps:
+<tests-timeout>    steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
-      - run: <test>
+<node>      - run: <test>
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
@@ -242,9 +242,25 @@ def _codex_config(top: Path) -> str:
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
+    node = ""
+    if (top / "package.json").is_file():
+        node = "      - uses: actions/setup-node@v7\n"
+        version_file = next((name for name in (".nvmrc", ".node-version")
+                             if (top / name).is_file()), None)
+        if version_file:
+            node += f"        with:\n          node-version-file: {version_file}\n"
+        else:
+            package = json.loads(read(top / "package.json"))
+            version = package.get("engines", {}).get("node")
+            if isinstance(version, str) and version.strip():
+                node += f"        with:\n          node-version: {json.dumps(version)}\n"
     workflow = (WORKFLOW.replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if cfg.get("repo") == "forge-source"
                          else install_line(cfg["version"]))
+                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
+                         if cfg.get("repo") == "client" and (top / "package.json").is_file()
+                         else "")
+                .replace("<node>", node)
                 .replace("<test>", json.dumps(cfg["test"])))
     return {
         "AGENTS.md": _block(top, "AGENTS.md", "adapters/AGENTS.md"),

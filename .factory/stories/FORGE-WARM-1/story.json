@@ -5,11 +5,27 @@
     "hash": "c7bf1971534d31522d2f1506a87be2918427c09c9f29338a87b0d23b7ba2a2f1"
   },
   "doc": "plans/FORGE-WARM-1.md",
-  "status": "approved",
+  "finished": "2026-09-27T03:16:54+00:00",
+  "merged": {
+    "BUILD": "2026-09-26T07:17:36+00:00",
+    "READER": "2026-09-26T07:17:36+00:00",
+    "RECORD": "2026-09-26T10:20:25+00:00",
+    "RESUME": "2026-09-26T17:32:31+00:00",
+    "SDK": "2026-09-26T07:17:36+00:00",
+    "SMOKE": "2026-09-26T19:03:21+00:00",
+    "UNPLUG": "2026-09-27T03:16:54+00:00",
+    "USE-CODEX": "2026-09-26T19:21:05+00:00"
+  },
+  "outcome": "Codex now builds this repo's tasks as named, resumable conversations with per-kind models, recovers after a crash, and the old Codex plugin is gone.",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-26T03:17:14+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-27T03:17:12+00:00",
+      "step": "done"
     }
   ],
   "title": "Codex builds your tasks and picks up where it left off",
