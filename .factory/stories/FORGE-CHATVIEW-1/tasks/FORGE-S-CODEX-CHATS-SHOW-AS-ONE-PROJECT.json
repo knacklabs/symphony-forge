@@ -1,8 +1,7 @@
 {
   "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
-  "branch": "fix/forge-s-codex-chats-show-as-one-project",
+  "branch": "task/FORGE-CHATVIEW-1-FORGE-S-CODEX-CHATS-SHOW-AS-ONE-PROJECT",
   "done_when": "docs/specs/codex-chat-view.md is confirmed by the owner and on the roadmap as FORGE-CHATVIEW-1",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
