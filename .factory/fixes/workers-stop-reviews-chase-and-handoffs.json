@@ -3,11 +3,22 @@
   "branch": "fix/workers-stop-reviews-chase-and-handoffs",
   "done_when": "brief.md lets a worker update tests when the Done-when deliberately changes behaviour, explaining the old and new contract, and never weaken a test to hide a defect; brief.md says a failure is unrelated only with a matching failure on the default branch, else unresolved; review.md and standards.md say doc-only changes need no new behaviour test, only checked claims, commands and links; standards.md and brief.md say joining lines or removing blank lines never counts as a reduction; skill.md says to read the worker's final handoff and resolve stated blockers before forge close; the generated skill copies match; a test through the real commands shows each sentence reaches its reader",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "2af821ff14442365a2f4e772254acc67f4065e34",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "352635cf64cae7e9f60aea03e04c16c28e263d1b0c2cfd9005ffb3aea0a4084a"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T17:11:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:28:46+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers stop, reviews chase and handoffs mislead for reasons one sentence of instruction would prevent: tests that must change with an intended behaviour change, test demands on doc-only changes, failures called unrelated without evidence, line cuts by reformatting, and closes started on a worker's unfinished handoff"
