@@ -9,74 +9,66 @@ saved: 2026-09-27T16:10:53+00:00
 
 ## Why
 
-Forge's rule is that it shrinks over time, enforced by an 8,000-line ceiling on `src/forge`. It
-now sits at about 7,960 lines, so the next stories (agent merge, one-chat approval) can't land
-their code. A first attempt reached the number only by joining lines and dropping blank lines,
-which makes the code harder to read and removes nothing. A read-only audit found about 415 lines
-Forge really carries for nothing: unreachable branches, a fallback for a module that now always
-exists, three copies of the same file helpers, repeated story-doc parsing, docstrings that restate
-the spec, the finished mode for migrating Forge's own repo, a skill text Forge never reads, and a
-skill section that repeats the standards page.
+Forge's rule is that it shrinks over time, enforced by an 8,000-line ceiling on `src/forge`. By the
+ceiling test's own count it is at 7,961 lines, so the next stories (agent merge, one-chat approval)
+can't land their code. A first attempt reached the number only by joining lines and dropping blank
+lines, which makes the code harder to read and removes nothing. Two read-only audits, the second a
+ponytail audit on Codex, found what Forge really carries for nothing: second copies of skill texts
+that are already checked in byte for byte, the finished mode for migrating Forge's own repo, a
+skill text Forge never reads, and a skill section that repeats the standards page.
 
 ## Behaviour
 
-**Nothing a user sees changes,** except where the owner chose it below: every command's output,
-refusals and generated files stay as they are, and every existing test keeps passing unless it
-tests something this spec removes.
-
-**Dead code goes.** The CLI's "not built" refusal and its missing-module branch, the prcheck
-fallback import for `story`, and the standards-file existence check in the worker and its brief
-wrapper are removed, since every module and the standards page always ship.
-
-**Duplicates become one.** The file read and write helpers, the JSON-output helper, the worktree
-list parsing, the worktree creation, the blocking-findings check, the shared refusals, the roadmap
-append, the cold-read record and disposition checks, the story-doc section, table and cell parsing,
-the approval hash, the interface-promotion problem and the temporary-index snapshot each live in
-one place and are called from the others. Where two callers print different wording today, the
-wording is passed in and stays the same.
-
-**Docstrings stop restating the spec.** Module and function docstrings that repeat a spec section
-or another module's docstring shrink to a short statement plus a pointer.
+**One copy of each shipped skill text.** The test-audit skill (its SKILL.md and NOTICE.md), the
+FDE guidance and the Remote Control skill each exist today both under `src/forge/templates/` and,
+byte for byte, as the checked-in copies `forge sync` writes. The package copies go: the build
+bundles the checked-in copies at the same package paths, so `forge sync` writes exactly the same
+files as before, whether Forge is installed from a wheel, from a source distribution or as an
+editable checkout.
 
 **The finished own-repo migrate mode goes.** `forge migrate`'s mode for moving Forge's own repo off
-the copied-in Forge, and its tests, are removed; the v1 spec's passages about it are amended to say
-the move finished at the switch. Migrating a copied-in client is unchanged.
+the copied-in Forge, and its tests, are removed. In Forge's own repo (`repo = "forge-source"`),
+`forge migrate` now refuses before doing anything, saying Forge's own repo moved at the switch, so
+it can never take the client path there. The v1 spec's passages about the mode are amended to say
+the same. Migrating a copied-in client is unchanged.
 
 **The migration skill text moves to `docs/`.** `src/forge/templates/migrate-skill.md` moves to
 `docs/migrate-skill.md`, and the test that reads it follows it.
 
 **The skill points to the standards page.** `forge sync` writes the standards page next to the
-Forge skill, as it does the FDE guidance, and the skill's "Build simple" section becomes a short
-pointer to it plus its "Finding forms" lines.
+Forge skill for both hosts, as it does the FDE guidance, and the skill's "Build simple" section
+becomes a short pointer to it plus its "Finding forms" lines.
 
-**No reformatting.** The reduction comes from removed or merged code and text, never from joining
-lines or removing blank lines between definitions.
+**Nothing else changes.** Every other command's output, refusal and generated file stays the same,
+and no helpers are merged or rewritten for this. The reduction comes only from the removals above,
+never from joining lines or removing blank lines.
 
 ## Acceptance criteria
 
-- `src/forge` counts at least 400 fewer lines than on main by the ceiling test's own count, with
-  the ceiling unchanged at 8,000.
-- No change joins lines or removes blank lines between definitions to save lines.
-- The full test suite passes, with only tests of removed behaviour removed or moved.
-- Every command's help and every refusal text that tests pin is unchanged.
-- `forge migrate` has no own-repo mode, and the v1 spec says why; a copied-in client migrates as
-  before.
+- `src/forge` counts at most 7,561 lines by the ceiling test's count (at least 400 fewer than
+  7,961), with the ceiling unchanged at 8,000.
+- No change joins lines or removes blank lines to save lines.
+- A wheel, a source distribution and an editable install each give `forge sync` the same test-audit,
+  FDE and Remote Control files as before, byte for byte.
+- In Forge's own repo `forge migrate` refuses before any change; a copied-in client migrates as
+  before; the v1 spec says why.
 - The migration skill text is at `docs/migrate-skill.md`.
-- `forge sync` writes the standards page next to the Forge skill, and the skill's "Build simple"
-  section points to it.
+- `forge sync` writes the standards page next to the Forge skill for both hosts, and the skill's
+  "Build simple" section points to it.
+- The full test suite passes, with only tests of removed behaviour removed or changed.
 
 ## Success measure
 
 - Metric: lines in `src/forge` by the ceiling test's count.
-- Baseline: about 7,960 on 2026-09-27.
-- Target: at most 7,560.
+- Baseline: 7,961 on 2026-09-27.
+- Target: at most 7,561.
 - Check date: 2026-10-15
 
 ## Out of scope
 
+- Merging or rewriting shared helpers.
 - Changing any command's behaviour or output beyond the owner-chosen moves above.
 - Raising or lowering the ceiling.
-- Removing the vendored test-audit skill.
 
 ## Roadmap
 
