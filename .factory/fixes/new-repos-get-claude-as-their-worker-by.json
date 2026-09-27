@@ -1,0 +1,14 @@
+{
+  "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
+  "branch": "fix/new-repos-get-claude-as-their-worker-by",
+  "done_when": "forge init writes workers = \"codex\" and forge.toml's default worker is Codex, with an end-to-end test through forge init; repos that set workers explicitly keep their setting",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:39:59+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "New repos get Claude as their worker by default, but the owner wants Codex workers for all implementation in every repo"
+}
