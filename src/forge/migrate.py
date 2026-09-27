@@ -407,11 +407,8 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
     parts = re.split(r"^(\d+)\.[ \t]+", done, flags=re.M)
     items = {int(n): _flat(block) for n, block in zip(parts[1::2], parts[2::2])}
     saved, title = fields.get("saved") or repo.now(), fields.get("title") or key
-    if prs is not None:
-        rows, states, needs, waiting = _plan_rows(found, key, prs)
-        pending: list[str] = []
-    else:
-        rows, states, needs, waiting, pending = _tasks(top, ref, old, key, items, saved)
+    rows, states, needs, waiting = (_plan_rows(found, key, prs) if prs is not None
+                                    else _tasks(top, ref, old, key, items, saved))
     moving = re.search(r"^New moving parts:.*(?:\n[ \t]*[-*].*)*", "\n".join(found.values()), re.M)
     notes = [f"### {heading}\n\n{part.strip()}" for heading, part in found.items()
              if heading not in picked.values() and part.strip()]
@@ -440,7 +437,7 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
                 needs.append(str(exc))
             if not shipped:  # a doc that is malformed isn't approved; a finished story stays done
                 why_not = f"the story doc it becomes is malformed: {exc}"
-    if pending and not why_not:
+    if not own and waiting and not why_not:
         why_not = "parts are still pending in the old Forge's records"
     entry = {"key": key, "title": title, "old": rel, "why_not": why_not, "needs": needs,
              "waiting": waiting, "done": len(states), "total": len(rows), "outcome": ""}
@@ -461,7 +458,7 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
 
 
 def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
-           saved: str) -> tuple[list[str], dict[str, Any], list[str], list[str], list[str]]:
+           saved: str) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
     """The old decomposition as Tasks rows, the merged tasks' states, what a human must fix in
     the rows, and the rows not done yet."""
     base = f".factory/stories/{old}"
@@ -480,14 +477,12 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     states: dict[str, Any] = {}
     needs = [] if tasks else ["the old plan has no tasks to carry over"]
     waiting: list[str] = []
-    pending: list[str] = []
     for task in tasks:
         tid, marker = ids[task["id"]], f"{base}/tasks/{task['id']}/pr-ready.json"
         done = marker if story.show(top, ref, marker) is not None else shipped
         if any(stage.get("id") == task["id"] and stage.get("status") != "done"
                for stage in stages):
             done = ""
-            pending.append(tid)
         said = [str(text) for text in task.get("acceptance_criteria") or []] + [
             str(contract.get("statement", "")) for contract in task.get("plan_contracts") or []
             if isinstance(contract, dict)]
@@ -510,7 +505,7 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
             states[f"{key}/{tid}"] = _merged(key, tid, story.merged_at(top, ref, done) or saved)
         else:
             waiting.append(row)
-    return rows, states, needs, waiting, pending
+    return rows, states, needs, waiting
 
 
 def _merged(key: str, tid: str, at: str) -> dict[str, Any]:
