@@ -1,0 +1,14 @@
+{
+  "base": "a3bf3e378ac2f9d4786a753f4fc989db4b1fac8b",
+  "branch": "fix/forge-says-end-to-end-tests-come-first-b",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/e2e-plan.md is in the file it names, as the owner decided on 2026-09-27; the full suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T05:52:31+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge says end-to-end tests come first but doesn't say how a client app runs them: which items get browser tests, where they run in CI, how tests get data, what to do with flaky tests, the time budget, and what happens to existing flows"
+}
