@@ -3,7 +3,7 @@
   "branch": "fix/on-windows-forge-s-process-check-codex-i",
   "done_when": "On Windows, codex.identity reads a process's start time and executable path through the Windows API with ctypes (OpenProcess, GetProcessTimes, QueryFullProcessImageNameW) instead of running PowerShell, so no child process is started; identity keeps its contract (None when no process has the id, a matching record otherwise, and a reused id never matches); POSIX is unchanged; a test on Windows exercises a live process, an exited one and a mismatch",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T04:54:04+00:00",
