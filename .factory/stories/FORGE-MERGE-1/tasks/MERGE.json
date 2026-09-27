@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
-  "status": "working",
+  "review": {
+    "commit": "539780951d497446042c3b2c9dde196e192f0aa8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`--delete-branch` also performs local cleanup, which conflicts with Forge's worktree handling. In [gh v2.83.2](https://github.com/cli/cli/blob/v2.83.2/pkg/cmd/pr/merge/merge.go#L352), local deletion precedes remote deletion: a checked-out item branch makes deletion fail, or running from that worktree fails to switch to an already-checked-out default branch. The PR has already merged, so line 55 ignores the error and Forge reports success while leaving the remote branch. Retries skip deletion entirely for MERGED PRs. Conversely, [current gh](https://github.com/cli/cli/blob/trunk/pkg/cmd/pr/merge/merge.go#L352) can remove a clean linked worktree when invoked from another checkout, causing Forge's subsequent status call to fail before archiving. Prevent gh from performing local cleanup, and explicitly complete or retry remote deletion before retiring the ready record.",
+        "file": "src/forge/merge.py",
+        "line": 51,
+        "priority": "P1",
+        "title": "Not done: 5. Complete remote deletion and cleanup after merging"
+      },
+      {
+        "body": "The GitHub stub performs the very behaviors these tests should verify: line 60 always squashes regardless of Forge's arguments, and this line fetches the merged default branch into Forge's repository. Consequently, replacing Forge's `--squash` with `--merge`, or deleting its post-merge fetch, still satisfies the assertions at lines 145\u2013147. Make the stub enforce the requested merge strategy and leave local fetching to Forge, so either regression fails the CLI test.",
+        "file": "tests/test_merge_command.py",
+        "line": 67,
+        "priority": "P1",
+        "title": "Not done: squash and post-merge fetch tests"
+      },
+      {
+        "body": "The refusal test removes the entire ready record, then restores a clean one; it never exercises an existing record whose review is not clean. Every supplied PR is also OPEN or MERGED, so removing the clean-review comparison or allowing CLOSED PRs would leave the tests passing. Add CLI cases with an otherwise valid non-clean receipt and an otherwise matching closed PR, asserting refusal and no merge request. These are explicit item 4 gates.",
+        "file": "tests/test_merge_command.py",
+        "line": 104,
+        "priority": "P1",
+        "title": "Not done: item 4's clean-review and open-PR refusal tests"
+      },
+      {
+        "body": "With agent merging enabled, a missing ready record now silently hides every merged worktree. Human-merged items and items predating ready records can still have worktrees needing cleanup; absence of a receipt does not establish that Forge finished tidying them. The existing scenario in `tests/test_fix_forge_next_lists_already_merged_fixes_an.py:12` explicitly covers merged worktrees without receipts, but only under the default human setting. Preserve cleanup guidance for these items while keeping successfully finalized items hidden.",
+        "file": "src/forge/nextstep.py",
+        "line": 216,
+        "priority": "P2",
+        "title": "Preserve cleanup guidance for merged items without ready records"
+      }
+    ],
+    "status": "blocked",
+    "tree": "2717ffa5fb6a45c6b2d2624a919b1f6b1fda611dfa67997c23452c610e1e6405"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T17:28:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T18:19:31+00:00",
+      "step": "review"
     }
   ]
 }
