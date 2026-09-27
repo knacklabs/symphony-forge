@@ -1,6 +1,14 @@
 {
+  "approval": {
+    "at": "2026-09-27T15:34:47+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_012UhXzaWkKRybWn3MqHwzwL",
+    "hash": "4c6eaf91ab19aa59838f9bb22a97e22c9536e66db9a9391625e759ef1cc0a11f",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-ONECHAT-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-27T15:23:02+00:00",
@@ -9,8 +17,12 @@
     {
       "at": "2026-09-27T15:25:59+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-09-27T15:34:47+00:00",
+      "step": "approved"
     }
   ],
   "title": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in",
-  "touches": 0
+  "touches": 1
 }
