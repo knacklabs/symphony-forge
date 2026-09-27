@@ -7,8 +7,11 @@
 - The choice is yours per repo, in `forge.toml`, and it is off unless you turn it on. Only the
   setting on the default branch counts, so a change can't give itself permission, and turning it
   off takes effect at once.
-- After a merge, Forge tidies up: the branch and the item's folder go away, and `forge next` stops
-  listing the item. A folder with unsaved changes is left in place, and Forge says so.
+- After a merge, Forge tidies up: the branch, the item's folder and its Codex chats go away, and
+  `forge next` stops listing the item. A folder with unsaved changes is left in place, and Forge
+  says so. Archived chats can still be restored in Codex.
+- A cold read's Codex chat is archived as soon as the read is written, so reads don't pile up in
+  your Codex list.
 - In Forge's own repo it is turned on.
 
 ## Why
@@ -35,8 +38,11 @@ spec `docs/specs/agent-merge.md`.
    to that head commit; any of those failing refuses and merges nothing.
 5. A merge squashes with the pull request's title, deletes the remote branch, fetches the default
    branch, and removes the item's worktree and local branch, leaving a worktree with uncommitted
-   changes in place and saying so; `forge next` no longer lists the item; the hook still refuses
-   the agent's raw merge command in every repo.
+   changes in place and saying so; it archives, through Codex's own archive call, every Codex
+   conversation Forge recorded for the item; `forge next` no longer lists the item; the hook still
+   refuses the agent's raw merge command in every repo.
+7. A cold read archives its Codex conversation, through Codex's own archive call, right after it
+   writes its notes; a failed archive is reported and never fails the read.
 6. The generated AGENTS.md, the Forge skill and the guide describe the setting and `forge merge`,
    and say the agent merges only through `forge merge`; this repo's `forge.toml` has
    `merge = "agent"`.
@@ -47,7 +53,7 @@ spec `docs/specs/agent-merge.md`.
 |---|---|---|---|---|---|---|---|
 | THE-OWNER-WANTS-THE-AGENT-TO-MERGE-READY | The spec | The confirmed spec and its roadmap item | 1 | `docs/specs/agent-merge.md`, `docs/specs/agent-merge.read.md`, `plans/roadmap.json` | | none | no |
 | READY | Ready on record | The `merge` setting and its reader from the fetched default branch; close recording the ready record and naming the next step; `forge next` naming `forge merge`; a stub `forge merge` that refuses, with its command row in the CLI and the guide | 2, 3 | `src/forge/repo.py`, `src/forge/close.py`, `src/forge/nextstep.py`, `src/forge/merge.py`, `src/forge/cli.py`, `docs/guide.md` | `tests/test_merge_ready.py` | none | yes |
-| MERGE | Forge merges | `forge merge`'s checks, the head-tied squash merge and the tidy-up | 4, 5 | `src/forge/merge.py` | `tests/test_merge_command.py` | READY | yes |
+| MERGE | Forge merges | `forge merge`'s checks, the head-tied squash merge and the tidy-up, including archiving the item's recorded Codex conversations; the cold read archiving its own conversation; the driver's archive request | 4, 5, 7 | `src/forge/merge.py`, `src/forge/codex.py`, `src/forge/codex_turn.py` | `tests/test_merge_command.py` | READY | yes |
 | DOCS | Tell the agent | The generated AGENTS.md's and the Forge skill's merge rules, the guide's section on the setting and `forge merge`, and this repo's `merge = "agent"` | 6 | `src/forge/templates/adapters/AGENTS.md`, `src/forge/templates/skill.md`, `AGENTS.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `docs/guide.md`, `forge.toml` | `tests/test_merge_docs.py` | MERGE | yes |
 
 New moving parts: none
@@ -71,6 +77,9 @@ New moving parts: none
   exception, and merges with `gh`'s squash merge tied to the recorded head commit
   (`--match-head-commit`), run from Forge's own Python, which the shell hook doesn't see.
 - The hook's refusal of the agent's raw merge command stays as it is.
+- Archiving goes through the Codex SDK driver (`codex_turn.py`) with a new `archive` request, the
+  same path as a turn, so Forge never edits Codex's own files; tests use a throwaway Codex home.
+  MERGE waits for FORGE-STEER-1/RESUME, which also changes `codex_turn.py`.
 - READY owns the guide's command-list row; DOCS, which runs after it, owns the guide's prose.
   DOCS turns this repo's setting on, which takes effect only once a human merges its pull request.
 - Each test file starts with `STORY = "FORGE-MERGE-1"`, and its `test_<n>_` names cite the
