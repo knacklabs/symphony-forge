@@ -1,0 +1,14 @@
+{
+  "base": "69dc838fd8d2563d6333e6b439cc03b358385f4d",
+  "branch": "fix/on-windows-forge-s-process-check-codex-i",
+  "done_when": "On Windows, codex.identity reads a process's start time and executable path through the Windows API with ctypes (OpenProcess, GetProcessTimes, QueryFullProcessImageNameW) instead of running PowerShell, so no child process is started; identity keeps its contract (None when no process has the id, a matching record otherwise, and a reused id never matches); POSIX is unchanged; a test on Windows exercises a live process, an exited one and a mismatch",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T04:54:04+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows, Forge's process check (codex.identity) shells out to PowerShell Get-CimInstance, and CI shows that call sometimes never returns: a pytest worker hung in subprocess communicate() during crash recovery (test_codex_resume.py test_9), like the earlier Windows hang in test_4"
+}
