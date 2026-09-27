@@ -1,0 +1,14 @@
+{
+  "base": "baa1b4e84707bd893048241516e0371faee17c88",
+  "branch": "fix/forge-records-no-timings-so-nobody-can-t",
+  "done_when": "each forge work round and each forge close appends one JSON line per step (worker round, review, CI wait) to .git/forge/timings.jsonl, never committed, with the item, the step, the model and effort where one ran, start time, seconds taken and outcome; a failed write never fails the command; a test through the real commands proves the lines",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T17:51:49+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge records no timings, so nobody can tell how long worker rounds, reviews and CI waits take or which models and steps are worth tuning"
+}
