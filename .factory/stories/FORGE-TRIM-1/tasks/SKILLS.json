@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-TRIM-1-SKILLS",
-  "status": "working",
+  "review": {
+    "commit": "2358f336a9b177ed59c3b8094856b67e2d35be89",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The expected bytes retain checkout line endings. With `core.autocrlf=true`, the [Git for Windows default](https://github.com/git-for-windows/build-extra/blob/main/installer/install.iss), these Markdown files contain CRLF: `.gitattributes:1\u20132` only pins two JSON files to LF. However, `src/forge/sync.py:246` normalizes newlines when reading and `src/forge/sync.py:146` writes LF bytes. Consequently, the assertion at line 53 fails on the first installation even when sync preserves its previous behavior. The suite includes Windows runners (`.github/workflows/forge-next.yml:23\u201325`). Construct expected bytes using the established LF output convention while retaining the byte comparison.",
+        "file": "tests/test_trim_skills.py",
+        "line": 28,
+        "priority": "P1",
+        "title": "Not done: byte-for-byte install test passes on Windows"
+      }
+    ],
+    "status": "blocked",
+    "tree": "5ff91c61bcad8ed5cde6eb806273b16655562a2e6a5f8f0a7f23105daafce3fe"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T16:28:38+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:16:36+00:00",
+      "step": "review"
     }
   ]
 }
