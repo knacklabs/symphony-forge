@@ -533,8 +533,8 @@ The session-start hook prints the same output.
 
 ### `forge migrate` (clients that copied Forge in)
 
-`forge migrate` runs in a client that copied in the `factory/` layout (the myclaw family, copied
-on 12 September). It works only on its own `forge/migrate-v1` branch and ends with one pull request
+`forge migrate` runs in a client that copied in the `factory/` layout. It works only on its own
+`forge/migrate-v1` branch and ends with one pull request
 through the normal close. It writes a fix state of kind `migrate`, so the hooks allow the branch
 and `forge close` works on it.
 
@@ -572,7 +572,7 @@ and `forge close` works on it.
 - **It writes** `forge.toml` pinned to the running version. The client's accepted sign-off
   decision stays in `docs/decisions/`, so the sign-off gate is already met.
 
-Clients from before the `factory/` layout (Gantry-fork, openclaw) are refused with a pointer to the
+Clients from before the `factory/` layout are refused with a pointer to the
 "move vendored clients" story.
 
 In Forge's own repo (it holds `src/forge/cli.py`), `forge migrate` deletes nothing. It converts only
@@ -611,8 +611,8 @@ switch checks pass.
      `spec measure`, the doctor rows). The check is that the whole flow completes; the commands
      don't need to exist beforehand.
    - A fresh client made with `forge init` closes one fix.
-   - myclaw's `forge migrate` pull request closes and is merged, and a fix in myclaw then closes
-     on v1.
+   - a copied-in client's `forge migrate` pull request closes and is merged, and a fix in that
+     client then closes on v1.
 3. **Switch.** Tag the last old-tree commit. Replace the old workflows with v1's generated CI
    (`tests` and `forge-pr-check`) and delete the old ones. Then delete:
    - the old tree (`factory/`, `forge`, `forge.cmd`, `harness.yaml`, `constitution/`, `install/`,
@@ -781,7 +781,7 @@ switch checks pass.
       - a `tests` workflow that doesn't run the `test` command.
     - It passes on a repo just made by `forge init`.
 30. **Migrate.**
-    - On a copy of a myclaw-shaped fixture, `forge migrate` makes one branch with a fix state of
+    - On a copy of a copied-in client fixture, `forge migrate` makes one branch with a fix state of
       kind `migrate`. On that branch it:
       - deletes exactly the listed Forge-owned paths and touches nothing else;
       - moves client-changed copies to `.forge-migrate/kept/` and lists them in the pull request;
@@ -872,7 +872,7 @@ switch checks pass.
   comes after the switch.
 - The FDE story's own features (discovery questions, payback, success-measure checks). That
   story's tasks build them on v1 during the pilot.
-- Moving clients from before the `factory/` layout, and any client other than myclaw. These belong
+- Moving clients from before the `factory/` layout, and other clients. These belong
   to the "move vendored clients" story.
 - Merging pull requests automatically; a human merges.
 - Lessons, deferrals, audits, outcome files, event export and the old history folders.

@@ -1,9 +1,9 @@
 """forge migrate: a client that copied Forge in moves to v1 in one pull request.
 
-The fixture (tests/fixtures/copied-client/) is shaped like myclaw. `source/` is the old Forge as it
+The fixture (tests/fixtures/copied-client/) is shaped like a copied-in client. `source/` is the old Forge as it
 was copied in; the test commits it as the Forge source repo that constitution/VENDORED_FROM names.
 `client/` is laid over it: the client's product, its own changes to Forge files (harness.yaml, and a
-skill added under factory/), old plans in myclaw's format, and old ledgers and records.
+skill added under factory/), old plans in the copied-in client's format, and old ledgers and records.
 
 Each test is named test_<criterion>_<rule> after the spec's acceptance criterion it proves.
 """
@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "copied-client"
 SHIP = "plans/active/SHIP-1-shoppers-can-save-a-basket.md"
 DRAFT = "plans/active/DRAFT-1-shoppers-can-share-a-basket.md"
-# A lower-case story key, like myclaw's cache-bug: it becomes TIDY-UP.
+# A lower-case story key in a copied-in client becomes TIDY-UP.
 TIDY = "plans/active/tidy-up-the-shop-code-is-easy-to-change.md"
 # Fully shipped before the move: one whole (with its outcome), one task by task (with none).
 SEARCH = "plans/active/SEARCH-1-shoppers-can-search-the-shop.md"

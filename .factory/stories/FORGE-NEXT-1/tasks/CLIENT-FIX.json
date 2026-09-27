@@ -4,11 +4,11 @@
     "commit": "0831f051a79f71eba53da712033fc8744e25f181",
     "dismissals": [
       {
-        "because": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json:3 the trial ran in its own repo: knacklabs/forge-trial-client was made with forge init from v1.0.0-rc.2 (rc.1 predates today's fixes and fails its own forge-pr-check) and its README fix merged as knacklabs/forge-trial-client#1 with a clean review; this branch only records it",
+        "because": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json:3 the trial ran in its own repo: the trial client repo was made with forge init from v1.0.0-rc.2 (rc.1 predates today's fixes and fails its own forge-pr-check) and its README fix merged as the trial client pull request with a clean review; this branch only records it",
         "finding": 1
       },
       {
-        "because": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json:7 knacklabs/forge-trial-client#1 passed tests and forge-pr-check in CI; the repo is public by the owner's choice (2026-09-27) because the org's Actions budget blocked private CI, and main's protection requires both checks with admins included",
+        "because": ".factory/stories/FORGE-NEXT-1/tasks/CLIENT-FIX.json:7 the trial client pull request passed tests and forge-pr-check in CI; the repo is public by the owner's choice (2026-09-27) because the org's Actions budget blocked private CI, and main's protection requires both checks with admins included",
         "finding": 2
       }
     ],
