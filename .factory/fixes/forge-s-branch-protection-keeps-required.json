@@ -1,0 +1,56 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/forge-s-branch-protection-keeps-required",
+  "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
+  "kind": "fix",
+  "review": {
+    "commit": "ab2a7ab91b1a49edcc4d26dab1597701e317ccd1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "An absolute local origin bypasses the refusal and sends both protection requests using `{owner}/{repo}`. With `GH_REPO` pointing elsewhere, this can modify an unrelated repository because [gh resolves those placeholders from its repository context](https://cli.github.com/manual/gh_api). Remove the production exception and refuse unresolved origins. Tests can use GitHub fetch URLs with local push URLs, as the new test already does at tests/test_fix_forge_s_branch_protection_keeps_required.py:65\u201366.",
+        "file": "src/forge/init.py",
+        "line": 88,
+        "priority": "P2",
+        "title": "Simpler: test-only repository fallback \u2192 refuse unresolved origins"
+      },
+      {
+        "body": "The exact comparison rejects `jobs: # required checks`, although comments are valid [YAML syntax](https://yaml.org/spec/1.2.2/#66-comments). If a deleted workflow declares `keep-check` and a surviving workflow uses that commented header to declare the same job, the surviving producer is invisible and protection drops a live requirement. Conversely, a commented header in the deleted workflow leaves its obsolete checks required. Handle comments and valid indentation when discovering jobs. This is P2 under the requested edge-case rule; the supplied generated-workflow scenario is covered.",
+        "file": "src/forge/init.py",
+        "line": 124,
+        "priority": "P2",
+        "title": "Recognize commented jobs headers before removing required checks"
+      }
+    ],
+    "status": "clean",
+    "tree": "eece6aa9d8a4401f04ecc842eb2bf16526788b22bd95e2f1ea2729732f58d06b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:42+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:23:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:14:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:23:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:06:56+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's branch protection keeps required checks whose workflows a migration deletes, which blocks every later pull request once admins are enforced, and with two remotes and no gh default it can protect the wrong repo"
+}
