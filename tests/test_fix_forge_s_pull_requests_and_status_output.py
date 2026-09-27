@@ -16,12 +16,15 @@ def test_1_pr_title_and_labeled_body(env):
 
 
 def test_2_fix_title_uses_first_clause_and_seventy_characters(env):
-    why = "A very long owner-facing explanation of the problem, with more details that continue"
+    why = ("The owner cannot tell which action to take from this very long pull request title "
+           "when the first clause runs beyond the stated limit, with more details afterward")
     item, _ = env.start_fix(why=why)
     env.reviews(CLEAN)
     assert env.close(item).returncode == 0
     create = env.gh_calls("pr", "create")[-1]
-    assert create[create.index("--title") + 1] == why.split(",", 1)[0][:70]
+    title = create[create.index("--title") + 1]
+    assert title == why.split(",", 1)[0][:70]
+    assert len(title) == 70
 
 
 def test_3_review_block_opens_with_plain_verdict(env):
@@ -50,19 +53,37 @@ def test_4_promoted_spec_task_is_named_spec(repo):
 
 def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     setup(repo)
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text(encoding="utf-8")
+               + 'checks = ["tests"]\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-q", "-m", "Check pull requests")
+    repo.git("push", "-q", "origin", "main")
     fix = repo.path.parent / "repo-fix-tidy-up"
     repo.git("worktree", "add", "-q", "-b", "fix/tidy-up", str(fix), "main")
     state = fix / ".factory/fixes/tidy-up.json"
     state.parent.mkdir(parents=True)
-    state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up", "status": "ready"}))
-    gh.respond("pr", "list", stdout=json.dumps([{"headRefName": "fix/tidy-up", "state": "OPEN",
-        "title": "Tidy up", "url": "https://github.com/acme/shop/pull/7"}]))
+    state.write_text(json.dumps({"branch": "fix/tidy-up", "why": "Tidy up",
+                                 "status": "waiting for checks"}))
+    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
+               "headRefName,state,title,body,mergedAt,url", stdout=json.dumps([{
+                   "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
+                   "url": "https://github.com/acme/shop/pull/7"}]))
+    gh.respond("pr", "list", "--state", "all", "--limit", "25", "--json",
+               "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup",
+               stdout=json.dumps([{"headRefName": "fix/tidy-up",
+                                   "statusCheckRollup": [{"name": "tests", "conclusion": "SUCCESS",
+                                                          "completedAt": "2026-09-27T10:00:00Z"}]}]))
+    gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
+               "headRefName,state,title,body,mergedAt,files,statusCheckRollup", exit=1,
+               stderr="GitHub timed out on the detailed bulk request")
     out = tmp_path / "board.html"
     result = repo.forge("board", "--out", str(out))
     assert result.returncode == 0, result.stderr
-    assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in out.read_text()
+    page = out.read_text()
+    assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
+    assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
-    assert "--limit" in calls[-1] and int(calls[-1][calls[-1].index("--limit") + 1]) <= 25
+    assert len(calls) == 2
 
 
 def test_6_next_names_ready_pr_and_close_findings(repo, gh):
