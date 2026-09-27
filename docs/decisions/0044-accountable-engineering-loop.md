@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0093-lean-forge-rebuild
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-08-13
 stories: [FORGE-ACC-1, FORGE-ACC-2, FORGE-ACC-3]

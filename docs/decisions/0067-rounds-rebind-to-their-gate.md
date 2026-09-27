@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0092-close-is-green-ci-and-clean-review
 confirmed_by: "Ravi"
 date: 2026-09-11
 stories: [GATES-1]

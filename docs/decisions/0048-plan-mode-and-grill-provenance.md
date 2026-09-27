@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0093-lean-forge-rebuild
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-08-21
 stories: [plan-mode-and-grill-provenance]

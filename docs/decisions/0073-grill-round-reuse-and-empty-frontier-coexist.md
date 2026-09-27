@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0092-close-is-green-ci-and-clean-review
 confirmed_by: "User (selected reuse same gate, 2026-09-13)"
 date: 2026-09-13
 stories: [FORGE-COORD-1]

@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0093-lean-forge-rebuild
 confirmed_by: "vrknetha"
 date: 2026-08-07
 stories: [FORGE-MODES-1]

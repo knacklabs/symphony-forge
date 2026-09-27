@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0093-lean-forge-rebuild
 confirmed_by: "User (explicit CI-only Linux/Windows ruling, Codex conversation 2026-09-10)"
 date: 2026-09-10
 stories: [FORGE-COORD-1]

@@ -1,5 +1,6 @@
 ---
-status: accepted
+status: superseded
+superseded_by: 0093-lean-forge-rebuild
 confirmed_by: "User (all plans approved, Codex conversation 2026-09-12)"
 date: 2026-09-12
 stories: [FORGE-COORD-1]

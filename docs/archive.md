@@ -18,12 +18,12 @@ git log old-forge-final -- factory/scripts/            see a file's history
 | `harness.yaml` | Phase owners, model routing and skill lists | `forge.toml` and the `forge` commands |
 | `constitution/` | The engineering constitution | The standards page, `src/forge/standards.md` |
 | `harness/` | The NestJS and React scaffold and its conventions | `src/forge/templates/conventions/` |
-| `.codex/agents/` and the model routing in `.codex/` | The Codex role files | The `workers` setting in `forge.toml`, and the models in `.codex/config.toml` |
+| `.codex/explore.config.toml` | Old exploration routing | The `workers` setting in `forge.toml`; Codex's role files remain in `.codex/agents/` |
 | `.envrc` | The three verify commands and gstack's folder | The `test` command in `forge.toml` |
 | `.gstack/` | gstack's reviews, plans, decisions and learnings | Office-hours design docs move to `docs/context/`; gstack keeps the rest on each machine |
-| `WORKFLOW.md` and the old Forge docs in `docs/` | How the old Forge worked | `docs/guide.md` |
+| The old Forge docs in `docs/` | How the old Forge worked | `docs/guide.md` |
 | Specs the switch supersedes | Contracts for machinery the rebuild removes | `docs/specs/lean-forge-v1.md` |
-| `board-invariant.yml`, `factory-scaffold.yml`, `gardener.yml`, `harness-health.yml`, `pr-link.yml`, `pr-ticket-check.yml` and `roadmap-gate.yml` in `.github/workflows/` | The old checks | The generated `forge.yml`, with its `tests` and `forge-pr-check` checks |
+| The old workflows in `.github/workflows/` | The old checks | `forge.yml` runs `tests` and `forge-pr-check`; `forge-next.yml` runs the full v1 suite on Linux, macOS and Windows |
 
 ## Kept
 
@@ -31,3 +31,7 @@ git log old-forge-final -- factory/scripts/            see a file's history
 - `docs/specs/` (the specs still in force) and `docs/decisions/`, where the switch marks the
   decisions it supersedes.
 - `docs/product/`, `docs/context/` and every doc the first story on v1 produced.
+- Codex's own role files in `.codex/agents/`.
+
+The old `plans/roadmap.json` is archived history. Its pending stories belong to the old Forge and
+do not authorize work on v1; new work is planned from the kept specs and decisions.
