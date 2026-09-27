@@ -1,0 +1,41 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/forge-next-lists-already-merged-fixes-an",
+  "done_when": "forge next says an item whose pull request merged is merged and names the cleanup, instead of waiting for checks, and a test proves it",
+  "kind": "fix",
+  "review": {
+    "commit": "6ae8f600d26694188d231092a4cc428b6d84f062",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When the last task merges on GitHub before origin/<default> is fetched, this branch recommends `forge story done` using the new GitHub-derived status. However, that command reads the last-fetched ref (`src/forge/story.py:174`, `376\u2013381`) and refuses completion when task merges are absent there (`182\u2013186`). Removing the worktrees does not refresh that ref, so the printed sequence ends in a contradictory \u201cnot merged yet\u201d refusal. Include a fetch before recommending story completion when merge evidence comes only from GitHub.",
+        "file": "src/forge/nextstep.py",
+        "line": 159,
+        "priority": "P2",
+        "title": "Fetch merged task state before recommending story completion"
+      }
+    ],
+    "status": "clean",
+    "tree": "e1012b0d75775f772233d6da913ba193118d03e971c8aaa40f72ab5301b148b1"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:44+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:05:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:22:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:35:15+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge next lists already-merged fixes and tasks as waiting for their checks while their worktrees still exist"
+}

@@ -25,5 +25,5 @@
       "step": "review"
     }
   ],
-  "why": "forge migrate moves a client's old verify commands into forge.toml's test without installing the project's dependencies first, so a Node client's CI runs npm checks on a fresh runner with no node_modules (myclaw's migration PR)"
+  "why": "forge migrate moves a client's old verify commands into forge.toml's test without installing the project's dependencies first, so a Node client's CI runs npm checks on a fresh runner with no node_modules (the copied-in client's migration PR)"
 }

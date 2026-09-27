@@ -55,7 +55,7 @@
         "Workflow rules are enforced by forge commands and git hooks, with the PR check as backstop, identically on Claude and Codex",
         "Clients install a pinned Forge tool; forge sync regenerates the adapter; forge migrate moves a vendored client in one PR",
         "The board tells history and current state in plain English for non-technical readers",
-        "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating myclaw; then the old tree is deleted"
+        "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating a copied-in client; then the old tree is deleted"
       ],
       "order": 52,
       "status": "active",
@@ -80,10 +80,17 @@
       "order": 54
     },
     {
+      "key": "FORGE-ONECHAT-1",
+      "title": "One main chat approves every Forge repo's stories",
+      "spec": "docs/specs/one-chat-approval.md",
+      "status": "pending",
+      "order": 55
+    },
+    {
       "key": "FORGE-TRIM-1",
       "title": "src/forge is at its 8,000-line ceiling, so the next stories can't add their code without breaking Forge's rule that it shrinks over time",
       "status": "pending",
-      "order": 55
+      "order": 56
     }
   ],
   "epics": [
