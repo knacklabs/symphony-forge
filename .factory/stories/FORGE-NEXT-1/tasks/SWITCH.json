@@ -1,21 +1,21 @@
 {
   "branch": "task/FORGE-NEXT-1-SWITCH",
   "review": {
-    "commit": "4f72c4bc0ad489225c59d4ab68f97edb2201cdc2",
+    "commit": "dd89983193764c162b438e65c092322f2c55d220",
     "dismissals": [],
     "findings": [
       {
-        "body": "The entire branch change records SWITCH starting; it does not implement the switch. The old launcher remains at `forge:14`, pointing to `factory/scripts/forge.py`, and `src/forge/__init__.py:4` still declares `1.0.0-rc.2`. Thus the old Forge is demonstrably still present and the package has not been bumped to the required release version. Complete the scoped removal and release changes before treating this part as delivered, preserving the old state under its archive tag and tagging the merge commit as specified.",
-        "file": ".factory/stories/FORGE-NEXT-1/tasks/SWITCH.json",
-        "line": 3,
-        "priority": "P1",
-        "title": "Not done: 9. The old Forge is deleted, its last state is kept under a tag, and version 1.0.0 is released."
+        "body": "chunk 1/13:\n\nCalling `plans/roadmap.json` archived here does not retire it from v1. For example, `FORGE-LED-0` remains pending at `plans/roadmap.json:810` and references the deleted `factory-event-export.md` spec. V1 still directs users to this roadmap (`src/forge/nextstep.py:97\u2013100`), and `story new` accepts its keys (`src/forge/story.py:95`). Consequently, obsolete work remains available through the normal workflow despite the switch's requirement to supersede old pending stories. Retire those entries in the roadmap consumed by v1, preserving their history in the archive.",
+        "file": "docs/archive.md",
+        "line": 36,
+        "priority": "P2",
+        "title": "Supersede the old pending stories in the live roadmap"
       }
     ],
-    "status": "blocked",
-    "tree": "21a599f824fc1bcfd650602f2266a32674bce088a8cba64e927f303a68d2673b"
+    "status": "clean",
+    "tree": "780c024e6b7f3c060546cdbac3165fac5d3e64af3d69a19eed6dfdd8e770d73c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-26T20:25:18+00:00",
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-26T20:27:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T03:07:11+00:00",
       "step": "review"
     }
   ]
