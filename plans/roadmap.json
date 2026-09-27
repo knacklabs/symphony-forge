@@ -64,6 +64,13 @@
       "kind": "refactor",
       "depends_on": [],
       "spec": "docs/specs/lean-forge-v1.md"
+    },
+    {
+      "key": "FORGE-STEER-1",
+      "title": "The coordinator can steer and question its Codex workers",
+      "spec": "docs/specs/codex-steering.md",
+      "status": "pending",
+      "order": 53
     }
   ],
   "epics": [
