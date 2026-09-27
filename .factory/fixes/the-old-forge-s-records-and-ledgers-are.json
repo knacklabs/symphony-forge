@@ -4,11 +4,22 @@
   "branch": "fix/the-old-forge-s-records-and-ledgers-are",
   "done_when": "Only the new Forge's files stay: under .factory/, only stories/<KEY>/tasks/*.json, stories/<KEY>/*.json story states and fixes/*.json that the new Forge reads; under plans/, only the story docs (<KEY>.md), their .read.md notes and roadmap.json; WORKFLOW.md, .review-notes.md, projects/, .forge-migrate/ and .claude/CLAUDE.md are deleted; every path the new Forge's code, tests, CI or docs still reference is kept or the reference is updated; the full suite passes; git history keeps everything",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "0279bc20e228dd6a0fc2b9089508e3cb45d5cce1",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "34ff64cc1a2b25fe161c17698de966758feb23fe62e5e8c7b9ab6d604e9c8dd0"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T03:28:05+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:45:21+00:00",
+      "step": "review"
     }
   ],
   "why": "The old Forge's records and ledgers are still on main after the switch (about 1,700 files under .factory/, 700 under plans/, plus WORKFLOW.md, .review-notes.md, projects/, .forge-migrate/ and .claude/CLAUDE.md), so the repo still reads like the old Forge"
