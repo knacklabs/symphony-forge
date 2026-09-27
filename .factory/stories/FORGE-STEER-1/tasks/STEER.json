@@ -1,33 +1,33 @@
 {
   "branch": "task/FORGE-STEER-1-STEER",
   "review": {
-    "commit": "b25a38dc6ae5d4c99251c8a90a21eae903c57dc4",
+    "commit": "d31bab0ffe72be4d1a7715df63579e79dfa53185",
     "dismissals": [],
     "findings": [
       {
-        "body": "The first question round still creates Forge's status commit before calling Codex: worker.py:84\u201386 writes and commits the working state. The new question test explicitly expects HEAD's commit count to increase by one. This violates the supplied Done-when requirement that the round add no commit of its own. The source spec permits this pre-turn commit, but that exception is absent from the authoritative review contract. Defer the state commit or otherwise make question rounds satisfy the requested no-commit behavior.",
+        "body": "On the first question round, worker.py:84\u201386 changes the status to working and calls commit_state before Codex runs. src/forge/repo.py:306\u2013309 confirms this creates a commit when the state changes. Detecting Question afterward cannot prevent that commit. Defer the status commit so a completed question round leaves HEAD unchanged.",
         "file": "src/forge/worker.py",
         "line": 90,
         "priority": "P1",
         "title": "Not done: 2. A question round adds no commit of its own"
       },
       {
-        "body": "The answering-round test never verifies successful continuation. Its app-server stub rejects thread/resume as unsupported (tests/stubs/codex-app-server:134\u2013135), so the answer always exercises a fresh conversation. Consequently, always starting fresh specifically when answering a question would pass this test. Add a question-and-answer case using the resumable fixture and assert that the answer uses the original conversation without starting another one.",
+        "body": "The question test explicitly requires one additional commit, enforcing the opposite of Done-when item 2. Consequently, the required no-commit behavior has no protecting test, and fixing it would fail this assertion. Assert that HEAD remains unchanged across the question round.",
         "file": "tests/test_steer_question.py",
-        "line": 39,
+        "line": 58,
         "priority": "P1",
-        "title": "Not done: test_2_answer_continues_the_same_conversation"
+        "title": "Not done: test_2_question_round_adds_no_commit"
       },
       {
-        "body": "The test covers a reported failed answer, but never interrupts an answering turn. The required interruption behavior therefore has no coverage: the question must remain recorded, and both work without --note and close must continue refusing. Add a command-level interruption case and verify those refusals afterward; a reported failed status does not exercise interruption and cleanup.",
-        "file": "tests/test_steer_question.py",
-        "line": 36,
-        "priority": "P1",
-        "title": "Not done: test_2_interrupted_answer_keeps_the_question_unanswered"
+        "body": "With re.S, Question:.* consumes subsequent paragraphs too. For example, `Question: Which parser?\\n\\nUsed the existing parser; implementation complete.` is recorded as an unanswered question even though the final paragraph is not a question. This unnecessarily blocks both work and close. Inspect the final paragraph rather than matching any Question paragraph through the end of the message.",
+        "file": "src/forge/worker.py",
+        "line": 97,
+        "priority": "P2",
+        "title": "Recognize Question only in the final paragraph"
       }
     ],
     "status": "blocked",
-    "tree": "764096667029d9692ae1092e86ab2c4a27efefe6434e0f7aa7222a8802a1a68f"
+    "tree": "171716e224a71184b9d74eb01091cf0672950fb86f249118f506ed465537b2f5"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-27T05:12:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:29:31+00:00",
       "step": "review"
     }
   ]
