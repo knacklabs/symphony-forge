@@ -4,21 +4,13 @@
   "done_when": "each forge work round and each forge close appends one JSON line per step (worker round, review, CI wait) to .git/forge/timings.jsonl, never committed, with the item, the step, the model and effort where one ran, start time, seconds taken and outcome; a failed write never fails the command; a test through the real commands proves the lines",
   "kind": "fix",
   "review": {
-    "commit": "75ac8e4d9531deaa25897a8fda675e40ba039620",
+    "commit": "4f21d57160f7f9a1071f4c0747e9b617987c4a7d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The timing tests exercise successful Claude workers and unsuccessful Codex turns, but never assert a timing record after Claude fails. These use different failure paths: `src/forge/worker.py:303\u2013304` raises a refusal for Claude, whereas the tested Codex failure returns a status. The existing failure test at `tests/test_worker.py:122\u2013126` checks only command output. Losing the timing record or recording a successful outcome on Claude failure would therefore pass the suite. Add a real `forge work` failure scenario using `STUB_CLAUDE_EXIT`, and assert that it appends a failed worker-round record with the required timing and model fields.",
-        "file": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
-        "line": 34,
-        "priority": "P1",
-        "title": "Not done: prove failed Claude worker timings through forge work"
-      }
-    ],
-    "status": "blocked",
-    "tree": "efcb72726cfc550253bc19df961107299cbe9f4086a2534998f5ef3d38720124"
+    "findings": [],
+    "status": "clean",
+    "tree": "0accf07e4504b28a4e9cdbb7ba8829e5ac64922dfb5e66803a84985a90b6729b"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T17:51:49+00:00",
@@ -34,6 +26,10 @@
     },
     {
       "at": "2026-09-27T18:41:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:46:28+00:00",
       "step": "review"
     }
   ],
