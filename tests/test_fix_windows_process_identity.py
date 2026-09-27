@@ -36,21 +36,29 @@ def test_1_windows_process_identity_is_live_gone_and_not_reused(repo):
     process = subprocess.Popen([sys.executable, "-c", "import sys; sys.stdin.read()"],
                                stdin=subprocess.PIPE)
     try:
+        def doctor():
+            done = repo.forge("doctor")
+            assert (done.returncode == 0 or
+                    (done.returncode == 1 and done.stderr.startswith("forge doctor found ") and
+                     done.stderr.endswith("Next: forge doctor\n"))), done.stderr
+            assert "Traceback" not in done.stderr
+            return done
+
         record = {"pid": process.pid, "started": started(process), "command": sys.executable}
         lock.write_text(json.dumps(record), encoding="utf-8")
-        live = repo.forge("doctor")
+        live = doctor()
         assert f"forge work TEST/PROCESS is running as process {process.pid}" in live.stdout
         assert lock.exists()
 
         lock.write_text(json.dumps({**record, "started": "0"}), encoding="utf-8")
-        reused = repo.forge("doctor")
+        reused = doctor()
         assert f"forge work TEST/PROCESS is running as process {process.pid}" not in reused.stdout
         assert not lock.exists()
 
         lock.write_text(json.dumps(record), encoding="utf-8")
         process.stdin.close()
         process.wait(timeout=10)
-        gone = repo.forge("doctor")
+        gone = doctor()
         assert f"forge work TEST/PROCESS is running as process {process.pid}" not in gone.stdout
         assert not lock.exists()
         assert not powershell_call.exists()

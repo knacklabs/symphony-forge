@@ -485,6 +485,8 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     stopped, unknown = False, None
     for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
         recorded = saved.get(key) or {}
+        if not recorded:
+            continue
         if os.name != "nt" and runs not in str(recorded.get("command")):
             continue
         alive = _alive(recorded)
