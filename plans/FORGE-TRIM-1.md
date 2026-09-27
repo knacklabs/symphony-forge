@@ -18,9 +18,11 @@ confirmed spec `docs/specs/forge-trim.md`.
 ## Done when
 
 1. `docs/specs/forge-trim.md` is confirmed by the owner and on the roadmap as FORGE-TRIM-1.
-2. The test-audit skill, the FDE guidance and the Remote Control skill each have one checked-in
-   copy, bundled at their package paths by the build; a wheel, a source distribution and an
-   editable install each give `forge sync` the same files as before, byte for byte.
+2. The test-audit skill, the FDE guidance and the Remote Control skill each have one source copy:
+   the package copies under `src/forge/templates/` are gone, and the build bundles the copies
+   `forge sync` already writes into this repo at the same package paths; a wheel, a source
+   distribution and an editable install each give `forge sync` the same test-audit, FDE and Remote
+   Control files as before, byte for byte.
 3. In Forge's own repo `forge migrate` refuses before any change, saying the repo moved at the
    switch; the own-repo mode and its tests are gone; a copied-in client migrates as before; the v1
    spec says why.
@@ -35,9 +37,11 @@ confirmed spec `docs/specs/forge-trim.md`.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | SRC-FORGE-IS-AT-ITS-8-000-LINE-CEILING-S | The spec | The confirmed spec and its roadmap item | 1 | `docs/specs/forge-trim.md`, `docs/specs/forge-trim.read.md`, `plans/roadmap.json` | | none | no |
-| SKILLS | One copy of each skill | The package copies of the three skill texts removed, the build bundling the checked-in copies at the same package paths, and a check of wheel, source and editable installs | 2 | `pyproject.toml`, `src/forge/templates/skills/`, `src/forge/templates/fde.md`, `src/forge/sync.py` | `tests/test_trim_skills.py` | none | no |
-| MIGRATE | No own-repo migrate | The own-repo mode removed, the refusal in Forge's own repo, the v1 spec's passages, and the migration skill text moved to `docs/` | 3, 4 | `src/forge/migrate.py`, `tests/test_migrate.py`, `docs/specs/lean-forge-v1.md`, `src/forge/templates/migrate-skill.md`, `docs/migrate-skill.md`, `tests/test_fix_after_forge_migrate_old_forge_leftovers.py` | `tests/test_trim_migrate.py` | none | yes |
-| STANDARDS | Point to the standards | The standards page synced next to the Forge skill, the "Build simple" pointer, the generated copies, and the size check | 5, 6 | `src/forge/templates/skill.md`, `src/forge/sync.py`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_setup.py` | `tests/test_trim_standards.py` | SKILLS, MIGRATE | yes |
+| SKILLS | One source copy | The three package copies removed, the build's forced inclusion of this repo's synced copies at the same package paths, and `sync`'s source lookup for a built package and an editable checkout, with one test that crosses sync and the source lookup | 2 | `pyproject.toml`, `src/forge/templates/skills/`, `src/forge/templates/fde.md`, `src/forge/sync.py` | `tests/test_trim_skills.py` | none | no |
+| PACKAGING | Same files from every install | Byte-for-byte checks that a wheel, a source distribution and an editable install give `forge sync` the same test-audit, FDE and Remote Control files as before | 2 | `tests/test_trim_packaging.py` | `tests/test_trim_packaging.py` | SKILLS | no |
+| MIGRATE | No own-repo migrate | The own-repo mode and its tests removed, the refusal in Forge's own repo, and the v1 spec's passages | 3 | `src/forge/migrate.py`, `tests/test_migrate.py`, `docs/specs/lean-forge-v1.md` | `tests/test_trim_migrate.py` | none | yes |
+| GUIDE | The migration guide in docs | The migration skill text moved to `docs/` and its reader test following it | 4 | `src/forge/templates/migrate-skill.md`, `docs/migrate-skill.md`, `tests/test_fix_after_forge_migrate_old_forge_leftovers.py` | `tests/test_trim_guide.py` | none | no |
+| STANDARDS | Point to the standards | The standards page synced next to the Forge skill, the "Build simple" pointer, the generated copies, and the size check once every other task has merged | 5, 6 | `src/forge/templates/skill.md`, `src/forge/sync.py`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_setup.py` | `tests/test_trim_standards.py` | SKILLS, PACKAGING, MIGRATE, GUIDE | yes |
 
 New moving parts: none
 
@@ -56,6 +60,10 @@ New moving parts: none
   copies directly.
 - MIGRATE's refusal fires on `repo = "forge-source"` before any planning; the client path is
   untouched.
-- STANDARDS goes last because it shares `sync.py` with SKILLS and counts the result for item 6.
+- SKILLS pins `sync`'s file list and its source lookup before STANDARDS adds the standards page to
+  it. STANDARDS goes last because it shares `sync.py` with SKILLS and counts the whole result for
+  item 6, which needs every other task merged.
+- Done-when 2's byte-for-byte promise covers only the test-audit, FDE and Remote Control files;
+  STANDARDS changes the Forge skill and adds the standards page on purpose (item 5).
 - Each test file starts with `STORY = "FORGE-TRIM-1"`, and its `test_<n>_` names cite the Done-when
   items its task covers.
