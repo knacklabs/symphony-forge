@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed the size cut to refactor across modules, with every command's output unchanged, on 2026-09-27",
   "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
   "branch": "fix/src-forge-is-at-its-8-000-line-ceiling-s",
   "done_when": "src/forge has at least 400 fewer lines than on main, with no behaviour change: the full test suite passes and every Forge command's output is unchanged",
