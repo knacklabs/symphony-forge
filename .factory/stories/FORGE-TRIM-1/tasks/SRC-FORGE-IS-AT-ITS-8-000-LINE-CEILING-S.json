@@ -3,11 +3,22 @@
   "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
   "branch": "task/FORGE-TRIM-1-SRC-FORGE-IS-AT-ITS-8-000-LINE-CEILING-S",
   "done_when": "src/forge has at least 400 fewer lines than on main, with no behaviour change: the full test suite passes and every Forge command's output is unchanged",
-  "status": "working",
+  "review": {
+    "commit": "e6fbb20dd6e042d6c9861232ef41d482d8a75293",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "07fb30b7eca38e27a9b996ee96fe4df55da7828051bffb8f76817a205646d66d"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T15:31:28+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:30:43+00:00",
+      "step": "review"
     }
   ],
   "why": "src/forge is at its 8,000-line ceiling, so the next stories can't add their code without breaking Forge's rule that it shrinks over time"
