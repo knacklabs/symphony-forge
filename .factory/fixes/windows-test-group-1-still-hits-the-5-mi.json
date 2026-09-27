@@ -3,11 +3,22 @@
   "branch": "fix/windows-test-group-1-still-hits-the-5-mi",
   "done_when": "In .github/workflows/forge-next.yml only the Windows jobs get a 10-minute cap (the others keep 5), so a test over pytest-timeout's limit fails by name in the log; the workflow test pins both caps",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "fa5d9ce6474cc72d526071e85ddb59d863e04d5e",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "f803ac26e6d6727eec0c9eda31b74316d04297879267999d82d417c2a6579938"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T03:48:14+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T03:53:37+00:00",
+      "step": "review"
     }
   ],
   "why": "Windows test group 1 still hits the 5-minute job cap and is cancelled before pytest-timeout can name a slow or hung test, so the log is empty and pull requests need reruns"
