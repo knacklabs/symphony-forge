@@ -1,8 +1,10 @@
 ---
 slug: one-chat-approval
 title: One main chat approves every Forge repo's stories
-status: draft
+status: confirmed
 saved: 2026-09-27T15:18:50+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 19e131df57992cf7cc791576df0601aafab6ebafa85dcc7bd57e0e4859b4b981
 ---
 
 # One main chat approves every Forge repo's stories
