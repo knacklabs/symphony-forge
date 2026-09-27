@@ -1,0 +1,14 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/forge-s-branch-protection-keeps-required",
+  "done_when": "init.protect drops required checks that no remaining workflow produces, names the repo from the origin remote explicitly in every gh api call, and a test proves each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:42+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's branch protection keeps required checks whose workflows a migration deletes, which blocks every later pull request once admins are enforced, and with two remotes and no gh default it can protect the wrong repo"
+}
