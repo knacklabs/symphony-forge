@@ -1,35 +1,21 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
-    "commit": "13362f285eaa90273be5735e3ea9ac26f846bbbe",
+    "commit": "f57168f253cc126ee9ccbc8d4c73f23a789bf81a",
     "dismissals": [],
     "findings": [
       {
-        "body": "This test does not establish that merge checks belong to the recorded commit. `env.checks()` matches only the API argument prefix (tests/test_close.py:150\u2013154), so it returns identical results for every SHA. Passing another commit to `checks.wait` would still pass this test; the `--match-head-commit` assertion verifies a separate operation. Make the API responses commit-specific or assert the check-run and status endpoints queried by the merge command.",
-        "file": "tests/test_merge_command.py",
-        "line": 146,
-        "priority": "P1",
-        "title": "Not done: recorded-head check lookup test"
-      },
-      {
-        "body": "The assertion accepts any archive request, while the archive stub succeeds for any thread ID. Archiving an unrelated conversation would therefore pass both the success and failure scenarios, leaving item 7's requirement to archive the read's own conversation unprotected. Assert that the archive request's thread ID matches the conversation created for this read, or make the stub reject other IDs.",
-        "file": "tests/test_merge_command.py",
-        "line": 298,
-        "priority": "P1",
-        "title": "Not done: cold-read conversation identity test"
-      },
-      {
-        "body": "If a local commit is created during merging and archiving subsequently fails, the receipt correctly preserves pending archives, but the instructed retry always stops here because the local branch no longer equals the receipt. The MERGED cleanup path and its local-commit preservation logic are unreachable. Following `forge close` does not repair this: close.py:57\u201360 returns through `_merged`, which only prints guidance (close.py:247\u2013258). Apply this local-head gate to an unmerged PR, while allowing cleanup of a verified merged recorded head to archive outstanding conversations and preserve the advanced local branch.",
+        "body": "If the local branch advances during merging and archiving then fails, the instructed `forge merge` retry always stops at this head check. It never reaches the MERGED path to archive outstanding conversations and preserve the advanced local branch. The suggested `forge close` cannot repair this: src/forge/close.py:57\u201360 returns through `_merged`, which only prints guidance at lines 247\u2013258. Apply the local-head gate to unmerged pull requests; allow cleanup retries after verifying that the merged PR has the recorded head.",
         "file": "src/forge/merge.py",
         "line": 39,
         "priority": "P2",
         "title": "Allow cleanup retries after the local branch advances"
       }
     ],
-    "status": "blocked",
-    "tree": "5854d9c8bc39c3e182196a33d75b22b0444be07687c160f61eec0364c5fa2ac7"
+    "status": "clean",
+    "tree": "b69a2dca32fa925639ab0ec2f261ccc9c43b7d63969b9780aa88ac430e84b91a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T17:28:37+00:00",
@@ -45,6 +31,10 @@
     },
     {
       "at": "2026-09-27T18:45:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:53:38+00:00",
       "step": "review"
     }
   ]
