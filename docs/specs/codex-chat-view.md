@@ -1,8 +1,10 @@
 ---
 slug: codex-chat-view
 title: Forge's Codex chats are easy to follow in the Codex app
-status: draft
+status: confirmed
 saved: 2026-09-27T16:54:48+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 3bb6a14dc403fe9e50166db37897bb47d0f0005b37569dc1116d7d613298f5ff
 ---
 
 # Forge's Codex chats are easy to follow in the Codex app
