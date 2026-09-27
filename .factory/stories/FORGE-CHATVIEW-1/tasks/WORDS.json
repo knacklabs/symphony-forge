@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-WORDS",
-  "status": "working",
+  "review": {
+    "commit": "599cf37ca8253445b6edec63a430ea04f716b5b5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The counter excludes every log entry containing `status`, but recovered turns can have only such an entry. `src/forge/codex.py:189\u2013197` records a turn recovered after a crash before its start was logged by appending only its completion record; `tests/test_codex_resume.py:514\u2013557` exercises this supported case. The next brief therefore undercounts the round, potentially saying `Build ...` after the first recovered turn instead of `Fix round 2 ...`. Count distinct recorded conversation/turn pairs, including recovery-only records.",
+        "file": "src/forge/worker.py",
+        "line": 82,
+        "priority": "P1",
+        "title": "Not done: 4. Correct fix-round summaries for every recorded turn"
+      },
+      {
+        "body": "The cold-read test uses only `BOARD`, so deleting the independent truncation implementation in `src/forge/story.py:150\u2013153` would leave every new naming assertion passing. The long fix name exercises only worker.py's separate implementation. Add a CLI cold-read case with an overlong key or spec slug that asserts the required whole-word cutoff and ellipsis.",
+        "file": "tests/test_chatview_words.py",
+        "line": 33,
+        "priority": "P1",
+        "title": "Not done: cold-read name truncation test"
+      },
+      {
+        "body": "This assertion still requires two naming requests for one resumed conversation. The current driver calls `thread.set_name(...)` unconditionally after start or resume (`src/forge/codex_turn.py:143\u2013146`), so item 3's named-once behavior is not delivered yet. The notes explicitly assign that behavior to START; when START lands, update this assertion to expect only the initial naming request and verify that subsequent rounds preserve the name.",
+        "file": "tests/test_codex_resume.py",
+        "line": 217,
+        "priority": "P2",
+        "title": "Later: START must enforce naming only on a fresh chat"
+      }
+    ],
+    "status": "blocked",
+    "tree": "3ce4d8202a2714adeb6b9cc39ed572f92080a662b8f7f9ede8b71bff0469ca3c"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T17:03:28+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:31:14+00:00",
+      "step": "review"
     }
   ]
 }
