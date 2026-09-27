@@ -1,0 +1,25 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/in-src-forge-checks-py-a-check-run-count",
+  "done_when": "every required check name is matched independently against the check runs, so overlapping names each find their run, and a test proves it",
+  "kind": "fix",
+  "review": {
+    "commit": "ed52e313bfb7b6ace82e1b9d3fb86c3ffd895320",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "3c1eb0ebf4dacec978e0e0c144deecf85ef22a7936d4fcfe4148774c9fe25573"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T14:49:45+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:04:44+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "In src/forge/checks.py a check run counts toward only one required check name when names overlap, so close can end up waiting on nothing"
+}

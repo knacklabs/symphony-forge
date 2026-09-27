@@ -71,6 +71,13 @@
       "spec": "docs/specs/codex-steering.md",
       "status": "pending",
       "order": 53
+    },
+    {
+      "key": "FORGE-MERGE-1",
+      "title": "The agent can merge a ready pull request when the owner allows it",
+      "spec": "docs/specs/agent-merge.md",
+      "status": "pending",
+      "order": 54
     }
   ],
   "epics": [
