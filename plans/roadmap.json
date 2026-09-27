@@ -71,6 +71,13 @@
       "spec": "docs/specs/codex-steering.md",
       "status": "pending",
       "order": 53
+    },
+    {
+      "key": "FORGE-ONECHAT-1",
+      "title": "One main chat approves every Forge repo's stories",
+      "spec": "docs/specs/one-chat-approval.md",
+      "status": "pending",
+      "order": 54
     }
   ],
   "epics": [
