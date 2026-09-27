@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from test_close import env  # noqa: F401
+from test_close import CLEAN, FAILED, blocked, env, finding, run  # noqa: F401
+from test_codex_worker import _codex_repo, _toml, sdk_data  # noqa: F401
 from test_worker import install_claude
 
 STORY = "FIX-FORGE-RECORDS-NO-TIMINGS-SO-NOBODY-CAN-T"
@@ -24,17 +25,29 @@ def delay_tool(path: Path, report: str = "") -> None:
     path.chmod(0o755)
 
 
-@pytest.mark.parametrize("review_config,review_model", [
-    ("", "gpt-6-sol"),
-    ('models.review = { model = "gpt-6-astra" }\n', "gpt-6-astra"),
+@pytest.mark.parametrize("scenario,review_model", [
+    ("clean_default", "gpt-6-sol"),
+    ("clean_override", "gpt-6-astra"),
+    ("codex", None),
+    ("blocked", None),
+    ("review_failed", None),
+    ("ci_failed", None),
 ])
-def test_1_work_and_close_append_step_timings(env, monkeypatch, review_config, review_model):
+def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenario, review_model):
     repo = env.repo
+    if scenario == "codex":
+        _codex_rounds(repo, monkeypatch, request.getfixturevalue("sdk_data"))
+        return
+    if scenario in ("blocked", "review_failed", "ci_failed"):
+        _failed_close(env, scenario)
+        return
+
     install_claude(repo)
     config = repo.path / "forge.toml"
     config.write_text(config.read_text("utf-8") +
                       'models.lite = { model = "sonnet", effort = "medium" }\n'
-                      + review_config, "utf-8")
+                      + ('models.review = { model = "gpt-6-astra" }\n'
+                         if scenario == "clean_override" else ""), "utf-8")
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Set models")
     repo.git("push", "-q", "origin", "main")
@@ -66,10 +79,51 @@ def test_1_work_and_close_append_step_timings(env, monkeypatch, review_config, r
         assert 0.15 <= line["seconds"] <= (latest - earliest).total_seconds()
     assert not repo.git("status", "--porcelain", cwd=repo.path)
 
-    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
-    failed = repo.forge("work", item)
-    assert failed.returncode != 0
-    assert json.loads(timings.read_text("utf-8").splitlines()[-1])["outcome"] == "failed"
+
+def _codex_rounds(repo, monkeypatch, sdk_data):
+    folder, _ = _codex_repo(repo, monkeypatch, sdk_data)
+    item = "BOARD/PAGE"
+    timings = repo.path / ".git" / "forge" / "timings.jsonl"
+
+    first = repo.forge("work", item)
+    assert first.returncode == 0, first.stderr
+    version = repo.forge("--version").stdout.split()[-1]
+    (folder / "forge.toml").write_text(_toml(version, "codex", {
+        "build": {"model": "gpt-6-sol", "effort": "medium"},
+        "fix": {"model": "gpt-6-luna", "effort": "high"}}), "utf-8")
+    second = repo.forge("work", item)
+    assert second.returncode == 0, second.stderr
+    monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
+    third = repo.forge("work", item)
+    assert third.returncode != 0
+
+    lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
+    assert [(line["item"], line["step"], line["outcome"], line["model"], line["effort"])
+            for line in lines] == [
+                (item, "worker round", "completed", "gpt-6-sol", "medium"),
+                (item, "worker round", "completed", "gpt-6-luna", "high"),
+                (item, "worker round", "failed", "gpt-6-luna", "high")]
+
+
+def _failed_close(env, failure):
+    if failure == "blocked":
+        env.reviews(blocked(finding("P1", "Missing greeting")))
+        expected = [("review", "blocked")]
+    elif failure == "review_failed":
+        env.reviews(FAILED)
+        expected = [("review", "failed")]
+    else:
+        env.reviews(CLEAN)
+        env.checks([run("tests", "failure"), run("forge-pr-check")])
+        expected = [("review", "clean"), ("CI wait", "failed")]
+    item, _ = env.start_fix()
+    timings = env.repo.path / ".git" / "forge" / "timings.jsonl"
+
+    closed = env.close(item)
+    assert closed.returncode != 0
+    lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
+    assert [(line["item"], line["step"], line["outcome"]) for line in lines] == [
+        (item, step, outcome) for step, outcome in expected]
 
 
 def test_2_timing_write_failure_does_not_fail_work(env):
