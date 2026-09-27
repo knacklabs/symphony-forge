@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -84,11 +85,19 @@ def work(args: argparse.Namespace) -> None:
         state["status"] = "fixing" if findings or failing else "working"
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
-        if not on_codex:
-            _run(item, top, brief, claude)
-            return
-        result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
-                           thread, fresh, approval, note=note)
+        start, clock = repo.now(), time.monotonic()
+        outcome = "failed"
+        try:
+            if not on_codex:
+                _run(item, top, brief, claude)
+                outcome = "completed"
+                return
+            result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
+                               thread, fresh, approval, note=note)
+            outcome = "completed" if result["status"] == "completed" else "failed"
+        finally:
+            repo.record_timing(top, item, "worker round", start, clock, outcome,
+                               repo.models(config, kind.lower()))
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")

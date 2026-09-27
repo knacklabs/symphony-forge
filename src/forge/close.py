@@ -12,6 +12,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +66,14 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
-        result = review.run(top, item, state, cfg, f"origin/{default}")
+        start, clock = repo.now(), time.monotonic()
+        outcome = "failed"
+        try:
+            result = review.run(top, item, state, cfg, f"origin/{default}")
+            outcome = "blocked" if review.blocking(result) else "clean"
+        finally:
+            repo.record_timing(top, item, "review", start, clock, outcome,
+                               cfg["models"].get("review"))
         repo.add_step(state, "review")
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
@@ -91,8 +99,14 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
-    checks.wait(top, item, head, [name for name in cfg["checks"]
-                                  if not (migrating and name == "forge-pr-check")])
+    start, clock = repo.now(), time.monotonic()
+    outcome = "failed"
+    try:
+        checks.wait(top, item, head, [name for name in cfg["checks"]
+                                      if not (migrating and name == "forge-pr-check")])
+        outcome = "passed"
+    finally:
+        repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     merge = "human" if migrating else repo.default_config(top)["merge"]
