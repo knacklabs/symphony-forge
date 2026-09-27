@@ -21,6 +21,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
 | "What should we build?" or "Find the real problem" | Discovery, below |
 | "Is it worth building?" | `forge spec payback --build-days <days> --day-rate <rate>` plus a value group |
 | "Save this spec" | `forge spec save <slug>` |
@@ -35,12 +36,21 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
 | "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
-The human approves stories, chooses between options and merges. Everything else is yours. Ask
-one question at a time: a decision gets options with your recommendation first, a question of
-fact gets neutral choices.
+The human approves stories and chooses between options. The human merges by default
+(`merge = "human"`). If the default branch's `forge.toml` has `merge = "agent"`, run
+`forge merge <item>` once `forge close` says Ready. Never run `gh pr merge`; the agent merges only
+through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
+first, a question of fact gets neutral choices.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
+
+## New directions
+
+When the human states a new direction, principle or value, grill how it applies before changing
+anything. Ask one question at a time with your recommended answer and why; look up facts in the
+repo instead of asking the human. Continue until the plan for applying it is agreed, then make
+the changes.
 
 ## Discovery
 
