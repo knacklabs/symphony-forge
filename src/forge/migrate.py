@@ -4,9 +4,9 @@ Everything is worked out from the default branch as last fetched, which the chec
 before anything changes, and `--dry-run` prints that plan and stops. The run works in its own
 worktree on forge/migrate-v1:
 - it deletes the copied-in Forge's listed paths, except files referenced by tracked client files,
-  which stay in place, and files that differ from the copied-in version (the Forge source at the
-  commit constitution/VENDORED_FROM names), which move to .forge-migrate/kept/. .envrc is set
-  aside only when it has lines besides the old Forge's, and
+  which stay in place unless Forge sync writes that path, and files that differ from the copied-in
+  version (the Forge source at the commit constitution/VENDORED_FROM names), which move to
+  .forge-migrate/kept/. .envrc is set aside only when it has lines besides the old Forge's, and
   its old verify commands become forge.toml's test;
 - it deletes every old record under .factory/ and the old ledgers under plans/; git history
   keeps them;
@@ -190,9 +190,9 @@ def migrate(args: argparse.Namespace) -> int:
     busy = [] if own else _in_flight(top)  # Forge's own repo keeps its old records and work
     if busy:
         repo.refuse(REFUSALS["in_flight"], items="; ".join(busy))
-    plan = _plan(top, ref, own)
     # sync's own list of the adapters it will write (their text is not needed here).
-    adapters = sync.files(top, {"version": f"v{__version__}", "test": plan["test"]})
+    adapters = sync.files(top, {"version": f"v{__version__}", "test": ""})
+    plan = _plan(top, ref, own, set(adapters))
     # Never through a link, even one inside the repo: the run works in another folder.
     for rel in [*_touched(plan), *adapters]:
         parts = Path(rel).parts
@@ -229,7 +229,7 @@ def migrate(args: argparse.Namespace) -> int:
 # --- the plan: computed from the default branch, before anything changes -------------------
 
 
-def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
+def _plan(top: Path, ref: str, own: bool, adapters: set[str]) -> dict[str, Any]:
     vendored = {} if own else _tree(top, ref, *VENDORED)
     records = {} if own else _tree(top, ref, ".factory", *LEDGERS)
     source = _source(top, ref) if vendored else {}
@@ -239,6 +239,7 @@ def _plan(top: Path, ref: str, own: bool) -> dict[str, Any]:
         outside.append(":(exclude)AGENTS.md")  # sync replaces the old instructions
     # The old Claude adapter import is removed; other tracked references still count.
     referenced = sorted(path for path in vendored if "/" in path and path not in FORGE_MADE
+                        and path not in adapters
                         and repo.run("git", "grep", "-q", "-F", "-e", path, ref, "--", *outside,
                                      *((":(exclude)CLAUDE.md",) if path == ".claude/CLAUDE.md"
                                        else ()),
