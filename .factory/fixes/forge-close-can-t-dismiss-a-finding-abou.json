@@ -1,0 +1,29 @@
+{
+  "base": "a3bf3e378ac2f9d4786a753f4fc989db4b1fac8b",
+  "branch": "fix/forge-close-can-t-dismiss-a-finding-abou",
+  "done_when": "forge close accepts a --because file:line that is a line of the base commit when the branch deletes that file, and says in the review block that the evidence is from the base; any other path still needs a line of the reviewed commit; a test covers a deleted file, a present file and a missing line",
+  "kind": "fix",
+  "review": {
+    "commit": "7d8c7ae044a76d71901720954ecc21b29ad21e3b",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "047a18310cb7ed644bef128c3798ef7986aa94535ba5ab326a06ac70f59a73f2"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T05:54:24+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T06:05:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T06:13:47+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge close can't dismiss a finding about a file the branch deletes: --because must cite a line of the reviewed commit, and the deleted file has none (myclaw's migrate PR has a finding about a password in a file the migration deletes)"
+}

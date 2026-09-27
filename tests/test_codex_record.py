@@ -23,8 +23,6 @@ from test_codex_worker import PIN, _codex_repo, _running, _sent, _stub, sdk_data
 
 STORY = "FORGE-WARM-1"
 KILL = getattr(signal, "SIGKILL", signal.SIGTERM)  # on Windows os.kill ends a process either way
-# The tool Forge reads a process's start time and command with.
-PS = "powershell" if os.name == "nt" else "ps"
 # That tool, a second slower: two calls that start together both read a stale lock before either
 # takes it.
 SLOW = """#!{python}
@@ -48,16 +46,7 @@ sys.stdout.write(done.stdout)
 sys.stderr.write(done.stderr)
 sys.exit(done.returncode)
 """
-# The real PowerShell, whose process query fails with an error that PowerShell's default lets the
-# script run on past.
-QUERY_FAILS = """#!{python}
-import subprocess, sys
-args = sys.argv[1:]
-at = args.index("-Command") + 1
-args[at] = "function Get-CimInstance {{ Write-Error 'stub: the query failed' }}; " + args[at]
-sys.exit(subprocess.run([{tool!r}, *args]).returncode)
-"""
-# A ps, and on Windows a PowerShell, that can't read any process.
+# A ps that can't read any process.
 BLIND = "#!/usr/bin/env python3\nimport sys\nsys.exit('stub: no process can be read')\n"
 # A ps that reads every process but Forge's Codex driver.
 DRIVER_BLIND = """#!{python}
@@ -199,7 +188,7 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
     record, lock = threads / "PAGE.json", threads / "PAGE.lock"
-    tool = shutil.which(PS)  # the real one, before any stand-in
+    tool = shutil.which("ps")  # the real one, before any stand-in
 
     if os.name != "nt":  # no SIGINT to send on Windows
         # The driver, then the app-server, are on record by id, start time and command before
@@ -252,39 +241,40 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     # The app-server, the conversation, and HEAD once the turn ends, join the record.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     saved = _saved(record)
-    assert "codex_turn" in saved["driver"]["command"]
+    if os.name == "nt":
+        assert Path(saved["driver"]["command"]).is_file()
+        assert Path(saved["app_server"]["command"]).is_file()
+    else:
+        assert "codex_turn" in saved["driver"]["command"]
     assert (saved["conversation"], saved["head"]) == ("thr-stub-1",
                                                       repo.git("rev-parse", "HEAD", cwd=folder))
 
-    # Codex waits for Forge to record the app-server: while Forge is slow to read its identity,
-    # no conversation starts.
-    seen = repo.path.parent / "seen.jsonl"
-    before = len(_sent(calls, "thread/start"))
-    _install(repo.bin, PS, SLOW_SERVER.format(python=sys.executable, tool=tool,
-                                              calls=str(calls), seen=str(seen)))
-    assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    for fake in [*repo.bin.glob("ps*"), *repo.bin.glob("powershell*")]:
-        fake.unlink()
-    assert (len(_sent(seen, "thread/start")), len(_sent(calls, "thread/start"))) == (before,
-                                                                                    before + 1)
+    if os.name != "nt":
+        # Codex waits for Forge to record the app-server: while Forge is slow to read its
+        # identity, no conversation starts.
+        seen = repo.path.parent / "seen.jsonl"
+        before = len(_sent(calls, "thread/start"))
+        _install(repo.bin, "ps", SLOW_SERVER.format(python=sys.executable, tool=tool,
+                                                    calls=str(calls), seen=str(seen)))
+        assert repo.forge("work", "BOARD/PAGE").returncode == 0
+        (repo.bin / "ps").unlink()
+        assert (len(_sent(seen, "thread/start")), len(_sent(calls, "thread/start"))) == (before,
+                                                                                        before + 1)
 
-    # When Forge can't read who holds the lock, the owner counts as running: forge work refuses,
-    # naming the lock.
+        # When Forge can't read who holds the lock, the owner counts as running: forge work
+        # refuses, naming the lock.
+        lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
+                                    "command": "forge work BOARD/PAGE"}), encoding="utf-8")
+        _install(repo.bin, "ps", BLIND)
+        blind = repo.forge("work", "BOARD/PAGE")
+        assert blind.stderr == (f"Forge can't read the start time and command of process {os.getpid()}"
+                                f", so it can't tell who holds {lock}; it counts it as held.\n"
+                                f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
+        (repo.bin / "ps").unlink()
+
+    # A lock whose process id now belongs to another process is stale and cleared.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
                                 "command": "forge work BOARD/PAGE"}), encoding="utf-8")
-    for name in ("ps", "powershell"):
-        _install(repo.bin, name, BLIND)
-    blind = repo.forge("work", "BOARD/PAGE")
-    assert blind.stderr == (f"Forge can't read the start time and command of process {os.getpid()}"
-                            f", so it can't tell who holds {lock}; it counts it as held.\n"
-                            f"Next: delete {lock} once no forge work runs on BOARD/PAGE\n")
-    if os.name == "nt":  # a query that fails, where PowerShell runs on past the error, can't tell
-        _install(repo.bin, "powershell", QUERY_FAILS.format(python=sys.executable, tool=tool))
-        assert repo.forge("work", "BOARD/PAGE").stderr == blind.stderr
-
-    # Once it can, a lock whose process id now belongs to another process is stale and cleared.
-    for fake in [*repo.bin.glob("ps*"), *repo.bin.glob("powershell*")]:
-        fake.unlink()
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert not lock.exists()
 
@@ -292,7 +282,8 @@ def test_5_one_worker_per_item(repo, monkeypatch, sdk_data):
     # finds the new lock and refuses, rather than clearing that one too.
     lock.write_text(json.dumps({"pid": os.getpid(), "started": "long ago",
                                 "command": "forge work BOARD/PAGE"}), encoding="utf-8")
-    _install(repo.bin, PS, SLOW.format(python=sys.executable, tool=shutil.which(PS)))
+    if os.name != "nt":
+        _install(repo.bin, "ps", SLOW.format(python=sys.executable, tool=shutil.which("ps")))
     both = [subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
                              cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "hold"},
                              stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)

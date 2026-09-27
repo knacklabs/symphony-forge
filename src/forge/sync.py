@@ -98,7 +98,7 @@ jobs:
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: ubuntu-latest
-    steps:
+<tests-timeout>    steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
 <node>      - run: <test>
@@ -257,6 +257,9 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     workflow = (WORKFLOW.replace("<version>", cfg["version"])
                 .replace("<install>", "uv tool install ." if cfg.get("repo") == "forge-source"
                          else install_line(cfg["version"]))
+                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
+                         if cfg.get("repo") == "client" and (top / "package.json").is_file()
+                         else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(cfg["test"])))
     return {
