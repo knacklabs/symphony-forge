@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-test-suite-starts-real-codex-con",
   "done_when": "no test creates, names or archives a thread in the user's real Codex home: every test that reaches Codex uses a throwaway Codex home, and a test run leaves the real home's thread list unchanged, proven by an end-to-end test",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T15:59:43+00:00",
