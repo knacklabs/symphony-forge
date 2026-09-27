@@ -3,7 +3,7 @@
   "branch": "fix/forge-v1-is-ready-for-its-1-0-0-release",
   "done_when": "Forge's version is 1.0.0 in src/forge/__init__.py (the release tag becomes v1.0.0), this repo's forge.toml pins v1.0.0, and tests/test_version.py passes; the comment about the switch bumping the version is updated to say this fix did",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T02:34:58+00:00",
