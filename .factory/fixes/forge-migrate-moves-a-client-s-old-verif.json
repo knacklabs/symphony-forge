@@ -4,11 +4,11 @@
   "done_when": "When the client has a package.json, the test command forge migrate writes starts with npm ci (the same install forge init's default test uses) before the moved verify commands; a test covers a client with package.json and one without",
   "kind": "fix",
   "review": {
-    "commit": "5eeda29a574533b0aaae43461da5e498969471b8",
+    "commit": "e9e76c653c4c80baf67ae61aa4109ff857189ccd",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "4aa274a96dc365e9a9f5d91fb3ddedab6efe8bd6bde1dda93f0fa3166b59bd15"
+    "tree": "14af530d6d70db2001e5e61981c542872bc4759fa6679a3796745a8cb10883bb"
   },
   "status": "waiting for checks",
   "steps": [
@@ -18,6 +18,10 @@
     },
     {
       "at": "2026-09-27T04:36:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T04:44:45+00:00",
       "step": "review"
     }
   ],
