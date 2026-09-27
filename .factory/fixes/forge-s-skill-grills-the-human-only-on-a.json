@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-skill-grills-the-human-only-on-a",
   "done_when": "the Forge skill says to grill any request with more than one reasonable reading or no stated done-when before starting a fix or story, one question at a time with a recommendation, looking facts up in the repo, while a clear request goes straight ahead; the generated skill copies match, and a test through forge sync proves the synced skill carries the rule",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T16:43:42+00:00",
