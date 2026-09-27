@@ -28,6 +28,7 @@ def delay_tool(path: Path, report: str = "") -> None:
 @pytest.mark.parametrize("scenario,review_model", [
     ("clean_default", "gpt-6-sol"),
     ("clean_override", "gpt-6-astra"),
+    ("claude_failed", None),
     ("codex", None),
     ("blocked", None),
     ("review_failed", None),
@@ -53,6 +54,19 @@ def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenari
     repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     timings = repo.path / ".git" / "forge" / "timings.jsonl"
+    if scenario == "claude_failed":
+        monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+        work_start = datetime.now(timezone.utc)
+        failed = repo.forge("work", item)
+        work_end = datetime.now(timezone.utc)
+        assert failed.returncode != 0
+        assert "The worker stopped with exit code 3" in failed.stderr
+        [line] = [json.loads(text) for text in timings.read_text("utf-8").splitlines()]
+        assert (line["item"], line["step"], line["outcome"], line["model"], line["effort"]) == (
+            item, "worker round", "failed", "sonnet", "medium")
+        assert work_start - timedelta(seconds=1) <= datetime.fromisoformat(line["start"]) <= work_end
+        assert 0 <= line["seconds"] <= (work_end - work_start).total_seconds()
+        return
     delay_tool(repo.bin / "claude")
     delay_tool(repo.bin / "gh")
     delay_tool(Path(os.environ["AUTOREVIEW"]),
