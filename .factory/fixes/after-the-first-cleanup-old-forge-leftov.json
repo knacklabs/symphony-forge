@@ -1,0 +1,14 @@
+{
+  "base": "966b9eb7564e5350546f444ce7f678488aced715",
+  "branch": "fix/after-the-first-cleanup-old-forge-leftov",
+  "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/cleanup-part2.md is done as written; references still resolve; the full suite passes and forge doctor reports no problems",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T04:16:25+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the first cleanup, old-Forge leftovers remain: superseded decisions, two unlinked old specs, old debt notes, a dead pyrightconfig, dead .gitattributes and .gitignore rules, 55 old roadmap items, old Codex roles, and a README and product brief that describe the old Forge"
+}
