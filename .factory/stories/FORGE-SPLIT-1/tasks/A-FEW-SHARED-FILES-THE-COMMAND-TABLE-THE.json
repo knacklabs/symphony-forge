@@ -1,8 +1,7 @@
 {
   "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
-  "branch": "fix/a-few-shared-files-the-command-table-the",
+  "branch": "task/FORGE-SPLIT-1-A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE",
   "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
