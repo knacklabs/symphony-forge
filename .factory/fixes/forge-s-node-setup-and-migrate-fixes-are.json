@@ -5,28 +5,13 @@
   "done_when": "Forge's version is 1.0.1 in src/forge/__init__.py (release tag v1.0.1), this repo's forge.toml pins v1.0.1, and the version test passes",
   "kind": "fix",
   "review": {
-    "commit": "79108561d2ba73d93f8d7d3bbd34f95f38edb11e",
+    "commit": "ff236c8a0fdf7f2e61152f4380c88f046d4c4781",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The branch only adds a tracking record; the requested release changes are absent. The checked-out src/forge/__init__.py:4 still declares 1.0.0, and forge.toml:2 still pins v1.0.0. Consequently, this change does not deliver the stated release upgrade. Bump the package version and repository pin to the requested versions and complete the v1.0.1 release requirement.",
-        "file": ".factory/fixes/forge-s-node-setup-and-migrate-fixes-are.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: Forge's version is 1.0.1 in src/forge/__init__.py (release tag v1.0.1), this repo's forge.toml pins v1.0.1, and the version test \""
-      },
-      {
-        "body": "The existing tests still require the old release: tests/test_version.py:10 asserts 1.0.0, while tests/test_fix_forge_v1_release.py:10\u201311 assert v1.0.0 for the CLI and repository pin. These tests run through the suite command in .github/workflows/forge.yml:21, but cannot detect the missing 1.0.1 upgrade and would reject a correct version bump. Update the existing release assertions to enforce 1.0.1/v1.0.1 and verify they pass with the release changes.",
-        "file": ".factory/fixes/forge-s-node-setup-and-migrate-fixes-are.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: version tests enforce the 1.0.1 release"
-      }
-    ],
-    "status": "blocked",
-    "tree": "417dc76bc00b7424478df59664a4fe721985e2536708fd8490c63e7cb6a7c4c5"
+    "findings": [],
+    "status": "clean",
+    "tree": "aa4f59a0f60d95b0f8e853a5cab932f12862fc358f409267c48c358462efdb54"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T05:07:51+00:00",
@@ -34,6 +19,10 @@
     },
     {
       "at": "2026-09-27T05:09:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:22:23+00:00",
       "step": "review"
     }
   ],
