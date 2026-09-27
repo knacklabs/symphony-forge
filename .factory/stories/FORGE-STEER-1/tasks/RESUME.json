@@ -1,26 +1,19 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
   "review": {
-    "commit": "abad21dac70976059547edb5ea3a2a69e6ae5c2d",
+    "commit": "ee4caaf84e21f6744ab26edfc665b9b6dd762047",
     "dismissals": [],
     "findings": [
       {
-        "body": "The branch adds planning records but no driver implementation. In the readable source, `src/forge/codex_turn.py:131-134` catches every `JsonRpcError`, emits the fresh-start reason, and immediately starts another conversation. Thus an \"already has an active writer\" error still loses conversation continuity without stopping matching recorded processes, restarting the app-server, or retrying once. Implement the required recovery in the driver while preserving other resume errors' behavior.",
-        "file": "plans/FORGE-STEER-1.md",
-        "line": 32,
+        "body": "The stub releases the writer based only on attempt count, so successful recovery does not establish that Forge waited a few seconds. The later concurrent-command check verifies lock exclusion but imposes no minimum retry delay; a subsecond wait can still pass. Add command-level coverage that records timestamps at the app-server boundary and asserts the interval between resume attempts, or keeps the simulated writer active for a measured interval. This is required coverage for item 3 under the test-audit contract.",
+        "file": "tests/test_steer_resume.py",
+        "line": 22,
         "priority": "P1",
-        "title": "Not done: 3. Recover from an active-writer resume error before starting fresh"
-      },
-      {
-        "body": "The required test file is absent from both the supplied change and the readable checkout. Existing fallback coverage at `tests/test_codex_resume.py:247-271` exercises a missing conversation and expects a single resume attempt; it does not test active-writer recovery. Add executable coverage for successful recovery, exactly one retry followed by an explained fresh start on failure, unchanged handling of other errors, and the required process-identity and item-lock safeguards.",
-        "file": "plans/FORGE-STEER-1.md",
-        "line": 44,
-        "priority": "P1",
-        "title": "Not done: tests/test_steer_resume.py"
+        "title": "Not done: test the few-second delay before the active-writer retry"
       }
     ],
     "status": "blocked",
-    "tree": "04b56b55d1b1afbac35921e88b360b90d52be4104c1bbbbf8ece0ea36bbd6532"
+    "tree": "ee94039d2c1b7e672a6d056b2e886261ea28744a5042a73cbf94def9453aa966"
   },
   "status": "fixing",
   "steps": [
@@ -30,6 +23,10 @@
     },
     {
       "at": "2026-09-27T05:01:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T14:57:56+00:00",
       "step": "review"
     }
   ]
