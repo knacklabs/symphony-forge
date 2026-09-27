@@ -2,7 +2,16 @@
   "branch": "task/FORGE-STEER-1-STEER",
   "review": {
     "commit": "d31bab0ffe72be4d1a7715df63579e79dfa53185",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "docs/specs/codex-steering.md:40 the confirmed spec says a question round makes no commit of its own and that the usual state commit before a turn stays; the commit at worker.py:84-86 is that pre-turn state commit, so HEAD moving by exactly that one commit is the specified behaviour",
+        "finding": 1
+      },
+      {
+        "because": "docs/specs/codex-steering.md:40 the test asserts exactly the one pre-turn state commit the spec keeps and no commit from the question round itself, which is what Done-when 2's 'no commit of its own' means",
+        "finding": 2
+      }
+    ],
     "findings": [
       {
         "body": "On the first question round, worker.py:84\u201386 changes the status to working and calls commit_state before Codex runs. src/forge/repo.py:306\u2013309 confirms this creates a commit when the state changes. Detecting Question afterward cannot prevent that commit. Defer the status commit so a completed question round leaves HEAD unchanged.",
@@ -26,10 +35,10 @@
         "title": "Recognize Question only in the final paragraph"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "171716e224a71184b9d74eb01091cf0672950fb86f249118f506ed465537b2f5"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T04:59:04+00:00",
