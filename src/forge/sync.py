@@ -293,8 +293,10 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     for hook, what in (("pre-commit", "commit"), ("pre-push", "push")):
         path = folder / hook
         prior = read(path.with_name(f"{hook}.pre-forge")) or read(path)
-        # Husky's dispatcher derives its user-script path from $0, which a rename changes.
-        husky = 'n=$(basename "$0")' in prior and 's=$(dirname "$(dirname "$0")")/$n' in prior
+        # Husky's wrapper sources h, whose user-script lookup uses $0; a rename changes it.
+        husky = ('. "$(dirname "$0")/h"' in prior or
+                 ('n=$(basename "$0")' in prior and
+                  's=$(dirname "$(dirname "$0")")/$n' in prior))
         run_prior = ('sh -c \'. "$0.pre-forge"\' "$0" "$@"' if husky
                      else '"$0.pre-forge" "$@"')
         wanted[path] = (SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
