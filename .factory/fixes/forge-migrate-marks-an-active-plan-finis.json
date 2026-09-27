@@ -1,0 +1,14 @@
+{
+  "base": "c7be07d3a55f2e3986de886f58f1562bec455cf9",
+  "branch": "fix/forge-migrate-marks-an-active-plan-finis",
+  "done_when": "forge migrate calls a story finished only when every Tasks row is done in the old Forge's records (.factory/stages.json and task markers); a story with a pending part is not converted as finished and gets a replan draft under .forge-migrate/replan/ like a malformed one, and the dry run says which parts are pending; a test covers a story with one pending part",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T03:14:26+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge migrate marks an active plan finished whenever its approval is on main, even when its old-Forge stages still have parts pending (myclaw's GRANTED-1 has T1 pending, yet the dry run says every part was done)"
+}
