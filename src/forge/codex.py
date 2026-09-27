@@ -422,17 +422,41 @@ def identity(pid: int) -> dict[str, Any] | None:
     record, and its owner counts as running.
     """
     if os.name == "nt":
-        # Every error stops the script (exit 1), so only a query that finds no process exits 3.
-        done = repo.run("powershell", "-NoProfile", "-Command", "$ErrorActionPreference = 'Stop'; "
-                        f"$p = Get-CimInstance Win32_Process -Filter 'ProcessId = {pid}'; "
-                        "if (!$p) { exit 3 }; $p.CreationDate.ToString('o'); $p.CommandLine")
-        gone = done.returncode == 3
-        started, _, command = done.stdout.strip().partition("\n")
-    else:
-        done = repo.run("ps", "-ww", "-o", "lstart=,command=", "-p", str(pid))  # -ww: whole command
-        gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
-        *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
-        started = " ".join(start)
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.GetProcessTimes.argtypes = (wintypes.HANDLE, *([ctypes.POINTER(wintypes.FILETIME)] * 4))
+        kernel32.GetProcessTimes.restype = wintypes.BOOL
+        kernel32.QueryFullProcessImageNameW.argtypes = (wintypes.HANDLE, wintypes.DWORD,
+                                                        wintypes.LPWSTR, ctypes.POINTER(wintypes.DWORD))
+        kernel32.QueryFullProcessImageNameW.restype = wintypes.BOOL
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return None if ctypes.get_last_error() == 87 else {"pid": pid}  # invalid process id
+        try:
+            created, exited, kernel, user = (wintypes.FILETIME() for _ in range(4))
+            if not kernel32.GetProcessTimes(handle, ctypes.byref(created), ctypes.byref(exited),
+                                            ctypes.byref(kernel), ctypes.byref(user)):
+                return {"pid": pid}
+            if exited.dwLowDateTime or exited.dwHighDateTime:
+                return None
+            path = ctypes.create_unicode_buffer(32768)
+            size = wintypes.DWORD(len(path))
+            if not kernel32.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(size)) or not path.value:
+                return {"pid": pid}
+            started = str((created.dwHighDateTime << 32) | created.dwLowDateTime)
+            return {"pid": pid, "started": started, "command": path.value}
+        finally:
+            kernel32.CloseHandle(handle)
+    done = repo.run("ps", "-ww", "-o", "lstart=,command=", "-p", str(pid))  # -ww: whole command
+    gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
+    *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
+    started = " ".join(start)
     if gone:
         return None
     if done.returncode or not started.strip() or not command.strip():
@@ -461,7 +485,7 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     stopped, unknown = False, None
     for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
         recorded = saved.get(key) or {}
-        if runs not in str(recorded.get("command")):
+        if os.name != "nt" and runs not in str(recorded.get("command")):
             continue
         alive = _alive(recorded)
         if alive:
