@@ -149,8 +149,9 @@ def read(args: Any) -> int:
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
-                name = (prefix.rstrip() if name[59].isspace() else
-                        prefix.rsplit(" ", 1)[0] or prefix) + "…"
+                name = (prefix.rstrip(" -") if name[59] in " -" else
+                        prefix.rsplit("-", 1)[0] if "-" in prefix else
+                        prefix.rsplit(" ", 1)[0]) + "…"
             ran = codex.run(top, target, "Grill", name, prompt, "read-only")
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else

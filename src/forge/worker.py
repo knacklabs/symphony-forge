@@ -79,9 +79,9 @@ def work(args: argparse.Namespace) -> None:
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         turns = codex._item_file(top, item, ".log", kind)
-        round_number = 1 + sum("turn" in (entry := json.loads(line)) and "status" not in entry
-                               for line in turns.read_text(encoding="utf-8").splitlines()
-                               ) if turns.exists() else 1
+        round_number = 1 + len({(entry["conversation"], entry["turn"])
+                                for line in turns.read_text(encoding="utf-8").splitlines()
+                                if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number)
         if thread:
             brief += _changes(top, codex.record(top, item)["start"])
