@@ -5,7 +5,12 @@
   "kind": "fix",
   "review": {
     "commit": "ab40167108bb532b88bc73ac8752fbda138c938b",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "plans/roadmap.json:69 FORGE-STEER-1 is on the roadmap, added by forge roadmap add codex-steering in commit 3cc4aff0; the review predates that commit because plans/ changes don't re-run it",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "FORGE-STEER-1 appears in this spec but is absent from `plans/roadmap.json`, whose items end at line 68. The spec's Roadmap section does not register it: `src/forge/records.py:292-295` separately writes and commits roadmap entries, and `src/forge/story.py:95-96` refuses to start a story absent from that registry. Run `forge roadmap add codex-steering` and include the resulting roadmap change. This directly required step can be completed on this branch.",
@@ -15,10 +20,10 @@
         "title": "Not done: docs/specs/codex-steering.md is saved, read once, and confirmed, and its story FORGE-STEER-1 is on the roadmap"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "dd7d9d2fee3df6d068095f6defec33073407a035b5c57eedc72aed318417cf0b"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T03:27:21+00:00",
