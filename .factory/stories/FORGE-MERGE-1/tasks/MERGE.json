@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
-    "commit": "a0ce6266c6e73439df3c26b93442c10ad360f5c0",
+    "commit": "ab1afa26f93c483f2c83685a29d29113bfc422cb",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "484fb9af7e0fde4fe7b2903d70731ec92a71564a3eed63a7dd947d2ba4e8939c"
+    "findings": [
+      {
+        "body": "A conversation is missed when the first worker attempt stops after creating its thread but before starting a turn, and the worker is then retried. `codex.py:192\u2013194` clears the pending record without logging that conversation; `codex.py:156\u2013157` then requests a fresh conversation, and `codex.py:311` overwrites the previous ID. This collector reads only the latest record and turn log, so merge succeeds while leaving the earlier recorded conversation unarchived. Preserve conversation IDs independently of whether a turn starts, and extend the CLI test to retry the interrupted worker with a different conversation before merging.",
+        "file": "src/forge/merge.py",
+        "line": 128,
+        "priority": "P1",
+        "title": "Not done: 5. Archive every recorded Codex conversation"
+      }
+    ],
+    "status": "blocked",
+    "tree": "0268c15a2cc2eec1add3a9d1e998200dfedb7654afa825d9bb4aa28aa0f7e8dc"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +43,10 @@
     },
     {
       "at": "2026-09-27T19:30:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T19:43:21+00:00",
       "step": "review"
     }
   ]
