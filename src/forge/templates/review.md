@@ -75,6 +75,12 @@ nothing the change does, is skipped, or always passes), as a P1 finding titled
 `Not done: <the test>`. The test-audit skill (`.codex/skills/test-audit/SKILL.md`) has the full
 checklist.
 
+Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
+for client apps, the running API with a real database and user flows in a browser through
+Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+many cases, never an item's only proof. Report an item proven only by unit tests as a P1 finding
+titled `Not done: <the item>`. Never ask for unit tests of helpers.
+
 ## Build simple
 $moving_parts
 

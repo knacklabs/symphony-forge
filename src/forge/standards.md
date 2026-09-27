@@ -208,11 +208,12 @@ Open one only when your task touches its concern; the rules on this page apply e
 
 ## Tests
 
-- Each Done-when item has one primary test at the boundary the user touches: an API test through
-  HTTP against a real Postgres, or a UI test that finds elements by role and label the way a user
-  would. Each bug fix adds a test that fails without the fix.
-- Unit-test logic with real branches. Fake only what sits at the edge (a provider, the clock), not
-  the code under test.
+- Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
+  for client apps, the running API with a real database and user flows in a browser through
+  Playwright. Each bug fix adds a test that fails without the fix. Fake only third-party services
+  at their edge.
+- Unit tests are only for pure logic with many cases, never an item's only proof. Review reports
+  an item proven only by unit tests as a P1 `Not done` and never asks for unit tests of helpers.
 - Tests build their own data with factories, own that data, don't depend on order, and never sleep.
   A skipped test names the reason next to it.
 - Test behaviour, not markup or internals. There is no coverage target: a number invites tests
