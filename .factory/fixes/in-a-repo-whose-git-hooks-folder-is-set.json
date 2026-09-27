@@ -1,0 +1,14 @@
+{
+  "base": "a6d2b13ba630403445e2c6a27bf23853d1445655",
+  "branch": "fix/in-a-repo-whose-git-hooks-folder-is-set",
+  "done_when": "forge sync installs Forge's git hooks in the folder git actually uses (core.hooksPath when set) and still runs the hooks already there, forge doctor reports a hooks folder without them, and a test proves both with a Husky-style hooks path",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:22:27+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In a repo whose git hooks folder is set elsewhere, such as Husky's .husky/_ in myclaw, forge sync installs its git hooks where git never runs them, so Forge's commit and push guards are off"
+}
