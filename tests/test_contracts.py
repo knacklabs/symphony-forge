@@ -370,7 +370,8 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
-        env.commit(repo.path, "forge.toml", with_models((repo.path / "forge.toml").read_text("utf-8")))
+        env.commit(repo.path, "forge.toml", with_models(
+            'workers = "claude"\n' + (repo.path / "forge.toml").read_text("utf-8")))
         repo.git("push", "-q", "origin", "main")
         wish = ready(repo, "WISH", DOC)
         build = claude_payload if tool == "claude" else codex_payload
