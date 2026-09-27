@@ -15,7 +15,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from forge import checks, init, repo, review
+from forge import checks, codex, init, repo, review
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -35,6 +35,8 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "question": ("The worker is waiting for an answer:\n{question}",
+                 'forge work {item} --note "<answer>"'),
 }
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 
@@ -42,6 +44,9 @@ BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 def close(args: argparse.Namespace) -> int:
     item = args.item
     top = _worktree(item)
+    question = codex.record(top, item).get("question")
+    if question:
+        repo.refuse(REFUSALS["question"], item=item, question=question)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])

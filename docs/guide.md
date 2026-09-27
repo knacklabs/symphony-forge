@@ -52,6 +52,7 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round |
+| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix |
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; unavailable until the merge gate is built |
 | `forge spec save <slug>` | Saves a spec as a draft |
