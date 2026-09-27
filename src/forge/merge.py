@@ -4,7 +4,6 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Any
 from forge import checks, close, codex, repo
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
@@ -38,25 +37,26 @@ def merge(args: argparse.Namespace) -> int:
     shown = repo.run("gh", "pr", "view", branch, "--json",
                      "number,state,baseRefName,headRefName,headRefOid,title,isDraft", cwd=top)
     try:
-        pr: dict[str, Any] = json.loads(shown.stdout) if shown.returncode == 0 else {}
+        pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
         pr = {}
-    if (pr.get("state") != "OPEN" or pr.get("isDraft") is not False
+    if (not isinstance(pr, dict) or pr.get("state") not in ("OPEN", "MERGED") or (pr.get("state") == "OPEN" and pr.get("isDraft") is not False)
             or pr.get("baseRefName") != default or pr.get("headRefName") != branch
             or not isinstance(pr.get("number"), int) or not isinstance(pr.get("title"), str)):
         repo.refuse(REFUSALS["pr"], item=item, default=default, branch=branch)
     if pr.get("headRefOid") != head:
         repo.refuse(REFUSALS["changed"], item=item)
-    checks.wait(top, item, head, config["checks"])
-    done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash", "--delete-branch",
-                    "--subject", pr["title"], "--match-head-commit", head, cwd=top)
-    after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
-    merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
-    if not merged and done.returncode:
-        reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
-        repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
-    if not merged:
-        repo.refuse(REFUSALS["pending"], item=item)
+    if pr["state"] == "OPEN":
+        checks.wait(top, item, head, config["checks"])
+        done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash", "--delete-branch",
+                        "--subject", pr["title"], "--match-head-commit", head, cwd=top)
+        after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
+        merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
+        if not merged and done.returncode:
+            reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
+            repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
+        if not merged:
+            repo.refuse(REFUSALS["pending"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
                      if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
@@ -65,7 +65,7 @@ def merge(args: argparse.Namespace) -> int:
     else:
         repo.git("worktree", "remove", str(worktree), cwd=survivor)
         if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=survivor).returncode == 0:
-            repo.git("branch", "-d", branch, cwd=survivor)
+            repo.git("branch", "-D", branch, cwd=survivor)
         print(f"Merged {item} and removed its worktree and local branch.")
     for thread in _conversations(survivor, item):
         try:
@@ -77,14 +77,13 @@ def merge(args: argparse.Namespace) -> int:
     path.unlink(missing_ok=True)
     return 0
 def _conversations(top: Path, item: str) -> set[str]:
-    folder = "task" if "/" in item else "fix"
-    base = repo.forge_dir(top) / "threads" / folder / item
+    base = repo.forge_dir(top) / "threads" / ("task" if "/" in item else "fix") / item
     found = {saved} if isinstance(saved := codex.record(top, item).get("conversation"), str) else set()
     try:
         for line in base.with_suffix(".log").read_text(encoding="utf-8").splitlines():
-            logged = json.loads(line)
-            if isinstance(logged.get("conversation"), str):
-                found.add(logged["conversation"])
+            thread = json.loads(line).get("conversation")
+            if isinstance(thread, str):
+                found.add(thread)
     except (OSError, ValueError):
         pass
     return found

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -31,12 +32,18 @@ def _ready(env):
 def _merge_at_github(env):
     """The gh edge performs a squash in the fixture's bare remote, as GitHub would."""
     stub = GH_STUB.format(python=sys.executable)
+    head = env.repo.git("rev-parse", "fix/tidy-readme")
     code = '''import json, pathlib, subprocess, sys
 here = pathlib.Path(__file__).resolve().parent
 if sys.argv[1:3] == ["pr", "view"] and (here / "github-merged").exists():
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(sys.argv[1:]) + "\\n")
-    print("MERGED")
+    if "--jq" in sys.argv:
+        print("MERGED")
+    else:
+        print(json.dumps({"number": 7, "state": "MERGED", "baseRefName": "main",
+                          "headRefOid": MERGED_OID, "headRefName": "fix/tidy-readme",
+                          "title": "Tidy readme", "isDraft": False}))
     sys.exit(0)
 if sys.argv[1:3] == ["pr", "merge"]:
     args = sys.argv[1:]
@@ -57,9 +64,10 @@ if sys.argv[1:3] == ["pr", "merge"]:
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     subprocess.run(["git", "push", "-q", "origin", "--delete", "fix/tidy-readme"],
                    cwd=checkout, check=True)
+    subprocess.run(["git", "-C", LOCAL, "fetch", "-q", "--prune", "origin"], check=True)
     (here / "github-merged").write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", repr(str(env.tmp / "remote.git")))
+'''.replace("REMOTE", repr(str(env.tmp / "remote.git"))).replace("MERGED_OID", repr(head)).replace("LOCAL", repr(str(env.repo.path)))
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + stub.split("\n", 1)[1])
 
 
@@ -153,18 +161,27 @@ def test_5_merge_leaves_dirty_worktree_and_archives_recorded_conversations(
     env.gh.respond("pr", "view", stdout=json.dumps({
         "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    env.gh.respond("pr", "merge")
+    queued = env.repo.forge("merge", item)
+    assert "GitHub has not finished merging" in queued.stderr
+    assert where.exists()
     _merge_at_github(env)
+    subprocess.run([str(env.repo.bin / "gh"), "pr", "merge", "7", "--subject", "Tidy readme",
+                    "--match-head-commit", head], cwd=env.repo.path, check=True)
+    env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
+        [{"headRefName": "fix/tidy-readme"}]))
+    assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
+    merge_calls = len(env.gh_calls("pr", "merge"))
     (where / "unsaved.txt").write_text("keep me\n", encoding="utf-8")
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
+    assert len(env.gh_calls("pr", "merge")) == merge_calls
     assert where.is_dir() and (where / "unsaved.txt").read_text("utf-8") == "keep me\n"
     assert "uncommitted" in merged.stdout.lower()
     assert any("--delete-branch" in call for call in env.gh_calls("pr", "merge"))
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
     assert {call["params"]["threadId"] for call in calls
             if call.get("method") == "thread/archive"} == {"thr-one", "thr-two"}
-    env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
-        [{"headRefName": "fix/tidy-readme"}]))
     next_step = env.repo.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert item not in next_step.stdout

@@ -212,9 +212,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None = None) -> list[str]:
     status = state.get("status") or "started"
     if status == "merged" and path:
-        return ([] if repo.default_config(top)["merge"] == "agent" else
-                [f"{label} is merged; clean up its worktree.",
-                 f"Next: git worktree remove {shlex.quote(str(path))}"])
+        if repo.default_config(top)["merge"] == "agent":
+            return [f"{label} is merged; Forge needs to finish tidying up.", f"Next: forge merge {item}"] if repo.ready_path(item, top).is_file() else []
+        return [f"{label} is merged; clean up its worktree.",
+                f"Next: git worktree remove {shlex.quote(str(path))}"]
     ready = repo.ready_path(item, top)
     if ready.is_file():
         try:
