@@ -4,11 +4,30 @@
   "branch": "fix/after-the-first-cleanup-old-forge-leftov",
   "done_when": "Every item in /private/tmp/claude-501/-Users-ravikiranvemula-Workdir-sf-lean/a0106b2c-e659-5e23-b0c7-d419b1d20fda/scratchpad/cleanup-part2.md is done as written; references still resolve; the full suite passes and forge doctor reports no problems",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "5660561aadce4a76595b01a7478addf7bd537ccc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Deleting this record leaves `docs/decisions/0093-lean-forge-rebuild.md:6` pointing to the missing `0088-simple-upgrade` predecessor. Five other retained decisions have the same dangling `supersedes` reference: 0092, 0040, 0081, 0047 and 0087 (each at line 6). This violates the explicit requirement that references still resolve. Update these references to identify their archived Git locations, or otherwise preserve resolvable targets while removing the obsolete live documents.",
+        "file": "docs/decisions/0088-simple-upgrade.md",
+        "line": 1,
+        "priority": "P1",
+        "title": "Not done: references still resolve"
+      }
+    ],
+    "status": "blocked",
+    "tree": "fa31caed9b95f6e332153a5e242d1b50abd4f04f4e7fbbc9ab8663a4c270757c"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T04:16:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T04:25:15+00:00",
+      "step": "review"
     }
   ],
   "why": "After the first cleanup, old-Forge leftovers remain: superseded decisions, two unlinked old specs, old debt notes, a dead pyrightconfig, dead .gitattributes and .gitignore rules, 55 old roadmap items, old Codex roles, and a README and product brief that describe the old Forge"
