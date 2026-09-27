@@ -1,7 +1,7 @@
 {
   "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
   "branch": "fix/forge-s-questions-and-story-docs-are-har",
-  "done_when": "the Forge skill says each question gets one line of context, a header of 12 characters or less, 1-5 word options that say what happens, the recommended one first, and no IDs, paths or slugs; the story template and skill open each Done-when item with one bold plain sentence before its detail and put Risks right after Done when with a For the builders heading before Tasks; the generated skill copies match; a test through forge sync proves it",
+  "done_when": "the Forge skill says each question gets one line of context, a header of 12 characters or less, 1-5 word options that say what happens, the recommended one first, and no IDs, paths or slugs; the story template and skill open each Done-when item with one bold plain sentence before its detail and put Risks right after Done when with a For the builders heading before Tasks; the generated skill copies match; a test through forge sync proves it; the skill also says to write one framing line before showing a story in Plan Mode (\"Approving: <title>, <n> parts, <risks>\"), and to give status updates in one shape (\"Ready to merge (n): ... · Needs you (n): ...\"); and the story template puts an at-a-glance line under the title (\"<n> parts · Risks: ... · New moving parts: ...\") outside the approved sections",
   "kind": "fix",
   "status": "working",
   "steps": [
