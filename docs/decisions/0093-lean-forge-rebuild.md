@@ -64,9 +64,9 @@ Build a lean Forge v1 and switch to it. Seventeen owner decisions define it:
     needed.
 14. **Switch checks.** Before the switch, one real story (the FDE story) runs end to end on the new
     Forge, and a fresh client closes a fix on it.
-15. **Old clients.** Clients that copied Forge in (the myclaw family, copied on 12 September, with
-    about five active plans) are frozen until the switch. After it, each moves over in one
-    `forge migrate` pull request. Migrating myclaw is itself a switch check.
+15. **Old clients.** Clients that copied Forge in around 12 September, some with
+    about five active plans, are frozen until the switch. After it, each moves over in one
+    `forge migrate` pull request. Migrating a copied-in client is itself a switch check.
 16. **Docs.** One standards page of about 300 lines replaces the constitution. Only the guide, the
     specs and the decisions stay live. Only three workflows remain: test CI, ticket and roadmap.
     Lessons and deferrals are dropped.
