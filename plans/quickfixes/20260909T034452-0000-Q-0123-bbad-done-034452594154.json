@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0123-bbad",
-  "profile": "quickfix",
-  "reason": "Review fixes need a write path: task reopen --review-fix returns a done stage to active with its base, contract and plan approval intact; review, stage start and the stamp recorder point at it",
-  "started_at": "2026-09-09T03:04:22+00:00",
-  "completed_at": "2026-09-09T03:44:52+00:00",
-  "files": []
-}

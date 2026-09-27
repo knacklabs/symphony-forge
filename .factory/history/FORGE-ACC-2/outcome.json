@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "A task can no longer be implemented on an unproven plan: its grill must show what was inspected, how the system currently flows, how every acceptance criterion will be proven, what new abstractions are justified, and which resolutions the operator personally chose (recorded question-options-chosen rounds) or a document dictated (named citations) - and the recorder derives the binding itself from the contract, the approved plan, and the product tree, so nothing self-asserted survives an edit. Diffs stay reviewable: stage done refuses more than 8 files/400 lines unless a written reason raised it, the task graph is frozen except for skeletal appends (so splits work), completed contracts are immutable, and the board now shows every task's state, grill freshness, and budget live.",
-  "issue": "FORGE-ACC-2",
-  "commit": "4e2e7a7cf239e9ca8412986863f3e57bc7df7242",
-  "recorded_at": "2026-08-14T13:26:18+00:00"
-}

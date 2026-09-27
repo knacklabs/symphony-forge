@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Implementation can no longer begin before its contract exists and survived an independent grill: the decomposition recorder refuses execution detail on future tasks, a shared readiness gate makes stage start and delegate refuse incomplete or ungrilled frontier contracts (and the silent empty-scope read-only downgrade is gone), and forge next walks the dev through the JIT loop one action at a time - enter plan mode and author, grill, start, delegate. The docs now say what the gates enforce. A dev following the rail cannot skip contract authoring or grilling by accident.",
-  "issue": "FORGE-ACC-1",
-  "commit": "07e1a48f1d4ab885da7d8d95a13e51af682a8b5e",
-  "recorded_at": "2026-08-14T02:56:09+00:00"
-}

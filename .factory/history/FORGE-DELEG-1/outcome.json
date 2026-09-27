@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Developers can now see the epic-to-story dependency hierarchy, start dependency-ready stories in separate worktrees, and execute each story's tasks sequentially through a protected, measured delegation boundary that refuses off-contract writes, overlapping workers, stale proof, and incomplete verification.",
-  "issue": "FORGE-DELEG-1",
-  "commit": "664f94c4da999185772e9379885b848dea15eb8e",
-  "recorded_at": "2026-07-30T11:49:26+00:00"
-}

@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0036-c8ec",
-  "reason": "factory-scaffold.yml runs harness-only self-tests in vendored client repos; guard them behind constitution/VENDORED_FROM",
-  "started_at": "2026-08-06T15:06:14+00:00",
-  "completed_at": "2026-08-06T15:07:39+00:00",
-  "files": []
-}

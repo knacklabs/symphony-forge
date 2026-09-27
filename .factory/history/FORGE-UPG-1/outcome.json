@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "A repo vendored before the factory/ rename can now be carried onto the current harness in one command. `forge upgrade` detects the legacy .agents/ layout, carries the project's skills across, deletes the old tree only once every file left in it is provably the machinery being replaced, and otherwise refuses before writing anything \u2014 so a refusal leaves a clean repo you can repair and re-run. It then names the project-owned files still mentioning the retired path instead of editing them. `forge stage migrate --base <sha>` gives a story that was open at upgrade time a measurement origin, so it can still be closed. Four client repos were stranded with no migration path; decision 0016 promised them one and this is it.",
-  "issue": "FORGE-UPG-1",
-  "commit": "c87a15ac07164ef1c6feeb5d894c861b03586d6d",
-  "recorded_at": "2026-08-04T13:50:28+00:00"
-}

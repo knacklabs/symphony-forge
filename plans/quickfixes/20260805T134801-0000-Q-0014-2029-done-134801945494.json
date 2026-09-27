@@ -1,8 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0014-2029",
-  "reason": "0025 review round 2: use git check-ignore for effective-rule detection",
-  "started_at": "2026-08-05T13:47:27+00:00",
-  "completed_at": "2026-08-05T13:48:01+00:00",
-  "files": []
-}

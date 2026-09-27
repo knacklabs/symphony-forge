@@ -1,7 +1,0 @@
-{
-  "generated_by": "implementer",
-  "outcome": "Symphony Forge now has a deterministic, contract-driven forge project audit that composes the harness's current validators (so it auto-detects any new requirement as Symphony changes) and rides harness-health.yml's schedule, making project-state drift a continuous check. forge project backfill honestly recovers legacy pr-links from real GitHub merge records (ZERO-match marks predates, TWO+-ambiguous reports, cards reconstructed only from committed evidence, never fabricating). Run on this repo it linked 10 legacy done stories to their real PRs and marked the one evidence-less stub, so check_board_complete passes and board-invariant now enforces on push:main, closing D-0011.",
-  "issue": "FORGE-BOARD-4",
-  "commit": "71b3ac3fbc1399346730721bf76eef0b5c7992b6",
-  "recorded_at": "2026-08-08T17:11:54+00:00"
-}

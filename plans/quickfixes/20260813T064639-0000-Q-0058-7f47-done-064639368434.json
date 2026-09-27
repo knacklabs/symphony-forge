@@ -1,9 +1,0 @@
-{
-  "event": "done",
-  "id": "Q-0058-7f47",
-  "profile": "quickfix",
-  "reason": "cp1252 UTF-8 stdout/stderr output fix for the forge CLI on Windows",
-  "started_at": "2026-08-13T06:46:38+00:00",
-  "completed_at": "2026-08-13T06:46:39+00:00",
-  "files": []
-}
