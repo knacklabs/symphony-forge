@@ -33,13 +33,17 @@ def test_2_fix_title_uses_first_clause_and_seventy_characters(env, why, expected
     assert len(title) <= 70
 
 
-def test_3_review_block_opens_with_plain_verdict(env):
-    item, _ = env.start_fix()
-    env.reviews(CLEAN)
-    assert env.close(item).returncode == 0
+@pytest.mark.parametrize("blocked_review", [False, True])
+def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review):
+    item, where = env.start_fix()
+    reviewed = env.repo.git("rev-parse", "HEAD", cwd=where)
+    env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
+    assert env.close(item).returncode == (1 if blocked_review else 0)
     review = body(env.gh_calls("pr", "create")[-1]).split("<!-- forge:begin -->\n", 1)[1]
-    assert review.startswith("The review found no serious problems.\n")
-    assert "Forge review of " not in review
+    verdict = ("The review found serious problems." if blocked_review
+               else "The review found no serious problems.")
+    assert review.startswith(f"{verdict}\n")
+    assert reviewed[:12] not in review
 
 
 def test_4_promoted_spec_task_is_named_spec(repo):
