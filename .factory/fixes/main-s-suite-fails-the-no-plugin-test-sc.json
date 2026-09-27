@@ -3,7 +3,7 @@
   "branch": "fix/main-s-suite-fails-the-no-plugin-test-sc",
   "done_when": "tests/test_no_plugin.py skips docs/context/ (context notes and office-hours design docs are copied in unchanged and never edited), keeps every other check, and the full suite passes on main",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T03:23:28+00:00",
