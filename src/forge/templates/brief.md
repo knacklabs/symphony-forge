@@ -76,6 +76,8 @@ for client apps, the running API with a real database and user flows in a browse
 Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Review reports an item proven only by unit tests as a P1
 `Not done` and never asks for unit tests of helpers.
+When changing a user-facing flow, add or update its Playwright test, including an old flow a story
+touches for the first time.
 
 A change to documentation only needs no test.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
