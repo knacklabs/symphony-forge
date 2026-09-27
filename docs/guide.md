@@ -8,8 +8,9 @@ inside Forge and goes into every worker's brief. How Forge behaves is set by its
 
 ## Install
 
-You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv` and either Claude Code or
-Codex. Either can coordinate the work, and `forge.toml` chooses which one builds tasks and fixes.
+You need git, the GitHub CLI (`gh`, signed in with `gh auth login`), `uv`, Claude Code and Codex.
+Either agent can coordinate the work; the first cold read of a story or spec runs on the other one.
+`forge.toml` chooses which one builds tasks and fixes.
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
