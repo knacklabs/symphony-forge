@@ -171,7 +171,7 @@ def test_4_merge_refuses_a_changed_head_and_checks_the_recorded_head(env):
     assert pending.stderr == (f"GitHub has not finished merging the pull request for {item}.\n"
                               f"Next: check the pull request, then forge merge {item}\n")
     _merge_at_github(env)
-    merged = env.repo.forge("merge", item, cwd=where)
+    merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
     assert any("--match-head-commit" in call and head in call for call in env.gh_calls("pr", "merge"))
     assert (env.repo.path / "app.py").is_file() is False
@@ -231,7 +231,9 @@ def _check_dirty_merge(
     assert item not in next_step.stdout
     (env.repo.path / ".git" / "forge" / "ready" / f"{item}.json").unlink()
     legacy = env.repo.forge("next")
-    assert f"Next: git worktree remove {where}" in legacy.stdout
+    command = legacy.stdout.splitlines()[-1]
+    assert command.startswith("Next: git worktree remove ")
+    assert Path(command.removeprefix("Next: git worktree remove ").strip("'")) == where
 
 
 def _check_later_local_commit(env):

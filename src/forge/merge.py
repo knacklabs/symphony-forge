@@ -64,18 +64,17 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
         if not merged:
             repo.refuse(REFUSALS["pending"], item=item)
-    survivor = next((Path(line[9:]) for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines()
-                     if line.startswith("worktree ") and Path(line[9:]) != worktree), top)
+    main_checkout = repo.forge_dir(top).parent.parent
     pending = receipt.get("pending_archives")
     if pending is None:
-        pending = sorted(_conversations(survivor, item))
+        pending = sorted(_conversations(main_checkout, item))
         receipt["pending_archives"] = pending
         _save_ready(path, receipt)
     if not isinstance(pending, list) or not all(isinstance(thread, str) for thread in pending):
         repo.refuse(REFUSALS["not_ready"], item=item)
     for thread in pending[:]:
         try:
-            archived = codex.archive(survivor, item, "Fix", thread)
+            archived = codex.archive(main_checkout, item, "Fix", thread)
         except Exception:
             archived = False
         if not archived:
@@ -103,12 +102,12 @@ def merge(args: argparse.Namespace) -> int:
         print(f"Merged {item}. Its worktree at {worktree} has uncommitted changes, so Forge left it and its local branch in place.")
     else:
         if top == worktree:
-            os.chdir(survivor)
-        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=survivor)
+            os.chdir(main_checkout)
+        removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
         if removed.returncode:
             repo.refuse(REFUSALS["worktree"], item=item)
-        if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=survivor).returncode == 0:
-            repo.git("branch", "-D", branch, cwd=survivor)
+        if repo.run("git", "show-ref", "--verify", f"refs/heads/{branch}", cwd=main_checkout).returncode == 0:
+            repo.git("branch", "-D", branch, cwd=main_checkout)
         print(f"Merged {item} and removed its worktree and local branch.")
     if dirty or advanced:
         receipt["tidied"] = True
