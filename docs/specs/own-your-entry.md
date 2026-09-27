@@ -1,8 +1,10 @@
 ---
 slug: own-your-entry
 title: Each Forge behaviour owns its own entry
-status: draft
+status: confirmed
 saved: 2026-09-27T16:42:06+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 4536140e4107c1e6086420540a065e02ee5f321c31bb0ca8cfc367f0f2bd7e8f
 ---
 
 # Each Forge behaviour owns its own entry
