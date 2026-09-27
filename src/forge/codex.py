@@ -51,7 +51,8 @@ GOOD = re.compile(re.escape(f"openai-codex {SDK_PIN}, openai-codex-cli-bin {SDK_
 # The driver the SDK's Python runs for one turn, in a process group of its own, so the driver, the
 # app-server it starts and whatever that starts can be stopped together.
 TURN = Path(__file__).with_name("codex_turn.py")
-GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True})
+GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt"
+         else {"start_new_session": True})
 # The Codex setting each key of a kind's [models] entry overrides. The app-server reads a dotted
 # key as a path, as `codex -c` does, so it sets one setting inside [agents] and keeps the rest.
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
@@ -87,13 +88,17 @@ REFUSALS = {
 # The token counts an end line carries, blank when Codex reports none.
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens")
 
+
 def sdk_env() -> Path:
     """The SDK's environment, with the user's other app data. XDG_DATA_HOME moves it."""
-    data = (os.environ.get("XDG_DATA_HOME") or os.environ.get("LOCALAPPDATA") or Path.home() / ".local" / "share")
+    data = (os.environ.get("XDG_DATA_HOME") or os.environ.get("LOCALAPPDATA")
+            or Path.home() / ".local" / "share")
     return Path(data) / "forge" / "codex-sdk" / f"openai-codex-{SDK_PIN}"
+
 
 def _python(env: Path) -> Path:
     return env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
 
 def sdk_problem() -> str:
     """Why the pinned SDK can't be used, in one sentence, or "" when it can."""
@@ -105,6 +110,7 @@ def sdk_problem() -> str:
     if done.returncode or not GOOD.fullmatch(said):
         return f"The Codex SDK in {env} should be {WANTED}, but its Python says: {said}"
     return ""
+
 
 def install() -> None:
     """Install the pinned SDK with uv into a fresh environment; the ready marker goes in last."""
@@ -122,6 +128,7 @@ def install() -> None:
     (env / READY).write_text(SDK_PIN + "\n", encoding="utf-8")
     print(f"Installed the Codex SDK {SDK_PIN} in {env}.")
 
+
 def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     """The kind's models from forge.toml, as the Codex settings its conversation starts with.
 
@@ -130,10 +137,12 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     return {OVERRIDES[key]: value for key, value in repo.models(
         cfg, "lite" if kind == "Ask" else kind.lower(), "codex").items()}
 
+
 def record(checkout: Path, item: str) -> dict[str, Any]:
     """The item's record: its Codex processes, conversation, checkout, approval, the commit its
     last turn started from, and HEAD when a turn last ended."""
     return _json(_item_file(checkout, item, ".json", "Fix"))
+
 
 def conversation(checkout: Path, item: str, approval: str | None) -> tuple[str | None, str]:
     """The item's conversation to continue and "", or None and why Forge starts a new one."""
@@ -148,6 +157,7 @@ def conversation(checkout: Path, item: str, approval: str | None) -> tuple[str |
         if repo.run("git", "merge-base", "--is-ancestor", commit, "HEAD", cwd=checkout).returncode:
             return None, "the branch's history was rewritten under its conversation"
     return saved["conversation"], ""
+
 
 def recover(checkout: Path, item: str) -> None:
     """After a crash, once its Codex processes are stopped: a turn whose end Forge never logged
@@ -164,12 +174,14 @@ def recover(checkout: Path, item: str) -> None:
     if "status" in last and not pending:
         return
     conversation = saved["conversation"] if "status" in last else last["conversation"]
-    said = run(checkout, item, (pending or last)["kind"], "", "", "read-only", conversation, read=True)
+    said = run(checkout, item, (pending or last)["kind"], "", "", "read-only", conversation,
+               read=True)
     if "read" not in said:
         repo.refuse(REFUSALS["unread"], item=item, command="work", log=repo.work_log(checkout, item))
     reported = dict(said["read"])
     if "status" in last:
-        logged = {(entry.get("conversation"), entry.get("turn")) for entry in map(json.loads, lines)}
+        logged = {(entry.get("conversation"), entry.get("turn"))
+                  for entry in map(json.loads, lines)}
         unlogged = [turn for turn in reported if (conversation, turn) not in logged]
         if not unlogged:  # the crash came before Codex started the turn
             _record(path, pending=None)
@@ -189,6 +201,7 @@ def recover(checkout: Path, item: str) -> None:
     print(f"Forge never saw the last turn end; Codex reports it {status}." if status != "lost" else
           "Forge never saw the last turn end, and Codex reports no status for it: it is logged "
           "as lost.", flush=True)
+
 
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
@@ -213,12 +226,14 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     """
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": settings(repo.config(checkout), kind), "thread": thread, "read": read}
-    log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else repo.work_log(checkout, item))
+    log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
+           repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
     command = "read" if kind == "Grill" else "ask" if kind == "Ask" else "work"
     started: dict[str, Any] = {}
     continued: dict[str, Any] = {}
-    result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None, "usage": None}
+    result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
+                              "usage": None}
     refused, server = "", None
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
@@ -275,7 +290,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     fresh, text = said["fresh"], ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
-                    continued = {"continued": said["continued"], "fresh_start": None if said["continued"] else fresh}
+                    continued = {"continued": said["continued"],
+                                 "fresh_start": None if said["continued"] else fresh}
                     # Codex may start the turn before Forge logs it, so a crash between the two
                     # leaves this for recover() to find the turn by. The turn starts from HEAD now,
                     # before Codex can commit anything. A new conversation drops the old one's
@@ -345,6 +361,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     pid=driver.pid if refused == "driver" else server)
     return result
 
+
 def _event(said: dict[str, Any]) -> str:
     """The readable line of a finished item: a message, a command or changed files; else ""."""
     if said.get("event") != "item/completed":
@@ -363,9 +380,11 @@ def _event(said: dict[str, Any]) -> str:
         return f"Changed {paths} ({item.get('status')})"
     return ""
 
+
 def _append(path: Path, line: dict[str, Any]) -> None:
     with path.open("a", encoding="utf-8") as out:
         out.write(json.dumps(line) + "\n")
+
 
 def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     """The item's record (.json), lock (.lock) or turn log (.log), in git's folder that every
@@ -379,6 +398,7 @@ def _item_file(checkout: Path, item: str, suffix: str, kind: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
+
 def _json(path: Path) -> dict[str, Any]:
     """A record or lock, or {} when it is missing or unreadable."""
     try:
@@ -386,6 +406,7 @@ def _json(path: Path) -> dict[str, Any]:
     except ValueError:
         return {}
     return data if isinstance(data, dict) else {}
+
 
 def _record(path: Path, **fields: Any) -> None:
     """Add fields to the item's record through a temporary file and a rename, so it stays whole."""
@@ -399,6 +420,7 @@ def _record(path: Path, **fields: Any) -> None:
                 tmp.unlink(missing_ok=True)
                 repo.refuse(REFUSALS["record"], record=path)
             time.sleep(wait)
+
 
 def identity(pid: int) -> dict[str, Any] | None:
     """A running process by its id, start time and command, so a reused id never passes for it.
@@ -448,6 +470,7 @@ def identity(pid: int) -> dict[str, Any] | None:
         return {"pid": pid}
     return {"pid": pid, "started": started.strip(), "command": command.strip()}
 
+
 def _alive(recorded: dict[str, Any]) -> bool | None:
     """Whether the recorded process still runs: False once its id is free or another process has
     it, None when Forge can't tell, which counts as running. It goes by id and start time: a
@@ -458,6 +481,7 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     if now is not None and "command" not in now:
         return None
     return now is not None and now["started"] == recorded.get("started")
+
 
 def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     """Stop what the item's last call left running: its driver's whole process group when the
@@ -480,6 +504,7 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
             unknown = recorded["pid"]
     return stopped, unknown
 
+
 def _stop(recorded: dict[str, Any], group: bool) -> None:
     """Stop a process, with its process group when `group`, and wait until it has gone: SIGTERM,
     then SIGKILL five seconds on. On Windows taskkill ends it and everything it started."""
@@ -498,6 +523,7 @@ def _stop(recorded: dict[str, Any], group: bool) -> None:
                 return
             time.sleep(0.1)
 
+
 @contextlib.contextmanager
 def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     """One forge work, or cold read, per item: take the item's lock, which holds this process's
@@ -509,7 +535,8 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     held = _take(lock, identity(os.getpid()) or {"pid": os.getpid()})
     if held:
         owner, alive = held
-        repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock, item=item, command=command)
+        repo.refuse(REFUSALS["busy" if alive else "unknown"], pid=owner.get("pid"), lock=lock,
+                    item=item, command=command)
     try:
         _, unknown = _stop_leftover(record)
         if unknown:  # its record stays, so a later call can still stop it
@@ -518,6 +545,7 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
     finally:
         _stop_leftover(record)
         lock.unlink(missing_ok=True)
+
 
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
     """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
@@ -534,6 +562,7 @@ def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] 
         with lock.open("x", encoding="utf-8") as out:  # created only if it isn't there
             json.dump(me, out)
         return None
+
 
 @contextlib.contextmanager
 def _one_at_a_time(lock: Path) -> Iterator[None]:
@@ -556,6 +585,7 @@ def _one_at_a_time(lock: Path) -> Iterator[None]:
             guard.seek(0)
             msvcrt.locking(guard.fileno(), msvcrt.LK_UNLCK, 1)
 
+
 def tidy(checkout: Path) -> list[str]:
     """For forge doctor, whatever the workers, since a record exists only where Codex ran: under
     each item's lock, clear what a crashed call left. An item whose lock is held is running, and
@@ -576,7 +606,8 @@ def tidy(checkout: Path) -> list[str]:
         try:
             stopped, unknown = _stop_leftover(base.with_suffix(".json"))
             if stopped:
-                said.append(f"Stopped the Codex processes that a crashed forge {command} {item} left.")
+                said.append(f"Stopped the Codex processes that a crashed forge {command} {item} "
+                            "left.")
             if unknown:
                 said.append(f"Process {unknown}, which a crashed forge {command} {item} left, may "
                             "still be running Codex, and Forge can't read its start time and "

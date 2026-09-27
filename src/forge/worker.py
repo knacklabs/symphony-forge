@@ -41,6 +41,7 @@ REFUSALS = {
                  'forge work {item} --note "<answer>"'),
 }
 
+
 def work(args: argparse.Namespace) -> None:
     item = args.item
     note = getattr(args, "note", None)
@@ -49,7 +50,8 @@ def work(args: argparse.Namespace) -> None:
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
-    top = _checkout(item, [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"])
+    top = _checkout(item, [f"task/{match['key']}-{match['task']}"] if match["task"]
+                    else [f"fix/{item}", f"forge/{item}"])
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     on_codex = config["workers"] == "codex"
     if on_codex and note is None and (question := codex.record(top, item).get("question")):
@@ -80,20 +82,24 @@ def work(args: argparse.Namespace) -> None:
         if thread:
             brief += _changes(top, codex.record(top, item)["start"])
         state["status"] = "fixing" if findings or failing else "working"
-        repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top), top=top)
+        repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
+                          top=top)
         if not on_codex:
             _run(item, top, brief, claude)
             return
         result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
                            thread, fresh, approval, note=note)
         if result["status"] != "completed":
-            why = (f"Codex reported it {result['status']}" if result["status"] else "Codex never reported its end")
+            why = (f"Codex reported it {result['status']}" if result["status"]
+                   else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
         final = (result.get("text") or "").strip()
         asked = re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", final, re.S)
-        codex._record(codex._item_file(top, item, ".json", kind), question=asked[1] if asked else None)
+        codex._record(codex._item_file(top, item, ".json", kind),
+                      question=asked[1] if asked else None)
         if asked:
             print(f"{asked[1]}\nNext: forge work {item} --note \"<answer>\"")
+
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
@@ -115,6 +121,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     if not doctor._codex_trusts(top, codex_config):
         refuse(REFUSALS["untrusted"])
     return []
+
 
 def _approval(key: str, item: str, top: Path) -> str:
     """The story's approval, read from its own branch, where approvals are committed, else from the
@@ -138,9 +145,11 @@ def _approval(key: str, item: str, top: Path) -> str:
             (planning / doc).read_text(encoding="utf-8") if (planning / doc).is_file() else ""):
         refuse(task.REFUSALS["changed"], key=key)
     brief = top / doc
-    if approved != task.approval_hash( brief.read_text(encoding="utf-8") if brief.is_file() else ""):
+    if approved != task.approval_hash(
+            brief.read_text(encoding="utf-8") if brief.is_file() else ""):
         refuse(REFUSALS["brief"], item=item, key=key, top=top, base=base, doc=doc)
     return approved
+
 
 def _changes(top: Path, start: str) -> str:
     """For a continued conversation: the commits since its last turn started, and every change git
@@ -149,7 +158,8 @@ def _changes(top: Path, start: str) -> str:
     commits = git("log", "--oneline", f"{start}..HEAD", cwd=top) or "None."
     with tempfile.TemporaryDirectory() as folder:
         env = {**os.environ, "GIT_INDEX_FILE": str(Path(folder) / "index")}
-        shutil.copy(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top), env["GIT_INDEX_FILE"])
+        shutil.copy(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top),
+                    env["GIT_INDEX_FILE"])
 
         def cached(*args: str) -> str:
             return subprocess.run(["git", *args], cwd=top, env=env, capture_output=True, text=True,
@@ -163,6 +173,7 @@ def _changes(top: Path, start: str) -> str:
             "the checkout since your last turn started, new files included:\n\n"
             f"```diff\n{diff}```\n")
 
+
 def _checkout(item: str, branches: list[str]) -> Path:
     """The worktree where the item's branch is checked out."""
     for block in git("worktree", "list", "--porcelain").split("\n\n"):
@@ -170,6 +181,7 @@ def _checkout(item: str, branches: list[str]) -> Path:
         if fields.get("branch", "").removeprefix("refs/heads/") in branches:
             return Path(fields["worktree"])
     refuse(REFUSALS["no_checkout"], item=item)
+
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     """The open serious findings and the failing checks, once close has reviewed the item."""
@@ -180,6 +192,7 @@ def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[
     findings = [finding for n, finding in enumerate(review.get("findings") or [], 1)
                 if finding.get("priority") in SERIOUS and n not in dismissed]
     return findings, _failing(state.get("branch", ""))
+
 
 def _failing(branch: str) -> list[tuple[str, str]]:
     """Each failing check on the branch's pull request, with the tail of its log."""
@@ -194,6 +207,7 @@ def _failing(branch: str) -> list[tuple[str, str]]:
             log = repo.run("gh", "run", "view", "--job", job[1], "--log-failed").stdout if job else ""
             failing.append((check.get("name", "a check"), "\n".join(log.splitlines()[-30:])))
     return failing
+
 
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
            findings: list[dict[str, Any]], failing: list[tuple[str, str]],
@@ -213,7 +227,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         row = task.rows(doc).get(match["task"], {})
         subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
-        on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true") else set())
+        on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
+                          else set())
         values.update(
             title=doc["#"], what=doc.get("What changes for you", ""), why=doc.get("Why", ""),
             done=doc.get("Done when", ""), risks=doc.get("Risks", ""), notes=doc.get("Notes", ""),
@@ -245,6 +260,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values), subject
 
+
 def _existing_tests(top: Path, scope: list[str]) -> str:
     """The checkout's test files that name a Scope file or folder, listed for the brief."""
     # ponytail: a whole-word match on each entry's last plain name (`board` for `web/board.py`), so
@@ -255,6 +271,7 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     found = repo.run("git", "grep", "-l", "-w", "-F", *patterns, "--", *TEST_PATHS,
                      cwd=top).stdout.splitlines() if names else []
     return ", ".join(f"`{path}`" for path in found) or "none found"
+
 
 def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
     """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""

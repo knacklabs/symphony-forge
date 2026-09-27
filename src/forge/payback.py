@@ -26,8 +26,10 @@ VALUE_GROUPS = (("hours_per_month", "people", "hourly_rate"), ("revenue_per_mont
 BUILD = ("build_days", "day_rate")
 WEIGHTS = {"measured": Fraction(1), "estimated": Fraction(1, 2), "guessed": Fraction(1, 5)}
 
+
 def _flag(name: str) -> str:
     return "--" + name.replace("_", "-")
+
 
 def _number(args: argparse.Namespace, name: str) -> Fraction:
     value = getattr(args, name)
@@ -39,6 +41,7 @@ def _number(args: argparse.Namespace, name: str) -> Fraction:
         repo.refuse(REFUSALS["not_number"], flag=_flag(name), value=value)
     return Fraction(number)
 
+
 def _group(args: argparse.Namespace, names: tuple[str, ...]) -> list[Fraction] | None:
     """The group's numbers, None when none of it is given; refuses a partly given group."""
     missing = [name for name in names if getattr(args, name) is None]
@@ -48,9 +51,11 @@ def _group(args: argparse.Namespace, names: tuple[str, ...]) -> list[Fraction] |
         repo.refuse(REFUSALS["missing"], missing=" and ".join(map(_flag, missing)))
     return [_number(args, name) for name in names]
 
+
 def _months(months: Fraction) -> str:
     """Months to one decimal, halves to even."""
     return f"{float(round(months, 1)):.1f}"
+
 
 def answer(args: argparse.Namespace) -> str:
     groups = [group for names in VALUE_GROUPS if (group := _group(args, names)) is not None]
@@ -65,8 +70,10 @@ def answer(args: argparse.Namespace) -> str:
     if value == 0:
         return "don't build: no monthly value"
     months = math.prod(build) / value
-    verdict = ("build" if months <= 3 else "smallest slice first" if months <= 12 else "don't build")
+    verdict = ("build" if months <= 3 else "smallest slice first" if months <= 12
+               else "don't build")
     return f"{verdict}: {_months(months)} months"
+
 
 def payback(args: argparse.Namespace) -> None:
     print(answer(args))

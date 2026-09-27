@@ -39,6 +39,7 @@ REFUSALS = {
 }
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 
+
 def close(args: argparse.Namespace) -> int:
     item = args.item
     top = _worktree(item)
@@ -68,9 +69,11 @@ def close(args: argparse.Namespace) -> int:
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
-        from_base = _check_line(top, item, result["commit"], f"origin/{default}", because.split()[0])
+        from_base = _check_line(top, item, result["commit"], f"origin/{default}",
+                                because.split()[0])
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
-        result["dismissals"].append({"finding": number, "because": because, "from_base": from_base})
+        result["dismissals"].append({"finding": number, "because": because,
+                                     "from_base": from_base})
     serious = review.blocking(result)
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
@@ -94,6 +97,7 @@ def close(args: argparse.Namespace) -> int:
     print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
 
+
 def _worktree(item: str) -> Path:
     """The checkout on the item's own branch: the one its state names. An earlier item's state
     reaches later branches through the default branch, so the file alone proves nothing."""
@@ -105,11 +109,13 @@ def _worktree(item: str) -> Path:
             return Path(fields["worktree"])
     repo.refuse(REFUSALS["not_started"], item=item)
 
+
 def _dismissals(args: argparse.Namespace, item: str) -> list[tuple[int, str]]:
     numbers, reasons = args.dismiss or [], args.because or []
     if len(numbers) != len(reasons) or not all(re.match(r"\S+:\d+\s+\S", r) for r in reasons):
         repo.refuse(REFUSALS["bad_dismiss"], item=item)
     return list(zip(numbers, reasons))
+
 
 def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> bool:
     """Use the base only when the branch deleted the cited file."""
@@ -118,8 +124,10 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
                                  base, commit, "--", path, cwd=top).split("\0")
     shown = repo.run("git", "show", f"{base if from_base else commit}:{path}", cwd=top)
     if shown.returncode or not 1 <= int(line) <= len(shown.stdout.splitlines()):
-        repo.refuse(REFUSALS["no_such_base_line" if from_base else "no_such_line"], where=where, item=item)
+        repo.refuse(REFUSALS["no_such_base_line" if from_base else "no_such_line"],
+                    where=where, item=item)
     return from_base
+
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     repo.git("fetch", "-q", "origin", default, cwd=top)
@@ -128,19 +136,25 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
         return
     files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
     if not files:
-        raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout, done.stderr)
+        raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
+                                            done.stderr)
     repo.git("merge", "--abort", cwd=top)
-    repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files), path=top, item=item)
+    repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
+                path=top, item=item)
+
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
     repo.write_state(item, state, top)
     repo.commit_state(message, repo.state_path(item), top=top)
 
+
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
-        raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout, done.stderr)
+        raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
+                                            done.stderr)
     return done.stdout
+
 
 def _draft(top: Path, *args: str) -> str:
     """A gh call that makes the pull request a draft. Where the repo allows no drafts (a private
@@ -154,10 +168,14 @@ def _draft(top: Path, *args: str) -> str:
           "forge-pr-check still blocks its merge.")
     return ""
 
+
 def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
     """The branch's open pull request, else its merged one, else None."""
-    prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all", "--json", "number,state,body,isDraft"))
-    return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state), None)
+    prs = json.loads(_gh(top, "pr", "list", "--head", branch, "--state", "all",
+                         "--json", "number,state,body,isDraft"))
+    return next((pr for state in ("OPEN", "MERGED") for pr in prs if pr.get("state") == state),
+                None)
+
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
              pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
@@ -172,19 +190,23 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         title, summary = _title(top, item, state)
         notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
         body_file.write_bytes(f"{summary}\n\n{notes}{block}\n".encode("utf-8"))
-        create = ("--base", default, "--head", branch, "--title", title, "--body-file", str(body_file))
-        url = ((draft and _draft(top, "pr", "create", "--draft", *create)) or _gh(top, "pr", "create", *create))
+        create = ("--base", default, "--head", branch, "--title", title, "--body-file",
+                  str(body_file))
+        url = ((draft and _draft(top, "pr", "create", "--draft", *create))
+               or _gh(top, "pr", "create", *create))
         print(f"Opened the pull request: {url.strip()}")
         return
     if draft and not pr.get("isDraft"):
         _draft(top, "pr", "ready", str(pr["number"]), "--undo")
     body = pr.get("body") or ""
     marked = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.S)
-    new = (marked.sub(lambda _: block, body, count=1) if marked.search(body) else f"{body.rstrip()}\n\n{block}\n")
+    new = (marked.sub(lambda _: block, body, count=1) if marked.search(body)
+           else f"{body.rstrip()}\n\n{block}\n")
     if new != body:
         body_file.write_bytes(new.encode("utf-8"))
         _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
         print("Updated the pull request's review block.")
+
 
 def _block(result: dict[str, Any], check: str) -> str:
     """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
@@ -196,8 +218,10 @@ def _block(result: dict[str, Any], check: str) -> str:
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if finding["priority"] in review.SERIOUS else "advisory")
-        lines.append(f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): {note}")
+        lines.append(f"{n}. {finding['priority']} {finding['title']} "
+                     f"({finding['file']}:{finding['line']}): {note}")
     return "\n".join([*lines, *(["", check] if check else []), END])
+
 
 def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str]:
     """A task's Name and "What it delivers"; a fix's why and done-when lines."""
@@ -207,6 +231,7 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str]:
     else:
         title, summary = state.get("why", ""), state.get("done_when", "")
     return " ".join(title.split()) or item, " ".join(summary.split())
+
 
 def _merged(top: Path, item: str) -> int:
     """The item's pull request merged: name `forge story done` once the story's last one has."""

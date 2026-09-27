@@ -28,14 +28,17 @@ DISCOVERY = "docs/product/DISCOVERY.md"
 # A problem card's six fields; a card is filled once any of them reads something other than unknown.
 CARD_FIELD = re.compile(r"^- (?:Job|Workaround|Cost|Who feels it|How often|Evidence):(.*)$", re.M)
 
+
 def next_step(args: Any) -> int:
     print("\n".join(_report(repo.root())[0]))
     return 0
+
 
 def context_hook(args: Any) -> int:
     lines, states = _report(repo.root())
     print("\n".join(lines + states))
     return 0
+
 
 def _report(top: Path) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
@@ -62,6 +65,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         lines.append(board.numbers_line(top))
     return lines, states
 
+
 def _due(top: Path) -> list[str]:
     """A success check for each spec whose check date has come and whose stories are all done."""
     ref = story.landed_ref(top)
@@ -73,7 +77,8 @@ def _due(top: Path) -> list[str]:
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
-        if not all(story.json_of(story.show(top, ref, repo.state_path(key))).get("status") == "done" for key in spec_keys):
+        if not all(story.json_of(story.show(top, ref, repo.state_path(key))).get("status") == "done"
+                   for key in spec_keys):
             continue
         found = records.due_check(story.show(top, ref, rel) or "", repo.now()[:10])
         if found:
@@ -84,6 +89,7 @@ def _due(top: Path) -> list[str]:
                       'spec records its result"',
                       f'Next: forge spec measure {slug} --result "<measured result>"']
     return lines
+
 
 def _idle(top: Path) -> list[str]:
     """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
@@ -105,6 +111,7 @@ def _idle(top: Path) -> list[str]:
             'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
             'filled problem card and the brief names it"']
 
+
 def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
     """Each story's worktree (None once it is only on the default branch), state and doc text."""
     found: dict[str, tuple[Path | None, dict[str, Any], str]] = {}
@@ -119,13 +126,15 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
     return found
 
+
 def _story(top: Path, key: str, path: Path | None, text: str,
            title: str) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     try:
         doc = story.parse(text)
     except ValueError as exc:
-        return [f"The story doc of {title} is malformed: {exc}.", f"Next: edit plans/{key}.md, then run forge next"], []
+        return [f"The story doc of {title} is malformed: {exc}.",
+                f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
         return _approval(top, key, path, title, digest), []
@@ -153,6 +162,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 
+
 def _approval(top: Path, key: str, path: Path, title: str, digest: str) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     try:
@@ -172,6 +182,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str) -> list[
             '"Approve this plan?", header "Approve plan" and choices "Approve plan", '
             '"Request changes", "Stop"']
 
+
 def _task(top: Path, key: str, task: str, trees: dict[str, Path]) -> dict[str, Any]:
     """A task's state: merged once on origin/<default>, else from its worktree, else {}."""
     item = f"{key}/{task}"
@@ -180,6 +191,7 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path]) -> dict[str, A
         return {**story.json_of(text), "status": "merged"}
     path = trees.get(f"task/{key}-{task}")
     return (repo.read_state(item, path) if path else None) or {}
+
 
 def _item(item: str, label: str, state: dict[str, Any]) -> list[str]:
     status = state.get("status") or "started"
@@ -191,6 +203,7 @@ def _item(item: str, label: str, state: dict[str, Any]) -> list[str]:
     values = {"item": item, "label": label, "status": status,
               "reason": str(state.get("reason") or "it has serious findings or red checks").rstrip(".")}
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
+
 
 def _touches(count: int) -> str:
     return f"{count} human touch{'es' if count != 1 else ''}"

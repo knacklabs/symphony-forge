@@ -70,7 +70,9 @@ DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|de
 # the cold read, read-only. Codex's is its conversation's id.
 READERS = {"CLAUDECODE": "codex", "CODEX_THREAD_ID": "claude"}
 
+
 # --- commands ------------------------------------------------------------------------------
+
 
 def new(args: Any) -> int:
     top, key, fix = repo.root(), args.key, args.from_fix
@@ -108,6 +110,7 @@ def new(args: Any) -> int:
         print(_promote(fix_top, fix, key, fix_state))
     print(f"Next: write {doc} there, then forge read {key}")
     return 0
+
 
 def read(args: Any) -> int:
     target = args.target
@@ -165,6 +168,7 @@ def read(args: Any) -> int:
           f"Next: give every finding a disposition, amend the doc once, then forge read {target} --amended")
     return 0
 
+
 def done(args: Any) -> int:
     top, key = repo.root(), args.key
     doc, ref = f"plans/{key}.md", landed_ref(top)
@@ -194,7 +198,9 @@ def done(args: Any) -> int:
     print(f"Opened the fix that records the outcome of {title} in {path}.\nNext: forge close {slug}")
     return 0
 
+
 # --- the story doc -------------------------------------------------------------------------
+
 
 def sections(text: str) -> dict[str, str]:
     """The doc's `## ` sections, heading to body, in order."""
@@ -203,6 +209,7 @@ def sections(text: str) -> dict[str, str]:
         heading, _, body = block.partition("\n")
         found.setdefault(heading.strip(), body)
     return found
+
 
 def parse(text: str) -> dict[str, Any]:
     """A story doc's title, sections, Done-when items, task rows and `New moving parts:` line.
@@ -255,6 +262,7 @@ def parse(text: str) -> dict[str, Any]:
     return {"title": title[1].strip() if title else "", "sections": found, "done": done,
             "tasks": list(tasks.values()), "moving_parts": moving[0]}
 
+
 def approval_hash(text: str) -> str | None:
     """What an approval binds: sha256 of the stripped "What changes for you" body, a newline, and the
     stripped "Done when" body. None when the text lacks either section.
@@ -266,6 +274,7 @@ def approval_hash(text: str) -> str | None:
         return None
     return hashlib.sha256("\n".join(found[name].strip() for name in APPROVED).encode("utf-8")).hexdigest()
 
+
 def overlaps(scope: list[str], other: list[str]) -> bool:
     """Whether two Scope lists share a path: the same path, one inside the other, or a glob match."""
     def one(a: str, b: str) -> bool:
@@ -273,7 +282,9 @@ def overlaps(scope: list[str], other: list[str]) -> bool:
         return a == b or a.startswith(b + "/") or b.startswith(a + "/") or fnmatch(a, b) or fnmatch(b, a)
     return any(one(a, b) for a in scope for b in other)
 
+
 # --- the cold read gate and forge-pr-check -------------------------------------------------
+
 
 def check_read(target: str, top: Path | None = None) -> None:
     """Refuse unless a story doc or spec has its cold read, is unchanged since the read (or its
@@ -292,6 +303,7 @@ def check_read(target: str, top: Path | None = None) -> None:
     if is_story:
         _parsed(doc, rel)
 
+
 def undisposed(findings: str) -> str:
     """The number of the first finding without a disposition (keep needs a reason), or ""."""
     parts = FINDING.split(findings)
@@ -300,6 +312,7 @@ def undisposed(findings: str) -> str:
         if not found or (found[1].lower() == "keep" and not found[2]):
             return number
     return ""
+
 
 def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
     """The story-doc part of forge-pr-check: the problem with the first bad story doc among the
@@ -321,7 +334,9 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
     return None
 
+
 # --- worktrees and the default branch ------------------------------------------------------
+
 
 def worktrees(top: Path) -> dict[str, Path]:
     """Every checked-out branch and its worktree folder."""
@@ -334,10 +349,12 @@ def worktrees(top: Path) -> dict[str, Path]:
             found[line[len("branch refs/heads/"):]] = path
     return found
 
+
 def stories_here(top: Path) -> dict[str, Path]:
     """Each story's own worktree, by key."""
     return {branch[6:]: path for branch, path in worktrees(top).items()
             if branch.startswith("story/") and KEY.fullmatch(branch[6:])}
+
 
 def story_checkout(key: str, top: Path | None = None) -> Path:
     """The checkout holding a story's planning state: its own worktree, else this checkout."""
@@ -347,12 +364,14 @@ def story_checkout(key: str, top: Path | None = None) -> Path:
             return path
     repo.refuse(REFUSALS["no_story"], key=key)
 
+
 def add_worktree(top: Path, branch: str, start: str) -> Path:
     """A new branch in its own worktree, next to the main checkout."""
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
     path = main.parent / f"{main.name}-{branch.replace('/', '-')}"
     repo.git("worktree", "add", "-q", "-b", branch, str(path), start, cwd=top)
     return path
+
 
 def landed_ref(top: Path) -> str:
     """Where merged work lands: origin/<default> as last fetched; the local default with no remote."""
@@ -361,15 +380,19 @@ def landed_ref(top: Path) -> str:
     found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
     return default if found else fetched
 
+
 def show(top: Path, ref: str, path: str) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
     done = repo.run("git", "show", f"{ref}:{path}", cwd=top)
     return done.stdout if done.returncode == 0 else None
 
+
 def merged_at(top: Path, ref: str, path: str) -> str:
     """When a file first reached the default branch (a task's merge date) in UTC, or ""."""
-    date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path, cwd=top)
+    date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path,
+                    cwd=top)
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
+
 
 def json_of(text: str | None) -> dict[str, Any]:
     """A JSON object read from git, or {} when it's missing or unreadable."""
@@ -379,7 +402,9 @@ def json_of(text: str | None) -> dict[str, Any]:
         return {}
     return data if isinstance(data, dict) else {}
 
+
 # --- helpers -------------------------------------------------------------------------------
+
 
 def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool]:
     """The checkout, doc and notes file of a story key or a spec slug, and whether it's a story."""
@@ -392,11 +417,13 @@ def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool
         repo.refuse(REFUSALS["no_spec"], slug=target)
     return top, doc, doc.with_name(f"{target}.read.md"), False
 
+
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:
     try:
         return parse(_text(doc))
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
+
 
 def _record(notes: str) -> tuple[dict[str, str], str]:
     """A notes file's read record (its frontmatter) and the findings after it."""
@@ -407,9 +434,11 @@ def _record(notes: str) -> tuple[dict[str, str], str]:
               for key, colon, value in (line.partition(":") for line in match[1].splitlines()) if colon}
     return fields, notes[match.end():]
 
+
 def _notes(record: dict[str, str], findings: str) -> str:
     head = "".join(f"{key}: {record.get(key) or ''}".rstrip() + "\n" for key in RECORD)
     return f"---\n{head}---\n{findings}"
+
 
 def _repo_root_paths(said: str, roots: Any) -> str:
     """Rewrite paths under a checkout, with either separator, to repo-root paths GitHub resolves."""
@@ -417,6 +446,7 @@ def _repo_root_paths(said: str, roots: Any) -> str:
         head = r"[\\/]".join(map(re.escape, re.split(r"[\\/]", root)))
         said = re.sub(head + r"[\\/]([^\s`'\")\]>]*)", lambda m: "/" + m[1].replace("\\", "/"), said)
     return said
+
 
 def _snapshot(top: Path) -> str:
     """HEAD plus a tree of every file in the checkout, tracked or not, so any change shows."""
@@ -427,11 +457,14 @@ def _snapshot(top: Path) -> str:
             shutil.copyfile(index, temp)  # a copy keeps git's stat cache, so this stays fast
         env = {**os.environ, "GIT_INDEX_FILE": str(temp)}
         for args in (["add", "-A"], ["write-tree"]):
-            done = subprocess.run(["git", *args], cwd=top, env=env, capture_output=True, text=True, check=True)
+            done = subprocess.run(["git", *args], cwd=top, env=env, capture_output=True, text=True,
+                                  check=True)
     return done.stdout + repo.run("git", "rev-parse", "-q", "--verify", "HEAD", cwd=top).stdout
+
 
 def _hash(top: Path, doc: Path) -> str:
     return repo.git("hash-object", "--", str(doc), cwd=top)
+
 
 def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
     items = repo.roadmap(top)  # refuses a roadmap it can't read
@@ -444,6 +477,7 @@ def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
     _write(path, json.dumps(data, indent=2) + "\n")
     return ["plans/roadmap.json"]
 
+
 def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> str:
     """Turn a fix's branch into the story's first task branch, keeping its commits."""
     task, branch, old = f"{key}/{fix.upper()}", f"task/{key}-{fix.upper()}", repo.state_path(fix)
@@ -452,8 +486,10 @@ def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> st
     (fix_top / old).unlink()
     state = {name: value for name, value in fix_state.items() if name != "kind"}
     new = repo.write_state(task, {**state, "branch": branch}, fix_top)
-    repo.commit_state("Turn the fix into the first part of its story", *([old] if tracked else []), new, top=fix_top)
+    repo.commit_state("Turn the fix into the first part of its story", *([old] if tracked else []), new,
+                      top=fix_top)
     return f"The fix {fix} is now the story's first task, {task}, in {fix_top}."
+
 
 def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
     checked: set[str] = set()
@@ -470,14 +506,19 @@ def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
     for task in tasks:
         visit(task, [])
 
+
 def _cell_paths(cell: str) -> list[str]:
-    return [part for part in (piece.strip(" `") for piece in cell.split(",")) if part not in ("", "-", "\u2014", "none")]
+    return [part for part in (piece.strip(" `") for piece in cell.split(","))
+            if part not in ("", "-", "\u2014", "none")]
+
 
 def _rel(top: Path, path: Path) -> str:
     return path.relative_to(top).as_posix()
 
+
 def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
+
 
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)

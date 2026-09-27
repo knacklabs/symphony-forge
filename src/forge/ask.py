@@ -13,6 +13,7 @@ REFUSALS = {
     "failed": ("Codex did not complete the answer.", 'forge ask "<question>"'),
 }
 
+
 def ask(args: argparse.Namespace) -> None:
     question = args.question
     if not question.strip():
@@ -26,7 +27,8 @@ def ask(args: argparse.Namespace) -> None:
               "Do not change any file.\n\n" + question)
     before = story._snapshot(top)
     with codex.hold(top, "ask", "Ask"):
-        result = codex.run(top, "ask", "Ask", "Ask · this checkout", prompt, "read-only", echo=False)
+        result = codex.run(top, "ask", "Ask", "Ask · this checkout", prompt, "read-only",
+                           echo=False)
     if story._snapshot(top) != before:
         repo.refuse(REFUSALS["discarded"])
     if result["status"] != "completed" or not (result["text"] or "").strip():

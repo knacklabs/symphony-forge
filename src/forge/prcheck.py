@@ -31,6 +31,7 @@ REFUSALS = {
 }
 CODE_LIMIT = 5
 
+
 def pr_check(args: argparse.Namespace) -> int:
     # The workflow runs: forge hook pr-check --base <sha> --head <sha> --branch <head branch>
     given = dict(zip(args.args[::2], args.args[1::2]))
@@ -74,10 +75,12 @@ def pr_check(args: argparse.Namespace) -> int:
         return 0
     repo.refuse(REFUSALS["not_reviewed"], branch=branch, problem=problem, item=item)
 
+
 def promote_problem(changed: list[str], interfaces: list[str]) -> str:
     """Why a fix must become a story, or "": it touches an interfaces path, or more than five code
     files. Markdown, .factory/ and plans/ never count."""
-    code = [path for path in changed if not path.lower().endswith(".md") and not path.startswith(review.BOOKKEEPING)]
+    code = [path for path in changed
+            if not path.lower().endswith(".md") and not path.startswith(review.BOOKKEEPING)]
     for path in code:
         # "/" + path lets "**/routes/**" match a top-level routes/ folder too.
         if any(fnmatch(path, pattern) or fnmatch("/" + path, pattern) for pattern in interfaces):
@@ -86,11 +89,13 @@ def promote_problem(changed: list[str], interfaces: list[str]) -> str:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
     return ""
 
+
 def _on_branch(top: Path, commit: str, head: str) -> bool:
     """The reviewed commit is the head or one of its ancestors. It is read from the head, so it
     must look like a commit id before it goes near git."""
     return bool(re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit)) and repo.run(
         "git", "merge-base", "--is-ancestor", commit, head, cwd=top).returncode == 0
+
 
 def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
     """The task or fix whose state at head names this branch."""
@@ -99,7 +104,8 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
     listing = repo.git("ls-tree", "-r", "-z", "--name-only", head, "--", ".factory/stories",
                        ".factory/fixes", cwd=top)
     for path in listing.split("\0"):
-        match = re.fullmatch(r"\.factory/(?:stories/([^/]+)/tasks/([^/]+)|fixes/([^/]+))\.json", path)
+        match = re.fullmatch(r"\.factory/(?:stories/([^/]+)/tasks/([^/]+)|fixes/([^/]+))\.json",
+                             path)
         if not match:
             continue
         try:

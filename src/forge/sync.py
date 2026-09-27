@@ -33,6 +33,7 @@ WORKFLOW_PATH = ".github/workflows/forge.yml"
 # A Forge host hook command: v1's, or the copied-in Forge's ("$(git rev-parse ...)/forge" hook x).
 FORGE_COMMAND = re.compile(r'forge"? hook ')
 
+
 def command(hook: str) -> str:
     """A host hook command that fails closed (decision 0038, ported).
 
@@ -40,6 +41,7 @@ def command(hook: str) -> str:
     one does. Exit 2 is the code both hosts treat as blocking.
     """
     return f"sh -c 'forge hook {hook} || exit 2' || exit 2"
+
 
 # Each host's hook file: event -> (the tools it matches, or None for all; the forge hook it runs).
 HOSTS = {
@@ -124,12 +126,15 @@ jobs:
           forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
 """
 
+
 def install_line(version: str) -> str:
     """The command that installs the pinned Forge (the pin refusal's own Next line)."""
     return repo.REFUSALS["pin"][1].format(pinned="v" + version.removeprefix("v"))
 
+
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
+
 
 def write_file(top: Path, rel: str, text: str) -> None:
     """Write a repo file with LF line endings, never through a link that leads outside the repo."""
@@ -138,6 +143,7 @@ def write_file(top: Path, rel: str, text: str) -> None:
         repo.refuse(REFUSALS["outside"], path=rel)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))
+
 
 def _span(text: str, rel: str) -> tuple[int, int]:
     """Where the Forge block starts and ends in the text, or (-1, -1) when there is none."""
@@ -148,6 +154,7 @@ def _span(text: str, rel: str) -> tuple[int, int]:
         repo.refuse(REFUSALS["bad_block"], path=rel)
     return start, end + len(END)
 
+
 def _block(top: Path, rel: str, template: str) -> str:
     """The file with its Forge block replaced, or appended when it has none."""
     text = read(top / rel)
@@ -156,6 +163,7 @@ def _block(top: Path, rel: str, template: str) -> str:
     if start == -1:
         return f"{text.rstrip()}\n\n{block}\n" if text.strip() else f"{block}\n"
     return text[:start] + block + text[end:]
+
 
 def _claude(top: Path) -> str:
     """CLAUDE.md without the Forge block an older Forge wrote; "" means delete it.
@@ -169,6 +177,7 @@ def _claude(top: Path) -> str:
     if rest in ("", "@AGENTS.md"):
         return ""
     return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
+
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> str:
     """The host's hook file with Forge's entries replaced (old Forge's too); the rest stays."""
@@ -190,6 +199,7 @@ def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> st
     except (ValueError, AttributeError, TypeError) as exc:
         repo.refuse(REFUSALS["cant_merge"], path=rel, problem=exc)
     return json.dumps(data, indent=2) + "\n"
+
 
 def _codex_config(top: Path) -> str:
     """.codex/config.toml with Codex's project hooks on; every other setting stays as it is."""
@@ -215,15 +225,19 @@ def _codex_config(top: Path) -> str:
         end = after.start() if after else len(text)
         table = text[header.end():end]
         line = re.search(r"^[ \t]*hooks[ \t]*=.*$", table, re.M)
-        table = (table[:line.start()] + "hooks = true" + table[line.end():] if line else "\nhooks = true" + table)
+        table = (table[:line.start()] + "hooks = true" + table[line.end():] if line
+                 else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
     try:
-        safe = bool(merged) and tomllib.loads(merged) == {**data, "features": {**(features or {}), "hooks": True}}
+        safe = bool(merged) and tomllib.loads(merged) == {
+            **data, "features": {**(features or {}), "hooks": True}}
     except tomllib.TOMLDecodeError:
         safe = False
     if not safe:
-        repo.refuse(REFUSALS["cant_merge"], path=rel, problem="Forge can't safely set hooks = true in its [features] table")
+        repo.refuse(REFUSALS["cant_merge"], path=rel,
+                    problem="Forge can't safely set hooks = true in its [features] table")
     return merged
+
 
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
@@ -231,7 +245,8 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     node = ""
     if (top / "package.json").is_file():
         node = "      - uses: actions/setup-node@v7\n"
-        version_file = next((name for name in (".nvmrc", ".node-version") if (top / name).is_file()), None)
+        version_file = next((name for name in (".nvmrc", ".node-version")
+                             if (top / name).is_file()), None)
         if version_file:
             node += f"        with:\n          node-version-file: {version_file}\n"
         else:
@@ -268,6 +283,7 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         WORKFLOW_PATH: workflow,
     }
 
+
 def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     """The two git hook shims, in the hooks folder every worktree shares."""
     # Asked from the checkout's top: git gives core.hooksPath when set, and resolves a relative
@@ -276,6 +292,7 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     return {folder / hook: SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
             .replace("<what>", what).replace("<install>", install_line(cfg["version"]))
             for hook, what in (("pre-commit", "commit"), ("pre-push", "push"))}
+
 
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     """Write the files that differ from what sync makes; returns them. Never on the default branch."""
@@ -289,6 +306,7 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
         else:
             (top / rel).unlink()
     return changed
+
 
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
     """Install the git hook shims; returns whether any changed. They are never committed.
@@ -312,6 +330,7 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             changed = True
         path.chmod(0o755)
     return changed
+
 
 def sync(args: argparse.Namespace) -> None:
     top = repo.root()

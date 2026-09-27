@@ -16,8 +16,10 @@ REFUSALS = {
     "failed": ("{command} failed: {problem}", "forge doctor"),
 }
 
+
 def _arg(*names: str, **options: Any) -> tuple[tuple[str, ...], dict[str, Any]]:
     return names, options
+
 
 # Command words, "module:function", whether it changes state, help, arguments.
 # A command that changes state refuses unless the installed Forge matches the forge.toml pin.
@@ -104,12 +106,15 @@ GROUPS = {
     "hook": "Internal: the one entry point that git hooks, host hooks and CI call",
 }
 
+
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         repo.refuse(REFUSALS["usage"], problem=f"{self.prog}: {message}", prog=self.prog)
 
+
 def _parser() -> _Parser:
-    parser = _Parser(prog="forge", description="Forge takes a story from approval to a merged pull request.")
+    parser = _Parser(prog="forge",
+                     description="Forge takes a story from approval to a merged pull request.")
     parser.add_argument("--version", action="version", version=f"forge v{__version__}")
     commands = parser.add_subparsers(required=True, title="commands")
     groups: dict[str, Any] = {}
@@ -128,6 +133,7 @@ def _parser() -> _Parser:
         command.set_defaults(words=words, handler=target, changes=changes)
     return parser
 
+
 def _function(args: argparse.Namespace) -> Callable[[argparse.Namespace], int | None]:
     module, name = args.handler.split(":")
     try:
@@ -141,11 +147,13 @@ def _function(args: argparse.Namespace) -> Callable[[argparse.Namespace], int | 
         repo.refuse(REFUSALS["not_built"], command=args.words)
     return function
 
+
 def _run(argv: list[str] | None) -> int:
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
         prog = f"forge {args.words}"
-        repo.refuse(REFUSALS["usage"], problem=f"{prog}: unrecognized arguments: {' '.join(extra)}", prog=prog)
+        repo.refuse(REFUSALS["usage"], problem=f"{prog}: unrecognized arguments: {' '.join(extra)}",
+                    prog=prog)
     args.args = extra
     if args.changes:
         repo.check_pin()
@@ -156,6 +164,7 @@ def _run(argv: list[str] | None) -> int:
         # A git (or gh) failure the command didn't expect: show what the tool said.
         repo.refuse(REFUSALS["failed"], command=" ".join(map(str, exc.cmd[:2])),
                     problem=(exc.stderr or exc.stdout or f"exit code {exc.returncode}").strip())
+
 
 def main(argv: list[str] | None = None) -> int:
     # UTF-8 whatever the console code page (Windows pipes use a legacy one), so "→" stays "→".

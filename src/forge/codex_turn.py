@@ -40,15 +40,18 @@ STARTING = threading.Lock()  # end() never falls between the app-server starting
 SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
 RECORDED = threading.Semaphore(0)  # a release per line Forge sends once it has recorded an id
 
+
 def emit(**line: Any) -> None:
     # The handler runs on the SDK's reader thread, so lines take turns.
     with LOCK:
         print(json.dumps(line), flush=True)
 
+
 def decline(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
     """Forge's answer to every request Codex sends, known or unknown."""
     emit(declined=method)
     return {"decision": "decline"}
+
 
 class Client(CodexClient):
     """The SDK's client, which prints the app-server's id as soon as it starts, before Codex()
@@ -61,8 +64,10 @@ class Client(CodexClient):
         emit(pid=self._proc.pid)
         RECORDED.acquire()
 
+
 # ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
 api.CodexClient = Client
+
 
 def end() -> None:
     """End this driver and everything it started: the process group Forge made for it."""
@@ -74,6 +79,7 @@ def end() -> None:
             os.killpg(0, signal.SIGTERM)
         os._exit(1)
 
+
 def watch() -> None:
     """Pass on each line saying Forge recorded an id, and end everything once Forge, the calling
     process, goes away: its end of stdin closes."""
@@ -81,9 +87,11 @@ def watch() -> None:
         RECORDED.release()
     end()
 
+
 def late() -> None:
     emit(refused="start")
     end()
+
 
 def main() -> int:
     emit(driver=os.getpid())  # Forge records this process, as it now runs, before it sends a request
@@ -149,6 +157,7 @@ def main() -> int:
         return 0
     finally:
         codex.close()
+
 
 if __name__ == "__main__":
     sys.exit(main())

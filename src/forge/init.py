@@ -55,6 +55,7 @@ effort = "high"
 model = "gpt-6-astra"
 """
 
+
 def _scaffold(top: Path) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
@@ -71,6 +72,7 @@ def _scaffold(top: Path) -> dict[str, str]:
            for path in sorted(skeleton.rglob("*")) if path.is_file()},
         "plans/roadmap.json": '{\n  "items": []\n}\n',
     }
+
 
 def protect(top: Path, branch: str, checks: list[str]) -> None:
     """Allow changes to branch only through a pull request with these checks green, and say so.
@@ -101,9 +103,11 @@ def protect(top: Path, branch: str, checks: list[str]) -> None:
           f"{' and '.join(checks)} checks pass, and nobody can push to it directly."
           + (" Its other rules stay as they were." if current else ""))
 
+
 def _protect_failed(done: subprocess.CompletedProcess[str], branch: str, args: list[str]) -> NoReturn:
     said = (done.stderr.strip() or f"gh exited with code {done.returncode}").splitlines()[0]
     repo.refuse(REFUSALS["protect"], branch=branch, problem=said.rstrip("."), command=shlex.join(args))
+
 
 def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
     """The protection GitHub reported (its read shape), in the shape it takes, with Forge's rules
@@ -122,7 +126,8 @@ def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
     required = [{"context": entry["context"], **({"app_id": entry["app_id"]}
                                                 if isinstance(entry.get("app_id"), int) else {})}
                 for entry in kept if isinstance(entry, dict) and "context" in entry]
-    required += [{"context": name} for name in checks if name not in {entry["context"] for entry in required}]
+    required += [{"context": name} for name in checks
+                 if name not in {entry["context"] for entry in required}]
     reviews = current.get("required_pull_request_reviews") or {}
     pull = {"required_approving_review_count": reviews.get("required_approving_review_count", 0),
             **{key: reviews[key] for key in ("dismiss_stale_reviews", "require_code_owner_reviews",
@@ -138,6 +143,7 @@ def _stronger(current: dict[str, Any], checks: list[str]) -> dict[str, Any]:
                 "required_linear_history", "allow_force_pushes", "allow_deletions", "block_creations",
                 "required_conversation_resolution", "lock_branch", "allow_fork_syncing")
                if key in current}}
+
 
 def init(args: argparse.Namespace) -> None:
     top = repo.root()
