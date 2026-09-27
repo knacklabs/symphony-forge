@@ -68,12 +68,12 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
+        selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}")
+            result = review.run(top, item, state, cfg, f"origin/{default}", selected)
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
-            repo.record_timing(top, item, "review", start, clock, outcome,
-                               cfg["models"].get("review"))
+            repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
