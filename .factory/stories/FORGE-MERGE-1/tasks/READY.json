@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-MERGE-1-READY",
-  "status": "working",
+  "review": {
+    "commit": "3a180bed92a604b042652a5026caeac243aa1cab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This test changes the item's configuration but invokes every merge command from the main checkout: tests/conftest.py:69 defaults cwd to env.repo.path. Replacing default_config() with config(root()) would therefore still pass. Likewise, removing the fetch would pass because these pushes already update the local origin/main reference. Run the command from the item's worktree with conflicting configuration, and change the remote default branch from a separate clone so the test requires fetching to observe it. These are required protections in Done-when 2.",
+        "file": "tests/test_merge_ready.py",
+        "line": 18,
+        "priority": "P1",
+        "title": "Not done: default-branch configuration isolation and freshness test"
+      },
+      {
+        "body": "The only new close/next test enables agent merging. There is no end-to-end assertion that closing an item with the default human setting creates the ready record and then makes forge next request a human merge, as Done-when 3 requires. tests/test_close.py:512 checks the existing human close message, but does not cover the new receipt-driven next step. A regression that always recommends forge merge for recorded-ready items would pass this coverage. Add the human-setting flow through the real commands and assert the receipt and human next step.",
+        "file": "tests/test_merge_ready.py",
+        "line": 40,
+        "priority": "P1",
+        "title": "Not done: human-merge ready flow test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "eabd3aa27742afcac3bb19dc3b1ecd3679672184b0fae49d657bdaea814d5d47"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T15:03:17+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T15:20:56+00:00",
+      "step": "review"
     }
   ]
 }
