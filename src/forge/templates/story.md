@@ -10,7 +10,15 @@ $why
 
 ## Done when
 
-1. $done
+1. **$done** <Detail: evidence, edge cases or technical notes, if needed.>
+
+## Risks
+
+<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+
+Risks: none
+
+## For the builders
 
 ## Tasks
 
@@ -27,11 +35,5 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|
 $tasks
 New moving parts: none
-
-## Risks
-
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
-
-Risks: none
 
 ## Notes

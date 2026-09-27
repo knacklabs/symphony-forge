@@ -79,7 +79,7 @@ def new(args: Any) -> int:
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
-    done = "<Something anyone can observe once this is done.>"
+    done = "Something anyone can observe once this is done."
     if fix:
         fix_top = worktrees(top).get(f"fix/{fix}")
         fix_state = repo.read_state(fix, fix_top) if fix_top else None

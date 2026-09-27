@@ -39,8 +39,19 @@ The human approves stories, chooses between options and merges. Everything else 
 one question at a time: a decision gets options with your recommendation first, a question of
 fact gets neutral choices.
 
+Give each question one line of context and a header of 12 characters or less. Use 1-5 word options
+that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
+questions; write for the human's choice.
+
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
+
+## New directions
+
+When the human states a new direction, principle or value, grill how it applies before changing
+anything. Ask one question at a time with your recommended answer and why; look up facts in the
+repo instead of asking the human. Continue until the plan for applying it is agreed, then make
+the changes.
 
 ## Discovery
 
@@ -79,7 +90,10 @@ choice and one line of why into the spec's Behaviour.
 ## Planning a story
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
-  behaviour or success measure. "Code exists" is not a result.
+  behaviour or success measure. Open each item with one bold plain sentence before its detail.
+  "Code exists" is not a result.
+- Put Risks right after Done when, then a `For the builders` heading before Tasks, so the owner's
+  sections come first.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each.
