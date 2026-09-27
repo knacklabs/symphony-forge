@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import REAL_CODEX_HOME
+
 STORY = "FORGE-WARM-1"
 PIN = "0.156.1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -125,7 +127,7 @@ def _one(lines: list[dict], key: str) -> dict:
                     reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
 def test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops(tmp_path,
                                                                          isolated_codex_home):
-    shutil.copyfile(Path.home() / ".codex" / "auth.json", isolated_codex_home / "auth.json")
+    shutil.copyfile(REAL_CODEX_HOME / "auth.json", isolated_codex_home / "auth.json")
     (isolated_codex_home / "auth.json").chmod(0o600)
     word = f"smoke-{uuid.uuid4().hex[:8]}"
     name = f"Smoke · Forge SDK check · {word}"

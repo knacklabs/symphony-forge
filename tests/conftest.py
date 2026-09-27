@@ -16,6 +16,7 @@ from typing import Any, Callable
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}

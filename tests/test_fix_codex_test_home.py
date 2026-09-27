@@ -4,11 +4,14 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-from test_codex_smoke import ENV, PIN, _sdk
+from conftest import REAL_CODEX_HOME
+from test_codex_smoke import ENV, PIN, ROOT, WAIT, _sdk
 
 STORY = "forge-s-test-suite-starts-real-codex-con"
 
@@ -29,18 +32,35 @@ def _isolated_home(isolated_codex_home):
 
 @pytest.mark.skipif(not (ENV / "forge-sdk-ready").is_file(),
                     reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
-def test_1_forge_command_leaves_real_codex_threads_unchanged(repo):
-    real_home = Path.home() / ".codex"
+def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
+    real_home = REAL_CODEX_HOME
     test_home = Path(os.environ["CODEX_HOME"])
     assert test_home != real_home and test_home.is_dir()
     shutil.copyfile(real_home / "auth.json", test_home / "auth.json")
     (test_home / "auth.json").chmod(0o600)
 
+    configured_home = tmp_path / "configured-codex-home"
+    configured_home.mkdir(mode=0o700)
+    shutil.copyfile(real_home / "auth.json", configured_home / "auth.json")
+    (configured_home / "auth.json").chmod(0o600)
+    other_user_home = tmp_path / "user-home"
+    other_user_home.mkdir()
+
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "codex"\n'
                '[models.lite]\nmodel = "gpt-6-sol"\neffort = "low"\n')
-    before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)}))
+    configured_before = json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)}))
+    smoke = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_codex_smoke.py::test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops", "-q"],
+        cwd=ROOT, capture_output=True, text=True, timeout=WAIT,
+        env={**os.environ, "HOME": str(other_user_home), "CODEX_HOME": str(configured_home),
+             "XDG_DATA_HOME": str(ENV.parents[2])})
+    assert smoke.returncode == 0 and "1 passed" in smoke.stdout, smoke.stdout + smoke.stderr
     asked = repo.forge("ask", "Reply with just OK.")
     assert asked.returncode == 0, asked.stdout + asked.stderr
-    assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})) == before
-    assert any(name == "Ask · this checkout" for _, name in json.loads(_sdk(THREADS)))
+    assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)})) == configured_before
+    ask_threads = json.loads(_sdk(THREADS))
+    assert any(name == "Ask · this checkout" for _, name in ask_threads)
+    created = {thread for thread, _ in ask_threads}
+    assert created.isdisjoint(thread for thread, _ in
+                              json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})))
