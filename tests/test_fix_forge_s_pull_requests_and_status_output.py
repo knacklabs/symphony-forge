@@ -106,3 +106,37 @@ def test_8_next_names_finding_after_close_stops(env):
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
     assert "Close stopped on The fix tidy-readme: A greeting is missing." in result.stdout
+
+
+def test_9_board_puts_active_work_first_and_folds_finished_fixes(repo, gh, tmp_path):
+    setup(repo, keys=("OLD", "LIVE"))
+    repo.write("plans/roadmap.json", json.dumps({"items": [
+        {"key": "OLD", "title": "An earlier story"},
+        {"key": "LIVE", "title": "A current story"}]}))
+    repo.write(".factory/stories/OLD/story.json", json.dumps({
+        "title": "An earlier story", "status": "done", "finished": "2026-09-26T10:00:00Z"}))
+    repo.write(".factory/stories/LIVE/story.json", json.dumps({
+        "title": "A current story", "status": "planning"}))
+    repo.write(".factory/fixes/finished-fix.json", json.dumps({
+        "branch": "fix/finished-fix", "why": "A finished fix", "status": "ready"}))
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Track current work")
+    repo.git("push", "-q", "origin", "main")
+    active = repo.path.parent / "repo-fix-active-fix"
+    repo.git("worktree", "add", "-q", "-b", "fix/active-fix", str(active), "main")
+    state = active / ".factory/fixes/active-fix.json"
+    state.write_text(json.dumps({"branch": "fix/active-fix", "why": "An active fix",
+                                 "status": "working"}))
+    gh.respond("pr", "list", stdout=json.dumps([{
+        "headRefName": "fix/finished-fix", "state": "MERGED", "title": "A finished fix",
+        "url": "https://github.com/acme/shop/pull/8",
+        "mergedAt": "2026-09-26T10:00:00Z"}]))
+    out = tmp_path / "board.html"
+    result = repo.forge("board", "--out", str(out))
+    assert result.returncode == 0, result.stderr
+    page = out.read_text()
+    assert page.index("A current story") < page.index("An earlier story")
+    assert "<summary>1 finished fix</summary>" in page
+    assert page.index("An active fix") < page.index("<summary>1 finished fix</summary>")
+    assert '<a href="https://github.com/acme/shop/pull/8">A finished fix</a>' in page
+    assert "An active fix</b>: <span class=\"status\">In progress." in page

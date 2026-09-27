@@ -29,10 +29,10 @@ STATE = re.compile(r"\.factory/(?:stories/(?P<key>[A-Z][A-Z0-9-]*)/(?:story|task
                    r"|fixes/(?P<fix>[a-z0-9][a-z0-9-]*))\.json")
 # ponytail: a merged fix "fixed Forge" when it changed Forge's own files; widen once a miss shows up.
 FORGE_FILES = ("forge.toml", ".claude/", ".codex/", ".github/workflows/forge.yml", "src/forge/")
-WAITING = "Waiting for someone to accept it"
-STATUS = {"started": "Started, not built yet", "working": "Being built", "reviewing": "Being reviewed",
-          "fixing": "Being fixed after its review", "waiting for checks": "Being checked",
-          "ready": "Being checked"}
+WAITING = "Ready to merge"
+STATUS = {"started": "Waiting to start", "working": "In progress", "reviewing": "Under review",
+          "fixing": "Needs fixes", "waiting for checks": "Checks running",
+          "ready": "Ready to merge"}
 
 Item = dict[str, Any]
 
@@ -106,6 +106,7 @@ def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
         parts = [(names.get(tid) or "A part with no name yet", mine.get(tid))
                  for tid in [*names, *sorted(set(mine) - set(names))]]
         stories.append(_story(top, key, state, state.get("title") or titles.get(key), parts))
+    stories.sort(key=lambda item: item["finished"])
     fixes.sort(key=lambda fix: fix["start"] or now, reverse=True)
     return stories, fixes, prs
 
@@ -180,14 +181,14 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     elif state.get("status") == "done":
         sentence = f"Finished on {_day(_when(state.get('finished')))}."
     elif not approved:
-        sentence = "Being planned." if state.get("status") == "planning" else "Planned, and waiting for approval."
+        sentence = "Planning." if state.get("status") == "planning" else "Waiting for approval."
     elif parts and len(finished) == len(parts):
-        sentence = "Every part is finished; waiting for someone to write down what it achieved."
+        sentence = "All parts finished; record the outcome."
     elif not started:
         sentence = "Approved; no part has started yet."
     else:
-        sentence = (f"Being built: {len(finished)} of {len(parts)} parts finished"
-                    + (f", {len(waiting)} waiting for someone to accept it" if waiting else "") + ".")
+        sentence = (f"In progress: {len(finished)} of {len(parts)} parts finished"
+                    + (f", {len(waiting)} ready to merge" if waiting else "") + ".")
     touches = state.get("touches", 0) + sum(part["touches"] for part in started)
     meta = []
     begun = _step(state, "start")
@@ -204,7 +205,8 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     if state.get("status") == "done" and ended:
         timeline.append((ended, "The story was finished.", state.get("outcome") or ""))
     return {"title": title or "A story with no title yet", "sentence": sentence, "meta": meta,
-            "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved)}
+            "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved),
+            "finished": state.get("status") == "done"}
 
 
 def _part(top: Path, landed: str, rel: str, state: Item, merged: bool, pr: Item | None,
@@ -367,7 +369,14 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
 
     note = ("" if prs is not None else '<p class="card note">GitHub couldn\'t be reached, so the list of '
             "finished work isn't available. This page shows the saved dates only.</p>")
-    fixed = "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in fixes)
+    active = [fix for fix in fixes if not fix["finished"]]
+    finished = [fix for fix in fixes if fix["finished"]]
+    fixed = "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in active)
+    if finished:
+        fixed += (f'<li><details><summary>{len(finished)} finished '
+                  f'fix{"es" if len(finished) != 1 else ""}</summary><ul>'
+                  + "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in finished)
+                  + "</ul></details></li>")
     now = _when(repo.now()) or datetime.now(timezone.utc)
     return Template((Path(__file__).parent / "board.html").read_text(encoding="utf-8")).substitute(
         updated=f"{_day(now)} at {now:%H:%M} UTC",
