@@ -98,6 +98,10 @@ def test_10_version_pin(repo, tmp_path):
     shutil.copytree(ROOT / "src" / "forge", source / "src" / "forge",
                     ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copy(ROOT / "pyproject.toml", source)
+    for rel in (".codex/skills/test-audit/SKILL.md", ".codex/skills/test-audit/NOTICE.md",
+                ".codex/skills/forge/fde.md", ".claude/skills/remote-approval/SKILL.md"):
+        (source / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, source / rel)
     repo.git("init", "-q", str(source))
     repo.git("add", "-A", cwd=source)
     repo.git("commit", "-q", "-m", "Release", cwd=source)

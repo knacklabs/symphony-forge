@@ -28,6 +28,7 @@ REFUSALS = {
 }
 
 TEMPLATES = Path(__file__).with_name("templates")
+SOURCE = Path(__file__).resolve().parents[2]
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 WORKFLOW_PATH = ".github/workflows/forge.yml"
 # A Forge host hook command: v1's, or the copied-in Forge's ("$(git rev-parse ...)/forge" hook x).
@@ -239,6 +240,12 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
+def _synced_text(source: str, packaged: str) -> str:
+    """Read the checkout's copy in editable installs, or the bundled copy in built installs."""
+    checked_in = SOURCE / source
+    return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
+
+
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
@@ -270,15 +277,17 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
         # Discovery's worked example, question bank and call script, opened only when needed.
-        **{f"{host}/skills/forge/fde.md": (TEMPLATES / "fde.md").read_text(encoding="utf-8")
+        **{f"{host}/skills/forge/fde.md": _synced_text(".codex/skills/forge/fde.md", "fde.md")
            for host in (".claude", ".codex")},
         # The test-audit skill (MIT, with its NOTICE) that workers and reviewers use for tests.
-        **{f"{host}/skills/test-audit/{path.name}": path.read_text(encoding="utf-8")
+        **{f"{host}/skills/test-audit/{name}":
+           _synced_text(f".codex/skills/test-audit/{name}", f"skills/test-audit/{name}")
            for host in (".claude", ".codex")
-           for path in sorted((TEMPLATES / "skills" / "test-audit").glob("*.md"))},
+           for name in ("NOTICE.md", "SKILL.md")},
         # Claude Code only: the Remote Control session it starts is a Claude feature.
         ".claude/skills/remote-approval/SKILL.md":
-            (TEMPLATES / "skills" / "remote-approval" / "SKILL.md").read_text(encoding="utf-8"),
+            _synced_text(".claude/skills/remote-approval/SKILL.md",
+                         "skills/remote-approval/SKILL.md"),
         ".codex/config.toml": _codex_config(top),
         WORKFLOW_PATH: workflow,
     }
