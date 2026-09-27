@@ -1,6 +1,14 @@
 {
+  "approval": {
+    "at": "2026-09-27T16:28:28+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01QuE1nY6SBZd2ZsVjRo9BTc",
+    "hash": "c053efb07ccbaa903034b350071620e1fff3b7614d988518d6861520ecb933da",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-TRIM-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-27T16:22:50+00:00",
@@ -9,8 +17,12 @@
     {
       "at": "2026-09-27T16:26:56+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-09-27T16:28:28+00:00",
+      "step": "approved"
     }
   ],
   "title": "src/forge is at its 8,000-line ceiling, so the next stories can't add their code without breaking Forge's rule that it shrinks over time",
-  "touches": 0
+  "touches": 1
 }
