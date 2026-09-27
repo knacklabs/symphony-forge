@@ -3,7 +3,7 @@
   "branch": "fix/in-src-forge-checks-py-a-check-run-count",
   "done_when": "every required check name is matched independently against the check runs, so overlapping names each find their run, and a test proves it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T14:49:45+00:00",
