@@ -1,33 +1,33 @@
 {
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
-    "commit": "149eece3a76fb59575ab8c3d4d940c455dfc3360",
+    "commit": "13362f285eaa90273be5735e3ea9ac26f846bbbe",
     "dismissals": [],
     "findings": [
       {
-        "body": "The local branch is checked against the receipt only at line 37, before checks.wait, which can wait 600 seconds (src/forge/checks.py:29). If someone commits locally during that wait without pushing, GitHub correctly merges the recorded head, but the newer local worktree is clean. This cleanup then removes it and force-deletes the branch containing the unmerged commits. Revalidate the local head before removal and preserve the worktree and branch if they advanced.",
-        "file": "src/forge/merge.py",
-        "line": 84,
-        "priority": "P1",
-        "title": "Preserve local commits created while checks are running"
-      },
-      {
-        "body": "When codex.archive fails, Forge prints a warning but still deletes the ready receipt or marks it tidied and returns success. For a clean item, its worktree was already removed, so another forge merge cannot retry the outstanding archives; for a dirty item, forge next hides it despite unfinished archiving. Thus a temporary Codex failure permanently abandons the required archive work. Preserve a usable retry path and outstanding conversation IDs until all recorded conversations have been archived.",
-        "file": "src/forge/merge.py",
-        "line": 98,
-        "priority": "P1",
-        "title": "Not done: 5. Complete archiving before retiring merge cleanup"
-      },
-      {
-        "body": "The assertion's 'failed' match comes from the unrelated 'FAILED stub diagnostic' emitted during every read (tests/stubs/codex-app-server:53), not the archive warning. Replacing the failure warning with a success message containing 'archive' would still pass, so this does not prove item 7's failure-reporting requirement. Assert the specific archive-failure message and its recovery instruction, independently of the reader's output.",
+        "body": "This test does not establish that merge checks belong to the recorded commit. `env.checks()` matches only the API argument prefix (tests/test_close.py:150\u2013154), so it returns identical results for every SHA. Passing another commit to `checks.wait` would still pass this test; the `--match-head-commit` assertion verifies a separate operation. Make the API responses commit-specific or assert the check-run and status endpoints queried by the merge command.",
         "file": "tests/test_merge_command.py",
-        "line": 243,
+        "line": 146,
         "priority": "P1",
-        "title": "Not done: cold-read archive-failure reporting test"
+        "title": "Not done: recorded-head check lookup test"
+      },
+      {
+        "body": "The assertion accepts any archive request, while the archive stub succeeds for any thread ID. Archiving an unrelated conversation would therefore pass both the success and failure scenarios, leaving item 7's requirement to archive the read's own conversation unprotected. Assert that the archive request's thread ID matches the conversation created for this read, or make the stub reject other IDs.",
+        "file": "tests/test_merge_command.py",
+        "line": 298,
+        "priority": "P1",
+        "title": "Not done: cold-read conversation identity test"
+      },
+      {
+        "body": "If a local commit is created during merging and archiving subsequently fails, the receipt correctly preserves pending archives, but the instructed retry always stops here because the local branch no longer equals the receipt. The MERGED cleanup path and its local-commit preservation logic are unreachable. Following `forge close` does not repair this: close.py:57\u201360 returns through `_merged`, which only prints guidance (close.py:247\u2013258). Apply this local-head gate to an unmerged PR, while allowing cleanup of a verified merged recorded head to archive outstanding conversations and preserve the advanced local branch.",
+        "file": "src/forge/merge.py",
+        "line": 39,
+        "priority": "P2",
+        "title": "Allow cleanup retries after the local branch advances"
       }
     ],
     "status": "blocked",
-    "tree": "c66b16dfdf096ef11bf3d9bf918486e73f9bd7b6e84d15b9a6dc13f4e049d6e0"
+    "tree": "5854d9c8bc39c3e182196a33d75b22b0444be07687c160f61eec0364c5fa2ac7"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-27T18:31:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:45:03+00:00",
       "step": "review"
     }
   ]
