@@ -160,6 +160,14 @@ def read(args: Any) -> int:
     record = {"reader": f"{reader} ({repo.models(config, 'grill', reader)['model']})",
               "read_at": repo.now(), "read_hash": read_hash, "amended_hash": ""}
     _write(notes, _notes(record, f"{head.strip()}\n\n{said}\n"))
+    if reader == "codex" and ran.get("conversation"):
+        try:
+            archived = codex.archive(top, target, "Grill", ran["conversation"])
+        except Exception:
+            archived = False
+        if not archived:
+            print(f"Forge could not archive the cold read's Codex conversation for {target}; "
+                  "archive it in Codex when it is available.")
     if is_story:
         state = repo.read_state(target, top) or {}
         state["status"] = "read"

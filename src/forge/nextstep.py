@@ -212,8 +212,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None = None) -> list[str]:
     status = state.get("status") or "started"
     if status == "merged" and path:
-        return [f"{label} is merged; clean up its worktree.",
-                f"Next: git worktree remove {shlex.quote(str(path))}"]
+        return ([] if repo.default_config(top)["merge"] == "agent" else
+                [f"{label} is merged; clean up its worktree.",
+                 f"Next: git worktree remove {shlex.quote(str(path))}"])
     ready = repo.ready_path(item, top)
     if ready.is_file():
         try:

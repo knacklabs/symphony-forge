@@ -112,6 +112,10 @@ def main() -> int:
             emit(refused="handler")
             return 3
         client._approval_handler = decline
+        if request.get("archive"):
+            codex.thread_archive(request["thread"])
+            emit(archived=True)
+            return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
