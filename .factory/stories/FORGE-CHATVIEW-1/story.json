@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-CHATVIEW-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-27T16:59:22+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
+  "touches": 0
+}
