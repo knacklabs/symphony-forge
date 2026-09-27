@@ -1,0 +1,14 @@
+{
+  "base": "c38a337dfa804a9485afbda8fa31dc8dd6e882be",
+  "branch": "fix/forge-s-test-suite-starts-real-codex-con",
+  "done_when": "no test creates, names or archives a thread in the user's real Codex home: every test that reaches Codex uses a throwaway Codex home, and a test run leaves the real home's thread list unchanged, proven by an end-to-end test",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T15:59:43+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's test suite starts real Codex conversations in the user's own Codex home, so every test run leaves new threads in their Codex chat list"
+}
