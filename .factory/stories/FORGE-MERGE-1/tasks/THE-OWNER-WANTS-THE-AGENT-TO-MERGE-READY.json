@@ -1,8 +1,7 @@
 {
   "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
-  "branch": "fix/the-owner-wants-the-agent-to-merge-ready",
+  "branch": "task/FORGE-MERGE-1-THE-OWNER-WANTS-THE-AGENT-TO-MERGE-READY",
   "done_when": "docs/specs/agent-merge.md is confirmed by the owner and on the roadmap as FORGE-MERGE-1",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
