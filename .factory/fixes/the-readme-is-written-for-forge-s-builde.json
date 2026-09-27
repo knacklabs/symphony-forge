@@ -1,0 +1,14 @@
+{
+  "base": "620d6cde8def2c31ad92f8d685f479dedfdfd72f",
+  "branch": "fix/the-readme-is-written-for-forge-s-builde",
+  "done_when": "README.md explains in simple English what Forge is, who it's for (developers, product people, vibe coders), how a change flows from idea to merged pull request, how to install and start, and the few commands people use, with no client names and every command and link in it real",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T16:24:22+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The README is written for Forge's builders, so a product person or someone vibe coding can't tell what Forge does for them or how to start"
+}
