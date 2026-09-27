@@ -1,0 +1,14 @@
+{
+  "base": "08cc730cdc9e865cc943bf4c98f044f5687fa15d",
+  "branch": "fix/the-owner-wants-the-agent-to-merge-ready",
+  "done_when": "docs/specs/agent-merge.md is confirmed by the owner and on the roadmap as FORGE-MERGE-1",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T14:52:29+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet"
+}
