@@ -3,7 +3,7 @@
   "branch": "fix/forge-next-lists-already-merged-fixes-an",
   "done_when": "forge next says an item whose pull request merged is merged and names the cleanup, instead of waiting for checks, and a test proves it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T14:49:44+00:00",
