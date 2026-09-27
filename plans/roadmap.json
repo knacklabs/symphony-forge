@@ -78,6 +78,13 @@
       "spec": "docs/specs/agent-merge.md",
       "status": "pending",
       "order": 54
+    },
+    {
+      "key": "FORGE-TRIM-1",
+      "title": "Forge sheds dead and duplicated code before it grows again",
+      "spec": "docs/specs/forge-trim.md",
+      "status": "pending",
+      "order": 55
     }
   ],
   "epics": [
