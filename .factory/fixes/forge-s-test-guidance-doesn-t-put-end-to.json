@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-test-guidance-doesn-t-put-end-to",
   "done_when": "src/forge/standards.md, src/forge/templates/conventions/testing.md, src/forge/templates/brief.md and src/forge/templates/review.md all say: every Done-when item is proven by an end-to-end test through the real entry point (Forge's own command; for client apps, the running API with a real database and user flows in a browser through Playwright), faking only third-party services at their edge; unit tests only for pure logic with many cases and never as an item's only proof; review reports an item proven only by unit tests as a P1 Not done and never asks for unit tests of helpers; a test pins each of the four texts",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T05:14:11+00:00",
