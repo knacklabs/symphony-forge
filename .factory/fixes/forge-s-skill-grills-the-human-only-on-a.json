@@ -1,0 +1,14 @@
+{
+  "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
+  "branch": "fix/forge-s-skill-grills-the-human-only-on-a",
+  "done_when": "the Forge skill says to grill any request with more than one reasonable reading or no stated done-when before starting a fix or story, one question at a time with a recommendation, looking facts up in the repo, while a clear request goes straight ahead; the generated skill copies match, and a test through forge sync proves the synced skill carries the rule",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-27T16:43:42+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's skill grills the human only on a new direction or value, so a vague change request with several readings or no stated done-when gets built on the agent's guess"
+}
