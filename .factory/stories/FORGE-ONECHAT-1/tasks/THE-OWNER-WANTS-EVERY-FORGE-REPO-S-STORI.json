@@ -4,7 +4,13 @@
   "done_when": "docs/specs/one-chat-approval.md is confirmed by the owner and on the roadmap as FORGE-ONECHAT-1",
   "review": {
     "commit": "14ac694becaf79e789a7d7cb80d263b52722046e",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": ".factory/stories/FORGE-ONECHAT-1/story.json:2 the story is now approved (status approved, approval recorded from Plan Mode and merged into this branch), so the story plan has its matching approval",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Adding this plan makes the branch fail Forge's existing PR document gate. `src/forge/story.py:332\u2013334` requires every changed story plan to have a matching approval in its story state, but the added `.factory/stories/FORGE-ONECHAT-1/story.json` contains only start/read steps and no approval. `src/forge/prcheck.py:60\u201362` refuses the PR on that mismatch. The plan, its cold-read notes and its story state are also outside this task's three allowed paths and are unnecessary to confirm and link the spec. Keep those story-planning artifacts on the parent story branch so this spec task can merge independently.",
@@ -14,10 +20,10 @@
         "title": "Keep the unapproved story plan out of this spec-only branch"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "58d5d86623d35539abf6520b5ed94e1105ab66f92799f8dd23ac5f68f5e067f6"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T15:18:18+00:00",
