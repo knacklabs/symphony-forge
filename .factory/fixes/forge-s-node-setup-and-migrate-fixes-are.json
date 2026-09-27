@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed on 2026-09-27: the v1.0.1 bump touches 7 files (package version, forge.toml pin, generated CI header, three version tests)",
   "base": "670df3faff9dd342f2ce4c58ca9f31c6150b5b76",
   "branch": "fix/forge-s-node-setup-and-migrate-fixes-are",
   "done_when": "Forge's version is 1.0.1 in src/forge/__init__.py (release tag v1.0.1), this repo's forge.toml pins v1.0.1, and the version test passes",
