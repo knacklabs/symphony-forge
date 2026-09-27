@@ -1,0 +1,30 @@
+{
+  "allow_large": "The owner allowed on 2026-09-27: the v1.0.1 bump touches 7 files (package version, forge.toml pin, generated CI header, three version tests)",
+  "base": "670df3faff9dd342f2ce4c58ca9f31c6150b5b76",
+  "branch": "fix/forge-s-node-setup-and-migrate-fixes-are",
+  "done_when": "Forge's version is 1.0.1 in src/forge/__init__.py (release tag v1.0.1), this repo's forge.toml pins v1.0.1, and the version test passes",
+  "kind": "fix",
+  "review": {
+    "commit": "ff236c8a0fdf7f2e61152f4380c88f046d4c4781",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "aa4f59a0f60d95b0f8e853a5cab932f12862fc358f409267c48c358462efdb54"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T05:07:51+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T05:09:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T05:22:23+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's Node-setup and migrate fixes are on main but not in a release, so clients pinned to v1.0.0 (myclaw) don't get them"
+}
