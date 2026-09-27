@@ -4,7 +4,7 @@
   "branch": "fix/the-old-forge-s-records-and-ledgers-are",
   "done_when": "Only the new Forge's files stay: under .factory/, only stories/<KEY>/tasks/*.json, stories/<KEY>/*.json story states and fixes/*.json that the new Forge reads; under plans/, only the story docs (<KEY>.md), their .read.md notes and roadmap.json; WORKFLOW.md, .review-notes.md, projects/, .forge-migrate/ and .claude/CLAUDE.md are deleted; every path the new Forge's code, tests, CI or docs still reference is kept or the reference is updated; the full suite passes; git history keeps everything",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-27T03:28:05+00:00",
