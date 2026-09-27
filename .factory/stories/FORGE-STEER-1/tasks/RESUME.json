@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-STEER-1-RESUME",
-  "status": "working",
+  "review": {
+    "commit": "abad21dac70976059547edb5ea3a2a69e6ae5c2d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch adds planning records but no driver implementation. In the readable source, `src/forge/codex_turn.py:131-134` catches every `JsonRpcError`, emits the fresh-start reason, and immediately starts another conversation. Thus an \"already has an active writer\" error still loses conversation continuity without stopping matching recorded processes, restarting the app-server, or retrying once. Implement the required recovery in the driver while preserving other resume errors' behavior.",
+        "file": "plans/FORGE-STEER-1.md",
+        "line": 32,
+        "priority": "P1",
+        "title": "Not done: 3. Recover from an active-writer resume error before starting fresh"
+      },
+      {
+        "body": "The required test file is absent from both the supplied change and the readable checkout. Existing fallback coverage at `tests/test_codex_resume.py:247-271` exercises a missing conversation and expects a single resume attempt; it does not test active-writer recovery. Add executable coverage for successful recovery, exactly one retry followed by an explained fresh start on failure, unchanged handling of other errors, and the required process-identity and item-lock safeguards.",
+        "file": "plans/FORGE-STEER-1.md",
+        "line": 44,
+        "priority": "P1",
+        "title": "Not done: tests/test_steer_resume.py"
+      }
+    ],
+    "status": "blocked",
+    "tree": "04b56b55d1b1afbac35921e88b360b90d52be4104c1bbbbf8ece0ea36bbd6532"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-27T04:59:02+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-27T05:01:20+00:00",
+      "step": "review"
     }
   ]
 }
