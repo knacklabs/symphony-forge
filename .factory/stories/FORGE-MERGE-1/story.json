@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MERGE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-27T14:58:52+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet",
+  "touches": 0
+}
