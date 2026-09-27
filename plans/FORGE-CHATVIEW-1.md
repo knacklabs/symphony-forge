@@ -40,7 +40,7 @@ builds the confirmed spec `docs/specs/codex-chat-view.md`.
 |---|---|---|---|---|---|---|---|
 | FORGE-S-CODEX-CHATS-SHOW-AS-ONE-PROJECT | The spec | The confirmed spec and its roadmap item | 1 | `docs/specs/codex-chat-view.md`, `docs/specs/codex-chat-view.read.md`, `plans/roadmap.json` | | none | no |
 | START | Chat start | In the driver: the project lookup and assignment after start or resume, naming only on a fresh start, and the `attach` request the close uses; the main checkout passed from Forge | 2, 3, 6 | `src/forge/codex_turn.py`, `src/forge/codex.py` | `tests/test_chatview_start.py` | none | yes |
-| WORDS | Names and previews | The name formats and the summary lines in the worker's and cold read's prompts | 3, 4 | `src/forge/worker.py`, `src/forge/story.py`, `src/forge/templates/brief.md`, `src/forge/templates/cold-read.md` | `tests/test_chatview_words.py` | none | yes |
+| WORDS | Names and previews | The name formats and the summary lines in the worker's and cold read's prompts | 3, 4 | `src/forge/worker.py`, `src/forge/story.py`, `src/forge/templates/brief.md`, `src/forge/templates/cold-read.md`, `tests/test_codex_reader.py`, `tests/test_codex_resume.py`, `tests/test_codex_worker.py`, `tests/test_fix_no_plugin_context.py` | `tests/test_chatview_words.py` | none | yes |
 | ATTACH | Pull request link | `forge close` reading its pull request and attaching it to the item's chat through `codex.attach` | 5, 6 | `src/forge/close.py` | `tests/test_chatview_attach.py` | START | yes |
 
 New moving parts: none
@@ -56,7 +56,8 @@ Risks: none
   (`["github.com","<owner>","<repo>",<number>]`) and `payload` (`url`, `root`, `headBranch`).
   The driver emits `project=<id>` or `project_skipped=<reason>` lines, which Forge writes to the
   work log. `codex.py` exposes `attach(top, item, pr)` for ATTACH.
-- WORDS owns the name strings; START sets a name only when the chat is new, using the name the
+- WORDS owns the name strings and updates the existing tests that expect the old names; the
+  named-once rule is START's to prove. START sets a name only when the chat is new, using the name the
   caller passes, so the two share only the existing `name` field of the request.
 - `project/list` and the `projectId` field are experimental in the app-server; the SDK sends the
   experimental flag already, and every call's failure is non-fatal.
