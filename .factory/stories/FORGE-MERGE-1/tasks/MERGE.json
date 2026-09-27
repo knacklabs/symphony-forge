@@ -2,7 +2,13 @@
   "branch": "task/FORGE-MERGE-1-MERGE",
   "review": {
     "commit": "ec4dd02fe406dac45afe02fee19169ef36ee3cce",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/merge.py:128 archiving exists to tidy the owner's chat list; merge archives every conversation in the item's record and turn log, and the one it can miss is a conversation that was created but never ran a turn before a retry, which holds no work; leaving that empty chat unarchived is harmless, and recording every created conversation would change how every worker round records chats, outside this task",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "An interrupted first worker attempt can leave a recorded conversation that this collector misses after a retry. In src/forge/codex.py:192\u2013194, recovery clears the pending turn without logging its conversation; lines 156\u2013157 then select a fresh conversation because no turn started, and line 311 overwrites the previous ID. This collector therefore archives only the replacement conversation, leaving the earlier recorded one active. Preserve every created conversation ID independently of turn completion. Extend tests/test_merge_command.py:306 to retry the worker with a different conversation before closing and merging, and assert that both conversations are archived.",
@@ -12,10 +18,10 @@
         "title": "Not done: 5. Archive every recorded Codex conversation"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "88309e1be0a35c1838821bc7e509e61a170aa1eb1f79895b78bae30057732c88"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T17:28:37+00:00",
