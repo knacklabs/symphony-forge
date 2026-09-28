@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "Forge now merges ready pull requests itself in repos that allow it, through forge merge, after a clean review and green checks",
-  "status": "started",
+  "review": {
+    "commit": "277c40e13cebff6a0fe4da0b9512d43a550bd68a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "fe235b014a2694c9c486d54daa34daeb5b0db4dd8474f85a58da390de28e108d"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T05:16:23+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:17:10+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
