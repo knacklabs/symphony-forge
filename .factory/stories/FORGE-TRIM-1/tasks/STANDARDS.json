@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-TRIM-1-STANDARDS",
-  "status": "working",
+  "review": {
+    "commit": "989b4c18ce8e4e980772c34ce663309a047935b6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "0f274b8327814b2662888f935985d4736bcb123128b8994b9f6e732a5d61390b"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T06:00:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T06:24:44+00:00",
+      "step": "review"
     }
   ]
 }
