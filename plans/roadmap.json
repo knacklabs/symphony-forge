@@ -109,7 +109,8 @@
     },
     {
       "key": "FORGE-PROTO-1",
-      "title": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in",
+      "title": "A customer signs off a working prototype before any story exists",
+      "spec": "docs/specs/prototype-signoff.md",
       "status": "pending",
       "order": 59
     }
