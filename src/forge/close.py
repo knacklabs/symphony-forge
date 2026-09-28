@@ -212,9 +212,9 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
     if pr is None:
-        title, summary = _title(top, item, state)
+        title, why, summary = _title(top, item, state)
         notes = f"{state['notes']}\n\n" if state.get("notes") else ""  # migrate's plan
-        body_file.write_bytes(f"{summary}\n\n{notes}{block}\n".encode("utf-8"))
+        body_file.write_bytes(f"Why: {why}\nDone when: {summary}\n\n{notes}{block}\n".encode("utf-8"))
         create = ("--base", default, "--head", branch, "--title", title, "--body-file",
                   str(body_file))
         url = ((draft and _draft(top, "pr", "create", "--draft", *create))
@@ -237,7 +237,9 @@ def _block(result: dict[str, Any], check: str) -> str:
     """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
     worker's functional check from its commit message."""
     because = {d["finding"]: d for d in result["dismissals"]}
-    lines = [BEGIN, f"Forge review of {result['commit'][:12]}: {result['status']}.", ""]
+    verdict = ("The review found serious problems." if result["status"] == "blocked"
+               else "The review found no serious problems.")
+    lines = [BEGIN, verdict, ""]
     for n, finding in enumerate(result["findings"], 1):
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
@@ -248,14 +250,17 @@ def _block(result: dict[str, Any], check: str) -> str:
     return "\n".join([*lines, *(["", check] if check else []), END])
 
 
-def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str]:
-    """A task's Name and "What it delivers"; a fix's why and done-when lines."""
+def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
+    """A short title and the why and done-when lines for a new pull request."""
     if "/" in item:
-        row = review.task(top, item)[2]
-        title, summary = row.get("name", ""), row.get("what it delivers", "")
+        _, doc, row = review.task(top, item)
+        story_title = re.search(r"^# (.+)$", (top / "plans" / f"{item.split('/')[0]}.md").read_text(), re.M)
+        title = f"{story_title[1]}: {row.get('name', '')}" if story_title else row.get("name", "")
+        why, summary = doc.get("Why", ""), row.get("what it delivers", "")
     else:
-        title, summary = state.get("why", ""), state.get("done_when", "")
-    return " ".join(title.split()) or item, " ".join(summary.split())
+        why, summary = state.get("why", ""), state.get("done_when", "")
+        title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
+    return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
 
 
 def _merged(top: Path, item: str) -> int:

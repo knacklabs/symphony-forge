@@ -83,10 +83,11 @@ You never run the hook commands yourself: git, the host hooks and CI call them.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
    the same time.
-6. The human merges each pull request. After the last one, record the outcome with
+6. Merge each ready pull request as described below. After the last one, record the outcome with
    `forge story done <KEY> "<outcome>"`.
 
-Only the human approves a story, chooses between options and merges. The agent does the rest.
+Only the human approves a story and chooses between options. The agent does the rest, including
+merging when the repo allows agent merges.
 
 ## Workers and conversations
 
@@ -129,6 +130,25 @@ is clean and the checks are green. When it stops, it prints why and the next
 command, usually `forge work <item>` for a fix round. Open the line a finding cites first: if the
 code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <reason>"`.
+
+## Merging a ready item
+
+The merge command is unavailable until the merge gate is built.
+
+The human merges by default: omitting `merge` from `forge.toml` is the same as
+`merge = "human"`. Ask your agent to set `merge = "agent"` in a fix if you want it to merge ready
+pull requests. Only the setting on the default branch counts. A change to the setting on an item
+branch cannot grant itself permission, and turning it off on the default branch takes effect at
+once. `forge close` and `forge next` tell the agent when to run `forge merge <item>`.
+
+With agent merging enabled, Forge checks that close recorded a clean, ready review, the pull
+request is still open against the default branch at the recorded commit, and every check named by
+the default branch's `forge.toml` is green. It then squash-merges with the pull request's title,
+deletes the remote branch, fetches the default branch, and removes the item's local branch and
+worktree. It leaves a worktree with uncommitted changes in place and says so. Forge archives the
+item's recorded Codex conversations; Codex can restore archived chats. The agent merges only
+through `forge merge <item>`; the hook still refuses a raw `gh pr merge` command. When agent
+merging is off, a human merges the ready pull request.
 
 ## Upgrading a repo
 

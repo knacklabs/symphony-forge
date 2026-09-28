@@ -92,6 +92,12 @@
       "status": "pending",
       "order": 56,
       "spec": "docs/specs/forge-trim.md"
+    },
+    {
+      "key": "FORGE-CHATVIEW-1",
+      "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
+      "status": "pending",
+      "order": 57
     }
   ],
   "epics": [

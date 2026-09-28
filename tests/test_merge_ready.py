@@ -50,7 +50,7 @@ def test_2_merge_setting_comes_from_default_branch(env):
     env.repo.git("push", "-q", "origin", "main", cwd=other)
     pending = env.repo.forge("merge", item, cwd=where)
     assert pending.returncode != 0
-    assert "forge merge is not ready to merge pull requests yet." in pending.stderr
+    assert f"Forge has no clean ready record for {item}.\nNext: forge close {item}\n" == pending.stderr
     assert not env.gh_calls("pr", "merge")
 
 

@@ -65,6 +65,13 @@ class Client(CodexClient):
         emit(pid=self._proc.pid)
         RECORDED.acquire()
 
+    def close(self) -> None:
+        if os.name == "nt" and self._proc is not None:
+            # The SDK stops only the .cmd launcher; stop its app-server child first.
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(self._proc.pid)],
+                           capture_output=True)
+        super().close()
+
 
 # ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
 api.CodexClient = Client
@@ -112,6 +119,10 @@ def main() -> int:
             emit(refused="handler")
             return 3
         client._approval_handler = decline
+        if request.get("archive"):
+            codex.thread_archive(request["thread"])
+            emit(archived=True)
+            return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns

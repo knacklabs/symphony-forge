@@ -179,7 +179,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
             "minutes; waited 40 minutes to be accepted. This part was open for 3 working days, which is "
             "slow.",
             "Shoppers can keep a wish list Not started yet.",
-            "Readme greets new readers : Being built. This fix has been open for 3 working days, which "
+            "Readme greets new readers : In progress. This fix has been open for 3 working days, which "
             "is slow.",
             "Upgrade Forge to the newest version : Finished on 16 September 2026. Forge now runs its "
             "newest version here. Built in 20 minutes;",

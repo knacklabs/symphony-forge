@@ -14,7 +14,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, records, repo, story
+from forge import approval, board, records, repo, review, story
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
@@ -49,11 +49,12 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     states: list[str] = []
     trees = story.worktrees(top)
     merged_prs = _merged_prs(top) if trees else set()
+    prs = _open_prs(top) if trees else {}
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs)
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs)
         lines += found
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
@@ -64,7 +65,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state is not None:
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
-            lines += _item(name, f"The fix {name}", state, top, path)
+            lines += _item(name, f"The fix {name}", state, top, path, prs)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
@@ -135,7 +136,7 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
-           title: str, trees: dict[str, Path], merged_prs: set[str]
+           title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     try:
@@ -152,7 +153,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
-                                 states[task["id"]], top, tree)]
+                                 states[task["id"]], top, tree, prs)]
     if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -163,7 +164,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]], top)
+            lines += _item(item, item, states[task["id"]], top, prs=prs)
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -209,17 +210,24 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 
 
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
-          path: Path | None = None) -> list[str]:
+          path: Path | None = None, prs: dict[str, dict[str, Any]] | None = None) -> list[str]:
     status = state.get("status") or "started"
+    ready = repo.ready_path(item, top)
+    try:
+        receipt = json.loads(ready.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        receipt = {}
+    if not isinstance(receipt, dict):
+        receipt = {}
+    if receipt.get("tidied") is True:
+        return []
     if status == "merged" and path:
+        if repo.default_config(top)["merge"] == "agent" and receipt.get("review") == "clean":
+            return [f"{label} is merged; Forge needs to finish tidying up.",
+                    f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
                 f"Next: git worktree remove {shlex.quote(str(path))}"]
-    ready = repo.ready_path(item, top)
     if ready.is_file():
-        try:
-            receipt = json.loads(ready.read_text(encoding="utf-8"))
-        except (ValueError, UnicodeDecodeError):
-            receipt = {}
         branch = state.get("branch")
         if (branch and receipt.get("review") == "clean" and
                 repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
@@ -235,7 +243,33 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,
               "reason": str(state.get("reason") or "it has serious findings or red checks").rstrip(".")}
+    if status == "fixing":
+        findings = [f.get("title", "a serious finding") for _, f in
+                    review.blocking(state.get("review") or {}) if isinstance(f, dict)]
+        if findings:
+            values["reason"] = "; ".join(findings)
+    pr = (prs or {}).get(state.get("branch", "")) or {}
+    checks = repo.config(path or top)["checks"] if pr and status == "waiting for checks" else []
+    ready = status == "ready" or (status == "waiting for checks" and checks
+                                  and board._green_at(pr, checks) and not pr.get("isDraft"))
+    if ready and (url := pr.get("url")):
+        next_step = (step.format(**values) if step == "forge merge {item}"
+                     else f"merge {url}, then forge next")
+        return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
+
+
+def _open_prs(top: Path) -> dict[str, dict[str, Any]]:
+    if not shutil.which("gh"):
+        return {}
+    done = repo.run("gh", "pr", "list", "--state", "open", "--limit", "1000",
+                    "--json", "headRefName,url,statusCheckRollup,isDraft", cwd=top)
+    try:
+        prs = json.loads(done.stdout) if done.returncode == 0 else []
+    except ValueError:
+        prs = []
+    return {pr["headRefName"]: pr for pr in prs if isinstance(pr, dict)
+            and isinstance(pr.get("headRefName"), str) and isinstance(pr.get("url"), str)}
 
 
 def _merged_prs(top: Path) -> set[str]:
