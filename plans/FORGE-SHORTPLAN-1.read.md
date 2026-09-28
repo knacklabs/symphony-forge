@@ -44,3 +44,11 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 8. BRIEF’s old-style work and close test does not specify a wrapped or nested Done-when item, though [existing plans use both](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/plans/FORGE-FDE-1.md:42). The [current story parser](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/src/forge/story.py:265) captures only the first line. Use a real multiline old-style item in BRIEF’s test and assert its full text reaches both worker and reviewer.
    Disposition: cut: details item 4 tests a wrapped old-style item reaching worker and reviewer whole.
 
+## Round 3
+
+9. The numbering contract still leaves duplicate **top-level Done-when numbers** undefined. [The current parser](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/src/forge/story.py:265) silently keeps the last item, so a detail numbered `1` cannot be assigned unambiguously if two results are numbered `1`. BRIEF should require a refusal naming the duplicate and test it through `forge read`.
+   Disposition: cut: details item 4 refuses a repeated Done-when number, tested through forge read.
+
+10. Details item 4 promises refusal wherever the doc is parsed, but its [malformed-detail tests](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/plans/FORGE-SHORTPLAN-1.md:50) cover only `forge task start` and `forge work`. [`forge close` has a separate review parser](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/src/forge/review.py:95); the positive close test does not prove it refuses an unknown or repeated detail added after work. Add a malformed-detail close case to BRIEF.
+   Disposition: cut: details item 4 tests the malformed-details refusal through forge close too.
+

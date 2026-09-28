@@ -47,11 +47,12 @@ Risks: none
    from `### Done-when details`; items the task doesn't cover stay context, sentence only. Tests
    run `forge work` and `forge close` on a story with two results, one covered, and check both
    carry the covered result's details and leave the other's out.
-4. A details section whose entry has a number no Done-when item has, or repeats a number, is
-   refused wherever the story doc is parsed, `forge task start` included, naming the number; a Done-when item with no entry
+4. Two Done-when items with the same number, or a details section whose entry has a number no
+   Done-when item has or repeats a number, is refused wherever the story doc is parsed, `forge task start` included, naming the number; a Done-when item with no entry
    simply has no details. A story doc without `### Done-when details` is read as today: each item's whole text is its
-   sentence and there are no separate details. Tests cover an unknown number and a repeated number
-   (refused by `forge task start` and `forge work`), a missing entry, and `forge work` and
+   sentence and there are no separate details. Tests cover a repeated Done-when number (refused by `forge
+   read`), an unknown and a repeated details number (refused by `forge task start`, `forge work`
+   and `forge close`), a missing entry, and `forge work` and
    `forge close` on an old-style doc whose item wraps over several lines, with its full text
    reaching both.
 
