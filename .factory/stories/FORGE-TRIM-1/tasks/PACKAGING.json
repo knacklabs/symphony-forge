@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-TRIM-1-PACKAGING",
-  "status": "working",
+  "review": {
+    "commit": "8e3b1ef52c81acfbd29f4191ae6de66de9d484ef",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The explicitly required packaging test file does not exist. This branch strengthens the integration test in tests/test_trim_skills.py, but never adds or changes tests/test_trim_packaging.py as required. Move the packaging coverage into the required module, preserving the real installed `forge sync` checks for all three installation forms and the byte assertions; avoid duplicating the existing test.",
+        "file": "tests/test_trim_skills.py",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: tests/test_trim_packaging.py"
+      },
+      {
+        "body": "This task permits changes only to the two named test files. Editing plans/FORGE-TRIM-1.md and plans/FORGE-TRIM-1.read.md is unnecessary for the packaging checks: the supplied scope already permits tests/test_trim_skills.py. Revert these plan and read-record edits to keep the change within the authorized scope.",
+        "file": "plans/FORGE-TRIM-1.md",
+        "line": 41,
+        "priority": "P2",
+        "title": "Remove unnecessary plan edits outside the permitted scope"
+      }
+    ],
+    "status": "blocked",
+    "tree": "5d5f937c6e9ff3ad2d83c17c0ff9a2c53ea2c68494f475d88d901edc722aa9b0"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T01:50:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T02:10:11+00:00",
+      "step": "review"
     }
   ]
 }
