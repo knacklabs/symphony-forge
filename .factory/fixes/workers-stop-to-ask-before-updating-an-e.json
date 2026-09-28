@@ -3,7 +3,7 @@
   "branch": "fix/workers-stop-to-ask-before-updating-an-e",
   "done_when": "The worker brief lets a worker update any existing test its intended change breaks, outside its scope, naming each changed test and why in its handoff; the review brief no longer reports such test files as outside scope but reports a test weakened to hide a real defect as a P1; tests through forge work and forge close show both",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T11:31:23+00:00",
