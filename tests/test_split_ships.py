@@ -12,6 +12,7 @@ import pytest
 STORY = "FORGE-SPLIT-1"
 
 # Captured from origin/main's forge sync with these two client setups. Hashes use LF newlines.
+# The standards hash includes the approved two-skill UI contract.
 GOLDEN = {
     "plain": {
         "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
@@ -19,8 +20,10 @@ GOLDEN = {
         ".codex/hooks.json": "6fe7fdfc37c7bc7a8f761b344753fc3d3ca8a43a821d5888d6792b8bd3627ab3",
         ".claude/skills/forge/SKILL.md": "59852584050ed4ea73bf9ab9bd1ec091c4aefd071be0766e54447bf3644b6855",
         ".codex/skills/forge/SKILL.md": "59852584050ed4ea73bf9ab9bd1ec091c4aefd071be0766e54447bf3644b6855",
-        ".claude/skills/forge/standards.md": "9a955ff1c2a84363b7af6070e1b38a6d6f5ca0e4c4e74dc6155917aa152bc7f8",
-        ".codex/skills/forge/standards.md": "9a955ff1c2a84363b7af6070e1b38a6d6f5ca0e4c4e74dc6155917aa152bc7f8",
+        ".claude/skills/forge/standards.md": "d6a34c1073515134779f4022fe55b90e09b8ddf64ed86af453ae09961f09ed35",
+        ".codex/skills/forge/standards.md": "d6a34c1073515134779f4022fe55b90e09b8ddf64ed86af453ae09961f09ed35",
+        ".claude/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
+        ".codex/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
         ".claude/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
         ".codex/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
         ".claude/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
@@ -65,7 +68,8 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
     package = tmp_path / "package" / "forge"
     shutil.copytree(source, package)
     root = source.parents[1]
-    for rel in (".codex/skills/forge/fde.md", ".codex/skills/test-audit/SKILL.md",
+    for rel in (".codex/skills/forge/fde.md", ".codex/skills/app-baseline/SKILL.md",
+                ".codex/skills/test-audit/SKILL.md",
                 ".codex/skills/test-audit/NOTICE.md",
                 ".claude/skills/remote-approval/SKILL.md"):
         target = tmp_path / rel

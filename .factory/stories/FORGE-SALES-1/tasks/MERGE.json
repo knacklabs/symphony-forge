@@ -1,0 +1,55 @@
+{
+  "branch": "task/FORGE-SALES-1-MERGE",
+  "review": {
+    "commit": "eec06742c6c5ccb81269b41c8cba8c431dc8a2ab",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If an unsigned prototype PR contains the accepted sign-off, `forge merge` can merge it and then fail during remote branch or worktree cleanup. On retry, this permission check sees the new sign-off on the default branch and refuses before reaching the merged-PR cleanup path at `src/forge/merge.py:92-124`. `forge close` only reports that the PR merged (`src/forge/close.py:278-289`), leaving no Forge command to finish cleanup.",
+        "file": "src/forge/merge.py",
+        "line": 34,
+        "priority": "P2",
+        "title": "Allow merge cleanup after the sign-off PR lands"
+      },
+      {
+        "body": "`src/forge/nextstep.py:304,317` still reads the raw merge setting, so `forge next` tells an unsigned client prototype configured with `merge = \"human\"` to wait for a human merge. `src/forge/templates/skill.md:41-43` gives the agent the same outdated rule. The changed Tasks table assigns these paths and their tests to TALK after MERGE.",
+        "file": "plans/FORGE-SALES-1.md",
+        "line": 78,
+        "priority": "P2",
+        "title": "Later: TALK must update forge next and agent guidance"
+      },
+      {
+        "body": "Done-when item 1 requires an accepted decision recording the owner's choice to merge prototypes until sign-off. No such decision appears under `docs/decisions/`; the changed Tasks table assigns that decision and its checklist test to SPEC.",
+        "file": "plans/FORGE-SALES-1.md",
+        "line": 66,
+        "priority": "P2",
+        "title": "Later: SPEC must record the owner's merge decision"
+      }
+    ],
+    "status": "clean",
+    "tree": "1d2edea3bc37ed6df237d7659bdfb00d4b1cb61c0e70c1318bb3d80e1f7da6f5"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T12:02:27+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:34:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:01:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:19:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:41:46+00:00",
+      "step": "review"
+    }
+  ]
+}

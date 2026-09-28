@@ -21,4 +21,5 @@ def test_14_this_repo_builds_with_codex_on_its_old_per_role_models() -> None:
     # Lite used to carry only the lead model; first fix rounds now give it the same helpers.
     assert config["models"]["lite"] == config["models"]["build"]
     assert config["models"]["grill"]["codex"] == {"model": "gpt-6-sol", "effort": "high"}
-    assert config["models"]["review"] == {"model": "gpt-6-astra"}
+    # The old Astra default had no effort; reviews now use Sol at xhigh effort.
+    assert config["models"]["review"] == {"model": "gpt-6-sol", "effort": "xhigh"}
