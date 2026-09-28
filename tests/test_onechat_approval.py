@@ -54,9 +54,17 @@ def test_3_one_chat_approves_other_repo_once(repo, tmp_path, claude_payload):
         "This approval was already recorded once")
 
     client = _other(repo, tmp_path, "client")
-    setup(client, kind="client", keys=("SHOP",))
+    # The waiting story predates the creation gate; this test exercises approval routing.
+    setup(client, kind="forge-source", keys=("SHOP",))
     client_doc = DOC.replace("save a basket", "keep a basket")
-    ready(client, "SHOP", client_doc)
+    client_story = ready(client, "SHOP", client_doc)
+    (client_story / "forge.toml").write_text(
+        (client_story / "forge.toml").read_text("utf-8").replace(
+            'repo = "forge-source"', 'repo = "client"'), encoding="utf-8")
+    client.write("forge.toml", (client.path / "forge.toml").read_text("utf-8").replace(
+        'repo = "forge-source"', 'repo = "client"'))
+    client.git("commit", "-q", "-am", "Make this a client repo")
+    client.git("push", "-q", "origin", "main")
     assert client.forge("next").returncode == 0
     client_head = client.git("rev-parse", "story/SHOP")
     client_approval = claude_plan(claude_payload, client_doc)
