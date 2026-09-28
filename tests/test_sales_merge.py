@@ -15,7 +15,8 @@ SIGNOFF = ('---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n'
 
 
 @pytest.mark.parametrize("case", ["prototype", "signed", "signed_unprefixed",
-                                  "pinned_other", "pinned_signed", "forge-source"])
+                                  "pinned_other", "pinned_signed", "forge-source",
+                                  "forge-source-agent"])
 def test_1_merge_setting_follows_default_branch_signoff(env, case):
     if case in ("signed", "signed_unprefixed", "pinned_other", "pinned_signed"):
         other = env.tmp / "signed-off-clone"
@@ -32,9 +33,10 @@ def test_1_merge_setting_follows_default_branch_signoff(env, case):
             env.commit(other, f"docs/decisions/{name}", SIGNOFF)
         env.repo.git("push", "-q", "origin", "main", cwd=other)
         assert not (env.repo.path / "docs/decisions" / name).exists()
-    elif case == "forge-source":
+    elif case in ("forge-source", "forge-source-agent"):
         env.commit(env.repo.path, "forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
-                   + 'repo = "forge-source"\n')
+                   + 'repo = "forge-source"\n'
+                   + ('merge = "agent"\n' if case == "forge-source-agent" else ''))
         env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     if case == "prototype":
@@ -44,7 +46,7 @@ def test_1_merge_setting_follows_default_branch_signoff(env, case):
 
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
-    if case in ("prototype", "pinned_other"):
+    if case in ("prototype", "pinned_other", "forge-source-agent"):
         assert closed.stdout.splitlines()[-1] == f"Next: forge merge {item}"
         env.gh.respond("pr", "view", stdout=json.dumps({
             "number": 7, "state": "OPEN", "baseRefName": "main",
