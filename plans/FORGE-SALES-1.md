@@ -50,8 +50,8 @@ small tweaks each waiting on a full review, and Forge's own vocabulary.
    Claude Code or Codex; opening it in the repo and asking for `forge init`, which also installs
    the Codex SDK through `forge doctor --fix`; discovery with the customer; asking the agent to
    build the demo, which it builds, tests and merges; connecting the repo to our deploy platform
-   (the address and who grants access are a placeholder to fill in: "ask your lead"); and
-   sign-off. The README links it.
+   with their own platform login and picking a subdomain (the platform's address is a placeholder
+   until the owner gives it); and sign-off. The README links it.
 
 ## Risks
 
