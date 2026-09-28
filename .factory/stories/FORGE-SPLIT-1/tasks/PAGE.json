@@ -1,21 +1,13 @@
 {
   "branch": "task/FORGE-SPLIT-1-PAGE",
   "review": {
-    "commit": "5ac37dd6a86679494bd5f2e13813591f86438bc2",
+    "commit": "55d13b8be5194468c4d3dccd3e301186e7342685",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The staleness assertion fails on CRLF checkouts even when the command page is current. `sync.write_file` writes LF bytes (`src/forge/sync.py:85`), but this assertion reads the checked-out reference as raw bytes. `.gitattributes:1\u20132` does not enforce LF for Markdown, and the suite includes Windows runners (`.github/workflows/forge-next.yml:23\u201335`). Git for Windows [defaults to CRLF checkout conversion](https://github.com/git-for-windows/build-extra/blob/main/installer/install.iss#L2184-L2200). Normalize the reference with `read_text(encoding=\"utf-8\").encode(\"utf-8\")`, as the existing generated-document test does at `tests/test_trim_standards.py:17\u201318`, so checkout line endings do not produce a false staleness failure.",
-        "file": "tests/test_split_page.py",
-        "line": 26,
-        "priority": "P1",
-        "title": "Not done: 5. The full test suite passes"
-      }
-    ],
-    "status": "blocked",
-    "tree": "49acb4acff36f9e57bfdbb64ca2dad93d15666591b285c236c8c0d3de3b8cce9"
+    "findings": [],
+    "status": "clean",
+    "tree": "4c4c5f4b1f181bb838cef653f34251eeca7c7fc9bed32deb8f005ccfbe9f35fe"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T10:22:37+00:00",
@@ -23,6 +15,10 @@
     },
     {
       "at": "2026-09-28T10:45:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T10:51:36+00:00",
       "step": "review"
     }
   ]
