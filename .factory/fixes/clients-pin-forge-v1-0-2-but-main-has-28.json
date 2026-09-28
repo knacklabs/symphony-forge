@@ -5,11 +5,11 @@
   "done_when": "Forge's version, forge.toml's pin and the release tests say 1.1.0, and the full test suite passes",
   "kind": "fix",
   "review": {
-    "commit": "2a42dd71eab5f50dd1653d1bc4b6be2b9807a7c8",
+    "commit": "189e7ea5c2b8c525207304845d43b787541b0da9",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "afe48ebd45c58dad132c622dd82c5d3cbc023fd2a5f71e3e9c1e0c254447e6eb"
+    "tree": "9dce026a78e5851665626d868a5804ea01f2946c178a24f1cd10216b23472315"
   },
   "status": "waiting for checks",
   "steps": [
@@ -19,6 +19,10 @@
     },
     {
       "at": "2026-09-28T02:15:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T02:23:34+00:00",
       "step": "review"
     }
   ],
