@@ -3,7 +3,7 @@
   "branch": "fix/claude-workers-start-a-fresh-session-eve",
   "done_when": "A Claude worker's fix round continues the session its first round started and gets only the short fix prompt; when that session can't be continued it starts fresh with the full brief and says so; tests run forge work twice on a Claude worker and check both paths",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T16:48:02+00:00",
