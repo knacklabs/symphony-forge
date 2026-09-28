@@ -178,3 +178,11 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 46. **Unproven: item 2’s archive path after a reader switch.** A Codex round with findings leaves its conversation open. If Codex then becomes unavailable and a Claude round passes, the plan does not say whether Forge attempts to archive that earlier Codex conversation, prints the promised archive-failure note, or leaves it silently. Pin the outcome and test this switch-and-pass case in GATES.
    Disposition: cut: item 2 archives only the passing round's own conversation and names a left-over one in a note, tested.
 
+## Round 11
+
+47. **Item 2 does not distinguish the first task’s base from later tasks’.** It says the new task branch starts from the default branch, but [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/task.py:128) and its [test](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_task.py:108) start before the first merge from the story branch. That branch can also contain a [roadmap addition](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:121) that copying only the doc, notes and state would omit. Pin the first-task base and prove its files reach the pull request.
+   Disposition: cut: item 2 keeps today's story-branch start before the first merge, and tests a first task carrying the roadmap entry.
+
+48. **The legacy exception can copy a stale story doc over the default branch’s copy.** Before this change, [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/task.py:128) reads the default branch after the first task merges, and the old [pull-request check](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:369) permits a Tasks-table-only edit. For an already approved story in that state, item 2’s new story-branch source can miss the newer table and commit the older one into the next task. Pin how GATES detects this legacy divergence and test it.
+   Disposition: cut: item 2 limits the copy to stories whose notes have rounds; older stories keep today's task start throughout.
+
