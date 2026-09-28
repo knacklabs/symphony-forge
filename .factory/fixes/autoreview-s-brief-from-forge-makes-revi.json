@@ -3,7 +3,7 @@
   "branch": "fix/autoreview-s-brief-from-forge-makes-revi",
   "done_when": "Forge's review brief shows the previous round's findings and asks for every blocking gap at once; a test the story assigns to another task is an advisory Later finding; the end-to-end test rule applies to user-facing behaviour, not CI, config or test-only items; the edge-case rule sits with the blocking rules; Forge's bookkeeping files are left out of the out-of-scope list; the reviewer's checkout has readable git history; tests through forge close show each",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T09:49:07+00:00",
