@@ -2,10 +2,16 @@ STORY = "FORGE-READLOOP-1"
 # What the cold reader is asked each round, and what the synced skill tells the agent to do with
 # its findings.
 
+import os
 from pathlib import Path
 
+from conftest import _install
+from test_codex_reader import GRILL
+from test_codex_worker import ROOT, _sent, _toml
+from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_discovery import HOSTS, _client
 from test_phases import _flat
+from test_story import DOC, new_story, setup
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "src" / "forge" / "templates" / "cold-read.md"
 
@@ -89,3 +95,39 @@ def test_5_known_traps_are_shipped_and_learned(repo, gh, tmp_path):
                      "create the section when it is missing",
                      "Commit it before closing the fix"):
             assert step in skill, step
+
+
+def test_5_the_first_round_sends_its_own_part_and_the_default_branchs_traps(
+        repo, monkeypatch, sdk_data, tmp_path):  # noqa: F811  (the fixture)
+    setup(repo)
+    _install(repo.bin, "codex-app-server",
+             (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8"))
+    program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
+    monkeypatch.setenv("CODEX_BIN", str(program))
+    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    (tmp_path / "codex-home").mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    monkeypatch.delenv("CODEX_THREAD_ID")
+    monkeypatch.setenv("CLAUDECODE", "1")  # under Claude Code the reader is Codex
+    shop = new_story(repo, "SHOP")
+    # A trap learned on the default branch after the story branch was made; the same heading
+    # inside Forge's block is not the repo's own.
+    repo.write("AGENTS.md", "<!-- forge:begin -->\n## Known traps\n\n- Forge's own line.\n"
+                            "<!-- forge:end -->\n\n## Known traps\n\n"
+                            "- Fixture paths break on Windows.\n")
+    repo.git("add", "AGENTS.md")
+    repo.git("commit", "-q", "-m", "Learn a trap")
+    repo.git("push", "-q", "origin", "main")
+    agents = shop / "AGENTS.md"
+    assert "Fixture paths" not in (agents.read_text("utf-8") if agents.exists() else "")
+    (shop / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    (shop / "forge.toml").write_text(_toml(version, "claude", GRILL), encoding="utf-8")
+
+    read = repo.forge("read", "SHOP", cwd=shop)
+    assert read.returncode == 0, read.stdout + read.stderr
+    prompt = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
+    assert "Cold read of SHOP." in prompt
+    for leaked in ("<!-- forge:round -->", "Round $round", "$traps", "Forge's own line."):
+        assert leaked not in prompt, leaked
+    assert "own known traps, from its AGENTS.md:\n\n- Fixture paths break on Windows.\n" in prompt
