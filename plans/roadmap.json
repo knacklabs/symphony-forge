@@ -95,9 +95,17 @@
     },
     {
       "key": "FORGE-CHATVIEW-1",
-      "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
+      "title": "Forge's Codex chats are easy to follow in the Codex app",
       "status": "pending",
-      "order": 57
+      "order": 57,
+      "spec": "docs/specs/codex-chat-view.md"
+    },
+    {
+      "key": "FORGE-SPLIT-1",
+      "title": "Each Forge behaviour owns its own entry",
+      "spec": "docs/specs/own-your-entry.md",
+      "status": "pending",
+      "order": 58
     }
   ],
   "epics": [
