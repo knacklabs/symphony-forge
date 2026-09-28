@@ -88,13 +88,10 @@ def work(args: argparse.Namespace) -> None:
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
                          (None, "first turn"))
         # A Claude worker, design ones too, continues the session its item's last round ran in, in
-        # this checkout, until two resumes in a row fail. Without one, a round after the first
-        # starts fresh and says why.
+        # this checkout. Without one, a round after the first starts fresh and says why.
         session = None if on_codex else codex.record(top, item).get("claude")
         if session and session["checkout"] != str(top):
             fresh = f"its session was started in another checkout, {session['checkout']}"
-        elif session and session.get("failed_resumes", 0) >= 2:
-            fresh = f"Claude couldn't continue session {session['id']} in two rounds in a row"
         elif session:
             thread = session["id"]
         elif not on_codex and state.get("status", "started") != "started":
@@ -383,25 +380,29 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
             session: dict[str, Any] | None, resume: str | None, why: str | None) -> None:
     """A Claude worker's round: continue session `resume` with the short brief, else start a new
-    session with the whole brief and say why when there was one to continue. A resumed round that
-    fails, fails like any round and keeps its session, counting failed resumes in a row; the next
-    forge work resumes it again, and the one after two starts fresh. The session, its checkout,
-    the item's rounds, the failed resumes and HEAD when a round ends go in the item's record on
-    this machine."""
+    session with the whole brief and say why when there was one to continue. When Claude says it
+    has no such session, the same round starts fresh; any other failure fails the round and keeps
+    the session, so the next forge work continues it. The session, its checkout, the item's rounds
+    and HEAD when a round ends go in the item's record on this machine."""
     path = codex._item_file(top, item, ".json", "Fix")
+    log = repo.work_log(top, item)
     rounds = session["rounds"] if session else 0
-    failed = 0
     try:
         if resume:
-            # ponytail: exit codes don't tell a lost session from a failed turn, so both count
-            failed = session.get("failed_resumes", 0) + 1
-            _run(item, top, brief, models, ["--resume", resume])
-            failed = 0
-            return
+            size = log.stat().st_size if log.exists() else 0
+            try:
+                _run(item, top, brief, models, ["--resume", resume])
+                return
+            except repo.Refused:
+                # Claude refuses a session it doesn't have before the turn starts, with this line.
+                output = log.read_bytes()[size:].decode("utf-8", "replace").split("\n", 1)[-1]
+                if not output.startswith("No conversation found"):
+                    raise
+            why = f"Claude no longer has session {resume}"
         if why:
             message = f"Starting a new Claude session with the whole brief, because {why}."
             print(message, flush=True)
-            with repo.work_log(top, item).open("a", encoding="utf-8") as out:
+            with log.open("a", encoding="utf-8") as out:
                 out.write(message + "\n")
         # A replaced session keeps the item's round count.
         session = {"id": str(uuid.uuid4()), "checkout": str(top),
@@ -410,9 +411,8 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
     finally:
         if session:
-            codex._record(path, claude={**session, "rounds": rounds + 1, "failed_resumes": failed,
+            codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
-
 
 def _run(item: str, top: Path, brief: str, models: list[str],
          session: list[str] | None = None) -> None:

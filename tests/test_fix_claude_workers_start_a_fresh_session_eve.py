@@ -79,60 +79,34 @@ def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
     assert _sent(codex_log, "turn/start") == []
 
 
-def test_3_a_failed_resume_keeps_its_session_and_two_in_a_row_start_fresh_saying_why(
-        repo, gh, monkeypatch, tmp_path):
+def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(repo, gh, tmp_path):
     log = _started(repo)
     assert repo.forge("work", FIX).returncode == 0
     first = _session(calls(log)[0], "--session-id")
-
-    # Claude accepts the resume, then its turn fails: the round fails and the session is kept.
-    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
-    failed = repo.forge("work", FIX)
-    monkeypatch.delenv("STUB_CLAUDE_EXIT")
-
-    assert failed.returncode != 0
-    [_, resumed] = calls(log)
-    assert _session(resumed, "--resume") == first and EARLIER in resumed["brief"]
-    assert FRESH not in failed.stdout
-
-    # The next forge work resumes the same session again with the short prompt.
-    again = repo.forge("work", FIX)
-
-    assert again.returncode == 0, again.stdout + again.stderr
-    [*_, resumed] = calls(log)
-    assert _session(resumed, "--resume") == first and "--session-id" not in resumed["args"]
-    assert EARLIER in resumed["brief"] and "# Worker brief" not in resumed["brief"]
-    assert FRESH not in again.stdout
-
-    # Two failed resumes in a row, here Claude having lost the session: the next round starts a
-    # new session with the whole brief and says why.
+    # Claude has lost the session, as after its own history was cleared.
     (repo.bin / "claude-sessions.json").unlink()
-    assert repo.forge("work", FIX).returncode != 0
-    assert repo.forge("work", FIX).returncode != 0
-    assert [_session(call, "--resume") for call in calls(log)[-2:]] == [first, first]
 
     lost = repo.forge("work", FIX)
 
+    # The same forge work starts a new session with the whole brief and says why.
     assert lost.returncode == 0, lost.stdout + lost.stderr
-    [*_, fresh] = calls(log)
-    assert len(calls(log)) == 6 and "--resume" not in fresh["args"]
+    [_, rejected, fresh] = calls(log)
+    assert _session(rejected, "--resume") == first
+    assert "--resume" not in fresh["args"]
     second = _session(fresh, "--session-id")
     assert second != first
     assert "# Worker brief" in fresh["brief"] and EARLIER not in fresh["brief"]
-    # The new session keeps the item's round count.
-    assert fresh["brief"].startswith("Fix round 6 on Fix the login typo.")
-    assert (f"{FRESH}Claude couldn't continue session {first} in two rounds in a row."
-            in lost.stdout)
+    assert fresh["brief"].startswith("Fix round 2 on Fix the login typo.")
+    assert f"{FRESH}Claude no longer has session {first}." in lost.stdout
 
-    # A success resets the count: one more failed resume keeps the new session.
-    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
-    assert repo.forge("work", FIX).returncode != 0
-    monkeypatch.delenv("STUB_CLAUDE_EXIT")
+    # The next round continues the new session with the short prompt.
     kept = repo.forge("work", FIX)
 
     assert kept.returncode == 0, kept.stdout + kept.stderr
     [*_, resumed] = calls(log)
-    assert _session(resumed, "--resume") == second and FRESH not in kept.stdout
+    assert len(calls(log)) == 4 and _session(resumed, "--resume") == second
+    assert resumed["brief"].startswith("Fix round 3 on Fix the login typo.")
+    assert EARLIER in resumed["brief"] and FRESH not in kept.stdout
 
     # A checkout moved since its session started: the session is left alone and a new one starts.
     folder = Path(fresh["cwd"])
@@ -143,13 +117,38 @@ def test_3_a_failed_resume_keeps_its_session_and_two_in_a_row_start_fresh_saying
 
     assert elsewhere.returncode == 0, elsewhere.stdout + elsewhere.stderr
     [*_, restarted] = calls(log)
-    assert len(calls(log)) == 9 and "--resume" not in restarted["args"]
+    assert len(calls(log)) == 5 and "--resume" not in restarted["args"]
     assert _session(restarted, "--session-id") not in (first, second)
     assert Path(restarted["cwd"]).resolve() == moved.resolve()
-    assert restarted["brief"].startswith("Fix round 9 on Fix the login typo.")
+    assert restarted["brief"].startswith("Fix round 4 on Fix the login typo.")
     assert "# Worker brief" in restarted["brief"]
     assert (f"{FRESH}its session was started in another checkout, {folder}"
             in elsewhere.stdout)
+
+
+def test_5_failed_turns_in_a_session_claude_still_has_keep_that_session(repo, gh, monkeypatch):
+    log = _started(repo)
+    assert repo.forge("work", FIX).returncode == 0
+    first = _session(calls(log)[0], "--session-id")
+
+    # Claude accepts the resume twice and both turns fail: each round fails and keeps the session.
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    for _ in range(2):
+        failed = repo.forge("work", FIX)
+        assert failed.returncode != 0
+        assert FRESH not in failed.stdout
+    monkeypatch.delenv("STUB_CLAUDE_EXIT")
+    assert [_session(call, "--resume") for call in calls(log)[1:]] == [first, first]
+
+    # The third round still continues the same session with the short prompt.
+    again = repo.forge("work", FIX)
+
+    assert again.returncode == 0, again.stdout + again.stderr
+    [*_, resumed] = calls(log)
+    assert len(calls(log)) == 4
+    assert _session(resumed, "--resume") == first and "--session-id" not in resumed["args"]
+    assert EARLIER in resumed["brief"] and "# Worker brief" not in resumed["brief"]
+    assert FRESH not in again.stdout
 
 
 def test_4_a_round_without_forge_s_local_session_record_starts_fresh_and_says_so(repo, gh):
