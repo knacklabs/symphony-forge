@@ -106,6 +106,12 @@
       "spec": "docs/specs/own-your-entry.md",
       "status": "pending",
       "order": 58
+    },
+    {
+      "key": "FORGE-PROTO-1",
+      "title": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in",
+      "status": "pending",
+      "order": 59
     }
   ],
   "epics": [

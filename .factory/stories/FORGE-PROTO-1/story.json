@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-PROTO-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-28T10:22:37+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in",
+  "touches": 0
+}
