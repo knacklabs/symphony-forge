@@ -3,25 +3,25 @@
   "branch": "task/FORGE-SPLIT-1-A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE",
   "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
   "review": {
-    "commit": "373ba17f1abd016c5cc048e91ac4606ebfc4e15f",
+    "commit": "dc1212c66a42dcd4138bbf367f4eb21494f67bfb",
     "dismissals": [],
     "findings": [
       {
-        "body": "The confirmed spec requires collecting commands from a fixed module list, but the supplied COLLECTOR contract requires discovery through `pkgutil` without a fixed list. Following the spec would require another shared-file edit whenever a command introduces a module, contradicting its own acceptance criterion at lines 61\u201362. Update this requirement and the corresponding read-note disposition to match the agreed discovery contract.",
+        "body": "The spec requires a fixed module list, while the supplied COLLECTOR contract requires discovering modules with `pkgutil` without a fixed list. Following this spec would require editing shared code whenever a command introduces a new module, contradicting the acceptance criterion at lines 61\u201362. Update this requirement and the corresponding read-note disposition to match the agreed discovery contract.",
         "file": "docs/specs/own-your-entry.md",
         "line": 28,
         "priority": "P2",
-        "title": "Replace fixed module discovery with the agreed automatic discovery"
+        "title": "Align command discovery with the agreed pkgutil contract"
       },
       {
-        "body": "The spec assigns the CI workflow to the init module, while the supplied SHIPS contract assigns it to `prcheck.py` and excludes `init.py` from that task's scope. It also names a skill module instead of the agreed `story.py` owner for the Forge skill and FDE page. These conflicting instructions should be reconciled in the spec so the implementation can follow the confirmed ownership and task boundaries.",
+        "body": "The spec assigns the CI workflow to the init module and the Forge skill to a skill module. The supplied SHIPS contract instead assigns these to `prcheck.py` and `story.py`, respectively, and excludes `init.py` from that task's scope. Reconcile these ownership requirements so implementation can follow the confirmed spec within the agreed task boundaries.",
         "file": "docs/specs/own-your-entry.md",
         "line": 37,
         "priority": "P2",
-        "title": "Align shipped-file owners with the agreed SHIPS contract"
+        "title": "Align shipped-file ownership with the SHIPS contract"
       },
       {
-        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the diff also adds this parent-story plan, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON under that story. Creating the parent story and recording its approval and review state are not needed to deliver the confirmed spec and roadmap entry. Move those four additions to the change that owns the parent story.",
+        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the branch also adds the parent-story plan, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON beneath that story. Those additions record parent-story planning, approval, and review state; they are unnecessary to deliver the confirmed spec and roadmap entry. Move these four files to the change that owns the parent story.",
         "file": "plans/FORGE-SPLIT-1.md",
         "line": 1,
         "priority": "P2",
@@ -29,7 +29,7 @@
       }
     ],
     "status": "clean",
-    "tree": "ed20cf2f17b7250c546a5c9efddca646150296ce963ce64c1d8ba6513b6e55eb"
+    "tree": "706eeee12d6eb96c85bf10761006a5759410867316c46b3303ae4d944d0d021b"
   },
   "status": "waiting for checks",
   "steps": [
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-09-28T05:31:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:43:55+00:00",
       "step": "review"
     }
   ],
