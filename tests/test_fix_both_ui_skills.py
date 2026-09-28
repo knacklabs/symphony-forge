@@ -83,6 +83,8 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     skills = home / ".claude" / "skills"
     (skills / "impeccable").mkdir(parents=True)
     (skills / "impeccable" / "SKILL.md").write_text("impeccable\n", "utf-8")
+    # Doctor checks UI skills only when the client has a frontend.
+    (client / "web").mkdir()
 
     missing = repo.forge("doctor", cwd=client)
     assert missing.returncode == 1
