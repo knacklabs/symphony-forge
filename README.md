@@ -41,6 +41,8 @@ do it) and differs in three ways:
 
 ## How it works
 
+After a new client's prototype is signed off, each story follows this loop:
+
 1. **A short story doc.** The agent writes one short page: what changes for you, why, when it's
    done, and the tasks.
 2. **One independent read.** A second AI agent, not the one that wrote the plan, reads it cold
@@ -63,24 +65,30 @@ There are two sizes of change:
 
 ## From idea to production
 
-For a first demo, follow the [prototype checklist](docs/start-a-prototype.md): the agent builds
-and merges a live prototype before the customer signs off. After sign-off, the path for product
-stories runs from a plan to production as follows.
+This is the path for a new client project, from the first conversation to running in production.
+The agent starts as a forward deployed engineer (FDE): it learns the customer's problem and
+builds the smallest working prototype that tests it. A salesperson can start this work; a
+developer can take over using the discovery notes and answers page. To start one, follow the
+[prototype checklist](docs/start-a-prototype.md).
 
 | Stage | What happens | Who | Where it's kept |
 |---|---|---|---|
 | 1. Find the problem | The agent interviews you (and, through you, the customer) about what really happens today, and writes it as a problem card: the job, today's workaround, what it costs, who feels it | Agent asks, you answer | `docs/product/DISCOVERY.md` |
 | 2. Pick an option | Two to four options, always including "don't build" and "smallest slice", each with an estimate of when it pays back | Agent proposes, you choose | `forge spec payback` |
-| 3. Write the spec | What it should do, how you'll know it worked, and what's out of scope. One independent read, then you confirm it | Agent writes, you confirm | `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm` |
-| 4. Client sign-off | After seeing the live prototype, the customer signs off before any product story is approved | Client and you | `forge decision new client-signoff`, `forge decision accept` |
-| 5. Plan the stories | The spec becomes stories on the roadmap, the smallest usable slice first, with no setup-only stories | Agent plans, you approve each story once | `plans/roadmap.json`, `forge roadmap add`, `forge story new` |
-| 6. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
-| 7. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
-| 8. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
-| 9. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
+| 3. Build the prototype | The agent asks each question when it first affects the build, records the answer and who gave it, confirms specs as they emerge, and builds the smallest working slice through fixes | Agent, with you and the customer | `docs/product/BRIEF.md`, `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm`, `forge fix start`, `forge work`, `forge close` |
+| 4. Demo and review | The customer tries the prototype; a strict review checks the whole prototype and its answers before sign-off | Client and agent | Demo address, `forge decision accept` |
+| 5. Client sign-off | The customer's named person approves the demo and answers; no client story or roadmap entry can be created before this | Client approves, agent records | `forge decision new client-signoff`, `forge decision accept` |
+| 6. Plan the stories | Confirmed specs become stories on the roadmap, the smallest usable slice first, with no setup-only stories | Agent plans, you approve each story once | `forge roadmap add`, `forge story new` |
+| 7. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
+| 8. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
+| 9. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
+| 10. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
 
-A small change is a fix: it gets a short version of stage 1 (at most two questions), then goes
-straight to build, check and ship.
+Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
+Each still goes through tests, review and a pull request. The agent confirms specs during this
+work, then adds them to the roadmap after sign-off.
+See [decision 0095](docs/decisions/0095-prototype-before-stories.md) for why this order replaces
+the earlier roadmap-before-sign-off order.
 
 ## What you do vs what the agent does
 

@@ -102,8 +102,22 @@ Complexity the diff adds that no Done-when item needs is a defect, not a style p
 - complexity the diff didn't add, in a file the branch changes, is an advisory P3 titled
   `Simpler (existing): <what>`.
 
-impeccable is the one UI skill. A motion skill, or motion in the UI, belongs only when a
-Done-when item needs motion; anything else is a P2 `Simpler:` finding.
+impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
+visual design (layout, type, colour, states and copy) and its checking pass: shape before building,
+then audit and polish before a demo. Run emil-design-eng's review checklist inside impeccable's
+one batched inspection, with at most one more round. Invoke emil-design-eng with a specific task,
+never bare. It owns interaction feel (press feedback, easing, durations, popovers, tooltips, drag
+and when not to animate). Report a missing impeccable pass on a UI change or a failed
+emil-design-eng checklist item on the changed screens as P1 `Not done`.
+
+Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
+routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
+keep content visible by default and enter with `@starting-style` or transitions, never wait for a
+script to reveal it; share `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token; use CSS or
+the Web Animations API first and Motion only when a Done-when item needs springs or drag. Prototypes
+use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
+shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
+Motion that follows these rules is not a `Simpler:` finding.
 
 ## How to report
 Report every blocking gap you see in this round, together, even when one finding already blocks.
