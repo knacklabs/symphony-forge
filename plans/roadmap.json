@@ -108,10 +108,17 @@
       "order": 58
     },
     {
+      "key": "FORGE-PROTO-1",
+      "title": "A customer signs off a working prototype before any story exists",
+      "spec": "docs/specs/prototype-signoff.md",
+      "status": "pending",
+      "order": 59
+    },
+    {
       "key": "FORGE-DESIGN-1",
       "title": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high",
       "status": "pending",
-      "order": 59
+      "order": 60
     }
   ],
   "epics": [
