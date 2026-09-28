@@ -518,9 +518,11 @@ def test_18_close(env, kind):
     # Right after the checks are green, close marks the draft ready for review.
     assert env.gh.calls()[-3:] == [*env.gh_calls("api")[-2:], ["pr", "ready", "7"]]
 
-    # A new commit needs a new round; the older result and its dismissal no longer count, so the
-    # finding blocks again and the ready pull request goes back to a draft.
+    # A new commit needs a new round. The old contract dropped every dismissal; now a matching
+    # file and title keeps it. A different finding still blocks and returns the PR to a draft.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
+    env.reviews(blocked(finding("P1", "Saving loses the basket"),
+                        finding("P2", "Simpler: drop the cache → a dict")))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)
     assert third.returncode == 1

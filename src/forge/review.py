@@ -95,12 +95,18 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
-    """What a clean review covers: product files, the item's story doc and roadmap entry, its
+    """What a clean review covers: changed product files, the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
+    ancestor = repo.git("merge-base", base, commit, cwd=top)
+    changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
+                       cwd=top).split("\0")
+    changed = {path for path in changed if path and not path.startswith(BOOKKEEPING)}
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
-    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
+    blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
+             if (path := entry.partition("\t")[2]) in changed}
+    digest = hashlib.sha256("\0".join(
+        f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
     key, _, name = item.partition("/")
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout

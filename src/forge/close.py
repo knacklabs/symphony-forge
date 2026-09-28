@@ -61,7 +61,8 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
-    result = state.get("review") or {}
+    previous = state.get("review") or {}
+    result = previous
     fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
@@ -71,6 +72,17 @@ def close(args: argparse.Namespace) -> int:
         selected: dict[str, str] = {}
         try:
             result = review.run(top, item, state, cfg, f"origin/{default}", selected)
+            dismissed = {}
+            for dismissal in previous.get("dismissals", []):
+                number = dismissal["finding"]
+                if not 1 <= number <= len(previous["findings"]):
+                    continue
+                finding = previous["findings"][number - 1]
+                dismissed[(finding["file"], finding["title"])] = dismissal
+            result["dismissals"] = [dict(dismissed[(finding["file"], finding["title"])],
+                                         finding=number)
+                                    for number, finding in enumerate(result["findings"], 1)
+                                    if (finding["file"], finding["title"]) in dismissed]
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
