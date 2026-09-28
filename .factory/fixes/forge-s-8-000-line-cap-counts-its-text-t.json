@@ -3,11 +3,30 @@
   "branch": "fix/forge-s-8-000-line-cap-counts-its-text-t",
   "done_when": "The cap counts only Python files under src/forge against a ceiling of 7,000 in pyproject.toml, an accepted decision records the owner's choice, the tests and the v1 spec say so, and the full test suite passes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "b6dfedd93dedc69915d4b6e2b7d8319f0ff91b8f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required end-to-end proof is missing. This test implements the count directly; its Forge invocation at tests/test_rules.py:70 only requests help. The other changed test likewise calls `--help` and checks the configuration value. Neither exercises enforcement through Forge's command, as the review contract requires. Add an acceptance test that exercises the real check path and demonstrates that non-Python growth is accepted while Python growth beyond 7,000 lines is rejected.",
+        "file": "tests/test_rules.py",
+        "line": 63,
+        "priority": "P1",
+        "title": "Not done: Python-only line-cap enforcement through Forge's command"
+      }
+    ],
+    "status": "blocked",
+    "tree": "72c93e45a434cad52b4fb8a0fabe46bdcda886ca2b78c31ab40f79b0b93a5d65"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T07:34:08+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T07:47:21+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's 8,000-line cap counts its text templates with its Python, so every story must cut lines first and trims delete useful comments"
