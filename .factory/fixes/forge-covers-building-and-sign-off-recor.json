@@ -1,0 +1,14 @@
+{
+  "base": "6adcdc7f44b8822a57f0f7e16bcd21f8c0257e7b",
+  "branch": "fix/forge-covers-building-and-sign-off-recor",
+  "done_when": "The skill and templates carry the aha journey from the first meeting to sign-off",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T12:14:35+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step"
+}
