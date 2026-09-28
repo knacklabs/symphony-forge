@@ -4,13 +4,21 @@
   "done_when": "README.md describes the per-repo merge setting and forge merge, shows the v1.1.0 install line, has an Upgrading section that says to tell the agent to upgrade Forge to a named version, lists forge merge and forge ask in its commands table, and links the explainer video from the v1.1.0 release with a preview image; no video or video source is committed, only links to the release assets",
   "kind": "fix",
   "review": {
-    "commit": "6a5e5b178f1d6e7c8b851cf0732ba9e6b6c6c68f",
+    "commit": "dde0143275bba8af52bab519bfe65374f4112a64",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "fabae9059733cc1fba67debbde284e7825d3040201756b4df467a28d2999d20e"
+    "findings": [
+      {
+        "body": "The explainer block adds a user-attachment URL and a separate text download link, but no preview image linked to the release video. Even if GitHub renders the attachment inline, that URL is not a release asset, contrary to the explicit acceptance criteria. Replace it with a linked preview image whose image and video URLs both reference the v1.1.0 release assets. This requirement can be completed within this branch.",
+        "file": "README.md",
+        "line": 10,
+        "priority": "P1",
+        "title": "Not done: Link the v1.1.0 explainer with a preview image using only release assets"
+      }
+    ],
+    "status": "blocked",
+    "tree": "98fc4b652e381a248701265b183be2470a6b309d2a40c14cba3094fc7f1fc018"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T02:31:32+00:00",
@@ -18,6 +26,10 @@
     },
     {
       "at": "2026-09-28T04:31:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T04:39:32+00:00",
       "step": "review"
     }
   ],
