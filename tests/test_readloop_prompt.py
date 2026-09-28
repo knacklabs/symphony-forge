@@ -29,6 +29,39 @@ def _skills(repo, gh, tmp_path) -> list[str]:
     return [_flat((client / host / "skills/forge/SKILL.md").read_text("utf-8")) for host in HOSTS]
 
 
+def _first_round_prompt(repo, monkeypatch, sdk_data, tmp_path) -> str:  # noqa: F811
+    """The prompt Codex received from a real `forge read` of a story branch made before a trap
+    landed on the default branch."""
+    setup(repo)
+    _install(repo.bin, "codex-app-server",
+             (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8"))
+    program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
+    monkeypatch.setenv("CODEX_BIN", str(program))
+    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    (tmp_path / "codex-home").mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    monkeypatch.delenv("CODEX_THREAD_ID")
+    monkeypatch.setenv("CLAUDECODE", "1")  # under Claude Code the reader is Codex
+    shop = new_story(repo, "SHOP")
+    # A trap learned on the default branch after the story branch was made; the same heading
+    # inside Forge's block is not the repo's own.
+    repo.write("AGENTS.md", "<!-- forge:begin -->\n## Known traps\n\n- Forge's own line.\n"
+                            "<!-- forge:end -->\n\n## Known traps\n\n"
+                            "- Fixture paths break on Windows.\n")
+    repo.git("add", "AGENTS.md")
+    repo.git("commit", "-q", "-m", "Learn a trap")
+    repo.git("push", "-q", "origin", "main")
+    agents = shop / "AGENTS.md"
+    assert "Fixture paths" not in (agents.read_text("utf-8") if agents.exists() else "")
+    (shop / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    (shop / "forge.toml").write_text(_toml(version, "claude", GRILL), encoding="utf-8")
+
+    read = repo.forge("read", "SHOP", cwd=shop)
+    assert read.returncode == 0, read.stdout + read.stderr
+    return _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
+
+
 def test_3_kept_findings_are_settled_not_argued(repo, gh, tmp_path):
     _first, round_part = _parts()
     for placeholder in ("$round", "$path", "$diff", "$dispositions", "$spec_diff", "$next",
@@ -62,21 +95,24 @@ def test_3_kept_findings_are_settled_not_argued(repo, gh, tmp_path):
             assert step in skill, step
 
 
-def test_4_the_reader_hunts_edge_cases(repo, gh, tmp_path):
+def test_4_the_reader_hunts_edge_cases(repo, gh, monkeypatch, sdk_data, tmp_path):  # noqa: F811
     first, _round = _parts()
+    prompt = _flat(_first_round_prompt(repo, monkeypatch, sdk_data, tmp_path))
     for question in ("which inputs and states it must handle",
                      "Windows PowerShell and cmd, WSL, macOS, Linux CI",
                      "which failure and refusal paths it has",
                      "which test, in which task's Tests cell, proves each case",
                      "`Unproven: item <n>: <case>`", "`Trap: <trap>: item <n>`"):
         assert question in first, question
+        assert question in prompt, question
     for skill in _skills(repo, gh, tmp_path):
         assert ("`Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that "
                 "Done-when item and its test to the Tests cell of the task that owns it. Never "
                 "resolve one only in Notes.") in skill
 
 
-def test_5_known_traps_are_shipped_and_learned(repo, gh, tmp_path):
+def test_5_known_traps_are_shipped_and_learned(repo, gh, monkeypatch, sdk_data,  # noqa: F811
+                                               tmp_path):
     first, round_part = _parts()
     for trap in ("Windows line endings and shells", "no network in CI",
                  "a new settings key the installed Forge rejects",
@@ -95,39 +131,10 @@ def test_5_known_traps_are_shipped_and_learned(repo, gh, tmp_path):
                      "create the section when it is missing",
                      "Commit it before closing the fix"):
             assert step in skill, step
-
-
-def test_5_the_first_round_sends_its_own_part_and_the_default_branchs_traps(
-        repo, monkeypatch, sdk_data, tmp_path):  # noqa: F811  (the fixture)
-    setup(repo)
-    _install(repo.bin, "codex-app-server",
-             (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8"))
-    program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
-    monkeypatch.setenv("CODEX_BIN", str(program))
-    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    (tmp_path / "codex-home").mkdir()
-    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
-    monkeypatch.delenv("CODEX_THREAD_ID")
-    monkeypatch.setenv("CLAUDECODE", "1")  # under Claude Code the reader is Codex
-    shop = new_story(repo, "SHOP")
-    # A trap learned on the default branch after the story branch was made; the same heading
-    # inside Forge's block is not the repo's own.
-    repo.write("AGENTS.md", "<!-- forge:begin -->\n## Known traps\n\n- Forge's own line.\n"
-                            "<!-- forge:end -->\n\n## Known traps\n\n"
-                            "- Fixture paths break on Windows.\n")
-    repo.git("add", "AGENTS.md")
-    repo.git("commit", "-q", "-m", "Learn a trap")
-    repo.git("push", "-q", "origin", "main")
-    agents = shop / "AGENTS.md"
-    assert "Fixture paths" not in (agents.read_text("utf-8") if agents.exists() else "")
-    (shop / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
-    version = repo.forge("--version").stdout.split()[-1]
-    (shop / "forge.toml").write_text(_toml(version, "claude", GRILL), encoding="utf-8")
-
-    read = repo.forge("read", "SHOP", cwd=shop)
-    assert read.returncode == 0, read.stdout + read.stderr
-    prompt = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
+    prompt = _first_round_prompt(repo, monkeypatch, sdk_data, tmp_path)
     assert "Cold read of SHOP." in prompt
     for leaked in ("<!-- forge:round -->", "Round $round", "$traps", "Forge's own line."):
         assert leaked not in prompt, leaked
     assert "own known traps, from its AGENTS.md:\n\n- Fixture paths break on Windows.\n" in prompt
+    for trap in ("Windows line endings and shells", "no network in CI"):
+        assert trap in _flat(prompt), trap
