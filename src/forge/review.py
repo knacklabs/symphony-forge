@@ -23,7 +23,9 @@ from forge import repo
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
-HELPER = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
+# Its standard installs: the Codex skills folder, then the Claude one.
+HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
+           for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
@@ -246,8 +248,9 @@ def _within(path: str, entry: str) -> bool:
 
 
 def helper() -> Path:
-    """The Autoreview helper ($AUTOREVIEW, else the standard install), refused unless pinned."""
-    path = Path(os.environ.get("AUTOREVIEW") or HELPER)
+    """The Autoreview helper ($AUTOREVIEW, else the first standard install), refused unless pinned."""
+    path = Path(os.environ.get("AUTOREVIEW")
+                or next((found for found in HELPERS if found.is_file()), HELPERS[0]))
     stamp = path.parent.parent / ".upstream-sha"
     found = stamp.read_text(encoding="utf-8").strip() if path.is_file() and stamp.is_file() else ""
     if found != AUTOREVIEW_PIN:
@@ -286,16 +289,20 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = repo.git("rev-parse", base, cwd=tree)
+        engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
-                "--engine", "codex",
+                "--engine", engine,
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
                 "--json-output", str(out)]
-        chosen = {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review")
+        # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
+        # on Codex, or its Claude cold-read model when only Claude is installed.
+        chosen = (repo.models(cfg, "grill", "claude") if engine == "claude" else
+                  {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review"))
         if chosen:
-            argv += ["--model", f"codex={chosen['model']}"]
-            argv += ["--thinking", f"codex={chosen['effort']}"] if "effort" in chosen else []
+            argv += ["--model", f"{engine}={chosen['model']}"]
+            argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree)
         if launcher:
             argv += ["--codex-bin", str(launcher)]
