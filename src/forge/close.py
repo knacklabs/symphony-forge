@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import approval, checks, codex, init, repo, review
+from forge import checks, codex, init, repo, review
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -49,8 +49,6 @@ def close(args: argparse.Namespace) -> int:
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
-    light = (state.get("kind") == "fix" and state.get("allow_large") == "Prototype before sign-off"
-             and cfg["repo"] == "client" and not approval.signed_off(top))
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
@@ -63,6 +61,7 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
     fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
@@ -86,7 +85,7 @@ def close(args: argparse.Namespace) -> int:
                                          finding=number)
                                     for number, finding in enumerate(result["findings"], 1)
                                     if (finding["file"], finding["title"]) in dismissed]
-            outcome = "blocked" if review.blocking(result, light) else "clean"
+            outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
@@ -98,14 +97,14 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
-    serious = review.blocking(result, light)
+    serious = review.blocking(result)
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
         _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
-    _publish(top, item, state, branch, default, pr, result, light)
+    _publish(top, item, state, branch, default, pr, result)
 
     if serious:
         for number, finding in serious:
@@ -218,10 +217,10 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
-             pr: dict[str, Any] | None, result: dict[str, Any], light: bool) -> None:
+             pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
     """Open the pull request, or replace only Forge's block in its body. While the review is
     blocked, the pull request is a draft."""
-    block = _block(result, review.functional_check(top, f"origin/{default}"), light)
+    block = _block(result, review.functional_check(top, f"origin/{default}"))
     draft = result["status"] == "blocked"
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
@@ -248,7 +247,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         print("Updated the pull request's review block.")
 
 
-def _block(result: dict[str, Any], check: str, light: bool) -> str:
+def _block(result: dict[str, Any], check: str) -> str:
     """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
     worker's functional check from its commit message."""
     because = {d["finding"]: d for d in result["dismissals"]}
@@ -259,7 +258,7 @@ def _block(result: dict[str, Any], check: str, light: bool) -> str:
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if finding["priority"] in (("P0",) if light else review.SERIOUS)
+                else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
                 else "advisory")
         lines.append(f"{n}. {finding['priority']} {finding['title']} "
                      f"({finding['file']}:{finding['line']}): {note}")

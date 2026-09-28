@@ -105,7 +105,8 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 # --- what a review covers --------------------------------------------------------------
 
 
-def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
+def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
+                reviewed_level: str | None = None) -> str:
     """What a clean review covers: changed product files, the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
@@ -128,17 +129,44 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
+    current_level = blocking_level(top, item, state, base, commit)
+    saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
+    if saved_level == "P0":
+        parts.append("P0-only prototype review")
+    if saved_level != current_level:
+        parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
 
 
-def blocking(result: dict[str, Any], light: bool = False) -> list[tuple[int, dict[str, Any]]]:
+def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
+                   commit: str = "HEAD") -> str:
+    """P0 for an unsigned client prototype fix, P1 for every other review."""
+    cfg = repo.config(top)
+    if ("/" in item or state.get("kind") != "fix" or
+            state.get("allow_large") != "Prototype before sign-off" or cfg["repo"] != "client"):
+        return "P1"
+    for ref in (base, commit):
+        names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+        for name in names.splitlines():
+            wanted = name == cfg["signoff"] if cfg["signoff"] else name.endswith("client-signoff.md")
+            if not wanted:
+                continue
+            record = repo.git("show", f"{ref}:{name}", cwd=top)
+            if record.startswith("---") and re.search(
+                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
+                return "P1"
+    return "P0"
+
+
+def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
     """The numbered blocking findings of a review result that no one dismissed."""
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
             if not isinstance(f, dict) or
-            (f.get("priority") in (("P0",) if light else SERIOUS) and n not in dismissed)]
+            (f.get("priority") in (("P0",) if result.get("blocking_level") == "P0" else SERIOUS)
+             and n not in dismissed)]
 
 
 # --- the instructions ------------------------------------------------------------------
@@ -296,8 +324,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
-            "dismissals": []}
+    return {"commit": head, "tree": fingerprint(head, item, top, state, base,
+                                                  "P0" if light else "P1"), "findings": findings,
+            "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
 
 def signoff(top: Path, answers: str) -> str:
