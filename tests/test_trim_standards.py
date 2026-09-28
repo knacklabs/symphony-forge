@@ -14,7 +14,8 @@ def test_5_sync_places_standards_beside_both_forge_skills(repo):
 
     result = repo.forge("sync")
     assert result.returncode == 0, result.stderr
-    expected = (ROOT / "src/forge/standards.md").read_bytes()
+    # read_text normalizes CRLF checkouts, matching sync's LF byte write.
+    expected = (ROOT / "src/forge/standards.md").read_text(encoding="utf-8").encode("utf-8")
     for host in (".claude", ".codex"):
         folder = repo.path / host / "skills/forge"
         assert (folder / "standards.md").read_bytes() == expected
