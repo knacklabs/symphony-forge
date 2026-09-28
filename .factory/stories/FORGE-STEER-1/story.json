@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-STEER-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T06:00:19+00:00",
+  "merged": {
+    "ASK-MODEL": "2026-09-28T05:26:54+00:00",
+    "DOCS": "2026-09-28T06:00:19+00:00",
+    "RESUME": "2026-09-27T17:27:58+00:00",
+    "STEER": "2026-09-27T15:01:57+00:00"
+  },
+  "outcome": "The coordinator can steer a worker with a note, answer its questions, and ask Codex read-only questions on any model without leaving saved chats",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-27T04:51:24+00:00",
@@ -29,6 +37,10 @@
     {
       "at": "2026-09-27T16:23:45+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T06:00:42+00:00",
+      "step": "done"
     }
   ],
   "title": "The coordinator can steer and question its Codex workers",

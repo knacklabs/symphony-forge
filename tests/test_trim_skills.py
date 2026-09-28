@@ -1,5 +1,6 @@
 STORY = "FORGE-TRIM-1"
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -15,6 +16,14 @@ SOURCES = {
     ".codex/skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
 }
+# SHA-256 of the four package copies before the trim, with LF endings as sync writes.
+# Current-source equality alone would miss a shared change across all three installs.
+PRE_TRIM_SHA256 = {
+    ".codex/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
+    ".codex/skills/test-audit/SKILL.md": "d0bd6a7f13510241a334a5991f2b860c80283933f963603c5d88abb1e4859126",
+    ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
+    ".claude/skills/remote-approval/SKILL.md": "23f7e0b9a12ed5a9b06e135f92fc51b99cf053accafcba5c9773e75d010f4c86",
+}
 OLD_COPIES = (
     "src/forge/templates/fde.md",
     "src/forge/templates/skills/test-audit/SKILL.md",
@@ -25,8 +34,12 @@ OLD_COPIES = (
 
 def test_2_sync_ships_one_source_copy_in_wheel_sdist_and_editable(repo, tmp_path):
     assert all(not (ROOT / rel).exists() for rel in OLD_COPIES)
-    expected = {target: (ROOT / source).read_text(encoding="utf-8").encode("utf-8")
-                for target, source in SOURCES.items()}
+    # read_text normalizes CRLF checkouts, matching sync's read and LF byte write.
+    originals = {source: (ROOT / source).read_text(encoding="utf-8").encode("utf-8")
+                 for source in PRE_TRIM_SHA256}
+    assert {source: hashlib.sha256(data).hexdigest()
+            for source, data in originals.items()} == PRE_TRIM_SHA256
+    expected = {target: originals[source] for target, source in SOURCES.items()}
     dist = tmp_path / "dist"
     subprocess.run(["uv", "build", "--wheel", "--sdist", "--out-dir", str(dist), str(ROOT)],
                    check=True, capture_output=True, text=True)
