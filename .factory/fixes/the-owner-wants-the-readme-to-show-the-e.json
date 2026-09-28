@@ -1,0 +1,29 @@
+{
+  "base": "d95280ffa7b33fefa4d6a7db95e33a07f85b0eed",
+  "branch": "fix/the-owner-wants-the-readme-to-show-the-e",
+  "done_when": "README.md shows the explainer once, as the animated preview linked to the video, with no player link above it",
+  "kind": "fix",
+  "review": {
+    "commit": "29e1f50ab6170f7f98f4962ab1b505153e9c6947",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "3d90db4673910d39cf5d6784b87c9e039abe8f671b054b158a3268bc64af1980"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T07:40:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T07:42:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T07:59:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants the README to show the explainer only as the animated preview linked to the video, without the player"
+}
