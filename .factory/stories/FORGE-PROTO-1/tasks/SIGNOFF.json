@@ -1,26 +1,19 @@
 {
   "branch": "task/FORGE-PROTO-1-SIGNOFF",
   "review": {
-    "commit": "875e213da127a5a24203aee7a3df272844dc3890",
+    "commit": "0b5e0b156838bccd4ab36d1a354d8fe9ac8d1386",
     "dismissals": [],
     "findings": [
       {
-        "body": "The command test supplies a P1 review finding and an `our default` answer, but never a P0 finding or a must-answer topic sourced only from `agent`. Removing either rejection would leave this test passing, although item 7 requires both to block acceptance. Add command-level cases that verify the decision remains proposed.",
-        "file": "tests/test_proto_signoff.py",
-        "line": 72,
+        "body": "The answers parser accepts any nonempty source without a comma or parentheses (`src/forge/nextstep.py:57,86-92`), and its open-topic check does not examine that source (`src/forge/nextstep.py:98-103`). This guard rejects only the exact strings `our default` and `agent`. A must-answer line such as `- Sign-in: agreed (agent + our default, 2026-09-28)` therefore passes both checks despite having no human source. With an exact decision quote and a clean review, sign-off can be accepted. Require a client, salesperson, or developer source for each must-answer topic and cover that case through `forge decision accept`.",
+        "file": "src/forge/records.py",
+        "line": 280,
         "priority": "P1",
-        "title": "Not done: P0 and agent-source sign-off test"
-      },
-      {
-        "body": "The tests reject a blank or mismatched customer but never try a matching name without a role, accept approval by call, or assert that `confirmed_by` contains the recorder named by `--by`. The successful case checks `reviewed_commit` only. Dropping role validation, rejecting calls, or recording the customer in place of the recorder would leave these tests passing, contrary to item 8.",
-        "file": "tests/test_proto_signoff.py",
-        "line": 204,
-        "priority": "P1",
-        "title": "Not done: customer identity and approval test"
+        "title": "Not done: A strict review guards sign-off"
       }
     ],
     "status": "blocked",
-    "tree": "07f60e4238fa84bacbed7cc341b7fd178cf502030b1841cf86e506918d4e1148"
+    "tree": "82613bb0821c3b77b4a1eb1f75949263f38cbb8e1c0f2730f72bdd0d20ba74f4"
   },
   "status": "fixing",
   "steps": [
@@ -46,6 +39,10 @@
     },
     {
       "at": "2026-09-28T14:24:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:47:35+00:00",
       "step": "review"
     }
   ]
