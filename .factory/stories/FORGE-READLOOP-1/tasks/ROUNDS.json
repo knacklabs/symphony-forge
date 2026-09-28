@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-READLOOP-1-ROUNDS",
-  "status": "working",
+  "review": {
+    "commit": "6fce03498be3f41db975a6e3e4db59cac5de1852",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch adds only task state. The unchanged `src/forge/story.py:147-148` still refuses `forge read` whenever notes already have a read hash, so no second round can continue a recorded Codex conversation or Claude session, send diffs and dispositions, or add numbered round notes.",
+        "file": ".factory/stories/FORGE-READLOOP-1/tasks/ROUNDS.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: The same reader reads again"
+      },
+      {
+        "body": "No `nextstep.py` change is present. Its existing approval path at `src/forge/nextstep.py:317-322` reports a read refusal without naming the current round or advising a human to consider splitting the story from round four.",
+        "file": ".factory/stories/FORGE-READLOOP-1/tasks/ROUNDS.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: Forge nudges when a read doesn't converge"
+      },
+      {
+        "body": "The required round test file is absent from the selected diff and repository. There is no end-to-end coverage through `forge read` for continued or fresh Codex and Claude rounds, or through `forge next` for the round-four nudge.",
+        "file": ".factory/stories/FORGE-READLOOP-1/tasks/ROUNDS.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: tests/test_readloop_rounds.py"
+      },
+      {
+        "body": "The task commits contain no `Functional check:` paragraph. Nothing in the commit messages records exercising either the repeat-read flow or the `forge next` nudge and observing their results.",
+        "file": ".factory/stories/FORGE-READLOOP-1/tasks/ROUNDS.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      }
+    ],
+    "status": "blocked",
+    "tree": "caeb97df88992fb7504473838cae0152a7e41512da95651e6cdc900c5df3550d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T19:22:52+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:48:05+00:00",
+      "step": "review"
     }
   ]
 }
