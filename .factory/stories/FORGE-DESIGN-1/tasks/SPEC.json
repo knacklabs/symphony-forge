@@ -1,8 +1,7 @@
 {
   "base": "6f934a6b045ed08c4059a8df59b39aaa93df5b1e",
-  "branch": "fix/design-work-screens-and-flows-runs-on-co",
+  "branch": "task/FORGE-DESIGN-1-SPEC",
   "done_when": "User-facing story tasks and prototype fixes run on a Claude worker with the models in forge.toml's [models.design] (Opus 5.5, high), falling back to Codex with [models.design.codex] (Sol, high) only when Claude can't run; other work is unchanged",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
