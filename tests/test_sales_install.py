@@ -165,6 +165,7 @@ def _windows_check_and_install(tmp_path):
                f'copy /Y "{installed / "codex.cmd"}" "{bin_dir / "codex.cmd"}" >nul\n'
                f'echo %* | findstr.exe /C:"@openai/codex" >nul && '
                f'copy /Y "{installed / "codex.ps1"}" "{bin_dir / "codex.ps1"}" >nul\n'
+               'exit /b 0\n'
                if name == "npm" else ""), encoding="utf-8")
         (bin_dir / f"{name}.ps1").write_text("throw 'Use the .cmd installer'\n", encoding="utf-8")
     piped = ("function Invoke-RestMethod { param($Uri) "
@@ -229,6 +230,24 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
         assert "WSL install requested" in setup.stdout
     else:
         assert "administrator" in setup.stdout.lower()
+
+    # An installed WSL1 needs a version change, not another install request.
+    (bin_dir / "wsl.cmd").write_text(
+        f'@echo off\nif "%1"=="--status" (echo Default Version: 1) else (echo wsl %* >> "{log}")\n',
+        encoding="utf-8")
+    wsl1_check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
+                                env=env, capture_output=True, text=True)
+    assert wsl1_check.returncode == 0
+    assert wsl1_check.stdout.strip() == "Missing: WSL2 for Docker"
+    assert not log.exists()
+    wsl1_setup = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
+                                env=env, capture_output=True, text=True)
+    assert "restart" in wsl1_setup.stdout.lower()
+    if wsl1_setup.returncode == 0:
+        assert log.read_text().splitlines() == ["wsl --set-default-version 2"]
+    else:
+        assert "administrator" in wsl1_setup.stdout.lower()
+        assert not log.exists()
 
 
 def test_2_one_install_script_per_laptop_checks_and_installs(tmp_path):

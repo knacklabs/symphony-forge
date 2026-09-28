@@ -33,7 +33,8 @@ Install-Package 'GitHub CLI' gh 'GitHub.cli'
 Install-Package 'Node' node 'OpenJS.NodeJS.LTS'
 Install-Package 'uv' uv 'astral-sh.uv'
 
-$wslReady = (Has-Tool wsl) -and ((& wsl --status 2>$null) -match 'Default Version: 2')
+$wslStatus = if (Has-Tool wsl) { & wsl --status 2>$null } else { '' }
+$wslReady = $wslStatus -match 'Default Version: 2'
 if (-not $wslReady) {
     if ($Check) { Missing 'WSL2 for Docker' }
     else {
@@ -43,7 +44,8 @@ if (-not $wslReady) {
             exit 1
         }
         Write-Output 'Switching on WSL2 for Docker. Restart your laptop once after setup, then run this script again.'
-        & wsl --install --no-distribution
+        if ($wslStatus -match 'Default Version: 1') { & wsl --set-default-version 2 }
+        else { & wsl --install --no-distribution }
         if ($LASTEXITCODE -ne 0) { throw 'WSL2 did not switch on. Check the message above, then run this script again as administrator.' }
     }
 }
