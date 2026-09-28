@@ -1,8 +1,7 @@
 {
   "base": "79af562bf260f110ad6a0b158c6847bcac95165c",
-  "branch": "fix/gaps-a-plan-never-pins-down-come-back-as",
+  "branch": "task/FORGE-READLOOP-1-SPEC",
   "done_when": "The same cold reader reads the plan again until it has no findings",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
