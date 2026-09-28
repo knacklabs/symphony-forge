@@ -269,6 +269,11 @@ def decision_accept(args: argparse.Namespace) -> None:
 def roadmap_add(args: argparse.Namespace) -> None:
     slug = args.spec
     top = _start(args, slug)
+    from forge import approval
+
+    if (top / "forge.toml").is_file() and not approval.signed_off(top):
+        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                     "forge next"))
     rel, _, fields, body = _spec(top, slug)
     if fields.get("status") != "confirmed":
         repo.refuse(REFUSALS["unconfirmed"], slug=slug, status=fields.get("status") or "none")
