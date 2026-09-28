@@ -133,11 +133,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     return digest.hexdigest()
 
 
-def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
-    """The numbered P0 and P1 findings of a review result that no one dismissed."""
+def blocking(result: dict[str, Any], light: bool = False) -> list[tuple[int, dict[str, Any]]]:
+    """The numbered blocking findings of a review result that no one dismissed."""
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
-            if not isinstance(f, dict) or f.get("priority") in SERIOUS and n not in dismissed]
+            if not isinstance(f, dict) or
+            (f.get("priority") in (("P0",) if light else SERIOUS) and n not in dismissed)]
 
 
 # --- the instructions ------------------------------------------------------------------
@@ -228,7 +229,7 @@ def helper() -> Path:
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
-        signoff_prompt: str = "") -> dict[str, Any]:
+        signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
     path = helper()
@@ -261,9 +262,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", "codex",
-                "--max-priority", "P3", "--prompt", prompt, "--json-output", str(out)]
-        chosen = cfg["models"].get("review")
-        if chosen:  # forge.toml's review kind: its model, and its effort when it sets one
+                "--max-priority", "P0" if light else "P3", "--prompt", prompt,
+                "--json-output", str(out)]
+        chosen = {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review")
+        if chosen:
             argv += ["--model", f"codex={chosen['model']}"]
             argv += ["--thinking", f"codex={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree)
