@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked for the v1.1.0 release on 2026-09-28; a version bump touches the version, the pin and their tests",
   "base": "28bd79a1563da375fedea26a7a829770166def7a",
   "branch": "fix/clients-pin-forge-v1-0-2-but-main-has-28",
   "done_when": "Forge's version, forge.toml's pin and the release tests say 1.1.0, and the full test suite passes",
