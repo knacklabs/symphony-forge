@@ -1,11 +1,11 @@
 {
   "branch": "task/FORGE-STEER-1-ASK-MODEL",
   "review": {
-    "commit": "5891726447e1fa30de893ee921289f5b0a3ad2fd",
+    "commit": "6535fb1773ac41374037016c7c3ec52221c6b1ae",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "70a93f73aa208c955fdca4b409571992a3d9bd68fe38d0f827faa10c2b756231"
+    "tree": "e8a96f1db214bf511cc21d26080a8a440e5a468990735cbf215ad8db5ae4b732"
   },
   "status": "waiting for checks",
   "steps": [
@@ -15,6 +15,10 @@
     },
     {
       "at": "2026-09-28T02:09:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:17:48+00:00",
       "step": "review"
     }
   ]
