@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-code-sits-at-its-8-000-line-ceil",
   "done_when": "src/forge counts at most 7,850 lines by the ceiling test's count on this branch, only dead or duplicated code is removed with no behaviour change, no change joins lines or removes blank lines to save lines, and the full test suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T06:35:34+00:00",
