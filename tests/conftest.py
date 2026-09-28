@@ -95,6 +95,13 @@ class StubGh:
         return [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
 
 
+@pytest.fixture(autouse=True)
+def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Every Forge subprocess must write its per-machine repo list inside this test's temp folder.
+    monkeypatch.setenv("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
+                       str(tmp_path / "config"))
+
+
 @pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.

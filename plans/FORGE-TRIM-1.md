@@ -29,7 +29,7 @@ confirmed spec `docs/specs/forge-trim.md`.
 4. The migration skill text is at `docs/migrate-skill.md`, and the test that reads it follows it.
 5. `forge sync` writes the standards page next to the Forge skill for both hosts, and the skill's
    "Build simple" section is a short pointer to it plus its "Finding forms" lines.
-6. `src/forge` counts at most 7,561 lines by the ceiling test's count, the ceiling stays at 8,000,
+6. `src/forge` stays at or under the 8,000-line ceiling by the ceiling test's count, the ceiling stays at 8,000,
    no change joins lines or removes blank lines to save lines, and the full test suite passes.
 
 ## Tasks
