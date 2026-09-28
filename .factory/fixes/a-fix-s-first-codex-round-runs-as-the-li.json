@@ -5,11 +5,26 @@
   "done_when": "This repo's forge.toml and the forge.toml that forge init writes give [models.lite] subagents gpt-6-luna with subagent_effort max, like build and fix, and a test through forge work shows a fix's first Codex round passing them",
   "kind": "fix",
   "review": {
-    "commit": "ee0c59096ab188fc6c0099dd212ba22f037cc46a",
+    "commit": "2a3a3c5626620a1fa1451e28eff6b2d268ad9715",
     "dismissals": [],
-    "findings": [],
+    "findings": [
+      {
+        "body": "The generated forge.toml now always includes these Codex subagent keys. If a client later changes `workers` to `claude` and selects a Claude lite model, `forge work` still refuses the first fix: `src/forge/worker.py:178-182` rejects any Claude worker whose model entry has `subagents`. This is a compatibility edge case; the requested Codex behavior works.",
+        "file": "src/forge/init.py",
+        "line": 54,
+        "priority": "P2",
+        "title": "Switching an initialized repo to Claude blocks its first fix"
+      },
+      {
+        "body": "This new test runs `forge init` and checks the lite keys already asserted by the changed `tests/test_codex_reader.py:164-173`, which checks the entire generated models table. Removing this duplicate leaves that contract covered and keeps the separate `forge work` test as the behavior proof.",
+        "file": "tests/test_fix_first_codex_round_luna_helpers.py",
+        "line": 17,
+        "priority": "P2",
+        "title": "Simpler: remove the duplicate forge init test \u2192 keep the existing init assertion"
+      }
+    ],
     "status": "clean",
-    "tree": "f93666c97df1338107265fdae5fb20593bdb706ace84743d3f53a3c28bc33bf5"
+    "tree": "cfbf1acf651cc9fcb8ae46bc8ed58ac4b4bb7301161a7c1d1bbd472d1f718c77"
   },
   "status": "waiting for checks",
   "steps": [
@@ -19,6 +34,10 @@
     },
     {
       "at": "2026-09-28T11:44:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:22:04+00:00",
       "step": "review"
     }
   ],
