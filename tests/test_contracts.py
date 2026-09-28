@@ -529,11 +529,19 @@ def test_8_plain_english(env):
 # --- criterion 9: nothing changes outside a pull request --------------------------------------
 
 def _commands() -> dict[str, bool]:
-    """Each command in cli.py's table, and whether it changes state, read from its source."""
+    """Each declared or not-yet-moved command and whether it changes state."""
     tree = ast.parse((SOURCE / "cli.py").read_text(encoding="utf-8"))
     table = next(node.value for node in tree.body if isinstance(node, ast.Assign)
                  and [getattr(t, "id", "") for t in node.targets] == ["TABLE"])
-    return {row.elts[0].value: row.elts[2].value for row in table.elts}
+    commands = {row.elts[0].value: row.elts[2].value for row in table.elts}
+    for path in SOURCE.glob("*.py"):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if not isinstance(node, ast.Assign) or [getattr(t, "id", "") for t in node.targets] != ["COMMANDS"]:
+                continue
+            for row in node.value.elts:
+                fields = {key.value: value for key, value in zip(row.keys, row.values)}
+                commands[fields["words"].value] = fields["changes_state"].value
+    return commands
 
 
 def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch):
