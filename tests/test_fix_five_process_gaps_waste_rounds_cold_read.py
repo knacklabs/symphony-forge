@@ -72,7 +72,7 @@ def test_3_fix_work_brief_states_limit_interfaces_and_allowance(repo):
     brief = calls(log)[-1]["brief"]
     assert "at most five code files" in brief
     assert "**/routes/**" in brief and "**/*.schema.*" in brief
-    assert "No recorded allowance" in brief
+    assert "Prototype before sign-off" in brief
     assert repo.forge("fix", "allow-large", "The client approved the wider repair", cwd=fix).returncode == 0
     assert repo.forge("work", "clarify-the-fix-boundary").returncode == 0
     assert "The client approved the wider repair" in calls(log)[-1]["brief"]

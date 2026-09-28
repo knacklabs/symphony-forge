@@ -24,6 +24,8 @@ def test_33_new_moving_parts_line(env):
     repo = env.repo
     # The template from forge story new ends its Tasks section with the line.
     env.commit(repo.path, "plans/roadmap.json", json.dumps({"items": [{"key": "CART"}]}))
+    env.commit(repo.path, "docs/decisions/0001-client-signoff.md",
+               "---\nstatus: accepted\n---\n")
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("story", "new", "CART", "Shoppers share a cart")
     assert made.returncode == 0, made.stderr
@@ -138,6 +140,10 @@ def test_40_interfaces(repo, gh, tmp_path, env):
     # forge init writes the stack's default interfaces: a fix that changes one is refused.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
+    # The normal interface limit applies to fixes started after client sign-off.
+    (client / "docs/decisions/0001-client-signoff.md").parent.mkdir(parents=True, exist_ok=True)
+    (client / "docs/decisions/0001-client-signoff.md").write_text(
+        "---\nstatus: accepted\n---\n", encoding="utf-8")
     started = repo.forge("fix", "start", "Tidy the orders code", "--done", "It reads well",
                          cwd=client)
     assert started.returncode == 0, started.stderr
