@@ -4,11 +4,11 @@
   "done_when": "brief.md lets a worker update tests when the Done-when deliberately changes behaviour, explaining the old and new contract, and never weaken a test to hide a defect; brief.md says a failure is unrelated only with a matching failure on the default branch, else unresolved; review.md and standards.md say doc-only changes need no new behaviour test, only checked claims, commands and links; standards.md and brief.md say joining lines or removing blank lines never counts as a reduction; skill.md says to read the worker's final handoff and resolve stated blockers before forge close; the generated skill copies match; a test through the real commands shows each sentence reaches its reader",
   "kind": "fix",
   "review": {
-    "commit": "9fdb0b2665225469fa56d6250bcdcd143d68b7d2",
+    "commit": "321d2ddcb4022dbd120b32ebc26c4e1bc040920d",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "c8eb12109190636bb42312bf3d7c3d1b5197bef3973b2d1bb36e0255e66a5f03"
+    "tree": "55d14582c71f83c84e1e7ce80fb35d1117a9780b483c245db70bba2c99ae627a"
   },
   "status": "waiting for checks",
   "steps": [
@@ -22,6 +22,10 @@
     },
     {
       "at": "2026-09-28T01:51:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T02:10:45+00:00",
       "step": "review"
     }
   ],
