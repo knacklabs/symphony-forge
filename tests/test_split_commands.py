@@ -407,36 +407,37 @@ def _copy_forge(repo, tmp_path):
     return package
 
 
-def test_2_commands_keep_their_help_and_collect_owner_declarations(repo, tmp_path, monkeypatch):
+def test_2_commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     for words, expected in HELP_GOLDEN.items():
         result = repo.forge(*words.split(), "--help")
         assert (result.returncode, result.stdout, result.stderr) == (0, expected, ""), words
 
     package = _copy_forge(repo, tmp_path)
-    # Fixed listed owners supply Python argument tuples, including callable converters.
-    owner = package / "board.py"
-    original = owner.read_text(encoding="utf-8")
-    probe = ('{"words": "probe", "run": "probe", "changes_state": False, '
-             '"help": "A newly owned command", '
-             '"args": [(("--dismiss",), {"type": int, "action": "append", "metavar": "N"})], '
-             '"position": 15, '
-             '"listing": "| `forge probe` | A newly owned command |"}')
-    owner.write_text(original.replace('}]\n', '}, ' + probe + ']\n', 1)
-                     + '\ndef probe(args):\n    print(f"{type(args.dismiss[0]).__name__}:{args.dismiss}")\n',
-                     encoding="utf-8")
+    owner = package / "probe.py"
+    owner.write_text(
+        'def probe(args):\n    print(f"{type(args.dismiss[0]).__name__}:{args.dismiss}")\n'
+        'COMMANDS = [{"words": "probe", "run": "probe", "changes_state": False, '
+        '"help": "A newly owned command", '
+        '"args": [(("--dismiss",), {"type": int, "action": "append", "metavar": "N"})], '
+        '"position": 15, '
+        '"listing": "| `forge probe` | A newly owned command |"}]\n',
+        encoding="utf-8",
+    )
     assert "probe" in repo.forge("--help").stdout
     assert repo.forge("probe", "--dismiss", "7", "--dismiss", "8").stdout == "int:[7, 8]\n"
     assert "invalid int value" in repo.forge("probe", "--dismiss", "seven").stderr
-    grouped = ('{"words": "probe run", "run": "run", "changes_state": False, '
-               '"help": "Run the probe", "args": [], "position": 15, '
-               '"listing": "| `forge probe run` | Run the probe |"}')
-    owner.write_text(original.replace('}]\n', '}, ' + grouped + ']\n', 1)
-                     + '\ndef run(args):\n    print("group command ran")\n', encoding="utf-8")
+    owner.write_text(
+        'def run(args):\n    print("group command ran")\n'
+        'COMMANDS = [{"words": "probe run", "run": "run", "changes_state": False, '
+        '"help": "Run the probe", "args": [], "position": 15, '
+        '"listing": "| `forge probe run` | Run the probe |"}]\n',
+        encoding="utf-8",
+    )
     assert "group help missing: probe" in repo.forge("--help").stderr
     with owner.open("a", encoding="utf-8") as file:
         file.write('GROUP_HELP = {"probe": "Probe commands"}\n')
     assert repo.forge("probe", "run").stdout == "group command ran\n"
-    with (package / "init.py").open("a", encoding="utf-8") as file:
-        file.write('GROUP_HELP = {"probe": "Duplicate"}\n')
+    (package / "other.py").write_text('GROUP_HELP = {"probe": "Duplicate"}\n',
+                                      encoding="utf-8")
     assert "group help declared twice: probe" in repo.forge("--help").stderr

@@ -1,12 +1,15 @@
 """The forge command. One table maps every command to the module function that runs it."""
 import argparse
+import ast
 import importlib
+import pkgutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, NoReturn
 
 from forge import __version__, machine, repo
+import forge
 
 REFUSALS = {
     "usage": ("{problem}.", "{prog} --help"),
@@ -103,7 +106,16 @@ def _parser() -> _Parser:
     groups: dict[str, Any] = {}
     declarations = []
     group_help = dict(GROUPS)
-    for module_name in ("init", "sync", "doctor", "migrate", "nextstep", "board"):
+    for info in pkgutil.iter_modules(forge.__path__):
+        if info.ispkg:
+            continue
+        source = Path(info.module_finder.path) / f"{info.name}.py"
+        names = {target.id for node in ast.parse(source.read_text(encoding="utf-8")).body
+                 if isinstance(node, ast.Assign) for target in node.targets
+                 if isinstance(target, ast.Name)}
+        if not names.intersection({"COMMANDS", "GROUP_HELP"}):
+            continue
+        module_name = info.name
         module = importlib.import_module(f"forge.{module_name}")
         for group, help_text in getattr(module, "GROUP_HELP", {}).items():
             if group in group_help:
