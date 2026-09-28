@@ -166,6 +166,24 @@ def default_config(top: Path) -> dict[str, Any]:
     return _config_text(found.stdout)
 
 
+def merge_setting(top: Path) -> str:
+    """Use agent merges for client prototypes until the fetched default branch signs off."""
+    cfg = default_config(top)
+    if cfg["repo"] != "client":
+        return cfg["merge"]
+    ref = f"origin/{default_branch(top)}"
+    names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+    pinned = cfg["signoff"]
+    for name in names:
+        if not (name == pinned if pinned else name.endswith("client-signoff.md")):
+            continue
+        record = git("show", f"{ref}:{name}", cwd=top)
+        if record.startswith("---") and re.search(
+                r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
+            return cfg["merge"]
+    return "agent"
+
+
 def _config_text(text: str) -> dict[str, Any]:
     try:
         data = tomllib.loads(text)
