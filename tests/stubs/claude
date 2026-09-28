@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
-with STUB_CLAUDE_EXIT (0 by default)."""
+with STUB_CLAUDE_EXIT (0 by default). Like claude, it keeps each --session-id it starts, for its
+folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there."""
 import io
 import json
 import os
@@ -10,8 +11,19 @@ import sys
 here = pathlib.Path(__file__).resolve().parent
 # The brief arrives as UTF-8 whatever the console code page (Windows would read it as cp1252).
 brief = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
-call = {"args": sys.argv[1:], "cwd": os.getcwd(), "brief": brief}
+args = sys.argv[1:]
+call = {"args": args, "cwd": os.getcwd(), "brief": brief}
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(call) + "\n")
+store = here / "claude-sessions.json"
+sessions = json.loads(store.read_text(encoding="utf-8")) if store.exists() else {}
+if "--resume" in args:
+    session = args[args.index("--resume") + 1]
+    if sessions.get(session) != os.getcwd():
+        print(f"No conversation found with session ID: {session}", file=sys.stderr)
+        sys.exit(1)
+if "--session-id" in args:
+    sessions[args[args.index("--session-id") + 1]] = os.getcwd()
+    store.write_text(json.dumps(sessions), encoding="utf-8")
 print("stub claude: built it")
 sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))

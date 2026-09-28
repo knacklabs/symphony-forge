@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -87,17 +88,26 @@ def work(args: argparse.Namespace) -> None:
             question = None
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
                          (None, "first turn"))
+        # A Claude worker continues the session its item's last round ran in, in this checkout.
+        session = None if on_codex or design else codex.record(top, item).get("claude")
+        if session and session["checkout"] != str(top):
+            fresh = f"its session was started in another checkout, {session['checkout']}"
+            session = None
+        elif session:
+            thread = session["id"]
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         turns = codex._item_file(top, item, ".log", kind)
         round_number = 1 + len({(entry["conversation"], entry["turn"])
                                 for line in turns.read_text(encoding="utf-8").splitlines()
                                 if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
+        if session:
+            round_number = session["rounds"] + 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread))
         fresh_brief = None
         if thread:
-            saved = codex.record(top, item)
+            saved = session or codex.record(top, item)
             brief += _changes(top, saved.get("head") or saved["start"])
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
@@ -142,7 +152,8 @@ def work(args: argparse.Namespace) -> None:
                     outcome = "completed"
                     return
             if not on_codex:
-                _run(item, top, brief, claude)
+                _claude(item, top, brief, fresh_brief, claude, session,
+                        None if fresh == "first turn" else fresh)
                 outcome = "completed"
                 return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -363,24 +374,58 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in found) or "none found"
 
 
-def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
-    """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
+def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
+            session: dict[str, Any] | None, why: str | None) -> None:
+    """A Claude worker's round: continue the item's session with the short brief, else start a new
+    session with the whole brief and say why when there was one to continue. The session, its
+    checkout, its rounds and HEAD when a round ends go in the item's record on this machine."""
+    path = codex._item_file(top, item, ".json", "Fix")
+    head = git("rev-parse", "HEAD", cwd=top)
+    try:
+        if session:
+            lost = _run(item, top, brief, models, ["--resume", session["id"]])
+            if not lost:
+                return
+            why = f"Claude couldn't continue session {session['id']}: {lost}"
+        if why:
+            message = f"Starting a new Claude session with the whole brief, because {why}."
+            print(message, flush=True)
+            with repo.work_log(top, item).open("a", encoding="utf-8") as out:
+                out.write(message + "\n")
+        session = {"id": str(uuid.uuid4()), "checkout": str(top), "start": head, "rounds": 0}
+        codex._record(path, claude=session)
+        _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
+    finally:
+        if session:
+            codex._record(path, claude={**session, "rounds": session["rounds"] + 1,
+                                        "head": git("rev-parse", "HEAD", cwd=top)})
+
+
+def _run(item: str, top: Path, brief: str, models: list[str],
+         session: list[str] | None = None) -> str | None:
+    """Run Claude Code headless in the checkout; its output goes to the terminal and the log.
+    Resuming, returns claude's line saying the session can't be continued, if it said one."""
     exe = shutil.which("claude")
     if exe is None:
         refuse(repo.REFUSALS["missing_tool"], tool="claude")
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
-               "--add-dir", str(CONVENTIONS)]
+               "--add-dir", str(CONVENTIONS), *(session or [])]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()
+        lost = None
         for line in worker.stdout:
             print(line, end="", flush=True)
             out.write(line)
+            if session and session[0] == "--resume" and line.startswith("No conversation found"):
+                lost = line.strip()
+    if worker.returncode and lost:
+        return lost
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
 
