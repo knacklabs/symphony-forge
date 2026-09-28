@@ -1,8 +1,10 @@
 ---
 slug: prototype-signoff
 title: A customer signs off a working prototype before any story exists
-status: draft
+status: confirmed
 saved: 2026-09-28T10:20:17+00:00
+confirmed_by: "vrknetha"
+confirmed_hash: 69bc4fdb3b05cbde845b6b8472cd936e55761276bd39cc3059e7a6a2086dc39f
 ---
 
 # A customer signs off a working prototype before any story exists
