@@ -76,8 +76,10 @@ Why: $why
 
 Done when: $done
 
-A fix stays small: at most five code files and no interface changes. If it needs more, stop and say
-so; it has to become a story.
+A fix stays small: at most five code files and no interface changes unless a recorded allowance
+says otherwise. If it needs more, stop and say so; it has to become a story.
+
+Interface globs in forge.toml: $interfaces. Recorded allowance: $allowance.
 
 A fix's tests go in their own file with the fix's own STORY key, never into a story's test file:
 a test there takes a number the story's own criterion needs.
