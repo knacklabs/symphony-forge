@@ -2,11 +2,44 @@
   "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
   "branch": "task/FORGE-SPLIT-1-A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE",
   "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
-  "status": "started",
+  "review": {
+    "commit": "6e17badb35418632a0db81b7b80dd92988cd125a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The spec requires a fixed module list, while the supplied COLLECTOR contract requires discovery with `pkgutil` and no fixed list. Following this spec would require editing the shared collector whenever a command introduces a module, contradicting the spec's own acceptance criterion at lines 61\u201362. Align the spec and its read-note disposition with automatic discovery.",
+        "file": "docs/specs/own-your-entry.md",
+        "line": 28,
+        "priority": "P2",
+        "title": "[P2] Replace fixed module discovery in the confirmed spec"
+      },
+      {
+        "body": "The spec assigns the CI workflow to the init module, but the supplied SHIPS contract assigns it to `prcheck.py`; the SHIPS task scope also excludes `init.py`. These instructions cannot both be followed. Update the confirmed spec to name the agreed owners explicitly, including `story.py` for the Forge skill and `prcheck.py` for the workflow.",
+        "file": "docs/specs/own-your-entry.md",
+        "line": 37,
+        "priority": "P2",
+        "title": "[P2] Align shipped-file ownership with the SHIPS contract"
+      },
+      {
+        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the patch also adds `plans/FORGE-SPLIT-1.md`, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON beneath that story. Defining and recording approval of the entire parent story is additional work beyond delivering the confirmed spec and roadmap entry. Keep those additions in the change that owns the parent story.",
+        "file": "plans/FORGE-SPLIT-1.md",
+        "line": 1,
+        "priority": "P2",
+        "title": "[P2] Remove parent-story additions outside this part's scope"
+      }
+    ],
+    "status": "clean",
+    "tree": "8c0c49a30a0b2235c53cd5698d9610b7427aa6c0cf228fa1f11b8874a838bc5d"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T16:41:48+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:29:11+00:00",
+      "step": "review"
     }
   ],
   "why": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others"
