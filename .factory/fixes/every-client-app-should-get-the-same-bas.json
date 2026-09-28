@@ -4,11 +4,30 @@
   "branch": "fix/every-client-app-should-get-the-same-bas",
   "done_when": "forge sync writes an app-baseline skill for Claude Code and Codex into client repos, holding that baseline and which of impeccable and Emil's design engineering decides what, and a test through forge sync shows it",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "e4c9f044f893894e6edd3f9e5ed0a934824671f6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This test runs Forge from the source checkout and compares the output with that same checked-in source, so it never checks the packaged skill added in pyproject.toml:25 and :32. The existing installed-package test in tests/test_trim_skills.py:10-18 and :62-67 runs sync but asserts only the older skill files. A wheel or sdist containing the wrong app-baseline text could therefore pass both tests. Extend the installed-package sync test to compare the app-baseline output for both hosts with the intended skill.",
+        "file": "tests/test_fix_app_baseline.py",
+        "line": 16,
+        "priority": "P1",
+        "title": "Not done: installed forge sync ships the app-baseline skill from wheel and sdist"
+      }
+    ],
+    "status": "blocked",
+    "tree": "5d03f0ceeb45208bc806dcce45de73f0fc8f152003bf3ef1e69c97756ab4e03a"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T12:38:04+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:07:07+00:00",
+      "step": "review"
     }
   ],
   "why": "Every client app should get the same baseline without anyone asking (shadcn only, app shell with sidebar, top bar and command palette, data tables, forms, toasts, loading, empty and error states, auth, 404 and 403 pages, theme, locale, audit fields), but nothing ships it to the agent"
