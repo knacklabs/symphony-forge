@@ -34,7 +34,6 @@ GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 # Asks the checkout's forge, in its own process, what sync should write for this repo.
 EXPECTED = """
 import json, sys
-from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 from forge import githooks, repo, sync
 top = repo.root()
