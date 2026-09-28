@@ -4,11 +4,30 @@
   "branch": "fix/a-developer-who-clones-symphony-forge-to",
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "cc737700be96c92fe0cfcd9e1845f409104383c5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new test only exports the explicitly selected dev group; it never installs that group or invokes the documented test command. For example, disabling default groups would leave this test and CI's explicit `--group dev` commands passing while breaking the contributor workflow. Add an integration test using an isolated checkout/environment that runs plain `uv sync`, verifies the installed test tools, and exercises `uv run pytest`, with recursion prevented. The required end-to-end proof is currently missing.",
+        "file": "tests/test_fix_clone_gets_test_tools.py",
+        "line": 13,
+        "priority": "P1",
+        "title": "Not done: a fresh checkout installs test tools with uv sync and runs tests with uv run pytest"
+      }
+    ],
+    "status": "blocked",
+    "tree": "7987c88ed86e835db8de2241490262e5ed373c19a7e126c7f805e88c3a5c8589"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T07:48:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:16:16+00:00",
+      "step": "review"
     }
   ],
   "why": "A developer who clones symphony-forge to fix a bug gets no test tools from uv sync and no instructions: CI adds pytest at run time and the README only covers using Forge"
