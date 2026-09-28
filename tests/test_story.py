@@ -287,12 +287,12 @@ def test_22_promote(repo):
 
     promoted = repo.forge("story", "new", "BASKET", "--from-fix", "keep-baskets")
     assert promoted.returncode == 0, promoted.stderr
-    assert subprocess.run(["git", "merge-base", "--is-ancestor", fixed, "task/BASKET-KEEP-BASKETS"],
+    assert subprocess.run(["git", "merge-base", "--is-ancestor", fixed, "task/BASKET-SPEC"],
                           cwd=repo.path).returncode == 0
     assert repo.git("branch", "--list", "fix/keep-baskets") == ""
     doc = repo.git("show", "story/BASKET:plans/BASKET.md")
     assert "## Why\n\nShoppers lose their basket when they leave\n" in doc
-    row = next(line for line in doc.splitlines() if line.startswith("| KEEP-BASKETS |"))
+    row = next(line for line in doc.splitlines() if line.startswith("| SPEC |"))
     assert "`basket.py`" in row and ".factory" not in row  # its Scope is what the fix changed
     roadmap = json.loads(repo.git("show", "story/BASKET:plans/roadmap.json"))
     assert [item["key"] for item in roadmap["items"]] == ["SHOP", "BASKET"]

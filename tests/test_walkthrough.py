@@ -160,8 +160,8 @@ def test_42_story_done(env, claude_payload, monkeypatch):
     text = seen["board"]
     assert "Shoppers can share a cart Finished on 23 September 2026." in text, text
     timeline = ["21 September 2026 Forge Test approved the plan.",
-                "22 September 2026 Save a cart Shoppers can save their cart",
-                "23 September 2026 Send a cart Friends open a sent cart with one click",
+                "22 September 2026 Shoppers can share a cart: Save a cart Shoppers can save their cart",
+                "23 September 2026 Shoppers can share a cart: Send a cart Friends open a sent cart with one click",
                 f"23 September 2026 The story was finished. {OUTCOME}"]
     assert all(entry in text for entry in timeline), text
     assert [text.index(entry) for entry in timeline] == sorted(text.index(entry)

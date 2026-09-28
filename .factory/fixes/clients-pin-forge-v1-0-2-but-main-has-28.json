@@ -1,0 +1,30 @@
+{
+  "allow_large": "The owner asked for the v1.1.0 release on 2026-09-28; a version bump touches the version, the pin and their tests",
+  "base": "28bd79a1563da375fedea26a7a829770166def7a",
+  "branch": "fix/clients-pin-forge-v1-0-2-but-main-has-28",
+  "done_when": "Forge's version, forge.toml's pin and the release tests say 1.1.0, and the full test suite passes",
+  "kind": "fix",
+  "review": {
+    "commit": "189e7ea5c2b8c525207304845d43b787541b0da9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "9dce026a78e5851665626d868a5804ea01f2946c178a24f1cd10216b23472315"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T02:10:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T02:15:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T02:23:34+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients pin Forge v1.0.2, but main has 28 merged changes since then, so client repos can't get them"
+}

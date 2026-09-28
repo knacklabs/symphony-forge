@@ -204,7 +204,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     state_file.write_text(json.dumps(state), encoding="utf-8")
     commits = repo.git("log", "--oneline", f"{start}..HEAD", cwd=folder)
 
-    # The fix round continues the same conversation, renamed Fix, on the fix kind's models, with
+    # The fix round continues the same conversation on the fix kind's models, with
     # full access and approvals "never"; no new conversation starts.
     fixed = repo.forge("work", "BOARD/PAGE")
     assert fixed.returncode == 0, fixed.stdout + fixed.stderr
@@ -214,7 +214,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert (resume["sandbox"], resume["approvalPolicy"]) == ("danger-full-access", "never")
     assert Path(resume["cwd"]).resolve() == folder.resolve()
     assert [named["name"] for named in _sent(calls, "thread/name/set")] == [
-        "Build · BOARD/PAGE · The page", "Fix · BOARD/PAGE · The page"]
+        "BOARD · The page", "BOARD · The page"]
     assert "stub codex: turn-stub-2 on thr-stub-1" in fixed.stdout
 
     # It tells the conversation the findings, the new commits, and every change git sees since
@@ -255,7 +255,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         assert f"Starting a new Codex conversation, because {why}." in again.stdout
         line = _lines(turns)[-1]
         assert (line["kind"], line["continued"], line["fresh_start"]) == ("Fix", False, why)
-        assert _sent(calls, "thread/name/set")[-1]["name"] == "Fix · BOARD/PAGE · The page"
+        assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
         assert _sent(calls, "thread/start")[-1]["config"] == FIX_CONFIG
         tried = len(_sent(calls, "thread/resume")) - resumed
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why

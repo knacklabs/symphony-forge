@@ -1,0 +1,25 @@
+{
+  "base": "d06277a6e6c81c458156b6b89c99a52de7644be3",
+  "branch": "fix/the-readme-lost-two-things-the-earlier-o",
+  "done_when": "README.md, in the same simple English, has a section on where Forge comes from (OpenAI's Symphony spec of April 2026, linked to openai.com/index/open-source-codex-orchestration-symphony and github.com/openai/symphony, what Forge keeps from it and how v1 differs: Claude Code or Codex coordinates while Codex builds, the repo is the source of truth, and approval, review and CI gate every change) and a section on the stages from idea to production as v1 really runs them (discovery and the problem card, options with payback, a confirmed spec, client sign-off in client repos, the roadmap with the smallest usable slice first, tasks built and closed on a clean review and green CI, merge, the story's outcome and the success-measure check-back), each stage naming who does it and the command or file it uses, with every claim, command and link checked against the repo",
+  "kind": "fix",
+  "review": {
+    "commit": "d0487fb63346e397d68e63274c630756df12b412",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e27ee834ad3c703221f1150a7bac7781f06646744cc6618b24fc466bd509da9b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T17:43:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:46:19+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The README lost two things the earlier one had: how work moves from idea to production in stages, and that Forge comes from OpenAI's Symphony spec"
+}
