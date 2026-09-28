@@ -1,35 +1,28 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
   "review": {
-    "commit": "f0dfcc5a26da8c6db2d054d878249ecd9182aae2",
+    "commit": "39eb1c8c54630654d35ab7f7e675224160bb740f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The collector only visits six hard-coded modules. A new module declaring COMMANDS or GROUP_HELP is ignored, so its commands remain unavailable until cli.py is edited. This directly misses COLLECTOR's required package discovery, also specified in plans/FORGE-SPLIT-1.md:61\u201363. Discover modules with pkgutil and collect their declarations while retaining the permitted transitional table.",
+        "body": "The source filter recognizes only ast.Assign. A module defining `COMMANDS: list[dict] = [...]` satisfies the declared format but is silently skipped, so its command never appears or runs. Annotated GROUP_HELP-only modules are likewise ignored. The contract reader also skips annotated declarations at tests/test_contracts.py:539. Support annotated assignments in both discovery paths and cover this case through the CLI.",
         "file": "src/forge/cli.py",
-        "line": 106,
-        "priority": "P1",
-        "title": "Not done: discover every module's command declarations"
+        "line": 114,
+        "priority": "P2",
+        "title": "Recognize annotated command declarations"
       },
       {
-        "body": "The discovery test inserts its probe into board.py, which is already in the collector's fixed list. It therefore passes despite the missing package discovery. Add a fixture module outside that list and verify through the real Forge entry point that its command appears in help and runs without editing cli.py. The existing callable-argument and group-help checks remain useful, but do not prove discovery.",
-        "file": "tests/test_split_commands.py",
-        "line": 418,
-        "priority": "P1",
-        "title": "Not done: test command discovery from a new module"
-      },
-      {
-        "body": "Parser construction still consumes TABLE and GROUPS, so Done-when item 2's complete removal of centralized declarations remains unfinished. plans/FORGE-SPLIT-1.md:41 assigns the remaining owner migrations to COMMANDS, and lines 63\u201364 explicitly allow this intermediate arrangement. Complete that removal in COMMANDS; it is deferred advice for this branch.",
+        "body": "Parser construction still consumes centralized TABLE and GROUPS declarations, so Done-when item 2 is not fully delivered. plans/FORGE-SPLIT-1.md:41 assigns the remaining migrations to COMMANDS, and lines 63\u201364 explicitly permit this transitional arrangement. Complete the table removal and remaining module declarations in COMMANDS; this is deferred advice for this branch.",
         "file": "src/forge/cli.py",
-        "line": 118,
+        "line": 130,
         "priority": "P2",
         "title": "Later: remove the remaining command table in COMMANDS"
       }
     ],
-    "status": "blocked",
-    "tree": "e59320c006692498300467086bbaf80fc7c7138b536f1eed1710979eb5c1e949"
+    "status": "clean",
+    "tree": "ae51101961c97a5ffc3ad3a0d9fc61186d497bed2f1793dc9a00e9fa6b5b1397"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T07:31:27+00:00",
@@ -57,6 +50,10 @@
     },
     {
       "at": "2026-09-28T08:57:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T09:05:11+00:00",
       "step": "review"
     }
   ]
