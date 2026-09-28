@@ -2,7 +2,13 @@
   "branch": "task/FORGE-CHATVIEW-1-START",
   "review": {
     "commit": "c157aafb4a85dea270abd073f06fee4a361a3550",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/codex_turn.py:117 the attach path is only reachable through forge close, which the story's ATTACH task wires and tests (tests/test_chatview_attach.py; ATTACH owns src/forge/close.py)",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The stub accepts `thread/attachment/add`, but no test calls `codex.attach` or reaches this driver branch. The request could be removed, its identity or payload changed, or its failure handling broken without failing the suite. Add coverage through `codex.attach` and the real SDK driver, faking the app-server, for the recorded thread, pinned fields, missing conversation, and request failure.",
@@ -12,10 +18,10 @@
         "title": "Not done: attachment request tests"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "2ac88273826daf8287aaf55ede18e52386d0964bca93760aca8517c153a77702"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T05:28:42+00:00",
