@@ -1,4 +1,10 @@
-"""forge init: set up a new repo in one first commit, push it, then protect its default branch."""
+"""forge init: set up a new repo in one first commit, push it, then protect its default branch.
+
+In a repo that already has commits it adopts the repo instead, on the fix branch fix/adopt-forge in
+its own worktree: a live forge.toml with the test command, checks and interface folders the human
+confirmed, a "House rules" section in AGENTS.md outside Forge's block, then forge sync and one
+commit. `forge close` turns on branch protection once that pull request merged.
+"""
 from __future__ import annotations
 
 import argparse
@@ -10,18 +16,36 @@ import subprocess
 from pathlib import Path
 from typing import Any, NoReturn
 
-from forge import __version__, repo, sync
+from forge import __version__, githooks, repo, story, sync
 
 COMMANDS = [{
     "words": "init", "run": "init", "changes_state": True,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
-    "args": [], "position": 10,
+    "args": [(("--test",), {"help": "a repo with history: the test command CI runs"}),
+             (("--checks",), {"action": "append", "metavar": "CHECK",
+                              "help": "a repo with history: a check branch protection requires"}),
+             (("--interfaces",), {"action": "append", "metavar": "GLOB",
+                                  "help": "a repo with history: its route or migration folders"}),
+             (("--approver",), {"help": "a repo with history: who approves stories"}),
+             (("--merger",), {"help": "a repo with history: who merges pull requests"}),
+             (("--never-touch",), {"action": "append", "metavar": "PATH",
+                                   "help": "a repo with history: a path agents never change"})],
+    "position": 10,
     "listing": "| `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |",
 }]
 
 REFUSALS = {
-    "has_commits": ("forge init sets up a new repo, and this one already has commits; a repo with "
-                    "the copied-in Forge moves over with forge migrate.", "forge migrate"),
+    "answers": ("This repo already has commits, so forge init adopts it on a fix branch, and it "
+                "needs the answers you confirmed: {missing}.",
+                'forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+                '--approver "<who>" --merger "<who>" --never-touch "<path>"'),
+    "not_current": ("This checkout isn't clean at {ref}, which forge init adopts, so it can't check "
+                    "that tree here.", "commit or set aside your changes, git switch {default} && "
+                    "git pull, then forge init again"),
+    "adopting": ("fix/adopt-forge is already there, so Forge has started adopting this repo.",
+                 "forge close adopt-forge"),
+    "taken": ("forge init won't write over files that Forge didn't write: {paths}.",
+              "move or rename those files, then forge init again"),
     "no_origin": ("This repo has no origin remote, so Forge can't push the first commit or protect "
                   "the default branch.", "gh repo create <name> --private --source . --remote origin"),
     "origin_repo": ("Forge cannot identify a GitHub repository from origin.", "git remote set-url origin <GitHub repository URL>"),
@@ -76,21 +100,33 @@ effort = "xhigh"
 """
 
 
+ROADMAP = '{\n  "items": []\n}\n'
+ADOPT_BRANCH, ADOPT_ITEM = "fix/adopt-forge", "adopt-forge"
+ADOPT_WHY = "Adopt Forge in this repo, which already has history."
+ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, checks and interface "
+              "folders, and AGENTS.md keeps the team's lines and its house rules.")
+
+
+def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
+              merge: str = "") -> str:
+    return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
+            "upgrade Forge.\n"
+            f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
+            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "codex"\n'
+            f"test = {json.dumps(test)}\n"
+            f"checks = {json.dumps(checks)}\n"
+            f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
+
+
 def _scaffold(top: Path) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
     test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
     return {
-        "forge.toml": (
-            "# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
-            "upgrade Forge.\n"
-            f'version = "v{__version__}"\nrepo = "client"\nstage = "prototype"\nworkers = "codex"\n'
-            f"test = {json.dumps(test)}\n"
-            f"checks = {json.dumps(['tests', 'forge-pr-check'])}\n"
-            f"interfaces = {json.dumps(INTERFACES)}\n{MODELS}"),
+        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()},
-        "plans/roadmap.json": '{\n  "items": []\n}\n',
+        "plans/roadmap.json": ROADMAP,
     }
 
 
@@ -204,12 +240,12 @@ def _stronger(current: dict[str, Any], checks: list[str], removed: set[str]) -> 
 
 def init(args: argparse.Namespace) -> None:
     top = repo.root()
-    if repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0:
-        repo.refuse(REFUSALS["has_commits"])
     if repo.run("git", "remote", "get-url", "origin", cwd=top).returncode:
         repo.refuse(REFUSALS["no_origin"])
     if not shutil.which("gh"):
         repo.refuse(repo.REFUSALS["missing_tool"], tool="gh")
+    if repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0:
+        return _adopt(top, args)
     branch = repo.current_branch(top)
     scaffold = _scaffold(top)
     for rel, text in scaffold.items():
@@ -227,3 +263,59 @@ def init(args: argparse.Namespace) -> None:
     print(f"Pushed {branch} to origin and installed the git hooks that check each commit and push.")
     protect(top, branch, cfg["checks"])
     print("Next: forge next")
+
+
+def _adopt(top: Path, args: argparse.Namespace) -> None:
+    """Adopt a repo with history: everything is checked against the default branch as last
+    fetched, which the checkout must be at, before anything changes; then one commit on
+    fix/adopt-forge in its own worktree. The default branch changes only when its pull request
+    merges."""
+    missing = [f"--{name}" for name in ("test", "checks", "interfaces", "approver", "merger")
+               if not getattr(args, name)]
+    if missing:
+        repo.refuse(REFUSALS["answers"], missing=", ".join(missing))
+    ref, default = story.landed_ref(top), repo.default_branch(top)
+    heads = repo.run("git", "rev-parse", "HEAD", f"{ref}^{{commit}}", cwd=top).stdout.split()
+    if len(heads) != 2 or heads[0] != heads[1] or repo.git("status", "--porcelain", cwd=top):
+        repo.refuse(REFUSALS["not_current"], ref=ref, default=default)
+    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/{ADOPT_BRANCH}",
+                cwd=top).returncode == 0:
+        repo.refuse(REFUSALS["adopting"])
+    # Forge's own check gates each pull request once Forge is on the default branch.
+    checks = [*args.checks, *(["forge-pr-check"] if "forge-pr-check" not in args.checks else [])]
+    toml = _settings("live", args.test, checks, args.interfaces, merge="human")
+    cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
+    # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
+    # already there with other text is the team's, and adoption stops before changing anything.
+    merged = set(githooks.ships(top, cfg))
+    wanted = {"forge.toml": toml, "plans/roadmap.json": ROADMAP, **sync.files(top, cfg)}
+    taken = sorted(rel for rel, text in wanted.items() if rel not in merged
+                   and (top / rel).exists() and sync.read(top / rel) != text)
+    if taken:
+        repo.refuse(REFUSALS["taken"], paths=", ".join(taken))
+    path = story.add_worktree(top, ADOPT_BRANCH, ref)
+    sync.write_file(path, "forge.toml", toml)
+    sync.write_file(path, "plans/roadmap.json", ROADMAP)
+    never = ", ".join(args.never_touch or []) or "nothing named yet"
+    rules = (f"## House rules\n\n- Approves stories: {args.approver}\n"
+             f"- Merges pull requests: {args.merger}\n- Never touch: {never}\n")
+    team = sync.read(path / "AGENTS.md")
+    sync.write_file(path, "AGENTS.md", f"{team.rstrip()}\n\n{rules}" if team.strip() else rules)
+    touched = {"forge.toml", "plans/roadmap.json", "AGENTS.md", *sync.write(path, cfg)}
+    who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=path).split("<")[0].strip()
+    fix = {"kind": "adopt", "why": ADOPT_WHY, "done_when": ADOPT_DONE, "branch": ADOPT_BRANCH,
+           "status": "started", "base": repo.git("rev-parse", ref, cwd=path), "touches": 0,
+           "allow_large": f"Adopting Forge adds its settings, skills and hooks in one change; "
+                          f"{who} allowed it by running forge init."}
+    touched.add(repo.write_state(ADOPT_ITEM, repo.add_step(fix, "start"), path))
+    # Exactly these paths, even ones the team's .gitignore matches.
+    repo.git("add", "-f", "--", *sorted(touched), cwd=path)
+    repo.git("commit", "-q", "-m", "Adopt Forge", cwd=path)
+    sync.install_shims(path, cfg)
+    print(f"Made {ADOPT_BRANCH} in {path} with one commit, not pushed yet: forge.toml marks this "
+          "repo live with the tests, checks and interface folders you confirmed, AGENTS.md keeps "
+          "your lines and adds the house rules, and the Forge skills and hooks are added. "
+          f"{default} is unchanged until its pull request merges.")
+    print(f"After that pull request merges, forge close {ADOPT_ITEM} turns on branch protection "
+          f"for {default}, keeping its existing rules.")
+    print(f"Next: your tests in {path}, then forge close {ADOPT_ITEM}")
