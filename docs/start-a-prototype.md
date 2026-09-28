@@ -31,12 +31,23 @@ If a step fails, read the message, complete the named action and run the same li
 Open Claude Code or Codex and sign in with your account. You can use either one to talk to
 Forge.
 
+## Sign in to GitHub
+
+In Terminal or PowerShell, run `gh auth login` and choose the browser login. Finish the
+sign-in in your browser before continuing. `forge init` pushes the first commit and protects
+the default branch on GitHub, so the GitHub command-line tool needs your login first.
+
 ## Open the repo and set up Forge
 
 Run `git clone <repo-url>` with the URL you copied, open the new repo folder, then open your
 agent there. Ask: “Run `forge init`, then `forge doctor --fix`.”
 The second command installs the Codex SDK that Forge needs. If setup reports a problem,
 ask the agent to follow its next step before continuing.
+
+If `forge init` already stopped after its first commit, do not run `forge init` again: it
+requires an empty repo. Sign in with `gh auth login`, then ask the agent to push that
+existing commit, run `forge sync` to install the hooks and finish branch protection using
+`gh api` (or Forge's printed `Next:` command, if it gave one). Then run `forge doctor --fix`.
 
 ## Discover the customer's problem
 
