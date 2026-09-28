@@ -1,0 +1,14 @@
+{
+  "base": "b400ddaa7843f764982509ccae87bf950c0b8d80",
+  "branch": "fix/forge-s-code-sits-at-its-8-000-line-ceil",
+  "done_when": "src/forge counts at most 7,850 lines by the ceiling test's count on this branch, only dead or duplicated code is removed with no behaviour change, no change joins lines or removes blank lines to save lines, and the full test suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T06:35:34+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's code sits at its 8,000-line ceiling, so the open tasks (registry, chat names, pull request link, approve anywhere, split) can't land without each one hunting for lines"
+}
