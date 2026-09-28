@@ -10,7 +10,7 @@ STORY = "A-DEVELOPER-WHO-CLONES-SYMPHONY-FORGE-TO"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_plain_sync_installs_test_tools_and_uv_run_finds_pytest(tmp_path):
+def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
     for name in ("pyproject.toml", "uv.lock", "README.md"):
         shutil.copy2(ROOT / name, tmp_path / name)
     shutil.copytree(ROOT / "src", tmp_path / "src")
@@ -39,10 +39,20 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_finds_pytest(tmp_path):
     )
     assert installed.returncode == 0, installed.stderr
 
-    run = subprocess.run(["uv", "run", "--frozen", "pytest", "--version"],
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_smoke.py").write_text(
+        "import subprocess\n\n"
+        "def test_forge_command():\n"
+        "    result = subprocess.run(['forge', '--version'], capture_output=True, text=True)\n"
+        "    assert result.returncode == 0, result.stderr\n"
+        "    assert result.stdout.startswith('forge v')\n",
+        encoding="utf-8",
+    )
+    run = subprocess.run(["uv", "run", "--frozen", "pytest", "-q"],
                          cwd=tmp_path, env=env, capture_output=True, text=True)
     assert run.returncode == 0, run.stderr
-    assert run.stdout.startswith("pytest ")
+    assert "1 passed" in run.stdout
 
 
 def test_2_ci_uses_the_declared_dev_group():
