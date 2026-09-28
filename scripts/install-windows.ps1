@@ -33,7 +33,17 @@ Install-Package 'GitHub CLI' gh 'GitHub.cli'
 Install-Package 'Node' node 'OpenJS.NodeJS.LTS'
 Install-Package 'uv' uv 'astral-sh.uv'
 
-$wslStatus = if (Has-Tool wsl) { & wsl --status 2>$null } else { '' }
+$wslStatus = ''
+if (Has-Tool wsl) {
+    # wsl.exe exists but fails with an error when WSL is not installed; Windows PowerShell 5.1
+    # would stop the script on that redirected error, so any failure here means WSL2 is missing.
+    $ErrorActionPreference = 'Continue'
+    try {
+        $wslStatus = & wsl --status 2>$null
+        if ($LASTEXITCODE -ne 0) { $wslStatus = '' }
+    } catch { $wslStatus = '' }
+    finally { $ErrorActionPreference = 'Stop' }
+}
 $wslReady = $wslStatus -match 'Default Version: 2'
 if (-not $wslReady) {
     if ($Check) { Missing 'WSL2 for Docker' }

@@ -235,7 +235,10 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
                           env=env, capture_output=True, text=True)
     assert full.returncode == 0 and "forge v1.1.0" in full.stdout
     assert not log.exists()
-    (bin_dir / "wsl.cmd").write_text("@echo WSL is not ready\n@if \"%1\"==\"--install\" echo WSL install requested\n", encoding="utf-8")
+    # wsl.exe exists on a fresh laptop but fails on --status with its message on stderr.
+    (bin_dir / "wsl.cmd").write_text(
+        '@echo off\nif "%1"=="--install" (echo WSL install requested& exit /b 0)\n'
+        'echo WSL is not installed. Run wsl --install. 1>&2\nexit /b 1\n', encoding="utf-8")
     missing = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
                              env=env, capture_output=True, text=True)
     assert missing.returncode == 0 and missing.stdout.strip() == "Missing: WSL2 for Docker"
