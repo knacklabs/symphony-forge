@@ -1,6 +1,7 @@
 """Forge delivers the two-skill UI contract to workers and reviewers."""
 
 import json
+import os
 
 from test_close import env  # noqa: F401 (pytest fixture)
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge
@@ -77,6 +78,8 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     (codex_home / "config.toml").write_text(
         f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', "utf-8")
     _executable(repo.bin / "claude", "#!/bin/sh\n")
+    if os.name == "nt":
+        (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
     skills = home / ".claude" / "skills"
     (skills / "impeccable").mkdir(parents=True)
     (skills / "impeccable" / "SKILL.md").write_text("impeccable\n", "utf-8")
