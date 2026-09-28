@@ -23,6 +23,15 @@ from typing import Any
 
 from forge import repo, story, task
 
+COMMANDS = [{
+    "words": "board", "run": "board", "changes_state": False,
+    "help": "Write and open the plain-English board page",
+    "args": [(('--out',), {"metavar": "PATH", "help":
+              "write the page here instead of .git/forge/board.html"})],
+    "position": 60,
+    "listing": "| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |",
+}]
+
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
 PREFIXES = ("story/", "task/", "fix/", "forge/")  # the branches Forge starts; forge/ is migrate's
 STATE = re.compile(r"\.factory/(?:stories/(?P<key>[A-Z][A-Z0-9-]*)/(?:story|tasks/(?P<task>[A-Z0-9][A-Z0-9-]*))"
