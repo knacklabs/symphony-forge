@@ -151,10 +151,13 @@ def main() -> int:
                         reason = retry_error.message
                 if resumed is None:
                     emit(fresh=f"Codex couldn't resume its conversation: {reason}")
+        if request.get("ephemeral"):
+            settings["ephemeral"] = True
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
-        thread.set_name(request["name"])
+        if not request.get("ephemeral"):
+            thread.set_name(request["name"])
         turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
         emit(turn=turn.id)
         usage, items = None, []
