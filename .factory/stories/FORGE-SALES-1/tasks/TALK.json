@@ -1,19 +1,19 @@
 {
   "branch": "task/FORGE-SALES-1-TALK",
   "review": {
-    "commit": "c3383af29e3a6bbb052c9984b1079aaa6a629eed",
+    "commit": "4b5eaebccd555ba4943c7d9e8b93e8c2d5c3c7dd",
     "dismissals": [],
     "findings": [
       {
-        "body": "`repo.default_config(top)` runs `git fetch origin` (src/forge/repo.py:160-164). Because this new call runs whenever the cached default branch has a Dockerfile, `forge next` now fails when origin is unavailable, even if the cached branch contains everything needed to show the platform reminder. It can also refresh the branch midway through a report that has already read other state. Read `forge.toml` from the same last-fetched ref used for the Dockerfile and brief.",
+        "body": "`repo.default_config(top)` runs `git fetch origin` (src/forge/repo.py:160-164). When the cached default branch has a Dockerfile, this new call makes `forge next` fail if origin is unavailable, even though the cached branch has the files needed for the reminder. It can also advance the branch after earlier parts of the report have read it. Read `forge.toml` from the same `ref` used for the Dockerfile and brief.",
         "file": "src/forge/nextstep.py",
-        "line": 193,
+        "line": 196,
         "priority": "P2",
         "title": "Use the last-fetched branch for the demo reminder"
       }
     ],
     "status": "clean",
-    "tree": "1c277e2be881dfa4313a5cc3cd1d77478659594d6037e3bc847cddc5127919a6"
+    "tree": "9528d8adfec211484bd427a05cbc0fd33cfc612b441e23628469933b9f74bf43"
   },
   "status": "waiting for checks",
   "steps": [
@@ -27,6 +27,10 @@
     },
     {
       "at": "2026-09-28T16:22:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T17:59:17+00:00",
       "step": "review"
     }
   ]
