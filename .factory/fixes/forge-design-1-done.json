@@ -1,0 +1,16 @@
+{
+  "base": "ac786efd86c5afbbe851edf7659a2083b7d85295",
+  "branch": "fix/forge-design-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Screens and flows in client repos are built by Claude on Opus 5.5 high with impeccable, Emil and the app baseline, falling back to Codex Sol high when Claude can't run",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T15:00:53+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high is finished, and what it achieved."
+}
