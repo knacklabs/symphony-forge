@@ -1,0 +1,28 @@
+{
+  "approval": {
+    "at": "2026-09-28T10:30:42+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_015opLM1zYxgchbC6cixasb7",
+    "hash": "9e91218b66817100c56a9ec010cdebbb0486e6f4662ddc0dcbf7f65a297de846",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-PROTO-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-28T10:22:37+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T10:26:53+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T10:30:42+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in",
+  "touches": 1
+}

@@ -19,7 +19,7 @@ SPEC = (ROOT / "docs" / "specs" / "lean-forge-v1.md").read_text(encoding="utf-8"
 PAGE = (ROOT / "src" / "forge" / "standards.md").read_text(encoding="utf-8")
 CONVENTIONS_DIR = ROOT / "src" / "forge" / "templates" / "conventions"
 CONVENTIONS = sorted((ROOT / "src" / "forge" / "templates" / "conventions").glob("*.md"))
-GUIDE = (ROOT / "docs" / "guide.md").read_text(encoding="utf-8")
+COMMANDS = (ROOT / "docs" / "commands.md").read_text(encoding="utf-8")
 ADD_LATER = "add when a story's new moving parts names it"
 
 
@@ -83,17 +83,17 @@ def test_36_client_apps_simple(repo, tmp_path):
         assert built.returncode == 0, built.stderr
         assert PAGE.strip() in calls(log)[-1]["brief"], item
 
-    # The guide names every command in the command table, and nothing else.
+    # The separate command page names every command exposed by help, and nothing else.
     table: set[str] = set()
     for name in re.search(r"\{([^}]+)\}", repo.forge("--help").stdout)[1].split(","):
         subs = re.search(r"\{([^}]+)\}", repo.forge(name, "--help").stdout)
         table |= {f"{name} {sub}" for sub in subs[1].split(",")} if subs else {name}
     groups = {command.split()[0] for command in table if " " in command}
-    named_in_guide = {f"{first} {second}" if first in groups else first
-                      for first, second in re.findall(r"\bforge ([a-z][\w-]*)(?: ([a-z][\w-]*))?",
-                                                      GUIDE)}
-    assert named_in_guide == table, (f"not commands: {sorted(named_in_guide - table)}; "
-                                     f"missing: {sorted(table - named_in_guide)}")
+    named_on_page = {f"{first} {second}" if first in groups else first
+                     for first, second in re.findall(r"^\| `forge ([a-z][\w-]*)(?: ([a-z][\w-]*))?",
+                                                     COMMANDS, re.M)}
+    assert named_on_page == table, (f"not commands: {sorted(named_on_page - table)}; "
+                                    f"missing: {sorted(table - named_on_page)}")
 
 
 CARRIED_OVER_RULES = {
