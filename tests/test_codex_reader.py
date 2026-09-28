@@ -151,7 +151,10 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     (repo.bin / "claude-says.md").write_text(f"1. see {wish.resolve()}/docs/b.md\n", encoding="utf-8")
     assert repo.forge("read", "WISH").returncode == 0
     [call] = claude_calls(claude)
-    assert call["args"] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode", "plan"]
+    # The old contract ran claude with no session; FORGE-READLOOP-1 starts it with a known session
+    # id, so the next round can continue it.
+    assert call["args"][:-1] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode",
+                                 "plan", "--session-id"]
     assert Path(call["cwd"]).resolve() == wish.resolve()
     wished = (wish / "plans" / "WISH.read.md").read_text("utf-8")
     assert "reader: claude (opus)" in wished and "see /docs/b.md" in wished
