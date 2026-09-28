@@ -1,26 +1,19 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-START",
   "review": {
-    "commit": "3d946d6221592b363682912c34daa0149e4905a0",
+    "commit": "30eb90c35cac70373023bbf39bc00148a4b81508",
     "dismissals": [],
     "findings": [
       {
-        "body": "This assertion can pass even if the cold read never assigns its project: the shared call log already contains the identical metadata update from the worker rounds. The cold-read stub also reuses `thr-stub-1` (`tests/stubs/codex-app-server:22`). Consequently, removing project assignment specifically for cold reads would leave this test green. Capture the calls added by `forge read` and assert that those contain the expected update.",
-        "file": "tests/test_chatview_start.py",
-        "line": 106,
+        "body": "The branch adds `codex.attach()` and the driver's attachment request path, but no test invokes either path. The new stub accepts `thread/attachment/add`, yet every command exercised by the tests is work or read; deleting the attachment implementation would leave these tests green. Add coverage of this branch's attachment interface through the real driver and SDK, checking the recorded thread, identity and payload, no request without a recorded conversation, and non-fatal request failure. This covers START's interface without requiring ATTACH's later `forge close` integration.",
+        "file": "src/forge/codex_turn.py",
+        "line": 115,
         "priority": "P1",
-        "title": "Not done: cold-read project assignment test"
-      },
-      {
-        "body": "The only injected failure is `project/list` during a worker round. No test triggers a failing `thread/metadata/update`, and the cold-read stub always succeeds. Item 2 explicitly requires failed requests to be logged without failing either a round or a read. Add command-level cases with a unique matching project followed by an update failure, and a failing project request during `forge read`; assert successful completion and a diagnostic in that invocation's work log.",
-        "file": "tests/test_chatview_start.py",
-        "line": 88,
-        "priority": "P1",
-        "title": "Not done: project request failure tests"
+        "title": "Not done: attachment request tests"
       }
     ],
     "status": "blocked",
-    "tree": "1af3550582ffbed7d4b102b706489f4101ffd81f944cefda14723c8ba96226ab"
+    "tree": "16673ab6ff5a7953835924446b4aed8d97d7073ea9c4ef69b1ba55bb0881f900"
   },
   "status": "fixing",
   "steps": [
@@ -30,6 +23,10 @@
     },
     {
       "at": "2026-09-28T06:20:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:07:44+00:00",
       "step": "review"
     }
   ]
