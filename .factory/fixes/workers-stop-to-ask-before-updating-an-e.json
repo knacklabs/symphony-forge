@@ -4,26 +4,26 @@
   "done_when": "The worker brief lets a worker update any existing test its intended change breaks, outside its scope, naming each changed test and why in its handoff; the review brief no longer reports such test files as outside scope but reports a test weakened to hide a real defect as a P1; tests through forge work and forge close show both",
   "kind": "fix",
   "review": {
-    "commit": "11609ec484bec3ef05b91746a9028884e5f1f3c6",
+    "commit": "4679b564bc67598d0e62f9a2fbc8196a0d9746b9",
     "dismissals": [],
     "findings": [
       {
-        "body": "The extension allowlist still excludes existing tests such as `tests/check_api.mjs`, `tests/check_api.cjs`, or `tests/test_api.sh`. None matches the filename patterns above, so an intended change updating these tests still lists them outside scope. The worker already recognizes these test-folder paths through `TEST_PATHS` in `src/forge/worker.py:23\u201325`. This leaves the acceptance criterion covering any existing test incomplete. Extend recognition and cover these cases through `forge close`.",
-        "file": "src/forge/review.py",
-        "line": 224,
+        "body": "The task-brief assertions check the permission and handoff phrases separately, but never check that an existing broken test may be changed outside Scope. Replacing the task-specific instruction with \u201cYou may also update an existing test your intended change breaks, but only inside Scope; name each such test and why it changed in your handoff\u201d leaves both assertions passing while contradicting the required exception. Assert the permission, outside-Scope exception, and handoff requirement together in the task brief returned by `forge work`.",
+        "file": "tests/test_fix_workers_stop_to_ask_before_updating_an_e.py",
+        "line": 38,
         "priority": "P1",
-        "title": "Not done: Existing tests with other extensions still appear outside scope"
+        "title": "Not done: forge work task-brief test enforces outside-Scope permission"
       },
       {
-        "body": "The fix-brief assertions check isolated words without checking that permission is granted. Changing the fix-specific instruction to `You must not update an existing test your intended change breaks` while retaining its scope and handoff text leaves every assertion passing. The stronger assertions below inspect only the separate task brief. Assert the permission, outside-scope exception, and handoff requirement together in the fix prompt returned through `forge work`, so reversing that permission fails this test.",
-        "file": "tests/test_fix_workers_stop_to_ask_before_updating_an_e.py",
-        "line": 27,
-        "priority": "P1",
-        "title": "Not done: forge work test enforces permission in the fix brief"
+        "body": "The new instruction asks the reviewer to check the worker's handoff, but `forge close` passes only the generated prompt and a fresh Git clone to review (`src/forge/review.py:145\u2013182, 247\u2013260`). Claude's output is kept in an uncommitted `.git/forge/` work log (`src/forge/repo.py:100\u2013110`; `src/forge/worker.py:366\u2013383`), and the Codex path records only a pending question from its final text (`src/forge/worker.py:165\u2013168`). The reviewer therefore cannot verify whether each changed test was named and explained. Supply the handoff to review or remove this unverifiable check.",
+        "file": "src/forge/templates/review.md",
+        "line": 16,
+        "priority": "P2",
+        "title": "Reviewer cannot inspect the worker handoff it is told to verify"
       }
     ],
     "status": "blocked",
-    "tree": "c4153b81b91f2b165941d8de3b2dd9b98d23f2262ffc6fb83c494212fee99c1c"
+    "tree": "f1186f517a4e6ff68ee663abc6ff4d73598ceb5d04c30d7eda8c5752efc7616e"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-28T12:05:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:09:51+00:00",
       "step": "review"
     }
   ],
