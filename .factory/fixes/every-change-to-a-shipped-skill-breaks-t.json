@@ -3,7 +3,7 @@
   "branch": "fix/every-change-to-a-shipped-skill-breaks-t",
   "done_when": "tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes, so a skill edit needs no test change and two skill edits never conflict in that test",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T18:45:19+00:00",
