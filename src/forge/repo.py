@@ -126,12 +126,13 @@ def record_timing(top: Path, item: str, step: str, start: str, clock: float,
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str, "merge": str,
-        "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "codex", "test": "", "signoff": "", "merge": "human",
-            "checks": [], "interfaces": [], "models": {}}
-CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
-           "merge": ("agent", "human")}
+KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "signoff": str,
+        "merge": str, "checks": list, "interfaces": list, "models": dict}
+# A client repo without a stage counts as live: prototype rules never reach an app by default.
+DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "signoff": "",
+            "merge": "human", "checks": [], "interfaces": [], "models": {}}
+CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
+           "workers": ("claude", "codex"), "merge": ("agent", "human")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -170,19 +171,32 @@ def default_config(top: Path) -> dict[str, Any]:
 def merge_setting(top: Path) -> str:
     """Use agent merges for client prototypes until the fetched default branch signs off."""
     cfg = default_config(top)
-    if cfg["repo"] != "client":
-        return cfg["merge"]
-    ref = f"origin/{default_branch(top)}"
-    names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+    return "agent" if is_prototype(top, cfg, (f"origin/{default_branch(top)}",)) else cfg["merge"]
+
+
+def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, ...] = ()) -> bool:
+    """Prototype rules apply only to a client repo whose stage is prototype and whose sign-off
+    record isn't accepted: exactly the record forge.toml's signoff pins, or, with none pinned, a
+    decision whose slug ends in client-signoff. The record is looked for in these refs, or with none
+    given, in this checkout and on the default branch."""
+    cfg = cfg if cfg is not None else config(top)
+    if cfg["repo"] != "client" or cfg["stage"] != "prototype":
+        return False
+    from forge import story
+
     pinned = cfg["signoff"]
-    for name in names:
-        if not (name == pinned if pinned else name.endswith("client-signoff.md")):
-            continue
-        record = git("show", f"{ref}:{name}", cwd=top)
-        if record.startswith("---") and re.search(
-                r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-            return cfg["merge"]
-    return "agent"
+
+    def wanted(name: str) -> bool:
+        return name == pinned if pinned else name.endswith("client-signoff.md")
+
+    texts = [] if refs else [path.read_text(encoding="utf-8")
+                             for path in top.glob("docs/decisions/*.md")
+                             if wanted(path.relative_to(top).as_posix())]
+    for ref in refs or (story.landed_ref(top),):
+        names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+        texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
+    return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
+                   for text in texts if text.startswith("---"))
 
 
 def _config_text(text: str) -> dict[str, Any]:
