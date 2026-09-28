@@ -3,8 +3,10 @@
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
 
+import conftest
 import pytest
 
 STORY = "FORGE-SPLIT-1"
@@ -70,8 +72,8 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / rel, target)
     launcher = repo.bin / "forge"
-    launcher.write_text(launcher.read_text(encoding="utf-8").replace(
-        str(source.parent), str(package.parent)), encoding="utf-8")
+    launcher.write_text(conftest.FORGE_SHIM.format(python=sys.executable,
+                                                  src=str(package.parent)), encoding="utf-8")
     before = {rel: file.read_bytes() for rel, file in files.items()}
     (package / "new_ship.py").write_text(
         'def ships(top, cfg):\n    return {"docs/new-owner.md": "Shipped by its owner.\\n"}\n',
