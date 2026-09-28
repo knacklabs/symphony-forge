@@ -2,7 +2,13 @@
   "branch": "task/FORGE-AHA-1-TEMPLATES",
   "review": {
     "commit": "a426db0b9234441c877a48a047fd92e148e843aa",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/templates/conventions/frontend.md:61 Done-when 3 asks that production never shows the toolbar; the run-time check never loads its chunk outside APP_ENV=demo, and one Dockerfile builds one image for both, so a separate production build adds a moving part the item doesn't need",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The convention explicitly permits Agentation's lazy chunk in the built assets. The scaffold Dockerfile builds the frontend once without `APP_ENV` (`src/forge/templates/skeleton/Dockerfile:6`), so the production build can contain the toolbar code even though the runtime check prevents it from loading. The Done-when item requires Agentation to be absent from production builds. Specify separate demo and production builds with the toolbar excluded from the latter.",
@@ -33,10 +39,10 @@
         "title": "Later: DEMO must put the pointing instructions in the skill"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "db0396deaf0c22ead70f2ac3a62c57f91665e3104d66252f4d06163b6dfc0a82"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T14:18:51+00:00",
