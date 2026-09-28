@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-ONECHAT-1-DOCS",
-  "status": "working",
+  "review": {
+    "commit": "8f75a777213b7b21cdadfaf1b9947f1a6d4af5fe",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "13195d663b58ecbc44ec35940dee26769d24645b1ace4f1df54093201cdbac46"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T08:24:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:47:08+00:00",
+      "step": "review"
     }
   ]
 }
