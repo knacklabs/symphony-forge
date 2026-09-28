@@ -140,14 +140,23 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
-    if (top / "forge.toml").is_file() and repo.config(top)["repo"] == "client" \
-            and not approval.signed_off(top):
-        open_topics = open_must_answer_topics(top)
-        if open_topics:
-            notice = ["Open before sign-off in docs/product/BRIEF.md:",
-                      *(f"- {topic}" for topic in open_topics),
-                      "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
-            lines = notice + lines if len(trees) > 1 else lines + notice
+    if (top / "forge.toml").is_file():
+        try:
+            current_repo = repo.config(top)["repo"]
+        except repo.Refused as refusal:
+            if top not in trees.values():
+                raise
+            diagnostic = f"{top}: {str(refusal).splitlines()[0]}"
+            if diagnostic not in lines:
+                lines.append(diagnostic)
+            current_repo = None
+        if current_repo == "client" and not approval.signed_off(top):
+            open_topics = open_must_answer_topics(top)
+            if open_topics:
+                notice = ["Open before sign-off in docs/product/BRIEF.md:",
+                          *(f"- {topic}" for topic in open_topics),
+                          "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
+                lines = notice + lines if len(trees) > 1 else lines + notice
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top))
     return lines, states

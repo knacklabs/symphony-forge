@@ -24,7 +24,7 @@ def test_1_next_lists_other_items_and_names_the_unreadable_worktree(repo, gh):
     gh.respond("pr", "list", "--state", "open", stdout=json.dumps([
         {"headRefName": "fix/broken-settings", "url": "https://example.test/pr/1"}]))
 
-    result = repo.forge("next")
+    result = repo.forge("next", cwd=broken)
 
     assert result.returncode == 0, result.stderr
     assert (f"{broken}: forge.toml's [models] table is not usable: unknown is not a kind of work"
