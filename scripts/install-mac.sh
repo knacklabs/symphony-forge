@@ -30,8 +30,13 @@ install_brew() {
     echo 'Curl is missing. Install curl, then run this script again.' >&2
     exit 1
   fi
+  echo 'Homebrew needs your Mac administrator password. Enter it in this terminal.'
+  if ! sudo -v; then
+    echo 'Administrator access failed. Ask your Mac administrator for access, then run this script again.' >&2
+    exit 1
+  fi
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+  export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 }
 brew_tool() {
   local label=$1 command=$2 package=$3
@@ -60,7 +65,8 @@ if ! has forge || [[ $(forge --version 2>/dev/null) != "forge v$FORGE_VERSION" ]
   if [[ $check == --check ]]; then missing Forge; else
     step Forge
     uv tool install --force "symphony-forge==$FORGE_VERSION"
-    export PATH="$HOME/.local/bin:$PATH"
+    uv tool update-shell
+    export PATH="$(uv tool dir --bin):$PATH"
   fi
 elif [[ $check != --check ]]; then echo 'Forge is ready.'; fi
 
@@ -87,5 +93,6 @@ fi
 if [[ $check != --check ]]; then
   echo 'Setup finished. Forge version:'
   forge --version
+  echo 'Open a new terminal before using Forge so it can find the command.'
   echo 'Next: sign in to Claude Code or Codex, then open your new repo.'
 fi

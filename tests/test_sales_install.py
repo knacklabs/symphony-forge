@@ -47,7 +47,9 @@ def _mac_check_and_install(tmp_path):
 
     installed = tmp_path / "installed"
     installed.mkdir()
-    _stub(installed, "uv", f'echo "uv $*" >> "{log}"\n/bin/cp "{installed / "forge"}" "{bin_dir / "forge"}"')
+    _stub(installed, "uv", f'echo "uv $*" >> "{log}"\n'
+          f'case "$*" in "tool dir --bin") echo "{bin_dir}";; '
+          f'*"tool install"*) /bin/cp "{installed / "forge"}" "{bin_dir / "forge"}";; esac')
     _stub(installed, "forge", 'echo "forge v1.1.0"')
     _stub(bin_dir, "brew", f'echo "brew $*" >> "{log}"\n'
           f'case "$*" in *"install uv"*) /bin/cp "{installed / "uv"}" "{bin_dir / "uv"}";; esac')
@@ -58,15 +60,55 @@ def _mac_check_and_install(tmp_path):
                           capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
     calls = log.read_text().splitlines()
-    assert sum("install gh" in call for call in calls) == 1
-    assert sum("install --cask docker" in call for call in calls) == 1
-    assert sum("install uv" in call for call in calls) == 1
-    assert sum("@anthropic-ai/claude-code" in call for call in calls) == 1
-    assert sum("@openai/codex" in call for call in calls) == 1
-    assert sum("symphony-forge==1.1.0" in call for call in calls) == 1
-    assert sum("playwright install" in call for call in calls) == 1
+    assert calls == ["brew install gh", "brew install --cask docker", "brew install uv",
+                     "uv tool install --force symphony-forge==1.1.0", "uv tool update-shell",
+                     "uv tool dir --bin", "npm install -g @anthropic-ai/claude-code",
+                     "npm install -g @openai/codex",
+                     "npx --yes playwright install chromium firefox webkit"]
     assert "forge v1.1.0" in full.stdout
     assert "sign in" in full.stdout.lower()
+    assert "new terminal" in full.stdout.lower()
+
+
+def test_2_mac_homebrew_authorization_and_ready_tools(tmp_path):
+    if os.name == "nt":
+        return
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "calls"
+    env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path)}
+    script = ROOT / "scripts/install-mac.sh"
+    _stub(bin_dir, "curl", f'echo "curl $*" >> "{log}"\necho "exit 23"')
+    _stub(tmp_path, "brew", f'echo "brew $*" >> "{log}"')
+    _stub(bin_dir, "sudo", f'echo "sudo $*" >> "{log}"\nexit 1')
+    failed = subprocess.run(["/bin/bash"], input=script.read_text(), env=env,
+                            capture_output=True, text=True)
+    assert failed.returncode != 0
+    assert "administrator" in (failed.stdout + failed.stderr).lower()
+    assert log.read_text().splitlines() == ["sudo -v"]
+
+    _stub(bin_dir, "sudo", f'echo "sudo $*" >> "{log}"')
+    _stub(bin_dir, "curl", f'echo "curl $*" >> "{log}"\n'
+          f'echo "/bin/cp {tmp_path / "brew"} {bin_dir / "brew"}"')
+    _stub(bin_dir, "git", "exit 0")
+    _stub(bin_dir, "gh", "exit 0")
+    _stub(bin_dir, "node", "exit 0")
+    _stub(bin_dir, "docker", "exit 0")
+    _stub(bin_dir, "uv", "exit 0")
+    _stub(bin_dir, "claude", "exit 0")
+    _stub(bin_dir, "codex", "exit 0")
+    _stub(bin_dir, "forge", 'echo "forge v1.1.0"')
+    for kind in ("chromium", "firefox", "webkit"):
+        (tmp_path / "Library/Caches/ms-playwright" / f"{kind}-1").mkdir(parents=True)
+    check = subprocess.run(["/bin/bash", str(script), "--check"], env=env,
+                           capture_output=True, text=True)
+    assert check.returncode == 0 and check.stdout == "Missing: Homebrew\n"
+    full = subprocess.run(["/bin/bash"], input=script.read_text(), env=env,
+                          capture_output=True, text=True)
+    assert full.returncode == 0, full.stderr
+    assert log.read_text().splitlines() == ["sudo -v", "sudo -v",
+                                           "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"]
+    assert "forge v1.1.0" in full.stdout
 
 
 def _windows_check_and_install(tmp_path):
@@ -78,37 +120,96 @@ def _windows_check_and_install(tmp_path):
     (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
     powershell = shutil.which("powershell")
     assert powershell
-    env = os.environ | {"PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
-                        "LOCALAPPDATA": str(tmp_path)}
+    system_root = Path(os.environ["SystemRoot"])
+    system_path = os.pathsep.join(str(system_root / part) for part in ("System32", "", "System32/WindowsPowerShell/v1.0"))
+    env = os.environ | {"PATH": str(bin_dir) + os.pathsep + system_path,
+                        "LOCALAPPDATA": str(tmp_path), "UV_TOOL_BIN_DIR": str(tmp_path / "tools")}
     script = ROOT / "scripts/install-windows.ps1"
     check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
                            env=env, capture_output=True, text=True)
     assert check.returncode == 0, check.stderr
-    assert "GitHub CLI" in check.stdout and "Forge" in check.stdout
+    assert set(check.stdout.splitlines()) == {
+        "Missing: GitHub CLI", "Missing: Docker", "Missing: uv", "Missing: Forge",
+        "Missing: Claude Code", "Missing: Codex", "Missing: Playwright browsers"}
     assert all(line.startswith("Missing: ") for line in check.stdout.splitlines())
     assert not log.exists()
     installed = tmp_path / "installed"
     installed.mkdir()
+    tool_bin = tmp_path / "tools"
+    tool_bin.mkdir()
     (installed / "uv.cmd").write_text(
-        f'@echo off\necho uv %* >> "{log}"\ncopy /Y "{installed / "forge.cmd"}" "{bin_dir / "forge.cmd"}" >nul\n',
+        f'@echo off\necho uv %* >> "{log}"\n'
+        f'if "%1 %2 %3"=="tool dir --bin" echo {tool_bin}\n'
+        f'if "%1 %2"=="tool install" copy /Y "{installed / "forge.cmd"}" "{tool_bin / "forge.cmd"}" >nul\n',
         encoding="utf-8")
     (installed / "forge.cmd").write_text("@echo forge v1.1.0\n", encoding="utf-8")
     (bin_dir / "winget.cmd").write_text(
         f'@echo off\necho winget %* >> "{log}"\n'
+        f'echo %* | findstr /C:"GitHub.cli" >nul && copy /Y "{installed / "gh.cmd"}" "{bin_dir / "gh.cmd"}" >nul\n'
         f'echo %* | findstr /C:"astral-sh.uv" >nul && copy /Y "{installed / "uv.cmd"}" "{bin_dir / "uv.cmd"}" >nul\n'
+        f'echo %* | findstr /C:"Docker.DockerDesktop" >nul && copy /Y "{installed / "docker.cmd"}" "{bin_dir / "docker.cmd"}" >nul\n'
         'exit /b 0\n',
         encoding="utf-8")
+    for name in ("gh", "docker"):
+        (installed / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("npm", "npx"):
         (bin_dir / f"{name}.cmd").write_text(
             f'@echo off\necho {name} %* >> "{log}"\n', encoding="utf-8")
+        (bin_dir / f"{name}.ps1").write_text("throw 'Use the .cmd installer'\n", encoding="utf-8")
     full = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
                           env=env, capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
     calls = log.read_text().splitlines()
-    assert sum("GitHub.cli" in call for call in calls) == 1
-    assert sum("Docker.DockerDesktop" in call for call in calls) == 1
-    assert sum("symphony-forge==1.1.0" in call for call in calls) == 1
+    assert calls == [
+        "winget install --id GitHub.cli --exact --source winget --accept-package-agreements --accept-source-agreements",
+        "winget install --id astral-sh.uv --exact --source winget --accept-package-agreements --accept-source-agreements",
+        "winget install --id Docker.DockerDesktop --exact --source winget --accept-package-agreements --accept-source-agreements",
+        "uv tool install --force symphony-forge==1.1.0", "uv tool update-shell", "uv tool dir --bin",
+        "npm install -g @anthropic-ai/claude-code", "npm install -g @openai/codex",
+        "npx --yes playwright install chromium firefox webkit"]
+    assert "forge v1.1.0" in full.stdout
     assert "sign in" in full.stdout.lower()
+    assert "new powershell window" in full.stdout.lower()
+
+
+def test_2_windows_wsl2_restart_and_all_present(tmp_path):
+    if os.name != "nt":
+        return
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "calls"
+    system_root = Path(os.environ["SystemRoot"])
+    env = os.environ | {"PATH": str(bin_dir) + os.pathsep + str(system_root / "System32"),
+                        "LOCALAPPDATA": str(tmp_path)}
+    for name in ("git", "gh", "node", "docker", "uv", "claude", "codex"):
+        (bin_dir / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
+    for name in ("winget", "npm", "npx"):
+        (bin_dir / f"{name}.cmd").write_text(
+            f'@echo off\necho {name} %* >> "{log}"\n', encoding="utf-8")
+    (bin_dir / "forge.cmd").write_text("@echo forge v1.1.0\n", encoding="utf-8")
+    for kind in ("chromium", "firefox", "webkit"):
+        (tmp_path / "ms-playwright" / f"{kind}-1").mkdir(parents=True)
+    (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
+    script = ROOT / "scripts/install-windows.ps1"
+    powershell = shutil.which("powershell")
+    check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
+                           env=env, capture_output=True, text=True)
+    assert check.returncode == 0 and check.stdout.strip() == ""
+    full = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
+                          env=env, capture_output=True, text=True)
+    assert full.returncode == 0 and "forge v1.1.0" in full.stdout
+    assert not log.exists()
+    (bin_dir / "wsl.cmd").write_text("@echo WSL is not ready\n@if \"%1\"==\"--install\" echo WSL install requested\n", encoding="utf-8")
+    missing = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
+                             env=env, capture_output=True, text=True)
+    assert missing.returncode == 0 and missing.stdout.strip() == "Missing: WSL2 for Docker"
+    setup = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
+                           env=env, capture_output=True, text=True)
+    assert "restart" in setup.stdout.lower()
+    if setup.returncode == 0:
+        assert "WSL install requested" in setup.stdout
+    else:
+        assert "administrator" in setup.stdout.lower()
 
 
 def test_2_one_install_script_per_laptop_checks_and_installs(tmp_path):
