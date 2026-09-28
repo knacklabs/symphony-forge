@@ -54,7 +54,7 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round |
 | `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix |
 | `forge close <item>` | Closes a task or fix by the close rule |
-| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; unavailable until the merge gate is built |
+| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |
@@ -133,8 +133,6 @@ code proves the finding wrong, dismiss it with
 
 ## Merging a ready item
 
-The merge command is unavailable until the merge gate is built.
-
 The human merges by default: omitting `merge` from `forge.toml` is the same as
 `merge = "human"`. Ask your agent to set `merge = "agent"` in a fix if you want it to merge ready
 pull requests. Only the setting on the default branch counts. A change to the setting on an item
@@ -160,7 +158,7 @@ makes the change in a fix like any other:
 2. It changes `version` in `forge.toml` to `vX.Y.Z`.
 3. It installs that release with the `uv tool install` line above, using `@vX.Y.Z`.
 4. `forge sync` rewrites the generated files for the new version.
-5. `forge close <fix>`, and you merge.
+5. `forge close <fix>`, then it is merged as described in Merging a ready item.
 
 ## Releasing Forge
 

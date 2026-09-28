@@ -70,6 +70,7 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 - **Touch only what the task needs.** Match the existing style, don't tidy neighbouring code, and
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.
+- Joining lines or removing blank lines never counts as a reduction.
 - **Turn the task into checks first.** A Done-when item becomes a test at the boundary the user
   touches; a bug becomes a test that fails before the fix. Then make them pass.
 - **Compatibility is a requirement, not a reflex.** Unless the story names live users, API
@@ -208,6 +209,7 @@ Open one only when your task touches its concern; the rules on this page apply e
 
 ## Tests
 
+- Documentation-only changes need no new behaviour test; check claims, commands and links.
 - Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
   for client apps, the running API with a real database and user flows in a browser through
   Playwright. Each bug fix adds a test that fails without the fix. Fake only third-party services
