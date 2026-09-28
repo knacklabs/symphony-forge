@@ -1,40 +1,33 @@
 {
   "branch": "task/FORGE-PROTO-1-SIGNOFF",
   "review": {
-    "commit": "f60a3f30c8aaccc923154a2bf9ec280758690715",
+    "commit": "bc58976ca14ef5e6d0a24f6c01db9e7156e39315",
     "dismissals": [],
     "findings": [
       {
-        "body": "The sign-off path checks only whether Autoreview returned findings or a failure reason. `_attempt` records `model:`, `thinking:`, and model-fallback progress lines at review.py:317-323, but `run` never checks the recorded values. A clean report after a fallback can therefore accept sign-off and record the commit even though GPT-6 Sol at xhigh did not run. Refuse unless the reported model and effort positively match the required values.",
+        "body": "The strict path rejects only exit code 2 or the literal `review_status: incomplete`. A zero-exit report with `findings: []` and a missing or unknown review status passes this check; with matching model and effort telemetry, `decision accept` then records the reviewed commit. Require an affirmative finished status before accepting sign-off.",
         "file": "src/forge/review.py",
-        "line": 275,
+        "line": 341,
         "priority": "P1",
         "title": "Not done: A strict review guards sign-off"
       },
       {
-        "body": "An explicitly incomplete Autoreview report can also authorize sign-off. At review.py:335-337, `_attempt` suppresses the incomplete-review reason whenever `scope_rejected_findings` is nonempty. If those findings are P2 or P3, this sign-off check finds no blocking issue and accepts despite `review_status: incomplete` (or exit code 2). The strict gate must require a completed review.",
-        "file": "src/forge/review.py",
-        "line": 275,
-        "priority": "P1",
-        "title": "Not done: A strict review guards sign-off"
-      },
-      {
-        "body": "The acceptance test's Autoreview stub emits no model or effort telemetry, yet the test expects acceptance and asserts only the requested `--model` and `--thinking` arguments. It would still pass if Autoreview ran a fallback model or a lower effort. Add a command-level refusal case that emits fallback or mismatched selection and verifies that the decision remains proposed.",
+        "body": "The command tests refuse `review_status: incomplete` and exit code 2, but never try a zero-exit report with a missing or unknown status. That case currently accepts, so these tests do not guard the strict completion requirement. The successful fixtures also use `complete`, while the existing Autoreview fixture in `tests/test_close.py:67-72` uses `scoped-clean`; test an actual successful status as well.",
         "file": "tests/test_proto_signoff.py",
-        "line": 116,
+        "line": 138,
         "priority": "P1",
-        "title": "Not done: no-fallback sign-off test"
+        "title": "Not done: completed-review sign-off test"
       },
       {
-        "body": "The product path list comes from the current index. After `git rm --cached app.py` followed by an edit, `app.py` remains in the checkout but disappears from this list. The clone reviews HEAD's older `app.py`, while the path-limited status check at review.py:284-285 misses its staged removal and untracked edited copy. Sign-off can then accept a checkout that differs from the recorded reviewed commit. Compare all product changes against HEAD, including paths removed from the index.",
-        "file": "src/forge/review.py",
-        "line": 236,
-        "priority": "P2",
-        "title": "Check index-removed product files against the reviewed commit"
+        "body": "This prompt assertion passes from the quoted answers alone. `signoff()` substitutes an empty string when it cannot extract the topic table, yet this test would still pass because it never checks a table header or row unique to that table. Assert the table content in the prompt sent by `forge decision accept`.",
+        "file": "tests/test_proto_signoff.py",
+        "line": 175,
+        "priority": "P1",
+        "title": "Not done: topic-table prompt test"
       }
     ],
     "status": "blocked",
-    "tree": "6a1ddcf39d2c08a3d455d145a3d9203ab0706a8379c2b2463a0aed9e9989478d"
+    "tree": "67ab86464584a82c1d1f533e18c25a10be1534ed6b62464573095eb6e8b76675"
   },
   "status": "fixing",
   "steps": [
@@ -52,6 +45,10 @@
     },
     {
       "at": "2026-09-28T13:46:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:03:37+00:00",
       "step": "review"
     }
   ]
