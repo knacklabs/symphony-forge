@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
 with STUB_CLAUDE_EXIT (0 by default). Like claude, it keeps each --session-id it starts, for its
-folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there, or
-any with the message STUB_CLAUDE_RESUME_ERROR when that is set."""
+folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there."""
 import io
 import json
 import os
@@ -20,9 +19,6 @@ store = here / "claude-sessions.json"
 sessions = json.loads(store.read_text(encoding="utf-8")) if store.exists() else {}
 if "--resume" in args:
     session = args[args.index("--resume") + 1]
-    if os.environ.get("STUB_CLAUDE_RESUME_ERROR"):
-        print(os.environ["STUB_CLAUDE_RESUME_ERROR"], file=sys.stderr)
-        sys.exit(1)
     if sessions.get(session) != os.getcwd():
         print(f"No conversation found with session ID: {session}", file=sys.stderr)
         sys.exit(1)
