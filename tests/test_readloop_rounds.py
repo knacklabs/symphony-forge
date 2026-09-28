@@ -291,7 +291,8 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     brief.parent.mkdir(parents=True)
     brief.write_text("# Brief\n\n## Answers\n\n- Hosting: the client's own servers\n", encoding="utf-8")
 
-    reader.ok("3. Disputed keep 1: shoppers without an account lose baskets too.\n")
+    # The reader restarts its numbering at 1; Forge numbers it after round 1's findings.
+    reader.ok("1. Disputed keep 1: shoppers without an account lose baskets too.\n")
     assert reader.continued()
     prompt = reader.prompt()
     flat = _flat(prompt)
@@ -355,7 +356,10 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
     # A failed round records nothing and drops its conversation, so the retry starts fresh.
     reader.fail(True)
+    calls = reader.calls()
     failed = reader.read()
+    # Only a conversation the app no longer has starts fresh in the same run; this failure doesn't.
+    assert reader.calls() == calls + 1
     problem = ("Codex reported the turn failed." if app == "codex" else "stub claude: the model gave up")
     assert (failed.returncode, failed.stderr) == (1, f"The cold read of plans/SHOP.md failed: {problem}\n"
                                                      "Next: forge read SHOP\n")
@@ -381,7 +385,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.touch(None)
     (reader.shop / "scratch.txt").unlink()
-    fresh(no_record, "3. Nothing saves offline.\n")
+    fresh(no_record, "1. Nothing saves offline.\n")
+    assert "## Round 3\n\n3. Nothing saves offline.\n" in reader.text()
     reader.dispose("Nothing saves offline.", "cut")
 
     # The app lost the conversation.

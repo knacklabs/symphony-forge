@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -264,6 +265,10 @@ def read(args: Any) -> int:
     if not passed and not FINDING.search(said):
         # ponytail: unstructured output is one finding, so it still needs a disposition
         said = f"{max(blocks, default=0) + 1}. {said}"
+    if not passed:
+        # Findings number on from earlier rounds', whatever numbers the reader used.
+        numbers = itertools.count(max(blocks, default=0) + 1)
+        said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}", said)
     model = repo.models(config, "grill", reader)["model"]
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
@@ -582,7 +587,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     command = ["claude", "-p", *models, "--permission-mode", "plan"]
     if resume:
         done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
-        if not done.returncode:
+        # As for Claude workers: only a session Claude doesn't have starts fresh in this run.
+        if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why, prompt = f"Claude couldn't continue session {resume}", fresh_prompt or prompt
     if why:
