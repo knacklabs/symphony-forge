@@ -256,16 +256,17 @@ def decision_accept(args: argparse.Namespace) -> None:
         from forge import nextstep, review
 
         next_step = f'forge decision accept {args.slug} --by "{by}"'
+        replied = fields.get("approved_via") or fields.get("approved_on")  # none: review only
         invalid = [name for name, valid in {
             "customer": re.fullmatch(r"\S[^,]*,\s*\S.*", fields.get("customer", "")),
-            "approved_via": fields.get("approved_via", "").lower() in ("email", "call"),
+            "approved_via": not replied or fields.get("approved_via", "").lower() in ("email", "call"),
             "demo": re.fullmatch(r"https?://[^\s/]+(?:/\S*)?", fields.get("demo", "")),
         }.items() if not valid]
         if invalid:
             repo.refuse((f"{rel} needs valid {', '.join(invalid)} for customer sign-off.",
                          f"correct {rel}, then {next_step}"))
         try:
-            date.fromisoformat(fields.get("approved_on", ""))
+            replied and date.fromisoformat(fields.get("approved_on", ""))
         except ValueError:
             repo.refuse((f"{rel} needs a real approved_on date.",
                          f"correct {rel}, then {next_step}"))
@@ -287,6 +288,9 @@ def decision_accept(args: argparse.Namespace) -> None:
             repo.refuse((f"{rel}'s customer must match the Sign-off person answer.",
                          f"correct {rel}, then {next_step}"))
         text = _set(text, reviewed_commit=review.signoff(top, quote))
+        if not replied:  # so the customer is only asked to approve a reviewed version
+            return print("The sign-off review passed; the sign-off email can go out. Record the "
+                         f"customer's reply in approved_via and approved_on, then {next_step}")
     changed = [rel]
     old = fields.get("supersedes")
     if old:

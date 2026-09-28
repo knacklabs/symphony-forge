@@ -48,8 +48,11 @@ Build and demo the prototype through `forge fix start`, `forge work` and `forge 
 fix started before sign-off can exceed the usual fix size and change an interface; it still gets
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows which required answers are still open. Resolve those, then have the whole
-prototype and answers strictly reviewed. The customer's named person approves the demo and the
-quoted answers; record that with `forge decision new client-signoff` and `forge decision accept`.
+prototype and answers strictly reviewed before the customer is asked: write the record with
+`forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
+`forge decision accept`, which runs the review and says whether the sign-off email can go out.
+The customer's named person approves the demo and the quoted answers; fill in their reply and run
+`forge decision accept` again to record it.
 
 Only after accepted client sign-off, add confirmed specs to the roadmap with `forge roadmap add`
 and create stories with `forge story new`. This includes stories promoted from fixes. In a client
