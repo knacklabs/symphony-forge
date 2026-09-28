@@ -1,0 +1,24 @@
+{
+  "base": "d5e8736c6dde2dc96ba6c70da344511b46329ff4",
+  "branch": "task/FORGE-PROTO-1-SPEC",
+  "done_when": "docs/specs/prototype-signoff.md is confirmed by the owner and on the roadmap",
+  "review": {
+    "commit": "044e65ec00de45975c9f9f0d5aa90b2e19654a27",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "5f59135adfa4276709a0b79886440623901d3ff78e8c2cc18f3aeeda5d9e8c13"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T10:13:57+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T10:32:38+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in"
+}
