@@ -73,8 +73,6 @@ TABLE = [
     ("roadmap add", "records:roadmap_add", True, "Add roadmap items from a confirmed spec",
      [_arg("spec")]),
     # Hooks get any extra arguments (git's pre-push remote, pr-check's flags) as args.args.
-    ("hook context", "nextstep:context_hook", False,
-     "Session start: print forge next and the story state", []),
     ("hook approval", "approval:hook", True,
      "After a plan or question tool: record approvals and count human touches", []),
     ("hook deny", "deny:hook", False,
@@ -92,7 +90,6 @@ GROUPS = {
     "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
     "decision": "Write and accept decisions",
     "roadmap": "Add roadmap items",
-    "hook": "Internal: the one entry point that git hooks, host hooks and CI call",
 }
 
 
@@ -127,8 +124,13 @@ def _parser() -> _Parser:
                     declarations.append((command["position"], command["words"],
                                          f"{info.name}:{command['run']}", command["changes_state"],
                                          command["help"], command["args"]))
-    declarations.extend((position * 10, *row) for position, row in
-                        enumerate(TABLE, start=7))
+    declared_positions = {row[0] for row in declarations}
+    position = 10
+    for row in TABLE:
+        while position in declared_positions:
+            position += 10
+        declarations.append((position, *row))
+        position += 10
     for _, words, target, changes, text, arguments in sorted(declarations):
         name, _, sub = words.partition(" ")
         if sub and name not in groups:

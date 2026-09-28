@@ -16,12 +16,24 @@ from typing import Any
 
 from forge import approval, board, records, repo, review, story
 
-COMMANDS = [{
-    "words": "next", "run": "next_step", "changes_state": False,
-    "help": "Say where things stand and give the exact next command",
-    "args": [], "position": 50,
-    "listing": "| `forge next` | Says where things stand and gives the exact next command |",
-}]
+COMMANDS = [
+    {
+        "words": "next", "run": "next_step", "changes_state": False,
+        "help": "Say where things stand and give the exact next command",
+        "args": [], "position": 50,
+        "listing": "| `forge next` | Says where things stand and gives the exact next command |",
+    },
+    {
+        "words": "hook context", "run": "context_hook", "changes_state": False,
+        "help": "Session start: print forge next and the story state",
+        "args": [], "position": 240,
+        "listing": "| `forge hook context` | Session start: prints `forge next` and the story's state |",
+    },
+]
+
+GROUP_HELP = {
+    "hook": "Internal: the one entry point that git hooks, host hooks and CI call",
+}
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {

@@ -1,6 +1,7 @@
 """FORGE-SPLIT-1 command declarations at the installed command boundary."""
 from __future__ import annotations
 
+import ast
 import shutil
 import sys
 from pathlib import Path
@@ -414,6 +415,14 @@ def test_2_commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, mon
         assert (result.returncode, result.stdout, result.stderr) == (0, expected, ""), words
 
     package = _copy_forge(repo, tmp_path)
+    cli = package / "cli.py"
+    tree = ast.parse(cli.read_text(encoding="utf-8"))
+    table = next(node.value for node in tree.body if isinstance(node, ast.Assign)
+                 and [getattr(target, "id", "") for target in node.targets] == ["TABLE"])
+    table.elts = [row for row in table.elts if row.elts[0].value != "hook context"]
+    cli.write_text(ast.unparse(tree) + "\n", encoding="utf-8")
+    assert repo.forge("hook", "context", "--help").stdout == HELP_GOLDEN["hook context"]
+
     (package / "probe.py").write_text(
         'def probe(args):\n    print(f"{type(args.count).__name__}:{args.count}")\n'
         'COMMANDS = [{"words": "probe", "run": "probe", "changes_state": False, '
