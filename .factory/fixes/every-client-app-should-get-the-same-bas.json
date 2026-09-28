@@ -4,7 +4,7 @@
   "branch": "fix/every-client-app-should-get-the-same-bas",
   "done_when": "forge sync writes an app-baseline skill for Claude Code and Codex into client repos, holding that baseline and which of impeccable and Emil's design engineering decides what, and a test through forge sync shows it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T12:38:04+00:00",
