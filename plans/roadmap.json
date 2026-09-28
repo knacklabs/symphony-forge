@@ -106,6 +106,13 @@
       "spec": "docs/specs/own-your-entry.md",
       "status": "pending",
       "order": 58
+    },
+    {
+      "key": "FORGE-PROTO-1",
+      "title": "A customer signs off a working prototype before any story exists",
+      "spec": "docs/specs/prototype-signoff.md",
+      "status": "pending",
+      "order": 59
     }
   ],
   "epics": [
