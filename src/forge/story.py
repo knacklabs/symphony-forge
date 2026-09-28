@@ -156,13 +156,14 @@ def read(args: Any) -> int:
     reader, config = readers[0], repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
     prompt, head = (TEMPLATES / "cold-read.md").read_text(encoding="utf-8").split("<!-- forge:notes -->\n")
+    prompt = prompt.split("<!-- forge:round -->\n")[0]  # the first round's part
     before = _snapshot(top)  # first, so any change from here on discards the read
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
                                capture_output=True, check=True).stdout.decode().strip()
     prompt = Template(prompt).safe_substitute(
         path=rel, doc=text.decode("utf-8"), target=target,
-        spec=_confirmed_spec(top, target) if is_story else "")
+        spec=_confirmed_spec(top, target) if is_story else "", traps=_known_traps(top))
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
@@ -479,6 +480,13 @@ def _confirmed_spec(top: Path, key: str) -> str:
                     and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
                 return f"\nConfirmed spec at `{path}` on `{ref}`:\n\n{spec}\n"
     return "\nNo linked confirmed spec was found in the local branches.\n"
+
+
+def _known_traps(top: Path) -> str:
+    """The `## Known traps` section of AGENTS.md on the default branch, outside Forge's block."""
+    text = show(top, landed_ref(top), "AGENTS.md") or ""
+    text = re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", "", text, flags=re.S)
+    return sections(text).get("Known traps", "").strip()
 
 
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:

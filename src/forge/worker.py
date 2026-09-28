@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import hashlib
 import json
 import os
@@ -11,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -74,10 +74,10 @@ def work(args: argparse.Namespace) -> None:
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = [] if design else ready(top, config, kind, on_codex)
-    # Codex workers take the item's lock, stop a leftover Codex process and read back a turn it
-    # left before the status commit, and leave none running when this ends, whether it succeeds,
-    # fails or is interrupted.
-    with codex.hold(top, item, kind) if on_codex or design else contextlib.nullcontext():
+    # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
+    # workers also stop a leftover Codex process and read back a turn it left before the status
+    # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
+    with codex.hold(top, item, kind):
         if on_codex:
             codex.recover(top, item)
             question = codex.record(top, item).get("question")
@@ -87,17 +87,28 @@ def work(args: argparse.Namespace) -> None:
             question = None
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
                          (None, "first turn"))
+        # A Claude worker, design ones too, continues the session its item's last round ran in, in
+        # this checkout. Without one, a round after the first starts fresh and says why.
+        session = None if on_codex else codex.record(top, item).get("claude")
+        if session and session["checkout"] != str(top):
+            fresh = f"its session was started in another checkout, {session['checkout']}"
+        elif session:
+            thread = session["id"]
+        elif not on_codex and state.get("status", "started") != "started":
+            fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         turns = codex._item_file(top, item, ".log", kind)
         round_number = 1 + len({(entry["conversation"], entry["turn"])
                                 for line in turns.read_text(encoding="utf-8").splitlines()
                                 if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
+        if session:
+            round_number = session["rounds"] + 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread))
         fresh_brief = None
         if thread:
-            saved = codex.record(top, item)
+            saved = session or codex.record(top, item)
             brief += _changes(top, saved.get("head") or saved["start"])
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
@@ -111,8 +122,9 @@ def work(args: argparse.Namespace) -> None:
                 before = _checkout_snapshot(top)
                 claude_model = repo.design_models(config, "claude")
                 try:
-                    _run(item, top, brief, ["--model", claude_model["model"],
-                                            "--effort", claude_model["effort"]])
+                    _claude(item, top, brief, fresh_brief, ["--model", claude_model["model"],
+                                                            "--effort", claude_model["effort"]],
+                            session, thread, None if fresh == "first turn" else fresh)
                 except (repo.Refused, OSError) as error:
                     if _checkout_snapshot(top) != before:
                         raise
@@ -131,6 +143,7 @@ def work(args: argparse.Namespace) -> None:
                         refuse(REFUSALS["question"], item=item, question=question)
                     thread, fresh = (codex.conversation(top, item, approval) if later else
                                      (None, "first turn"))
+                    brief, fresh_brief = fresh_brief or brief, None
                     if thread:
                         saved = codex.record(top, item)
                         fresh_brief = brief
@@ -142,7 +155,8 @@ def work(args: argparse.Namespace) -> None:
                     outcome = "completed"
                     return
             if not on_codex:
-                _run(item, top, brief, claude)
+                _claude(item, top, brief, fresh_brief, claude, session, thread,
+                        None if fresh == "first turn" else fresh)
                 outcome = "completed"
                 return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -363,7 +377,45 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in found) or "none found"
 
 
-def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
+def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
+            session: dict[str, Any] | None, resume: str | None, why: str | None) -> None:
+    """A Claude worker's round: continue session `resume` with the short brief, else start a new
+    session with the whole brief and say why when there was one to continue. When Claude says it
+    has no such session, the same round starts fresh; any other failure fails the round and keeps
+    the session, so the next forge work continues it. The session, its checkout, the item's rounds
+    and HEAD when a round ends go in the item's record on this machine."""
+    path = codex._item_file(top, item, ".json", "Fix")
+    log = repo.work_log(top, item)
+    rounds = session["rounds"] if session else 0
+    try:
+        if resume:
+            size = log.stat().st_size if log.exists() else 0
+            try:
+                _run(item, top, brief, models, ["--resume", resume])
+                return
+            except repo.Refused:
+                # Claude refuses a session it doesn't have before the turn starts, with this line.
+                output = log.read_bytes()[size:].decode("utf-8", "replace").split("\n", 1)[-1]
+                if not output.startswith("No conversation found"):
+                    raise
+            why = f"Claude no longer has session {resume}"
+        if why:
+            message = f"Starting a new Claude session with the whole brief, because {why}."
+            print(message, flush=True)
+            with log.open("a", encoding="utf-8") as out:
+                out.write(message + "\n")
+        # A replaced session keeps the item's round count.
+        session = {"id": str(uuid.uuid4()), "checkout": str(top),
+                   "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
+        codex._record(path, claude=session)
+        _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
+    finally:
+        if session:
+            codex._record(path, claude={**session, "rounds": rounds + 1,
+                                        "head": git("rev-parse", "HEAD", cwd=top)})
+
+def _run(item: str, top: Path, brief: str, models: list[str],
+         session: list[str] | None = None) -> None:
     """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
     exe = shutil.which("claude")
     if exe is None:
@@ -371,7 +423,7 @@ def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
-               "--add-dir", str(CONVENTIONS)]
+               "--add-dir", str(CONVENTIONS), *(session or [])]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:

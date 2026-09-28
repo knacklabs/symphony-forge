@@ -233,6 +233,21 @@ setup-only, platform or "foundation" stories. A story that no spec behaviour lin
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes.
 
+## Cold read findings
+
+- `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
+  and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- `Disputed keep <n>: <why>`: the reader still disagrees with a finding you kept. Put it to the
+  human as one question with options, record the answer in the doc's Notes as
+  `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
+  one the disposition `keep` citing that line.
+
+**Learn the traps.** After `forge story done` opens the outcome fix, look back at the story's
+review rounds. For each kind of finding the plan missed that cost two or more fix rounds or hit
+two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
+outside Forge's block, in the outcome fix's worktree; create the section when it is missing.
+Commit it before closing the fix. Every cold read checks plans against that section.
+
 ## Steering a Codex worker
 
 When one sentence would help a worker finish its next round, give it with
