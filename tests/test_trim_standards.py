@@ -28,10 +28,7 @@ def test_5_sync_places_standards_beside_both_forge_skills(repo):
 
 def test_6_forge_fits_trim_target_without_raising_ceiling(repo):
     assert repo.forge("--help").returncode == 0
-    # The approved trim target is the existing 8,000-line ceiling, not the old 7,561 goal.
+    # Decision 0094 replaces the 8,000-line all-file cap with a 7,000-line Python cap.
     ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
         "tool"]["forge"]["line_ceiling"]
-    assert ceiling == 8000
-    files = [p for p in (ROOT / "src/forge").rglob("*")
-             if p.is_file() and "__pycache__" not in p.parts]
-    assert sum(p.read_bytes().count(b"\n") for p in files) <= ceiling
+    assert ceiling == 7000
