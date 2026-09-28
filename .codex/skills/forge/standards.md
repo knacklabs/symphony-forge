@@ -42,7 +42,8 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
 6. **One home per fact.** Store each piece of data once; everything else reads or derives it.
    Before adding a table, field, cache, export or sync, name the record that already holds it.
 7. **The simplest UI.** One path per job, with the fewest screens, fields, clicks and choices, and
-   native controls first. impeccable sets the quality; run its `distill` before a demo.
+   native controls first. impeccable shapes the visual design and checks it before a demo;
+   emil-design-eng makes interaction feel deliberate on every UI, including prototypes.
 8. **Measure then check back.** Success means the client's number moved, not that a feature
    shipped. Every spec has a metric, baseline, target and check date. At the check-back the choice
    is to stop, change the slice or remove it; adding more is never the default.
@@ -197,12 +198,26 @@ Open one only when your task touches its concern; the rules on this page apply e
 ## Frontend
 
 - React with Vite. TanStack Query holds server data; `useState` holds local state; anything a
-  shared link should reproduce lives in the URL. Add a router when the app has a second page.
-- Tailwind with shadcn/ui components, which are accessible by default. impeccable is the one
-  required UI skill: use it for layout, type and colour decisions. Use motion skills only when a
-  Done-when item needs motion.
+  shared link should reproduce lives in the URL. Start with a router for the app shell, sign-in,
+  protected routes, and 404/403 pages.
+- Tailwind with shadcn/ui components, which are accessible by default. impeccable and
+  emil-design-eng are required for every UI, prototypes included. impeccable owns layout, type,
+  colour, states, copy and the checking pass: shape before building, then audit and polish before
+  a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection;
+  allow at most one more checking round. Invoke emil-design-eng with a specific task, never bare.
+  It owns press feedback, easing, durations, popovers, tooltips, drag and when not to animate.
+- Stagger only when a list appears as a list. Keep routine app-screen motion under 300 ms; a longer
+  duration belongs only to one authored landing-page moment. Content is visible by default and
+  enters with `@starting-style` or transitions, never hidden until a script runs. Share one
+  ease-out token, `cubic-bezier(0.23, 1, 0.32, 1)`. Use CSS or the Web Animations API first; add
+  Motion only when a Done-when item needs springs or drag. Treat prototypes as app UI in
+  impeccable's Operate mode, where Emil's restraint wins over bold effects. Popovers scale from
+  their trigger with shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or
+  very frequent actions.
 - Every view that loads data handles loading, error and empty. The error says what to do next;
   the empty state says what the screen is for.
+- Forms use shadcn Form with react-hook-form and zod, reusing shared validators and showing API
+  field errors next to their fields.
 - Accessibility is part of done: every control is reachable by keyboard with visible focus,
   inputs have labels, images have alt text, contrast meets WCAG AA, and a click target is a
   `<button>` or a link, never a clickable `<div>`.
