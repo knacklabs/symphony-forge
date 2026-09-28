@@ -1,0 +1,14 @@
+{
+  "base": "b5beaaced7a7637e2b618eda57bd4488e110e7f2",
+  "branch": "fix/the-readme-has-a-download-line-under-the",
+  "done_when": "README.md no longer has the line under the explainer player that links to the video download",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T04:56:48+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The README has a download line under the explainer player that the owner doesn't want"
+}
