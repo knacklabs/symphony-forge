@@ -105,6 +105,13 @@ def close(args: argparse.Namespace) -> int:
     head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
     _publish(top, item, state, branch, default, pr, result)
+    try:  # link the pull request in the item's recorded Codex chat; a failure never stops the close
+        if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
+                _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):
+            raise RuntimeError(f"see {repo.work_log(top, item)}")
+    except Exception as error:
+        print(f"Could not link the pull request in its Codex chat "
+              f"({(getattr(error, 'stderr', '') or str(error)).strip()}). The next forge close tries again.")
 
     if serious:
         for number, finding in serious:
