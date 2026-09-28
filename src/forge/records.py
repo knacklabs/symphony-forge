@@ -278,9 +278,9 @@ def decision_accept(args: argparse.Namespace) -> None:
         answers = nextstep.parse_answers(top)
         open_topics += [topic for topic in nextstep.MUST_ANSWER_TOPICS
                         if topic not in open_topics and answers[topic][0][1].strip().lower()
-                        in ("our default", "agent")]
+                        not in ("client", "salesperson", "developer")]
         if open_topics:
-            repo.refuse(("Customer sign-off needs client answers for: "
+            repo.refuse(("Customer sign-off needs a client, salesperson, or developer answer for: "
                          + ", ".join(open_topics) + ".",
                          "forge next, then update docs/product/BRIEF.md and the decision quote"))
         if fields["customer"] != answers["Sign-off person"][0][0]:

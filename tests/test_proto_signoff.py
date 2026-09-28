@@ -18,9 +18,10 @@ MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems
 def _client(repo, tmp_path, monkeypatch):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
+    sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
     answers = "## Answers\n" + "".join(
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
-        "(client, 2026-09-28)\n" for topic in MUST)
+        f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
     repo.write("docs/product/BRIEF.md", "# Brief\n\n" + answers)
     repo.write("app.py", "print('prototype')\n")
     repo.git("add", "-A")
@@ -104,6 +105,17 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert agent.returncode == 1
     assert "Sign-in" in agent.stderr
     assert "forge next" in agent.stderr
+    assert "status: proposed" in page.read_text()
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+
+    changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent + our default")
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    _decision(fix, changed)
+    combined = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert combined.returncode == 1
+    assert "Sign-in" in combined.stderr
+    assert "client, salesperson, or developer" in combined.stderr
+    assert "forge next" in combined.stderr
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
