@@ -55,7 +55,8 @@ Only after accepted client sign-off, add confirmed specs to the roadmap with `fo
 and create stories with `forge story new`. This includes stories promoted from fixes. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
-[prototype sign-off spec](specs/prototype-signoff.md).
+[prototype sign-off spec](specs/prototype-signoff.md) and
+[decision 0095](decisions/0095-prototype-before-stories.md).
 
 ## Commands
 

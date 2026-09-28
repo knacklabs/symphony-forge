@@ -10,8 +10,9 @@ supersedes: ""
 
 ## Context
 
-Decision 0014 required a derived roadmap before client sign-off. That order lets stories exist
-before the customer has seen a working prototype. The owner confirmed the opposite order in
+The earlier [decision 0014](0014-specs-before-signoff.md) required a derived roadmap before client
+sign-off. That order lets stories exist before the customer has seen a working prototype. The owner
+confirmed the opposite order in
 [the prototype sign-off spec](../specs/prototype-signoff.md): discovery, prototype, strict review,
 the customer's sign-off, then stories.
 

@@ -84,6 +84,8 @@ developer can take over using the discovery notes and answers page.
 Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
 Each still goes through tests, review and a pull request. The agent confirms specs during this
 work, then adds them to the roadmap after sign-off.
+See [decision 0095](docs/decisions/0095-prototype-before-stories.md) for why this order replaces
+the earlier roadmap-before-sign-off order.
 
 ## What you do vs what the agent does
 
