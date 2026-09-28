@@ -87,11 +87,24 @@
       "order": 55
     },
     {
+      "key": "FORGE-TRIM-1",
+      "title": "Forge sheds dead and duplicated code before it grows again",
+      "status": "pending",
+      "order": 56,
+      "spec": "docs/specs/forge-trim.md"
+    },
+    {
+      "key": "FORGE-CHATVIEW-1",
+      "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
+      "status": "pending",
+      "order": 57
+    },
+    {
       "key": "FORGE-SPLIT-1",
       "title": "Each Forge behaviour owns its own entry",
       "spec": "docs/specs/own-your-entry.md",
       "status": "pending",
-      "order": 56
+      "order": 58
     }
   ],
   "epics": [

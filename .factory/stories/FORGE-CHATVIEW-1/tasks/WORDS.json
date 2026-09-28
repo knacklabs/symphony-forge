@@ -1,0 +1,33 @@
+{
+  "branch": "task/FORGE-CHATVIEW-1-WORDS",
+  "review": {
+    "commit": "34496e024c09199f2f905cd5d5b1e7c99f0af795",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This assertion still expects two naming requests for one resumed conversation. The current driver unconditionally calls `thread.set_name(request[\"name\"])` after either start or resume (`src/forge/codex_turn.py:143\u2013146`), so later rounds can overwrite an existing name. The task notes assign this behavior to START. When START lands, update this assertion to expect only the initial naming request and verify that resumed rounds preserve the name.",
+        "file": "tests/test_codex_resume.py",
+        "line": 217,
+        "priority": "P2",
+        "title": "Later: START must name chats only when they first start"
+      }
+    ],
+    "status": "clean",
+    "tree": "9dff08e171829df5376ad4995ca7affa61f009fb51dca86779e2909f19005661"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T17:03:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:31:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:01:19+00:00",
+      "step": "review"
+    }
+  ]
+}

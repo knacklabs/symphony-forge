@@ -1,0 +1,26 @@
+{
+  "allow_large": "The owner added UX items to this fix on 2026-09-27",
+  "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
+  "branch": "fix/forge-s-questions-and-story-docs-are-har",
+  "done_when": "the Forge skill says each question gets one line of context, a header of 12 characters or less, 1-5 word options that say what happens, the recommended one first, and no IDs, paths or slugs; the story template and skill open each Done-when item with one bold plain sentence before its detail and put Risks right after Done when with a For the builders heading before Tasks; the generated skill copies match; a test through forge sync proves it; the skill also says to write one framing line before showing a story in Plan Mode (\"Approving: <title>, <n> parts, <risks>\"), and to give status updates in one shape (\"Ready to merge (n): ... \u00b7 Needs you (n): ...\"); and the story template puts an at-a-glance line under the title (\"<n> parts \u00b7 Risks: ... \u00b7 New moving parts: ...\") outside the approved sections",
+  "kind": "fix",
+  "review": {
+    "commit": "c4330fe189f3ccd11a2c9161f6b07dfbcc28db92",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c38e45b6faee7db7a78dc8b9bde4ab5293fdcbfa843d83827b44141ee3ace2b7"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T17:02:22+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T18:00:42+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's questions and story docs are hard to read on a phone: questions carry IDs and long options, Done-when items open with technical detail, and the owner's sections sit among the builders' table"
+}
