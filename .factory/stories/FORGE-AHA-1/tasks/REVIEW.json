@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-AHA-1-REVIEW",
-  "status": "working",
+  "review": {
+    "commit": "deb5f404f2646ba9f7c5d2464742598a3b0328d5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`light` is decided before `_merge_default` fetches the default branch at `src/forge/close.py:65`. `approval.signed_off()` checks the current checkout or the last fetched default ref (`src/forge/approval.py:95`). If sign-off landed upstream since that fetch, `forge close` still runs the light review after merging the accepted sign-off. Decide the review level after refreshing the default branch.",
+        "file": "src/forge/close.py",
+        "line": 52,
+        "priority": "P1",
+        "title": "Not done: Prototype changes are reviewed lightly"
+      },
+      {
+        "body": "The freshness check at `src/forge/close.py:68` does not account for whether the saved review was light. `review.fingerprint()` hashes product changes and the fix contract, but not the review level (`src/forge/review.py:108`). After sign-off, a previously saved P0-only review can remain fresh, skipping this call to `review.run` and letting `forge close` proceed without the required strict review. Invalidate the saved review when eligibility changes.",
+        "file": "src/forge/close.py",
+        "line": 76,
+        "priority": "P1",
+        "title": "Not done: Strict review after a light review becomes ineligible"
+      },
+      {
+        "body": "`forge close` treats P1 findings in a light review as advisory here, but the required `forge hook pr-check` calls `review.blocking(result)` without the light policy (`src/forge/prcheck.py:155`). If a light result contains a P1, as the new test supplies, close can report it ready while the required CI check rejects the same committed review. Make the committed review and PR check agree on the blocking threshold.",
+        "file": "src/forge/close.py",
+        "line": 101,
+        "priority": "P1",
+        "title": "Not done: P0-only prototype review passes the required PR check"
+      },
+      {
+        "body": "The new test supplies a canned green `forge-pr-check` result, then exercises only `forge close`; it never runs the real `forge hook pr-check` against the resulting head. It therefore passes while that required check rejects the test's light P1 scenario. Add a command-level check of the produced review artifact so the test fails when CI applies the wrong threshold.",
+        "file": "tests/test_aha_review.py",
+        "line": 31,
+        "priority": "P1",
+        "title": "Not done: prototype review PR-check test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "4ea69b663b01feb8a258c10aa33c80ea184a7d8c58a84e2ee429580fec8cd2ba"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T16:00:16+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T16:26:54+00:00",
+      "step": "review"
     }
   ]
 }
