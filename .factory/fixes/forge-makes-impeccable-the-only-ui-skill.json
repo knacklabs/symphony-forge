@@ -4,7 +4,7 @@
   "branch": "fix/forge-makes-impeccable-the-only-ui-skill",
   "done_when": "The standards, the frontend conventions, the worker brief and the review brief require both impeccable and emil-design-eng for UI work, with impeccable owning visual design and the checking pass and Emil owning interaction feel, and state the owner's resolutions of their conflicts; review reports a missing impeccable pass or a failed Emil checklist item as blocking; the synced copies match and the full test suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T10:27:25+00:00",
