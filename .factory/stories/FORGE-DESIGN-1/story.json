@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-DESIGN-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-28T11:05:31+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high",
+  "touches": 0
+}
