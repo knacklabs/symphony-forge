@@ -1,33 +1,33 @@
 {
   "branch": "task/FORGE-PROTO-1-DEPLOY",
   "review": {
-    "commit": "680a36d3da7296b6c224bcd5b2283ecac9e60a9c",
+    "commit": "7ea6f2463541e8c0de70bf7ec5447dac676379c3",
     "dismissals": [],
     "findings": [
       {
-        "body": "The branch only records that DEPLOY started; it delivers none of item 10. The skeleton contains no Dockerfile, and `src/forge/init.py:88\u201389` copies that skeleton into new repositories. `src/forge/templates/conventions/stack.md:22\u201331` still specifies `apps/api` and `apps/web` without the required frontend/backend build, serve, migration and readiness contract, and there is no deploy conventions page. Add the Dockerfile and conventions so a new client repository can build the frontend, serve it through the backend, and start serving only after migrations succeed.",
-        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
-        "line": 3,
+        "body": "The generated conventions use `.env` for local secrets (`src/forge/templates/conventions/security.md:30`), but the scaffold has no `.dockerignore`. With `COPY . .`, a client running `docker build .` while `.env` exists copies those secrets into the image; Git ignore rules do not exclude files from Docker's build context. Add a scaffold Docker exclusion for local secrets or copy only the files the build needs.",
+        "file": "src/forge/templates/skeleton/Dockerfile",
+        "line": 5,
         "priority": "P1",
-        "title": "Not done: A prototype deploys from one Dockerfile"
+        "title": "Exclude local secrets from the Docker image"
       },
       {
-        "body": "The required test file does not exist, and this branch adds no tests. `plans/FORGE-PROTO-1.md:83` explicitly assigns this file and item 10 to DEPLOY, so this is not deferred to another task. Add tests through the real initialization entry point and exercise the generated Dockerfile with a contract-following app and real database, including successful frontend serving and health readiness, and migration failure preventing serving.",
-        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
-        "line": 3,
+        "body": "The test waits for `/health` to return 200 and only then checks that the migration created `Ready`. It never checks that health is unavailable while a migration is pending, so starting the server during migration could pass these assertions while violating the readiness contract. It also fetches `/` with urllib instead of testing the frontend in Playwright, as required for client app flows. Hold a migration pending and verify health remains unavailable, then verify the loaded frontend in a browser.",
+        "file": "tests/test_proto_deploy.py",
+        "line": 105,
         "priority": "P1",
         "title": "Not done: tests/test_proto_deploy.py"
       },
       {
-        "body": "The last commit message is only `Start FORGE-PROTO-1/DEPLOY`; it contains no required `Functional check:` paragraph. After implementing item 10, walk the new-repository deployment path, exercise migration success and failure, and record what was actually exercised and observed in the commit message, including the actionable next step shown on failure.",
-        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
-        "line": 7,
-        "priority": "P1",
-        "title": "Not done: functional check"
+        "body": "This changes item 7's review model in the story plan, outside DEPLOY's allowed paths and unrelated to delivering item 10. The associated plan read hash and story reapproval also change in this branch. Move that amendment to the story or SIGNOFF work so this branch contains only the deploy work and its required test.",
+        "file": "plans/FORGE-PROTO-1.md",
+        "line": 43,
+        "priority": "P2",
+        "title": "Keep the unrelated SIGNOFF amendment out of DEPLOY"
       }
     ],
     "status": "blocked",
-    "tree": "e3a67dc65fe72e1770d50d9fda21c5c13dc3247217b407144e3dcd24f5b25984"
+    "tree": "d8f49c1bbcd0414aa78316348d45c9e6aac982b43406be63e344d9dfacab89d5"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-28T12:03:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:43:57+00:00",
       "step": "review"
     }
   ]
