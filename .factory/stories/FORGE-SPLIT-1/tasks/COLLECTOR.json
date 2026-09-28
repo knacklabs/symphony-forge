@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
-  "status": "working",
+  "review": {
+    "commit": "cfd31b18a61ef0e34a2e7e229f9f3b9456d794a1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new test checks description substrings and the first six command names, but never compares complete help output. Changing `--out`'s metavar or help, removing an option description, or changing top-level help text would still pass these assertions. Item 2 explicitly requires unchanged `forge --help` and command help. Extend this entry-point test with independent baseline expectations for the complete output, including arguments and usage.",
+        "file": "tests/test_split_commands.py",
+        "line": 35,
+        "priority": "P1",
+        "title": "Not done: test unchanged help output"
+      },
+      {
+        "body": "`ast.literal_eval` cannot evaluate callable argument converters such as `int`. The existing `close --dismiss` argument uses `type=int` in `src/forge/cli.py:49`; expressing that same argument tuple in `COMMANDS` raises `ValueError` here and prevents every command, including `--help`, from starting. The promised declaration format therefore cannot represent all current argument tuples. Support these argument values and exercise a typed argument through the fixture command.",
+        "file": "src/forge/cli.py",
+        "line": 126,
+        "priority": "P2",
+        "title": "Support existing argument converters in declarations"
+      },
+      {
+        "body": "Item 2 remains partially incomplete: this fallback still consumes the central `TABLE`, and group help remains in `GROUPS`. The remaining commands do not yet declare their position and listing in their owning modules. `plans/FORGE-SPLIT-1.md:41` assigns this migration to COMMANDS, and lines 63\u201364 explicitly permit the interim table, so this is deferred P2 advice rather than a merge-blocking requirement for COLLECTOR.",
+        "file": "src/forge/cli.py",
+        "line": 130,
+        "priority": "P2",
+        "title": "Later: remove the remaining command table in COMMANDS"
+      }
+    ],
+    "status": "blocked",
+    "tree": "f636f59ff5a1e1b122acf1635d2e7363de5748e243cf5d0bc110b92cd420be70"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T07:31:27+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:04:04+00:00",
+      "step": "review"
     }
   ]
 }
