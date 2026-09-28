@@ -112,8 +112,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    # forge-pr-check runs from the base branch, which has no Forge until the migrate or adopt pull
-    # request merges.
+    # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:

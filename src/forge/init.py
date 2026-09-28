@@ -1,10 +1,4 @@
-"""forge init: set up a new repo in one first commit, push it, then protect its default branch.
-
-In a repo that already has commits it adopts the repo instead, on the fix branch fix/adopt-forge in
-its own worktree: a live forge.toml with the test command, checks and interface folders the human
-confirmed, a "House rules" section in AGENTS.md outside Forge's block, then forge sync and one
-commit. `forge close` turns on branch protection once that pull request merged.
-"""
+"""forge init: set up a new repo in one first commit, or adopt a repo with history on a fix branch."""
 from __future__ import annotations
 
 import argparse
@@ -19,7 +13,8 @@ from typing import Any, NoReturn
 from forge import __version__, githooks, repo, story, sync
 
 COMMANDS = [{
-    "words": "init", "run": "init", "changes_state": True,
+    # False: init checks the pin itself, after adoption lists a forge.toml Forge didn't write.
+    "words": "init", "run": "init", "changes_state": False,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
     "args": [(("--test",), {"help": "a repo with history: the test command CI runs"}),
              (("--checks",), {"action": "append", "metavar": "CHECK",
@@ -246,6 +241,7 @@ def init(args: argparse.Namespace) -> None:
         repo.refuse(repo.REFUSALS["missing_tool"], tool="gh")
     if repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0:
         return _adopt(top, args)
+    repo.check_pin(top)
     branch = repo.current_branch(top)
     scaffold = _scaffold(top)
     for rel, text in scaffold.items():
@@ -287,8 +283,9 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
     # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
     # already there with other text is the team's, and adoption stops before changing anything.
-    merged = set(githooks.ships(top, cfg))
-    wanted = {"forge.toml": toml, "plans/roadmap.json": ROADMAP, **sync.files(top, cfg)}
+    merged = {*githooks.ships(top, cfg), *sync.ships(top, cfg)}
+    wanted = {"forge.toml": toml, "plans/roadmap.json": ROADMAP, **sync.files(top, cfg),
+              repo.state_path(ADOPT_ITEM): None}  # its state file is written later, never kept
     taken = sorted(rel for rel, text in wanted.items() if rel not in merged
                    and (top / rel).exists() and sync.read(top / rel) != text)
     if taken:

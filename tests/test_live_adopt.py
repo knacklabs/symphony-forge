@@ -106,6 +106,13 @@ def _stops(repo, gh, case: str) -> None:
         repo.git("add", "-A")
         repo.git("commit", "-q", "-m", "Our tools")
         repo.git("push", "-q", "origin", "main")
+    elif case in ("state file", "foreign forge.toml"):  # the team's files at Forge's own paths
+        repo.write(".factory/fixes/adopt-forge.json" if case == "state file" else "forge.toml",
+                   '{"owner": "the shop"}\n' if case == "state file" else
+                   '# the shop\'s deploy tool\n[deploy]\nregion = "eu"\n')
+        repo.git("add", "-A")
+        repo.git("commit", "-q", "-m", "Our tools")
+        repo.git("push", "-q", "origin", "main")
     elif case == "missing answers":
         args = ANSWERS[:2]
     elif case == "uncommitted":
@@ -119,6 +126,11 @@ def _stops(repo, gh, case: str) -> None:
         assert refused.stderr == (
             "forge init won't write over files that Forge didn't write: "
             ".claude/skills/forge/SKILL.md, .github/workflows/forge.yml.\n"
+            "Next: move or rename those files, then forge init again\n"), refused.stderr
+    elif case in ("state file", "foreign forge.toml"):
+        path = ".factory/fixes/adopt-forge.json" if case == "state file" else "forge.toml"
+        assert refused.stderr == (
+            f"forge init won't write over files that Forge didn't write: {path}.\n"
             "Next: move or rename those files, then forge init again\n"), refused.stderr
     elif case == "uncommitted":
         assert refused.stderr == (
@@ -137,10 +149,26 @@ def _stops(repo, gh, case: str) -> None:
     assert _snapshot(repo) == before and gh.calls() == []
 
 
-@pytest.mark.parametrize("case", ["adopts", "taken files", "missing answers", "uncommitted",
+def _keeps_gitattributes(repo) -> None:
+    """The team's .gitattributes is kept and gets Forge's roadmap rule, not listed as taken."""
+    _live_app(repo)
+    repo.write(".gitattributes", "*.png binary\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Binary images")
+    repo.git("push", "-q", "origin", "main")
+    adopted = repo.forge("init", *ANSWERS)
+    assert adopted.returncode == 0, adopted.stdout + adopted.stderr
+    assert repo.git("show", f"{BRANCH}:.gitattributes") == (
+        "*.png binary\nplans/roadmap.json merge=forge-roadmap")
+
+
+@pytest.mark.parametrize("case", ["adopts", "team gitattributes", "taken files", "state file",
+                                  "foreign forge.toml", "missing answers", "uncommitted",
                                   "adopting"])
 def test_4_a_repo_with_history_adopts_forge(repo, gh, tmp_path, monkeypatch, case):
     if case == "adopts":
         _adopts(repo, gh, tmp_path, monkeypatch)
+    elif case == "team gitattributes":
+        _keeps_gitattributes(repo)
     else:
         _stops(repo, gh, case)
