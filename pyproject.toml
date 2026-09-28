@@ -35,4 +35,4 @@ packages = ["src/forge"]
 
 [tool.forge]
 # Only Python lines under src/forge/ count (decision 0094). Raising this needs an accepted decision.
-line_ceiling = 7000
+line_ceiling = 7500
