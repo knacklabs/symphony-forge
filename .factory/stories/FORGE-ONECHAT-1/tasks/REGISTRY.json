@@ -1,13 +1,21 @@
 {
   "branch": "task/FORGE-ONECHAT-1-REGISTRY",
   "review": {
-    "commit": "d0c980321b2330cc3d5e411e46171f7fe3d3d14d",
+    "commit": "e359f84b4533db58c691d6b919ea95a682a3c1f0",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "0c78d59cdd779754654cb5a668913ca68c67bf8472785ca48f22486aa25aae46"
+    "findings": [
+      {
+        "body": "The only registry test always sets XDG_CONFIG_HOME on Unix, so it never verifies the explicitly required ~/.config fallback. Removing or breaking that fallback in machine.py would leave this test passing, and no other test asserts the registry location. Add a case through the real Forge command with XDG_CONFIG_HOME unset and HOME isolated, then assert that the checkout is recorded in ~/.config/forge/repos.",
+        "file": "tests/test_onechat_registry.py",
+        "line": 18,
+        "priority": "P1",
+        "title": "Not done: test the default ~/.config registry location"
+      }
+    ],
+    "status": "blocked",
+    "tree": "3b411ad01a40cd5139beed1cea92ecb104ae8a986376affeaf80a5d864060f59"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T05:28:26+00:00",
@@ -19,6 +27,10 @@
     },
     {
       "at": "2026-09-28T06:13:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T06:57:19+00:00",
       "step": "review"
     }
   ]
