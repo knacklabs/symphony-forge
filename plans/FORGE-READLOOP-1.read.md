@@ -248,3 +248,8 @@ No findings.
 
 60. **SPEC’s new first-round code lacks an owning test case.** The [new Note](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:159) makes SPEC change `story.read` to exclude the next-round prompt and load traps from the default branch, but SPEC’s Done-when coverage and test promise do not name either runtime case; item 1’s older-branch trap test remains with ROUNDS. The existing [story test](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_story.py:219) only checks that the doc reaches the reader. Give SPEC a `forge read` boundary test that rejects leaked next-round text and proves an older story branch receives the default branch’s traps, so SPEC can pass before ROUNDS.
    Disposition: cut: the SPEC note now names a forge read test for both cases in tests/test_readloop_prompt.py.
+
+
+## Round 21
+
+No findings.
