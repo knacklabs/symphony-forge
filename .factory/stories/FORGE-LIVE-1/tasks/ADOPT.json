@@ -1,10 +1,57 @@
 {
   "branch": "task/FORGE-LIVE-1-ADOPT",
-  "status": "working",
+  "review": {
+    "commit": "d5c8e83817ed144b4c9954f8f06ffc16f1dca3f1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "An established repo with its own `.gitattributes` is refused as a collision. `sync.ships` merges `plans/roadmap.json merge=forge-roadmap` into that file (src/forge/sync.py:188-193), but `merged` includes only paths from `githooks.ships`. The merged output therefore differs from the existing file and is added to `taken`. Include `.gitattributes` among mergeable paths so adoption preserves the team's rules.",
+        "file": "src/forge/init.py",
+        "line": 290,
+        "priority": "P1",
+        "title": "Not done: A repo with history adopts Forge when .gitattributes exists"
+      },
+      {
+        "body": "The collision list omits `.factory/fixes/adopt-forge.json`, although `repo.write_state` writes that path later (src/forge/repo.py:325-331,354-364). If it already belongs to the team, init creates the worktree and replaces its contents in the adoption commit instead of listing it and changing nothing. Preflight the state path before creating the worktree.",
+        "file": "src/forge/init.py",
+        "line": 291,
+        "priority": "P1",
+        "title": "Not done: A repo with history adopts Forge without overwriting team state"
+      },
+      {
+        "body": "A repo can already have a `forge.toml` that Forge did not write. Because init remains a state-changing command, the CLI calls `repo.check_pin()` before `_adopt` (src/forge/cli.py:76-77). An unrelated or incompatible TOML file is rejected as a config or pin error before the new collision list runs, potentially telling the user to install a different Forge version instead of naming the file to move. Let adoption perform its collision check before applying the Forge pin.",
+        "file": "src/forge/init.py",
+        "line": 24,
+        "priority": "P1",
+        "title": "Not done: list a pre-existing forge.toml collision"
+      },
+      {
+        "body": "The new CLI test exercises collisions only for a skill and workflow. It has no case with the team's `.gitattributes` or an existing `.factory/fixes/adopt-forge.json`, so it stays green while adoption falsely refuses the former and overwrites the latter. Add end-to-end cases through `forge init` that assert attribute preservation and a no-change refusal for the state-file collision.",
+        "file": "tests/test_live_adopt.py",
+        "line": 103,
+        "priority": "P1",
+        "title": "Not done: existing-file adoption test"
+      },
+      {
+        "body": "Hook installation runs after the adoption commit. If a repo has both a non-Forge `pre-commit` hook and `pre-commit.pre-forge`, `sync.install_shims` refuses their conflict (src/forge/sync.py:289-294), but init has already created and committed the adoption branch. The command fails while leaving changes behind. Check this hook conflict before creating the worktree.",
+        "file": "src/forge/init.py",
+        "line": 314,
+        "priority": "P2",
+        "title": "Commit adoption only after hook installation can succeed"
+      }
+    ],
+    "status": "blocked",
+    "tree": "7f428dd7d795d68c280cb0bc0b9b8d6d49d253ec238fc0d7cb6257c93500d669"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T19:22:51+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:57:23+00:00",
+      "step": "review"
     }
   ]
 }
