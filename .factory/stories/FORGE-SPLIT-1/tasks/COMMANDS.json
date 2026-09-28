@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-SPLIT-1-COMMANDS",
-  "status": "working",
+  "review": {
+    "commit": "ff062bdb1084b5440163005ae610b69dd58eadd2",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "0cacc1437de896bc586346a5291593c1587ff6b4d57cf247aa1e4a5654f305d3"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T09:11:27+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T09:38:49+00:00",
+      "step": "review"
     }
   ]
 }
