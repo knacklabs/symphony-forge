@@ -1,35 +1,13 @@
 {
   "branch": "task/FORGE-PROTO-1-DEPLOY",
   "review": {
-    "commit": "7ea6f2463541e8c0de70bf7ec5447dac676379c3",
+    "commit": "ac4829d34b8c067a0c960036159e2e9f64015c1a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The generated conventions use `.env` for local secrets (`src/forge/templates/conventions/security.md:30`), but the scaffold has no `.dockerignore`. With `COPY . .`, a client running `docker build .` while `.env` exists copies those secrets into the image; Git ignore rules do not exclude files from Docker's build context. Add a scaffold Docker exclusion for local secrets or copy only the files the build needs.",
-        "file": "src/forge/templates/skeleton/Dockerfile",
-        "line": 5,
-        "priority": "P1",
-        "title": "Exclude local secrets from the Docker image"
-      },
-      {
-        "body": "The test waits for `/health` to return 200 and only then checks that the migration created `Ready`. It never checks that health is unavailable while a migration is pending, so starting the server during migration could pass these assertions while violating the readiness contract. It also fetches `/` with urllib instead of testing the frontend in Playwright, as required for client app flows. Hold a migration pending and verify health remains unavailable, then verify the loaded frontend in a browser.",
-        "file": "tests/test_proto_deploy.py",
-        "line": 105,
-        "priority": "P1",
-        "title": "Not done: tests/test_proto_deploy.py"
-      },
-      {
-        "body": "This changes item 7's review model in the story plan, outside DEPLOY's allowed paths and unrelated to delivering item 10. The associated plan read hash and story reapproval also change in this branch. Move that amendment to the story or SIGNOFF work so this branch contains only the deploy work and its required test.",
-        "file": "plans/FORGE-PROTO-1.md",
-        "line": 43,
-        "priority": "P2",
-        "title": "Keep the unrelated SIGNOFF amendment out of DEPLOY"
-      }
-    ],
-    "status": "blocked",
-    "tree": "d8f49c1bbcd0414aa78316348d45c9e6aac982b43406be63e344d9dfacab89d5"
+    "findings": [],
+    "status": "clean",
+    "tree": "5d2e665a0b3fd03f0ba7af2f0dcce6546a8cd760fad6e18c9f9e81882e2fe105"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T12:02:25+00:00",
@@ -41,6 +19,10 @@
     },
     {
       "at": "2026-09-28T12:43:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:08:57+00:00",
       "step": "review"
     }
   ]
