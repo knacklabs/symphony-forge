@@ -1,9 +1,9 @@
 {
   "approval": {
-    "at": "2026-09-28T13:42:22+00:00",
+    "at": "2026-09-28T13:49:41+00:00",
     "by": "human-via-Claude",
-    "event": "toolu_017GiztNHnfD2k8CXNRkcbce",
-    "hash": "83ba93c2810bcfb7c61c709948492d42780a81af162891d0d0a7c076c40d74b9",
+    "event": "toolu_014mpQfNmwLxXxMpPj3uetJd",
+    "hash": "07afc5ed05920e33f4a1a9bfd1a8a911847e88f8f3048859926ddc0c039456e2",
     "runtime": "claude",
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
@@ -21,8 +21,12 @@
     {
       "at": "2026-09-28T13:42:22+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T13:49:41+00:00",
+      "step": "approved"
     }
   ],
   "title": "Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches",
-  "touches": 1
+  "touches": 2
 }
