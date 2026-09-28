@@ -43,3 +43,26 @@ Only a genuine trade-off goes to the human, as a question with options. There is
    LOOP owns three Done-when items across six Python modules, two docs, an adapter, and the real-SDK tests; its scope suggests more than about 400 changed lines. Put round execution in one task and approval, spec, PR, and post-approval gates in a following task.
    Disposition: cut: LOOP is split into ROUNDS (items 1, 6) and GATES (item 2, after ROUNDS).
 
+## Round 2 (run by hand on gpt-6-sol xhigh)
+
+8. Finding 2 remains open. The exemption for confirmed specs covers any spec that still says `status: confirmed`, not just `spec confirm` and `spec measure` changes. A direct Behaviour edit can retain that status without a new read; [records.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:123) validates the body only when `spec save` runs. Pin how the pull-request check distinguishes the permitted changes, and test a substantive edit to a confirmed spec.
+   Disposition: cut: item 2 keeps confirmed specs under their existing confirmed hash; the pull-request check refuses a body edit, and confirm and measure refresh it.
+
+9. Finding 3 remains open. After the first task merges, [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/task.py:126) reads the doc from `origin/main`, even if the story worktree has a newly read Tasks table. `forge read` writes notes but does not commit that amended doc. Pin which version starts the next task and how the passing doc and notes reach its base; test this after one task has merged.
+   Disposition: cut: item 2 has task start read the doc and notes from the story branch and merge it into the new task branch; tested before and after the first merge.
+
+10. The legacy approval exception needs a boundary. Item 2 lets a story approved before this change start tasks without a passing round, while also requiring a new round for edits after approval. It does not say whether the exception ends when that old story’s Tasks table changes. Test both an unchanged legacy approval and a later edit to it.
+   Disposition: cut: item 2 ends the old-approval exception at the doc's first change; both cases tested.
+
+11. GATES cannot make its promised test updates within its listed paths. Existing `--amended` assertions occur in [test_codex_reader.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_codex_reader.py:144), [test_story.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_story.py:250), [test_approval.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_approval.py:66), and [test_split_commands.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_split_commands.py:201), among others. The [GATES row](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:91) names none of them in Scope or Tests.
+   Disposition: cut: GATES' Scope names the tests that use --amended.
+
+12. Unproven: item 3, a human-settled disputed keep. The plan assigns this entirely to prompt and skill text, but does not say what happens if the next reader raises the same dispute again. No named test proves that the recorded human answer is accepted, despite item 3 promising that outcome.
+   Disposition: cut: item 3's round prompt never re-raises a finding whose disposition cites a Decided line; SPEC's test checks it.
+
+13. Finding 6 remains open on proof. Item 5 now instructs the agent to commit learned traps, but neither its Done-when text nor SPEC’s Tests cell checks the two-round or two-task trigger, creation of a missing `## Known traps` section, or that the trap commit reaches the outcome fix’s pull request. [story done](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:224) currently opens a fix containing only state changes.
+   Disposition: cut: item 5 adds creating a missing section and SPEC's test checks every step and threshold in the synced skill.
+
+14. Unproven: item 4, the case-to-test rule as applied to this story. The [Tests cells](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:87) name files, not tests for each promised case: a failed round, exact `No findings.` rejection variants, the round-four nudge, Windows PowerShell and cmd, and WSL have no identified proof. The current [CI matrix](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/.github/workflows/forge-next.yml:17) covers Ubuntu, macOS, and Windows, but identifies no WSL or shell-specific run.
+   Disposition: cut: each Tests cell names its cases; Notes say no item runs its own shell commands, so CI's three systems cover it.
+

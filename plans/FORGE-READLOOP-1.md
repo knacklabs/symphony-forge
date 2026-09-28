@@ -38,24 +38,30 @@ expensive to find in review.
    new round while a finding lacks a disposition. Tests cover a continued round, a fresh round
    after the conversation is gone, a wrong-app refusal, a discarded round and an undisposed
    finding.
-2. **It passes only on "No findings".** A read passes only when its latest round wrote exactly
-   `No findings.` about the doc as it stands. Story approval, `forge next`'s approval step,
-   `forge task start`, spec confirmation and Forge's pull-request check all refuse a story doc or
-   unconfirmed spec whose latest round had findings or which changed after that round, naming
-   `forge read <target>` as the next step. `--amended` is removed, so a story doc edited after
-   approval, including its Tasks table, gets a new round before its next task starts. A confirmed
-   spec's own later changes (`spec confirm`'s frontmatter, `spec measure`'s result) need no new
-   round. Notes written before this change count as round 1: an unapproved story or unconfirmed
-   spec with such notes needs a passing round, and a story approved before this change keeps its
-   approval and starts tasks as today. Tests cover each refusal, a changed Tasks table stopping
-   `forge task start`, spec confirmation and measurement, old notes, and an approved old story.
-   The reader's Codex conversation is archived when a round passes.
+2. **It passes only on "No findings".** A read passes only when its latest round's whole text is
+   exactly `No findings.` about the doc as it stands. Story approval, `forge next`'s approval
+   step, `forge task start`, spec confirmation and Forge's pull-request check all refuse a story
+   doc or unconfirmed spec whose latest round had findings or which changed after that round,
+   naming `forge read <target>` as the next step. `--amended` is removed, so a story doc edited
+   after approval, including its Tasks table, gets a new round before its next task starts.
+   `forge task start` reads the story doc and its notes from the story branch while that branch
+   exists, and the new task branch merges the story branch, so the passing doc and notes reach
+   the task's pull request. A confirmed spec stays guarded by its existing confirmed hash:
+   `spec confirm` and `spec measure` keep refreshing it and need no new round, and the
+   pull-request check refuses a confirmed spec whose body no longer matches it. Notes written
+   before this change count as round 1: an unapproved story or unconfirmed spec with such notes
+   needs a passing round, and a story approved before this change starts tasks as today until its
+   doc changes, after which it needs a passing round too. Tests cover each refusal, text that
+   only contains `No findings.`, a changed Tasks table stopping `forge task start` before and
+   after the story's first task has merged, a confirmed spec's confirm, measure and body edit, old
+   notes, and an old approved story before and after an edit. The reader's Codex conversation is
+   archived when a round passes.
 3. **Kept findings are settled, not argued.** The reader raises a finding the agent kept again
    only when it disagrees with the stated reason, as a new finding `Disputed keep <n>: <why>`. The
    skill tells the agent to put each disputed keep to the human as one question with options,
    record the answer in the doc's Notes as `Decided: <finding>: <answer> (owner, <date>)`, and
-   give the disputed finding the disposition `keep` citing that line, which the next round
-   accepts.
+   give the disputed finding the disposition `keep` citing that line. The next-round prompt tells
+   the reader never to raise again a finding whose disposition cites a `Decided:` line.
 4. **The reader hunts edge cases.** For every Done-when item the cold-read prompt asks which
    inputs and states it must handle, which platforms and shells (Windows PowerShell and cmd, WSL,
    macOS, Linux CI), which failure and refusal paths, and which test in which task's Tests cell
@@ -71,7 +77,8 @@ expensive to find in review.
    agent, after `forge story done` opens the outcome fix, to look back at the story's review
    rounds and, for each kind of finding the plan missed that cost two or more fix rounds or hit
    two or more tasks, add one trap line to that section in the outcome fix's worktree and commit
-   it before closing the fix.
+   it before closing the fix, creating the section when it is missing. SPEC's test checks that the
+   synced skill carries each of these steps, including the two thresholds.
 6. **Forge nudges when a read doesn't converge.** While a read hasn't passed, `forge next` names
    its round, and from round 4 on it adds that the plan isn't converging and the human should be
    asked whether to split the story.
@@ -86,9 +93,9 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py` | none | yes |
-| ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/nextstep.py` | `tests/test_readloop_rounds.py` | SPEC | yes |
-| GATES | Pass before going on | The pass gate in approval, task start, spec confirmation and the pull-request check, old notes, and the removal of `--amended` | 2 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md` | `tests/test_readloop_gates.py` | ROUNDS | yes |
+| SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py`: the round prompt's parts and variables, the edge-case questions, the general traps, the Decided rule, the skill's disputed-keep, edge-case and trap steps | none | yes |
+| ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/nextstep.py` | `tests/test_readloop_rounds.py`: a continued round, a fresh round, a wrong-app refusal, a failed round, a discarded round, an undisposed finding, the round-four nudge | SPEC | yes |
+| GATES | Pass before going on | The pass gate in approval, task start, spec confirmation and the pull-request check, old notes, and the removal of `--amended` | 2 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `tests/test_codex_reader.py`, `tests/test_story.py`, `tests/test_approval.py`, `tests/test_split_commands.py`, and any other test that uses `--amended` | `tests/test_readloop_gates.py`: each case item 2 names |  ROUNDS | yes |
 
 New moving parts: none
 
@@ -105,6 +112,8 @@ New moving parts: none
   taken against the previous round's text, which `read` stores with `git hash-object -w`.
 - The read conversation is recorded under the read's own folder (`threads/read/<target>`), so
   `codex.conversation` and `codex.record` take the kind instead of assuming a fix.
+- Nothing here runs shell commands of its own: every item runs inside Forge's Python, which CI
+  runs on Ubuntu, macOS and Windows, so no WSL or shell-specific case applies.
 - Opus writes SPEC's text; Claude workers build ROUNDS and GATES. Existing tests that use
   `--amended` are updated by GATES.
 - Each test file starts with `STORY = "FORGE-READLOOP-1"`, and its `test_<n>_` names cite the
