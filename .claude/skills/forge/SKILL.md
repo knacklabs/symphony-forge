@@ -35,6 +35,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" | `forge doctor` |
 | "Set up a new repo" | `forge init` |
+| "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
 | "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
@@ -143,6 +144,37 @@ When a later story needs a topic marked later, its cold read reports `Decide fir
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
 Until the decision, use a fake provider for an external service. No second cold read is needed.
+
+## Adopt a live app
+
+An app already in production joins Forge through one fix and one pull request the human merges.
+Adopting changes no app code.
+
+1. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
+   and the areas they don't cover; the CI workflows and the checks branch protection requires; what
+   a merge triggers; branch rules and reviewers; the hook tools already in use; secret files and
+   variables by name only, never their values; where personal data lives; the migration tool; and
+   the danger zones.
+2. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
+   story that touches one names it under Risks.
+3. List the open pull requests and branches in the report, so a story's plan avoids colliding with
+   a teammate's work.
+4. Link or import the repo's existing decision records and design docs as Forge decisions:
+   `forge decision new <slug>`, the original linked or copied unchanged under the line
+   `Imported from <path>.` Don't rewrite them.
+5. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
+   repeatedly becomes a House rule citing the pull requests it came from.
+6. Ask the human three questions, one at a time, with options: who approves stories, who merges,
+   and what must never be touched.
+7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
+   block. The repo's own rules win where they differ from Forge's default-stack conventions.
+
+On a live app, every story and fix also follows these:
+
+- Before changing code no test covers, first add a test that pins today's behaviour.
+- Migrations only add, and work with the previous version of the app still running.
+- A change users would notice ships behind the team's own feature flags.
+- No production credentials on this machine; never ask for them.
 
 ## Planning a story
 
