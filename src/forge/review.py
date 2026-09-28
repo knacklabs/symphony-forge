@@ -159,10 +159,14 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         items = {items[i]: " ".join(items[i + 1].split()) for i in range(1, len(items), 2)}
         covers = set(re.findall(r"\d+", row.get("covers", "")))
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
+        existing_tests = set(repo.git("ls-tree", "-r", "--name-only", base, "--", "tests",
+                                      cwd=top).splitlines())
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
-            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
+            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)
+                             and not (p in existing_tests and p.startswith("tests/")
+                                      and Path(p).name.startswith("test_") and p.endswith(".py"))),
             covered=_bullets(f"{n}. {t}" for n, t in items.items() if n in covers),
             context=_bullets(f"{n}. {t}" for n, t in items.items() if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),

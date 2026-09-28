@@ -10,11 +10,12 @@ nothing more.
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
-  only for a one-way step, a security question, a path outside your Scope, a new moving part, or
+  only for a one-way step, a security question, a path outside your Scope (except an existing test
+  your intended change breaks), a new moving part, or
   Done-when items that contradict each other; then say plainly what is wrong and what you need.
-- When finishing needs a path outside Scope or a choice this item does not settle, end your final
-  message with a paragraph starting `Question:` on its own line. Ask plainly and wait for the
-  coordinator's answer.
+- When finishing needs a path outside Scope other than an existing test your intended change
+  breaks, or a choice this item does not settle, end your final message with a paragraph starting
+  `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
 
 <!-- if coordinator -->
 ## From the coordinator
@@ -51,7 +52,9 @@ $done
 $row
 
 It covers Done-when items $covers. Change only the paths in its Scope ($scope), and add or change
-the tests it names ($tests). The other Done-when items are context, not your job.
+the tests it names ($tests). You may also update an existing test your intended change breaks,
+even outside Scope; name each such test and why it changed in your handoff, and never weaken a
+test to hide a defect. The other Done-when items are context, not your job.
 
 Existing tests that name a file or folder in your Scope, which must still pass: $existing_tests.
 
@@ -83,6 +86,9 @@ Interface globs in forge.toml: $interfaces. Recorded allowance: $allowance.
 
 A fix's tests go in their own file with the fix's own STORY key, never into a story's test file:
 a test there takes a number the story's own criterion needs.
+
+You may also update an existing test your intended change breaks, even outside Scope; name each
+such test and why it changed in your handoff, and never weaken a test to hide a defect.
 
 <!-- end -->
 ## Tests first
