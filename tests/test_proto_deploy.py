@@ -4,6 +4,7 @@ import http.client
 import json
 import shutil
 import subprocess
+import sys
 import urllib.error
 import urllib.request
 import uuid
@@ -33,8 +34,8 @@ def _docker(*args, check=True):
 
 
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
-    if not shutil.which("sh"):
-        pytest.skip("The Linux container startup script requires sh on the test host")
+    if sys.platform == "win32":
+        pytest.skip("The generated Docker image and startup script are Linux-only")
     if not shutil.which("docker"):
         pytest.skip("Docker daemon is required for the deployment lifecycle test")
     host = subprocess.run(["docker", "context", "inspect", "--format",
