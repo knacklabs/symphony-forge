@@ -3,7 +3,7 @@
   "branch": "fix/client-repos-lose-the-agent-s-state-the",
   "done_when": "forge sync ships a pre-compaction hook for Claude Code (and Codex where supported) that writes a local handoff file in the repo's .git Forge folder from forge next's state, never committed, and the Forge skill tells the agent to add the owner's decisions and lessons to it at milestones and read it first after a compaction; a test through forge sync and the hook shows it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T14:52:34+00:00",
