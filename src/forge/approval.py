@@ -12,10 +12,11 @@ import hashlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import repo, story
+from forge import __version__, machine, repo, story
 
 REFUSALS = {
     "bad_payload": ("The hook input is not a JSON object.", "forge doctor"),
@@ -36,6 +37,9 @@ REFUSALS = {
     "no_signoff": ("This client's sign-off isn't recorded yet, so the approval was not recorded.",
                    'forge decision new client-signoff, then forge decision accept client-signoff '
                    '--by "<client name>"'),
+    "other_version": ("{repo} pins Forge {pinned}, but {installed} is installed, so nothing was "
+                      "recorded.",
+                      "ask your agent to upgrade {repo} to {installed}, then approve again"),
 }
 
 TOOLS = {"claude": "ExitPlanMode", "codex": "request_user_input"}
@@ -116,17 +120,36 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     session, event = _text(payload.get("session_id")), _text(payload.get("tool_use_id"))
     if not session or not event:
         repo.refuse(REFUSALS["no_identity"])
-    used = repo.forge_dir(top) / "approvals" / hashlib.sha256(
-        f"{runtime}\0{session}\0{event}".encode("utf-8")).hexdigest()
-    if used.exists():
+    marker = hashlib.sha256(f"{runtime}\0{session}\0{event}".encode("utf-8")).hexdigest()
+    chat_used = repo.forge_dir(top) / "approvals" / marker
+    if chat_used.exists():
         repo.refuse(REFUSALS["replay"])
-    matches = [(key, path) for key, path in story.stories_here(top).items()
+    checkouts = dict.fromkeys([machine.main_checkout(top), *machine.remembered()])
+    matches = [(key, path) for checkout in checkouts
+               for key, path in story.stories_here(checkout).items()
                if waiting_digest(key, path) == digest]
     if not matches:
         repo.refuse(REFUSALS["no_match"])
     if len(matches) > 1:
         repo.refuse(REFUSALS["several"], count=len(matches))
     key, path = matches[0]
+    story_repo = machine.main_checkout(path)
+    # Read the pin alone before full config validation or any write in the story repo.
+    config_text = (path / "forge.toml").read_text(encoding="utf-8")
+    version_line = re.search(r'^version\s*=\s*[^\n]+', config_text, re.M)
+    if version_line:
+        try:
+            pinned = tomllib.loads(version_line[0])["version"]
+        except tomllib.TOMLDecodeError:
+            repo.check_pin(path)
+            return
+        if isinstance(pinned, str) and pinned.removeprefix("v") != __version__:
+            repo.refuse(REFUSALS["other_version"], repo=story_repo,
+                        pinned=pinned, installed=f"v{__version__}")
+    repo.check_pin(path)
+    story_used = repo.forge_dir(path) / "approvals" / marker
+    if story_used.exists():
+        repo.refuse(REFUSALS["replay"])
     story.check_read(key, path)
     if not signed_off(path):
         repo.refuse(REFUSALS["no_signoff"])
@@ -138,8 +161,9 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     title = state.get("title") or key
     repo.commit_state(f"Approve the plan: {title}", f"plans/{key}.md", f"plans/{key}.read.md", rel,
                       top=path)
-    used.parent.mkdir(exist_ok=True)
-    used.write_text(json.dumps(approval), encoding="utf-8")
+    for used in dict.fromkeys((chat_used, story_used)):
+        used.parent.mkdir(exist_ok=True)
+        used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
 
 
