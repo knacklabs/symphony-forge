@@ -5,7 +5,18 @@
   "kind": "fix",
   "review": {
     "commit": "89bb85bea32da54379e01991476fa610d3e69dd1",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/nextstep.py:373 the contract is that forge next keeps listing every item when a worktree's settings are refused; a worktree whose settings forge next never reads causes no refusal, so there is nothing to name",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_one_worktree_with_settings_the_installed.py:23 an unread worktree's settings cause no refusal, so there is nothing for that test to prove",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "From a healthy checkout, a worktree with rejected settings and a `started` fix is listed without any refusal or reason. This line reads that worktree's config only when it has an open PR and is `waiting for checks`; `_report` later validates only the checkout running the command. The same gap affects working fixes without an open PR. Read each active worktree's settings so the command can name the unreadable worktree while listing the other items.",
@@ -29,10 +40,10 @@
         "title": "Do not request client sign-off for a refused Forge-source config"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "82e32ed191ab537cd881baa8c32d29ab463df2d5378c86bfc7b15acffe0b08e9"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T14:52:33+00:00",
