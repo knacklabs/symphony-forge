@@ -1,6 +1,8 @@
 """The salesperson sees demo guidance and the next step from the real Forge command."""
 
-from test_close import GREEN, env
+import json
+
+from test_close import GREEN, env, run
 
 STORY = "FORGE-SALES-1"
 
@@ -28,7 +30,25 @@ def test_4_next_reminds_of_platform_from_fetched_default_branch(env):
     repo.git("commit", "-q", "-m", "Set up prototype")
     repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
-    env.open_pr("")
+    env.open_pr("", draft=True)
+    env.checks([run("tests", None, "in_progress"), run("forge-pr-check")])
+    pending = env.close(item)
+    assert pending.returncode == 1
+    assert f"Next: forge close {item}" in pending.stderr
+
+    # CI has turned green, but close has not saved a ready receipt yet.
+    url = "https://github.com/acme/shop/pull/7"
+    repo_pr = {"headRefName": "fix/tidy-readme", "url": url, "isDraft": False,
+               "statusCheckRollup": [
+                   {"name": name, "conclusion": "SUCCESS",
+                    "completedAt": "2026-09-28T16:00:00+00:00"}
+                   for name in ("tests", "forge-pr-check")]}
+    env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([repo_pr]))
+    green = repo.forge("next", cwd=where)
+    assert green.returncode == 0, green.stderr
+    assert f"Next: forge close {item}" in green.stdout
+    assert f"Next: merge {url}" not in green.stdout
+
     env.checks(GREEN)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
@@ -58,4 +78,4 @@ def test_4_next_reminds_of_platform_from_fetched_default_branch(env):
     repo.git("push", "-q", "origin", "main")
     signed = repo.forge("next", cwd=where)
     assert "connect the repo" not in signed.stdout
-    assert "Next: merge its pull request, then forge next" in signed.stdout
+    assert f"Next: merge {url}, then forge next" in signed.stdout

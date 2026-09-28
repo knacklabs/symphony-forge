@@ -358,6 +358,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
+        if status == "waiting for checks" and repo.merge_setting(top) == "agent":
+            return [f"{label}'s checks passed; finish preparing its automatic merge.",
+                    f"Next: forge close {item}"]
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]
