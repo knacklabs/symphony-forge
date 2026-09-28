@@ -17,6 +17,7 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
         shutil.copy2(ROOT / name, tmp_path / name)
     shutil.copytree(ROOT / "src", tmp_path / "src")
     for name in (
+        ".codex/skills/app-baseline/SKILL.md",
         ".codex/skills/test-audit/SKILL.md",
         ".codex/skills/test-audit/NOTICE.md",
         ".codex/skills/forge/fde.md",

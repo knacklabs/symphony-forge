@@ -198,7 +198,8 @@ Open one only when your task touches its concern; the rules on this page apply e
 ## Frontend
 
 - React with Vite. TanStack Query holds server data; `useState` holds local state; anything a
-  shared link should reproduce lives in the URL. Add a router when the app has a second page.
+  shared link should reproduce lives in the URL. Start with a router for the app shell, sign-in,
+  protected routes, and 404/403 pages.
 - Tailwind with shadcn/ui components, which are accessible by default. impeccable and
   emil-design-eng are required for every UI, prototypes included. impeccable owns layout, type,
   colour, states, copy and the checking pass: shape before building, then audit and polish before
@@ -215,6 +216,8 @@ Open one only when your task touches its concern; the rules on this page apply e
   very frequent actions.
 - Every view that loads data handles loading, error and empty. The error says what to do next;
   the empty state says what the screen is for.
+- Forms use shadcn Form with react-hook-form and zod, reusing shared validators and showing API
+  field errors next to their fields.
 - Accessibility is part of done: every control is reachable by keyboard with visible focus,
   inputs have labels, images have alt text, contrast meets WCAG AA, and a click target is a
   `<button>` or a link, never a clickable `<div>`.

@@ -1,0 +1,33 @@
+{
+  "base": "319abe700568b1c29227b92706a207e462203dfe",
+  "branch": "fix/forge-s-python-is-at-6-915-of-its-7-000",
+  "done_when": "An accepted decision records the owner's choice, pyproject.toml's line_ceiling is 7500, the tests that pin the ceiling follow it, and the full suite passes",
+  "kind": "fix",
+  "review": {
+    "commit": "f2bdc25088de5f75003982a482feb7483d805157",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new accepted decision sets the cap to 7,500, but the confirmed v1 spec still says 7,000 at docs/specs/lean-forge-v1.md:30, 593\u2013594, and 646\u2013647. Its acceptance criterion therefore conflicts with the configured limit and could lead a reviewer to reject Python growth that this decision permits. Update those references to 7,500 and decision 0096.",
+        "file": "docs/decisions/0096-python-cap-7500.md",
+        "line": 20,
+        "priority": "P2",
+        "title": "Update the confirmed v1 spec's 7,000-line rule"
+      }
+    ],
+    "status": "clean",
+    "tree": "086ca220739355b03bdb77f14db041866323c33f6d28f12573f29065a9af482f"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T12:41:46+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:08:04+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's Python is at 6,915 of its 7,000 cap and five approved tasks still add code; the owner raised the cap to 7,500 on 2026-09-28"
+}

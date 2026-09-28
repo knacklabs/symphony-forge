@@ -6,7 +6,7 @@ changes a screen.
 ## Layout
 
 ```
-apps/web/src/
+frontend/src/
   main.tsx
   api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors, sends an x-correlation-id
   pages/            one file per screen
@@ -16,7 +16,8 @@ apps/web/src/
 
 Error codes and their user messages live in `packages/shared`.
 
-Add a router (TanStack Router) when the app gets a second page.
+Start with a router (TanStack Router) for the app shell, sign-in, protected routes, and 404/403
+pages.
 
 ## Server data
 
@@ -43,8 +44,8 @@ already caches it and tracks loading and errors.
 - Each screen that loads data renders its loading, error and empty states. The error message comes
   from the API's `message`, which already says what to do next; the empty state says what the
   screen is for and offers its first action.
-- Forms use native inputs with `<label>`, `required`, `type="email"` and the like before any form
-  library, and show the API's field errors next to their fields.
+- Forms use shadcn Form with react-hook-form and zod, reusing shared validators, and show the API's
+  field errors next to their fields.
 - Style with Tailwind and the theme's tokens (`bg-primary`, not a raw colour), so the look changes
   in one place.
 
