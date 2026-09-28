@@ -46,8 +46,15 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         pytest.skip("Docker daemon is required for the deployment lifecycle test")
     client = _client(repo, gh, tmp_path)
     assert (client / "Dockerfile").is_file()
+    assert (client / ".dockerignore").is_file()
     assert len(list(client.rglob("Dockerfile"))) == 1
-    assert "Dockerfile" in repo.git("ls-files", cwd=client).splitlines()
+    assert {"Dockerfile", ".dockerignore"} <= set(repo.git("ls-files", cwd=client).splitlines())
+    (client / ".env").write_text("DATABASE_URL=private-local-secret\n")
+    (client / ".npmrc").write_text("# private-token-marker\n")
+    (client / "backend").mkdir()
+    (client / "backend" / "private.pem").write_text("private-key-marker\n")
+    (client / "secrets").mkdir()
+    (client / "secrets" / "token.txt").write_text("local-token-marker\n")
     (client / "frontend").mkdir()
     (client / "backend" / "prisma" / "migrations" / "20260928000000_init").mkdir(parents=True)
     (client / "package.json").write_text(json.dumps({
@@ -73,6 +80,7 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     (client / "backend" / "prisma" / "migrations" / "migration_lock.toml").write_text(
         'provider = "postgresql"\n')
     (client / "backend" / "prisma" / "migrations" / "20260928000000_init" / "migration.sql").write_text(
+        'SELECT pg_advisory_lock(445566);\n'
         'CREATE TABLE "Ready" ("id" INTEGER NOT NULL PRIMARY KEY);\n')
     subprocess.run(["npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit"],
                    cwd=client, capture_output=True, text=True, check=True, timeout=180)
@@ -81,6 +89,7 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     database = tag + "-db"
     success = tag + "-ok"
     failure = tag + "-fail"
+    holder = None
     try:
         _docker("network", "create", network)
         _docker("run", "-d", "--name", database, "--network", network,
@@ -91,28 +100,69 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         else:
             pytest.fail("Postgres did not become ready")
         _docker("build", "-t", tag, str(client))
+        _docker("run", "--rm", "--entrypoint", "sh", tag, "-c",
+                "test ! -e /app/.env && test ! -e /app/.npmrc && "
+                "test ! -e /app/backend/private.pem && "
+                "test ! -e /app/secrets/token.txt && test ! -e /app/.git")
+        holder = subprocess.Popen(
+            ["docker", "exec", "-i", database, "psql", "-X", "-Atq", "-U", "postgres", "-d", "prototype"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        holder.stdin.write("SELECT 'held' FROM pg_advisory_lock(445566);\n")
+        holder.stdin.flush()
+        assert holder.stdout.readline().strip() == "held"
         url = "postgresql://postgres:test@" + database + ":5432/prototype"
         _docker("run", "-d", "--name", success, "--network", network,
                 "-p", "127.0.0.1::3000", "-e", "DATABASE_URL=" + url, tag)
-        published = _docker("port", success, "3000/tcp", check=False)
-        if published.returncode:
-            logs = _docker("logs", success)
-            pytest.fail(published.stderr + logs.stdout + logs.stderr)
+        for _ in range(120):
+            published = _docker("port", success, "3000/tcp", check=False)
+            if published.returncode == 0 and published.stdout.strip():
+                break
+            if _docker("inspect", "-f", "{{.State.Running}}", success).stdout.strip() == "false":
+                logs = _docker("logs", success)
+                pytest.fail(published.stderr + logs.stdout + logs.stderr)
+        else:
+            pytest.fail("Container port 3000 was not published")
         port = published.stdout.strip().rsplit(":", 1)[1]
+        for _ in range(120):
+            waiting = _docker("exec", database, "psql", "-U", "postgres", "-d", "prototype",
+                              "-Atc", "SELECT count(*) FROM pg_stat_activity WHERE "
+                              "wait_event_type = 'Lock' AND query LIKE '%pg_advisory_lock(445566)%'")
+            if waiting.stdout.strip() == "1":
+                break
+        else:
+            pytest.fail(_docker("logs", success).stdout + _docker("logs", success).stderr)
+        assert _docker("inspect", "-f", "{{.State.Running}}", success).stdout.strip() == "true"
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=1) as response:
+                pytest.fail(f"health answered {response.status} while migration was blocked")
+        except (OSError, http.client.HTTPException):
+            pass
+        holder.stdin.close()
+        holder.wait(timeout=10)
         # Poll the observable HTTP state, without a fixed sleep.
         for _ in range(120):
             try:
                 with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=1) as response:
                     assert response.status == 200
                 break
-            except (urllib.error.URLError, TimeoutError, http.client.RemoteDisconnected):
+            except (OSError, http.client.HTTPException):
                 if _docker("inspect", "-f", "{{.State.Running}}", success).stdout.strip() == "false":
                     logs = _docker("logs", success)
                     pytest.fail(logs.stdout + logs.stderr)
         else:
             pytest.fail(_docker("logs", success).stdout)
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=3) as response:
-            assert b"Prototype ready" in response.read()
+        browser = subprocess.run(
+            ["uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
+             "python", "-c",
+             "import sys\nfrom playwright.sync_api import sync_playwright\n"
+             "with sync_playwright() as p:\n"
+             "    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])\n"
+             "    page = browser.new_page()\n"
+             "    page.goto(sys.argv[1])\n"
+             "    assert page.get_by_role('heading', name='Prototype ready').is_visible()\n"
+             "    browser.close()\n", f"http://127.0.0.1:{port}/"],
+            capture_output=True, text=True, timeout=60)
+        assert browser.returncode == 0, browser.stdout + browser.stderr
         assert "Ready" in _docker("exec", database, "psql", "-U", "postgres", "-d", "prototype",
                                   "-Atc", "SELECT to_regclass('public.\"Ready\"')").stdout
         _docker("run", "-d", "--name", failure, "--network", network,
@@ -121,6 +171,11 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         assert result.stdout.strip() != "0"
         assert "Check DATABASE_URL" in _docker("logs", failure).stdout + _docker("logs", failure).stderr
     finally:
+        if holder and holder.poll() is None:
+            if not holder.stdin.closed:
+                holder.stdin.close()
+            holder.kill()
+            holder.wait()
         for name in (success, failure, database):
             _docker("rm", "-f", name, check=False)
         _docker("network", "rm", network, check=False)

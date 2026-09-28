@@ -10,6 +10,8 @@ The root `package.json` uses npm workspaces for `frontend/` and `backend/`, with
 starts in `backend/`. The frontend build writes `frontend/dist`; the backend serves that folder
 at `/` and starts with `npm run start:prod`. The prototype's first fix creates the app and its
 scripts to this contract. Until then the Dockerfile is a deploy template, not a runnable app.
+The generated `.dockerignore` keeps local environment files, keys and credential files out of
+the image; keep deployment secrets in the platform's secret store.
 
 At every container start, `npx prisma migrate deploy` runs before the backend listens. If it
 fails, the container exits without serving traffic. Check `DATABASE_URL` and the failed migration
