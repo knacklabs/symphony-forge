@@ -3,33 +3,33 @@
   "branch": "task/FORGE-SPLIT-1-A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE",
   "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
   "review": {
-    "commit": "6e17badb35418632a0db81b7b80dd92988cd125a",
+    "commit": "373ba17f1abd016c5cc048e91ac4606ebfc4e15f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The spec requires a fixed module list, while the supplied COLLECTOR contract requires discovery with `pkgutil` and no fixed list. Following this spec would require editing the shared collector whenever a command introduces a module, contradicting the spec's own acceptance criterion at lines 61\u201362. Align the spec and its read-note disposition with automatic discovery.",
+        "body": "The confirmed spec requires collecting commands from a fixed module list, but the supplied COLLECTOR contract requires discovery through `pkgutil` without a fixed list. Following the spec would require another shared-file edit whenever a command introduces a module, contradicting its own acceptance criterion at lines 61\u201362. Update this requirement and the corresponding read-note disposition to match the agreed discovery contract.",
         "file": "docs/specs/own-your-entry.md",
         "line": 28,
         "priority": "P2",
-        "title": "[P2] Replace fixed module discovery in the confirmed spec"
+        "title": "Replace fixed module discovery with the agreed automatic discovery"
       },
       {
-        "body": "The spec assigns the CI workflow to the init module, but the supplied SHIPS contract assigns it to `prcheck.py`; the SHIPS task scope also excludes `init.py`. These instructions cannot both be followed. Update the confirmed spec to name the agreed owners explicitly, including `story.py` for the Forge skill and `prcheck.py` for the workflow.",
+        "body": "The spec assigns the CI workflow to the init module, while the supplied SHIPS contract assigns it to `prcheck.py` and excludes `init.py` from that task's scope. It also names a skill module instead of the agreed `story.py` owner for the Forge skill and FDE page. These conflicting instructions should be reconciled in the spec so the implementation can follow the confirmed ownership and task boundaries.",
         "file": "docs/specs/own-your-entry.md",
         "line": 37,
         "priority": "P2",
-        "title": "[P2] Align shipped-file ownership with the SHIPS contract"
+        "title": "Align shipped-file owners with the agreed SHIPS contract"
       },
       {
-        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the patch also adds `plans/FORGE-SPLIT-1.md`, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON beneath that story. Defining and recording approval of the entire parent story is additional work beyond delivering the confirmed spec and roadmap entry. Keep those additions in the change that owns the parent story.",
+        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the diff also adds this parent-story plan, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON under that story. Creating the parent story and recording its approval and review state are not needed to deliver the confirmed spec and roadmap entry. Move those four additions to the change that owns the parent story.",
         "file": "plans/FORGE-SPLIT-1.md",
         "line": 1,
         "priority": "P2",
-        "title": "[P2] Remove parent-story additions outside this part's scope"
+        "title": "Remove the parent-story additions outside this part's scope"
       }
     ],
     "status": "clean",
-    "tree": "8c0c49a30a0b2235c53cd5698d9610b7427aa6c0cf228fa1f11b8874a838bc5d"
+    "tree": "ed20cf2f17b7250c546a5c9efddca646150296ce963ce64c1d8ba6513b6e55eb"
   },
   "status": "waiting for checks",
   "steps": [
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-09-28T05:29:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:31:21+00:00",
       "step": "review"
     }
   ],
