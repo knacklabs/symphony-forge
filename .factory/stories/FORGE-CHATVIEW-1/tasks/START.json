@@ -1,11 +1,11 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-START",
   "review": {
-    "commit": "d77c5fa5085160f747c1ba4bea2e3a6b5768e9ca",
+    "commit": "fd881bdc3ff01a976b8dddf64b00573a43949eda",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new attachment interface has no executable coverage. The stub in tests/test_chatview_start.py accepts thread/attachment/add, but every test invokes work or read; no test calls codex.attach or exercises this driver branch. Removing the attachment implementation would leave the suite green. Add integration coverage using the real driver and SDK with the app-server stub, verifying the recorded thread, identity, payload, no request without a recorded conversation, and non-fatal request errors. This tests START's interface without requiring ATTACH's future forge close integration.",
+        "body": "The new attachment interface has no executable coverage. tests/test_chatview_start.py:29 lets the stub accept thread/attachment/add, but no test invokes codex.attach or exercises this driver branch. Removing the attachment implementation would leave the suite green. Add integration coverage through codex.attach and the real SDK driver, faking only the app-server, to verify the recorded thread, identity and payload, no request without a recorded conversation, and non-fatal request errors. This interface can be tested within START without waiting for ATTACH's forge close integration.",
         "file": "src/forge/codex_turn.py",
         "line": 115,
         "priority": "P1",
@@ -13,7 +13,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "ae4a0ec4fcda7bb6f1e6d18481d4c5107fc366651ea0e89fbfcf0039e6cfdb59"
+    "tree": "5e9668bc17b3a942394de419544dae630e6aa755c965a81ad31c06e1d458999a"
   },
   "status": "fixing",
   "steps": [
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-09-28T08:28:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:48:36+00:00",
       "step": "review"
     }
   ]
