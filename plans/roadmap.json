@@ -119,6 +119,12 @@
       "title": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high",
       "status": "pending",
       "order": 60
+    },
+    {
+      "key": "FORGE-LIVE-1",
+      "title": "Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches",
+      "status": "pending",
+      "order": 61
     }
   ],
   "epics": [
