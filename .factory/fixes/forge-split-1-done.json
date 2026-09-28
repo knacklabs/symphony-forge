@@ -1,0 +1,16 @@
+{
+  "base": "a71bbbc605645fbadb59a73b0d8b351d6ebe32c2",
+  "branch": "fix/forge-split-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Each command, shipped file and command-list entry now lives with the module that owns it, so new features stop queueing behind the shared tables",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T11:50:15+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others is finished, and what it achieved."
+}
