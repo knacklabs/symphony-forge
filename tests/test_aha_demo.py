@@ -37,16 +37,28 @@ def test_5_reactions_are_kept_after_each_demo(repo):
 
 
 def test_6_signoff_is_read_back_and_drafted(repo):
+    # Old contract: draft the email after the sign-off review passed. `forge decision accept`
+    # runs that review only once the customer's reply is recorded, so the order is now:
+    # read-back call, email draft, reply recorded, accept (which reviews), re-confirm on gaps.
     section = _prototype(repo)
-    for rule in (
-        "Before the sign-off review, hold one read-back call",
+    steps = (
+        "Before the sign-off email, hold one read-back call",
         "goes through every answer on the answers page: our defaults, the agent's guesses and "
         "the topics marked later",
         "Settle every open must-answer topic in that call",
-        "After the sign-off review passes, draft the sign-off email for the reviewed version",
-        "its demo address", "what the app does", "the problem and the saving",
-        "every answer in plain words, with our defaults called out", "what happens next",
-        "The customer's reply is the approval evidence the sign-off decision records",
+        "Then draft the sign-off email for the version they will approve",
         "The salesperson sends it; Forge sends nothing.",
-    ):
-        assert rule in section, rule
+        "When the customer replies, record the reply in `forge decision new client-signoff`",
+        'then run `forge decision accept client-signoff --by "<name>"`',
+        "which runs the strict sign-off review before it accepts",
+        "If that review finds gaps, fix them and ask the customer to confirm the fixed version "
+        "again before you accept.",
+    )
+    places = [section.find(step) for step in steps]
+    assert -1 not in places, [s for s, p in zip(steps, places) if p == -1]
+    assert places == sorted(places)
+    for part in ("its demo address", "what the app does", "the problem and the saving",
+                 "every answer in plain words, with our defaults called out", "what happens next",
+                 "The customer's reply is the approval evidence the sign-off decision records"):
+        assert part in section, part
+    assert "After the sign-off review passes" not in section

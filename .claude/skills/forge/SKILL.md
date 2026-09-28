@@ -181,13 +181,17 @@ default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
 
-**Sign-off.** Before the sign-off review, hold one read-back call with the customer that goes
+**Sign-off.** Before the sign-off email, hold one read-back call with the customer that goes
 through every answer on the answers page: our defaults, the agent's guesses and the topics marked
-later. Settle every open must-answer topic in that call; `forge next` lists them. After the
-sign-off review passes, draft the sign-off email for the reviewed version: its demo address, what
-the app does, the problem and the saving, every answer in plain words, with our defaults called
-out, and what happens next. The customer's reply is the approval evidence the sign-off decision
-records. The salesperson sends it; Forge sends nothing.
+later. Settle every open must-answer topic in that call; `forge next` lists them. Then draft the
+sign-off email for the version they will approve: its demo address, what the app does, the problem
+and the saving, every answer in plain words, with our defaults called out, and what happens next.
+The salesperson sends it; Forge sends nothing. When the customer replies, record the reply in
+`forge decision new client-signoff` (customer, approved via, approved on, demo address, and the
+answers page copied word for word), then run `forge decision accept client-signoff --by "<name>"`,
+which runs the strict sign-off review before it accepts. The customer's reply is the approval
+evidence the sign-off decision records. If that review finds gaps, fix them and ask the customer
+to confirm the fixed version again before you accept.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
