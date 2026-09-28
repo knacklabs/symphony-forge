@@ -213,7 +213,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
         archive_thread: bool = False, model: str | None = None,
-        effort: str | None = None, fresh_prompt: str | None = None) -> dict[str, Any]:
+        effort: str | None = None, fresh_prompt: str | None = None,
+        design: bool = False) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
     when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
@@ -232,8 +233,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
+    config = repo.config(checkout)
+    chosen = (repo.design_models(config, "codex") if design else None)
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
-               "config": {} if archive_thread else settings(repo.config(checkout), kind),
+               "config": ({} if archive_thread else
+                          {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
+                          settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask"}
     if fresh_prompt is not None:

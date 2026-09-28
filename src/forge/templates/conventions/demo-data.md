@@ -5,7 +5,7 @@ builds the prototype's first version or changes its demo data.
 
 ## What it holds
 
-- The loader lives in the app, in `apps/api/src/demo/`. Forge ships this page, not the code.
+- The loader lives in the app, in `backend/src/demo/`. Forge ships this page, not the code.
 - Its records are shaped from the column headers of the spreadsheet or form the client uses today,
   and every label comes from the "Words they use" list in `docs/product/DISCOVERY.md`.
 - The values are made up but look like theirs. It holds no real personal data: no real names,

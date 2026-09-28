@@ -136,7 +136,8 @@ CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
-# effort is optional); building and fixing may add their subagents' model and effort, as a pair.
+# effort is optional); building, fixing and lite work may add their subagents' model and effort,
+# as a pair.
 # The cold read and design work have one entry per family.
 KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
@@ -164,6 +165,24 @@ def default_config(top: Path) -> dict[str, Any]:
     if found.returncode:
         refuse(REFUSALS["no_config"])
     return _config_text(found.stdout)
+
+
+def merge_setting(top: Path) -> str:
+    """Use agent merges for client prototypes until the fetched default branch signs off."""
+    cfg = default_config(top)
+    if cfg["repo"] != "client":
+        return cfg["merge"]
+    ref = f"origin/{default_branch(top)}"
+    names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+    pinned = cfg["signoff"]
+    for name in names:
+        if not (name == pinned if pinned else name.endswith("client-signoff.md")):
+            continue
+        record = git("show", f"{ref}:{name}", cwd=top)
+        if record.startswith("---") and re.search(
+                r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
+            return cfg["merge"]
+    return "agent"
 
 
 def _config_text(text: str) -> dict[str, Any]:
@@ -223,7 +242,7 @@ def _models_problem(table: Any) -> str:
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
             for key, value in entry.items():
-                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix") else ())):
+                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix", "lite") else ())):
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"

@@ -19,16 +19,26 @@ already runs a different stack keeps its own.
 ## Layout
 
 ```
-apps/api/            NestJS backend (see backend.md)
-apps/web/            React app (see frontend.md)
+backend/             NestJS backend (see backend.md)
+frontend/            React app (see frontend.md)
 packages/shared/     types and validators both apps use
 docker-compose.yml   Postgres for local work and tests, nothing else
+Dockerfile           the one deploy file (see deploy.md)
 .env.example         every variable, with dummy values
 README.md            how to run it, and a short plain-English "How it works"
 ```
 
 The root `package.json` declares the workspaces and one `test` script that runs lint, typecheck
 and every workspace's tests (see testing.md).
+
+## Deploy contract
+
+The root npm workspaces are named `frontend` and `backend`. `npm run build` in `frontend/`
+creates `frontend/dist`; the backend build runs from `backend/`. The backend serves the built
+frontend at `/`, starts with `npm run start:prod` in `backend/`, and answers `GET /health` with
+HTTP 200 when ready. The Dockerfile runs `npx prisma migrate deploy` before the server starts.
+The platform supplies Postgres through `DATABASE_URL` and sends traffic to port 3000. See
+[deploy.md](deploy.md) for the deployment steps and failure behavior.
 
 A prototype's first version also builds a demo-data loader, so the client sees their own work
 (see demo-data.md).
