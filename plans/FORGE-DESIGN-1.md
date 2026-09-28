@@ -1,6 +1,6 @@
 # Screens and flows are built by Opus 5.5
 
-4 parts · Risks: none · New moving parts: none
+3 parts · Risks: none · New moving parts: none
 
 ## What changes for you
 
@@ -25,13 +25,15 @@ work is.
 2. **Design work has its own models.** `forge.toml` accepts `[models.design.claude]` and
    `[models.design.codex]`; `forge init` writes them as Opus 5.5 (`claude-opus-5-5`) high and
    `gpt-6-sol` high; a repo without them uses those same values; this repo's `forge.toml` has them.
-3. **Design work goes to Opus 5.5.** `forge work` on a story task whose row is user-facing, or on a
-   fix whose allowance is "Prototype before sign-off", runs a Claude worker with
-   `[models.design.claude]`, whatever `workers` says; every other item runs as today.
+3. **Design work goes to Opus 5.5.** In a client repo (`repo = "client"`), `forge work` on a story
+   task whose row is user-facing, or on a fix whose allowance is "Prototype before sign-off", runs a
+   Claude worker with `[models.design.claude]`, whatever `workers` says; every other item, and
+   everything in Forge's own repo, runs as today.
 4. **Sol high is the fallback.** When the `claude` command is missing, or the Claude run fails
-   before it changes the checkout, `forge work` runs the same brief on Codex with
-   `[models.design.codex]` and prints and logs that it fell back and why; a Claude run that changed
-   the checkout and then failed is reported as a failure, not retried on Codex.
+   without changing the checkout (its HEAD, index and working tree are as they were just before
+   the run), `forge work` runs the same brief on Codex with `[models.design.codex]`, with every
+   safeguard of a Codex round, and prints and logs that it fell back and why; a Claude run that
+   changed the checkout and then failed is reported as a failure, not retried on Codex.
 5. **The guide says so.** The guide's models section explains the design models and the fallback.
 
 ## Risks
@@ -44,10 +46,9 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | The decision | The decision record for design work on Opus 5.5 | 1 | `docs/decisions/` | | none | no |
+| SPEC | Record and explain | The decision record for design work on Opus 5.5, and the guide's models section | 1, 5 | `docs/decisions/`, `docs/guide.md` | `tests/test_design_docs.py` | none | no |
 | MODELS | Design models | The design kind with its two family entries, the defaults, init's forge.toml and this repo's forge.toml | 2 | `src/forge/repo.py`, `src/forge/init.py`, `forge.toml` | `tests/test_design_models.py` | none | no |
 | ROUTE | Route design work | Choosing the Claude worker for design items and the Codex fallback | 3, 4 | `src/forge/worker.py` | `tests/test_design_route.py` | MODELS | no |
-| DOCS | Say so | The guide's models section | 5 | `docs/guide.md` | `tests/test_design_docs.py` | none | no |
 
 New moving parts: none
 
@@ -60,8 +61,13 @@ New moving parts: none
 - ROUTE reads the prototype allowance exactly as FORGE-PROTO-1's GATE records it: the fix state's
   `allow_large` equals "Prototype before sign-off". A task is user-facing when its row's
   User-facing cell says yes, as the brief already reads it.
+- ROUTE starts only after FORGE-PROTO-1's GATE task and the fix that makes impeccable and Emil's
+  design engineering both required have merged: GATE records the prototype allowance, and that fix
+  puts the design guidance in the worker brief and has `forge doctor` check both skills, which the
+  Claude worker then uses.
+- The Codex fallback runs exactly like a Codex round: the item's lock, recovery of a lost turn, and
+  continuing the item's Codex conversation when it has one.
 - A Claude worker round starts fresh each time, so it always gets the full brief; the Codex
   fallback continues the item's Codex conversation when it has one, as any Codex round does.
-- "Changed the checkout" means HEAD moved or `git status --porcelain` is not empty after the run.
 - Each test file starts with `STORY = "FORGE-DESIGN-1"`, and its `test_<n>_` names cite the
   Done-when items its task covers.
