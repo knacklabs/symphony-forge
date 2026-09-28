@@ -88,6 +88,13 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     assert log.read_text().splitlines() == ["sudo -v"]
 
     _stub(bin_dir, "sudo", f'echo "sudo $*" >> "{log}"')
+    _stub(bin_dir, "curl", f'echo "curl $*" >> "{log}"\nexit 22')
+    offline = subprocess.run(["/bin/bash"], input=script.read_text(), env=env,
+                             capture_output=True, text=True)
+    assert offline.returncode == 1
+    assert "Homebrew could not be downloaded" in offline.stderr
+    assert "run this script again" in offline.stderr
+    log.unlink()
     _stub(bin_dir, "curl", f'echo "curl $*" >> "{log}"\n'
           f'echo "/bin/cp {tmp_path / "brew"} {bin_dir / "brew"}"')
     _stub(bin_dir, "git", "exit 0")
@@ -106,7 +113,7 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     full = subprocess.run(["/bin/bash"], input=script.read_text(), env=env,
                           capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
-    assert log.read_text().splitlines() == ["sudo -v", "sudo -v",
+    assert log.read_text().splitlines() == ["sudo -v",
                                            "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"]
     assert "forge v1.1.0" in full.stdout
 
@@ -232,32 +239,38 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
     missing = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
                              env=env, capture_output=True, text=True)
     assert missing.returncode == 0 and missing.stdout.strip() == "Missing: WSL2 for Docker"
+    # The runner's own rights never decide the path: the script reads FORGE_INSTALL_ADMIN first.
+    user = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
+                          env=env | {"FORGE_INSTALL_ADMIN": "0"}, capture_output=True, text=True)
+    assert user.returncode == 1
+    assert "Open PowerShell as administrator" in user.stdout
+    assert "restart" in user.stdout.lower()
+    assert "WSL install requested" not in user.stdout
+    admin = env | {"FORGE_INSTALL_ADMIN": "1"}
     setup = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
-                           env=env, capture_output=True, text=True)
+                           env=admin, capture_output=True, text=True)
+    assert setup.returncode == 0, setup.stderr
+    assert "WSL install requested" in setup.stdout
     assert "restart" in setup.stdout.lower()
-    if setup.returncode == 0:
-        assert "WSL install requested" in setup.stdout
-    else:
-        assert "administrator" in setup.stdout.lower()
 
-    # An installed WSL1 needs a version change, not another install request.
+    # An installed WSL1 needs the Virtual Machine Platform feature, then a version change.
     (bin_dir / "wsl.cmd").write_text(
         f'@echo off\nif "%1"=="--status" (echo Default Version: 1) else (echo wsl %* >> "{log}")\n',
         encoding="utf-8")
+    (bin_dir / "dism.cmd").write_text(
+        f'@echo off\necho dism %* >> "{log}"\nexit /b 3010\n', encoding="utf-8")
     wsl1_check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
                                 env=env, capture_output=True, text=True)
     assert wsl1_check.returncode == 0
     assert wsl1_check.stdout.strip() == "Missing: WSL2 for Docker"
     assert not log.exists()
     wsl1_setup = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
-                                env=env, capture_output=True, text=True)
-    assert "restart" in wsl1_setup.stdout.lower()
-    if wsl1_setup.returncode == 0:
-        assert [line.rstrip() for line in log.read_text().splitlines()] == ["wsl --set-default-version 2"]
-    else:
-        assert "administrator" in wsl1_setup.stdout.lower()
-        assert not log.exists()
-
+                                env=admin, capture_output=True, text=True)
+    assert wsl1_setup.returncode == 0, wsl1_setup.stderr
+    assert "Windows asks for a restart" in wsl1_setup.stdout
+    assert [line.rstrip() for line in log.read_text().splitlines()] == [
+        "dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart",
+        "wsl --set-default-version 2"]
 
 def test_2_one_install_script_per_laptop_checks_and_installs(tmp_path):
     if os.name == "nt":

@@ -38,13 +38,23 @@ $wslReady = $wslStatus -match 'Default Version: 2'
 if (-not $wslReady) {
     if ($Check) { Missing 'WSL2 for Docker' }
     else {
-        $admin = [Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
-        if (-not $admin.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        # FORGE_INSTALL_ADMIN (1 or 0) lets the tests choose either path on any runner.
+        $isAdmin = if ($env:FORGE_INSTALL_ADMIN) { $env:FORGE_INSTALL_ADMIN -eq '1' } else {
+            ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+                [Security.Principal.WindowsBuiltInRole]::Administrator)
+        }
+        if (-not $isAdmin) {
             Write-Output 'Docker needs WSL2. Open PowerShell as administrator, run this script again, then restart your laptop once.'
             exit 1
         }
         Write-Output 'Switching on WSL2 for Docker. Restart your laptop once after setup, then run this script again.'
-        if ($wslStatus -match 'Default Version: 1') { & wsl --set-default-version 2 }
+        if ($wslStatus -match 'Default Version: 1') {
+            & dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+            # 3010 means the feature is on and Windows wants a restart.
+            if ($LASTEXITCODE -notin 0, 3010) { throw 'WSL2 could not be switched on. Check the message above, then run this script again as administrator.' }
+            if ($LASTEXITCODE -eq 3010) { Write-Output 'Windows asks for a restart: restart your laptop, then run this script again.' }
+            & wsl --set-default-version 2
+        }
         else { & wsl --install --no-distribution }
         if ($LASTEXITCODE -ne 0) { throw 'WSL2 did not switch on. Check the message above, then run this script again as administrator.' }
     }

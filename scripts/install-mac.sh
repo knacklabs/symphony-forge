@@ -35,7 +35,12 @@ install_brew() {
     echo 'Administrator access failed. Ask your Mac administrator for access, then run this script again.' >&2
     exit 1
   fi
-  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  local installer
+  if ! installer=$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh); then
+    echo 'Homebrew could not be downloaded. Check your internet connection, then run this script again.' >&2
+    exit 1
+  fi
+  NONINTERACTIVE=1 /bin/bash -c "$installer"
   export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
 }
 brew_tool() {
