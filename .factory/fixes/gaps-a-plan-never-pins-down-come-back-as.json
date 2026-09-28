@@ -1,0 +1,14 @@
+{
+  "base": "79af562bf260f110ad6a0b158c6847bcac95165c",
+  "branch": "fix/gaps-a-plan-never-pins-down-come-back-as",
+  "done_when": "The same cold reader reads the plan again until it has no findings",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T15:42:12+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan"
+}
