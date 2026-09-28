@@ -17,8 +17,6 @@ REFUSALS = {
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
-    "archive": ("Forge could not archive every Codex conversation for {item}.",
-                "try forge merge {item} again"),
     "worktree": ("Forge could not remove the worktree for {item}.",
                  "unlock it or close programs using it, then forge merge {item}"),
 }
@@ -72,13 +70,15 @@ def merge(args: argparse.Namespace) -> int:
         _save_ready(path, receipt)
     if not isinstance(pending, list) or not all(isinstance(thread, str) for thread in pending):
         repo.refuse(REFUSALS["not_ready"], item=item)
+    failed_archives = []
     for thread in pending[:]:
         try:
             archived = codex.archive(main_checkout, item, "Fix", thread)
         except Exception:
             archived = False
         if not archived:
-            repo.refuse(REFUSALS["archive"], item=item)
+            failed_archives.append(thread)
+            continue
         pending.remove(thread)
         _save_ready(path, receipt)
     remote_ref = f"refs/heads/{branch}"
@@ -114,6 +114,9 @@ def merge(args: argparse.Namespace) -> int:
         _save_ready(path, receipt)
     else:
         path.unlink(missing_ok=True)
+    if failed_archives:
+        print(f"Forge could not archive these Codex conversations for {item}: "
+              f"{', '.join(failed_archives)}. Codex can archive them later.")
     return 0
 
 
