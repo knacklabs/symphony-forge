@@ -37,7 +37,8 @@ INSTALL = {
     "impeccable": "npx skills add pbakaus/impeccable -g",
     "emil-design-eng": "install emil-design-eng where the worker reads skills",
     "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
-                   f"{review.AUTOREVIEW_PIN} into {review.HELPER.parents[1]}"),
+                   f"{review.AUTOREVIEW_PIN} into {review.HELPERS[0].parents[1]} or "
+                   f"{review.HELPERS[1].parents[1]}"),
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
