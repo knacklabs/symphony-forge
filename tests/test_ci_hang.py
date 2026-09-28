@@ -22,7 +22,8 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
         text = (WORKFLOWS / name).read_text(encoding="utf-8")
         for command in re.findall(r"uv run [^\"]*?python -m pytest[^\n\"]*", text, re.S):
             seen += 1
-            assert "--with pytest-timeout" in command, f"{name}: {command}"
+            # pytest-timeout was added at run time; CI now uses the locked dev group.
+            assert "--group dev" in command, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
     assert seen == 2
 

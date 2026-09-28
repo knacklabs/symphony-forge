@@ -3,7 +3,7 @@ version = "v1.1.0"
 repo = "forge-source"
 workers = "codex"
 merge = "agent"
-test = "uv run --python 3.11 --with pytest --with pytest-xdist --with pytest-timeout python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
+test = "uv run --python 3.11 --group dev python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 

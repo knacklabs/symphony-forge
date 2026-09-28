@@ -9,6 +9,9 @@ description = "Forge: one small tool that takes a story from approval to a merge
 requires-python = ">=3.11"
 dependencies = []
 
+[dependency-groups]
+dev = ["pytest", "pytest-xdist", "pytest-split", "pytest-timeout"]
+
 [project.scripts]
 forge = "forge.cli:main"
 
