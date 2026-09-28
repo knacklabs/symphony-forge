@@ -32,8 +32,7 @@ jobs:
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 --group dev
-          python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
 
   net-lines:
     if: github.event_name == 'pull_request'

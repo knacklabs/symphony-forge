@@ -1,8 +1,10 @@
 """A cloned Forge checkout installs the same test tools CI uses."""
 
 import os
+import shlex
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 
@@ -55,9 +57,16 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
     assert "1 passed" in run.stdout
 
 
-def test_2_ci_uses_the_declared_dev_group():
+def test_2_ci_runs_the_documented_pytest_command():
+    command = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["test"]
+    args = shlex.split(command)
+    assert args[:2] == ["uv", "run"]
+    assert "pytest" in args
+    assert "--group" not in args and "--with" not in args
+
     workflows = ROOT / ".github" / "workflows"
     for name in ("forge-next.yml", "forge.yml", "codex-smoke.yml"):
         workflow = (workflows / name).read_text(encoding="utf-8")
+        assert "uv run --python 3.11 pytest" in workflow
+        assert "--group dev" not in workflow
         assert "--with pytest" not in workflow
-        assert "--group dev" in workflow
