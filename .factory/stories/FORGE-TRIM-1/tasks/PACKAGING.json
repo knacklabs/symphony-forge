@@ -1,26 +1,26 @@
 {
   "branch": "task/FORGE-TRIM-1-PACKAGING",
   "review": {
-    "commit": "8e3b1ef52c81acfbd29f4191ae6de66de9d484ef",
+    "commit": "5634981ff1d82a24933d7a7ed2ec79c7009f6a08",
     "dismissals": [],
     "findings": [
       {
-        "body": "The explicitly required packaging test file does not exist. This branch strengthens the integration test in tests/test_trim_skills.py, but never adds or changes tests/test_trim_packaging.py as required. Move the packaging coverage into the required module, preserving the real installed `forge sync` checks for all three installation forms and the byte assertions; avoid duplicating the existing test.",
+        "body": "The new assertion hashes checkout bytes against LF-only digests. With Git for Windows' default `core.autocrlf=true`, these Markdown files are checked out with CRLF, so the test fails before exercising any installation. The Windows suite is enabled in `.github/workflows/forge-next.yml:23`, and `.gitattributes:1` only pins two unrelated JSON files. Moreover, `src/forge/sync.py:246` normalizes newlines when reading and line 146 writes UTF-8 bytes, so the new raw-byte `expected` comparison also disagrees with correct sync output on such checkouts. Preserve byte-exact assertions on generated files, but derive the baseline independently of checkout newline conversion. The default is confirmed by the [Git for Windows installer](https://github.com/git-for-windows/build-extra/blob/main/installer/install.iss).",
         "file": "tests/test_trim_skills.py",
         "line": 37,
         "priority": "P1",
-        "title": "Not done: tests/test_trim_packaging.py"
+        "title": "Not done: byte-for-byte checks on Windows"
       },
       {
-        "body": "This task permits changes only to the two named test files. Editing plans/FORGE-TRIM-1.md and plans/FORGE-TRIM-1.read.md is unnecessary for the packaging checks: the supplied scope already permits tests/test_trim_skills.py. Revert these plan and read-record edits to keep the change within the authorized scope.",
+        "body": "The selected diff changes this plan, `plans/FORGE-TRIM-1.read.md:5`, and adds `.factory/stories/FORGE-TRIM-1/tasks/PACKAGING.json:1`, although the task permits only the two named test files. None is needed to implement the packaging assertions: the review contract already explicitly requires changing `tests/test_trim_skills.py`. Revert the plan, read-record and task-state changes to keep this branch within its authorized scope.",
         "file": "plans/FORGE-TRIM-1.md",
         "line": 41,
         "priority": "P2",
-        "title": "Remove unnecessary plan edits outside the permitted scope"
+        "title": "Remove the unnecessary changes outside the permitted test files"
       }
     ],
     "status": "blocked",
-    "tree": "5d5f937c6e9ff3ad2d83c17c0ff9a2c53ea2c68494f475d88d901edc722aa9b0"
+    "tree": "dc1f385ed96fa69609153cf20f8483035f2707a9fb058c78a66f0f683089c581"
   },
   "status": "fixing",
   "steps": [
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-09-28T02:10:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:18:04+00:00",
       "step": "review"
     }
   ]
