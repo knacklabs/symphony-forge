@@ -1,27 +1,21 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-START",
   "review": {
-    "commit": "30eb90c35cac70373023bbf39bc00148a4b81508",
-    "dismissals": [
-      {
-        "because": "src/forge/codex_turn.py:115 the attach path is only reachable through forge close, which the story's ATTACH task wires and tests (tests/test_chatview_attach.py, ATTACH owns src/forge/close.py)",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "commit": "d77c5fa5085160f747c1ba4bea2e3a6b5768e9ca",
+    "dismissals": [],
     "findings": [
       {
-        "body": "The branch adds `codex.attach()` and the driver's attachment request path, but no test invokes either path. The new stub accepts `thread/attachment/add`, yet every command exercised by the tests is work or read; deleting the attachment implementation would leave these tests green. Add coverage of this branch's attachment interface through the real driver and SDK, checking the recorded thread, identity and payload, no request without a recorded conversation, and non-fatal request failure. This covers START's interface without requiring ATTACH's later `forge close` integration.",
+        "body": "The new attachment interface has no executable coverage. The stub in tests/test_chatview_start.py accepts thread/attachment/add, but every test invokes work or read; no test calls codex.attach or exercises this driver branch. Removing the attachment implementation would leave the suite green. Add integration coverage using the real driver and SDK with the app-server stub, verifying the recorded thread, identity, payload, no request without a recorded conversation, and non-fatal request errors. This tests START's interface without requiring ATTACH's future forge close integration.",
         "file": "src/forge/codex_turn.py",
         "line": 115,
         "priority": "P1",
         "title": "Not done: attachment request tests"
       }
     ],
-    "status": "clean",
-    "tree": "16673ab6ff5a7953835924446b4aed8d97d7073ea9c4ef69b1ba55bb0881f900"
+    "status": "blocked",
+    "tree": "ae4a0ec4fcda7bb6f1e6d18481d4c5107fc366651ea0e89fbfcf0039e6cfdb59"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T05:28:42+00:00",
@@ -33,6 +27,10 @@
     },
     {
       "at": "2026-09-28T08:07:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:28:19+00:00",
       "step": "review"
     }
   ]
