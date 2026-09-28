@@ -3,7 +3,7 @@
   "branch": "fix/the-macos-test-job-has-a-5-minute-limit",
   "done_when": "The macOS test jobs in .github/workflows/forge-next.yml get the same 10-minute limit as Windows, Linux keeps 5, and the full test suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T08:21:33+00:00",
