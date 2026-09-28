@@ -29,10 +29,10 @@ STATE = re.compile(r"\.factory/(?:stories/(?P<key>[A-Z][A-Z0-9-]*)/(?:story|task
                    r"|fixes/(?P<fix>[a-z0-9][a-z0-9-]*))\.json")
 # ponytail: a merged fix "fixed Forge" when it changed Forge's own files; widen once a miss shows up.
 FORGE_FILES = ("forge.toml", ".claude/", ".codex/", ".github/workflows/forge.yml", "src/forge/")
-WAITING = "Waiting for someone to accept it"
-STATUS = {"started": "Started, not built yet", "working": "Being built", "reviewing": "Being reviewed",
-          "fixing": "Being fixed after its review", "waiting for checks": "Being checked",
-          "ready": "Being checked"}
+WAITING = "Ready to merge"
+STATUS = {"started": "Waiting to start", "working": "In progress", "reviewing": "Under review",
+          "fixing": "Needs fixes", "waiting for checks": "Checks running",
+          "ready": "Ready to merge"}
 
 Item = dict[str, Any]
 
@@ -106,6 +106,7 @@ def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
         parts = [(names.get(tid) or "A part with no name yet", mine.get(tid))
                  for tid in [*names, *sorted(set(mine) - set(names))]]
         stories.append(_story(top, key, state, state.get("title") or titles.get(key), parts))
+    stories.sort(key=lambda item: item["finished"])
     fixes.sort(key=lambda fix: fix["start"] or now, reverse=True)
     return stories, fixes, prs
 
@@ -139,14 +140,24 @@ def _prs(top: Path) -> list[Item] | None:
     """Every pull request gh can see, newest first, or None without a working gh."""
     if not shutil.which("gh"):
         return None
-    # ponytail: the newest 1,000 pull requests in one call; page by date once a repo outgrows it.
+    # GitHub times out on this repo when it resolves files and checks for every pull request.
     done = repo.run("gh", "pr", "list", "--state", "all", "--limit", "1000", "--json",
-                    "headRefName,state,title,body,mergedAt,files,statusCheckRollup", cwd=top)
+                    "headRefName,state,title,body,mergedAt,url", cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else None
     except ValueError:
         prs = None
-    return prs if isinstance(prs, list) and all(isinstance(pr, dict) for pr in prs) else None
+    if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
+        return None
+    recent = repo.run("gh", "pr", "list", "--state", "all", "--limit", "25", "--json",
+                      "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup", cwd=top)
+    try:
+        details = json.loads(recent.stdout) if recent.returncode == 0 else []
+    except ValueError:
+        details = []
+    by_branch = {pr["headRefName"]: pr for pr in details if isinstance(pr, dict)
+                 and isinstance(pr.get("headRefName"), str)}
+    return [{**pr, **by_branch.get(pr.get("headRefName"), {})} for pr in prs]
 
 
 def _read(top: Path, where: Path | str, rel: str) -> str:
@@ -170,14 +181,14 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     elif state.get("status") == "done":
         sentence = f"Finished on {_day(_when(state.get('finished')))}."
     elif not approved:
-        sentence = "Being planned." if state.get("status") == "planning" else "Planned, and waiting for approval."
+        sentence = "Planning." if state.get("status") == "planning" else "Waiting for approval."
     elif parts and len(finished) == len(parts):
-        sentence = "Every part is finished; waiting for someone to write down what it achieved."
+        sentence = "All parts finished; record the outcome."
     elif not started:
         sentence = "Approved; no part has started yet."
     else:
-        sentence = (f"Being built: {len(finished)} of {len(parts)} parts finished"
-                    + (f", {len(waiting)} waiting for someone to accept it" if waiting else "") + ".")
+        sentence = (f"In progress: {len(finished)} of {len(parts)} parts finished"
+                    + (f", {len(waiting)} ready to merge" if waiting else "") + ".")
     touches = state.get("touches", 0) + sum(part["touches"] for part in started)
     meta = []
     begun = _step(state, "start")
@@ -194,7 +205,8 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     if state.get("status") == "done" and ended:
         timeline.append((ended, "The story was finished.", state.get("outcome") or ""))
     return {"title": title or "A story with no title yet", "sentence": sentence, "meta": meta,
-            "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved)}
+            "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved),
+            "finished": state.get("status") == "done"}
 
 
 def _part(top: Path, landed: str, rel: str, state: Item, merged: bool, pr: Item | None,
@@ -316,8 +328,10 @@ def _day(when: datetime | None) -> str:
 
 
 def _summary(pr: Item) -> str:
-    """A pull request's summary: the first line of its body, which close writes in plain English."""
-    line = (str(pr.get("body") or "").strip().splitlines() or [""])[0].strip()
+    """A pull request's done-when line, or the first line of an older body."""
+    lines = str(pr.get("body") or "").strip().splitlines()
+    line = next((line.removeprefix("Done when: ") for line in lines
+                 if line.startswith("Done when: ")), lines[0].strip() if lines else "")
     return "" if line.startswith("<!--") else line
 
 
@@ -337,7 +351,9 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
         lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
         lines += [f'<p class="took">{esc(_cap("; ".join(item["took"])))}.</p>'] if item["took"] else []
         lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]]
-        return f'<li><b>{esc(name)}</b>: <span class="status">{esc(item["status"])}.</span>{"".join(lines)}</li>'
+        url = (item.get("pr") or {}).get("url")
+        label = (f'<a href="{esc(url, quote=True)}">{esc(name)}</a>' if url else esc(name))
+        return f'<li><b>{label}</b>: <span class="status">{esc(item["status"])}.</span>{"".join(lines)}</li>'
 
     def card(s: Item) -> str:
         body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(s["sentence"])}</p>']
@@ -353,7 +369,14 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
 
     note = ("" if prs is not None else '<p class="card note">GitHub couldn\'t be reached, so the list of '
             "finished work isn't available. This page shows the saved dates only.</p>")
-    fixed = "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in fixes)
+    active = [fix for fix in fixes if not fix["finished"]]
+    finished = [fix for fix in fixes if fix["finished"]]
+    fixed = "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in active)
+    if finished:
+        fixed += (f'<li><details><summary>{len(finished)} finished '
+                  f'fix{"es" if len(finished) != 1 else ""}</summary><ul>'
+                  + "".join(part(fix["name"], fix, _summary(fix["pr"] or {})) for fix in finished)
+                  + "</ul></details></li>")
     now = _when(repo.now()) or datetime.now(timezone.utc)
     return Template((Path(__file__).parent / "board.html").read_text(encoding="utf-8")).substitute(
         updated=f"{_day(now)} at {now:%H:%M} UTC",

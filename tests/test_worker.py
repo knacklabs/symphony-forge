@@ -32,7 +32,7 @@ def calls(log: Path) -> list[dict]:
 def test_17_worker(repo, gh, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\ntest = "pytest -q"\n'
+    repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\ntest = "pytest -q"\n'
                              'models.build = { model = "sonnet", effort = "medium" }\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't, and one sits

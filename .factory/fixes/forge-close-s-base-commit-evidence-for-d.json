@@ -30,5 +30,5 @@
       "step": "review"
     }
   ],
-  "why": "forge close's base-commit evidence for deleted files is on main but not released, so myclaw (pinned to v1.0.1) can't dismiss the finding about a password in a file its migration deletes"
+  "why": "forge close's base-commit evidence for deleted files is on main but not released, so a copied-in client (pinned to v1.0.1) can't dismiss the finding about a password in a file its migration deletes"
 }

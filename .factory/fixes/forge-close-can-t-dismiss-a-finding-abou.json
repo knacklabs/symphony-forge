@@ -25,5 +25,5 @@
       "step": "review"
     }
   ],
-  "why": "forge close can't dismiss a finding about a file the branch deletes: --because must cite a line of the reviewed commit, and the deleted file has none (myclaw's migrate PR has a finding about a password in a file the migration deletes)"
+  "why": "forge close can't dismiss a finding about a file the branch deletes: --because must cite a line of the reviewed commit, and the deleted file has none (the copied-in client's migrate PR has a finding about a password in a file the migration deletes)"
 }

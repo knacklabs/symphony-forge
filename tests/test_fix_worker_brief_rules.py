@@ -7,7 +7,7 @@ STORY = "FIX-WORKER-BRIEF-RULES"
 def test_1_worker_brief_says_when_to_skip_tests_and_run_forge(repo):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\n'
+    repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge")

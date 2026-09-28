@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import tomllib
 from datetime import datetime, timezone
 from pathlib import Path
@@ -109,13 +110,28 @@ def work_log(top: Path, item: str) -> Path:
     return forge_dir(top) / f"work-{item.replace('/', '-')}.log"
 
 
+def record_timing(top: Path, item: str, step: str, start: str, clock: float,
+                  outcome: str, model: dict[str, str] | None = None) -> None:
+    """Append a best-effort timing in the shared, uncommitted Git directory."""
+    line = {"item": item, "step": step, "start": start,
+            "seconds": round(time.monotonic() - clock, 3), "outcome": outcome}
+    if model:
+        line.update({key: model[key] for key in ("model", "effort") if key in model})
+    try:
+        with (forge_dir(top) / "timings.jsonl").open("a", encoding="utf-8") as out:
+            out.write(json.dumps(line) + "\n")
+    except OSError:
+        pass  # Timing is diagnostic; a full or unwritable Git directory must not fail the command.
+
+
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str,
+KEYS = {"version": str, "repo": str, "workers": str, "test": str, "signoff": str, "merge": str,
         "checks": list, "interfaces": list, "models": dict}
-DEFAULTS = {"repo": "client", "workers": "claude", "test": "", "signoff": "",
+DEFAULTS = {"repo": "client", "workers": "codex", "test": "", "signoff": "", "merge": "human",
             "checks": [], "interfaces": [], "models": {}}
-CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex")}
+CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
+           "merge": ("agent", "human")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -133,7 +149,24 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if not path.is_file():
         refuse(REFUSALS["no_config"])
     try:
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
+        return _config_text(path.read_text(encoding="utf-8"))
+    except UnicodeDecodeError as exc:
+        refuse(REFUSALS["bad_config"], problem=exc)
+
+
+def default_config(top: Path) -> dict[str, Any]:
+    """Fetch and read only the default branch's config for merge permission and checks."""
+    default = default_branch(top)
+    git("fetch", "-q", "origin", default, cwd=top)
+    found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
+    if found.returncode:
+        refuse(REFUSALS["no_config"])
+    return _config_text(found.stdout)
+
+
+def _config_text(text: str) -> dict[str, Any]:
+    try:
+        data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
     if "model" in data:
@@ -145,6 +178,12 @@ def config(top: Path | None = None) -> dict[str, Any]:
     if problem:
         refuse(REFUSALS["models"], problem=problem)
     return {**DEFAULTS, **data}
+
+
+def ready_path(item: str, top: Path) -> Path:
+    """An item's uncommitted ready receipt in the shared git directory."""
+    state_path(item)  # Validate before using the item in a path.
+    return forge_dir(top) / "ready" / f"{item}.json"
 
 
 def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
