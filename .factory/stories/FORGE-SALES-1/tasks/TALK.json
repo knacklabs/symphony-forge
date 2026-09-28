@@ -1,28 +1,21 @@
 {
   "branch": "task/FORGE-SALES-1-TALK",
   "review": {
-    "commit": "5596c6600722a5fd46e2cc68db185356fbafc7a5",
+    "commit": "c3383af29e3a6bbb052c9984b1079aaa6a629eed",
     "dismissals": [],
     "findings": [
       {
-        "body": "When `forge close` has saved `waiting for checks` and CI later turns green, `forge next` treats the PR as ready at `nextstep.py:357-363`. The new agent-merge rule only handles `status == \"ready\"`, so an unsigned client repo with a PR URL still gets `Next: merge <url>, then forge next`. That directs a human merge instead of completing `forge close` and using `forge merge`.",
+        "body": "`repo.default_config(top)` runs `git fetch origin` (src/forge/repo.py:160-164). Because this new call runs whenever the cached default branch has a Dockerfile, `forge next` now fails when origin is unavailable, even if the cached branch contains everything needed to show the platform reminder. It can also refresh the branch midway through a report that has already read other state. Read `forge.toml` from the same last-fetched ref used for the Dockerfile and brief.",
         "file": "src/forge/nextstep.py",
-        "line": 343,
-        "priority": "P1",
-        "title": "Not done: Prototype changes merge themselves"
-      },
-      {
-        "body": "This test calls `forge close` until it has written a ready receipt before checking `forge next`. It never exercises a green PR whose saved state is still `waiting for checks`, so it passes while the command tells an unsigned client to merge manually. Add a real `forge next` check for that state.",
-        "file": "tests/test_sales_talk.py",
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: test the green-checks path before close completes"
+        "line": 193,
+        "priority": "P2",
+        "title": "Use the last-fetched branch for the demo reminder"
       }
     ],
-    "status": "blocked",
-    "tree": "d0e00d0c44ea726cd79ff0518257acbbb957be83cd4c4ef2f9fc9b7962dc6534"
+    "status": "clean",
+    "tree": "1c277e2be881dfa4313a5cc3cd1d77478659594d6037e3bc847cddc5127919a6"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T15:45:44+00:00",
@@ -30,6 +23,10 @@
     },
     {
       "at": "2026-09-28T16:06:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T16:22:57+00:00",
       "step": "review"
     }
   ]
