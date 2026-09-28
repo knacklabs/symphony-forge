@@ -3,11 +3,30 @@
   "branch": "fix/autoreview-and-other-astra-passes-burn-t",
   "done_when": "This repo's forge.toml and the forge.toml that forge init writes set [models.review] to gpt-6-sol with xhigh effort, and no Forge default names gpt-6-astra",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "7df48e8cbfef37c79ea8fdf2bb68ae13d6d0186e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This test runs the real `forge init` command and checks the generated review model. The changed `tests/test_codex_reader.py:164-176` already runs the same command through `_fresh_client` and asserts the same review model and effort. A regression in either value fails that existing test, so this adds another full repository setup without covering a distinct failure.",
+        "file": "tests/test_fix_autoreview_and_other_astra_passes_burn_t.py",
+        "line": 9,
+        "priority": "P2",
+        "title": "Simpler: remove the duplicate init test \u2192 keep the existing command assertion"
+      }
+    ],
+    "status": "clean",
+    "tree": "b80796074baa44b8c489df8626552f382a3edfbb4b4ac9cdb759a50e48919cd3"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:48:36+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:08:09+00:00",
+      "step": "review"
     }
   ],
   "why": "Autoreview and other Astra passes burn too many tokens; the owner moved all Astra work to Sol at xhigh effort on 2026-09-28"
