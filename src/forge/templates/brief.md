@@ -87,6 +87,8 @@ a test there takes a number the story's own criterion needs.
 <!-- end -->
 ## Tests first
 
+A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
+
 For each Done-when item you cover, write one test at the boundary the user touches, named for the
 item. Run it and watch it fail, then build until it passes. Never edit or delete a test to make it
 pass; if a test is wrong, say so. A test whose result a stub or fake decides proves nothing. Use
@@ -105,8 +107,7 @@ many cases, never an item's only proof. Review reports an item proven only by un
 When changing a user-facing flow, add or update its Playwright test, including an old flow a story
 touches for the first time.
 
-A change to documentation only needs no test. Documentation-only changes need no new behaviour test;
-check claims, commands and links.
+Add every test your task's Tests column names, even when the change is documentation only.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
 
 <!-- if user-facing -->
@@ -161,6 +162,8 @@ Joining lines or removing blank lines never counts as a reduction.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
+Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
+conventions apply only to a repo on the default stack.
 
 ## When you finish
 

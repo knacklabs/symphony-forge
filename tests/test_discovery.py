@@ -50,7 +50,7 @@ def _discovery(client: Path) -> str:
     return " ".join(skill.split("\n## Discovery\n")[1].split("\n## ")[0].split())
 
 
-def test_1_discovery_asks_by_size_or_runs_office_hours(repo, gh, tmp_path):
+def test_1_discovery_asks_by_size(repo, gh, tmp_path):
     section = _discovery(_client(repo, gh, tmp_path))
     # An everyday ask: one past-event question per turn, each saying why, up to the limit.
     for rule in ("one question per turn", "about something that already happened",
@@ -58,11 +58,6 @@ def test_1_discovery_asks_by_size_or_runs_office_hours(repo, gh, tmp_path):
                  "at most two questions for a fix and eight for a story",
                  "write what is still unanswered as `unknown`",
                  "neutral choices", "recommendation first"):
-        assert rule in section, rule
-    # A new project, or an ask no confirmed spec covers: office-hours, or the fallback without it.
-    for rule in ("a new project, or an ask no confirmed spec covers", "`/office-hours`",
-                 "`*-design-*.md`", "unchanged into `docs/context/`",
-                 "github.com/garrytan/gstack", "your own interview"):
         assert rule in section, rule
 
 

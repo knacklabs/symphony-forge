@@ -125,6 +125,12 @@
       "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
       "status": "pending",
       "order": 61
+    },
+    {
+      "key": "FORGE-LIVE-1",
+      "title": "Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches",
+      "status": "pending",
+      "order": 62
     }
   ],
   "epics": [
