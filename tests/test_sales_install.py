@@ -19,8 +19,7 @@ def _mac_check_and_install(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "calls"
-    for name in ("git", "node", "brew"):
-        _stub(bin_dir, name, "exit 0")
+    _stub(bin_dir, "brew", "exit 0")
     env = os.environ | {"PATH": str(bin_dir), "HOME": str(tmp_path)}
     script = ROOT / "scripts/install-mac.sh"
 
@@ -28,14 +27,14 @@ def _mac_check_and_install(tmp_path):
                            capture_output=True, text=True)
     assert check.returncode == 0, check.stderr
     assert "GitHub CLI" in check.stdout
+    assert "Missing: Git" in check.stdout.splitlines()
+    assert "Missing: Node" in check.stdout.splitlines()
     assert "Docker" in check.stdout
     assert "uv" in check.stdout
     assert "Forge" in check.stdout
     assert "Claude Code" in check.stdout
     assert "Codex" in check.stdout
     assert "Playwright browsers" in check.stdout
-    assert "Git\n" not in check.stdout
-    assert "Node\n" not in check.stdout
     assert all(line.startswith("Missing: ") for line in check.stdout.splitlines())
     assert not log.exists()
 
@@ -47,12 +46,14 @@ def _mac_check_and_install(tmp_path):
 
     installed = tmp_path / "installed"
     installed.mkdir()
+    for name in ("git", "node"):
+        _stub(installed, name, "exit 0")
     _stub(installed, "uv", f'echo "uv $*" >> "{log}"\n'
           f'case "$*" in "tool dir --bin") echo "{bin_dir}";; '
           f'*"tool install"*) /bin/cp "{installed / "forge"}" "{bin_dir / "forge"}";; esac')
     _stub(installed, "forge", 'echo "forge v1.1.0"')
     _stub(bin_dir, "brew", f'echo "brew $*" >> "{log}"\n'
-          f'case "$*" in *"install uv"*) /bin/cp "{installed / "uv"}" "{bin_dir / "uv"}";; esac')
+          f'case "$2" in git|node|uv) /bin/cp "{installed}/$2" "{bin_dir}/$2";; esac')
     _stub(bin_dir, "npm", f'echo "npm $*" >> "{log}"')
     _stub(bin_dir, "npx", f'echo "npx $*" >> "{log}"')
     # A command installed earlier in the run can be called through the same PATH.
@@ -60,7 +61,8 @@ def _mac_check_and_install(tmp_path):
                           capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
     calls = log.read_text().splitlines()
-    assert calls == ["brew install gh", "brew install --cask docker", "brew install uv",
+    assert calls == ["brew install git", "brew install gh", "brew install node",
+                     "brew install --cask docker", "brew install uv",
                      "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.1.0", "uv tool update-shell",
                      "uv tool dir --bin", "npm install -g @anthropic-ai/claude-code",
                      "npm install -g @openai/codex",
@@ -113,7 +115,7 @@ def _windows_check_and_install(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "calls"
-    for name in ("git", "node", "winget", "npm", "npx", "wsl"):
+    for name in ("winget", "npm", "npx", "wsl"):
         (bin_dir / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
     powershell = shutil.which("powershell")
@@ -128,7 +130,8 @@ def _windows_check_and_install(tmp_path):
                            env=env, capture_output=True, text=True)
     assert check.returncode == 0, check.stderr
     assert set(check.stdout.splitlines()) == {
-        "Missing: GitHub CLI", "Missing: Docker", "Missing: uv", "Missing: Forge",
+        "Missing: Git", "Missing: GitHub CLI", "Missing: Node", "Missing: Docker",
+        "Missing: uv", "Missing: Forge",
         "Missing: Claude Code", "Missing: Codex", "Missing: Playwright browsers"}
     assert all(line.startswith("Missing: ") for line in check.stdout.splitlines())
     assert not log.exists()
@@ -142,12 +145,16 @@ def _windows_check_and_install(tmp_path):
         f'if "%1 %2"=="tool install" copy /Y "{installed / "forge.cmd"}" "{tool_bin / "forge.cmd"}" >nul\n',
         encoding="utf-8")
     (installed / "forge.cmd").write_text("@echo forge v1.1.0\n", encoding="utf-8")
+    for name in ("git", "node"):
+        (installed / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("claude", "codex"):
         (installed / f"{name}.cmd").write_text(f"@echo {name} ready\n", encoding="utf-8")
         (installed / f"{name}.ps1").write_text("throw 'PowerShell blocked this shim'\n", encoding="utf-8")
     (bin_dir / "winget.cmd").write_text(
         f'@echo off\necho winget %* >> "{log}"\n'
+        f'echo %* | findstr.exe /C:"Git.Git" >nul && copy /Y "{installed / "git.cmd"}" "{bin_dir / "git.cmd"}" >nul\n'
         f'echo %* | findstr.exe /C:"GitHub.cli" >nul && copy /Y "{installed / "gh.cmd"}" "{bin_dir / "gh.cmd"}" >nul\n'
+        f'echo %* | findstr.exe /C:"OpenJS.NodeJS.LTS" >nul && copy /Y "{installed / "node.cmd"}" "{bin_dir / "node.cmd"}" >nul\n'
         f'echo %* | findstr.exe /C:"astral-sh.uv" >nul && copy /Y "{installed / "uv.cmd"}" "{bin_dir / "uv.cmd"}" >nul\n'
         f'echo %* | findstr.exe /C:"Docker.DockerDesktop" >nul && copy /Y "{installed / "docker.cmd"}" "{bin_dir / "docker.cmd"}" >nul\n'
         'exit /b 0\n',
@@ -174,9 +181,11 @@ def _windows_check_and_install(tmp_path):
     full = subprocess.run([powershell, "-NoProfile", "-Command", piped],
                           env=env, capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
-    calls = log.read_text().splitlines()
+    calls = [line.rstrip() for line in log.read_text().splitlines()]
     assert calls == [
+        "winget install --id Git.Git --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id GitHub.cli --exact --source winget --accept-package-agreements --accept-source-agreements",
+        "winget install --id OpenJS.NodeJS.LTS --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id astral-sh.uv --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id Docker.DockerDesktop --exact --source winget --accept-package-agreements --accept-source-agreements",
         "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.1.0",
@@ -244,7 +253,7 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
                                 env=env, capture_output=True, text=True)
     assert "restart" in wsl1_setup.stdout.lower()
     if wsl1_setup.returncode == 0:
-        assert log.read_text().splitlines() == ["wsl --set-default-version 2"]
+        assert [line.rstrip() for line in log.read_text().splitlines()] == ["wsl --set-default-version 2"]
     else:
         assert "administrator" in wsl1_setup.stdout.lower()
         assert not log.exists()
