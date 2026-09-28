@@ -1,33 +1,26 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
   "review": {
-    "commit": "d3aa70e4d5e2a47108341ed34543ae19a3849316",
+    "commit": "113c7eb65b1ea4bcde4b6a8f65c74907bf8bcf56",
     "dismissals": [],
     "findings": [
       {
-        "body": "The pinned declaration format still cannot accept the existing `type=int` argument tuple used by `close --dismiss` at `src/forge/cli.py:49`. Moving that tuple into `COMMANDS` makes `ast.literal_eval` reject the `int` name before parser construction completes, breaking even `forge --help`. The conversion at lines 142\u2013143 only handles the replacement string `\"int\"`; the new fixture also uses that replacement instead of testing today's tuple. Support the promised argument representation and exercise it through the real CLI. This collector change is within this task's scope.",
+        "body": "The declaration contract promises today's argument tuples, but `ast.literal_eval` rejects callable values such as `int`. Moving the existing `close --dismiss` tuple from `src/forge/cli.py:49` into `COMMANDS` therefore breaks parser construction, including `forge --help`. The conversion at lines 144\u2013145 only supports the replacement string `\"int\"`, and `tests/test_split_commands.py:430` tests that replacement rather than the promised representation. Support the existing tuple format and exercise it through the real CLI; this collector work is within this task's scope.",
         "file": "src/forge/cli.py",
-        "line": 126,
+        "line": 123,
         "priority": "P1",
         "title": "Not done: command declarations accept today's argument tuples"
       },
       {
-        "body": "`nextstep.COMMANDS` declares only `next`, leaving `hook context` in the central table at `src/forge/cli.py:76`, although its implementation belongs to `nextstep.py:47`. Moving the first modules' commands is this task's deliverable. The later COMMANDS task explicitly excludes `nextstep.py` from its scope (`plans/FORGE-SPLIT-1.md:41`), so deferring this declaration leaves that task unable to complete the migration within scope. Declare `hook context` here and remove its table row while preserving its ordering and help.",
-        "file": "src/forge/nextstep.py",
-        "line": 24,
-        "priority": "P1",
-        "title": "Not done: all nextstep commands declare themselves"
-      },
-      {
-        "body": "Done-when item 2 remains incomplete because parser construction still consumes `TABLE` and central `GROUPS`. The remaining owners outside this branch's scope must receive their declarations before those structures can be removed. `plans/FORGE-SPLIT-1.md:41` assigns that work to COMMANDS, and lines 63\u201364 explicitly allow this intermediate arrangement, so this portion is deferred advice rather than a merge blocker.",
+        "body": "Done-when item 2 remains partially unmet: parser construction still consumes the central `TABLE` and `GROUPS`. The remaining declarations require changes to owners outside this task's scope. `plans/FORGE-SPLIT-1.md:41` assigns those changes to COMMANDS, and lines 63\u201364 explicitly permit this intermediate arrangement. Complete the table and group-help removal in COMMANDS; this is deferred advice rather than a blocker for COLLECTOR.",
         "file": "src/forge/cli.py",
-        "line": 130,
+        "line": 129,
         "priority": "P2",
         "title": "Later: remove the remaining command table in COMMANDS"
       }
     ],
     "status": "blocked",
-    "tree": "06519f72080bb9ec670beaac332895c7f51499ca24101b5584fa4544eaf6eb05"
+    "tree": "83368010b3299b97a695a8e5fb827ab2e67ab8690acd3d497a2d2b6612038622"
   },
   "status": "fixing",
   "steps": [
@@ -49,6 +42,10 @@
     },
     {
       "at": "2026-09-28T08:40:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:49:05+00:00",
       "step": "review"
     }
   ]
