@@ -1,0 +1,14 @@
+{
+  "base": "8c89e48ec3d3cc508d632c59b3c10bac4f337fb1",
+  "branch": "fix/merging-the-default-branch-into-a-task-m",
+  "done_when": "A review's fingerprint covers only the files the branch changes against its merge base plus the story doc or fix contract and the functional check, so merging an unrelated default-branch change keeps the review; a dismissal carries to a later review's finding with the same file and title; tests through forge close show both",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T09:10:01+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Merging the default branch into a task makes its clean review stale even when the task's own files did not change, and a new review raises findings that were already dismissed"
+}
