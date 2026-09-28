@@ -1,0 +1,14 @@
+{
+  "base": "8b80e011ca8ba2cfc7f3fd6726182f675e7e7caa",
+  "branch": "fix/the-readme-shows-the-explainer-twice-in",
+  "done_when": "README.md shows the explainer once, as the player, with no preview image under it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T07:23:41+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The README shows the explainer twice in a desktop browser: the player and the animated preview under it"
+}
