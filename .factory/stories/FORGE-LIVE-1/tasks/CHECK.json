@@ -1,28 +1,28 @@
 {
   "branch": "task/FORGE-LIVE-1-CHECK",
   "review": {
-    "commit": "c11eb6605d0d7fce8ce054e391bd7820a8a05cd9",
+    "commit": "3a1ab0b67d13a17dfe7474ff753c3c8800db938e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The comparison runs only when the protection request succeeds. GitHub returns 404 when a branch has no protection (as `src/forge/init.py:111` documents), so a repo whose forge.toml names required checks but whose default branch requires none gets no mismatch warning. `forge doctor` can report that everything checks out while merges can bypass those checks. The new test covers only successful protection responses.",
+        "body": "The presence of `web/package.json` alone sets `has_frontend` to true. A backend-only Node service in `web/` therefore gets warnings to install both UI skills, even when it has no UI. The new test uses a package manifest containing only a name, so it does not distinguish a frontend from this case.",
         "file": "src/forge/doctor.py",
-        "line": 144,
-        "priority": "P1",
-        "title": "Not done: CI waits for the team's checks"
+        "line": 187,
+        "priority": "P2",
+        "title": "Detect frontend content before requiring UI skills"
       },
       {
-        "body": "A root `web/` directory alone makes `has_frontend` true. A backend-only service can use that directory for HTTP handlers, causing doctor to require both UI skills despite having no frontend. The changed tests even use an empty `web/` directory as the frontend signal. Check for actual frontend content or configuration before issuing the skill warnings.",
+        "body": "A protection API failure other than the recognized 404 is silently skipped. For example, if `gh api` returns 403, doctor cannot compare required checks but can still print that everything checks out. It should report that the comparison failed and tell the user how to restore access.",
         "file": "src/forge/doctor.py",
-        "line": 186,
+        "line": 144,
         "priority": "P2",
-        "title": "Treat a web directory as a frontend only when it contains one"
+        "title": "Report failures to read branch protection"
       }
     ],
-    "status": "blocked",
-    "tree": "0f8546b6fba638fa5a31d5dd41edeada8ccf1a668cb82f715048531b9e07b653"
+    "status": "clean",
+    "tree": "1749853ed1b37230edfb18fc41aa699c0107b4767836a2f22aac9dd54d0214e9"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T13:42:38+00:00",
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-09-28T14:27:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:38:44+00:00",
       "step": "review"
     }
   ]
