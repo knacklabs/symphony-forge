@@ -113,6 +113,12 @@
       "spec": "docs/specs/prototype-signoff.md",
       "status": "pending",
       "order": 59
+    },
+    {
+      "key": "FORGE-SALES-1",
+      "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
+      "status": "pending",
+      "order": 60
     }
   ],
   "epics": [

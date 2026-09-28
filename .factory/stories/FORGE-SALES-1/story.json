@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SALES-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-28T11:15:52+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
+  "touches": 0
+}
