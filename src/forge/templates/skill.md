@@ -149,8 +149,9 @@ resolve that boundary before sending the note.
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses `[models.lite]` in
-`forge.toml`. The conversation is temporary and does not appear in the Codex chat list. If a
-tracked or untracked file changes during the turn, Forge discards the answer.
+`forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
+discards the answer.
 
 ## Build simple
 
