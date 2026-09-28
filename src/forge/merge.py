@@ -31,7 +31,7 @@ REFUSALS = {
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
     config = repo.default_config(top)
-    if config["merge"] != "agent":
+    if repo.merge_setting(top) != "agent":
         repo.refuse(REFUSALS["disabled"])
     path = repo.ready_path(item, top)
     try:

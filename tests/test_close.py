@@ -447,6 +447,10 @@ def test_2_gates_check_outcomes(env, case):
 
 @pytest.mark.parametrize("kind", ["task", "fix"])
 def test_18_close(env, kind):
+    # This existing close flow exercises the configured human merge after client sign-off.
+    env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
+               '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
+    env.repo.git("push", "-q", "origin", "main")
     toml = env.repo.path / "forge.toml"  # the review kind's model and effort go to Autoreview
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
