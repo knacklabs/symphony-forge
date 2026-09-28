@@ -1,25 +1,18 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
   "review": {
-    "commit": "01842cc5c8da0b767a162f3c3f7468ec6668da8f",
+    "commit": "e3a543414166fe6cc1a7acf43ed008776c1b59e5",
     "dismissals": [],
     "findings": [
       {
-        "body": "This test requires a historical commit that CI does not fetch. `.github/workflows/forge.yml:19\u201321` and `.github/workflows/forge-next.yml:30\u201336` run the suite after checkout without overriding its [default fetch depth of 1](https://raw.githubusercontent.com/actions/checkout/main/action.yml). Consequently, `git show` fails with `CalledProcessError` before any help or discovery assertions run. Make the independent baseline available in a shallow checkout, preferably as a committed test fixture.",
-        "file": "tests/test_split_commands.py",
-        "line": 29,
-        "priority": "P1",
-        "title": "Not done: help-preservation test runs in the repository's CI suite"
-      },
-      {
-        "body": "The promised declaration format accepts today's argument tuples, but `ast.literal_eval` cannot resolve callable values such as `int` ([Python contract](https://docs.python.org/3.11/library/ast.html#ast.literal_eval)). The existing `close --dismiss` option uses `type=int` at `src/forge/cli.py:49`. Putting its equivalent tuple into `COMMANDS` raises `ValueError` during parser construction, breaking every command, including `--help`. Support existing converter values and exercise a typed argument through the fixture command.",
+        "body": "The declaration format promised by this task cannot represent existing argument converters. `close --dismiss` uses `type=int` at `src/forge/cli.py:49`; placing its equivalent argument tuple in `COMMANDS` makes `ast.literal_eval` raise `ValueError` on the `int` name during parser construction, breaking every invocation, including `--help`. The current command works only because it remains in `TABLE`. Support existing converter values in the collector and extend the real-CLI fixture test to exercise a typed argument. This can be completed within COLLECTOR's scope without waiting for COMMANDS.",
         "file": "src/forge/cli.py",
         "line": 126,
-        "priority": "P2",
-        "title": "Support existing argument converters in command declarations"
+        "priority": "P1",
+        "title": "Not done: command declarations accept today's argument tuples"
       },
       {
-        "body": "Done-when item 2 remains incomplete: the collector still consumes `TABLE`, and group help remains centrally declared in `GROUPS`. Remaining commands lack module-owned positions and listings. `plans/FORGE-SPLIT-1.md:41` assigns this migration to COMMANDS, while lines 63\u201364 explicitly permit the interim table. Complete its removal in COMMANDS; this is deferred advice for this branch.",
+        "body": "Done-when item 2 is still partially outstanding: the parser consumes the remaining central `TABLE` and `GROUPS`, so those commands do not yet own their declarations, positions, and listings. `plans/FORGE-SPLIT-1.md:41` assigns that migration to COMMANDS, and lines 63\u201364 explicitly permit this interim arrangement. Complete the table and central group-help removal in COMMANDS; this is deferred advice for the current branch.",
         "file": "src/forge/cli.py",
         "line": 130,
         "priority": "P2",
@@ -27,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "78476c659aaf57b1379652faf5a15fcb62cbbe5f845cb67a24105492829cc71c"
+    "tree": "141796b0e7df5356ecf2101d2d37b6348555de3f41803e2071b40c9a8dfd4996"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +34,10 @@
     },
     {
       "at": "2026-09-28T08:14:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:29:23+00:00",
       "step": "review"
     }
   ]
