@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-AHA-1-DEMO",
-  "status": "working",
+  "review": {
+    "commit": "a3d3776fac25b6fdecb85ec368863d4323f39dde",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The instructed order cannot be completed. The strict sign-off review runs only inside `forge decision accept` (`src/forge/records.py:289`), after that command requires `approved_via` and `approved_on` (`src/forge/records.py:259-271`); it then accepts the decision (`src/forge/records.py:300`). The customer\u2019s email reply therefore has to exist before the review can pass, but this line says to draft that email afterward. Following the skill requires either recording approval before receiving it or asking the customer to approve an unreviewed version.",
+        "file": "src/forge/templates/skill.md",
+        "line": 187,
+        "priority": "P1",
+        "title": "Not done: Sign-off is read back and drafted"
+      }
+    ],
+    "status": "blocked",
+    "tree": "3ba8731072e1224f49da121a142cf2e2b2f814b57bc5f85005ef8189971cbc58"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T19:22:54+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:42:07+00:00",
+      "step": "review"
     }
   ]
 }
