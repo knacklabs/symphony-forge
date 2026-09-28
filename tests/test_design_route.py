@@ -13,6 +13,11 @@ STORY = "FORGE-DESIGN-1"
 
 def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    # A client repo counts as live unless forge.toml says prototype.
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace(
+        'repo = "client"', 'repo = "client"\nstage = "prototype"'))
+    repo.git("commit", "-q", "-am", "Prototype stage")
+    repo.git("push", "-q", "origin", "main")
     claude_log = install_claude(repo)
     result = repo.forge("work", "BOARD/PAGE")
     assert result.returncode == 0, result.stdout + result.stderr

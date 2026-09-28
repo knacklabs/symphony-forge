@@ -59,10 +59,9 @@ def work(args: argparse.Namespace) -> None:
     if match["task"]:
         sections = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
         row = task.rows(sections).get(match["task"], {})
-        design = row.get("User-facing", "").lower() in ("yes", "true")
+        design = config["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
     else:
-        design = state.get("allow_large") == "Prototype before sign-off"
-    design = config["repo"] == "client" and design
+        design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
     on_codex = config["workers"] == "codex" and not design
     if on_codex and note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)

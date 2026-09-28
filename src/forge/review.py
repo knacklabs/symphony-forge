@@ -145,21 +145,10 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
-    cfg = repo.config(top)
     if ("/" in item or state.get("kind") != "fix" or
-            state.get("allow_large") != "Prototype before sign-off" or cfg["repo"] != "client"):
+            state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
-    for ref in (base, commit):
-        names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-        for name in names.splitlines():
-            wanted = name == cfg["signoff"] if cfg["signoff"] else name.endswith("client-signoff.md")
-            if not wanted:
-                continue
-            record = repo.git("show", f"{ref}:{name}", cwd=top)
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return "P1"
-    return "P0"
+    return "P0" if repo.is_prototype(top, refs=(base, commit)) else "P1"
 
 
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:

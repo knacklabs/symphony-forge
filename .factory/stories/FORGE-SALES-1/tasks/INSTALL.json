@@ -1,0 +1,71 @@
+{
+  "branch": "task/FORGE-SALES-1-INSTALL",
+  "review": {
+    "commit": "442108ba31dc029be41f9915df8cb7a1005794a1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The check matches only the English text `Default Version: 2`. WSL localizes that label\u2014for example, its [Japanese status resource](https://github.com/microsoft/WSL/blob/master/localization/strings/ja-JP/Resources.resw) uses a different label. On a Windows laptop with WSL2 already ready, `-Check` therefore reports it missing, and a full run repeatedly enters the WSL installation path. Determine readiness without matching an English label.",
+        "file": "scripts/install-windows.ps1",
+        "line": 47,
+        "priority": "P2",
+        "title": "Recognize localized WSL2 status"
+      },
+      {
+        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or revisions left by an older Playwright release. Windows makes the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even though Playwright cannot launch a browser: [Playwright requires binaries matched to its version](https://playwright.dev/docs/browsers). Check the required browser revisions before skipping installation.",
+        "file": "scripts/install-mac.sh",
+        "line": 20,
+        "priority": "P2",
+        "title": "Check usable Playwright browsers before skipping installation"
+      },
+      {
+        "body": "A standalone `docker` CLI makes this script skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:72`. After a fresh Desktop installation, neither script tells the user to launch it, so setup can finish without a usable Docker engine. Check Desktop separately and print the first-launch action. Docker's [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) and [Windows](https://docs.docker.com/desktop/setup/install/windows-install/) instructions both require starting Desktop.",
+        "file": "scripts/install-mac.sh",
+        "line": 61,
+        "priority": "P2",
+        "title": "Check Docker Desktop and tell the user to start it"
+      }
+    ],
+    "status": "clean",
+    "tree": "d8d56e33fe366fff626260a130a7be3a10eae1a2dfb4792e06b727e8f150dc64"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T11:27:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:05:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:08:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:02:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:53:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:19:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:31:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:43:05+00:00",
+      "step": "review"
+    }
+  ]
+}
