@@ -18,6 +18,12 @@ Notes from talking with the client, before anything is built. They ship as fixes
 
 <!-- The client's people and their roles. Who signs off? -->
 
+## Customer call script
+
+<!-- Copy each "ask the client" topic from BRIEF.md here. Ask one at a time, explain why it
+     matters to the current build, and record the client's answer and date on the brief's
+     Answers page. Read back the answers and our defaults before asking for sign-off. -->
+
 ## Decisions the client approved
 
 <!-- Each one becomes a decision record: forge decision new <slug> -->
