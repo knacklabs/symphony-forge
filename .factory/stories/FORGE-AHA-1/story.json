@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-28T12:30:22+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01LttoTpm2cfGDtzJCjPM9y8",
+    "hash": "06b3a01ce461d7a48eba1eb35ca8390da7b1b2b4c811be7b18bce160cf2d451b",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-AHA-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-28T12:14:36+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:25:50+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T12:30:22+00:00",
+      "step": "approved"
     }
   ],
   "title": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step",
-  "touches": 0
+  "touches": 1
 }
