@@ -136,11 +136,14 @@ CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
-# effort is optional); building and fixing may add their subagents' model and effort, as a pair.
-# The cold read runs on either family, so the grill kind has one such entry per family.
-KINDS = ("build", "fix", "lite", "grill", "review")
+# effort is optional); building, fixing and lite work may add their subagents' model and effort,
+# as a pair.
+# The cold read and design work have one entry per family.
+KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
+DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+                   "codex": {"model": "gpt-6-sol", "effort": "high"}}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -162,6 +165,24 @@ def default_config(top: Path) -> dict[str, Any]:
     if found.returncode:
         refuse(REFUSALS["no_config"])
     return _config_text(found.stdout)
+
+
+def merge_setting(top: Path) -> str:
+    """Use agent merges for client prototypes until the fetched default branch signs off."""
+    cfg = default_config(top)
+    if cfg["repo"] != "client":
+        return cfg["merge"]
+    ref = f"origin/{default_branch(top)}"
+    names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+    pinned = cfg["signoff"]
+    for name in names:
+        if not (name == pinned if pinned else name.endswith("client-signoff.md")):
+            continue
+        record = git("show", f"{ref}:{name}", cwd=top)
+        if record.startswith("---") and re.search(
+                r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
+            return cfg["merge"]
+    return "agent"
 
 
 def _config_text(text: str) -> dict[str, Any]:
@@ -197,6 +218,11 @@ def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
     return chosen
 
 
+def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
+    """The design model for a family, including the default in older repos."""
+    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+
+
 def _models_problem(table: Any) -> str:
     if not isinstance(table, dict):
         return "models must be a table"
@@ -205,16 +231,18 @@ def _models_problem(table: Any) -> str:
             return f"{kind} is not a kind of work; the kinds are {', '.join(KINDS[:-1])} and {KINDS[-1]}"
         if not isinstance(chosen, dict):
             return f"models.{kind} must be a table"
-        wrong = [key for key in chosen if key not in FAMILIES] if kind == "grill" else []
+        wrong = [key for key in chosen if key not in FAMILIES] if kind in ("grill", "design") else []
         if wrong:
-            return f"models.grill has one entry per family, codex and claude, so it can't set {wrong[0]}"
-        entries = ({f"grill.{family}": entry for family, entry in chosen.items()} if kind == "grill"
+            return (f"models.{kind} has one entry per family, codex and claude, "
+                    f"so it can't set {wrong[0]}")
+        entries = ({f"{kind}.{family}": entry for family, entry in chosen.items()}
+                   if kind in ("grill", "design")
                    else {kind: chosen})
         for name, entry in entries.items():
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
             for key, value in entry.items():
-                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix") else ())):
+                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix", "lite") else ())):
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"

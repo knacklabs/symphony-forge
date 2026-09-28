@@ -35,6 +35,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" | `forge doctor` |
 | "Set up a new repo" | `forge init` |
+| "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
 | "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
@@ -97,6 +98,83 @@ already run) whenever one could do the job. Give each option that builds somethi
 build or smallest slice first; a tie goes to the smaller build. If none does, recommend don't
 build, or find out first when an option's value can't be estimated. The human chooses; write the
 choice and one line of why into the spec's Behaviour.
+
+## Prototype
+
+In a new client repo, follow the FDE route: start with discovery of the customer's job,
+workaround, cost, people, frequency and evidence; build the smallest working prototype that tests
+the riskiest part of that problem; demo it; review the whole prototype and answers; obtain the
+customer's named sign-off;
+then create stories. Use prototype fixes before sign-off. The salesperson can be the FDE at first;
+the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
+call script. Push back when a requested feature does not serve the problem card: explain why and
+offer to note it for after sign-off. Keep the same app as it grows into production.
+
+Ask one topic at a time when it first changes what you are building. Skip a topic the repo already
+answers. In the options column, our default is first where there is one; questions of fact have
+no default. Offer **Ask the client** on every question and add it to the customer call script in
+`docs/product/DISCOVERY.md`. For a topic that may wait, also offer **Decide later**. Standards
+already decide logging, security and error handling; take those defaults and include them in the
+read-back without asking again. The first seven topics must have answers from the client,
+salesperson or developer before sign-off; a default or agent-only answer does not settle them.
+
+| Topic | Question | Options (default first) | Before sign-off |
+|---|---|---|---|
+| Sign-off person | Who at the customer approves the prototype? | name and role | must |
+| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
+| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
+| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
+| Sign-in | How will people sign in? | email and password; company sign-in (Google or Microsoft) | must |
+| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
+| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
+| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
+| Email or SMS | Which provider sends messages? | none yet; the client's provider | may wait |
+| Domain | Which web address? | our subdomain; the client's domain | may wait |
+| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | may wait |
+| Log retention | How long must logs be kept? | the platform's default; longer | may wait |
+
+Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Record an answer as
+`- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
+default or agent as its source. Record an open request as
+`- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
+client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`. Before the
+sign-off review, use `forge next` to find each open must-answer topic and resolve it one at a time.
+
+When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
+Ask that one question, put the answer in the finding's disposition and the story's Notes as
+`Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
+Until the decision, use a fake provider for an external service. No second cold read is needed.
+
+## Adopt a live app
+
+An app already in production joins Forge through one fix and one pull request the human merges.
+Adopting changes no app code.
+
+1. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
+   and the areas they don't cover; the CI workflows and the checks branch protection requires; what
+   a merge triggers; branch rules and reviewers; the hook tools already in use; secret files and
+   variables by name only, never their values; where personal data lives; the migration tool; and
+   the danger zones.
+2. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
+   story that touches one names it under Risks.
+3. List the open pull requests and branches in the report, so a story's plan avoids colliding with
+   a teammate's work.
+4. Link or import the repo's existing decision records and design docs as Forge decisions:
+   `forge decision new <slug>`, the original linked or copied unchanged under the line
+   `Imported from <path>.` Don't rewrite them.
+5. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
+   repeatedly becomes a House rule citing the pull requests it came from.
+6. Ask the human three questions, one at a time, with options: who approves stories, who merges,
+   and what must never be touched.
+7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
+   block. The repo's own rules win where they differ from Forge's default-stack conventions.
+
+On a live app, every story and fix also follows these:
+
+- Before changing code no test covers, first add a test that pins today's behaviour.
+- Migrations only add, and work with the previous version of the app still running.
+- A change users would notice ships behind the team's own feature flags.
+- No production credentials on this machine; never ask for them.
 
 ## Planning a story
 

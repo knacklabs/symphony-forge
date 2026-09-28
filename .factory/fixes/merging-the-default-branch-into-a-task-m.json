@@ -1,0 +1,33 @@
+{
+  "base": "8c89e48ec3d3cc508d632c59b3c10bac4f337fb1",
+  "branch": "fix/merging-the-default-branch-into-a-task-m",
+  "done_when": "A review's fingerprint covers only the files the branch changes against its merge base plus the story doc or fix contract and the functional check, so merging an unrelated default-branch change keeps the review; a dismissal carries to a later review's finding with the same file and title; tests through forge close show both",
+  "kind": "fix",
+  "review": {
+    "commit": "f657c276867ada4129f303a3be9b72b454b53ded",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new fingerprint keeps only each tree entry\u2019s object ID, discarding its mode. After reviewing a branch that changes a script, removing that script\u2019s executable bit leaves both the changed-path set and blob ID unchanged. If the functional-check text also stays unchanged, `forge close` reuses the review (`src/forge/close.py:66`), and the required PR check accepts it (`src/forge/prcheck.py:69`), despite the unreviewed change potentially breaking script execution. Include the tree entry\u2019s mode alongside its object ID while retaining the changed-file scope.",
+        "file": "src/forge/review.py",
+        "line": 106,
+        "priority": "P2",
+        "title": "Preserve Git file modes in the scoped fingerprint"
+      }
+    ],
+    "status": "clean",
+    "tree": "bf53c779369758aabd235e5e63ed7533e69e3eedadf6fb0f57670ccb4e161883"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T09:10:01+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T09:38:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Merging the default branch into a task makes its clean review stale even when the task's own files did not change, and a new review raises findings that were already dismissed"
+}

@@ -26,6 +26,14 @@ Keep this under one page. It says what the product is and why; stories say how.
 
 <!-- What the flows alone don't say: sign-in, integrations, hosting, rules, speed. -->
 
+## Answers
+
+<!-- One line per topic from the Forge skill. Name who supplied each answer and when. -->
+
+- <Topic>: <answer> (<source>, <YYYY-MM-DD>)
+- <Topic>: ask the client (<who asked>, <date>)
+- <Topic>: later, when <trigger>
+
 ## Out of scope
 
 <!-- What we are deliberately not building. -->

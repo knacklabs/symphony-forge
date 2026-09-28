@@ -51,6 +51,8 @@ effort = "medium"
 [models.lite]
 model = "gpt-6-sol"
 effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
 
 [models.grill.codex]
 model = "gpt-6-sol"
@@ -60,8 +62,17 @@ effort = "high"
 model = "opus"
 effort = "high"
 
+[models.design.claude]
+model = "claude-opus-5-5"
+effort = "high"
+
+[models.design.codex]
+model = "gpt-6-sol"
+effort = "high"
+
 [models.review]
-model = "gpt-6-astra"
+model = "gpt-6-sol"
+effort = "xhigh"
 """
 
 

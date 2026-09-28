@@ -269,6 +269,11 @@ def decision_accept(args: argparse.Namespace) -> None:
 def roadmap_add(args: argparse.Namespace) -> None:
     slug = args.spec
     top = _start(args, slug)
+    from forge import approval
+
+    if (top / "forge.toml").is_file() and not approval.signed_off(top):
+        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                     "forge next"))
     rel, _, fields, body = _spec(top, slug)
     if fields.get("status") != "confirmed":
         repo.refuse(REFUSALS["unconfirmed"], slug=slug, status=fields.get("status") or "none")
@@ -430,3 +435,38 @@ def _write(top: Path, rel: str, text: str) -> None:
     path = top / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))  # bytes, so Windows writes the same LF file
+
+
+COMMANDS = [
+    {"words": "spec save", "run": "spec_save", "changes_state": True,
+     "help": "Save a spec as a draft", "args": [(('slug',), {})], "position": 170,
+     "listing": "| `forge spec save <slug>` | Saves a spec as a draft |"},
+    {"words": "spec confirm", "run": "spec_confirm", "changes_state": True,
+     "help": "Mark a spec confirmed after the human confirms in chat",
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "position": 180,
+     "listing": "| `forge spec confirm <slug> --by \"<name>\"` | Marks a spec confirmed after the human confirms it in chat |"},
+    {"words": "spec measure", "run": "spec_measure", "changes_state": True,
+     "help": "Record the measured result in a confirmed spec's Success measure; it stays confirmed",
+     "args": [(('slug',), {}), (('--result',), {"required": True, "metavar": "TEXT"})],
+     "position": 190,
+     "listing": '| `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec\'s Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |'},
+    {"words": "decision new", "run": "decision_new", "changes_state": True,
+     "help": "Write a decision record", "args": [(('slug',), {})], "position": 210,
+     "listing": "| `forge decision new <slug>` | Writes a decision record |"},
+    {"words": "decision accept", "run": "decision_accept", "changes_state": True,
+     "help": "Accept a decision after the human confirms in chat",
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "position": 220,
+     "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat |"},
+    {"words": "roadmap add", "run": "roadmap_add", "changes_state": True,
+     "help": "Add roadmap items from a confirmed spec", "args": [(('spec',), {})],
+     "position": 230,
+     "listing": "| `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |"},
+]
+
+GROUP_HELP = {
+    "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
+    "decision": "Write and accept decisions",
+    "roadmap": "Add roadmap items",
+}

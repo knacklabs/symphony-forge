@@ -97,15 +97,17 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
     return data
 
 
-def _toml(version: str, workers: str, models: dict[str, dict]) -> str:
+def _toml(version: str, workers: str, models: dict[str, dict],
+          repo_kind: str = "forge-source") -> str:
     """A forge.toml with these workers and this [models] table."""
-    lines = [f'version = "{version}"', f'workers = "{workers}"']
+    lines = [f'version = "{version}"', f'repo = "{repo_kind}"', f'workers = "{workers}"']
     for kind, keys in models.items():
         lines += ["", f"[models.{kind}]", *(f"{key} = {json.dumps(value)}" for key, value in keys.items())]
     return "\n".join(lines) + "\n"
 
 
-def _codex_repo(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
+def _codex_repo(repo, monkeypatch, sdk_data: Path,
+                client: bool = False) -> tuple[Path, Path]:
     """Codex workers with the models table, a project Codex trusts, story BOARD approved and
     BOARD/PAGE started. Returns the task's folder and the stub app-server's log."""
     _install(repo.bin, "codex-app-server",
@@ -119,7 +121,10 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
     (codex_home / "config.toml").write_text(
         f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
-    repo.write("forge.toml", _toml(repo.forge("--version").stdout.split()[-1], "codex", MODELS))
+    # These Codex lifecycle tests exercise Forge's own configured route. The design route's
+    # client task behavior is covered by test_design_route instead.
+    repo.write("forge.toml", _toml(repo.forge("--version").stdout.split()[-1], "codex", MODELS,
+                                   "client" if client else "forge-source"))
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge with Codex workers")
     repo.git("push", "-q", "origin", "main")
@@ -262,7 +267,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
             ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
              "models.fix sets only one of subagents and subagent_effort; set both or neither"),
             ({**MODELS, "debug": lite},
-             "debug is not a kind of work; the kinds are build, fix, lite, grill and review"),
+             "debug is not a kind of work; the kinds are build, fix, lite, grill, design and review"),
             ({"lite": lite}, "it has no [models.build], which this work uses")):
         toml.write_text(_toml(version, "codex", models), encoding="utf-8")
         refused = repo.forge("work", "BOARD/PAGE")

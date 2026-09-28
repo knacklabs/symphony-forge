@@ -24,6 +24,8 @@ def test_33_new_moving_parts_line(env):
     repo = env.repo
     # The template from forge story new ends its Tasks section with the line.
     env.commit(repo.path, "plans/roadmap.json", json.dumps({"items": [{"key": "CART"}]}))
+    env.commit(repo.path, "docs/decisions/0001-client-signoff.md",
+               "---\nstatus: accepted\n---\n")
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("story", "new", "CART", "Shoppers share a cart")
     assert made.returncode == 0, made.stderr
@@ -107,8 +109,9 @@ def test_35_simple_enough_cold_read(repo):
         assert disposition in notes
 
 
-def test_37_one_ui_skill(env):
-    # A user-facing task's brief and its review name motion only for a Done-when item needing it.
+def test_37_both_ui_skills(env):
+    # The old contract allowed one UI skill and motion only for a Done-when item.
+    # A user-facing task and its review now require both skills and bounded motion.
     # T2 waits for T1, which counts as merged once its state is on the default branch.
     env.commit(env.repo.path, ".factory/stories/SHOP/tasks/T1.json", '{"status": "merged"}')
     item = env.start_approved_task(STORY_DOC, "T2", {"show.py": "print('basket')\n"})[0]
@@ -116,11 +119,10 @@ def test_37_one_ui_skill(env):
     assert env.repo.forge("work", item).returncode == 0
     assert env.close(item).returncode == 0
     for text in (_flat(calls(log)[-1]["brief"]), _flat(env.prompt())):
-        assert "impeccable is the one" in text
-        motion = [s for s in re.split(r"(?<=\.) ", text) if re.search(r"motion|animat", s, re.I)]
-        assert motion, "no sentence names motion"
-        for sentence in motion:
-            assert "only when a Done-when item needs motion" in sentence, sentence
+        assert "impeccable and emil-design-eng are required for every UI" in text
+        assert "prototypes included" in text
+        assert "under 300 ms" in text
+        assert "one batched inspection" in text
 
 
 def test_40_interfaces(repo, gh, tmp_path, env):
@@ -138,6 +140,10 @@ def test_40_interfaces(repo, gh, tmp_path, env):
     # forge init writes the stack's default interfaces: a fix that changes one is refused.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
+    # The normal interface limit applies to fixes started after client sign-off.
+    (client / "docs/decisions/0001-client-signoff.md").parent.mkdir(parents=True, exist_ok=True)
+    (client / "docs/decisions/0001-client-signoff.md").write_text(
+        "---\nstatus: accepted\n---\n", encoding="utf-8")
     started = repo.forge("fix", "start", "Tidy the orders code", "--done", "It reads well",
                          cwd=client)
     assert started.returncode == 0, started.stderr

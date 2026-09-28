@@ -35,43 +35,38 @@ the install line to fix it.
 Run `forge next` whenever you're unsure. It says where things stand in one sentence and prints the
 exact next command. The same text appears when a Claude Code or Codex session starts.
 
+### A new client project
+
+Start with FDE discovery: ask about the customer's job, current workaround, its cost and the
+evidence. Choose the smallest working prototype that tests the riskiest part of that problem.
+A salesperson can lead at first; a developer can take over from `docs/product/DISCOVERY.md` and
+the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it first matters,
+one at a time, and record the answer and who gave it. If a requested feature does not help test
+the problem, say why and offer to note it for after sign-off.
+
+Build and demo the prototype through `forge fix start`, `forge work` and `forge close`. A prototype
+fix started before sign-off can exceed the usual fix size and change an interface; it still gets
+tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
+`forge next` shows which required answers are still open. Resolve those, then have the whole
+prototype and answers strictly reviewed. The customer's named person approves the demo and the
+quoted answers; record that with `forge decision new client-signoff` and `forge decision accept`.
+
+Only after accepted client sign-off, add confirmed specs to the roadmap with `forge roadmap add`
+and create stories with `forge story new`. This includes stories promoted from fixes. In a client
+repo, trying either command early tells you to build and demo the prototype and run `forge next`.
+Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
+[prototype sign-off spec](specs/prototype-signoff.md) and
+[decision 0095](decisions/0095-prototype-before-stories.md).
+
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |
-| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
-| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix |
-| `forge migrate` | Moves a client from the copied-in Forge in one pull request |
-| `forge next` | Says where things stand and gives the exact next command |
-| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
-| `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
-| `forge read <KEY or spec>` | Runs the one cold read of a story doc or spec (`--amended` records the one amendment) |
-| `forge story done <KEY> "<outcome>"` | Records a finished story's outcome sentence and dates |
-| `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
-| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |
-| `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
-| `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
-| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |
-| `forge close <item>` | Closes a task or fix by the close rule |
-| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
-| `forge spec save <slug>` | Saves a spec as a draft |
-| `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
-| `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |
-| `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |
-| `forge decision new <slug>` | Writes a decision record |
-| `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
-| `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
-| `forge hook context` | Session start: prints `forge next` and the story's state |
-| `forge hook deny` | Before each shell command: blocks destructive commands, `--no-verify` and `gh pr merge` |
-| `forge hook approval` | After the plan and question tools: records approvals and counts human touches |
-| `forge hook pre-commit` | The git pre-commit rules |
-| `forge hook pre-push` | The git pre-push rules |
-| `forge hook pr-check` | The required `forge-pr-check`, run in CI from the base branch |
+See the [command list](commands.md) for every Forge command.
 
 You never run the hook commands yourself: git, the host hooks and CI call them.
 
 ## How a story runs
+
+In a client repo, finish the prototype review and customer sign-off above before starting here.
 
 1. Add the story to the roadmap from its confirmed spec with `forge roadmap add <spec>`.
 2. `forge story new <KEY> "<title>"` makes the story's branch, worktree and doc. The doc says what
@@ -100,6 +95,15 @@ The same file holds a `[models]` table: `[models.build]` for the first task buil
 Autoreview. Build, fix, lite and grill set a model and reasoning effort; review sets its model.
 Building and fixing can also set the subagents' model and effort. Ask your agent to change these
 settings in a fix.
+
+In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
+uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
+high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
+Forge uses `[models.design.codex]` instead: `gpt-6-sol` at high effort by default. Forge prints
+and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
+failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its
+usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
+to change that choice.
 
 Forge names task conversations `Build · <story>/<task> · <task name>` and later turns
 `Fix · <story>/<task> · <task name>`. Quick fixes use `Lite · <fix name> · <why>` and cold reads
@@ -134,7 +138,9 @@ answer and tells you to check `git status` before asking again.
   decisions, the roadmap and discovery notes always ship as fixes, since planning documents don't
   count toward the limit. A fix that grows past five code files or touches an interface is
   refused at commit; either promote it with `forge story new <KEY> --from-fix <fix>`, which keeps
-  its commits, or have the human allow it with `forge fix allow-large "<reason>"`.
+  its commits, or have the human allow it with `forge fix allow-large "<reason>"`. In a client repo,
+  fixes started before sign-off have the prototype allowance; a fix keeps that allowance after
+  sign-off, and a later fix starts without it.
 
 Planning records follow the same lane: `forge spec save <slug>`, a cold read with
 `forge read <slug>`, then `forge spec confirm <slug> --by "<name>"` once the human confirms in

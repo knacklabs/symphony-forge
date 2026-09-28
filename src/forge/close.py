@@ -61,7 +61,8 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
-    result = state.get("review") or {}
+    previous = state.get("review") or {}
+    result = previous
     fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
@@ -70,7 +71,18 @@ def close(args: argparse.Namespace) -> int:
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}", selected)
+            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous)
+            dismissed = {}
+            for dismissal in previous.get("dismissals", []):
+                number = dismissal["finding"]
+                if not 1 <= number <= len(previous["findings"]):
+                    continue
+                finding = previous["findings"][number - 1]
+                dismissed[(finding["file"], finding["title"])] = dismissal
+            result["dismissals"] = [dict(dismissed[(finding["file"], finding["title"])],
+                                         finding=number)
+                                    for number, finding in enumerate(result["findings"], 1)
+                                    if (finding["file"], finding["title"]) in dismissed]
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
@@ -109,7 +121,7 @@ def close(args: argparse.Namespace) -> int:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-    merge = "human" if migrating else repo.default_config(top)["merge"]
+    merge = "human" if migrating else repo.merge_setting(top)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -275,3 +287,13 @@ def _merged(top: Path, item: str) -> int:
         if all(f"task/{key}-{row.get('id', '').strip('`')}" in merged for row in tasks):
             print(f'Every part of {key} is merged.\nNext: forge story done {key} "<outcome>"')
     return 0
+
+
+COMMANDS = [{
+    "words": "close", "run": "close", "changes_state": True,
+    "help": "Close a task or fix by the close rule",
+    "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
+             (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"})],
+    "position": 150,
+    "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",
+}]

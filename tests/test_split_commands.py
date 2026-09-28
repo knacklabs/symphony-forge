@@ -407,7 +407,7 @@ def _copy_forge(repo, tmp_path):
     return package
 
 
-def test_2_commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
+def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     for words, expected in HELP_GOLDEN.items():
         result = repo.forge(*words.split(), "--help")

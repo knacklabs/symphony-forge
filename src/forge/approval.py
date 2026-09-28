@@ -48,6 +48,14 @@ SUCCESS = {"success", "succeeded", "completed"}
 CHOICES = ["Approve plan", "Request changes", "Stop"]
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    return {".claude/skills/remote-approval/SKILL.md":
+            sync._synced_text(".claude/skills/remote-approval/SKILL.md",
+                              "skills/remote-approval/SKILL.md")}
+
+
 def hook(args: Any) -> int:
     try:
         payload = json.loads(sys.stdin.read() or "null")
@@ -255,3 +263,11 @@ def _item_here(top: Path) -> str:
 
 def _text(value: object) -> str:
     return str(value).strip() if value is not None else ""
+
+
+COMMANDS = [{
+    "words": "hook approval", "run": "hook", "changes_state": True,
+    "help": "After a plan or question tool: record approvals and count human touches",
+    "args": [], "position": 250,
+    "listing": "| `forge hook approval` | After the plan and question tools: records approvals and counts human touches |",
+}]
