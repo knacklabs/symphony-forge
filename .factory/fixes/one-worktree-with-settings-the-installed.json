@@ -1,0 +1,14 @@
+{
+  "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
+  "branch": "fix/one-worktree-with-settings-the-installed",
+  "done_when": "forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test through forge next shows it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T14:52:33+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "One worktree with settings the installed Forge rejects makes forge next refuse to show anything, for every item"
+}
