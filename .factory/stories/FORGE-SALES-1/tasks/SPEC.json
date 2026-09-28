@@ -2,11 +2,44 @@
   "base": "e717b3c8a4e43d30b254ac6bbde476c732983ed2",
   "branch": "task/FORGE-SALES-1-SPEC",
   "done_when": "Before sign-off in a client repo, ready prototype fixes merge by the agent; one install script sets up a Mac for prototyping; the skill tells the agent to batch changes per demo round, speak in demo terms and say when to connect the deploy platform; a start-a-prototype checklist exists",
-  "status": "working",
+  "review": {
+    "commit": "b3b4f7a4e23e5908db24bb05d81c642b2148858e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The checklist sends a fresh user to `forge init` without signing the GitHub CLI in. The unchanged README names `gh auth login` as a prerequisite (README.md:113), and `forge init` commits and pushes before calling `gh api` to protect the branch (src/forge/init.py:221-228). Without CLI authentication, setup fails after the first commit; rerunning `forge init` then refuses because the repo already has commits (src/forge/init.py:205-208). Add the login step before init and give a recovery action for this failure.",
+        "file": "docs/start-a-prototype.md",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: A checklist starts a prototype"
+      },
+      {
+        "body": "The decision says `forge next` tells the agent to merge unsigned prototype work, but src/forge/nextstep.py:304 and :317 still read the raw `merge` setting. With `merge = \"human\"`, it recommends a human merge even though `forge close` recommends `forge merge`. The agent skill also still says a human merges by default (src/forge/templates/skill.md:41-43). The story assigns these changes to TALK, so that task must land before this claim is true.",
+        "file": "docs/decisions/0097-agent-merges-before-client-signoff.md",
+        "line": 20,
+        "priority": "P2",
+        "title": "Later: TALK must make forge next recommend agent merging"
+      },
+      {
+        "body": "The Mac one-liner here and the Windows one at line 22 target `scripts/install-mac.sh` and `scripts/install-windows.ps1`, but neither script exists in this checkout. A user following the published checklist cannot complete laptop setup yet. The story's Tasks table assigns both scripts and their test to INSTALL (plans/FORGE-SALES-1.md:68).",
+        "file": "docs/start-a-prototype.md",
+        "line": 16,
+        "priority": "P2",
+        "title": "Later: INSTALL must publish the checklist's scripts"
+      }
+    ],
+    "status": "blocked",
+    "tree": "91803b6a5098f4e2b75795fed327a6b7834cdcef298e9e1819aafbffd7a105a9"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T11:15:41+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T14:38:11+00:00",
+      "step": "review"
     }
   ],
   "why": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's"
