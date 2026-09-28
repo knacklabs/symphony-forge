@@ -4,35 +4,28 @@
   "done_when": "When Codex isn't installed, forge close runs Autoreview with --engine claude on [models.grill.claude]'s model and effort, finding the Autoreview helper under the Claude or Codex skills folder; forge doctor accepts a Claude-only setup; a test runs forge close with no codex command and sees the Claude review used",
   "kind": "fix",
   "review": {
-    "commit": "5795f4d6ad3026a19a21df74c975be9e8f03586d",
+    "commit": "c9c6c2f810ce5359f8583dd4761faa7af16823b5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The changed install hint does not remove doctor's Codex SDK requirement. In a Claude Code session, CLAUDECODE is set, so doctor.py:81 sets needs_sdk even when workers is \"claude\"; lines 96\u201397 then reject a machine with only Claude installed. The new doctor test misses this because the repo fixture deletes CLAUDECODE at tests/conftest.py:114. The stated Claude-only doctor behavior remains unmet.",
-        "file": "src/forge/doctor.py",
-        "line": 40,
-        "priority": "P1",
-        "title": "Not done: forge doctor accepts a Claude-only setup"
-      },
-      {
-        "body": "The PATH filter removes the test fixture's entire bin directory because it contains codex. That directory also holds the gh stub (tests/conftest.py:121\u2013125). forge close calls gh before starting a review (src/forge/close.py:56, 188\u2013189), so the test fails where no system gh exists, or calls a real gh instead of its controlled fixture. Preserve the gh stub on the filtered PATH so this test can reach and verify the review.",
-        "file": "tests/test_fix_reviews_always_run_on_codex_so_a_team_wi.py",
-        "line": 23,
-        "priority": "P1",
-        "title": "Not done: forge close test runs without Codex and observes the Claude review"
-      },
-      {
-        "body": "helper() selects the first existing file before checking its pin. If the Codex skills folder contains an outdated helper while the Claude folder contains the pinned helper, it selects the outdated one and refuses the review. A Claude-only machine with a leftover Codex skill therefore cannot close work despite having a valid Claude installation. Select the first pinned standard helper.",
+        "body": "The helper search stops at the first existing file, then checks its pin. If ~/.codex has an outdated Autoreview helper and ~/.claude has the pinned helper, forge close rejects the Codex copy instead of using the valid Claude copy. Select the first pinned standard helper.",
         "file": "src/forge/review.py",
         "line": 224,
         "priority": "P2",
         "title": "Use a valid Claude helper when an older Codex helper is present"
+      },
+      {
+        "body": "The engine choice also affects client sign-off. review.signoff() at review.py:315 calls run() with a config containing only models.review. Without Codex, this line requests models.grill.claude, so repo.models() at repo.py:213\u2013217 refuses before Autoreview runs. A Claude-only team can close an ordinary fix but cannot accept client sign-off.",
+        "file": "src/forge/review.py",
+        "line": 272,
+        "priority": "P2",
+        "title": "Keep client sign-off review working without Codex"
       }
     ],
-    "status": "blocked",
-    "tree": "25c23bf447885f82ca4f3cb9935a37ad55e78e5dbb6fcd1a8370286a54ddd8cd"
+    "status": "clean",
+    "tree": "655209f85f88ff51e6cb520e95f7fd81bb457c743f7897b04f2bd76567b10650"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T16:51:53+00:00",
@@ -40,6 +33,10 @@
     },
     {
       "at": "2026-09-28T17:12:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T17:21:55+00:00",
       "step": "review"
     }
   ],
