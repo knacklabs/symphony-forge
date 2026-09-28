@@ -4,7 +4,7 @@
   "branch": "fix/clients-pin-forge-v1-0-2-but-main-has-28",
   "done_when": "Forge's version, forge.toml's pin and the release tests say 1.1.0, and the full test suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T02:10:28+00:00",
