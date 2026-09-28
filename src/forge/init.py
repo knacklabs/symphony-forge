@@ -69,7 +69,8 @@ model = "gpt-6-sol"
 effort = "high"
 
 [models.review]
-model = "gpt-6-astra"
+model = "gpt-6-sol"
+effort = "xhigh"
 """
 
 

@@ -50,8 +50,8 @@ small tweaks each waiting on a full review, and Forge's own vocabulary.
    Claude Code or Codex; opening it in the repo and asking for `forge init`, which also installs
    the Codex SDK through `forge doctor --fix`; discovery with the customer; asking the agent to
    build the demo, which it builds, tests and merges; connecting the repo to our deploy platform
-   (the address and who grants access are a placeholder to fill in: "ask your lead"); and
-   sign-off. The README links it.
+   with their own platform login and picking a subdomain (the platform's address is a placeholder
+   until the owner gives it); and sign-off. The README links it.
 
 ## Risks
 
@@ -64,7 +64,7 @@ Risks: none
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | SPEC | The checklist and the decision | The start-a-prototype checklist, the README's link to it, and the decision that the agent merges until sign-off | 1, 5 | `docs/start-a-prototype.md`, `README.md`, `docs/decisions/` | `tests/test_sales_checklist.py` | none | yes |
-| MERGE | Merge until sign-off | The effective merge setting for close and merge before sign-off | 1 | `src/forge/close.py`, `src/forge/merge.py`, `src/forge/repo.py` | `tests/test_sales_merge.py` | none | yes |
+| MERGE | Merge until sign-off | The effective merge setting for close and merge before sign-off | 1 | `src/forge/close.py`, `src/forge/merge.py`, `src/forge/repo.py`, `tests/test_close.py`, `tests/test_merge_ready.py` | `tests/test_sales_merge.py` | none | yes |
 | INSTALL | One install script | The Mac and Windows install scripts with their check modes | 2 | `scripts/install-mac.sh`, `scripts/install-windows.ps1` | `tests/test_sales_install.py` | none | yes |
 | TALK | Talk demo | The skill's prototype conversation rules and forge next's platform reminder | 1, 3, 4 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `src/forge/nextstep.py`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_sales_talk.py` | MERGE | yes |
 
