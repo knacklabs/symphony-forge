@@ -5,11 +5,11 @@
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
   "kind": "fix",
   "review": {
-    "commit": "538321aed40aca917651b1524421c107ab5fa6d0",
+    "commit": "32a450402f4ca6880f55ca675ed264959d01c8fb",
     "dismissals": [],
     "findings": [
       {
-        "body": "The integration test invokes only `pytest --version`, and its temporary checkout contains no tests. It proves that pytest is installed, but cannot detect collection failures or failures when running the repository suite through the documented command. CI explicitly selects the dev group and invokes `python -m pytest`, so it does not supply this missing contributor-workflow proof. Extend the integration coverage to run the repository tests after plain `uv sync`, using `uv run pytest` with recursion prevented, and assert successful test execution.",
+        "body": "The integration test runs only `pytest --version`, and its temporary checkout contains no tests. It verifies tool installation but cannot detect collection or execution failures through the documented contributor command. CI explicitly selects the dev group and runs `python -m pytest`, so it does not cover this exact workflow either. Add coverage that performs plain `uv sync` in a fresh checkout and executes the repository suite through `uv run pytest`, preventing recursive invocation of this integration test and asserting successful test execution.",
         "file": "tests/test_fix_clone_gets_test_tools.py",
         "line": 42,
         "priority": "P1",
@@ -17,7 +17,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "15f8c24a446382c4cc2ebcfad2168a1cf32f9573cd143f4ae617babc2ab87a96"
+    "tree": "724518d900d1f3fcd7eb83f9355b680361d7bb24c26194c770c79f3cab2c7fa5"
   },
   "status": "fixing",
   "steps": [
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-09-28T08:24:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:27:58+00:00",
       "step": "review"
     }
   ],
