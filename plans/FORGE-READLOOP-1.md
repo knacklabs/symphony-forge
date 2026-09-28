@@ -6,7 +6,8 @@
 
 - After the agent answers the cold reader's findings and fixes the plan, the same reader reads
   the whole plan again, with its earlier findings and the answers to them, and this repeats until
-  it finds nothing. Only then can you approve.
+  it finds nothing. Only then can you approve. The reader is the other app, or the same app when
+  only one is installed; if its app is uninstalled mid-way, the next read says so and switches.
 - The reader hunts edge cases item by item: the inputs and states each item must handle, Windows,
   WSL, macOS and CI, the failure paths, and the test that proves each case. Those cases go into
   the plan's "Done when" items with their tests, so workers build them and reviewers check them.
@@ -61,7 +62,8 @@ expensive to find in review.
    the next step, so a story doc edited after approval, including its Tasks table, gets a new
    round before its next task starts. `forge task start` reads the story doc and its notes from
    the story branch while that branch exists, and the new task branch, which still starts from the default
-   branch, gets the story branch's copy of the doc and notes as its first commit, so the passing
+   branch, gets the story branch's copy of the doc, its notes and the story's state file (which holds the
+   approval) as its first commit, so the passing
    doc and notes reach the task's pull request without merging branches that don't share history
    after a squash merge. Notes written before this change
    count as round 1: an unapproved story with such notes needs a passing round, and a story
@@ -69,10 +71,12 @@ expensive to find in review.
    refusal, a task pull request that changes only the Tasks table, the exact-text rule and its near misses, the commit, `forge next` naming the read and
    its round for an approved story whose doc changed, a changed Tasks table stopping
    `forge task start` before and after the story's first task has merged with the task branch
-   containing the passing doc and notes after a squash-merged first task and still starting from
+   containing the passing doc, notes and a renewed approval after a squash-merged first task and still starting from
    the default branch, and an old approved story before and after an edit.
    The reader's Codex conversation is archived only when a round passes; a round with findings
-   leaves it for the next round, and a failed archive only prints a note. Tests cover both.
+   leaves it for the next round, and a failed archive only prints a note. A passing round archives only its own conversation; an
+   earlier one left by an app that is no longer installed is left as it is, with a note naming it.
+   Tests cover all three.
 3. **Kept findings are settled, not argued.** The reader raises a finding the agent kept again
    only when it disagrees with the stated reason, as a new finding `Disputed keep <n>: <why>`. The
    skill tells the agent to put each disputed keep to the human as one question with options,

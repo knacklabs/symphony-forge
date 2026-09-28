@@ -167,3 +167,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 43. **Unproven: item 1 when the recorded reader app becomes unavailable.** [The plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:29) pins the reader family, but specifies a wrong-app refusal only while the other app is installed. Pin and test what `forge read` does if that recorded family is no longer installed, without silently switching readers.
    Disposition: cut: item 1 starts fresh on the reader Forge would pick now when the recorded app is gone, says so and records it, with a test.
 
+## Round 10
+
+44. **The task copy omits renewed approval.** After a first task is squash-merged, reapproving a changed Done-when item commits a new approval hash to the story branch’s [state file](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/approval.py:164). Item 2 copies only the doc and read notes into the next task branch, leaving the old approval at its pull-request head; the [pull-request check](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:369) then rejects the new doc. Pin how the approval state reaches that branch and test a renewed approval after a squash merge. The named Tasks-table test cannot catch this because that edit leaves the approval hash unchanged.
+   Disposition: cut: item 2 copies the story's state file with the doc and notes, tested with a renewed approval after a squash merge.
+
+45. **The new reader-switch rule changes the approved promise.** [“What changes for you”](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:7) says the same reader reads every round, while [item 1](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:35) now switches apps when the recorded reader is unavailable. State that exception in the user-facing promise.
+   Disposition: cut: What changes for you now states the one-app reader and the switch.
+
+46. **Unproven: item 2’s archive path after a reader switch.** A Codex round with findings leaves its conversation open. If Codex then becomes unavailable and a Claude round passes, the plan does not say whether Forge attempts to archive that earlier Codex conversation, prints the promised archive-failure note, or leaves it silently. Pin the outcome and test this switch-and-pass case in GATES.
+   Disposition: cut: item 2 archives only the passing round's own conversation and names a left-over one in a note, tested.
+
