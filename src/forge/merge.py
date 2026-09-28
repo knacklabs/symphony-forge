@@ -6,6 +6,14 @@ import os
 import re
 from pathlib import Path
 from forge import checks, close, codex, repo
+
+COMMANDS = [{
+    "words": "merge", "run": "merge", "changes_state": False,
+    "help": "Merge a ready item when this repo allows it",
+    "args": [(('item',), {})], "position": 160,
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |",
+}]
+
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "ask the repo owner to set merge = \"agent\" on the default branch"),

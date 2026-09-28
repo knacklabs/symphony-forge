@@ -318,3 +318,12 @@ def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
             out.write(line)
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
+
+
+COMMANDS = [{
+    "words": "work", "run": "work", "changes_state": True,
+    "help": "Run the configured worker on a task or fix",
+    "args": [(('item',), {}), (('--note',), {"metavar": "TEXT", "help": "guide this round of work"})],
+    "position": 130,
+    "listing": '| `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |',
+}]

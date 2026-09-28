@@ -115,3 +115,11 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
         if isinstance(state, dict) and state.get("branch") == branch:
             return (f"{match[1]}/{match[2]}" if match[1] else match[3]), state
     repo.refuse(REFUSALS["not_started"], branch=branch)
+
+
+COMMANDS = [{
+    "words": "hook pr-check", "run": "pr_check", "changes_state": False,
+    "help": "The required forge-pr-check, run from the base branch",
+    "args": [], "position": 290,
+    "listing": "| `forge hook pr-check` | The required `forge-pr-check`, run in CI from the base branch |",
+}]

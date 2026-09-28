@@ -565,3 +565,24 @@ def _text(path: Path) -> str:
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))  # bytes, so Windows writes the same LF file
+
+
+COMMANDS = [
+    {"words": "story new", "run": "new", "changes_state": True,
+     "help": "Start a story branch, worktree and story doc, or promote a fix",
+     "args": [(('key',), {}), (('title',), {"nargs": "?"}),
+              (('--from-fix',), {"metavar": "FIX"})], "position": 70,
+     "listing": '| `forge story new <KEY> "<title>"` | Starts a story\'s branch, worktree and doc (`--from-fix <fix>` promotes a fix) |'},
+    {"words": "story done", "run": "done", "changes_state": True,
+     "help": "Record a finished story's outcome sentence and dates",
+     "args": [(('key',), {}), (('outcome',), {})], "position": 80,
+     "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
+    {"words": "read", "run": "read", "changes_state": True,
+     "help": "Run the one cold read of a story doc or spec",
+     "args": [(('target',), {"help": "a story key or a spec slug"}),
+              (('--amended',), {"action": "store_true", "help": "record the one amendment"})],
+     "position": 90,
+     "listing": '| `forge read <KEY or spec>` | Runs the one cold read of a story doc or spec (`--amended` records the one amendment) |'},
+]
+
+GROUP_HELP = {"story": "Start a story, or record its outcome"}

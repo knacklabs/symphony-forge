@@ -275,3 +275,13 @@ def _merged(top: Path, item: str) -> int:
         if all(f"task/{key}-{row.get('id', '').strip('`')}" in merged for row in tasks):
             print(f'Every part of {key} is merged.\nNext: forge story done {key} "<outcome>"')
     return 0
+
+
+COMMANDS = [{
+    "words": "close", "run": "close", "changes_state": True,
+    "help": "Close a task or fix by the close rule",
+    "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
+             (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"})],
+    "position": 150,
+    "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",
+}]

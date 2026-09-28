@@ -227,3 +227,25 @@ def allow_large(args: argparse.Namespace) -> None:
     repo.commit_state(f"Allow the fix past the fix limit: {state['allow_large']}",
                       repo.write_state(name, state, top), top=top)
     print(f"Fix {name} may now go over the fix limit.")
+
+
+COMMANDS = [
+    {"words": "task start", "run": "start", "changes_state": True,
+     "help": "Start a task in its own branch and worktree",
+     "args": [(('item',), {"metavar": "KEY/TASK"})], "position": 100,
+     "listing": "| `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |"},
+    {"words": "fix start", "run": "fix_start", "changes_state": True,
+     "help": "Start a fix in its own branch and worktree, with a one-line why and done-when",
+     "args": [(('why',), {}), (('--done',), {"required": True, "metavar": "DONE_WHEN"})],
+     "position": 110,
+     "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |'},
+    {"words": "fix allow-large", "run": "allow_large", "changes_state": True,
+     "help": "Record the human's permission for this fix to go over the fix limit",
+     "args": [(('reason',), {})], "position": 120,
+     "listing": '| `forge fix allow-large "<reason>"` | Records the human\'s permission for a fix to go over the fix limit |'},
+]
+
+GROUP_HELP = {
+    "task": "Start a task",
+    "fix": "Start a fix, or let it go over the fix limit",
+}

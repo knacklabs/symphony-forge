@@ -116,3 +116,11 @@ def _subcommand(args: list[str]) -> tuple[str, list[str]]:
     while i < len(args) and args[i].startswith("-"):
         i += 2 if args[i] in ("-C", "-c") else 1
     return (args[i], args[i + 1:]) if i < len(args) else ("", [])
+
+
+COMMANDS = [{
+    "words": "hook deny", "run": "hook", "changes_state": False,
+    "help": "Before a shell command: block destructive commands, --no-verify and gh pr merge",
+    "args": [], "position": 260,
+    "listing": "| `forge hook deny` | Before each shell command: blocks destructive commands, `--no-verify` and `gh pr merge` |",
+}]

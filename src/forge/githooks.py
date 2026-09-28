@@ -80,3 +80,13 @@ def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str)
     if len(code) > LIMIT:
         refuse(REFUSALS["promote"], fix=fix,
                problem=f"changes {len(code)} code files, over the limit of {LIMIT}")
+
+
+COMMANDS = [
+    {"words": "hook pre-commit", "run": "pre_commit", "changes_state": False,
+     "help": "The git pre-commit rules", "args": [], "position": 270,
+     "listing": "| `forge hook pre-commit` | The git pre-commit rules |"},
+    {"words": "hook pre-push", "run": "pre_push", "changes_state": False,
+     "help": "The git pre-push rules", "args": [], "position": 280,
+     "listing": "| `forge hook pre-push` | The git pre-push rules |"},
+]

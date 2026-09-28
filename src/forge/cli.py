@@ -1,4 +1,4 @@
-"""The forge command. One table maps every command to the module function that runs it."""
+"""The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
 import importlib
@@ -18,81 +18,6 @@ REFUSALS = {
 }
 
 
-def _arg(*names: str, **options: Any) -> tuple[tuple[str, ...], dict[str, Any]]:
-    return names, options
-
-
-# Command words, "module:function", whether it changes state, help, arguments.
-# A command that changes state refuses unless the installed Forge matches the forge.toml pin.
-# Each function takes the parsed arguments and returns an exit code (None means 0).
-TABLE = [
-    ("story new", "story:new", True, "Start a story branch, worktree and story doc, or promote a fix",
-     [_arg("key"), _arg("title", nargs="?"), _arg("--from-fix", metavar="FIX")]),
-    ("story done", "story:done", True, "Record a finished story's outcome sentence and dates",
-     [_arg("key"), _arg("outcome")]),
-    ("read", "story:read", True, "Run the one cold read of a story doc or spec",
-     [_arg("target", help="a story key or a spec slug"),
-      _arg("--amended", action="store_true", help="record the one amendment")]),
-    ("task start", "task:start", True, "Start a task in its own branch and worktree",
-     [_arg("item", metavar="KEY/TASK")]),
-    ("fix start", "task:fix_start", True,
-     "Start a fix in its own branch and worktree, with a one-line why and done-when",
-     [_arg("why"), _arg("--done", required=True, metavar="DONE_WHEN")]),
-    ("fix allow-large", "task:allow_large", True,
-     "Record the human's permission for this fix to go over the fix limit", [_arg("reason")]),
-    ("work", "worker:work", True, "Run the configured worker on a task or fix",
-     [_arg("item"), _arg("--note", metavar="TEXT", help="guide this round of work")]),
-    ("ask", "ask:ask", False, "Ask Codex a read-only question about this checkout",
-     [_arg("question"), _arg("--model", metavar="MODEL", help="Codex model for this answer"),
-      _arg("--effort", metavar="EFFORT", help="reasoning effort for this answer")]),
-    ("close", "close:close", True, "Close a task or fix by the close rule",
-     [_arg("item"), _arg("--dismiss", type=int, action="append", metavar="N"),
-      _arg("--because", action="append", metavar="FILE:LINE_REASON")]),
-    ("merge", "merge:merge", False, "Merge a ready item when this repo allows it",
-     [_arg("item")]),
-    ("spec save", "records:spec_save", True, "Save a spec as a draft", [_arg("slug")]),
-    ("spec confirm", "records:spec_confirm", True,
-     "Mark a spec confirmed after the human confirms in chat",
-     [_arg("slug"), _arg("--by", required=True, metavar="NAME")]),
-    ("spec measure", "records:spec_measure", True,
-     "Record the measured result in a confirmed spec's Success measure; it stays confirmed",
-     [_arg("slug"), _arg("--result", required=True, metavar="TEXT")]),
-    ("spec payback", "payback:payback", False,
-     "Say whether a build pays back: build, smallest slice first, don't build or find out first",
-     [_arg("--build-days", metavar="DAYS"), _arg("--day-rate", metavar="AMOUNT"),
-      _arg("--hours-per-month", metavar="HOURS", help="hours saved per person each month"),
-      _arg("--people", metavar="COUNT"), _arg("--hourly-rate", metavar="AMOUNT"),
-      _arg("--revenue-per-month", metavar="AMOUNT"), _arg("--incident-cost", metavar="AMOUNT"),
-      _arg("--incident-chance", metavar="CHANCE", help="the chance each month, from 0 to 1"),
-      _arg("--confidence", choices=("measured", "estimated", "guessed"), default="guessed",
-           help="weighs the value by 1, 1/2 or 1/5 (default: guessed)")]),
-    ("decision new", "records:decision_new", True, "Write a decision record", [_arg("slug")]),
-    ("decision accept", "records:decision_accept", True,
-     "Accept a decision after the human confirms in chat",
-     [_arg("slug"), _arg("--by", required=True, metavar="NAME")]),
-    ("roadmap add", "records:roadmap_add", True, "Add roadmap items from a confirmed spec",
-     [_arg("spec")]),
-    # Hooks get any extra arguments (git's pre-push remote, pr-check's flags) as args.args.
-    ("hook approval", "approval:hook", True,
-     "After a plan or question tool: record approvals and count human touches", []),
-    ("hook deny", "deny:hook", False,
-     "Before a shell command: block destructive commands, --no-verify and gh pr merge", []),
-    ("hook pre-commit", "githooks:pre_commit", False, "The git pre-commit rules", []),
-    ("hook pre-push", "githooks:pre_push", False, "The git pre-push rules", []),
-    ("hook pr-check", "prcheck:pr_check", False,
-     "The required forge-pr-check, run from the base branch", []),
-]
-
-GROUPS = {
-    "story": "Start a story, or record its outcome",
-    "task": "Start a task",
-    "fix": "Start a fix, or let it go over the fix limit",
-    "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
-    "decision": "Write and accept decisions",
-    "roadmap": "Add roadmap items",
-}
-
-
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         repo.refuse(REFUSALS["usage"], problem=f"{self.prog}: {message}", prog=self.prog)
@@ -105,7 +30,7 @@ def _parser() -> _Parser:
     commands = parser.add_subparsers(required=True, title="commands")
     groups: dict[str, Any] = {}
     declarations = []
-    group_help = dict(GROUPS)
+    group_help = {}
     for info in pkgutil.iter_modules(forge.__path__):
         if info.ispkg:
             continue
@@ -125,13 +50,6 @@ def _parser() -> _Parser:
             declarations.append((command["position"], command["words"],
                                  f"{module_name}:{command['run']}", command["changes_state"],
                                  command["help"], command["args"]))
-    declared_positions = {row[0] for row in declarations}
-    position = 10
-    for row in TABLE:
-        while position in declared_positions:
-            position += 10
-        declarations.append((position, *row))
-        position += 10
     for _, words, target, changes, text, arguments in sorted(declarations):
         name, _, sub = words.partition(" ")
         if sub and name not in groups:

@@ -34,3 +34,14 @@ def ask(args: argparse.Namespace) -> None:
     if result["status"] != "completed" or not (result["text"] or "").strip():
         repo.refuse(REFUSALS["failed"])
     print(result["text"].strip())
+
+
+COMMANDS = [{
+    "words": "ask", "run": "ask", "changes_state": False,
+    "help": "Ask Codex a read-only question about this checkout",
+    "args": [(('question',), {}),
+             (('--model',), {"metavar": "MODEL", "help": "Codex model for this answer"}),
+             (('--effort',), {"metavar": "EFFORT", "help": "reasoning effort for this answer"})],
+    "position": 140,
+    "listing": '| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |',
+}]
