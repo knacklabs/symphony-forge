@@ -81,9 +81,9 @@ New moving parts: one install script for Macs and one for Windows (Done-when 2)
 - INSTALL's test runs each script against a PATH of stub commands, so it installs nothing (the
   Windows script on the Windows CI runner): the check mode lists only the missing tools, and a full
   run calls each missing tool's installer once, skips the present ones, installs the Forge release
-  named in the script's one variable, and prints the next step. Installing for real is proven once
-  on a clean Mac and once on a clean Windows laptop and recorded in the functional check, not in
-  CI.
+  named in the script's one variable, and prints the next step. Installing for real on a clean Mac
+  and a clean Windows laptop is a manual check the owner runs after merge; the worker's functional
+  check records the stubbed runs and says the clean-laptop runs are the owner's.
 - TALK reads `## Demo` / `- Address: <url>` in `docs/product/BRIEF.md` from the default branch as
   last fetched; it is outside `## Answers`, so the answers parser ignores it. Copying the address
   into the sign-off decision is an instruction in the skill, not code.
