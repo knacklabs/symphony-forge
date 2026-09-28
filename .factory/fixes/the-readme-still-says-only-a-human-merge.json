@@ -3,11 +3,22 @@
   "branch": "fix/the-readme-still-says-only-a-human-merge",
   "done_when": "README.md describes the per-repo merge setting and forge merge, shows the v1.1.0 install line, has an Upgrading section that says to tell the agent to upgrade Forge to a named version, lists forge merge and forge ask in its commands table, and links the explainer video from the v1.1.0 release with a preview image; no video or video source is committed, only links to the release assets",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "6a5e5b178f1d6e7c8b851cf0732ba9e6b6c6c68f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "fabae9059733cc1fba67debbde284e7825d3040201756b4df467a28d2999d20e"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T02:31:32+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T04:31:26+00:00",
+      "step": "review"
     }
   ],
   "why": "The README still says only a human merges, shows the v1.0.2 install line, doesn't say how to upgrade a repo or list forge merge and forge ask, and has no explainer video"
