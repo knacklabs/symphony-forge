@@ -4,28 +4,28 @@
   "done_when": "When Codex isn't installed, forge close runs Autoreview with --engine claude on [models.grill.claude]'s model and effort, finding the Autoreview helper under the Claude or Codex skills folder; forge doctor accepts a Claude-only setup; a test runs forge close with no codex command and sees the Claude review used",
   "kind": "fix",
   "review": {
-    "commit": "c9c6c2f810ce5359f8583dd4761faa7af16823b5",
+    "commit": "eac757de1b69d71c33d9cbcc680e6dd4bd7ad887",
     "dismissals": [],
     "findings": [
       {
-        "body": "The helper search stops at the first existing file, then checks its pin. If ~/.codex has an outdated Autoreview helper and ~/.claude has the pinned helper, forge close rejects the Codex copy instead of using the valid Claude copy. Select the first pinned standard helper.",
+        "body": "The search stops at the first existing file, then checks its pin. If ~/.codex has an outdated helper and ~/.claude has the pinned helper, both forge doctor and forge close reject the Codex copy without trying the valid Claude copy. Select the first pinned standard helper.",
         "file": "src/forge/review.py",
-        "line": 224,
+        "line": 253,
         "priority": "P2",
         "title": "Use a valid Claude helper when an older Codex helper is present"
       },
       {
-        "body": "The engine choice also affects client sign-off. review.signoff() at review.py:315 calls run() with a config containing only models.review. Without Codex, this line requests models.grill.claude, so repo.models() at repo.py:213\u2013217 refuses before Autoreview runs. A Claude-only team can close an ordinary fix but cannot accept client sign-off.",
+        "body": "This engine choice also applies to client sign-off. signoff() at src/forge/review.py:346 supplies only models.review, so the Claude path calls repo.models() without models.grill.claude and is refused at src/forge/repo.py:213\u2013217 before Autoreview runs. Even if that model were supplied, the fixed GPT-6 Sol selection check at src/forge/review.py:318\u2013321 would reject a Claude review. A Claude-only team can close an ordinary fix but cannot accept client sign-off.",
         "file": "src/forge/review.py",
-        "line": 272,
+        "line": 301,
         "priority": "P2",
         "title": "Keep client sign-off review working without Codex"
       }
     ],
     "status": "clean",
-    "tree": "655209f85f88ff51e6cb520e95f7fd81bb457c743f7897b04f2bd76567b10650"
+    "tree": "4b0ae78840b4f233a97b86a3b62a8a16db57fa958447080dde5ab5e90b144278"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T16:51:53+00:00",
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-28T17:21:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T17:48:18+00:00",
       "step": "review"
     }
   ],
