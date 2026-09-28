@@ -97,7 +97,25 @@ disagree, the frontend conventions settle it:
   customer judges the whole app by the path they see.
 - Demo data and the feedback toolbar follow the stack conventions when the repo has them.
 
-## 11. Done means
+## 11. Dashboard and charts
+
+- Charts use shadcn's Chart components (built on Recharts, themed from the same tokens); no other
+  chart library. Charts match the app and follow light and dark.
+- Home after sign-in is a dashboard from shadcn's dashboard block: 3-4 KPI cards, each with its
+  trend against the previous period; one main chart over time; a recent-activity table. People
+  see how things stand before they go looking.
+- The KPIs are the numbers from the customer's problem card (hours spent, orders delayed), so the
+  dashboard shows the saving; in a prototype they come from the demo data. The customer watches
+  the problem they paid to fix shrink.
+- Numbers come from real queries, never hard-coded. A dashboard that lies once is never trusted.
+- The date range lives in the URL, with presets (7 days, 30 days, quarter, custom). A shared link
+  shows the same period.
+- Numbers use tabular figures and the user's locale. Columns line up and read naturally.
+- Charts never rely on colour alone, have axis labels, and offer a readable table view for screen
+  readers. Everyone can read the numbers.
+- Loading skeletons and empty states match the rest of the app. The dashboard is no exception.
+
+## 12. Done means
 
 Run this before calling any UI change finished:
 
@@ -110,5 +128,8 @@ Run this before calling any UI change finished:
 - [ ] Keyboard-only walk-through works with visible focus; every control has a label.
 - [ ] Dates, numbers and money use the user's locale and time zone.
 - [ ] Records show who created or changed them and when.
+- [ ] Home is the dashboard: problem-card KPIs with trends, one chart over time, recent activity,
+      all from real queries, with the date range in the URL.
+- [ ] Charts are shadcn Chart only, with axis labels, more than colour, and a table view.
 - [ ] Light and dark themes and the mobile width both look right.
 - [ ] impeccable's audit and polish pass ran, with emil-design-eng's checklist inside it.
