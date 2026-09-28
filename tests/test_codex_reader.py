@@ -159,8 +159,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     monkeypatch.delenv("STUB_SAY")
     assert len(_stub(stub)) == before
 
-    # forge init writes the models table, grill with an entry per family, and no single model key;
-    # an old one refuses.
+    # forge init writes the models table, grill and design with an entry per family, and no single model key;
+    # an old one refuses. Review's old Astra default becomes Sol at xhigh effort.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -171,7 +171,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         "lite": {"model": "gpt-6-sol", "effort": "medium"},
         "grill": {"codex": {"model": "gpt-6-sol", "effort": "high"},
                   "claude": {"model": "opus", "effort": "high"}},
-        "review": {"model": "gpt-6-astra"}}
+        "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+                   "codex": {"model": "gpt-6-sol", "effort": "high"}},
+        "review": {"model": "gpt-6-sol", "effort": "xhigh"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml's model setting is now the [models] table.\n"
