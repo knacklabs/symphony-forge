@@ -1,13 +1,13 @@
 {
   "branch": "task/FORGE-PROTO-1-TOPICS",
   "review": {
-    "commit": "f99a4ecca4209a088027725b66e2aa4102dbe0b5",
+    "commit": "17c8b63242abce3b44c9529cfa3f9d63f10d64a2",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "3ca873e916f9fabcde840a2074df523decce09e9afdd3a36284d17dfddffcacf"
+    "tree": "33744c683ee0eb1a71b2599654e005e33c97bc590b4f013a85ecfd10452df0df"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T10:30:59+00:00",
@@ -15,6 +15,10 @@
     },
     {
       "at": "2026-09-28T11:06:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T11:25:36+00:00",
       "step": "review"
     }
   ]
