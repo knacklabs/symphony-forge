@@ -328,7 +328,12 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if findings:
             values["reason"] = "; ".join(findings)
     pr = (prs or {}).get(state.get("branch", "")) or {}
-    checks = repo.config(path or top)["checks"] if pr and status == "waiting for checks" else []
+    try:
+        checks = repo.config(path or top)["checks"] if pr and status == "waiting for checks" else []
+    except repo.Refused as refusal:
+        if path is None:
+            raise
+        return [f"{path}: {str(refusal).splitlines()[0]}"]
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
