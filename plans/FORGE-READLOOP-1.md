@@ -31,14 +31,16 @@ expensive to find in review.
    Codex or only Claude Code is installed, it is a separate read-only conversation of that same
    app, and the notes say so. `forge read <KEY or spec>` run again, once every finding in the
    notes has a disposition, continues the previous round's recorded reader conversation (a Codex
-   conversation, or a Claude Code session started with a known session id) and sends it the whole
-   current doc, every earlier finding with its disposition, and the doc's diff since the previous
-   round. The reader stays the one recorded in the notes; a round started from the app that is
+   conversation, or a Claude Code session started with a known session id) and sends it only what
+   changed: the doc's diff since the previous round, the previous round's findings with their
+   dispositions, and the number to start new findings from, telling it to re-read the whole doc
+   from its path. It never resends the first-round instructions, the whole doc or older rounds'
+   findings, which the conversation already has. The reader stays the one recorded in the notes; a round started from the app that is
    itself the recorded reader, while the other app is installed, refuses and names the app to run
    it from. When the recorded reader's app is no longer installed, the round starts fresh on the
    reader Forge would pick now, and Forge says so and records the new reader in the notes. When
-   the conversation can't be continued, the round starts fresh with the same text
-   plus the reader's first-round instructions, and Forge says so. When the previous round's text
+   the conversation can't be continued, the round starts fresh with the first-round
+   instructions, the whole doc and every earlier finding with its disposition, and Forge says so. When the previous round's text
    can't be found (notes written before this change), the round starts fresh without a diff. A
    round that fails or is discarded because a file changed records nothing and drops its
    conversation, so the retry starts fresh. Each round's findings are added to the notes under
@@ -47,7 +49,8 @@ expensive to find in review.
    numbered finding becomes one numbered finding, as today, so it needs a disposition too. Every
    round's prompt, the first included, carries the `## Known traps` section of the repo's
    AGENTS.md, outside Forge's block, as the default branch has it, so a story branch made before a
-   trap was learned still gets it. Tests cover a continued Codex round, a continued Claude round,
+   trap was learned still gets it. Tests cover a continued Codex round and a continued Claude round each sending only the diff,
+   the previous round's dispositions and the next number,
    a Codex-only and a Claude-only reader, a fresh round after a Codex conversation or a Claude
    session is gone, a recorded reader that is no longer installed, a fresh
    round from old notes whose text is gone, a wrong-app refusal, a retry after a failed round and
@@ -150,8 +153,9 @@ New moving parts: none
 
 - SPEC pins the next-round prompt as a second part of `cold-read.md`, after a
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
-  `$path`, `$doc`, `$diff`, `$findings`, `$next` (the first new finding's number) and `$traps`
-  (the default branch's `## Known traps` section, also added to the first-round prompt). ROUNDS
+  `$path`, `$diff`, `$dispositions` (the previous round's findings with their dispositions),
+  `$next` (the first new finding's number) and `$traps` (the default branch's `## Known traps`
+  section, also added to the first-round prompt); it has no `$doc` or `$findings`. ROUNDS
   fills them and adds nothing to the wording.
 - ROUNDS pins the notes contract CUT, GATES and SPECS read: the frontmatter keeps `reader`,
   `read_at` and `read_hash` for the latest round and adds `round` (a number) and `passed` (`yes`
