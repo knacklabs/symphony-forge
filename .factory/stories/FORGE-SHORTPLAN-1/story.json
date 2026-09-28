@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-28T18:32:33+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_012jmhehL7aueHGMRjbrRFRc",
+    "hash": "b55679b0308392c810f6f1514839250ce171f8dcc490c4e1132044bfa1f107d8",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-SHORTPLAN-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-28T18:17:23+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T18:21:27+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T18:32:33+00:00",
+      "step": "approved"
     }
   ],
   "title": "The plan the owner approves is long and full of test lists, tasks and notes that only agents use",
-  "touches": 0
+  "touches": 1
 }
