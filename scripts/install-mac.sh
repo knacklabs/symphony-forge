@@ -64,7 +64,7 @@ brew_tool uv uv uv
 if ! has forge || [[ $(forge --version 2>/dev/null) != "forge v$FORGE_VERSION" ]]; then
   if [[ $check == --check ]]; then missing Forge; else
     step Forge
-    uv tool install --force "symphony-forge==$FORGE_VERSION"
+    uv tool install --force "git+https://github.com/knacklabs/symphony-forge@v$FORGE_VERSION"
     uv tool update-shell
     export PATH="$(uv tool dir --bin):$PATH"
   fi

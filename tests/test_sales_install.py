@@ -61,7 +61,7 @@ def _mac_check_and_install(tmp_path):
     assert full.returncode == 0, full.stderr
     calls = log.read_text().splitlines()
     assert calls == ["brew install gh", "brew install --cask docker", "brew install uv",
-                     "uv tool install --force symphony-forge==1.1.0", "uv tool update-shell",
+                     "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.1.0", "uv tool update-shell",
                      "uv tool dir --bin", "npm install -g @anthropic-ai/claude-code",
                      "npm install -g @openai/codex",
                      "npx --yes playwright install chromium firefox webkit"]
@@ -70,9 +70,7 @@ def _mac_check_and_install(tmp_path):
     assert "new terminal" in full.stdout.lower()
 
 
-def test_2_mac_homebrew_authorization_and_ready_tools(tmp_path):
-    if os.name == "nt":
-        return
+def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "calls"
@@ -123,7 +121,8 @@ def _windows_check_and_install(tmp_path):
     system_root = Path(os.environ["SystemRoot"])
     system_path = os.pathsep.join(str(system_root / part) for part in ("System32", "", "System32/WindowsPowerShell/v1.0"))
     env = os.environ | {"PATH": str(bin_dir) + os.pathsep + system_path,
-                        "LOCALAPPDATA": str(tmp_path), "UV_TOOL_BIN_DIR": str(tmp_path / "tools")}
+                        "PATHEXT": ".CMD;.BAT", "LOCALAPPDATA": str(tmp_path),
+                        "UV_TOOL_BIN_DIR": str(tmp_path / "tools")}
     script = ROOT / "scripts/install-windows.ps1"
     check = subprocess.run([powershell, "-NoProfile", "-File", str(script), "-Check"],
                            env=env, capture_output=True, text=True)
@@ -143,20 +142,35 @@ def _windows_check_and_install(tmp_path):
         f'if "%1 %2"=="tool install" copy /Y "{installed / "forge.cmd"}" "{tool_bin / "forge.cmd"}" >nul\n',
         encoding="utf-8")
     (installed / "forge.cmd").write_text("@echo forge v1.1.0\n", encoding="utf-8")
+    for name in ("claude", "codex"):
+        (installed / f"{name}.cmd").write_text(f"@echo {name} ready\n", encoding="utf-8")
+        (installed / f"{name}.ps1").write_text("throw 'PowerShell blocked this shim'\n", encoding="utf-8")
     (bin_dir / "winget.cmd").write_text(
         f'@echo off\necho winget %* >> "{log}"\n'
-        f'echo %* | findstr /C:"GitHub.cli" >nul && copy /Y "{installed / "gh.cmd"}" "{bin_dir / "gh.cmd"}" >nul\n'
-        f'echo %* | findstr /C:"astral-sh.uv" >nul && copy /Y "{installed / "uv.cmd"}" "{bin_dir / "uv.cmd"}" >nul\n'
-        f'echo %* | findstr /C:"Docker.DockerDesktop" >nul && copy /Y "{installed / "docker.cmd"}" "{bin_dir / "docker.cmd"}" >nul\n'
+        f'echo %* | findstr.exe /C:"GitHub.cli" >nul && copy /Y "{installed / "gh.cmd"}" "{bin_dir / "gh.cmd"}" >nul\n'
+        f'echo %* | findstr.exe /C:"astral-sh.uv" >nul && copy /Y "{installed / "uv.cmd"}" "{bin_dir / "uv.cmd"}" >nul\n'
+        f'echo %* | findstr.exe /C:"Docker.DockerDesktop" >nul && copy /Y "{installed / "docker.cmd"}" "{bin_dir / "docker.cmd"}" >nul\n'
         'exit /b 0\n',
         encoding="utf-8")
     for name in ("gh", "docker"):
         (installed / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("npm", "npx"):
         (bin_dir / f"{name}.cmd").write_text(
-            f'@echo off\necho {name} %* >> "{log}"\n', encoding="utf-8")
+            f'@echo off\necho {name} %* >> "{log}"\n'
+            + (f'echo %* | findstr.exe /C:"@anthropic-ai/claude-code" >nul && '
+               f'copy /Y "{installed / "claude.cmd"}" "{bin_dir / "claude.cmd"}" >nul\n'
+               f'echo %* | findstr.exe /C:"@anthropic-ai/claude-code" >nul && '
+               f'copy /Y "{installed / "claude.ps1"}" "{bin_dir / "claude.ps1"}" >nul\n'
+               f'echo %* | findstr.exe /C:"@openai/codex" >nul && '
+               f'copy /Y "{installed / "codex.cmd"}" "{bin_dir / "codex.cmd"}" >nul\n'
+               f'echo %* | findstr.exe /C:"@openai/codex" >nul && '
+               f'copy /Y "{installed / "codex.ps1"}" "{bin_dir / "codex.ps1"}" >nul\n'
+               if name == "npm" else ""), encoding="utf-8")
         (bin_dir / f"{name}.ps1").write_text("throw 'Use the .cmd installer'\n", encoding="utf-8")
-    full = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
+    piped = ("function Invoke-RestMethod { param($Uri) "
+             f"Get-Content -Raw -LiteralPath '{script}' }}; "
+             "irm https://example.invalid/install-windows.ps1 | iex")
+    full = subprocess.run([powershell, "-NoProfile", "-Command", piped],
                           env=env, capture_output=True, text=True)
     assert full.returncode == 0, full.stderr
     calls = log.read_text().splitlines()
@@ -164,23 +178,28 @@ def _windows_check_and_install(tmp_path):
         "winget install --id GitHub.cli --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id astral-sh.uv --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id Docker.DockerDesktop --exact --source winget --accept-package-agreements --accept-source-agreements",
-        "uv tool install --force symphony-forge==1.1.0", "uv tool update-shell", "uv tool dir --bin",
+        "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.1.0",
+        "uv tool update-shell", "uv tool dir --bin",
         "npm install -g @anthropic-ai/claude-code", "npm install -g @openai/codex",
         "npx --yes playwright install chromium firefox webkit"]
     assert "forge v1.1.0" in full.stdout
     assert "sign in" in full.stdout.lower()
+    assert "claude.cmd" in full.stdout and "codex.cmd" in full.stdout
     assert "new powershell window" in full.stdout.lower()
+    agents = subprocess.run([powershell, "-NoProfile", "-ExecutionPolicy", "Restricted",
+                             "-Command", "& claude.cmd; & codex.cmd"], env=env,
+                            capture_output=True, text=True)
+    assert agents.returncode == 0, agents.stderr
+    assert agents.stdout.splitlines() == ["claude ready", "codex ready"]
 
 
-def test_2_windows_wsl2_restart_and_all_present(tmp_path):
-    if os.name != "nt":
-        return
+def _windows_wsl2_restart_and_all_present(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     log = tmp_path / "calls"
     system_root = Path(os.environ["SystemRoot"])
     env = os.environ | {"PATH": str(bin_dir) + os.pathsep + str(system_root / "System32"),
-                        "LOCALAPPDATA": str(tmp_path)}
+                        "PATHEXT": ".CMD;.BAT", "LOCALAPPDATA": str(tmp_path)}
     for name in ("git", "gh", "node", "docker", "uv", "claude", "codex"):
         (bin_dir / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("winget", "npm", "npx"):
@@ -215,5 +234,11 @@ def test_2_windows_wsl2_restart_and_all_present(tmp_path):
 def test_2_one_install_script_per_laptop_checks_and_installs(tmp_path):
     if os.name == "nt":
         _windows_check_and_install(tmp_path)
+        wsl_dir = tmp_path / "wsl"
+        wsl_dir.mkdir()
+        _windows_wsl2_restart_and_all_present(wsl_dir)
     else:
         _mac_check_and_install(tmp_path)
+        brew_dir = tmp_path / "homebrew"
+        brew_dir.mkdir()
+        _mac_homebrew_authorization_and_ready_tools(brew_dir)

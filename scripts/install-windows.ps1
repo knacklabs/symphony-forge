@@ -58,7 +58,7 @@ if (-not $forgeReady) {
     if ($Check) { Missing 'Forge' }
     else {
         Write-Output 'Installing Forge...'
-        & uv tool install --force "symphony-forge==$ForgeVersion"
+        & uv tool install --force "git+https://github.com/knacklabs/symphony-forge@v$ForgeVersion"
         if ($LASTEXITCODE -ne 0) { throw 'Forge did not install. Check the message above, then run this script again.' }
         & uv tool update-shell
         if ($LASTEXITCODE -ne 0) { throw 'Forge is installed, but its command could not be added to your PATH. Run uv tool update-shell, then open a new PowerShell window.' }
@@ -93,6 +93,5 @@ else {
 if (-not $Check) {
     Write-Output 'Setup finished. Forge version:'
     & forge --version
-    Write-Output 'Open a new PowerShell window before using Forge so it can find the command.'
-    Write-Output 'Next: sign in to Claude Code or Codex, then open your new repo.'
+    Write-Output 'Next: Open a new PowerShell window, sign in with claude.cmd or codex.cmd, then open your new repo.'
 }
