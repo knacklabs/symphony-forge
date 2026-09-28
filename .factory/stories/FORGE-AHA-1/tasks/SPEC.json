@@ -2,11 +2,22 @@
   "base": "6adcdc7f44b8822a57f0f7e16bcd21f8c0257e7b",
   "branch": "task/FORGE-AHA-1-SPEC",
   "done_when": "The skill and templates carry the aha journey from the first meeting to sign-off",
-  "status": "started",
+  "review": {
+    "commit": "5409fbe0ea65d7f72de61c1805f41c43d2f8647f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "1495a0486eae9049480a3b8b53e49465453b96aeb488f6e2222b188c13168389"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T12:14:35+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:24:21+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step"
