@@ -1,0 +1,14 @@
+{
+  "base": "319abe700568b1c29227b92706a207e462203dfe",
+  "branch": "fix/forge-s-python-is-at-6-915-of-its-7-000",
+  "done_when": "An accepted decision records the owner's choice, pyproject.toml's line_ceiling is 7500, the tests that pin the ceiling follow it, and the full suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T12:41:46+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's Python is at 6,915 of its 7,000 cap and five approved tasks still add code; the owner raised the cap to 7,500 on 2026-09-28"
+}
