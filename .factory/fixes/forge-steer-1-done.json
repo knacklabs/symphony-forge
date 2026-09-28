@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "The coordinator can steer a worker with a note, answer its questions, and ask Codex read-only questions on any model without leaving saved chats",
-  "status": "started",
+  "review": {
+    "commit": "5474d2c8c6938c413050b216f421a724ff4f4463",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "bfbee94b9366ca0210e3f70bbc55e3a476ca22d667b0f736ceaa916c81b8b16d"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T06:00:42+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T06:01:45+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
