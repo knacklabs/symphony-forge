@@ -3,7 +3,7 @@
   "branch": "fix/a-fix-s-first-codex-round-runs-as-the-li",
   "done_when": "This repo's forge.toml and the forge.toml that forge init writes give [models.lite] subagents gpt-6-luna with subagent_effort max, like build and fix, and a test through forge work shows a fix's first Codex round passing them",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T11:22:51+00:00",
