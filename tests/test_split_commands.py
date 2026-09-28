@@ -415,14 +415,16 @@ def test_2_commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, mon
 
     package = _copy_forge(repo, tmp_path)
     (package / "probe.py").write_text(
-        'def probe(args):\n    print("new owner ran")\n'
+        'def probe(args):\n    print(f"{type(args.count).__name__}:{args.count}")\n'
         'COMMANDS = [{"words": "probe", "run": "probe", "changes_state": False, '
-        '"help": "A newly owned command", "args": [], "position": 15, '
+        '"help": "A newly owned command", '
+        '"args": [( ("--count",), {"type": "int", "required": True} )], "position": 15, '
         '"listing": "| `forge probe` | A newly owned command |"}]\n',
         encoding="utf-8",
     )
     assert "probe" in repo.forge("--help").stdout
-    assert repo.forge("probe").stdout == "new owner ran\n"
+    assert repo.forge("probe", "--count", "7").stdout == "int:7\n"
+    assert "invalid int value" in repo.forge("probe", "--count", "seven").stderr
     (package / "probe.py").write_text(
         'def run(args):\n    print("group command ran")\n'
         'COMMANDS = [{"words": "probe run", "run": "run", "changes_state": False, '

@@ -139,6 +139,8 @@ def _parser() -> _Parser:
         command = (groups[name] if sub else commands).add_parser(sub or name, help=text,
                                                                  description=text)
         for names, options in arguments:
+            if options.get("type") == "int":
+                options["type"] = int
             command.add_argument(*names, **options)
         # "handler", not "target": `forge read` has a positional argument named target.
         command.set_defaults(words=words, handler=target, changes=changes)
