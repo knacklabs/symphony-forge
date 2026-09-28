@@ -61,6 +61,7 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
     fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
@@ -71,7 +72,8 @@ def close(args: argparse.Namespace) -> int:
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous)
+            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
+                                light=light)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 number = dismissal["finding"]
@@ -256,7 +258,8 @@ def _block(result: dict[str, Any], check: str) -> str:
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if finding["priority"] in review.SERIOUS else "advisory")
+                else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
+                else "advisory")
         lines.append(f"{n}. {finding['priority']} {finding['title']} "
                      f"({finding['file']}:{finding['line']}): {note}")
     return "\n".join([*lines, *(["", check] if check else []), END])
