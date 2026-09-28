@@ -53,7 +53,7 @@ def test_1_merge_setting_follows_default_branch_signoff(env, case):
             "headRefOid": env.repo.git("rev-parse", "HEAD", cwd=where),
             "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
         _merge_at_github(env)
-        merged = env.repo.forge("merge", item, cwd=where)
+        merged = env.repo.forge("merge", item)
         assert merged.returncode == 0, merged.stderr
         assert env.gh_calls("pr", "merge")
         return
