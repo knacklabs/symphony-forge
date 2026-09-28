@@ -24,8 +24,8 @@ jobs:
           - {os: windows-latest, group: 2, groups: 3}
           - {os: windows-latest, group: 3, groups: 3}
     runs-on: ${{ matrix.os }}
-    # Windows and macOS need time for pytest-timeout to name a slow test before the job ends.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 5 || 10 }}
+    # Give the suite time to finish and pytest-timeout time to name a slow test.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
