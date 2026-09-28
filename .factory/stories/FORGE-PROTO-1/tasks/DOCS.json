@@ -1,0 +1,33 @@
+{
+  "branch": "task/FORGE-PROTO-1-DOCS",
+  "review": {
+    "commit": "1ab70088daffcbf082fa997785e4513e39beeeb7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This branch adds `tests/test_setup.py` to DEPLOY's scope and also revises SIGNOFF's model and review instructions in the story plan. Those edits are unrelated to item 11's decision, README, guide, and required documentation test. Move the plan changes and their associated approval and cold-read updates to the owning story-planning work.",
+        "file": "plans/FORGE-PROTO-1.md",
+        "line": 83,
+        "priority": "P2",
+        "title": "Keep unrelated task-plan changes out of the DOCS branch"
+      }
+    ],
+    "status": "clean",
+    "tree": "05b941cb600a7565068dfc587c9a9379e1e393f49e8bacdac8a37cb5731910ae"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T11:34:52+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:15:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:38:43+00:00",
+      "step": "review"
+    }
+  ]
+}
