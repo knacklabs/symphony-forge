@@ -1,40 +1,40 @@
 {
   "branch": "task/FORGE-AHA-1-TEMPLATES",
   "review": {
-    "commit": "75c2d41ee53dcb74f1f7da806d112793ddfe4a18",
+    "commit": "a426db0b9234441c877a48a047fd92e148e843aa",
     "dismissals": [],
     "findings": [
       {
-        "body": "The toolbar check runs during the Vite build: Vite statically replaces `import.meta.env` values ([Vite documentation](https://vite.dev/guide/env-and-mode)). The scaffold Dockerfile builds the frontend at `src/forge/templates/skeleton/Dockerfile:6` without passing `APP_ENV` into that build. Setting `APP_ENV=demo` when the demo container starts cannot restore the omitted toolbar. The convention needs an explicit demo build that supplies the value at build time, alongside a production build that excludes it.",
+        "body": "The convention explicitly permits Agentation's lazy chunk in the built assets. The scaffold Dockerfile builds the frontend once without `APP_ENV` (`src/forge/templates/skeleton/Dockerfile:6`), so the production build can contain the toolbar code even though the runtime check prevents it from loading. The Done-when item requires Agentation to be absent from production builds. Specify separate demo and production builds with the toolbar excluded from the latter.",
         "file": "src/forge/templates/conventions/frontend.md",
         "line": 61,
         "priority": "P1",
         "title": "Not done: Anyone can point at the screen"
       },
       {
-        "body": "The stack convention tells a builder to add the loader, but the unchanged Forge skill at `src/forge/templates/skill.md:103-111` does not tell the agent to build it in the prototype's first version or use `Words they use` for screen labels. This part's scope excludes the skill; SPEC is the next task that edits it.",
+        "body": "The example counts tables before opening the insertion transaction. During a rolling deployment, the previous instance can create the first real row after the counts but before the demo records are inserted (`src/forge/templates/conventions/deploy.md:5-6`). The loader would then mix demo and real data despite the stated refusal rule. The check and insertion need a database guard that makes a concurrent first write cause refusal or retry.",
+        "file": "src/forge/templates/conventions/demo-data.md",
+        "line": 31,
+        "priority": "P2",
+        "title": "Make the empty-table check atomic with demo insertion"
+      },
+      {
+        "body": "The stack convention tells builders to add the loader, but the unchanged Forge skill's prototype instructions at `src/forge/templates/skill.md:103-111` do not tell the agent to build it in the first version or use `Words they use` for screen labels. The story assigns the skill edit to SPEC, outside this part's scope.",
         "file": "src/forge/templates/conventions/stack.md",
         "line": 43,
         "priority": "P2",
         "title": "Later: SPEC must put first-version demo data and customer labels in the skill"
       },
       {
-        "body": "The frontend convention describes clicking an element and pasting feedback, but the unchanged Forge skill at `src/forge/templates/skill.md:103-111` gives salespeople no Agentation instructions. This part cannot edit the skill under its scope; DEMO's skill update needs to carry that instruction.",
+        "body": "The frontend convention describes clicking an element and pasting feedback, but the unchanged Forge skill at `src/forge/templates/skill.md:103-111` gives salespeople no Agentation instructions. The story assigns that skill edit to DEMO, outside this part's scope.",
         "file": "src/forge/templates/conventions/frontend.md",
         "line": 54,
         "priority": "P2",
         "title": "Later: DEMO must put the pointing instructions in the skill"
-      },
-      {
-        "body": "The example counts tables before opening the insertion transaction. During a rolling deployment, the prior instance remains available (`src/forge/templates/conventions/deploy.md:5`); if it creates the first row after these counts, the loader can insert demo rows into a database that is no longer empty. Keep the emptiness check and insertion in one database transaction with isolation that makes a concurrent first write cause refusal or retry.",
-        "file": "src/forge/templates/conventions/demo-data.md",
-        "line": 31,
-        "priority": "P2",
-        "title": "Make the empty-table check atomic with demo insertion"
       }
     ],
     "status": "blocked",
-    "tree": "9c440362c9f9b9a48521f3435494f77c3e58f941a0e27f50049b0931eec7ccbd"
+    "tree": "db0396deaf0c22ead70f2ac3a62c57f91665e3104d66252f4d06163b6dfc0a82"
   },
   "status": "fixing",
   "steps": [
@@ -44,6 +44,10 @@
     },
     {
       "at": "2026-09-28T14:57:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:20:57+00:00",
       "step": "review"
     }
   ]
