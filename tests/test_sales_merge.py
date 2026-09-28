@@ -14,14 +14,24 @@ SIGNOFF = ('---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n'
            '\n# The client signed off\n')
 
 
-@pytest.mark.parametrize("case", ["prototype", "signed", "forge-source"])
+@pytest.mark.parametrize("case", ["prototype", "signed", "signed_unprefixed",
+                                  "pinned_other", "pinned_signed", "forge-source"])
 def test_1_merge_setting_follows_default_branch_signoff(env, case):
-    if case == "signed":
+    if case in ("signed", "signed_unprefixed", "pinned_other", "pinned_signed"):
         other = env.tmp / "signed-off-clone"
         env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(other))
-        env.commit(other, "docs/decisions/0001-client-signoff.md", SIGNOFF)
+        pin = "docs/decisions/0002-client-signoff.md"
+        if case.startswith("pinned"):
+            env.commit(other, "forge.toml", (other / "forge.toml").read_text("utf-8")
+                       + f'signoff = "{pin}"\n')
+            env.commit(other, "docs/decisions/customer-client-signoff.md", SIGNOFF)
+        name = ("customer-client-signoff.md" if case == "signed_unprefixed" else
+                "0002-client-signoff.md" if case.startswith("pinned") else
+                "0001-client-signoff.md")
+        if case != "pinned_other":
+            env.commit(other, f"docs/decisions/{name}", SIGNOFF)
         env.repo.git("push", "-q", "origin", "main", cwd=other)
-        assert not (env.repo.path / "docs/decisions/0001-client-signoff.md").exists()
+        assert not (env.repo.path / "docs/decisions" / name).exists()
     elif case == "forge-source":
         env.commit(env.repo.path, "forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
                    + 'repo = "forge-source"\n')
@@ -34,7 +44,7 @@ def test_1_merge_setting_follows_default_branch_signoff(env, case):
 
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
-    if case == "prototype":
+    if case in ("prototype", "pinned_other"):
         assert closed.stdout.splitlines()[-1] == f"Next: forge merge {item}"
         env.gh.respond("pr", "view", stdout=json.dumps({
             "number": 7, "state": "OPEN", "baseRefName": "main",

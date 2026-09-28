@@ -175,7 +175,7 @@ def merge_setting(top: Path) -> str:
     names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
     pinned = cfg["signoff"]
     for name in names:
-        if name != pinned and (pinned or not SIGNOFF.fullmatch(name)):
+        if not (name == pinned if pinned else name.endswith("client-signoff.md")):
             continue
         record = git("show", f"{ref}:{name}", cwd=top)
         if record.startswith("---") and re.search(
