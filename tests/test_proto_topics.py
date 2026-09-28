@@ -49,11 +49,14 @@ def test_5_init_gives_new_client_one_answers_page_with_all_line_formats(repo, gh
         assert line in answers
 
 
-def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo):
+def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo, monkeypatch):
     # The real reader is an LLM; this guards the prompt delivered at the command boundary.
     import json
-    import sys
 
+    from test_worker import calls, install_claude
+
+    monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
                'models.grill.claude = { model = "opus", effort = "high" }\n')
@@ -63,14 +66,11 @@ def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo):
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("story", "new", "DEMO", "Demo the product")
     assert made.returncode == 0, made.stderr
-    reader = repo.bin / "claude"
-    reader.write_text(f'#!{sys.executable}\nimport pathlib, sys\n'
-                      'pathlib.Path(__file__).with_name("prompt.txt").write_text(sys.stdin.read())\n'
-                      'print("No findings.")\n', encoding="utf-8")
-    reader.chmod(0o755)
+    log = install_claude(repo)
     read = repo.forge("read", "DEMO")
     assert read.returncode == 0, read.stderr
-    prompt = (repo.bin / "prompt.txt").read_text(encoding="utf-8")
+    [call] = calls(log)
+    prompt = call["brief"]
     for instruction in ("docs/product/BRIEF.md", "later", "Decide first: <topic>",
                         "Decided: <topic>: <answer> (<source>, <date>)",
                         "first task", "disposition"):
