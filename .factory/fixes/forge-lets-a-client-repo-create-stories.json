@@ -1,0 +1,14 @@
+{
+  "base": "d5e8736c6dde2dc96ba6c70da344511b46329ff4",
+  "branch": "fix/forge-lets-a-client-repo-create-stories",
+  "done_when": "docs/specs/prototype-signoff.md is confirmed by the owner and on the roadmap",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T10:13:57+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in"
+}
