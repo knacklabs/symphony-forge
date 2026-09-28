@@ -10,7 +10,15 @@ from test_close import GREEN, env
 STORY = "FORGE-MERGE-1"
 
 
+def _signed_off(env):
+    env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
+               '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
+    env.repo.git("push", "-q", "origin", "main")
+
+
 def test_2_merge_setting_comes_from_default_branch(env):
+    # The configured setting governs merges after sign-off; before it, prototypes use agent merge.
+    _signed_off(env)
     item, where = env.start_fix()
     env.commit(where, "forge.toml", (where / "forge.toml").read_text("utf-8")
                .replace('checks = ["tests", "forge-pr-check"]', 'checks = []')
@@ -56,6 +64,8 @@ def test_2_merge_setting_comes_from_default_branch(env):
 
 @pytest.mark.parametrize("setting", ["agent", "human"])
 def test_3_close_records_ready_and_next_names_merge(env, setting):
+    # The old setting-based contract still applies once the client has signed off.
+    _signed_off(env)
     if setting == "agent":
         env.commit(env.repo.path, "forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
                    + 'merge = "agent"\n')
