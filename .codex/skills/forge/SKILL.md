@@ -134,6 +134,24 @@ When `forge next` says to connect the repo to our deploy platform, tell the sale
 their own login, pick a subdomain and record its address under `## Demo` in
 `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off decision.
 
+**The demo.** Every demo follows five steps, in order:
+
+1. their workaround today;
+2. the same job in the app;
+3. the time or money it saves, in their numbers;
+4. they take the controls;
+5. ask "what would stop you using this?"
+
+Send the demo link only after the guided demo, never before it. With each new version, draft a
+three-line "what changed" note for the salesperson to send: what they can do now, what changed
+since their last look, and what to try first, all in their words.
+
+After each demo, ask the salesperson one question at a time: what the customer did themselves,
+what they said word for word, and what they asked for. Write the answers under
+`## Prototype notes` in `docs/product/DISCOVERY.md` as one `### <YYYY-MM-DD>` block with `- Did:`,
+`- Said: "<their words>"` and one `- Asked:` line per request, ending each request in
+`(serves the problem)` or `(after sign-off)`.
+
 Ask one topic at a time when it first changes what you are building. Skip a topic the repo already
 answers. In the options column, our default is first where there is one; questions of fact have
 no default. Offer **Ask the client** on every question and add it to the customer call script in
@@ -161,8 +179,15 @@ Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Re
 `- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
 default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
-client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`. Before the
-sign-off review, use `forge next` to find each open must-answer topic and resolve it one at a time.
+client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
+
+**Sign-off.** Before the sign-off review, hold one read-back call with the customer that goes
+through every answer on the answers page: our defaults, the agent's guesses and the topics marked
+later. Settle every open must-answer topic in that call; `forge next` lists them. After the
+sign-off review passes, draft the sign-off email for the reviewed version: its demo address, what
+the app does, the problem and the saving, every answer in plain words, with our defaults called
+out, and what happens next. The customer's reply is the approval evidence the sign-off decision
+records. The salesperson sends it; Forge sends nothing.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
