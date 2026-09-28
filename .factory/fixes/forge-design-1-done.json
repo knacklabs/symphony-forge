@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "Screens and flows in client repos are built by Claude on Opus 5.5 high with impeccable, Emil and the app baseline, falling back to Codex Sol high when Claude can't run",
-  "status": "started",
+  "review": {
+    "commit": "e666160feb9b817f54f4a7477c0436980705ade8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "8c0d5431d6f887801c46470438ad950d7228ba391c02985e7d482f828eea0f23"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T15:00:53+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:06:53+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
