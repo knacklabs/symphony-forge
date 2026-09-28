@@ -64,7 +64,7 @@ Risks: none
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | SPEC | The checklist and the decision | The start-a-prototype checklist, the README's link to it, and the decision that the agent merges until sign-off | 1, 5 | `docs/start-a-prototype.md`, `README.md`, `docs/decisions/` | `tests/test_sales_checklist.py` | none | yes |
-| MERGE | Merge until sign-off | The effective merge setting for close and merge before sign-off | 1 | `src/forge/close.py`, `src/forge/merge.py`, `src/forge/repo.py` | `tests/test_sales_merge.py` | none | yes |
+| MERGE | Merge until sign-off | The effective merge setting for close and merge before sign-off | 1 | `src/forge/close.py`, `src/forge/merge.py`, `src/forge/repo.py`, `tests/test_close.py`, `tests/test_merge_ready.py` | `tests/test_sales_merge.py` | none | yes |
 | INSTALL | One install script | The Mac and Windows install scripts with their check modes | 2 | `scripts/install-mac.sh`, `scripts/install-windows.ps1` | `tests/test_sales_install.py` | none | yes |
 | TALK | Talk demo | The skill's prototype conversation rules and forge next's platform reminder | 1, 3, 4 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `src/forge/nextstep.py`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_sales_talk.py` | MERGE | yes |
 
@@ -81,9 +81,9 @@ New moving parts: one install script for Macs and one for Windows (Done-when 2)
 - INSTALL's test runs each script against a PATH of stub commands, so it installs nothing (the
   Windows script on the Windows CI runner): the check mode lists only the missing tools, and a full
   run calls each missing tool's installer once, skips the present ones, installs the Forge release
-  named in the script's one variable, and prints the next step. Installing for real is proven once
-  on a clean Mac and once on a clean Windows laptop and recorded in the functional check, not in
-  CI.
+  named in the script's one variable, and prints the next step. Installing for real on a clean Mac
+  and a clean Windows laptop is a manual check the owner runs after merge; the worker's functional
+  check records the stubbed runs and says the clean-laptop runs are the owner's.
 - TALK reads `## Demo` / `- Address: <url>` in `docs/product/BRIEF.md` from the default branch as
   last fetched; it is outside `## Answers`, so the answers parser ignores it. Copying the address
   into the sign-off decision is an instruction in the skill, not code.

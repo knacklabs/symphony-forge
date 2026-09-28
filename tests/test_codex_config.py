@@ -20,4 +20,5 @@ def test_14_this_repo_builds_with_codex_on_its_old_per_role_models() -> None:
         **lead, "subagents": "gpt-6-luna", "subagent_effort": "max"}
     assert config["models"]["lite"] == lead
     assert config["models"]["grill"]["codex"] == {"model": "gpt-6-sol", "effort": "high"}
-    assert config["models"]["review"] == {"model": "gpt-6-astra"}
+    # The old Astra default had no effort; reviews now use Sol at xhigh effort.
+    assert config["models"]["review"] == {"model": "gpt-6-sol", "effort": "xhigh"}
