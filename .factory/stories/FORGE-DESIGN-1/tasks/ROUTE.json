@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-DESIGN-1-ROUTE",
-  "status": "working",
+  "review": {
+    "commit": "4cd16c726511ced80832a3936e9f9d2ae64b1c35",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`git ls-files --others --exclude-standard` omits ignored files, while both `git diff` calls cover only tracked files. If Claude changes an ignored file such as `.env` and then fails, both snapshots match and Forge starts Codex despite the working tree having changed. The fallback guard must include those files.",
+        "file": "src/forge/worker.py",
+        "line": 393,
+        "priority": "P1",
+        "title": "Not done: Sol high is the fallback"
+      },
+      {
+        "body": "This command-level test sets `workers = \"codex\"` throughout. Its ordinary-item check uses a fix, and its story-task check with a different route uses `repo = \"forge-source\"`. It never checks a non-user-facing story task in a client repo or a design task with `workers = \"claude\"`. Routing every client story task to design Claude, or using the ordinary Claude model for design work when workers is Claude, would pass the added test. Exercise both cases through `forge work`.",
+        "file": "tests/test_design_route.py",
+        "line": 15,
+        "priority": "P1",
+        "title": "Not done: client route matrix test"
+      },
+      {
+        "body": "The fallback test asserts only the default Codex model, then removes all model settings. It never sets `[models.design.codex]` to a different value, and its `turn/start` assertions count calls without checking the prompt against the brief sent to Claude. A fallback using a hard-coded model or sending an incomplete brief would pass. Assert the configured model and the outbound brief through `forge work`.",
+        "file": "tests/test_design_route.py",
+        "line": 75,
+        "priority": "P1",
+        "title": "Not done: configured Codex fallback brief test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "2e2b0bf057ae5cef48367e0c1e48c4eb397ad5d676974b5e5c70437b4c897152"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T12:02:30+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:09:39+00:00",
+      "step": "review"
     }
   ]
 }
