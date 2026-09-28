@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-STEER-1-DOCS",
-  "status": "working",
+  "review": {
+    "commit": "d2255e9d043f4b5a1c6380d500b7886a62862c05",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The explicitly required `tests/test_steer_docs.py` is absent, and this branch adds no test for the new documentation. Existing coverage in `tests/test_standards.py:86\u201396` checks command names, so removing the new steering guidance would still pass. Add the required documentation contract test covering notes, worker questions and `forge ask` in the generated skill and guide, exercising skill delivery through `forge sync`.",
+        "file": "src/forge/templates/skill.md",
+        "line": 134,
+        "priority": "P1",
+        "title": "Not done: tests/test_steer_docs.py"
+      }
+    ],
+    "status": "blocked",
+    "tree": "101cdbde2ce70a28856e12067510cf56d7994abbcb59e7a7362f972581e33fc4"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T05:28:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:46:21+00:00",
+      "step": "review"
     }
   ]
 }
