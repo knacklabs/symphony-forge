@@ -4,19 +4,29 @@ from __future__ import annotations
 
 import pytest
 
-from test_close import GREEN, blocked, body, env, finding
+from test_close import GREEN, blocked, body, env, finding, run
 
 STORY = "FORGE-AHA-1"
 
 
-@pytest.mark.parametrize("signed_off,allowance,priority,ready", [
-    (False, "Prototype before sign-off", "P1", True),
-    (False, "Prototype before sign-off", "P0", False),
-    (False, "Another allowance", "P1", False),
-    (True, "Prototype before sign-off", "P1", False),
+LIGHT = (False, "Prototype before sign-off", "P1")
+
+
+# The last three cases pass the light review with a P1 finding, so only tests and CI can stop close.
+@pytest.mark.parametrize("signed_off,allowance,priority,ready,checks,problem", [
+    (*LIGHT, True, GREEN, None),
+    (False, "Prototype before sign-off", "P0", False, GREEN, None),
+    (False, "Another allowance", "P1", False, GREEN, None),
+    (True, "Prototype before sign-off", "P1", False, GREEN, None),
+    (*LIGHT, False, [run("tests", "failure"), run("forge-pr-check")],
+     "Checks failed on the pull request: tests."),
+    (*LIGHT, False, [run("tests"), run("forge-pr-check", "failure")],
+     "Checks failed on the pull request: forge-pr-check."),
+    (*LIGHT, False, [run("tests")],
+     "The checks are not green yet: forge-pr-check has not reported."),
 ])
 def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
-        env, signed_off, allowance, priority, ready):
+        env, signed_off, allowance, priority, ready, checks, problem):
     env.repo.write("forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
                    + 'repo = "client"\n'
                    + '[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
@@ -28,7 +38,7 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(allow_large=allowance)
     env.reviews(blocked(finding(priority, "Prototype review finding")))
-    env.checks(GREEN)
+    env.checks(checks)
 
     result = env.close(item)
 
@@ -38,6 +48,14 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         ("codex=gpt-6-sol", "codex=medium", "P0") if not signed_off and
         allowance == "Prototype before sign-off" else
         ("codex=gpt-6-astra", "codex=high", "P3"))
+    if problem:
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert result.stderr.splitlines()[-2] == problem
+        assert "Ready" not in result.stdout + result.stderr
+        assert not env.gh_calls("pr", "ready")
+        env.checks(GREEN)
+        assert env.close(item).returncode == 0
+        return
     assert (result.returncode == 0) is ready, result.stderr
     assert ("Prototype review finding" in result.stderr) is not ready
     [create] = env.gh_calls("pr", "create")
