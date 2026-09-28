@@ -2,7 +2,7 @@
 reader: codex (gpt-6-sol)
 read_at: 2026-09-28T15:50:11+00:00
 read_hash: 681c20e42cbf8596b0ec19010db15c8a4143e6f6
-amended_hash: 3bd4992f25244a98cdbe84fddbed0efaa70de911
+amended_hash: 95dece00b89a6360a1c1c2b70c43509cbf1691b8
 ---
 # Cold read notes
 
@@ -218,5 +218,27 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 
 
 ## Round 16
+
+No findings.
+
+## Round 17
+
+56. **A settled older keep can become visible as unsettled again.** After a disputed keep, item 3 updates both the original finding’s disposition and the dispute to cite the human’s `Decided:` line. A continued prompt sends only the previous round’s dispositions, so the reader never receives the updated disposition of an original finding from an older round ([item 1](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:33), [item 3](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:93)). Pin how changed older dispositions reach the reader, and test a third round after a human settles a dispute.
+   Disposition: cut: item 1 sends older findings whose disposition changed since, tested with a third round after a settled dispute.
+
+57. **Continued rounds can use stale story context.** The first-round [prompt](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/templates/cold-read.md:8) supplies the confirmed spec and asks the reader to check `BRIEF.md` answers. Item 1 now sends only the story doc diff and tells the reader to reread that doc. If the linked spec or answers change between rounds, neither change appears in that diff. Pin how each continued round checks current linked context, and test a change between rounds.
+   Disposition: cut: item 1 tells the reader to re-read the confirmed spec and BRIEF.md from their paths, tested with a change between rounds.
+
+## Round 18
+
+58. **ROUNDS has no pinned baseline for changed older dispositions.** Item 1 sends only older findings whose disposition changed since the last round, but the [notes contract](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:164) stores the previous doc text, not the dispositions last shown to the reader. Findings rounds need not commit their notes. Pin how Forge compares dispositions with what that conversation last received, and test that a settled older keep is sent while unchanged older findings are omitted.
+   Disposition: cut: Notes pin doc_seen, spec_seen and notes_seen object ids stored each round; changed older dispositions compare against notes_seen; tested with unchanged ones left out.
+
+59. **A spec path alone may point to the wrong copy.** The planned `$spec_path` identifies a file, but Forge’s [confirmed-spec lookup](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:458) can find the current spec on a promoted task branch rather than in the story checkout. Telling the continued reader to open that path can yield an absent or stale file. Pin the selected ref or supply the current spec text, and test a spec that exists only on the promoted task branch.
+   Disposition: cut: item 1 sends the confirmed spec's diff since the previous round, found as the first round finds it, instead of a path; tested with a spec only on a promoted task branch.
+
+
+
+## Round 19
 
 No findings.
