@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-PROTO-1-NEXT",
-  "status": "working",
+  "review": {
+    "commit": "48d774269a367659eff41ec1f1bee02aeab90c11",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Malformed topic labels can count as settled answers. For example, `- Sign-in method: email and password (client, 2026-09-28)` is associated with `Sign-in` by the prefix check, and ANSWER_LINE accepts the altered label. Consequently, `forge next` omits Sign-in even though its required exact-name entry is missing. Validate the matched label against the exact topic before accepting an answer, while retaining malformed entries as open.",
+        "file": "src/forge/nextstep.py",
+        "line": 76,
+        "priority": "P1",
+        "title": "Not done: forge next lists what is still open"
+      },
+      {
+        "body": "A deferred entry such as `- Production host: later, when procurement approves (client, 2026-09-28)` matches both patterns. Because the ordinary-answer branch wins, it stores `later, when procurement approves` instead of the `later` marker. The exact comparison in open_must_answer_topics then treats this required topic as settled. Give the deferral format precedence so adding source/date information cannot remove an unresolved topic from the list.",
+        "file": "src/forge/nextstep.py",
+        "line": 81,
+        "priority": "P2",
+        "title": "Recognize dated deferrals before ordinary answers"
+      }
+    ],
+    "status": "blocked",
+    "tree": "1773c58652fc5a1d12c2bae2383b3ff7adb93f15d6e2cea0c71156181413810c"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T10:31:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T10:52:48+00:00",
+      "step": "review"
     }
   ]
 }
