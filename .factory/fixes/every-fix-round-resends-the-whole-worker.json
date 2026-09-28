@@ -4,28 +4,21 @@
   "done_when": "When forge work continues an item's existing Codex conversation, the prompt carries only the round's summary line, the coordinator's note or answer, the open findings and failing checks, one line saying the earlier brief still applies, and the changes since the last turn ended (not since it started); a first turn or a fresh conversation still gets the full brief; tests through forge work show both",
   "kind": "fix",
   "review": {
-    "commit": "89a52dfff8033131b5dc989053c4cf47c852b41f",
+    "commit": "0d2556a81320078f82b340e2ce1601087a8da612",
     "dismissals": [],
     "findings": [
       {
-        "body": "The fresh-conversation requirement fails when Codex rejects a resume request. This selects the shortened brief merely because a recorded thread exists. In src/forge/codex_turn.py:143\u2013161, a failed resume falls back to thread_start and sends the same request[\"prompt\"]. That new conversation therefore receives \u201cThe earlier brief ... still applies\u201d without ever receiving the task scope, Done-when, or worker instructions. Choose the prompt based on whether resumption actually succeeded, and send the full brief on fallback.",
+        "body": "The saved `head` is only a commit SHA (`src/forge/codex.py:345`), so it does not capture uncommitted files present when the turn ended. If those files remain unchanged through another round, `_changes` sends them again as new changes. This occurs in the existing CLI scenario: `tests/test_codex_resume.py:245` expects the third turn to receive uncommitted files already sent to the second turn. Preserve an end-of-turn working-tree baseline so subsequent prompts include only intervening changes. This is P2 advice for the dirty-checkout edge case; the ordinary committed-worker case is fixed.",
         "file": "src/forge/worker.py",
-        "line": 87,
-        "priority": "P1",
-        "title": "Not done: When forge work continues an item's existing Codex conversation, the prompt carries only the round's summary line, the coordinator"
-      },
-      {
-        "body": "The new condition explicitly excludes resume failures from the full-brief assertion. The existing scenario at tests/test_codex_resume.py:269\u2013274 already deletes the server-side conversation and exercises this fallback through forge work, but now passes even when the replacement conversation receives only continuation instructions. Remove this exclusion and assert the full brief on that path. Deleting the local record in the new test covers a different fresh-conversation path and does not catch this defect.",
-        "file": "tests/test_codex_resume.py",
-        "line": 261,
-        "priority": "P1",
-        "title": "Not done: Test that a failed Codex resume sends the full brief to the fresh conversation"
+        "line": 91,
+        "priority": "P2",
+        "title": "Exclude already-seen uncommitted edits from continuation diffs"
       }
     ],
-    "status": "blocked",
-    "tree": "01e3ee5baaf325c7e072d02b6f6f96e395cf3690d8b4ad76b592d949e7cc91e3"
+    "status": "clean",
+    "tree": "9ac1ceeeed861db1ab79e9f4a84933ff7ed1e10e18565b5187e8d8f24e38b82f"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T09:10:00+00:00",
@@ -33,6 +26,10 @@
     },
     {
       "at": "2026-09-28T09:30:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T09:39:55+00:00",
       "step": "review"
     }
   ],
