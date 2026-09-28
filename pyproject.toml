@@ -34,5 +34,5 @@ packages = ["src/forge"]
 ".claude/skills/remote-approval/SKILL.md" = ".claude/skills/remote-approval/SKILL.md"
 
 [tool.forge]
-# Every line of every file under src/forge/ counts. Raising this needs an accepted decision.
-line_ceiling = 8000
+# Only Python lines under src/forge/ count (decision 0094). Raising this needs an accepted decision.
+line_ceiling = 7000
