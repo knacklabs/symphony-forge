@@ -1,27 +1,10 @@
 """Planning records: specs, decisions and the roadmap. They ship through the fix lane.
 
-Every command here runs only on a fix or story branch that Forge started (its state file is
-in the checkout), and commits what it wrote there, so the change reaches main by `forge close`.
 
-A spec's cold read, written by `forge read <slug>`, lives in the notes file beside the spec,
-`docs/specs/<slug>.read.md`:
 
-    ---
-    reader: <who read it>
-    read_at: <when>
-    read_hash: <git hash-object of the spec as read>
-    amended_hash: <git hash-object after the one amendment, recorded by --amended>
-    ---
-    1. <finding>
-       Disposition: cut | defer | keep <one-line reason>
 
-Each finding is a numbered item at the start of a line; its disposition follows it.
-`spec confirm` stores the SHA-256 of the confirmed body (the text after the frontmatter) as
-`confirmed_hash`, and `roadmap add` reads a spec only while its body still matches it.
 
-A spec's `## Success measure` holds `- Metric:`, `- Baseline:`, `- Target:` and
-`- Check date: YYYY-MM-DD` lines, each of which may wrap onto indented lines. `spec measure`
-appends a `- Result: <text> (YYYY-MM-DD)` line and refreshes `confirmed_hash`.
+
 """
 from __future__ import annotations
 
@@ -32,7 +15,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from forge import repo
+from forge import repo, story
 
 REFUSALS = {
     "bad_slug": ("{slug!r} is not a slug; a slug is lowercase words joined by hyphens.", "{next}"),
@@ -149,7 +132,7 @@ def spec_confirm(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["not_draft"], slug=args.slug, status=status)
     _check_measure(args.slug, body)
     notes = f"docs/specs/{args.slug}.read.md"
-    record, findings = _front(_text(top, notes))
+    record, findings = story._record(_text(top, notes))
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], slug=args.slug)
     amended = record.get("amended_hash")
@@ -196,7 +179,7 @@ def due_check(text: str, today: str) -> tuple[str, str] | None:
 
     Whether its stories are done is the caller's to check.
     """
-    fields, body = _front(text)
+    fields, body = story._record(text)
     measure = success_measure(body)
     if (fields.get("status") != "confirmed" or _measure_gaps(measure) or "Result" in measure
             or measure["Check date"] > today):
@@ -205,7 +188,6 @@ def due_check(text: str, today: str) -> tuple[str, str] | None:
 
 
 def success_measure(body: str) -> dict[str, str]:
-    """The fields of a spec's Success measure, each on one line; {} when it has none."""
     return {match[1]: " ".join(match[2].split())
             for match in MEASURE_LINE.finditer(_sections(body).get("Success measure", ""))}
 
@@ -234,7 +216,7 @@ def decision_accept(args: argparse.Namespace) -> None:
     if not rel:
         repo.refuse(REFUSALS["no_decision"], slug=args.slug)
     text = _text(top, rel)
-    fields, body = _front(text)
+    fields, body = story._record(text)
     status = fields.get("status") or "proposed"
     if status == "accepted":
         print(f"{rel} is already accepted.")
@@ -300,7 +282,6 @@ def roadmap_add(args: argparse.Namespace) -> None:
 
 
 def _start(args: argparse.Namespace, slug: str) -> Path:
-    """The checkout's top, once the slug is sound and the branch is a Forge fix or story."""
     if not SLUG.fullmatch(slug):  # also keeps every path under docs/
         fixed = "-".join(re.findall(r"[a-z0-9]+", slug.lower())) or "my-slug"
         by = f' --by "{args.by}"' if getattr(args, "by", None) else ""
@@ -322,10 +303,9 @@ def _name(args: argparse.Namespace, slug: str) -> str:
 
 
 def _spec(top: Path, slug: str) -> tuple[str, str, dict[str, str], str]:
-    """A spec's path, text, frontmatter and body; the text is empty when there is no spec."""
     rel = f"docs/specs/{slug}.md"
     text = _text(top, rel)
-    return (rel, text, *_front(text))
+    return (rel, text, *story._record(text))
 
 
 def _digest(body: str) -> str:
@@ -333,7 +313,6 @@ def _digest(body: str) -> str:
 
 
 def _measure_gaps(measure: dict[str, str]) -> list[str]:
-    """The Success measure lines that are missing, empty or (the check date) not a real date."""
     gaps = [line for name, line in MEASURE_FIELDS.items() if not measure.get(name)]
     when = measure.get("Check date")
     if when:
@@ -351,7 +330,6 @@ def _check_measure(slug: str, body: str) -> None:
 
 
 def _roadmap_items(slug: str, body: str) -> dict[str, str]:
-    """The `- KEY: title` lines of a spec's Roadmap section, by key; refuses any other line."""
     items: dict[str, str] = {}
     for line in _sections(body).get("Roadmap", "").strip().splitlines():
         match = ROADMAP_LINE.fullmatch(line.strip())
@@ -363,7 +341,6 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
 
 
 def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
-    """The one decision named NNNN-slug (that exact file) or slug, or "" when there is none."""
     folder = top / "docs" / "decisions"
     if not SLUG.fullmatch(name):
         return ""
@@ -378,7 +355,6 @@ def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
 
 
 def _decision_numbers(top: Path) -> set[int]:
-    """Decision numbers in this checkout or ever on any branch, local or fetched."""
     # ponytail: one walk of all history; per-ref `git ls-tree` if that gets slow.
     names = repo.git("log", "--all", "--format=", "--name-only", "--", "docs/decisions/",
                      cwd=top).splitlines()
@@ -386,21 +362,7 @@ def _decision_numbers(top: Path) -> set[int]:
     return {int(match[1]) for name in names if (match := re.match(r"(\d{4})-", Path(name).name))}
 
 
-def _front(text: str) -> tuple[dict[str, str], str]:
-    """A doc's frontmatter fields and the body after them."""
-    match = FRONTMATTER.match(text)
-    if not match:
-        return {}, text
-    fields = {}
-    for line in match[1].splitlines():
-        key, colon, value = line.partition(":")
-        if colon:
-            fields[key.strip()] = value.strip().strip("\"'")
-    return fields, text[match.end():]
-
-
 def _set(text: str, **changes: str | None) -> str:
-    """The doc with these frontmatter fields set (None removes one); other lines stay as they are."""
     match = FRONTMATTER.match(text)
     lines = match[1].splitlines() if match else []
     for key, value in changes.items():
@@ -415,7 +377,6 @@ def _set(text: str, **changes: str | None) -> str:
 
 
 def _sections(body: str) -> dict[str, str]:
-    """A Markdown body's `## ` sections, by title."""
     # ponytail: fenced code isn't skipped, so a `## ` line inside a code block starts a section.
     parts = re.split(r"^## +(.+?)(?:[ \t]+#+)?[ \t]*$", body, flags=re.M)
     return dict(zip(parts[1::2], parts[2::2]))

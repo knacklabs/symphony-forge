@@ -6,7 +6,6 @@ read through git and never run, imported or checked out.
 from __future__ import annotations
 
 import argparse
-import importlib
 import json
 import re
 from fnmatch import fnmatch
@@ -50,14 +49,9 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "" if state.get("allow_large") else promote_problem(changed, cfg["interfaces"])
         if problem:
             repo.refuse(REFUSALS["promote"], branch=branch, problem=problem, fix=item)
-    try:
-        story = importlib.import_module("forge.story")
-    except ModuleNotFoundError as exc:
-        if exc.name != "forge.story":
-            raise
-        # ponytail: STORY builds story.py in parallel; its story-doc checks run once it lands.
-        story = None
-    doc_problem = story.check_pr_docs(top, head, changed) if story else None
+    from forge import story
+
+    doc_problem = story.check_pr_docs(top, head, changed)
     if doc_problem:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     result = state.get("review")
@@ -77,8 +71,6 @@ def pr_check(args: argparse.Namespace) -> int:
 
 
 def promote_problem(changed: list[str], interfaces: list[str]) -> str:
-    """Why a fix must become a story, or "": it touches an interfaces path, or more than five code
-    files. Markdown, .factory/ and plans/ never count."""
     code = [path for path in changed
             if not path.lower().endswith(".md") and not path.startswith(review.BOOKKEEPING)]
     for path in code:
@@ -98,7 +90,6 @@ def _on_branch(top: Path, commit: str, head: str) -> bool:
 
 
 def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
-    """The task or fix whose state at head names this branch."""
     # ponytail: reads every task and fix state at the head, one git call each; batch them
     # (git cat-file --batch) when a repo holds thousands.
     listing = repo.git("ls-tree", "-r", "-z", "--name-only", head, "--", ".factory/stories",

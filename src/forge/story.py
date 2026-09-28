@@ -1,20 +1,6 @@
 """Story docs: `story new` (and promotion from a fix), the one cold read, `story done`, the doc's
 shape checks and the story-doc part of forge-pr-check.
 
-A story is `plans/<KEY>.md` on its own `story/<KEY>` branch and worktree. The cold read of a doc
-writes its notes beside it (`plans/<KEY>.read.md`, `docs/specs/<slug>.read.md`), the same format
-RECORDS reads for `spec confirm`:
-
-    ---
-    reader: <who read it>
-    read_at: <when>
-    read_hash: <git hash-object of the doc as read>
-    amended_hash: <git hash-object after the amendment, recorded by --amended; empty until then>
-    ---
-    1. <finding>
-       Disposition: cut | defer | keep <one-line reason>
-
-A task is merged once its state file is on origin/<default>: its pull request carried it there.
 """
 from __future__ import annotations
 
@@ -219,7 +205,6 @@ def done(args: Any) -> int:
 
 
 def sections(text: str) -> dict[str, str]:
-    """The doc's `## ` sections, heading to body, in order."""
     found: dict[str, str] = {}
     for block in re.split(r"^## ", text.replace("\r\n", "\n"), flags=re.M)[1:]:
         heading, _, body = block.partition("\n")
@@ -292,7 +277,6 @@ def approval_hash(text: str) -> str | None:
 
 
 def overlaps(scope: list[str], other: list[str]) -> bool:
-    """Whether two Scope lists share a path: the same path, one inside the other, or a glob match."""
     def one(a: str, b: str) -> bool:
         a, b = a.rstrip("/"), b.rstrip("/")
         return a == b or a.startswith(b + "/") or b.startswith(a + "/") or fnmatch(a, b) or fnmatch(b, a)
@@ -321,7 +305,6 @@ def check_read(target: str, top: Path | None = None) -> None:
 
 
 def undisposed(findings: str) -> str:
-    """The number of the first finding without a disposition (keep needs a reason), or ""."""
     parts = FINDING.split(findings)
     for number, finding in zip(parts[1::2], parts[2::2]):
         found = DISPOSITION.search(finding)
@@ -331,8 +314,6 @@ def undisposed(findings: str) -> str:
 
 
 def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
-    """The story-doc part of forge-pr-check: the problem with the first bad story doc among the
-    pull request's changed paths, or None. Everything is read from head, as data."""
     for path in changed:
         match = re.fullmatch(r"plans/([A-Z][A-Z0-9-]*)\.md", path)
         text = show(top, head, path) if match else None
@@ -355,7 +336,6 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
 
 
 def worktrees(top: Path) -> dict[str, Path]:
-    """Every checked-out branch and its worktree folder."""
     found: dict[str, Path] = {}
     path = top
     for line in repo.git("worktree", "list", "--porcelain", cwd=top).splitlines():
@@ -367,13 +347,11 @@ def worktrees(top: Path) -> dict[str, Path]:
 
 
 def stories_here(top: Path) -> dict[str, Path]:
-    """Each story's own worktree, by key."""
     return {branch[6:]: path for branch, path in worktrees(top).items()
             if branch.startswith("story/") and KEY.fullmatch(branch[6:])}
 
 
 def story_checkout(key: str, top: Path | None = None) -> Path:
-    """The checkout holding a story's planning state: its own worktree, else this checkout."""
     top = top or repo.root()
     for path in (stories_here(top).get(key), top):
         if path is not None and repo.read_state(key, path) is not None:
@@ -382,7 +360,6 @@ def story_checkout(key: str, top: Path | None = None) -> Path:
 
 
 def add_worktree(top: Path, branch: str, start: str) -> Path:
-    """A new branch in its own worktree, next to the main checkout."""
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
     path = main.parent / f"{main.name}-{branch.replace('/', '-')}"
     repo.git("worktree", "add", "-q", "-b", branch, str(path), start, cwd=top)
@@ -398,20 +375,17 @@ def landed_ref(top: Path) -> str:
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
-    """A file's text at a commit, or None when it isn't there."""
     done = repo.run("git", "show", f"{ref}:{path}", cwd=top)
     return done.stdout if done.returncode == 0 else None
 
 
 def merged_at(top: Path, ref: str, path: str) -> str:
-    """When a file first reached the default branch (a task's merge date) in UTC, or ""."""
     date = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%cI", ref, "--", path,
                     cwd=top)
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
 
 
 def json_of(text: str | None) -> dict[str, Any]:
-    """A JSON object read from git, or {} when it's missing or unreadable."""
     try:
         data = json.loads(text or "{}")
     except ValueError:
@@ -423,7 +397,6 @@ def json_of(text: str | None) -> dict[str, Any]:
 
 
 def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool]:
-    """The checkout, doc and notes file of a story key or a spec slug, and whether it's a story."""
     if KEY.fullmatch(target):
         top = story_checkout(target, top)
         return top, top / "plans" / f"{target}.md", top / "plans" / f"{target}.read.md", True
@@ -435,7 +408,6 @@ def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool
 
 
 def _confirmed_spec(top: Path, key: str) -> str:
-    """The confirmed spec for a story, including one still on its promoted task branch."""
     entry = next((item for item in repo.roadmap(top) if item["key"] == key), {})
     linked = entry.get("spec", "")
     refs = repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads",
@@ -447,12 +419,7 @@ def _confirmed_spec(top: Path, key: str) -> str:
             if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
                 continue
             spec = show(top, ref, path) or ""
-            match = FRONTMATTER.match(spec)
-            if not match:
-                continue
-            fields = dict(line.partition(":")[::2] for line in match[1].splitlines() if ":" in line)
-            fields = {name.strip(): value.strip().strip('"\'') for name, value in fields.items()}
-            body = spec[match.end():]
+            fields, body = _record(spec)
             if (fields.get("status") == "confirmed"
                     and fields.get("confirmed_hash") == hashlib.sha256(body.encode("utf-8")).hexdigest()
                     and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
@@ -468,7 +435,6 @@ def _parsed(doc: Path, rel: str) -> dict[str, Any]:
 
 
 def _record(notes: str) -> tuple[dict[str, str], str]:
-    """A notes file's read record (its frontmatter) and the findings after it."""
     match = FRONTMATTER.match(notes)
     if not match:
         return {}, notes
@@ -483,7 +449,6 @@ def _notes(record: dict[str, str], findings: str) -> str:
 
 
 def _repo_root_paths(said: str, roots: Any) -> str:
-    """Rewrite paths under a checkout, with either separator, to repo-root paths GitHub resolves."""
     for root in roots:
         head = r"[\\/]".join(map(re.escape, re.split(r"[\\/]", root)))
         said = re.sub(head + r"[\\/]([^\s`'\")\]>]*)", lambda m: "/" + m[1].replace("\\", "/"), said)
@@ -521,7 +486,6 @@ def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
 
 
 def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> str:
-    """Turn a fix's branch into the story's first task branch, keeping its commits."""
     task, branch, old = f"{key}/SPEC", f"task/{key}-SPEC", repo.state_path(fix)
     repo.git("branch", "-m", branch, cwd=fix_top)
     tracked = repo.run("git", "ls-files", "--error-unmatch", "--", old, cwd=fix_top).returncode == 0

@@ -1,27 +1,5 @@
 """forge migrate: move a client that copied Forge in (the factory/ layout) to v1 in one pull request.
 
-Everything is worked out from the default branch as last fetched, which the checkout must be at,
-before anything changes, and `--dry-run` prints that plan and stops. The run works in its own
-worktree on forge/migrate-v1:
-- it deletes the copied-in Forge's listed paths, except files referenced by tracked client files,
-  which stay in place unless Forge sync writes that path, and files that differ from the copied-in
-  version (the Forge source at the commit constitution/VENDORED_FROM names), which move to
-  .forge-migrate/kept/. .envrc is set aside only when it has lines besides the old Forge's, and
-  its old verify commands become forge.toml's test;
-- it deletes every old record under .factory/ and the old ledgers under plans/; git history
-  keeps them;
-- it moves gstack's office-hours design docs to docs/context/, deletes the rest of .gstack/, and
-  takes the old Forge's gstack lines out of .gitignore and .gitattributes;
-- each active plan approved on the default branch becomes a story doc whose approval carries
-  over; a task whose old marker is on the default branch is merged, and a story whose every task
-  is merged is finished. An unapproved plan, or an unfinished one whose story doc is malformed,
-  becomes a draft in .forge-migrate/replan/;
-- AGENTS.md becomes just the Forge block only when it is the old Forge's word for word, and
-  CLAUDE.md loses its import of the deleted .claude/CLAUDE.md;
-- it pins forge.toml to this Forge and to the sign-off record harness.yaml named, runs forge sync,
-  and makes one commit.
-Its fix state (kind migrate) holds an allow-large reason naming who ran it, and the plan as notes
-for the pull request. `forge close` turns on branch protection once that pull request merged.
 
 """
 from __future__ import annotations
@@ -280,7 +258,6 @@ def _plan(top: Path, ref: str, adapters: set[str]) -> dict[str, Any]:
 
 
 def _touched(plan: dict[str, Any]) -> list[str]:
-    """Every path the run removes, moves or writes, but the adapters sync.files lists."""
     written = [path for entry in plan["stories"] if "dest" in entry
                for path in (entry["old"], entry["dest"], *map(repo.state_path, entry["states"]))]
     return [*plan["delete"], *(path for move in plan["moves"] for path in move),
@@ -288,7 +265,6 @@ def _touched(plan: dict[str, Any]) -> list[str]:
 
 
 def _tree(top: Path, ref: str, *paths: str) -> dict[str, str]:
-    """Each file under these paths at ref, with its blob id."""
     listing = repo.git("ls-tree", "-r", "-z", ref, "--", *paths, cwd=top)
     return {entry.partition("\t")[2]: entry.split()[2] for entry in listing.split("\0")
             if entry and entry.split()[1] == "blob"}
@@ -299,7 +275,6 @@ def _names(top: Path, ref: str, folder: str) -> list[str]:
 
 
 def _source(top: Path, ref: str) -> dict[str, str]:
-    """The copied-in version of the listed paths: the Forge source at VENDORED_FROM's commit."""
     commit = re.search(r"\b[0-9a-f]{40}\b", story.show(top, ref, FORGE_MADE[0]) or "")
     if not commit:
         repo.refuse(REFUSALS["no_source"], problem=f"{FORGE_MADE[0]} names no copied-in commit")
@@ -316,7 +291,6 @@ def _source(top: Path, ref: str) -> dict[str, str]:
 
 
 def _in_flight(top: Path) -> list[str]:
-    """Old Forge work not finished in any checkout of this repo: an open window, an active stage."""
     found = set()
     for path in {top, *story.worktrees(top).values()}:
         factory = path / ".factory"
@@ -334,7 +308,6 @@ def _in_flight(top: Path) -> list[str]:
 
 
 def _stories(top: Path, ref: str) -> list[dict[str, Any]]:
-    """Each active plan, converted; one that can't be keeps its place and says why."""
     found: list[dict[str, Any]] = []
     # Lower-cased: a disk that ignores capitals would write plans/CACHE-BUG.md over
     # plans/cache-bug.md.
@@ -361,7 +334,6 @@ def _stories(top: Path, ref: str) -> list[dict[str, Any]]:
 
 def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str, str],
              body: str) -> dict[str, Any]:
-    """An old plan as a story doc."""
     found = story.sections(body)
     picked = {name: next((heading for heading in olds if heading in found), None)
               for name, olds in SECTIONS.items()}
@@ -417,8 +389,6 @@ def _convert(top: Path, ref: str, rel: str, old: str, key: str, fields: dict[str
 
 def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
            saved: str) -> tuple[list[str], dict[str, Any], list[str], list[str]]:
-    """The old decomposition as Tasks rows, the merged tasks' states, what a human must fix in
-    the rows, and the rows not done yet."""
     base = f".factory/stories/{old}"
     decomposition = story.json_of(story.show(top, ref, f"{base}/decomposition.json"))
     tasks = [task for task in decomposition.get("tasks") or []
@@ -467,13 +437,11 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
 
 
 def _merged(key: str, tid: str, at: str) -> dict[str, Any]:
-    """The state of a task merged before the move."""
     return {"status": "merged", "branch": f"task/{key}-{tid}", "touches": 0,
             "steps": [{"step": "merged", "at": at}]}
 
 
 def _numbered(text: str) -> str:
-    """Done-when items, word for word, as the numbered list a story doc needs."""
     if re.search(r"^\d+\.[ \t]", text, re.M):
         return text
     count = iter(range(1, 10_000))
@@ -504,7 +472,6 @@ def _story_line(entry: dict[str, Any], default: str) -> str:
 
 
 def _report(plan: dict[str, Any], default: str) -> str:
-    """The plan in plain English: what --dry-run prints, and the notes of the pull request."""
     lines: list[str] = []
     lines.append("Deletes the copied-in Forge, these paths and nothing else (git history "
                  "keeps them):")
@@ -581,8 +548,6 @@ def _report(plan: dict[str, Any], default: str) -> str:
 
 
 def _fresh_branch(top: Path, ref: str) -> Path:
-    """forge/migrate-v1 in its own worktree, from ref. A branch holding nothing past ref but the
-    commit migrate recorded making, in a clean worktree, starts again; anything else stops it."""
     repo.git("worktree", "prune", cwd=top)
     if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/{BRANCH}", cwd=top).returncode == 0:
         made = repo.git("rev-list", f"{ref}..{BRANCH}", cwd=top).split()
