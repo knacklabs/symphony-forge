@@ -3,7 +3,7 @@
   "branch": "fix/workers-stop-or-skip-work-for-two-reason",
   "done_when": "The worker brief says the tests a task's Tests column names are always required, docs tasks included, and that a real-Codex or process-cleanup test failing locally under machine load is CI's to judge: commit, say so, don't stop; a test through forge work shows both lines in a brief",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T15:01:59+00:00",
