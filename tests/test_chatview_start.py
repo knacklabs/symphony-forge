@@ -37,8 +37,11 @@ SERVER = RESUMING.replace(
 READ_SERVER = (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8").replace(
     '        elif method == "thread/start":\n',
     '''        elif method == "project/list":
-            reply(message, {"data": [{"id": "main", "roots": [os.environ["STUB_MAIN_ROOT"]]}],
-                            "nextCursor": None})
+            if os.environ.get("STUB_CHATVIEW_FAIL") == method:
+                send(id=message["id"], error={"code": -32603, "message": "stub unavailable"})
+            else:
+                reply(message, {"data": [{"id": "main", "roots": [os.environ["STUB_MAIN_ROOT"]]}],
+                                "nextCursor": None})
         elif method == "thread/metadata/update":
             reply(message, {})
         elif method == "thread/start":
@@ -53,6 +56,7 @@ def _ready(repo, monkeypatch, sdk_data):
 
 def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch, sdk_data):
     folder, calls = _ready(repo, monkeypatch, sdk_data)
+    worker_log = repo.path / ".git/forge/work-BOARD-PAGE.log"
     monkeypatch.setenv("STUB_PROJECTS", json.dumps([
         {"id": "other", "roots": [str(folder)]},
         {"id": "main", "roots": [str(repo.path / ".." / repo.path.name)]},
@@ -86,10 +90,24 @@ def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch,
         ".git/forge/work-BOARD-PAGE.log").read_text()
 
     monkeypatch.setenv("STUB_CHATVIEW_FAIL", "project/list")
+    before = worker_log.read_text(encoding="utf-8")
     failed = repo.forge("work", "BOARD/PAGE")
     assert failed.returncode == 0, failed.stdout + failed.stderr
-    assert "Check Codex and try again" in repo.path.joinpath(
-        ".git/forge/work-BOARD-PAGE.log").read_text()
+    added_log = worker_log.read_text(encoding="utf-8")[len(before):]
+    assert "project_skipped=Codex could not update the chat project" in added_log
+    assert "stub unavailable" in added_log and "Check Codex and try again" in added_log
+
+    monkeypatch.setenv("STUB_CHATVIEW_FAIL", "thread/metadata/update")
+    monkeypatch.setenv("STUB_PROJECTS", json.dumps([{"id": "main", "roots": [str(repo.path)]}]))
+    before_calls = len(_sent(calls, "thread/metadata/update"))
+    before = worker_log.read_text(encoding="utf-8")
+    update_failed = repo.forge("work", "BOARD/PAGE")
+    assert update_failed.returncode == 0, update_failed.stdout + update_failed.stderr
+    assert _sent(calls, "thread/metadata/update")[before_calls:] == [
+        {"threadId": "thr-stub-1", "projectId": "main"}]
+    added_log = worker_log.read_text(encoding="utf-8")[len(before):]
+    assert "project_skipped=Codex could not update the chat project" in added_log
+    assert "stub unavailable" in added_log and "Check Codex and try again" in added_log
 
     story = repo.path.parent / "repo-story-BOARD"
     repo.git("worktree", "add", "-q", str(story), "story/BOARD")
@@ -101,10 +119,29 @@ def test_2_worker_joins_only_the_unique_main_checkout_project(repo, monkeypatch,
     monkeypatch.setenv("STUB_MAIN_ROOT", str(repo.path))
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.delenv("STUB_CHATVIEW_FAIL")
+    before_calls = len(_stub(calls))
     read = repo.forge("read", "BOARD")
     assert read.returncode == 0, read.stdout + read.stderr
-    assert _sent(calls, "thread/metadata/update")[-1] == {
-        "threadId": "thr-stub-1", "projectId": "main"}
+    read_calls = _stub(calls)[before_calls:]
+    assert [call["params"] for call in read_calls
+            if call.get("method") == "thread/metadata/update"] == [
+                {"threadId": "thr-stub-1", "projectId": "main"}]
+
+    slug = "chatview-project-failure"
+    (story / "docs/specs").mkdir(parents=True)
+    (story / f"docs/specs/{slug}.md").write_text("# Chat project failure\n", encoding="utf-8")
+    monkeypatch.setenv("STUB_CHATVIEW_FAIL", "project/list")
+    read_log = repo.path / f".git/forge/work-{slug}.log"
+    before_calls = len(_stub(calls))
+    failed_read = repo.forge("read", slug, cwd=story)
+    assert failed_read.returncode == 0, failed_read.stdout + failed_read.stderr
+    read_calls = _stub(calls)[before_calls:]
+    assert any(call.get("method") == "project/list" for call in read_calls)
+    assert not any(call.get("method") == "thread/metadata/update" for call in read_calls)
+    diagnostic = read_log.read_text(encoding="utf-8")
+    assert "project_skipped=Codex could not update the chat project" in diagnostic
+    assert "stub unavailable" in diagnostic and "Check Codex and try again" in diagnostic
 
 
 def test_6_codex_home_is_throwaway(repo, monkeypatch, sdk_data):
