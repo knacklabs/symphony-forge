@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-8-000-line-cap-counts-its-text-t",
   "done_when": "The cap counts only Python files under src/forge against a ceiling of 7,000 in pyproject.toml, an accepted decision records the owner's choice, the tests and the v1 spec say so, and the full test suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T07:34:08+00:00",
