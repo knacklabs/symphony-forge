@@ -37,9 +37,14 @@ def test_3_one_chat_approves_other_repo_once(repo, tmp_path, claude_payload):
     assert other.forge("next").returncode == 0  # remembers its main checkout
     before = other.git("rev-parse", "story/SHOP")
     payload = claude_plan(claude_payload, DOC, cwd=local)
+    git_dir = Path(other.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=shop))
+    commit_hook = git_dir / "hooks" / "commit-msg"
+    commit_hook.write_text("#!/bin/sh\ngit branch --show-current > approval-hook-ran\n", encoding="utf-8")
+    commit_hook.chmod(0o755)
 
     approved = hook(repo, payload)
     assert approved.returncode == 0, approved.stderr
+    assert (shop / "approval-hook-ran").read_text(encoding="utf-8").strip() == "story/SHOP"
     assert "Recorded the approval of Shoppers can save a basket." in approved.stdout
     assert other.git("rev-parse", "story/SHOP") != before
     assert "plans/SHOP.md" in other.git("show", "--name-only", "--format=", "story/SHOP")
