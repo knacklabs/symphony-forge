@@ -3,7 +3,7 @@
   "branch": "fix/the-ubuntu-test-job-is-cancelled-at-its",
   "done_when": "The Ubuntu test job in .github/workflows/forge-next.yml allows 10 minutes, like Windows and macOS",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T16:25:30+00:00",
