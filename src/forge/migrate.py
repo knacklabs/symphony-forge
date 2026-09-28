@@ -39,6 +39,15 @@ from typing import Any
 
 from forge import __version__, init, repo, story, sync
 
+COMMANDS = [{
+    "words": "migrate", "run": "migrate", "changes_state": True,
+    "help": "Move a client from the copied-in Forge to v1 in one pull request",
+    "args": [(('--dry-run',), {"action": "store_true",
+                               "help": "print the full plan and change nothing"})],
+    "position": 40,
+    "listing": "| `forge migrate` | Moves a client from the copied-in Forge in one pull request |",
+}]
+
 REFUSALS = {
     "dirty": ("The working tree has changes that aren't committed: {paths}.",
               "commit or drop them, then forge migrate --dry-run"),

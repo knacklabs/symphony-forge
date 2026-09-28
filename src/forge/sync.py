@@ -15,6 +15,13 @@ from typing import Any
 
 from forge import repo
 
+COMMANDS = [{
+    "words": "sync", "run": "sync", "changes_state": True,
+    "help": "Write the generated adapter files and git hooks for the pinned version",
+    "args": [], "position": 20,
+    "listing": "| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |",
+}]
+
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
                 "forge sync"),

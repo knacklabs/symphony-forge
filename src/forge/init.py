@@ -12,6 +12,13 @@ from typing import Any, NoReturn
 
 from forge import __version__, repo, sync
 
+COMMANDS = [{
+    "words": "init", "run": "init", "changes_state": True,
+    "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
+    "args": [], "position": 10,
+    "listing": "| `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |",
+}]
+
 REFUSALS = {
     "has_commits": ("forge init sets up a new repo, and this one already has commits; a repo with "
                     "the copied-in Forge moves over with forge migrate.", "forge migrate"),
