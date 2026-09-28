@@ -76,7 +76,8 @@ def test_2_new_client_keeps_their_words_and_gets_guarded_demo_data(repo, gh, tmp
 def test_3_agentation_toolbar_is_demo_only(repo, gh, tmp_path):
     frontend = _conventions(repo, _client(repo, gh, tmp_path))["frontend.md"]
     for rule in ("Agentation feedback toolbar", "click an element, write what's wrong and paste the "
-                 "output to the agent", "only when `APP_ENV=demo`, never in production builds",
-                 "import it behind that check", "import.meta.env.APP_ENV === 'demo'",
+                 "output to the agent", "only when `APP_ENV=demo` at run time",
+                 "backend injects", "served `index.html`", "window.__APP_ENV__",
+                 "window.__APP_ENV__ === 'demo'", "never loads in production",
                  "import('agentation')"):
         assert rule in frontend, rule

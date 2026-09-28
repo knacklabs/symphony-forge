@@ -53,16 +53,20 @@ already caches it and tracks loading and errors.
 
 A demo build adds the Agentation feedback toolbar, so a salesperson can click an element, write
 what's wrong and paste the output to the agent, which then knows exactly which element was meant.
-Add it only when `APP_ENV=demo`, never in production builds: import it behind that check, so a
-production bundle doesn't contain it.
+Show it only when `APP_ENV=demo` at run time. The Dockerfile builds the frontend without `APP_ENV`,
+so Vite's `import.meta.env` cannot decide this. When serving `index.html`, the backend injects a
+script setting `window.__APP_ENV__` to `"demo"` only if its validated `APP_ENV` is `demo`, and to
+`"production"` otherwise. Replace a fixed placeholder in the served `index.html`, never a value
+from the request, and do not cache that response. Keep the dynamic import behind the run-time
+check so the toolbar never loads in production. The built assets may contain its lazy chunk.
 
 ```tsx
-// vite.config.ts: envPrefix: ['VITE_', 'APP_ENV'], so the build can see APP_ENV
-const Agentation = import.meta.env.APP_ENV === 'demo'
-  ? lazy(() => import('agentation').then((m) => ({ default: m.Agentation })))
-  : null;
+// index.html: <script>window.__APP_ENV__ = "__APP_ENV__";</script>
+// backend: replace __APP_ENV__ with APP_ENV === 'demo' ? 'demo' : 'production'
+declare global { interface Window { __APP_ENV__?: 'demo' | 'production' } }
+const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Agentation })));
 
-// in App: {Agentation && <Suspense fallback={null}><Agentation /></Suspense>}
+// in App: {window.__APP_ENV__ === 'demo' && <Suspense fallback={null}><Agentation /></Suspense>}
 ```
 
 ## Design and accessibility
