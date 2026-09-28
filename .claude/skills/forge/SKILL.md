@@ -39,9 +39,11 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
 | "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
 
-The human approves stories and chooses between options. The human merges by default
-(`merge = "human"`). If the default branch's `forge.toml` has `merge = "agent"`, run
-`forge merge <item>` once `forge close` says Ready. Never run `gh pr merge`; the agent merges only
+The human approves stories and chooses between options. In a client repo before the default
+branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
+After sign-off, the default branch's `forge.toml` merge setting applies: the human merges by
+default (`merge = "human"`), or the agent runs `forge merge <item>` for `merge = "agent"`.
+Forge's own repo follows its setting throughout. Never run `gh pr merge`; the agent merges only
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
@@ -114,6 +116,14 @@ then create stories. Use prototype fixes before sign-off. The salesperson can be
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
 call script. Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
+
+For each demo round, gather all requests from one conversation into one prototype fix. Build,
+test, review and merge that round before starting another. Tell the salesperson what changed in
+the demo: "the next version is live" or "the reviewer found a missing error message". Do not
+use Forge's words (fix, worktree, branch, pull request) in progress updates to the salesperson.
+When `forge next` says to connect the repo to our deploy platform, tell the salesperson to use
+their own login, pick a subdomain and record its address under `## Demo` in
+`docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off decision.
 
 Ask one topic at a time when it first changes what you are building. Skip a topic the repo already
 answers. In the options column, our default is first where there is one; questions of fact have

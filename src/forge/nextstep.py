@@ -148,9 +148,35 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
                       *(f"- {topic}" for topic in open_topics),
                       "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
             lines = notice + lines if len(trees) > 1 else lines + notice
+    if _needs_demo_address(top):
+        lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
+                  "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top))
     return lines, states
+
+
+def _needs_demo_address(top: Path) -> bool:
+    """Read the fetched default branch, not a demo address still being edited here."""
+    if not (top / "forge.toml").is_file():
+        return False
+    ref = story.landed_ref(top)
+    if story.show(top, ref, "Dockerfile") is None:
+        return False
+    cfg = repo.default_config(top)
+    if cfg["repo"] != "client":
+        return False
+    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+    pinned = cfg["signoff"]
+    for name in names.splitlines():
+        if (name == pinned if pinned else name.endswith("client-signoff.md")):
+            record = story.show(top, ref, name) or ""
+            if record.startswith("---") and re.search(
+                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
+                return False
+    brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
+    demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
+    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
 
 
 def _due(top: Path) -> list[str]:
@@ -301,7 +327,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if receipt.get("tidied") is True:
         return []
     if status == "merged" and path:
-        if repo.default_config(top)["merge"] == "agent" and receipt.get("review") == "clean":
+        if repo.merge_setting(top) == "agent" and receipt.get("review") == "clean":
             return [f"{label} is merged; Forge needs to finish tidying up.",
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
@@ -314,7 +340,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     if (status == "ready" and state.get("kind") != "migrate"
-            and repo.default_config(top)["merge"] == "agent"):
+            and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
