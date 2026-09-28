@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -88,16 +89,24 @@ def work(args: argparse.Namespace) -> None:
         state["status"] = "fixing" if findings or failing else "working"
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
-        if not on_codex:
-            _run(item, top, brief, claude)
-            return
-        name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
-        if len(name) > 60:
-            prefix = name[:59]
-            name = (prefix.rstrip() if name[59].isspace() else
-                    prefix.rsplit(" ", 1)[0] or prefix) + "…"
-        result = codex.run(top, item, kind, name, brief, "full-access",
-                           thread, fresh, approval, note=note)
+        start, clock = repo.now(), time.monotonic()
+        outcome = "failed"
+        try:
+            if not on_codex:
+                _run(item, top, brief, claude)
+                outcome = "completed"
+                return
+            name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
+            if len(name) > 60:
+                prefix = name[:59]
+                name = (prefix.rstrip() if name[59].isspace() else
+                        prefix.rsplit(" ", 1)[0] or prefix) + "…"
+            result = codex.run(top, item, kind, name, brief, "full-access",
+                               thread, fresh, approval, note=note)
+            outcome = "completed" if result["status"] == "completed" else "failed"
+        finally:
+            repo.record_timing(top, item, "worker round", start, clock, outcome,
+                               repo.models(config, kind.lower()))
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")

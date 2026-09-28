@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import tomllib
 from datetime import datetime, timezone
 from pathlib import Path
@@ -107,6 +108,20 @@ def forge_dir(cwd: str | os.PathLike[str] | None = None) -> Path:
 def work_log(top: Path, item: str) -> Path:
     """The item's work log in `.git/forge/`, where its worker's progress goes."""
     return forge_dir(top) / f"work-{item.replace('/', '-')}.log"
+
+
+def record_timing(top: Path, item: str, step: str, start: str, clock: float,
+                  outcome: str, model: dict[str, str] | None = None) -> None:
+    """Append a best-effort timing in the shared, uncommitted Git directory."""
+    line = {"item": item, "step": step, "start": start,
+            "seconds": round(time.monotonic() - clock, 3), "outcome": outcome}
+    if model:
+        line.update({key: model[key] for key in ("model", "effort") if key in model})
+    try:
+        with (forge_dir(top) / "timings.jsonl").open("a", encoding="utf-8") as out:
+            out.write(json.dumps(line) + "\n")
+    except OSError:
+        pass  # Timing is diagnostic; a full or unwritable Git directory must not fail the command.
 
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
