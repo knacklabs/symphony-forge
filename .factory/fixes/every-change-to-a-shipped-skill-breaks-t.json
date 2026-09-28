@@ -4,19 +4,19 @@
   "done_when": "tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes, so a skill edit needs no test change and two skill edits never conflict in that test",
   "kind": "fix",
   "review": {
-    "commit": "9588885726752bc56478d2c42b1de331aabe3ec1",
+    "commit": "995c7f451463d54237e0297673db4eda47e978f6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The generated files are checked only for their paths. The byte comparison covers `SOURCES`, while `.claude/settings.json`, `.codex/hooks.json`, `.codex/config.toml`, `.github/workflows/forge.yml`, both git hooks, and `CLAUDE.md` have no first-run content assertion. Their production sources are in `src/forge/githooks.py:17-73` and `src/forge/prcheck.py:85-112`. A consistently wrong hook or workflow written at the expected path would pass this test, including its second-sync stability check. Add content assertions for these outputs without pinned hashes so the test checks every shipped file.",
+        "body": "The expected content for the generated files comes from `sync.files()` and `githooks.shims()`, the same renderers used by `forge sync` (`src/forge/sync.py:235-257`). If a renderer consistently emits an incorrect hook or workflow, both the expected value and the written file change together, so the assertion at line 73 passes. The previous review\u2019s generated-content gap remains. Check these files against an independent source or behavior contract without restoring skill hashes.",
         "file": "tests/test_split_ships.py",
-        "line": 50,
+        "line": 41,
         "priority": "P1",
         "title": "Not done: tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes"
       }
     ],
     "status": "blocked",
-    "tree": "d087d97b2379ebadc5cdbfd54d4afe3912883cc615239158d9f2d472a7058649"
+    "tree": "ec22b3db24c4ee1e96dc0dc2785a7a1d52f96743a942536ec164dcd44468eea3"
   },
   "status": "fixing",
   "steps": [
@@ -26,6 +26,10 @@
     },
     {
       "at": "2026-09-28T18:58:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T19:05:30+00:00",
       "step": "review"
     }
   ],
