@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked on 2026-09-28 for the handoff hook in every client repo; the new hook changes existing hook-count, generated-output and help-text tests",
   "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
   "branch": "fix/client-repos-lose-the-agent-s-state-the",
   "done_when": "forge sync ships a pre-compaction hook for Claude Code (and Codex where supported) that writes a local handoff file in the repo's .git Forge folder from forge next's state, never committed, and the Forge skill tells the agent to add the owner's decisions and lessons to it at milestones and read it first after a compaction; a test through forge sync and the hook shows it",
