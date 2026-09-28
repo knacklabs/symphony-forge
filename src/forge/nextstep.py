@@ -12,6 +12,7 @@ import os
 import re
 import shlex
 import shutil
+import tempfile
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -128,10 +129,15 @@ def handoff_hook(args: Any) -> int:
     heading = "## Decisions and lessons\n"
     notes = old[old.index(heading):] if heading in old else heading
     current = "\n".join(_report(top)[0])
-    temp = path.with_suffix(".tmp")
-    temp.write_text(f"# Forge handoff\n\n## Current state ({repo.now()[:10]})\n\n"
-                    f"{current}\n\n{notes}", encoding="utf-8")
-    os.replace(temp, path)
+    temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
+                                       prefix="handoff-", suffix=".tmp", delete=False)
+    try:
+        with temp:
+            temp.write(f"# Forge handoff\n\n## Current state ({repo.now()[:10]})\n\n"
+                       f"{current}\n\n{notes}")
+        os.replace(temp.name, path)
+    finally:
+        Path(temp.name).unlink(missing_ok=True)
     return 0
 
 

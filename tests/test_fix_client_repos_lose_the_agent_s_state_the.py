@@ -7,9 +7,12 @@ STORY = "FIX-CLIENT-REPOS-LOSE-THE-AGENT-S-STATE-THE"
 
 def test_1_sync_ships_precompact_handoff_and_hook_preserves_decisions(repo, monkeypatch):
     monkeypatch.setenv("FORGE_NOW", "2026-09-28T12:00:00+00:00")
-    repo.git("checkout", "-q", "-b", "fix/handoff")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\ntest = "true"\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-q", "-m", "Pin Forge")
+    repo.git("push", "-q", "origin", "main")
+    repo.git("checkout", "-q", "-b", "fix/handoff")
 
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
@@ -38,9 +41,17 @@ def test_1_sync_ships_precompact_handoff_and_hook_preserves_decisions(repo, monk
 
     notes = "## Decisions and lessons\n- The owner chose the simpler path.\n- Keep the release small.\n"
     handoff.write_text(content.split("## Decisions and lessons\n")[0] + notes, encoding="utf-8")
+    started = repo.forge("fix", "start", "Refresh handoff state", "--done", "The new fix is listed")
+    assert started.returncode == 0, started.stderr
+    after = repo.forge("next")
+    assert after.returncode == 0, after.stderr
+    assert after.stdout != before.stdout
+    assert "The fix refresh-handoff-state is started" in after.stdout
     second = compact(shipped_commands[1])
     assert second.returncode == 0, second.stderr
     updated = handoff.read_text(encoding="utf-8")
+    assert after.stdout.strip() in updated
+    assert before.stdout.strip() not in updated
     assert updated.endswith(notes)
     assert updated.count("## Current state (") == 1
     assert "handoff.md" not in repo.git("ls-files", "--others", "--exclude-standard")
