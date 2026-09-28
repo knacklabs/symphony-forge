@@ -1,49 +1,28 @@
 {
   "branch": "task/FORGE-LIVE-1-ADOPT",
   "review": {
-    "commit": "d5c8e83817ed144b4c9954f8f06ffc16f1dca3f1",
+    "commit": "af364f6a2abdb3cce605eda43ecb8c067f2262fd",
     "dismissals": [],
     "findings": [
       {
-        "body": "An established repo with its own `.gitattributes` is refused as a collision. `sync.ships` merges `plans/roadmap.json merge=forge-roadmap` into that file (src/forge/sync.py:188-193), but `merged` includes only paths from `githooks.ships`. The merged output therefore differs from the existing file and is added to `taken`. Include `.gitattributes` among mergeable paths so adoption preserves the team's rules.",
+        "body": "If the hooks directory contains both a non-Forge `pre-commit` hook and `pre-commit.pre-forge`, the adoption commit can succeed, but `sync.install_shims` then refuses the conflict (src/forge/sync.py:289-294). `forge init` exits after creating the branch, worktree, and commit. Check hook conflicts before `story.add_worktree` so this failure leaves nothing changed.",
         "file": "src/forge/init.py",
-        "line": 290,
-        "priority": "P1",
-        "title": "Not done: A repo with history adopts Forge when .gitattributes exists"
-      },
-      {
-        "body": "The collision list omits `.factory/fixes/adopt-forge.json`, although `repo.write_state` writes that path later (src/forge/repo.py:325-331,354-364). If it already belongs to the team, init creates the worktree and replaces its contents in the adoption commit instead of listing it and changing nothing. Preflight the state path before creating the worktree.",
-        "file": "src/forge/init.py",
-        "line": 291,
-        "priority": "P1",
-        "title": "Not done: A repo with history adopts Forge without overwriting team state"
-      },
-      {
-        "body": "A repo can already have a `forge.toml` that Forge did not write. Because init remains a state-changing command, the CLI calls `repo.check_pin()` before `_adopt` (src/forge/cli.py:76-77). An unrelated or incompatible TOML file is rejected as a config or pin error before the new collision list runs, potentially telling the user to install a different Forge version instead of naming the file to move. Let adoption perform its collision check before applying the Forge pin.",
-        "file": "src/forge/init.py",
-        "line": 24,
-        "priority": "P1",
-        "title": "Not done: list a pre-existing forge.toml collision"
-      },
-      {
-        "body": "The new CLI test exercises collisions only for a skill and workflow. It has no case with the team's `.gitattributes` or an existing `.factory/fixes/adopt-forge.json`, so it stays green while adoption falsely refuses the former and overwrites the latter. Add end-to-end cases through `forge init` that assert attribute preservation and a no-change refusal for the state-file collision.",
-        "file": "tests/test_live_adopt.py",
-        "line": 103,
-        "priority": "P1",
-        "title": "Not done: existing-file adoption test"
-      },
-      {
-        "body": "Hook installation runs after the adoption commit. If a repo has both a non-Forge `pre-commit` hook and `pre-commit.pre-forge`, `sync.install_shims` refuses their conflict (src/forge/sync.py:289-294), but init has already created and committed the adoption branch. The command fails while leaving changes behind. Check this hook conflict before creating the worktree.",
-        "file": "src/forge/init.py",
-        "line": 314,
+        "line": 311,
         "priority": "P2",
-        "title": "Commit adoption only after hook installation can succeed"
+        "title": "Preflight conflicting Git hooks before committing adoption"
+      },
+      {
+        "body": "A tracked `AGENTS.md` symlink to a file inside the repo passes preflight because `AGENTS.md` is treated as mergeable. `sync.write_file` follows that link (src/forge/sync.py:85-91), so adoption writes the House rules and Forge block to its target in the new worktree. The later `git add` stages `AGENTS.md`, whose symlink entry has not changed, but not the target. The command can report success with both additions absent from its commit and the worktree dirty. Refuse this link before creating the branch or account for its target in the commit.",
+        "file": "src/forge/init.py",
+        "line": 300,
+        "priority": "P2",
+        "title": "Handle an existing AGENTS.md symlink before writing adoption rules"
       }
     ],
-    "status": "blocked",
-    "tree": "7f428dd7d795d68c280cb0bc0b9b8d6d49d253ec238fc0d7cb6257c93500d669"
+    "status": "clean",
+    "tree": "7d433e031a345dbde4330ab3b5840e910b0b09612ec0d370236c7db24aa155f2"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T19:22:51+00:00",
@@ -51,6 +30,10 @@
     },
     {
       "at": "2026-09-28T19:57:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T20:17:42+00:00",
       "step": "review"
     }
   ]
