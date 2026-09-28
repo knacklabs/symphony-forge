@@ -42,7 +42,8 @@ def test_1_close_without_codex_reviews_with_claude_on_the_grill_claude_model(
     env.repo.git("push", "-q", "origin", "main")
     _claude_only(tmp_path, monkeypatch, env.repo.bin,
                  (ROOT / "tests" / "stubs" / "autoreview").read_text("utf-8"))
-    assert shutil.which("gh") == str(env.repo.bin / "gh")  # close still reaches the gh stub
+    # close still reaches the gh stub (gh.CMD on Windows)
+    assert Path(shutil.which("gh")).parent == env.repo.bin
     item, _ = env.start_fix()
     env.open_pr("Readme greets new readers")
 
