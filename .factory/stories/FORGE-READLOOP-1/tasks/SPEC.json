@@ -3,33 +3,19 @@
   "branch": "task/FORGE-READLOOP-1-SPEC",
   "done_when": "The same cold reader reads the plan again until it has no findings",
   "review": {
-    "commit": "5efbbab13b13965c67e0801241856ec5add233dc",
+    "commit": "88cd15aa53828aede5ce5decbd204ad97509d317",
     "dismissals": [],
     "findings": [
       {
-        "body": "This test checks edge-case wording in the template, but the `forge read` test checks the prompt Codex received only for the round marker and known traps. It would pass if Forge omitted the inputs, platforms, failure paths, or `Unproven` instruction from the delivered prompt. Assert those requirements in the prompt captured from the real command.",
-        "file": "tests/test_readloop_prompt.py",
-        "line": 65,
+        "body": "The new trap loader calls `landed_ref(top)`, but that helper returns the local default branch whenever `origin/<default>` exists (`src/forge/story.py:414-419`). Forge fetches the remote branch after a squash merge without advancing the local branch (`src/forge/merge.py:104`). A trap learned through an outcome fix can therefore be present on the fetched default branch yet absent from an older story\u2019s cold-read prompt. The test advances local `main` before pushing, so it misses this case. Read the fetched remote ref and test a remote-only advancement.",
+        "file": "src/forge/story.py",
+        "line": 487,
         "priority": "P1",
-        "title": "Not done: The reader hunts edge cases"
-      },
-      {
-        "body": "The required packaging test was not changed. Its `SOURCES` list still excludes the Forge skill, so its wheel, sdist, and editable-install checks cannot catch a distribution that fails to ship these new skill instructions. The changed hash here checks source-copy sync only. Extend the packaged-install check to cover the Forge skill.",
-        "file": "tests/test_split_ships.py",
-        "line": 22,
-        "priority": "P1",
-        "title": "Not done: tests/test_trim_skills.py"
-      },
-      {
-        "body": "The recorded functional check exercises a first-round read and a newly learned trap. It does not walk the covered disputed-keep or edge-case workflows (items 3 and 4) as a user would; their tests inspect text rather than a delivered read or generated skill in that check. Record an observed check for those covered items.",
-        "file": "tests/test_readloop_prompt.py",
-        "line": 100,
-        "priority": "P1",
-        "title": "Not done: functional check"
+        "title": "Not done: Known traps are shipped and learned"
       }
     ],
     "status": "blocked",
-    "tree": "9687152cc1c98158641c33acb64d7e2aa85b1c578309550000534c372f76c884"
+    "tree": "7a54ccf6e17a4a5da683ccfe885ef513aae4662fa2409ac0d63893014e353873"
   },
   "status": "fixing",
   "steps": [
@@ -39,6 +25,10 @@
     },
     {
       "at": "2026-09-28T17:50:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:12:15+00:00",
       "step": "review"
     }
   ],
