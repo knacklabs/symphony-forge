@@ -1,15 +1,12 @@
 """The forge command. One table maps every command to the module function that runs it."""
 import argparse
-import ast
 import importlib
-import pkgutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, NoReturn
 
 from forge import __version__, machine, repo
-import forge
 
 REFUSALS = {
     "usage": ("{problem}.", "{prog} --help"),
@@ -106,24 +103,16 @@ def _parser() -> _Parser:
     groups: dict[str, Any] = {}
     declarations = []
     group_help = dict(GROUPS)
-    for info in pkgutil.iter_modules(forge.__path__):
-        if info.ispkg:
-            continue
-        source = Path(info.module_finder.path) / f"{info.name}.py"
-        for node in ast.parse(source.read_text(encoding="utf-8")).body:
-            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
-                continue
-            name = getattr(node.targets[0], "id", None)
-            if name == "GROUP_HELP":
-                for group, help_text in ast.literal_eval(node.value).items():
-                    if group in group_help:
-                        raise ValueError(f"group help declared twice: {group}")
-                    group_help[group] = help_text
-            elif name == "COMMANDS":
-                for command in ast.literal_eval(node.value):
-                    declarations.append((command["position"], command["words"],
-                                         f"{info.name}:{command['run']}", command["changes_state"],
-                                         command["help"], command["args"]))
+    for module_name in ("init", "sync", "doctor", "migrate", "nextstep", "board"):
+        module = importlib.import_module(f"forge.{module_name}")
+        for group, help_text in getattr(module, "GROUP_HELP", {}).items():
+            if group in group_help:
+                raise ValueError(f"group help declared twice: {group}")
+            group_help[group] = help_text
+        for command in getattr(module, "COMMANDS", []):
+            declarations.append((command["position"], command["words"],
+                                 f"{module_name}:{command['run']}", command["changes_state"],
+                                 command["help"], command["args"]))
     declared_positions = {row[0] for row in declarations}
     position = 10
     for row in TABLE:
@@ -141,8 +130,6 @@ def _parser() -> _Parser:
         command = (groups[name] if sub else commands).add_parser(sub or name, help=text,
                                                                  description=text)
         for names, options in arguments:
-            if options.get("type") == "int":
-                options["type"] = int
             command.add_argument(*names, **options)
         # "handler", not "target": `forge read` has a positional argument named target.
         command.set_defaults(words=words, handler=target, changes=changes)
