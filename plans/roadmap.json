@@ -119,6 +119,12 @@
       "title": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high",
       "status": "pending",
       "order": 60
+    },
+    {
+      "key": "FORGE-AHA-1",
+      "title": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step",
+      "status": "pending",
+      "order": 61
     }
   ],
   "epics": [
