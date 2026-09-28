@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-SALES-1-MERGE",
-  "status": "working",
+  "review": {
+    "commit": "5894f3ca279a8e56004564b633b068fc88da0ea0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With no sign-off pin, `approval.signed_off` treats any accepted decision whose name ends in `client-signoff.md` as sign-off (`src/forge/approval.py:104-112`). This new filter requires a four-digit prefix. A client with an accepted unpinned record such as `docs/decisions/customer-client-signoff.md` is therefore signed off to Forge's existing gate, but `forge merge` still gets the pre-sign-off `agent` setting and can merge despite `merge = \"human\"`. Use the same accepted-record rule at this boundary.",
+        "file": "src/forge/repo.py",
+        "line": 178,
+        "priority": "P1",
+        "title": "Not done: Prototype changes merge themselves"
+      },
+      {
+        "body": "The new command test covers only an unpinned `0001-client-signoff.md`. It never sets `forge.toml`'s `signoff` pin, so an implementation that lets a different accepted decision restore human merge authority would pass every new case. Add a real `forge close`/`forge merge` case with a pinned record and a different accepted sign-off on the fetched default branch; only the pinned record should change the effective setting.",
+        "file": "tests/test_sales_merge.py",
+        "line": 17,
+        "priority": "P1",
+        "title": "Not done: pinned sign-off merge test"
+      },
+      {
+        "body": "The plan assigns this to TALK after MERGE. `src/forge/nextstep.py:304,317` still reads the raw `merge` value, so a ready pre-sign-off item configured for human merge tells the salesperson to merge it; its cleanup path also misses `forge merge`. The Forge skill at `src/forge/templates/skill.md:41-43` likewise tells the agent to use `forge merge` only when the raw setting is `agent`. TALK needs to update those paths and prove them through its assigned command test.",
+        "file": "plans/FORGE-SALES-1.md",
+        "line": 78,
+        "priority": "P2",
+        "title": "Later: TALK must update forge next and agent guidance"
+      },
+      {
+        "body": "The branch enables the pre-sign-off override, but contains no `docs/decisions/` record of the owner's choice. The Tasks table assigns that decision and its checklist test to SPEC. That task must land the decision required by Done-when item 1.",
+        "file": "plans/FORGE-SALES-1.md",
+        "line": 66,
+        "priority": "P2",
+        "title": "Later: SPEC must record the owner's merge decision"
+      }
+    ],
+    "status": "blocked",
+    "tree": "52354186352612e700ca4bff5b37d15f23b24d2e274cb439e3a112d29f5c927b"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T12:02:27+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:34:57+00:00",
+      "step": "review"
     }
   ]
 }
