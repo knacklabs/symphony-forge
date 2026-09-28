@@ -1,6 +1,6 @@
 # The cold read loops until the plan has no gaps
 
-4 parts · Risks: none · New moving parts: none
+5 parts · Risks: none · New moving parts: none
 
 ## What changes for you
 
@@ -36,9 +36,9 @@ expensive to find in review.
    are added to the notes under `## Round <n>`, numbered after the earlier rounds' findings. A
    round that fails or is discarded because a file changed records nothing. `forge read` refuses a
    new round while a finding lacks a disposition. When the previous round's text can't be found
-   (notes written before this change), the round starts fresh without a diff. `--amended` is
-   removed. Tests cover a continued round, a fresh round after the conversation is gone, a fresh
-   round from old notes whose text is gone, a wrong-app refusal, a failed round, a discarded round,
+   (notes written before this change), the round starts fresh without a diff. Tests cover a
+   continued round, a fresh round after the conversation is gone, a second round with a Claude
+   reader, a fresh round from old notes whose text is gone, a wrong-app refusal, a failed round, a discarded round,
    an undisposed finding and the round-four nudge.
 2. **A story passes only on "No findings".** A round passes only when its whole text, trimmed,
    is exactly `No findings.`; anything else, including `No findings.` followed by a finding, is
@@ -51,10 +51,12 @@ expensive to find in review.
    the passing doc and notes reach the task's pull request. Notes written before this change
    count as round 1: an unapproved story with such notes needs a passing round, and a story
    approved before this change starts tasks as today until its doc changes. Tests cover each
-   refusal, the exact-text rule and its near misses, the commit, a changed Tasks table stopping
+   refusal, the exact-text rule and its near misses, the commit, `forge next` naming the read and
+   its round for an approved story whose doc changed, a changed Tasks table stopping
    `forge task start` before and after the story's first task has merged with the task branch
    containing the passing doc and notes, and an old approved story before and after an edit.
-   The reader's Codex conversation is archived when a round passes.
+   The reader's Codex conversation is archived only when a round passes; a round with findings
+   leaves it for the next round, and a failed archive only prints a note. Tests cover both.
 3. **Kept findings are settled, not argued.** The reader raises a finding the agent kept again
    only when it disagrees with the stated reason, as a new finding `Disputed keep <n>: <why>`. The
    skill tells the agent to put each disputed keep to the human as one question with options,
@@ -83,10 +85,12 @@ expensive to find in review.
    asked whether to split the story.
 7. **Specs pass the same way.** `spec confirm` and Forge's pull-request check refuse an
    unconfirmed spec whose latest round had findings or which changed after that round. A confirmed
-   spec stays guarded by its existing confirmed hash: `spec confirm` and `spec measure` keep
-   refreshing it and need no new round, and the pull-request check refuses a confirmed spec whose
-   body no longer matches it. Tests cover an unconfirmed spec's refusals, confirm, measure and a
-   confirmed spec's body edit.
+   spec keeps today's rules. Tests cover an unconfirmed spec's refusals and its confirmation after
+   a passing round.
+8. **The one-time amendment goes.** `forge read --amended` is removed from the command, its help,
+   its refusal messages, the guide, the command table and the AGENTS.md block, and every read
+   check uses the latest round's pass instead of the amendment record. Tests that used
+   `--amended` run rounds instead.
 
 ## Risks
 
@@ -99,9 +103,10 @@ Risks: none
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py` | none | yes |
-| ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, the removal of `--amended` with every test that used it, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/nextstep.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | `tests/test_readloop_rounds.py` | SPEC | yes |
-| GATES | Stories pass first | The story pass gate in approval, `forge next` and task start, the passing round's commit, reading from the story branch, and old stories | 2 | `src/forge/story.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py` | `tests/test_readloop_gates.py` | ROUNDS | yes |
-| SPECS | Specs pass first | The spec pass gate in `spec confirm` and the pull-request check, and confirmed specs under their confirmed hash | 7 | `src/forge/records.py`, `src/forge/prcheck.py` | `tests/test_readloop_specs.py` | ROUNDS | yes |
+| ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/nextstep.py` | `tests/test_readloop_rounds.py` | SPEC | yes |
+| CUT | No more amendment | `--amended` removed everywhere, and every read check on the latest round's pass | 8 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | `tests/test_readloop_cut.py` | ROUNDS | yes |
+| GATES | Stories pass first | The story pass gate in approval, `forge next` and task start, the passing round's commit, reading from the story branch, and old stories | 2 | `src/forge/story.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py` | `tests/test_readloop_gates.py` | CUT | yes |
+| SPECS | Specs pass first | The spec pass gate in `spec confirm` and the pull-request check | 7 | `src/forge/records.py`, `src/forge/prcheck.py` | `tests/test_readloop_specs.py` | CUT | yes |
 
 New moving parts: none
 
@@ -111,8 +116,8 @@ New moving parts: none
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
   `$path`, `$doc`, `$diff`, `$findings` and `$next` (the first new finding's number). ROUNDS
   fills them and adds nothing to the wording.
-- ROUNDS pins the notes contract GATES and SPECS read, and keeps the read gate working on it (a
-  passed latest round on the unchanged doc) so approval still works once `--amended` is gone: the frontmatter keeps `reader`, `read_at` and
+- ROUNDS pins the notes contract CUT, GATES and SPECS read, and keeps `--amended` working until
+  CUT removes it: the frontmatter keeps `reader`, `read_at` and
   `read_hash` for the latest round, drops `amended_hash`, and adds `round` (a number) and
   `passed` (`yes` only when that round's whole text is exactly `No findings.`, else `no`). Each
   round's text sits under `## Round <n>`; notes without `round` are round 1. The doc's diff is
@@ -121,7 +126,7 @@ New moving parts: none
   `codex.conversation` and `codex.record` take the kind instead of assuming a fix.
 - Nothing here runs shell commands of its own: every item runs inside Forge's Python, which CI
   runs on Ubuntu, macOS and Windows, so no WSL or shell-specific case applies.
-- Opus writes SPEC's text; Claude workers build ROUNDS, GATES and SPECS.
+- Opus writes SPEC's text; Claude workers build ROUNDS, CUT, GATES and SPECS.
 - Each test file starts with `STORY = "FORGE-READLOOP-1"`, and its `test_<n>_` names cite the
   Done-when items its task covers. The round tests run the real SDK against the stub app-server,
   as `tests/test_codex_reader.py` does.

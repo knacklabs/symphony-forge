@@ -86,3 +86,23 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 20. Split GATES further. Its [Scope](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:98) spans six production modules, documentation, an adapter, existing test rewrites and a new gate suite. That still suggests more than the stated roughly 400 changed lines for one task, even after the earlier LOOP split.
    Disposition: cut: the gate is split: GATES (stories, item 2) and SPECS (specs, new item 7); ROUNDS takes --amended's removal.
 
+## Round 4 (run by hand on gpt-6-sol xhigh)
+
+21. **Earlier finding 8 remains open.** Item 7 does not say how the pull-request check distinguishes `spec measure` from an edit that changes both a confirmed spec’s body and its `confirmed_hash`. Both values live in the same file, and measurement legitimately refreshes the hash ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:84), [records.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:188)). Pin the trusted comparison and test a body-plus-hash edit. Also test `spec confirm` on an edited confirmed spec: it currently returns before checking the hash ([records.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:145)).
+   Disposition: cut: item 7 leaves confirmed specs on today's rules, so there is no confirmed-spec comparison to pin.
+
+22. **The `--amended` removal crosses task ownership.** ROUNDS promises to remove it and update every test that uses it, including `test_records.py` and `test_prcheck.py`, but the corresponding production messages are in `records.py` and `prcheck.py`, owned later by SPECS ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:102), [records.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:51), [prcheck.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/prcheck.py:30)). Assign those message and test changes together so ROUNDS can pass before SPECS starts.
+   Disposition: cut: the --amended removal is its own item 8 and task CUT, which owns records.py and prcheck.py messages and every test that used it.
+
+23. **An approved story’s `forge next` path is still unpinned after a Tasks-table edit.** Its read check currently runs only when approval is pending; otherwise it can offer `forge task start` ([nextstep.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/nextstep.py:226)). Item 2 tests task-start refusal, but items 2 and 6 do not require a test that `forge next` names the needed read and round for this post-approval state ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:46)).
+   Disposition: cut: item 2 tests forge next naming the read and round for an approved story whose doc changed.
+
+24. **Unproven: item 1’s Claude next round.** Item 1 requires a recorded Claude reader to start a fresh round with the first-round instructions, but its named cases cover fresh Codex recovery and legacy notes without explicitly covering a second Claude round. Name that case in ROUNDS’ test contract ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:34)).
+   Disposition: cut: item 1 tests a second round with a Claude reader.
+
+25. **Unproven: item 2’s archive boundary.** The plan requires archiving the Codex conversation when a round passes, but names no test that it remains available after a round with findings, or what happens when archiving fails. The current read archives after any successful turn and reports archive failure without failing the read ([story.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:192), [plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:57)).
+   Disposition: cut: item 2 archives only on a pass, keeps the conversation after findings, and treats a failed archive as a note; both tested.
+
+26. **Split: ROUNDS remains over the task-size target.** It owns round execution, notes, conversation recovery, reader pinning, the nudge, command removal, six existing test files, documentation, and a new real-SDK suite across thirteen listed paths. That scope suggests more than about 400 changed lines despite covering only two Done-when items ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:102)).
+   Disposition: cut: ROUNDS keeps rounds and the nudge; the removal moved to CUT.
+
