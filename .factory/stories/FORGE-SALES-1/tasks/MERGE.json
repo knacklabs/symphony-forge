@@ -1,35 +1,35 @@
 {
   "branch": "task/FORGE-SALES-1-MERGE",
   "review": {
-    "commit": "6b0137494215e0e1f7ed7d35eb19b58f310e8a28",
+    "commit": "ea15ce9cff77a52833d6eb48107223121a2f98a3",
     "dismissals": [],
     "findings": [
       {
-        "body": "The `forge-source` case sets only `repo = \"forge-source\"`; the fixture's merge setting remains `human`. It proves that human merge stays human, but never exercises Forge's configured `agent` merge through `forge close` and `forge merge`. No other command test covers that combination, so a regression that disables agent merges in Forge's own repo would pass. Add that case to this command test.",
-        "file": "tests/test_sales_merge.py",
-        "line": 35,
-        "priority": "P1",
-        "title": "Not done: Forge's own agent merge test"
+        "body": "If an unsigned prototype PR contains the accepted sign-off and `merge = \"human\"`, `forge merge` can merge it but fail while deleting the remote branch or removing the worktree. On retry, this check sees sign-off on the default branch and refuses before reaching the existing cleanup path (`src/forge/merge.py:92-124`). The merged item is left without a usable Forge cleanup command.",
+        "file": "src/forge/merge.py",
+        "line": 34,
+        "priority": "P2",
+        "title": "Allow merge cleanup after the sign-off PR lands"
       },
       {
-        "body": "The plan assigns this to TALK after MERGE. `src/forge/nextstep.py:304,317` still reads the raw merge setting, so `forge next` tells a user to merge a ready unsigned prototype configured with `merge = \"human\"`; its cleanup path also misses `forge merge`. `src/forge/templates/skill.md:41-43` likewise tells the agent to merge only when the raw setting is `agent`. TALK must use the effective setting and test those command paths.",
+        "body": "The changed plan assigns this to TALK after MERGE. `src/forge/nextstep.py:304,317` still reads the raw merge setting, so an unsigned client prototype configured with `merge = \"human\"` is described as waiting for a human merge, including on the cleanup path. `src/forge/templates/skill.md:41-43` likewise instructs the agent to run `forge merge` only when the raw setting is `agent`. TALK must use the effective setting and test those command paths.",
         "file": "plans/FORGE-SALES-1.md",
         "line": 78,
         "priority": "P2",
         "title": "Later: TALK must update forge next and agent guidance"
       },
       {
-        "body": "Done-when item 1 requires an accepted decision recording the owner's choice. This branch adds the merge override but no such decision under `docs/decisions/`. The Tasks table assigns that record and its checklist test to SPEC.",
+        "body": "Done-when item 1 calls for an accepted decision recording the owner's choice. This branch adds the merge override but no such decision under `docs/decisions/`. The changed Tasks table assigns that record and its checklist test to SPEC.",
         "file": "plans/FORGE-SALES-1.md",
         "line": 66,
         "priority": "P2",
         "title": "Later: SPEC must record the owner's merge decision"
       }
     ],
-    "status": "blocked",
-    "tree": "e5ec8dea83f438ef7548746c030d35c0cd475115c6aad6ed4c6078827fcaf4d3"
+    "status": "clean",
+    "tree": "bbeb4fdf04f3be92673c73cf50880d6a05ab0efc10122e6e794e10254a119e3d"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T12:02:27+00:00",
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-28T13:01:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:19:02+00:00",
       "step": "review"
     }
   ]
