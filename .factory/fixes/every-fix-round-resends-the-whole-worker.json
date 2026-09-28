@@ -1,0 +1,14 @@
+{
+  "base": "8c89e48ec3d3cc508d632c59b3c10bac4f337fb1",
+  "branch": "fix/every-fix-round-resends-the-whole-worker",
+  "done_when": "When forge work continues an item's existing Codex conversation, the prompt carries only the round's summary line, the coordinator's note or answer, the open findings and failing checks, one line saying the earlier brief still applies, and the changes since the last turn ended (not since it started); a first turn or a fresh conversation still gets the full brief; tests through forge work show both",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T09:10:00+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Every fix round resends the whole worker brief into the same Codex conversation, and its 'since your last turn' diff includes the worker's own changes"
+}
