@@ -1,0 +1,38 @@
+{
+  "allow_large": "The owner asked on 2026-09-28 for the app baseline in every client app; shipping the skill touches sync wiring, packaging, the frontend conventions and standards, and tests",
+  "base": "319abe700568b1c29227b92706a207e462203dfe",
+  "branch": "fix/every-client-app-should-get-the-same-bas",
+  "done_when": "forge sync writes an app-baseline skill for Claude Code and Codex into client repos, holding that baseline and which of impeccable and Emil's design engineering decides what, and a test through forge sync shows it",
+  "kind": "fix",
+  "review": {
+    "commit": "77436d84c5498fe661ae56d89354e664864ff8d3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This requires every client app to build KPI cards, a chart, and an activity table, including prototypes whose only required UI is the shell and one demo workflow (this skill, line 96). The stated baseline does not include a dashboard, and the existing stack convention says other parts arrive with the story that needs them (`src/forge/templates/conventions/stack.md:3-4`). Make dashboard and chart guidance conditional on an analytics requirement.",
+        "file": ".codex/skills/app-baseline/SKILL.md",
+        "line": 104,
+        "priority": "P2",
+        "title": "Simpler: mandatory dashboard and charts \u2192 add them when a story needs analytics"
+      }
+    ],
+    "status": "clean",
+    "tree": "905bf2d852bb93d9a8e8e4f697b721b6d6771fe4318120c79c0e003fad9667e2"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T12:38:04+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:07:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:22:35+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every client app should get the same baseline without anyone asking (shadcn only, app shell with sidebar, top bar and command palette, data tables, forms, toasts, loading, empty and error states, auth, 404 and 403 pages, theme, locale, audit fields), but nothing ships it to the agent"
+}
