@@ -1,21 +1,13 @@
 {
   "branch": "task/FORGE-ONECHAT-1-REGISTRY",
   "review": {
-    "commit": "03a41240552f1a7e4de01586f207bf0484f281b5",
+    "commit": "046eaff94f7a37369c8970e8df7653ef64dfb965",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This new dispatch write makes existing CLI tests modify the developer's real `forge/repos` file. The shared fixture in `tests/conftest.py:99\u2013130` does not isolate XDG_CONFIG_HOME or APPDATA, and existing tests such as `tests/test_setup.py:101` successfully invoke `sync` on temporary Forge repositories. Only the new registry test sets an isolated config folder. Consequently, ordinary suite runs append temporary checkout paths to persistent user configuration. Isolate the registry location in the shared test environment so all command tests keep their writes inside their temporary directories.",
-        "file": "src/forge/cli.py",
-        "line": 157,
-        "priority": "P2",
-        "title": "Isolate the registry for the existing CLI test suite"
-      }
-    ],
+    "findings": [],
     "status": "clean",
-    "tree": "90b335ff3ca2a357f79e4be47b384531594648c6b77c9c41c77346cc85c1e6fb"
+    "tree": "f95071e73acac198c63203be2bded60f16a3921aaedbad8dc53fc69909f876e9"
   },
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T05:28:26+00:00",
@@ -35,6 +27,10 @@
     },
     {
       "at": "2026-09-28T07:02:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T07:24:50+00:00",
       "step": "review"
     }
   ]
