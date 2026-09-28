@@ -107,8 +107,9 @@ def test_35_simple_enough_cold_read(repo):
         assert disposition in notes
 
 
-def test_37_one_ui_skill(env):
-    # A user-facing task's brief and its review name motion only for a Done-when item needing it.
+def test_37_both_ui_skills(env):
+    # The old contract allowed one UI skill and motion only for a Done-when item.
+    # A user-facing task and its review now require both skills and bounded motion.
     # T2 waits for T1, which counts as merged once its state is on the default branch.
     env.commit(env.repo.path, ".factory/stories/SHOP/tasks/T1.json", '{"status": "merged"}')
     item = env.start_approved_task(STORY_DOC, "T2", {"show.py": "print('basket')\n"})[0]
@@ -116,11 +117,10 @@ def test_37_one_ui_skill(env):
     assert env.repo.forge("work", item).returncode == 0
     assert env.close(item).returncode == 0
     for text in (_flat(calls(log)[-1]["brief"]), _flat(env.prompt())):
-        assert "impeccable is the one" in text
-        motion = [s for s in re.split(r"(?<=\.) ", text) if re.search(r"motion|animat", s, re.I)]
-        assert motion, "no sentence names motion"
-        for sentence in motion:
-            assert "only when a Done-when item needs motion" in sentence, sentence
+        assert "impeccable and emil-design-eng are required for every UI" in text
+        assert "prototypes included" in text
+        assert "under 300 ms" in text
+        assert "one batched inspection" in text
 
 
 def test_40_interfaces(repo, gh, tmp_path, env):
