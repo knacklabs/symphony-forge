@@ -1,46 +1,39 @@
 {
   "branch": "task/FORGE-SALES-1-INSTALL",
   "review": {
-    "commit": "9b405df534611973bf1e45b70a61eb1f098ce732",
+    "commit": "7c932d5ab73187fa9333528f346e61768494c83d",
     "dismissals": [],
     "findings": [
       {
-        "body": "When `wsl --status` reports default version 1, this branch calls `wsl --install --no-distribution`. Microsoft documents that `--no-distribution` applies when WSL is not installed; changing an existing default requires `wsl --set-default-version 2`. The script can therefore finish without switching that laptop to WSL2, and rerunning it repeats the same command. [Microsoft WSL commands](https://learn.microsoft.com/en-us/windows/wsl/basic-commands).",
-        "file": "scripts/install-windows.ps1",
-        "line": 46,
-        "priority": "P1",
-        "title": "Not done: One script sets up a laptop \u2014 enable WSL2 when WSL1 is already installed"
-      },
-      {
-        "body": "The generated `npm.cmd` stub ends with a `findstr` check for Codex and has no successful `exit /b 0`. During the Claude Code install, that last check does not match and leaves a nonzero exit code, so the installer throws and the test's full-run assertion fails. This test is included in the Windows suite by `.github/workflows/forge-next.yml:23,35`. Make the stub return success after handling either package.",
-        "file": "tests/test_sales_install.py",
-        "line": 168,
-        "priority": "P1",
-        "title": "Not done: Windows installer test runs in CI"
-      },
-      {
-        "body": "The plan requires the worker's functional check to record stubbed runs of both scripts. The head commit records Mac results but says the local Mac cannot report the Windows CI result; it provides no observed Windows outcome for the piped install, all-present path, or WSL2 guidance. The broken Windows test fixture also prevents that test from supplying the claimed result.",
+        "body": "The head commit records observed Mac stub runs but explicitly says no Windows result is claimed. The plan requires the functional check to record stubbed runs of both scripts. The Windows piped install, all-present path, and WSL2 guidance therefore still lack an observed outcome in the supplied evidence.",
         "file": "plans/FORGE-SALES-1.md",
-        "line": 86,
+        "line": 84,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or a revision incompatible with the Playwright version a project uses. The Windows script has the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing while tests cannot launch a browser. [Playwright requires version-specific browser binaries](https://playwright.dev/docs/browsers).",
+        "body": "The Mac fixture always provides `git` and `node` here, and the Windows fixture does the same at `tests/test_sales_install.py:116`. No test makes either tool missing. Removing or breaking either script's Git or Node installer call would leave this test green, despite those being required laptop setup steps. Add missing-tool cases that assert the Homebrew and winget calls.",
+        "file": "tests/test_sales_install.py",
+        "line": 22,
+        "priority": "P1",
+        "title": "Not done: test missing Git and Node installations"
+      },
+      {
+        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or an old revision; Windows makes the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even when the project's tests cannot launch a browser. [Playwright requires browser binaries matched to its version](https://playwright.dev/docs/browsers).",
         "file": "scripts/install-mac.sh",
         "line": 20,
         "priority": "P2",
         "title": "Check usable Playwright revisions before skipping installation"
       },
       {
-        "body": "A standalone `docker` command makes this branch skip the Docker Desktop cask; Windows uses the same command-only test at `scripts/install-windows.ps1:50`. That laptop can still lack the Desktop engine needed for prototype tests. Check for a usable Desktop installation or tell the user how to start it.",
+        "body": "A standalone `docker` command causes the Mac script to skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:52`. The script can then say Docker is ready while there is no Desktop engine for prototype work. Check for a usable Desktop installation or give a plain instruction to start it. [Docker distinguishes the CLI from Desktop setup and startup](https://docs.docker.com/desktop/setup/install/mac-install/).",
         "file": "scripts/install-mac.sh",
         "line": 56,
         "priority": "P2",
         "title": "Treat a Docker CLI without Docker Desktop as missing"
       },
       {
-        "body": "Done-when item 2 calls for running each script from a checklist one-liner. This task table assigns that checklist and README link to SPEC, and neither is present in this branch. SPEC must publish the Mac `curl \u2026 | bash` and Windows `irm \u2026 | iex` commands to complete the user path.",
+        "body": "Done-when item 2 calls for running each script from a checklist one-liner. The task table assigns the checklist and README link to SPEC, and this branch has neither `docs/start-a-prototype.md` nor that README link. SPEC must publish the Mac `curl \u2026 | bash` and Windows `irm \u2026 | iex` commands to complete the user path.",
         "file": "plans/FORGE-SALES-1.md",
         "line": 66,
         "priority": "P2",
@@ -48,7 +41,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "75baae39da932b3e7678386a1e42d99ec9e6018c7dcbbe91bcbbd1f833f51336"
+    "tree": "631a6ac5031b2db610556ffb3c2f8d515c160b5f61ed825e32829e21aaa04470"
   },
   "status": "fixing",
   "steps": [
@@ -70,6 +63,10 @@
     },
     {
       "at": "2026-09-28T13:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:53:29+00:00",
       "step": "review"
     }
   ]
