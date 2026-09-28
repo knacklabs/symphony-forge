@@ -80,3 +80,13 @@ def test_2_successful_commands_remember_one_main_checkout(repo, gh, tmp_path, mo
     registry.unlink()
     registry.mkdir()
     assert repo.forge("next").returncode == 0
+
+    if os.name != "nt":
+        home = tmp_path / "home"
+        home.mkdir()
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+        fallback = home / ".config" / "forge" / "repos"
+        next_step = repo.forge("next", cwd=tree)
+        assert next_step.returncode == 0, next_step.stderr
+        assert fallback.read_text(encoding="utf-8").splitlines() == [str(client.resolve())]
