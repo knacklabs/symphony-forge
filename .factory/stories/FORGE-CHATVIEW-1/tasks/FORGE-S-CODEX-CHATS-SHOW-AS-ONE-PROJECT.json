@@ -2,11 +2,22 @@
   "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
   "branch": "task/FORGE-CHATVIEW-1-FORGE-S-CODEX-CHATS-SHOW-AS-ONE-PROJECT",
   "done_when": "docs/specs/codex-chat-view.md is confirmed by the owner and on the roadmap as FORGE-CHATVIEW-1",
-  "status": "started",
+  "review": {
+    "commit": "66787cc864df51e563ccd4a44024ac4285d3e516",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "0bbb9176ecc7c671abc297053fd0281bbe5317dc06cacd1540293167c09708c3"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-27T16:54:30+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:17:18+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app"
