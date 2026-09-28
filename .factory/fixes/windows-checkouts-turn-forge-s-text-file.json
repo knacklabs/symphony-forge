@@ -1,0 +1,25 @@
+{
+  "base": "6f934a6b045ed08c4059a8df59b39aaa93df5b1e",
+  "branch": "fix/windows-checkouts-turn-forge-s-text-file",
+  "done_when": ".gitattributes makes git check out Forge's text files (Markdown, Python, TOML, YAML, JSON and templates) with LF line endings on every platform, and the full test suite passes on Windows CI",
+  "kind": "fix",
+  "review": {
+    "commit": "c9ee1e7f74a0f337e986fdc0ee981eb721c423b6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "711561d838a0fe427cc56c8cd86571b103b16aeab56b424db0689b1e713cf699"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T10:46:34+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:07:01+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Windows checkouts turn Forge's text files into CRLF, so tests that compare files byte for byte fail on Windows again and again"
+}
