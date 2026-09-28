@@ -1,0 +1,14 @@
+{
+  "base": "a71bbbc605645fbadb59a73b0d8b351d6ebe32c2",
+  "branch": "fix/autoreview-and-other-astra-passes-burn-t",
+  "done_when": "This repo's forge.toml and the forge.toml that forge init writes set [models.review] to gpt-6-sol with xhigh effort, and no Forge default names gpt-6-astra",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T11:48:36+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Autoreview and other Astra passes burn too many tokens; the owner moved all Astra work to Sol at xhigh effort on 2026-09-28"
+}
