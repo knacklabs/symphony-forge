@@ -1,33 +1,26 @@
 {
   "branch": "task/FORGE-DESIGN-1-ROUTE",
   "review": {
-    "commit": "4cd16c726511ced80832a3936e9f9d2ae64b1c35",
+    "commit": "0b13e91058d77db27ecc754aeac120fae38a95df",
     "dismissals": [],
     "findings": [
       {
-        "body": "`git ls-files --others --exclude-standard` omits ignored files, while both `git diff` calls cover only tracked files. If Claude changes an ignored file such as `.env` and then fails, both snapshots match and Forge starts Codex despite the working tree having changed. The fallback guard must include those files.",
+        "body": "`git ls-files --others --exclude-standard` omits ignored files, while both `git diff` calls cover tracked files. If Claude changes an ignored file such as `.env` and then fails, the snapshots match and Forge starts Codex even though the working tree changed. The fallback guard must account for ignored files; the new command-level test does not exercise this case.",
         "file": "src/forge/worker.py",
         "line": 393,
         "priority": "P1",
         "title": "Not done: Sol high is the fallback"
       },
       {
-        "body": "This command-level test sets `workers = \"codex\"` throughout. Its ordinary-item check uses a fix, and its story-task check with a different route uses `repo = \"forge-source\"`. It never checks a non-user-facing story task in a client repo or a design task with `workers = \"claude\"`. Routing every client story task to design Claude, or using the ordinary Claude model for design work when workers is Claude, would pass the added test. Exercise both cases through `forge work`.",
-        "file": "tests/test_design_route.py",
-        "line": 15,
-        "priority": "P1",
-        "title": "Not done: client route matrix test"
-      },
-      {
-        "body": "The fallback test asserts only the default Codex model, then removes all model settings. It never sets `[models.design.codex]` to a different value, and its `turn/start` assertions count calls without checking the prompt against the brief sent to Claude. A fallback using a hard-coded model or sending an incomplete brief would pass. Assert the configured model and the outbound brief through `forge work`.",
-        "file": "tests/test_design_route.py",
-        "line": 75,
-        "priority": "P1",
-        "title": "Not done: configured Codex fallback brief test"
+        "body": "The snapshot hashes the names of untracked files, then concatenates their contents without lengths or separators. With two untracked files, moving bytes from one file to the other can leave the digest unchanged. A failed Claude run could therefore change the checkout and still trigger the Codex fallback. Hash each file's name and content with explicit boundaries.",
+        "file": "src/forge/worker.py",
+        "line": 400,
+        "priority": "P2",
+        "title": "Keep untracked file boundaries in the checkout fingerprint"
       }
     ],
     "status": "blocked",
-    "tree": "2e2b0bf057ae5cef48367e0c1e48c4eb397ad5d676974b5e5c70437b4c897152"
+    "tree": "bca4a46032bf87a4376ac48e39accc5b92d4c2e5e2c816190ce53d4ba40a11b9"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +30,10 @@
     },
     {
       "at": "2026-09-28T13:09:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:27:40+00:00",
       "step": "review"
     }
   ]
