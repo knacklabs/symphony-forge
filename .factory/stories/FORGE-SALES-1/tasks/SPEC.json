@@ -3,35 +3,49 @@
   "branch": "task/FORGE-SALES-1-SPEC",
   "done_when": "Before sign-off in a client repo, ready prototype fixes merge by the agent; one install script sets up a Mac for prototyping; the skill tells the agent to batch changes per demo round, speak in demo terms and say when to connect the deploy platform; a start-a-prototype checklist exists",
   "review": {
-    "commit": "b3b4f7a4e23e5908db24bb05d81c642b2148858e",
+    "commit": "8beb0d3231baeb187f875ff63d91c8b18927d664",
     "dismissals": [],
     "findings": [
       {
-        "body": "The checklist sends a fresh user to `forge init` without signing the GitHub CLI in. The unchanged README names `gh auth login` as a prerequisite (README.md:113), and `forge init` commits and pushes before calling `gh api` to protect the branch (src/forge/init.py:221-228). Without CLI authentication, setup fails after the first commit; rerunning `forge init` then refuses because the repo already has commits (src/forge/init.py:205-208). Add the login step before init and give a recovery action for this failure.",
-        "file": "docs/start-a-prototype.md",
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: A checklist starts a prototype"
-      },
-      {
-        "body": "The decision says `forge next` tells the agent to merge unsigned prototype work, but src/forge/nextstep.py:304 and :317 still read the raw `merge` setting. With `merge = \"human\"`, it recommends a human merge even though `forge close` recommends `forge merge`. The agent skill also still says a human merges by default (src/forge/templates/skill.md:41-43). The story assigns these changes to TALK, so that task must land before this claim is true.",
+        "body": "The decision says `forge next` tells the agent to merge unsigned prototype work, but `src/forge/nextstep.py:304` and `:317` still read the raw `merge` setting. With `merge = \"human\"`, `forge next` recommends a human merge while `forge close` recommends `forge merge`. The agent skill also still says a human merges by default (`src/forge/templates/skill.md:41-44`). The story assigns these changes to TALK (`plans/FORGE-SALES-1.md:69`).",
         "file": "docs/decisions/0097-agent-merges-before-client-signoff.md",
         "line": 20,
         "priority": "P2",
         "title": "Later: TALK must make forge next recommend agent merging"
       },
       {
-        "body": "The Mac one-liner here and the Windows one at line 22 target `scripts/install-mac.sh` and `scripts/install-windows.ps1`, but neither script exists in this checkout. A user following the published checklist cannot complete laptop setup yet. The story's Tasks table assigns both scripts and their test to INSTALL (plans/FORGE-SALES-1.md:68).",
+        "body": "The checklist tells the salesperson to wait until the agent says the repo is ready to connect. `src/forge/nextstep.py` has no Dockerfile or Demo-address check, and the prototype instructions in `src/forge/templates/skill.md` do not tell the agent to give that cue. A salesperson following this step has no stated trigger to put the demo online. The story assigns the cue to TALK (`plans/FORGE-SALES-1.md:69`).",
+        "file": "docs/start-a-prototype.md",
+        "line": 66,
+        "priority": "P2",
+        "title": "Later: TALK must provide the deploy-platform cue"
+      },
+      {
+        "body": "The Mac command and the Windows command at line 22 point to install scripts that are absent from this checkout, so the laptop setup step cannot yet be followed. The story assigns both scripts to INSTALL (`plans/FORGE-SALES-1.md:68`).",
         "file": "docs/start-a-prototype.md",
         "line": 16,
         "priority": "P2",
         "title": "Later: INSTALL must publish the checklist's scripts"
+      },
+      {
+        "body": "If `forge init` fails while reading branch protection, its printed `Next:` command is a read-only `gh api` GET (`src/forge/init.py:107-117`). Running that command after fixing authentication or access does not create the protection rule; that requires the later PUT at `src/forge/init.py:121`. Because `forge init` refuses a second run after its first commit (`src/forge/init.py:205-208`), the suggested recovery can leave setup incomplete. Give the agent a recovery step that applies and verifies the rule.",
+        "file": "docs/start-a-prototype.md",
+        "line": 50,
+        "priority": "P2",
+        "title": "The printed recovery command may leave branch protection unset"
+      },
+      {
+        "body": "The URL is needed in the fifth section, \u201cOpen the repo and set up Forge,\u201d where the checklist runs `git clone` (line 42). The fourth section is GitHub sign-in, so \u201cKeep it for step 4\u201d points readers to the wrong step.",
+        "file": "docs/start-a-prototype.md",
+        "line": 9,
+        "priority": "P3",
+        "title": "Correct the repo URL's step reference"
       }
     ],
-    "status": "blocked",
-    "tree": "91803b6a5098f4e2b75795fed327a6b7834cdcef298e9e1819aafbffd7a105a9"
+    "status": "clean",
+    "tree": "57cf6a6879b3d322ffa23a044bb00218f152068bab62f692d3a26531fbb01c0b"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:15:41+00:00",
@@ -39,6 +53,10 @@
     },
     {
       "at": "2026-09-28T14:38:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:56:46+00:00",
       "step": "review"
     }
   ],
