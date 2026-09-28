@@ -3,7 +3,7 @@
   "branch": "fix/the-sign-off-review-runs-only-when-the-c",
   "done_when": "forge decision accept on a sign-off decision with no approval details yet runs the strict sign-off review and stops without accepting, saying the review passed and the sign-off email can go out (or naming the gaps); with the reply recorded, it accepts as today; tests run both through forge decision accept",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T21:02:05+00:00",
