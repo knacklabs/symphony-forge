@@ -3,21 +3,13 @@
   "branch": "task/FORGE-LIVE-1-SPEC",
   "done_when": "A live app joins Forge in one human-merged pull request and never gets prototype rules",
   "review": {
-    "commit": "6d52cd2823efa0eba06373cfdfc82a3215cc84f4",
+    "commit": "1b99b42a757607924a6bb263359dec01fe4d086f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This adds the user-facing adoption flow for items 6 and 7, but the supplied commit evidence says the worker's last commit has no `Functional check:` paragraph. Add a paragraph to that commit describing what was exercised and observed for both items.",
-        "file": "src/forge/templates/skill.md",
-        "line": 148,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      }
-    ],
-    "status": "blocked",
-    "tree": "af2e772ef9d68fbdc06ee218bb1485cdf9ef489245bcdb2e0ac897b87bc55bfc"
+    "findings": [],
+    "status": "clean",
+    "tree": "cc4b23cb6996da131b70cb2c6d13be45058d2ca5cf067e26b51c21a28c7fed75"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T13:34:46+00:00",
@@ -25,6 +17,10 @@
     },
     {
       "at": "2026-09-28T14:35:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:49:50+00:00",
       "step": "review"
     }
   ],
