@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-PROTO-1-TOPICS",
-  "status": "working",
+  "review": {
+    "commit": "f99a4ecca4209a088027725b66e2aa4102dbe0b5",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "3ca873e916f9fabcde840a2074df523decce09e9afdd3a36284d17dfddffcacf"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T10:30:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:06:09+00:00",
+      "step": "review"
     }
   ]
 }
