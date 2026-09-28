@@ -276,6 +276,9 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{rel: _hooks(top, rel, events) for rel, events in HOSTS.items()},
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
+        **{f"{host}/skills/forge/standards.md":
+           (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
         # Discovery's worked example, question bank and call script, opened only when needed.
         **{f"{host}/skills/forge/fde.md": _synced_text(".codex/skills/forge/fde.md", "fde.md")
            for host in (".claude", ".codex")},
