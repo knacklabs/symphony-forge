@@ -51,8 +51,8 @@ exact next command. The same text appears when a Claude Code or Codex session st
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
-| `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round |
-| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix |
+| `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
+| `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
 | `forge spec save <slug>` | Saves a spec as a draft |
@@ -104,6 +104,26 @@ Forge names task conversations `Build · <story>/<task> · <task name>` and late
 use `Grill · <story or spec> · <name>`. A later turn continues the item's conversation when it
 can. For conversations you start yourself, names such as `Review`, `Explore` and `Debug` make
 them easier to find in the Codex app.
+
+### Notes, worker questions and quick answers
+
+Use `forge work <item> --note "<text>"` when one sentence of guidance would help the worker in
+this round. Forge puts it under "From the coordinator" in the brief and records it in the turn
+log. An empty note is refused. Repeat the note if a later round needs it; the flag guides only
+the current round and never extends the task or fix's Scope.
+
+When a worker needs a decision it cannot make, its final message ends with a `Question:`
+paragraph. Forge prints the question and waits for `forge work <item> --note "<answer>"`.
+Without an answer, another `forge work <item>` and `forge close <item>` refuse. Forge sends the
+question and answer in the answering brief and resumes the worker's conversation when possible.
+If that round fails or is interrupted, answer again with `--note`; the question remains open.
+
+Use `forge ask "<question>"` for a quick read-only look at this checkout without starting a
+fix. It uses `[models.lite]` in `forge.toml` by default; pass `--model <model>` or
+`--effort <effort>` to override either setting for the question. Forge prints the answer and
+keeps its records under `.git/forge/`. The Codex conversation is temporary and does not appear
+in the chat list. If a tracked or untracked file changes during the turn, Forge discards the
+answer and tells you to check `git status` before asking again.
 
 ## The two lanes
 
