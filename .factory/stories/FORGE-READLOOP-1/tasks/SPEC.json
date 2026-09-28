@@ -2,11 +2,44 @@
   "base": "79af562bf260f110ad6a0b158c6847bcac95165c",
   "branch": "task/FORGE-READLOOP-1-SPEC",
   "done_when": "The same cold reader reads the plan again until it has no findings",
-  "status": "started",
+  "review": {
+    "commit": "5efbbab13b13965c67e0801241856ec5add233dc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This test checks edge-case wording in the template, but the `forge read` test checks the prompt Codex received only for the round marker and known traps. It would pass if Forge omitted the inputs, platforms, failure paths, or `Unproven` instruction from the delivered prompt. Assert those requirements in the prompt captured from the real command.",
+        "file": "tests/test_readloop_prompt.py",
+        "line": 65,
+        "priority": "P1",
+        "title": "Not done: The reader hunts edge cases"
+      },
+      {
+        "body": "The required packaging test was not changed. Its `SOURCES` list still excludes the Forge skill, so its wheel, sdist, and editable-install checks cannot catch a distribution that fails to ship these new skill instructions. The changed hash here checks source-copy sync only. Extend the packaged-install check to cover the Forge skill.",
+        "file": "tests/test_split_ships.py",
+        "line": 22,
+        "priority": "P1",
+        "title": "Not done: tests/test_trim_skills.py"
+      },
+      {
+        "body": "The recorded functional check exercises a first-round read and a newly learned trap. It does not walk the covered disputed-keep or edge-case workflows (items 3 and 4) as a user would; their tests inspect text rather than a delivered read or generated skill in that check. Record an observed check for those covered items.",
+        "file": "tests/test_readloop_prompt.py",
+        "line": 100,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      }
+    ],
+    "status": "blocked",
+    "tree": "9687152cc1c98158641c33acb64d7e2aa85b1c578309550000534c372f76c884"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T15:42:12+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T17:50:06+00:00",
+      "step": "review"
     }
   ],
   "why": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan"
