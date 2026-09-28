@@ -1,0 +1,14 @@
+{
+  "base": "dc254d9927aafce01ad8ac7f1b8c1952e96fbd86",
+  "branch": "fix/autoreview-s-brief-from-forge-makes-revi",
+  "done_when": "Forge's review brief shows the previous round's findings and asks for every blocking gap at once; a test the story assigns to another task is an advisory Later finding; the end-to-end test rule applies to user-facing behaviour, not CI, config or test-only items; the edge-case rule sits with the blocking rules; Forge's bookkeeping files are left out of the out-of-scope list; the reviewer's checkout has readable git history; tests through forge close show each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T09:49:07+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Autoreview's brief from Forge makes reviews take extra rounds: findings arrive one round at a time, tests owned by a later task block, the end-to-end rule and edge cases block non-user items, Forge's own records show as out of scope, and the reviewer cannot read git history"
+}
