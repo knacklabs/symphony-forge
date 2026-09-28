@@ -1,21 +1,21 @@
 {
   "branch": "task/FORGE-PROTO-1-SIGNOFF",
   "review": {
-    "commit": "0b5e0b156838bccd4ab36d1a354d8fe9ac8d1386",
+    "commit": "b56d0ba70522957e21c5fc9f1dda62ff6d95c4fd",
     "dismissals": [],
     "findings": [
       {
-        "body": "The answers parser accepts any nonempty source without a comma or parentheses (`src/forge/nextstep.py:57,86-92`), and its open-topic check does not examine that source (`src/forge/nextstep.py:98-103`). This guard rejects only the exact strings `our default` and `agent`. A must-answer line such as `- Sign-in: agreed (agent + our default, 2026-09-28)` therefore passes both checks despite having no human source. With an exact decision quote and a clean review, sign-off can be accepted. Require a client, salesperson, or developer source for each must-answer topic and cover that case through `forge decision accept`.",
-        "file": "src/forge/records.py",
-        "line": 280,
-        "priority": "P1",
-        "title": "Not done: A strict review guards sign-off"
+        "body": "A client can commit the sign-off decision using repository-local `user.name` and `user.email` without having a global Git identity. The review clone does not inherit that local configuration, so `git commit-tree` can fail before Autoreview runs, leaving `forge decision accept` unable to complete. The tests miss this because `tests/conftest.py:111-120` supplies a global identity. Set an identity for these synthetic commits. [Git's commit-tree documentation](https://git-scm.com/docs/git-commit-tree) describes its identity requirements.",
+        "file": "src/forge/review.py",
+        "line": 251,
+        "priority": "P2",
+        "title": "Set an identity for the synthetic review commits"
       }
     ],
-    "status": "blocked",
-    "tree": "82613bb0821c3b77b4a1eb1f75949263f38cbb8e1c0f2730f72bdd0d20ba74f4"
+    "status": "clean",
+    "tree": "85efb179feb014ef9b9279b3034e2c33bb1884a82c522e76fc00ca93205c84a1"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:50:18+00:00",
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-09-28T14:47:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:43:56+00:00",
       "step": "review"
     }
   ]
