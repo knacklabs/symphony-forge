@@ -1,26 +1,40 @@
 {
   "branch": "task/FORGE-PROTO-1-SIGNOFF",
   "review": {
-    "commit": "1048afacf7701ffd6aaca45abb2ec89d90a36d9f",
+    "commit": "f60a3f30c8aaccc923154a2bf9ec280758690715",
     "dismissals": [],
     "findings": [
       {
-        "body": "The sign-off guard treats missing model and effort telemetry as proof that GPT-6 Sol at xhigh ran. `_attempt` fills `selected` only from progress lines, but this check substitutes the required values when those lines are absent. The clean Autoreview stub in `test_7_review_guards_client_signoff` emits neither line and acceptance succeeds. Require positive verification of both values so an unverified review cannot authorize sign-off.",
+        "body": "The sign-off path checks only whether Autoreview returned findings or a failure reason. `_attempt` records `model:`, `thinking:`, and model-fallback progress lines at review.py:317-323, but `run` never checks the recorded values. A clean report after a fallback can therefore accept sign-off and record the commit even though GPT-6 Sol at xhigh did not run. Refuse unless the reported model and effort positively match the required values.",
         "file": "src/forge/review.py",
-        "line": 276,
+        "line": 275,
         "priority": "P1",
         "title": "Not done: A strict review guards sign-off"
       },
       {
-        "body": "The review clone uses HEAD, while `records.py:272-274` validates the quote against the working-tree answers page. After `git rm --cached docs/product/BRIEF.md` and an edit, the page drops out of this index-derived `product` list. The path-limited status check at `review.py:286-287` misses it, so acceptance can quote the edited page while Autoreview saw HEAD's older page and the decision records HEAD. Check the answers page explicitly against the reviewed commit.",
+        "body": "An explicitly incomplete Autoreview report can also authorize sign-off. At review.py:335-337, `_attempt` suppresses the incomplete-review reason whenever `scope_rejected_findings` is nonempty. If those findings are P2 or P3, this sign-off check finds no blocking issue and accepts despite `review_status: incomplete` (or exit code 2). The strict gate must require a completed review.",
+        "file": "src/forge/review.py",
+        "line": 275,
+        "priority": "P1",
+        "title": "Not done: A strict review guards sign-off"
+      },
+      {
+        "body": "The acceptance test's Autoreview stub emits no model or effort telemetry, yet the test expects acceptance and asserts only the requested `--model` and `--thinking` arguments. It would still pass if Autoreview ran a fallback model or a lower effort. Add a command-level refusal case that emits fallback or mismatched selection and verifies that the decision remains proposed.",
+        "file": "tests/test_proto_signoff.py",
+        "line": 116,
+        "priority": "P1",
+        "title": "Not done: no-fallback sign-off test"
+      },
+      {
+        "body": "The product path list comes from the current index. After `git rm --cached app.py` followed by an edit, `app.py` remains in the checkout but disappears from this list. The clone reviews HEAD's older `app.py`, while the path-limited status check at review.py:284-285 misses its staged removal and untracked edited copy. Sign-off can then accept a checkout that differs from the recorded reviewed commit. Compare all product changes against HEAD, including paths removed from the index.",
         "file": "src/forge/review.py",
         "line": 236,
         "priority": "P2",
-        "title": "Keep the quoted answers tied to the reviewed commit"
+        "title": "Check index-removed product files against the reviewed commit"
       }
     ],
     "status": "blocked",
-    "tree": "a1abe2e1c4317974d102401a89d0ebdd760b2d8333fdaceb294319108ad0bd82"
+    "tree": "6a1ddcf39d2c08a3d455d145a3d9203ab0706a8379c2b2463a0aed9e9989478d"
   },
   "status": "fixing",
   "steps": [
@@ -34,6 +48,10 @@
     },
     {
       "at": "2026-09-28T13:32:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:46:11+00:00",
       "step": "review"
     }
   ]
