@@ -3,11 +3,30 @@
   "branch": "fix/every-change-to-a-shipped-skill-breaks-t",
   "done_when": "tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes, so a skill edit needs no test change and two skill edits never conflict in that test",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "9588885726752bc56478d2c42b1de331aabe3ec1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The generated files are checked only for their paths. The byte comparison covers `SOURCES`, while `.claude/settings.json`, `.codex/hooks.json`, `.codex/config.toml`, `.github/workflows/forge.yml`, both git hooks, and `CLAUDE.md` have no first-run content assertion. Their production sources are in `src/forge/githooks.py:17-73` and `src/forge/prcheck.py:85-112`. A consistently wrong hook or workflow written at the expected path would pass this test, including its second-sync stability check. Add content assertions for these outputs without pinned hashes so the test checks every shipped file.",
+        "file": "tests/test_split_ships.py",
+        "line": 50,
+        "priority": "P1",
+        "title": "Not done: tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes"
+      }
+    ],
+    "status": "blocked",
+    "tree": "d087d97b2379ebadc5cdbfd54d4afe3912883cc615239158d9f2d472a7058649"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T18:45:19+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T18:58:14+00:00",
+      "step": "review"
     }
   ],
   "why": "Every change to a shipped skill breaks the pinned hashes in tests/test_split_ships.py and every merge of two such changes conflicts there"
