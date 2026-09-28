@@ -1,7 +1,7 @@
 {
   "base": "a65ba1e014f225d0dd012531340022a4a2cd9dd4",
   "branch": "fix/the-readme-still-says-only-a-human-merge",
-  "done_when": "README.md describes the per-repo merge setting and forge merge, shows the v1.1.0 install line, has an Upgrading section that says to tell the agent to upgrade Forge to a named version, lists forge merge and forge ask in its commands table, and links the explainer video from the v1.1.0 release with a preview image; the video's Remotion source is in docs/video",
+  "done_when": "README.md describes the per-repo merge setting and forge merge, shows the v1.1.0 install line, has an Upgrading section that says to tell the agent to upgrade Forge to a named version, lists forge merge and forge ask in its commands table, and links the explainer video from the v1.1.0 release with a preview image; no video or video source is committed, only links to the release assets",
   "kind": "fix",
   "status": "started",
   "steps": [

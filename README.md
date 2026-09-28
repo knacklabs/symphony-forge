@@ -46,7 +46,9 @@ do it) and differs in three ways:
    own folder, so tasks don't get in each other's way. A Codex or Claude worker writes the code.
 5. **Tests and review must pass.** An automatic code review runs, and the tests must be green.
    Only then is the pull request marked ready.
-6. **A human merges.** You click merge. Forge blocks the agent from merging.
+6. **It merges.** By default you click merge, and Forge stops the agent from merging on its own.
+   If you'd rather not, set `merge = "agent"` in the project's `forge.toml`: then the agent runs
+   `forge merge` for each change that passed, and nothing else can merge.
 
 There are two sizes of change:
 
@@ -70,7 +72,7 @@ the client can really use.
 | 5. Plan the stories | The spec becomes stories on the roadmap, the smallest usable slice first, with no setup-only stories | Agent plans, you approve each story once | `plans/roadmap.json`, `forge roadmap add`, `forge story new` |
 | 6. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
 | 7. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
-| 8. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge | GitHub |
+| 8. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
 | 9. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
 
 A small change is a fix: it gets a short version of stage 1 (at most two questions), then goes
@@ -82,7 +84,7 @@ You do three things:
 
 - **Approve** a story's plan.
 - **Choose** between options when the agent asks.
-- **Merge** the finished pull request.
+- **Merge** the finished pull request, unless you let the agent do it (`merge = "agent"`).
 
 The agent does everything else: the plan, the code, the tests, fixing what the review finds, and
 keeping Forge's settings file up to date.
@@ -105,7 +107,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.0.2"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.1.0"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge
@@ -120,6 +122,13 @@ prints the exact install line if yours doesn't match.
   pull request.
 - **Every new copy of a project on your machine:** run `forge sync` once, then `forge doctor` to
   check your setup. Doctor prints a fix for each problem it finds.
+
+### Upgrade a project
+
+Tell your agent "upgrade Forge to v1.1.0" (or whichever version). It does it as a small fix:
+changes the version in `forge.toml`, installs that release, runs `forge sync` to refresh Forge's
+own files (your own text stays), checks with `forge doctor`, and opens the pull request. Always
+name a released version, not "main".
 
 ### Start working
 
@@ -140,6 +149,8 @@ Your agent runs these for you. You'll see them in its messages.
 | `forge fix start` | Starts a small fix in its own branch and folder |
 | `forge work` | Has the worker build a task or fix, or fix what the review found |
 | `forge close` | Runs the review, waits for the tests, and marks the pull request ready |
+| `forge merge` | Merges a ready pull request, when the project allows the agent to merge |
+| `forge ask` | Asks Codex a quick read-only question about the code |
 | `forge doctor` | Checks your setup and says how to fix each problem |
 
 The full command list is in the [Forge guide](docs/guide.md#commands).
