@@ -5,21 +5,21 @@
   "done_when": "forge sync writes an app-baseline skill for Claude Code and Codex into client repos, holding that baseline and which of impeccable and Emil's design engineering decides what, and a test through forge sync shows it",
   "kind": "fix",
   "review": {
-    "commit": "e4c9f044f893894e6edd3f9e5ed0a934824671f6",
+    "commit": "77436d84c5498fe661ae56d89354e664864ff8d3",
     "dismissals": [],
     "findings": [
       {
-        "body": "This test runs Forge from the source checkout and compares the output with that same checked-in source, so it never checks the packaged skill added in pyproject.toml:25 and :32. The existing installed-package test in tests/test_trim_skills.py:10-18 and :62-67 runs sync but asserts only the older skill files. A wheel or sdist containing the wrong app-baseline text could therefore pass both tests. Extend the installed-package sync test to compare the app-baseline output for both hosts with the intended skill.",
-        "file": "tests/test_fix_app_baseline.py",
-        "line": 16,
-        "priority": "P1",
-        "title": "Not done: installed forge sync ships the app-baseline skill from wheel and sdist"
+        "body": "This requires every client app to build KPI cards, a chart, and an activity table, including prototypes whose only required UI is the shell and one demo workflow (this skill, line 96). The stated baseline does not include a dashboard, and the existing stack convention says other parts arrive with the story that needs them (`src/forge/templates/conventions/stack.md:3-4`). Make dashboard and chart guidance conditional on an analytics requirement.",
+        "file": ".codex/skills/app-baseline/SKILL.md",
+        "line": 104,
+        "priority": "P2",
+        "title": "Simpler: mandatory dashboard and charts \u2192 add them when a story needs analytics"
       }
     ],
-    "status": "blocked",
-    "tree": "5d03f0ceeb45208bc806dcce45de73f0fc8f152003bf3ef1e69c97756ab4e03a"
+    "status": "clean",
+    "tree": "905bf2d852bb93d9a8e8e4f697b721b6d6771fe4318120c79c0e003fad9667e2"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T12:38:04+00:00",
@@ -27,6 +27,10 @@
     },
     {
       "at": "2026-09-28T13:07:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:22:35+00:00",
       "step": "review"
     }
   ],
