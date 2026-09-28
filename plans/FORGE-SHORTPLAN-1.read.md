@@ -52,3 +52,8 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 10. Details item 4 promises refusal wherever the doc is parsed, but its [malformed-detail tests](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/plans/FORGE-SHORTPLAN-1.md:50) cover only `forge task start` and `forge work`. [`forge close` has a separate review parser](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-SHORTPLAN-1/src/forge/review.py:95); the positive close test does not prove it refuses an unknown or repeated detail added after work. Add a malformed-detail close case to BRIEF.
    Disposition: cut: details item 4 tests the malformed-details refusal through forge close too.
 
+
+
+## Round 4
+
+No findings.
