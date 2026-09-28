@@ -36,6 +36,8 @@ do it) and differs in three ways:
   follow progress on a simple board page instead of in code.
 - **Vibe coders who build with AI:** you don't need to know git. Forge handles branches, commits
   and pull requests for your agent, and tells you the next step whenever you're unsure.
+- **Salespeople starting a prototype:** follow the [Start a prototype](docs/start-a-prototype.md)
+  checklist from an empty repo to a live customer demo.
 
 ## How it works
 
@@ -48,9 +50,9 @@ do it) and differs in three ways:
    own folder, so tasks don't get in each other's way. A Codex or Claude worker writes the code.
 5. **Tests and review must pass.** An automatic code review runs, and the tests must be green.
    Only then is the pull request marked ready.
-6. **It merges.** By default you click merge, and Forge stops the agent from merging on its own.
-   If you'd rather not, set `merge = "agent"` in the project's `forge.toml`: then the agent runs
-   `forge merge` for each change that passed, and nothing else can merge.
+6. **It merges.** Before client sign-off, the agent merges ready prototype changes. After
+   sign-off, you click merge by default. Set `merge = "agent"` in the project's `forge.toml`
+   if you want the agent to run `forge merge` for each ready change instead.
 
 There are two sizes of change:
 
@@ -61,16 +63,16 @@ There are two sizes of change:
 
 ## From idea to production
 
-This is the whole path a piece of work takes, from a first conversation to running in
-production. There is no separate prototype step: the first story is already the smallest version
-the client can really use.
+For a first demo, follow the [prototype checklist](docs/start-a-prototype.md): the agent builds
+and merges a live prototype before the customer signs off. After sign-off, the path for product
+stories runs from a plan to production as follows.
 
 | Stage | What happens | Who | Where it's kept |
 |---|---|---|---|
 | 1. Find the problem | The agent interviews you (and, through you, the customer) about what really happens today, and writes it as a problem card: the job, today's workaround, what it costs, who feels it | Agent asks, you answer | `docs/product/DISCOVERY.md` |
 | 2. Pick an option | Two to four options, always including "don't build" and "smallest slice", each with an estimate of when it pays back | Agent proposes, you choose | `forge spec payback` |
 | 3. Write the spec | What it should do, how you'll know it worked, and what's out of scope. One independent read, then you confirm it | Agent writes, you confirm | `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm` |
-| 4. Client sign-off | In a client's repo, no story can be approved until the client's sign-off is recorded | Client and you | `forge decision new client-signoff`, `forge decision accept` |
+| 4. Client sign-off | After seeing the live prototype, the customer signs off before any product story is approved | Client and you | `forge decision new client-signoff`, `forge decision accept` |
 | 5. Plan the stories | The spec becomes stories on the roadmap, the smallest usable slice first, with no setup-only stories | Agent plans, you approve each story once | `plans/roadmap.json`, `forge roadmap add`, `forge story new` |
 | 6. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
 | 7. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
@@ -86,7 +88,8 @@ You do three things:
 
 - **Approve** a story's plan.
 - **Choose** between options when the agent asks.
-- **Merge** the finished pull request, unless you let the agent do it (`merge = "agent"`).
+- **Merge** the finished pull request after client sign-off, unless you let the agent do it
+  (`merge = "agent"`). The agent merges ready prototype changes before sign-off.
 
 The agent does everything else: the plan, the code, the tests, fixing what the review finds, and
 keeping Forge's settings file up to date.
