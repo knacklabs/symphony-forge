@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-28T17:23:08+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Wg89w4723dHFd6QAMH48eB",
+    "hash": "b6b3f7ce7ebb144cd3fffc8a8ff2049556095860356a4160e14f732905e90ba1",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-READLOOP-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-28T15:42:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:50:20+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T17:23:08+00:00",
+      "step": "approved"
     }
   ],
   "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
-  "touches": 0
+  "touches": 1
 }
