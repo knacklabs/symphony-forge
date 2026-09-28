@@ -11,6 +11,7 @@ import json
 import re
 import shlex
 import shutil
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,54 @@ STATUS = {
 DISCOVERY = "docs/product/DISCOVERY.md"
 # A problem card's six fields; a card is filled once any of them reads something other than unknown.
 CARD_FIELD = re.compile(r"^- (?:Job|Workaround|Cost|Who feels it|How often|Evidence):(.*)$", re.M)
+MUST_ANSWER_TOPICS = ("Sign-off person", "Demo workflow", "Users and roles",
+                      "Existing systems", "Sign-in", "Personal data", "Production host")
+ANSWER_TOPICS = (*MUST_ANSWER_TOPICS, "Data import", "Email or SMS", "Domain",
+                 "Backups and uptime", "Log retention")
+ANSWER_LINE = re.compile(r"^- [^:]+: (.+) \(([^(),]+), (\d{4}-\d{2}-\d{2})\)$")
+LATER_LINE = re.compile(r"^- [^:]+: later, when (\S.*)$")
+
+
+def parse_answers(top: Path) -> dict[str, list[tuple[str, str] | None]]:
+    """Read topic entries from this checkout's answers section; None marks a malformed entry."""
+    page = top / "docs/product/BRIEF.md"
+    text = page.read_text(encoding="utf-8") if page.is_file() else ""
+    found: dict[str, list[tuple[str, str] | None]] = {}
+    in_answers = False
+    for line in text.splitlines():
+        if line == "## Answers":
+            in_answers = True
+            continue
+        if line.startswith("#") and re.match(r"^#{1,6} ", line):
+            in_answers = False
+        if not in_answers:
+            continue
+        topic = next((name for name in ANSWER_TOPICS
+                      if line == f"- {name}" or line.startswith((f"- {name}:", f"- {name} "))), None)
+        if topic is None:
+            continue
+        answer = ANSWER_LINE.fullmatch(line)
+        later = LATER_LINE.fullmatch(line)
+        if answer and answer[1].strip() and answer[2].strip():
+            try:
+                date.fromisoformat(answer[3])
+            except ValueError:
+                found.setdefault(topic, []).append(None)
+            else:
+                found.setdefault(topic, []).append((answer[1], answer[2]))
+        elif later:
+            found.setdefault(topic, []).append(("later", ""))
+        else:
+            found.setdefault(topic, []).append(None)
+    return found
+
+
+def open_must_answer_topics(top: Path) -> list[str]:
+    """Topics that cannot be treated as one settled answer before client sign-off."""
+    answers = parse_answers(top)
+    return [topic for topic in MUST_ANSWER_TOPICS
+            if len(answers.get(topic, [])) != 1 or answers[topic][0] is None
+            or answers[topic][0][0] in ("ask the client", "later")]
 
 
 def next_step(args: Any) -> int:
@@ -88,6 +137,14 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
+    if (top / "forge.toml").is_file() and repo.config(top)["repo"] == "client" \
+            and not approval.signed_off(top):
+        open_topics = open_must_answer_topics(top)
+        if open_topics:
+            notice = ["Open before sign-off in docs/product/BRIEF.md:",
+                      *(f"- {topic}" for topic in open_topics),
+                      "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
+            lines = notice + lines if len(trees) > 1 else lines + notice
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top))
     return lines, states
