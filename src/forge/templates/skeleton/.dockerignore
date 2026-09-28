@@ -1,0 +1,15 @@
+.git
+.factory
+**/.env*
+**/.npmrc
+**/.netrc
+**/.ssh
+**/.aws
+**/secrets
+**/credentials.json
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/node_modules
+**/dist

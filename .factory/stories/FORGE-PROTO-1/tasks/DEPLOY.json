@@ -1,0 +1,45 @@
+{
+  "branch": "task/FORGE-PROTO-1-DEPLOY",
+  "review": {
+    "commit": "441bd02930e1606e8c2fc76af382a9a3f8308823",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`forge init` copies the entire skeleton even when `pyproject.toml` or `go.mod` selects a different stack (`src/forge/init.py:35-39,77-89`). Such a client now receives this Dockerfile, whose `npm ci` and workspace builds fail without a Node app. The stack convention says clients already using another stack keep it (`stack.md:3-5`). Include this Dockerfile only for fixed-stack clients.",
+        "file": "src/forge/templates/skeleton/Dockerfile",
+        "line": 6,
+        "priority": "P2",
+        "title": "Do not scaffold the Node Dockerfile into Python or Go clients"
+      }
+    ],
+    "status": "clean",
+    "tree": "d94c7abff4ff1631dcbdb18e4e7d41916ddc190717ac4421cef6098be84c91e1"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T12:02:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:03:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:43:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:08:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:29:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:55:34+00:00",
+      "step": "review"
+    }
+  ]
+}
