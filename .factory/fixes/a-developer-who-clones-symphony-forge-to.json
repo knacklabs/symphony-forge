@@ -5,21 +5,13 @@
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
   "kind": "fix",
   "review": {
-    "commit": "ee460dfdedbf5604428f09425363ef7cf6d1db81",
+    "commit": "df6c5adfdef7d2c854d90202e90aea5de0d3ed99",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The integration test creates a synthetic test suite containing only `forge --version`, so it passes even if the repository's actual suite cannot collect or execute through the documented contributor command. The CI command in `.github/workflows/forge-next.yml:36` instead runs `python -m pytest` with an explicit dev group. Under the requested test audit, the contributor workflow still lacks end-to-end proof. Exercise plain `uv sync` followed by `uv run pytest` against the repository suite in a fresh checkout, preventing recursive invocation of this integration test, and assert successful execution.",
-        "file": "tests/test_fix_clone_gets_test_tools.py",
-        "line": 44,
-        "priority": "P1",
-        "title": "Not done: uv run pytest runs the suite in a freshly synced checkout"
-      }
-    ],
-    "status": "blocked",
-    "tree": "69b5a3620a58bb502716aeb6d38bd4b162861d161fe6caa3ff3b22e5df4d2a0a"
+    "findings": [],
+    "status": "clean",
+    "tree": "db4591d53062d30e2e5b8a85ff21d41ed50c0d78b1f407b8dce948cd5b018731"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T07:48:59+00:00",
@@ -39,6 +31,10 @@
     },
     {
       "at": "2026-09-28T08:37:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:47:30+00:00",
       "step": "review"
     }
   ],
