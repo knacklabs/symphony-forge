@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-MERGE-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T01:47:40+00:00",
+  "merged": {
+    "DOCS": "2026-09-28T01:47:40+00:00",
+    "MERGE": "2026-09-28T01:47:00+00:00",
+    "READY": "2026-09-27T17:23:43+00:00",
+    "THE-OWNER-WANTS-THE-AGENT-TO-MERGE-READY": "2026-09-27T15:25:19+00:00"
+  },
+  "outcome": "Forge now merges ready pull requests itself in repos that allow it, through forge merge, after a clean review and green checks",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-27T14:58:52+00:00",
@@ -25,6 +33,10 @@
     {
       "at": "2026-09-27T16:09:09+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T05:16:23+00:00",
+      "step": "done"
     }
   ],
   "title": "The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet",
