@@ -18,7 +18,8 @@ from test_close import PIN
 
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
-LISTED = {"AGENTS.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+# .gitattributes carries the roadmap's merge rule.
+LISTED = {"AGENTS.md", ".gitattributes", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
