@@ -2,6 +2,7 @@
 
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -25,10 +26,23 @@ SOURCES = {
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
 }
-# Built from code rather than copied; their own tests check what they say.
+# Built from code rather than copied: each must match what Forge's own ship functions make for
+# the same repo in the same run, so a generator change is checked but needs no test edit.
 GENERATED = {"plain": {".claude/settings.json", ".codex/hooks.json", ".codex/config.toml",
                        ".github/workflows/forge.yml", "git-hook/pre-commit", "git-hook/pre-push"}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
+# Asks the checkout's forge, in its own process, what sync should write for this repo.
+EXPECTED = """
+import json, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from forge import githooks, repo, sync
+top = repo.root()
+cfg = repo.config(top)
+wanted = {**sync.files(top, cfg),
+          **{f"git-hook/{path.name}": text for path, text in githooks.shims(top, cfg).items()}}
+print(json.dumps(wanted))
+"""
 
 
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
@@ -40,6 +54,9 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
         repo.write("CLAUDE.md", "# Team notes\n")
         repo.write("package.json", json.dumps({"engines": {"node": "20"}}))
         repo.write(".nvmrc", "20\n")
+    expected = json.loads(subprocess.run(
+        [sys.executable, "-c", EXPECTED, str(ROOT / "src")], cwd=repo.path, check=True,
+        capture_output=True, text=True, encoding="utf-8").stdout)
     result = repo.forge("sync")
     assert result.returncode == 0, result.stderr
     paths = [line.removeprefix("Wrote ") for line in result.stdout.splitlines()
@@ -53,6 +70,8 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
     agents = (ROOT / "src/forge/templates/adapters/AGENTS.md").read_text(encoding="utf-8")
     assert files["AGENTS.md"].read_text(encoding="utf-8") == (
         f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n")
+    for path in GENERATED[case]:
+        assert files[path].read_text(encoding="utf-8") == expected[path], path
     if case != "plain":
         return
 
