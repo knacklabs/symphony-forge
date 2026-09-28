@@ -1,0 +1,14 @@
+{
+  "base": "2f87e1d83d8da057a5260d81d6f49831f5eb9929",
+  "branch": "fix/forge-makes-impeccable-the-only-ui-skill",
+  "done_when": "The standards, the frontend conventions, the worker brief and the review brief require both impeccable and emil-design-eng for UI work, with impeccable owning visual design and the checking pass and Emil owning interaction feel, and state the owner's resolutions of their conflicts; review reports a missing impeccable pass or a failed Emil checklist item as blocking; the synced copies match and the full test suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T10:27:25+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge makes impeccable the only UI skill and treats other motion as a defect, but the owner wants impeccable and Emil's design engineering both required so every UI, prototypes included, is flawless"
+}
