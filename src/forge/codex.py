@@ -150,6 +150,20 @@ def archive(checkout: Path, item: str, kind: str, thread: str) -> bool:
                     archive_thread=True, echo=False).get("archived"))
 
 
+def attach(top: Path, item: str, pr: dict[str, Any]) -> bool:
+    """Attach a pull request to the item's recorded Codex conversation, if it has one."""
+    match = re.fullmatch(r"https://github\.com/([^/]+)/([^/]+)/pull/\d+/?", pr["url"])
+    thread = _json(_item_file(top, item, ".json", "Fix")).get("conversation")
+    if match is None or not thread:
+        return False
+    root = repo.forge_dir(top).resolve().parent.parent
+    result = run(top, item, "Fix", "", "", "read-only", thread, echo=False,
+                 attach_request={"identity": ["github.com", *match.groups(), pr["number"]],
+                                 "payload": {"url": pr["url"], "root": str(root),
+                                             "headBranch": pr["headRefName"]}})
+    return bool(result.get("attached"))
+
+
 def conversation(checkout: Path, item: str, approval: str | None) -> tuple[str | None, str]:
     """The item's conversation to continue and "", or None and why Forge starts a new one."""
     saved = record(checkout, item)
@@ -213,29 +227,16 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
         archive_thread: bool = False, model: str | None = None,
-        effort: str | None = None) -> dict[str, Any]:
-    """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
-    resume it, else on a new one, and name the conversation `name`. `fresh` says why a new one
-    starts, and the conversation is recorded with the story's `approval`. With `read`, run no
-    turn: read back each turn of `thread` with its status, returned as "read" ([] when Codex has
-    no such conversation).
-
-    `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
-    `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
-    and every request Codex sends is declined. Events go to the terminal and the item's work log.
-    The item's record gets the driver's identity as soon as it starts, before Codex does, then the
-    app-server's, the conversation with its checkout and approval and the turn about to start
-    (pending until its "started" line is logged), the commit the turn starts from, and HEAD when
-    the turn ends. The driver waits for each of the
-    app-server and the conversation to be on record before it goes on. The item's turn log gets a
-    "started" line when the turn starts, and an end line only when Codex reports the end. Returns
-    the conversation and turn ids, and the status, final text and token usage Codex reported;
-    status, text and usage are None when it reported no end.
-    """
-    request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
-               "config": {} if archive_thread else settings(repo.config(checkout), kind),
+        effort: str | None = None, attach_request: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Run one turn or a read, archive, or attachment request in the item's checkout."""
+    root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
+                         cwd=checkout)).resolve().parent
+    request = {"cwd": str(checkout), "root": str(root), "name": name, "prompt": prompt, "sandbox": sandbox,
+               "config": {} if archive_thread or attach_request else settings(repo.config(checkout), kind),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask"}
+    if attach_request is not None:
+        request.update(attach=True, **attach_request)
     if model is not None:
         request["config"]["model"] = model
     if effort is not None:
@@ -302,6 +303,14 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     result["read"], text = said["read"], ""
                 elif "archived" in said:
                     result["archived"], text = said["archived"], ""
+                elif "attached" in said:
+                    result["attached"], text = said["attached"], ""
+                elif "attachment_failed" in said:
+                    text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
+                elif "project" in said:
+                    text = f"project={said['project']}"
+                elif "project_skipped" in said:
+                    text = f"project_skipped={said['project_skipped']}"
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
                 elif "thread" in said:
