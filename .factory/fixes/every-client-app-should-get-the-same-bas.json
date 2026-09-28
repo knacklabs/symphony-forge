@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked on 2026-09-28 for the app baseline in every client app; shipping the skill touches sync wiring, packaging, the frontend conventions and standards, and tests",
   "base": "319abe700568b1c29227b92706a207e462203dfe",
   "branch": "fix/every-client-app-should-get-the-same-bas",
   "done_when": "forge sync writes an app-baseline skill for Claude Code and Codex into client repos, holding that baseline and which of impeccable and Emil's design engineering decides what, and a test through forge sync shows it",
