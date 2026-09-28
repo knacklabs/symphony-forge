@@ -1,42 +1,35 @@
 {
   "branch": "task/FORGE-SALES-1-INSTALL",
   "review": {
-    "commit": "bfb52c4444b63343f139af1687f8e0cc0fea887d",
+    "commit": "442108ba31dc029be41f9915df8cb7a1005794a1",
     "dismissals": [],
     "findings": [
       {
-        "body": "On a fresh Windows laptop, `wsl.exe` can exist while WSL is uninstalled; [Microsoft documents](https://learn.microsoft.com/en-us/windows/dev-environment/wsl-interop) that it then exits with an error. This call redirects stderr while `$ErrorActionPreference` is `Stop`. In Windows PowerShell 5.1, that combination can terminate the script before `-Check` lists WSL2 as missing or the full run reaches its administrator guidance and `wsl --install` ([PowerShell issue](https://github.com/PowerShell/PowerShell/issues/4002)). Handle a failed status probe as \u201cWSL2 missing.\u201d",
+        "body": "The check matches only the English text `Default Version: 2`. WSL localizes that label\u2014for example, its [Japanese status resource](https://github.com/microsoft/WSL/blob/master/localization/strings/ja-JP/Resources.resw) uses a different label. On a Windows laptop with WSL2 already ready, `-Check` therefore reports it missing, and a full run repeatedly enters the WSL installation path. Determine readiness without matching an English label.",
         "file": "scripts/install-windows.ps1",
-        "line": 36,
-        "priority": "P1",
-        "title": "Not done: One script sets up a laptop"
+        "line": 47,
+        "priority": "P2",
+        "title": "Recognize localized WSL2 status"
       },
       {
-        "body": "The fresh-WSL test stub prints `WSL is not ready` to stdout and exits successfully. It therefore stays green if a real `wsl --status` failure on stderr stops the installer before either the missing-tools list or administrator guidance. Make this stub fail like an uninstalled WSL and assert the `-Check` and full-run outcomes.",
-        "file": "tests/test_sales_install.py",
-        "line": 238,
-        "priority": "P1",
-        "title": "Not done: test Windows setup when WSL status fails"
-      },
-      {
-        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or revisions left by an older Playwright release; Windows uses the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even though the project's Playwright cannot launch a browser. [Playwright requires browser binaries matched to its version](https://playwright.dev/docs/browsers).",
+        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or revisions left by an older Playwright release. Windows makes the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even though Playwright cannot launch a browser: [Playwright requires binaries matched to its version](https://playwright.dev/docs/browsers). Check the required browser revisions before skipping installation.",
         "file": "scripts/install-mac.sh",
         "line": 20,
         "priority": "P2",
         "title": "Check usable Playwright browsers before skipping installation"
       },
       {
-        "body": "A standalone `docker` CLI makes this script skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:62`. After a fresh Desktop installation, neither script tells the user to launch it, so setup can finish without a usable Docker engine. Check Desktop separately and print the first-launch action. Docker's [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) and [Windows](https://docs.docker.com/desktop/setup/install/windows-install/) instructions both require starting Desktop.",
+        "body": "A standalone `docker` CLI makes this script skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:72`. After a fresh Desktop installation, neither script tells the user to launch it, so setup can finish without a usable Docker engine. Check Desktop separately and print the first-launch action. Docker's [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) and [Windows](https://docs.docker.com/desktop/setup/install/windows-install/) instructions both require starting Desktop.",
         "file": "scripts/install-mac.sh",
         "line": 61,
         "priority": "P2",
         "title": "Check Docker Desktop and tell the user to start it"
       }
     ],
-    "status": "blocked",
-    "tree": "e3f86fab49a6632842ea7898279833f503fffade12d635b9e2005cd4c787da5c"
+    "status": "clean",
+    "tree": "d8d56e33fe366fff626260a130a7be3a10eae1a2dfb4792e06b727e8f150dc64"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:27:47+00:00",
@@ -68,6 +61,10 @@
     },
     {
       "at": "2026-09-28T18:31:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:43:05+00:00",
       "step": "review"
     }
   ]
