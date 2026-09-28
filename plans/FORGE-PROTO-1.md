@@ -40,7 +40,7 @@ has seen anything. This story builds the confirmed spec `docs/specs/prototype-si
    `forge next` lists each must-answer topic that is missing, "ask the client", marked later,
    repeated or malformed on the checkout's answers page.
 7. **A strict review guards sign-off.** Accepting a client sign-off decision first runs one fresh
-   Autoreview on GPT-6 Astra at high effort, with no model fallback, over every product file in the
+   Autoreview on GPT-6 Sol at xhigh effort, with no model fallback, over every product file in the
    checkout together with the answers page and the topic table, and refuses on a blocking finding;
    a must-answer topic that `forge next` would list as open, or one sourced only from our default
    or the agent, blocks; the accepted decision records the reviewed commit.
@@ -79,7 +79,7 @@ has seen anything. This story builds the confirmed spec `docs/specs/prototype-si
 | GATE | Stories wait | The sign-off gate on roadmap add and story new, and the prototype allowance on fix start | 2, 3 | `src/forge/records.py`, `src/forge/story.py`, `src/forge/task.py`, `tests/test_approval.py`, `tests/test_githooks.py`, `tests/test_phases.py`, `tests/test_onechat_approval.py`, `tests/test_fix_five_process_gaps_waste_rounds_cold_read.py` | `tests/test_proto_gate.py` | none | yes |
 | TOPICS | The FDE route and topics | The skill's prototype section, topic table and deferred-answer steps, the answers section in the brief template, the call script in the discovery template, and the cold read's Decide first check | 4, 5, 9 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `src/forge/templates/skeleton/docs/product/`, `src/forge/templates/cold-read.md`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_proto_topics.py` | none | yes |
 | NEXT | What is still open | The answers-page parser and forge next's list of open must-answer topics before sign-off | 6 | `src/forge/nextstep.py` | `tests/test_proto_next.py` | none | yes |
-| SIGNOFF | Review, then sign-off | The Astra-high review at sign-off acceptance and the sign-off decision template | 7, 8 | `src/forge/records.py`, `src/forge/review.py`, `src/forge/templates/review.md` | `tests/test_proto_signoff.py` | NEXT | yes |
+| SIGNOFF | Review, then sign-off | The Sol-xhigh review at sign-off acceptance and the sign-off decision template | 7, 8 | `src/forge/records.py`, `src/forge/review.py`, `src/forge/templates/review.md` | `tests/test_proto_signoff.py` | NEXT | yes |
 | DEPLOY | One Dockerfile | The fixed stack's Dockerfile in new client repos and the deploy conventions page | 10 | `src/forge/templates/skeleton/`, `src/forge/templates/conventions/`, `src/forge/init.py` | `tests/test_proto_deploy.py` | none | yes |
 | DOCS | Say so | The decision superseding 0014's order, and the README and guide | 11 | `docs/decisions/`, `README.md`, `docs/guide.md` | `tests/test_proto_docs.py` | none | yes |
 
@@ -103,7 +103,7 @@ New moving parts: one Dockerfile in new client repos (Done-when 10)
   reviews in Forge's review clone against an empty root commit made there, so every product file
   is in the diff (product files: every tracked file except `.factory/`, `plans/` and
   `docs/decisions/`), passing the model the way the existing invocation does
-  (`codex=gpt-6-astra`) with high thinking and no fallback, and a test checks those arguments. It
+  (`codex=gpt-6-sol`) with xhigh thinking and no fallback, and a test checks those arguments. It
   puts the reviewed commit in the decision's front matter as `reviewed_commit`.
 - The sign-off decision's front matter carries `customer`, `approved_via`, `approved_on` and
   `demo`; its `## Answers` section is the reviewed answers page's section, word for word.
