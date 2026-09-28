@@ -3,7 +3,7 @@
   "branch": "fix/forge-s-python-is-at-6-915-of-its-7-000",
   "done_when": "An accepted decision records the owner's choice, pyproject.toml's line_ceiling is 7500, the tests that pin the ceiling follow it, and the full suite passes",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T12:41:46+00:00",
