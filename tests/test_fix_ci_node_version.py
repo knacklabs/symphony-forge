@@ -16,7 +16,7 @@ STORY = "FIX-THE-CI-WORKFLOW-FORGE-GENERATES-RUNS-A-N"
 ])
 def test_1_sync_sets_up_node_before_package_tests(repo, files, expected):
     repo.git("checkout", "-q", "-b", "fix/node-tests")
-    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\ntest = "npm ci && npm test"\n')
+    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\ntest = "npm ci && npm test"\nchecks = ["tests", "forge-pr-check"]\n')
     for name, content in files.items():
         repo.write(name, content)
     result = repo.forge("sync")
@@ -35,7 +35,7 @@ def test_1_sync_sets_up_node_before_package_tests(repo, files, expected):
 
 def test_2_sync_keeps_python_only_tests_job(repo):
     repo.git("checkout", "-q", "-b", "fix/python-tests")
-    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\ntest = "uv run pytest"\n')
+    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\ntest = "uv run pytest"\nchecks = ["tests", "forge-pr-check"]\n')
     repo.write("pyproject.toml", "[project]\nname = 'example'\n")
     result = repo.forge("sync")
     assert result.returncode == 0, result.stderr

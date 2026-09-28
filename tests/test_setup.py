@@ -175,7 +175,13 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    return client, repo.forge("init", cwd=client)
+    initialized = repo.forge("init", cwd=client)
+    if initialized.returncode == 0:
+        # Init has installed the required checks; later commands see that protection.
+        gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
+                   stdout=json.dumps({"required_status_checks": {
+                       "checks": [{"context": "tests"}, {"context": "forge-pr-check"}]}}))
+    return client, initialized
 
 
 @pytest.mark.parametrize("case, rows", [
@@ -238,6 +244,11 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         emil = home / ".claude" / "skills" / "emil-design-eng" / "SKILL.md"
         emil.parent.mkdir(parents=True)
         emil.write_text("---\nname: emil-design-eng\n---\n", encoding="utf-8")
+    if case in ("no impeccable", "impeccable only for codex",
+                "impeccable only in the repo's .agents", "impeccable in CLAUDE_CONFIG_DIR"):
+        # These cases exercise UI skill placement, so the client must have a frontend.
+        (client / "web").mkdir()
+        (client / "web" / "package.json").write_text('{"name":"web"}\n', encoding="utf-8")
     if case != "codex doesn't trust the project":
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
@@ -286,7 +297,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert f'version = "{_version(repo)}"' in toml.read_text(encoding="utf-8")
         assert "Branch protection is on for main" in init.stdout
         # It reads the branch's protection first (a new repo has none), then sets Forge's rule.
-        read, call = [args for args in gh.calls() if args[0] == "api"]
+        read, call = [args for args in gh.calls() if args[0] == "api"][:2]
         assert read == ["api", "repos/{owner}/{repo}/branches/main/protection"]
         assert call[:4] == ["api", "--method", "PUT", "repos/{owner}/{repo}/branches/main/protection"]
         rule = json.loads(Path(call[call.index("--input") + 1]).read_text(encoding="utf-8"))

@@ -220,8 +220,13 @@ def decision_new(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["decision_exists"], rel=existing, slug=args.slug)
     number = max(_decision_numbers(top), default=0) + 1
     rel = f"docs/decisions/{number:04d}-{args.slug}.md"
-    _write(top, rel, DECISION.format(date=repo.now()[:10],
-                                     title=args.slug.replace("-", " ").capitalize()))
+    text = DECISION.format(date=repo.now()[:10],
+                           title=args.slug.replace("-", " ").capitalize())
+    if args.slug.endswith("client-signoff"):
+        text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
+                            "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
+        text += "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n"
+    _write(top, rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
           f'confirms in chat: forge decision accept {args.slug} --by "<name>"')
@@ -247,6 +252,41 @@ def decision_accept(args: argparse.Namespace) -> None:
     if unfilled:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
+    if Path(rel).stem.endswith("client-signoff"):
+        from forge import nextstep, review
+
+        next_step = f'forge decision accept {args.slug} --by "{by}"'
+        invalid = [name for name, valid in {
+            "customer": re.fullmatch(r"\S[^,]*,\s*\S.*", fields.get("customer", "")),
+            "approved_via": fields.get("approved_via", "").lower() in ("email", "call"),
+            "demo": re.fullmatch(r"https?://[^\s/]+(?:/\S*)?", fields.get("demo", "")),
+        }.items() if not valid]
+        if invalid:
+            repo.refuse((f"{rel} needs valid {', '.join(invalid)} for customer sign-off.",
+                         f"correct {rel}, then {next_step}"))
+        try:
+            date.fromisoformat(fields.get("approved_on", ""))
+        except ValueError:
+            repo.refuse((f"{rel} needs a real approved_on date.",
+                         f"correct {rel}, then {next_step}"))
+        brief = _text(top, "docs/product/BRIEF.md")
+        quote = _answer_section(body)
+        if not brief or not quote or quote != _answer_section(brief):
+            repo.refuse((f"{rel}'s Answers must quote docs/product/BRIEF.md word for word.",
+                         f"copy its Answers section, then {next_step}"))
+        open_topics = nextstep.open_must_answer_topics(top)
+        answers = nextstep.parse_answers(top)
+        open_topics += [topic for topic in nextstep.MUST_ANSWER_TOPICS
+                        if topic not in open_topics and answers[topic][0][1].strip().lower()
+                        not in ("client", "salesperson", "developer")]
+        if open_topics:
+            repo.refuse(("Customer sign-off needs a client, salesperson, or developer answer for: "
+                         + ", ".join(open_topics) + ".",
+                         "forge next, then update docs/product/BRIEF.md and the decision quote"))
+        if fields["customer"] != answers["Sign-off person"][0][0]:
+            repo.refuse((f"{rel}'s customer must match the Sign-off person answer.",
+                         f"correct {rel}, then {next_step}"))
+        text = _set(text, reviewed_commit=review.signoff(top, quote))
     changed = [rel]
     old = fields.get("supersedes")
     if old:
@@ -424,6 +464,11 @@ def _sections(body: str) -> dict[str, str]:
     # ponytail: fenced code isn't skipped, so a `## ` line inside a code block starts a section.
     parts = re.split(r"^## +(.+?)(?:[ \t]+#+)?[ \t]*$", body, flags=re.M)
     return dict(zip(parts[1::2], parts[2::2]))
+
+
+def _answer_section(body: str) -> str:
+    match = re.search(r"(?ms)^## Answers\r?\n.*?(?=^## |\Z)", body)
+    return match[0] if match else ""
 
 
 def _text(top: Path, rel: str) -> str:
