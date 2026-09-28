@@ -1,25 +1,25 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
   "review": {
-    "commit": "cfd31b18a61ef0e34a2e7e229f9f3b9456d794a1",
+    "commit": "01842cc5c8da0b767a162f3c3f7468ec6668da8f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new test checks description substrings and the first six command names, but never compares complete help output. Changing `--out`'s metavar or help, removing an option description, or changing top-level help text would still pass these assertions. Item 2 explicitly requires unchanged `forge --help` and command help. Extend this entry-point test with independent baseline expectations for the complete output, including arguments and usage.",
+        "body": "This test requires a historical commit that CI does not fetch. `.github/workflows/forge.yml:19\u201321` and `.github/workflows/forge-next.yml:30\u201336` run the suite after checkout without overriding its [default fetch depth of 1](https://raw.githubusercontent.com/actions/checkout/main/action.yml). Consequently, `git show` fails with `CalledProcessError` before any help or discovery assertions run. Make the independent baseline available in a shallow checkout, preferably as a committed test fixture.",
         "file": "tests/test_split_commands.py",
-        "line": 35,
+        "line": 29,
         "priority": "P1",
-        "title": "Not done: test unchanged help output"
+        "title": "Not done: help-preservation test runs in the repository's CI suite"
       },
       {
-        "body": "`ast.literal_eval` cannot evaluate callable argument converters such as `int`. The existing `close --dismiss` argument uses `type=int` in `src/forge/cli.py:49`; expressing that same argument tuple in `COMMANDS` raises `ValueError` here and prevents every command, including `--help`, from starting. The promised declaration format therefore cannot represent all current argument tuples. Support these argument values and exercise a typed argument through the fixture command.",
+        "body": "The promised declaration format accepts today's argument tuples, but `ast.literal_eval` cannot resolve callable values such as `int` ([Python contract](https://docs.python.org/3.11/library/ast.html#ast.literal_eval)). The existing `close --dismiss` option uses `type=int` at `src/forge/cli.py:49`. Putting its equivalent tuple into `COMMANDS` raises `ValueError` during parser construction, breaking every command, including `--help`. Support existing converter values and exercise a typed argument through the fixture command.",
         "file": "src/forge/cli.py",
         "line": 126,
         "priority": "P2",
-        "title": "Support existing argument converters in declarations"
+        "title": "Support existing argument converters in command declarations"
       },
       {
-        "body": "Item 2 remains partially incomplete: this fallback still consumes the central `TABLE`, and group help remains in `GROUPS`. The remaining commands do not yet declare their position and listing in their owning modules. `plans/FORGE-SPLIT-1.md:41` assigns this migration to COMMANDS, and lines 63\u201364 explicitly permit the interim table, so this is deferred P2 advice rather than a merge-blocking requirement for COLLECTOR.",
+        "body": "Done-when item 2 remains incomplete: the collector still consumes `TABLE`, and group help remains centrally declared in `GROUPS`. Remaining commands lack module-owned positions and listings. `plans/FORGE-SPLIT-1.md:41` assigns this migration to COMMANDS, while lines 63\u201364 explicitly permit the interim table. Complete its removal in COMMANDS; this is deferred advice for this branch.",
         "file": "src/forge/cli.py",
         "line": 130,
         "priority": "P2",
@@ -27,7 +27,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "f636f59ff5a1e1b122acf1635d2e7363de5748e243cf5d0bc110b92cd420be70"
+    "tree": "78476c659aaf57b1379652faf5a15fcb62cbbe5f845cb67a24105492829cc71c"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-09-28T08:04:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:14:01+00:00",
       "step": "review"
     }
   ]
