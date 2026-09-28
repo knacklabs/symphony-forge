@@ -67,14 +67,18 @@ expensive to find in review.
    story's state file (which holds the approval) as its first commit, so they reach the task's
    pull request without merging branches that don't share history after a squash merge. Notes
    written before this change count as round 1: an unapproved story with such notes needs a
-   passing round, and a story approved before this change keeps today's task start throughout,
-   reading the default branch after its first merge. Tests cover each refusal, a task pull
+   passing round, and a story approved before this change keeps today's rules entirely: no read
+   gate after approval and today's task start, reading the default branch after its first merge.
+   When a story is approved, Forge merges the story branch into the branch of a task promoted from
+   a fix, so the doc, its notes, the state file and the roadmap entry reach that task's pull
+   request. Tests cover each refusal, a task pull
    request that changes only the Tasks table, the exact-text rule and its near misses, the
    commit, `forge next` naming the read and its round for an approved story whose doc changed, a
    first task starting from the story branch with its roadmap entry, a later task starting from
    the default branch with the passing doc, notes and a renewed approval after a squash-merged
-   first task, a changed Tasks table stopping `forge task start`, and an old approved story whose
-   Tasks table changed on the default branch still starting from that copy. The reader's Codex
+   first task, a changed Tasks table stopping `forge task start`, a promoted task's pull request carrying the
+   passing doc, notes, state and roadmap entry after approval, and an old approved story whose
+   Tasks table changed on the default branch starting from that copy without a read. The reader's Codex
    conversation is archived only when a round passes; a round with findings leaves it for the
    next round, and a failed archive only prints a note. A passing round archives only its own
    conversation; an earlier one left by an app that is no longer installed is left as it is,
