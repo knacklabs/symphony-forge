@@ -118,6 +118,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
+    refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
     merged_prs = _merged_prs(top) if trees else set()
     prs = _open_prs(top) if trees else {}
@@ -125,7 +126,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs)
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals)
         lines += found
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
@@ -136,21 +137,13 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state is not None:
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
-            lines += _item(name, f"The fix {name}", state, top, path, prs)
+            lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
-        try:
-            current_repo = repo.config(top)["repo"]
-        except repo.Refused as refusal:
-            if top not in trees.values():
-                raise
-            diagnostic = f"{top}: {str(refusal).splitlines()[0]}"
-            if diagnostic not in lines:
-                lines.append(diagnostic)
-            current_repo = None
-        if current_repo == "client" and not approval.signed_off(top):
+        cfg = _report_config(top, refusals)
+        if cfg["repo"] == "client" and not approval.signed_off(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
                 notice = ["Open before sign-off in docs/product/BRIEF.md:",
@@ -158,8 +151,17 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
                           "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
                 lines = notice + lines if len(trees) > 1 else lines + notice
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
-        lines.append(board.numbers_line(top))
+        lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
+    lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     return lines, states
+
+
+def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
+    try:
+        return repo.config(path)
+    except repo.Refused as refusal:
+        refusals[path] = str(refusal).splitlines()[0]
+        return repo.DEFAULTS
 
 
 def _due(top: Path) -> list[str]:
@@ -224,7 +226,8 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
-           title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]]
+           title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
+           refusals: dict[Path, str]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     try:
@@ -234,14 +237,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
-        return _approval(top, key, path, title, digest), []
+        return _approval(top, key, path, title, digest, refusals), []
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
-                                 states[task["id"]], top, tree, prs)]
+                                 states[task["id"]], top, tree, prs, refusals)]
     if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -252,7 +255,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]], top, prs=prs)
+            lines += _item(item, item, states[task["id"]], top,
+                           trees.get(f"task/{key}-{task['id']}"), prs, refusals)
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -264,14 +268,15 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                      "Next: git fetch origin, then forge next"], list(states.values())
 
 
-def _approval(top: Path, key: str, path: Path, title: str, digest: str) -> list[str]:
+def _approval(top: Path, key: str, path: Path, title: str, digest: str,
+              refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path):
+    if not approval.signed_off(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)
@@ -298,7 +303,8 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 
 
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
-          path: Path | None = None, prs: dict[str, dict[str, Any]] | None = None) -> list[str]:
+          path: Path | None, prs: dict[str, dict[str, Any]] | None,
+          refusals: dict[Path, str]) -> list[str]:
     status = state.get("status") or "started"
     ready = repo.ready_path(item, top)
     try:
@@ -337,12 +343,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if findings:
             values["reason"] = "; ".join(findings)
     pr = (prs or {}).get(state.get("branch", "")) or {}
-    try:
-        checks = repo.config(path or top)["checks"] if pr and status == "waiting for checks" else []
-    except repo.Refused as refusal:
-        if path is None:
-            raise
-        return [f"{path}: {str(refusal).splitlines()[0]}"]
+    checks = (_report_config(path or top, refusals)["checks"]
+              if pr and status == "waiting for checks" else [])
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
