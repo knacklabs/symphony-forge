@@ -1,5 +1,7 @@
-"""A cloned Forge checkout can resolve the same test tools CI uses."""
+"""A cloned Forge checkout installs the same test tools CI uses."""
 
+import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -8,16 +10,39 @@ STORY = "A-DEVELOPER-WHO-CLONES-SYMPHONY-FORGE-TO"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_dev_group_resolves_ci_test_tools():
-    result = subprocess.run(
-        ["uv", "export", "--locked", "--only-dev", "--no-emit-project"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
+def test_1_plain_sync_installs_test_tools_and_uv_run_finds_pytest(tmp_path):
+    for name in ("pyproject.toml", "uv.lock", "README.md"):
+        shutil.copy2(ROOT / name, tmp_path / name)
+    shutil.copytree(ROOT / "src", tmp_path / "src")
+    for name in (
+        ".codex/skills/test-audit/SKILL.md",
+        ".codex/skills/test-audit/NOTICE.md",
+        ".codex/skills/forge/fde.md",
+        ".claude/skills/remote-approval/SKILL.md",
+    ):
+        destination = tmp_path / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / name, destination)
+    env = os.environ.copy()
+    env.pop("VIRTUAL_ENV", None)
+    env["UV_PROJECT_ENVIRONMENT"] = str(tmp_path / ".venv")
+
+    sync = subprocess.run(["uv", "sync", "--frozen"], cwd=tmp_path, env=env,
+                          capture_output=True, text=True)
+    assert sync.returncode == 0, sync.stderr
+
+    python = tmp_path / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    installed = subprocess.run(
+        [str(python), "-c", "import importlib.metadata as m; "
+         "[m.version(name) for name in ('pytest', 'pytest-xdist', 'pytest-split', 'pytest-timeout')]"],
+        cwd=tmp_path, env=env, capture_output=True, text=True,
     )
-    assert result.returncode == 0, result.stderr
-    for package in ("pytest", "pytest-xdist", "pytest-split", "pytest-timeout"):
-        assert f"{package}==" in result.stdout
+    assert installed.returncode == 0, installed.stderr
+
+    run = subprocess.run(["uv", "run", "--frozen", "pytest", "--version"],
+                         cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert run.returncode == 0, run.stderr
+    assert run.stdout.startswith("pytest ")
 
 
 def test_2_ci_uses_the_declared_dev_group():
