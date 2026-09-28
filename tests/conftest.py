@@ -16,6 +16,7 @@ from typing import Any, Callable
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
@@ -94,6 +95,13 @@ class StubGh:
         return [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
 
 
+@pytest.fixture(autouse=True)
+def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Every Forge subprocess must write its per-machine repo list inside this test's temp folder.
+    monkeypatch.setenv("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
+                       str(tmp_path / "config"))
+
+
 @pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     for name in list(os.environ):  # GIT_DIR and friends leak in when tests run inside a git hook.
@@ -149,6 +157,14 @@ def _payload(event: str, cwd: Path, tool: str | None, tool_input: dict[str, Any]
 
 
 Builder = Callable[..., dict[str, Any]]
+
+
+@pytest.fixture
+def isolated_codex_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    home = tmp_path / "isolated-codex-home"
+    home.mkdir(mode=0o700)
+    monkeypatch.setenv("CODEX_HOME", str(home))
+    return home
 
 
 @pytest.fixture

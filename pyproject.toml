@@ -9,6 +9,9 @@ description = "Forge: one small tool that takes a story from approval to a merge
 requires-python = ">=3.11"
 dependencies = []
 
+[dependency-groups]
+dev = ["pytest", "pytest-xdist", "pytest-split", "pytest-timeout"]
+
 [project.scripts]
 forge = "forge.cli:main"
 
@@ -18,7 +21,18 @@ path = "src/forge/__init__.py"
 # The wheel ships every file under src/forge: the code plus its Markdown and data files.
 [tool.hatch.build.targets.wheel]
 packages = ["src/forge"]
+[tool.hatch.build.targets.wheel.force-include]
+".codex/skills/test-audit/SKILL.md" = "forge/templates/skills/test-audit/SKILL.md"
+".codex/skills/test-audit/NOTICE.md" = "forge/templates/skills/test-audit/NOTICE.md"
+".codex/skills/forge/fde.md" = "forge/templates/fde.md"
+".claude/skills/remote-approval/SKILL.md" = "forge/templates/skills/remote-approval/SKILL.md"
+
+[tool.hatch.build.targets.sdist.force-include]
+".codex/skills/test-audit/SKILL.md" = ".codex/skills/test-audit/SKILL.md"
+".codex/skills/test-audit/NOTICE.md" = ".codex/skills/test-audit/NOTICE.md"
+".codex/skills/forge/fde.md" = ".codex/skills/forge/fde.md"
+".claude/skills/remote-approval/SKILL.md" = ".claude/skills/remote-approval/SKILL.md"
 
 [tool.forge]
-# Every line of every file under src/forge/ counts. Raising this needs an accepted decision.
-line_ceiling = 8000
+# Only Python lines under src/forge/ count (decision 0094). Raising this needs an accepted decision.
+line_ceiling = 7000

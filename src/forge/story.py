@@ -79,7 +79,7 @@ def new(args: Any) -> int:
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
-    done = "<Something anyone can observe once this is done.>"
+    done = "Something anyone can observe once this is done."
     if fix:
         fix_top = worktrees(top).get(f"fix/{fix}")
         fix_state = repo.read_state(fix, fix_top) if fix_top else None
@@ -91,7 +91,7 @@ def new(args: Any) -> int:
         base = repo.git("merge-base", repo.default_branch(top), "HEAD", cwd=fix_top)
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
-        row = f"| {fix.upper()} | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
+        row = f"| SPEC | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
     elif key not in {item["key"] for item in repo.roadmap(top)}:
         repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
@@ -139,14 +139,22 @@ def read(args: Any) -> int:
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
                                capture_output=True, check=True).stdout.decode().strip()
-    prompt = Template(prompt).safe_substitute(path=rel, doc=text.decode("utf-8"))
+    prompt = Template(prompt).safe_substitute(
+        path=rel, doc=text.decode("utf-8"), target=target,
+        spec=_confirmed_spec(top, target) if is_story else "")
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
-            ran = codex.run(top, target, "Grill", f"Grill · {target} · {rel}", prompt, "read-only")
+            name = f"Read · {target}"
+            if len(name) > 60:
+                prefix = name[:59]
+                name = (prefix.rstrip(" -") if name[59] in " -" else
+                        prefix.rsplit("-", 1)[0] if "-" in prefix else
+                        prefix.rsplit(" ", 1)[0]) + "…"
+            ran = codex.run(top, target, "Grill", name, prompt, "read-only")
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
@@ -160,6 +168,14 @@ def read(args: Any) -> int:
     record = {"reader": f"{reader} ({repo.models(config, 'grill', reader)['model']})",
               "read_at": repo.now(), "read_hash": read_hash, "amended_hash": ""}
     _write(notes, _notes(record, f"{head.strip()}\n\n{said}\n"))
+    if reader == "codex" and ran.get("conversation"):
+        try:
+            archived = codex.archive(top, target, "Grill", ran["conversation"])
+        except Exception:
+            archived = False
+        if not archived:
+            print(f"Forge could not archive the cold read's Codex conversation for {target}; "
+                  "archive it in Codex when it is available.")
     if is_story:
         state = repo.read_state(target, top) or {}
         state["status"] = "read"
@@ -418,6 +434,32 @@ def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool
     return top, doc, doc.with_name(f"{target}.read.md"), False
 
 
+def _confirmed_spec(top: Path, key: str) -> str:
+    """The confirmed spec for a story, including one still on its promoted task branch."""
+    entry = next((item for item in repo.roadmap(top) if item["key"] == key), {})
+    linked = entry.get("spec", "")
+    refs = repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads",
+                    "refs/remotes/origin", cwd=top).splitlines()
+    refs.sort(key=lambda ref: (not ref.startswith(f"task/{key}-"), ref))
+    for ref in refs:
+        paths = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/specs", cwd=top).splitlines()
+        for path in paths:
+            if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
+                continue
+            spec = show(top, ref, path) or ""
+            match = FRONTMATTER.match(spec)
+            if not match:
+                continue
+            fields = dict(line.partition(":")[::2] for line in match[1].splitlines() if ":" in line)
+            fields = {name.strip(): value.strip().strip('"\'') for name, value in fields.items()}
+            body = spec[match.end():]
+            if (fields.get("status") == "confirmed"
+                    and fields.get("confirmed_hash") == hashlib.sha256(body.encode("utf-8")).hexdigest()
+                    and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
+                return f"\nConfirmed spec at `{path}` on `{ref}`:\n\n{spec}\n"
+    return "\nNo linked confirmed spec was found in the local branches.\n"
+
+
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:
     try:
         return parse(_text(doc))
@@ -480,7 +522,7 @@ def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
 
 def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> str:
     """Turn a fix's branch into the story's first task branch, keeping its commits."""
-    task, branch, old = f"{key}/{fix.upper()}", f"task/{key}-{fix.upper()}", repo.state_path(fix)
+    task, branch, old = f"{key}/SPEC", f"task/{key}-SPEC", repo.state_path(fix)
     repo.git("branch", "-m", branch, cwd=fix_top)
     tracked = repo.run("git", "ls-files", "--error-unmatch", "--", old, cwd=fix_top).returncode == 0
     (fix_top / old).unlink()

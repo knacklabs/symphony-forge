@@ -24,16 +24,15 @@ jobs:
           - {os: windows-latest, group: 2, groups: 3}
           - {os: windows-latest, group: 3, groups: 3}
     runs-on: ${{ matrix.os }}
-    # Windows needs time for pytest-timeout to name a slow test before the job ends.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 10 || 5 }}
+    # Windows and macOS need time for pytest-timeout to name a slow test before the job ends.
+    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 5 || 10 }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 --with pytest --with pytest-xdist --with pytest-split --with pytest-timeout
-          python -m pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
 
   net-lines:
     if: github.event_name == 'pull_request'

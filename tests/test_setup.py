@@ -19,6 +19,7 @@ from test_close import PIN
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+          ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")

@@ -42,9 +42,9 @@ in another repo has cost a new chat and its context. This story builds the confi
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | THE-OWNER-WANTS-EVERY-FORGE-REPO-S-STORI | The spec | The confirmed spec and its roadmap item | 1 | `docs/specs/one-chat-approval.md`, `docs/specs/one-chat-approval.read.md`, `plans/roadmap.json` | | none | no |
-| REGISTRY | Remembered repos | The per-machine list: `main_checkout(path)`, `remember(top)` and `remembered()` in a new module, called from the command dispatch after init, migrate, sync or next succeeds | 2 | `src/forge/machine.py`, `src/forge/cli.py` | `tests/test_onechat_registry.py` | none | no |
+| REGISTRY | Remembered repos | The per-machine list: `main_checkout(path)`, `remember(top)` and `remembered()` in a new module, called from the command dispatch after init, migrate, sync or next succeeds | 2 | `src/forge/machine.py`, `src/forge/cli.py`, `tests/conftest.py` | `tests/test_onechat_registry.py` | none | no |
 | APPROVE | Approve anywhere | The approval hook matching across the chat's repo and every remembered repo, the story repo's replay marker and sign-off, and the version refusal | 3, 4 | `src/forge/approval.py` | `tests/test_onechat_approval.py` | REGISTRY | yes |
-| DOCS | Say so | The guide's approval section and the Remote Control skill's wording, template and generated copy | 5 | `docs/guide.md`, `src/forge/templates/skills/remote-approval/SKILL.md`, `.claude/skills/remote-approval/SKILL.md` | `tests/test_onechat_docs.py` | APPROVE | yes |
+| DOCS | Say so | The guide's approval section and the Remote Control skill's wording, template and generated copy | 5 | `docs/guide.md`, `src/forge/templates/skills/remote-approval/SKILL.md`, `.claude/skills/remote-approval/SKILL.md`, `tests/test_trim_skills.py` | `tests/test_onechat_docs.py` | APPROVE | yes |
 
 New moving parts: the per-machine file `forge/repos` in the user's config folder, with its reader and writer in `src/forge/machine.py` (Done-when 2)
 

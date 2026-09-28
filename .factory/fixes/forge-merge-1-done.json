@@ -1,0 +1,31 @@
+{
+  "base": "d819ee0d8f2eb4bac3f3b8fc620d838e661e386f",
+  "branch": "fix/forge-merge-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Forge now merges ready pull requests itself in repos that allow it, through forge merge, after a clean review and green checks",
+  "review": {
+    "commit": "2431950fabc2892fb5bccbc5f98757b31fdb3958",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "08e4a941f258186ed320bdc2421d9fa31d7a1b4bc6b782905ce2ad4363b8a09b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T05:16:23+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:17:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:29:15+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that The owner wants the agent to merge ready pull requests in repos where they allow it; Forge has no spec for that yet is finished, and what it achieved."
+}

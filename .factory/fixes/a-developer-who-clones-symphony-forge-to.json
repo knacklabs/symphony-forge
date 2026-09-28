@@ -1,0 +1,46 @@
+{
+  "allow_large": "The owner allowed it on 2026-09-28: each extra file is a one-line switch of CI and forge.toml to the new dev group",
+  "base": "d95280ffa7b33fefa4d6a7db95e33a07f85b0eed",
+  "branch": "fix/a-developer-who-clones-symphony-forge-to",
+  "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
+  "kind": "fix",
+  "review": {
+    "commit": "c455858433f97bc530d50bcd797439387fdcee27",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c9de970803f7852c9bffe96aac462cb9421ccdb7523337dd2a14bd0d39cbbef3"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T07:48:59+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:16:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:24:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:27:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:37:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:47:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T09:04:22+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A developer who clones symphony-forge to fix a bug gets no test tools from uv sync and no instructions: CI adds pytest at run time and the README only covers using Forge"
+}

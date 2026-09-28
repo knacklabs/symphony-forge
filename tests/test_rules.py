@@ -60,10 +60,9 @@ def test_4_one_test_per_rule():
 def test_5_forge_stays_small(repo):
     ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["forge"][
         "line_ceiling"]
-    files = [p for p in (ROOT / "src" / "forge").rglob("*")
-             if p.is_file() and "__pycache__" not in p.parts]
+    files = (ROOT / "src" / "forge").rglob("*.py")
     lines = {p.relative_to(ROOT).as_posix(): p.read_bytes().count(b"\n") for p in files}
-    too_long = {path: n for path, n in lines.items() if path.endswith(".py") and n > 1200}
+    too_long = {path: n for path, n in lines.items() if n > 1200}
     assert not too_long, f"modules over 1,200 lines: {too_long}"
     assert sum(lines.values()) <= ceiling, (
         f"src/forge/ has {sum(lines.values())} lines, over the {ceiling} ceiling in pyproject.toml")
@@ -98,6 +97,10 @@ def test_10_version_pin(repo, tmp_path):
     shutil.copytree(ROOT / "src" / "forge", source / "src" / "forge",
                     ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copy(ROOT / "pyproject.toml", source)
+    for rel in (".codex/skills/test-audit/SKILL.md", ".codex/skills/test-audit/NOTICE.md",
+                ".codex/skills/forge/fde.md", ".claude/skills/remote-approval/SKILL.md"):
+        (source / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, source / rel)
     repo.git("init", "-q", str(source))
     repo.git("add", "-A", cwd=source)
     repo.git("commit", "-q", "-m", "Release", cwd=source)

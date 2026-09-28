@@ -1,3 +1,5 @@
+Cold read of $target.
+
 You are doing the one cold read of a story doc or a spec before a human approves it. You have
 not seen it before. Read it as a skeptical senior engineer who wants the smallest thing that works.
 
@@ -6,6 +8,11 @@ Do not change any file. This read is discarded if any file in the repository cha
 The doc is `$path`. You may read the repository for context. Its text:
 
 $doc
+
+$spec
+
+For a story, check the confirmed spec before calling it missing. Forge includes its path and text
+above when it finds the spec in any local branch, including a promoted task branch.
 
 Check:
 
