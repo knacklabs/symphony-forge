@@ -4,19 +4,26 @@
   "done_when": "forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test through forge next shows it",
   "kind": "fix",
   "review": {
-    "commit": "2af181ed27c2b4b00518ddbde351df0ba3b885d6",
+    "commit": "25a55de2e47dbb5a5a82070c901611bf1e65e7d0",
     "dismissals": [],
     "findings": [
       {
-        "body": "Running `forge next` from the worktree with rejected settings still prints nothing. This catch converts the refusal into an item line, but `_report` then calls `repo.config(top)` at `src/forge/nextstep.py:143`; because `top` is that same worktree, the refusal escapes before `next_step` prints the report. The new test invokes `forge next` only from the healthy main checkout (`tests/test_fix_one_worktree_with_settings_the_installed.py:27`), so it misses this case. Handle that configuration refusal as an item diagnostic and test the command from the rejected worktree.",
+        "body": "Active tasks still bypass this recovery. `_story` calls `_item` without a worktree path at `src/forge/nextstep.py:255`. For a task waiting for checks with an open PR, running `forge next` from a worktree whose settings are rejected makes line 341 read that checkout\u2019s config; this `path is None` branch re-raises the refusal before `_report` can print any items. The new command test covers only a fix worktree. Add the task case through `forge next` and keep the other items visible.",
         "file": "src/forge/nextstep.py",
-        "line": 336,
+        "line": 343,
         "priority": "P1",
-        "title": "Not done: forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test though"
+        "title": "Not done: forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test tr[..."
+      },
+      {
+        "body": "On or after `board.CHECK_DATE` (2026-11-15), `_report` handles the current worktree\u2019s config refusal here but then calls `board.numbers_line(top)` at `src/forge/nextstep.py:160-161`. Its `_gather` calls `repo.config(top)` again at `src/forge/board.py:86`, so `forge next` from that worktree again prints no item list. Cover this dated path when preserving the diagnostic.",
+        "file": "src/forge/nextstep.py",
+        "line": 152,
+        "priority": "P2",
+        "title": "Keep the dated success check from rethrowing rejected settings"
       }
     ],
     "status": "blocked",
-    "tree": "671c66b00fc405b2512e546d655b8e6847ac991b4bc166a562acb227dff9e163"
+    "tree": "4eefa487e05bd977acf77a03f52fce1a71afcd070420a9067f916ed11948727a"
   },
   "status": "fixing",
   "steps": [
@@ -26,6 +33,10 @@
     },
     {
       "at": "2026-09-28T15:02:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:47:17+00:00",
       "step": "review"
     }
   ],
