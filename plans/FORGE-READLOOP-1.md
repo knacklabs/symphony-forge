@@ -61,7 +61,8 @@ expensive to find in review.
    only when it disagrees with the stated reason, as a new finding `Disputed keep <n>: <why>`. The
    skill tells the agent to put each disputed keep to the human as one question with options,
    record the answer in the doc's Notes as `Decided: <finding>: <answer> (owner, <date>)`, and
-   give the disputed finding the disposition `keep` citing that line. The next-round prompt tells
+   give both the original kept finding and the disputed one the disposition `keep` citing that
+   line. The next-round prompt tells
    the reader never to raise again a finding whose disposition cites a `Decided:` line.
 4. **The reader hunts edge cases.** For every Done-when item the cold-read prompt asks which
    inputs and states it must handle, which platforms and shells (Windows PowerShell and cmd, WSL,
@@ -102,9 +103,9 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py` | none | yes |
+| SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | none | yes |
 | ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/nextstep.py` | `tests/test_readloop_rounds.py` | SPEC | yes |
-| CUT | No more amendment | `--amended` removed everywhere, and every read check on the latest round's pass | 8 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | `tests/test_readloop_cut.py` | ROUNDS | yes |
+| CUT | No more amendment | `--amended` removed everywhere, and every read check on the latest round's pass | 8 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | `tests/test_readloop_cut.py`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | ROUNDS | yes |
 | GATES | Stories pass first | The story pass gate in approval, `forge next` and task start, the passing round's commit, reading from the story branch, and old stories | 2 | `src/forge/story.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py` | `tests/test_readloop_gates.py` | CUT | yes |
 | SPECS | Specs pass first | The spec pass gate in `spec confirm` and the pull-request check | 7 | `src/forge/records.py`, `src/forge/prcheck.py` | `tests/test_readloop_specs.py` | CUT | yes |
 
@@ -116,12 +117,13 @@ New moving parts: none
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
   `$path`, `$doc`, `$diff`, `$findings` and `$next` (the first new finding's number). ROUNDS
   fills them and adds nothing to the wording.
-- ROUNDS pins the notes contract CUT, GATES and SPECS read, and keeps `--amended` working until
-  CUT removes it: the frontmatter keeps `reader`, `read_at` and
-  `read_hash` for the latest round, drops `amended_hash`, and adds `round` (a number) and
-  `passed` (`yes` only when that round's whole text is exactly `No findings.`, else `no`). Each
-  round's text sits under `## Round <n>`; notes without `round` are round 1. The doc's diff is
-  taken against the previous round's text, when it can be found,, which `read` stores with `git hash-object -w`.
+- ROUNDS pins the notes contract CUT, GATES and SPECS read: the frontmatter keeps `reader`,
+  `read_at` and `read_hash` for the latest round and adds `round` (a number) and `passed` (`yes`
+  only when that round's whole text, trimmed, is exactly `No findings.`, else `no`). Each round's
+  text sits under `## Round <n>`; notes without `round` are round 1. The doc's diff is taken
+  against the previous round's text when it can be found, which `read` stores with
+  `git hash-object -w`. ROUNDS leaves `amended_hash`, `--amended` and today's read gate working
+  as they are; CUT drops them and moves every read check to the latest round's pass.
 - The read conversation is recorded under the read's own folder (`threads/read/<target>`), so
   `codex.conversation` and `codex.record` take the kind instead of assuming a fix.
 - Nothing here runs shell commands of its own: every item runs inside Forge's Python, which CI

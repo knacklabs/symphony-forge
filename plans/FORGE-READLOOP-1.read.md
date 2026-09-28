@@ -106,3 +106,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 26. **Split: ROUNDS remains over the task-size target.** It owns round execution, notes, conversation recovery, reader pinning, the nudge, command removal, six existing test files, documentation, and a new real-SDK suite across thirteen listed paths. That scope suggests more than about 400 changed lines despite covering only two Done-when items ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:102)).
    Disposition: cut: ROUNDS keeps rounds and the nudge; the removal moved to CUT.
 
+## Round 5 (run by hand on gpt-6-sol xhigh)
+
+27. **ROUNDS cannot both drop `amended_hash` and keep `--amended` working until CUT.** The plan requires both in the same handoff ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:119)). Today, `--amended` writes that field and the read gate uses it ([story.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:143)). Pin the temporary record and gate behavior so ROUNDS passes before CUT removes the command.
+   Disposition: cut: Notes say ROUNDS leaves amended_hash, --amended and today's gate as they are; CUT drops them.
+
+28. **A human-settled keep can be disputed again.** Item 3 puts the `Decided:` citation on the *new disputed finding*, while the original kept finding still has its old reason ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:60)). The next-round rule protects only a finding whose own disposition cites that line. Pin how the original finding is marked settled, and test a further round that sees both findings.
+   Disposition: cut: item 3 gives both the original kept finding and the disputed one a keep citing the Decided line.
+
+29. **Changed tests are missing from their tasks’ Tests cells.** SPEC will need to update the shipped-skill hash in [test_split_ships.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_split_ships.py:21), and CUT promises to rewrite six existing `--amended` test files. The plan puts those files only in Scope and lists only new suites under Tests ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:105)). Forge’s [test-audit skill](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/.codex/skills/test-audit/SKILL.md:15) requires every added or changed test in that column; list the affected files there.
+   Disposition: cut: each task's Tests cell lists the existing tests it changes.
+
