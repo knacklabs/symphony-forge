@@ -71,6 +71,22 @@ DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|de
 READERS = {"CLAUDECODE": "codex", "CODEX_THREAD_ID": "claude"}
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
+    return {
+        ".claude/skills/forge/SKILL.md": skill,
+        ".codex/skills/forge/SKILL.md": skill,
+        **{f"{host}/skills/forge/standards.md":
+           (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
+        **{f"{host}/skills/forge/fde.md":
+           sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
+           for host in (".claude", ".codex")},
+    }
+
+
 # --- commands ------------------------------------------------------------------------------
 
 

@@ -61,12 +61,15 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 
 <!-- rules -->
 ## What blocks the merge
+Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
   naming that task;
-- an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+- when the story's Tasks table assigns a test or check to another task, report it as a
+  P2 `Later:` finding naming that task, not `Not done`.
 
-Missing tests and the functional check are unchanged: they stay P1.
+Missing tests this branch owns and the functional check stay P1.
 
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
@@ -77,9 +80,11 @@ checklist.
 
 Documentation-only changes need no new behaviour test; check claims, commands and links.
 
-Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-for client apps, the running API with a real database and user flows in a browser through
-Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+Every Done-when item needs an end-to-end test through the real entry point when it covers
+user-facing behaviour: Forge's own command; for client apps, the running API with a real database
+and user flows in a browser through Playwright. CI, config, packaging and test-only items are proven
+by the test the item names.
+Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Report an item proven only by unit tests as a P1 finding
 titled `Not done: <the item>`. Never ask for unit tests of helpers.
 
@@ -101,6 +106,11 @@ impeccable is the one UI skill. A motion skill, or motion in the UI, belongs onl
 Done-when item needs motion; anything else is a P2 `Simpler:` finding.
 
 ## How to report
+Report every blocking gap you see in this round, together, even when one finding already blocks.
+The previous review's findings and dismissals are below; recheck them against this branch and
+report any still-open gap alongside new ones:
+$previous
+
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
 When a finding depends on code the diff doesn't show, open that file and cite the line you read

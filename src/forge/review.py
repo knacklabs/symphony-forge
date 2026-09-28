@@ -1,4 +1,4 @@
-"""One review round: Autoreview over the branch in a read-only worktree, and its committed result.
+"""One review round: Autoreview over the branch in a read-only checkout, and its committed result.
 
 Autoreview is a third-party black box. Forge reads only the fields it uses (each finding's
 priority, title, body and code_location, in findings and scope_rejected_findings, then
@@ -29,6 +29,16 @@ SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 
+
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    return {f"{host}/skills/test-audit/{name}":
+            sync._synced_text(f".codex/skills/test-audit/{name}",
+                              f"skills/test-audit/{name}")
+            for host in (".claude", ".codex")
+            for name in ("NOTICE.md", "SKILL.md")}
+
 REFUSALS = {
     "helper": ("The Autoreview helper at {path} is not the pinned version {pin} (found: {found}).",
                "forge doctor"),
@@ -40,7 +50,7 @@ REFUSALS = {
 
 # Ported from the old tree's review launcher: the helper starts Codex in an empty folder, where
 # the reviewer can't open the code a finding depends on. This `codex` swaps that one folder for
-# the reviewed worktree; the read-only sandbox the helper asks for stays as it is.
+# the reviewed checkout; the read-only sandbox the helper asks for stays as it is.
 LAUNCHER = '''\
 import subprocess, sys
 argv = sys.argv[1:]
@@ -133,7 +143,7 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
 
 
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-                 base: str) -> str:
+                 base: str, previous: dict[str, Any]) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     parts = re.split(r"^<!-- ([a-z-]+) -->\r?\n", text, flags=re.M)
@@ -141,7 +151,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
-              "moving_parts": "New moving parts: none (a fix adds no new moving part)"}
+              "moving_parts": "New moving parts: none (a fix adds no new moving part)",
+              "previous": _previous(previous)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -166,6 +177,15 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _previous(result: dict[str, Any]) -> str:
+    findings = result.get("findings", [])
+    dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    return "\n".join(
+        f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
+        f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
+        for n, finding in enumerate(findings, 1)) or "- none"
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
@@ -206,19 +226,24 @@ def helper() -> Path:
 
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-        base: str, selected: dict[str, str]) -> dict[str, Any]:
+        base: str, selected: dict[str, str], previous: dict[str, Any]) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
-    prompt = instructions(top, item, state, cfg, base)
+    prompt = instructions(top, item, state, cfg, base, previous)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
     tmp = Path(tempfile.mkdtemp(prefix="forge-review-"))
     tree, out = tmp / "tree", tmp / "review.json"
     try:
-        # A fresh detached checkout of the head: no dirty or ignored files reach the reviewer.
-        repo.git("worktree", "add", "-q", "--detach", str(tree), head, cwd=top)
+        # A local clone keeps Git history inside the reviewer's read-only sandbox.
+        repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
+        repo.git("checkout", "-q", "--detach", head, cwd=tree)
+        repo.git("fetch", "-q", str(top),
+                 f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
+        review_base = repo.git("rev-parse", base, cwd=tree)
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
-        argv = [sys.executable, str(path), "--mode", "branch", "--base", base, "--engine", "codex",
+        argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
+                "--engine", "codex",
                 "--max-priority", "P3", "--prompt", prompt, "--json-output", str(out)]
         chosen = cfg["models"].get("review")
         if chosen:  # forge.toml's review kind: its model, and its effort when it sets one
@@ -235,9 +260,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         else:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     finally:
-        repo.run("git", "worktree", "remove", "--force", str(tree), cwd=top)
         shutil.rmtree(tmp, ignore_errors=True)
-        repo.run("git", "worktree", "prune", cwd=top)
     return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
             "dismissals": []}
 
@@ -295,7 +318,7 @@ def _finding(raw: Any) -> dict[str, Any] | None:
 
 
 def _launcher(folder: Path, tree: Path) -> Path | None:
-    """A `codex` for the helper that runs the real one inside the reviewed worktree."""
+    """A `codex` for the helper that runs the real one inside the reviewed checkout."""
     real = shutil.which(os.environ.get("CODEX_BIN") or "codex")
     if not real:
         return None  # the helper then finds no Codex itself and says so

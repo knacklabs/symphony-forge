@@ -48,6 +48,14 @@ SUCCESS = {"success", "succeeded", "completed"}
 CHOICES = ["Approve plan", "Request changes", "Stop"]
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    return {".claude/skills/remote-approval/SKILL.md":
+            sync._synced_text(".claude/skills/remote-approval/SKILL.md",
+                              "skills/remote-approval/SKILL.md")}
+
+
 def hook(args: Any) -> int:
     try:
         payload = json.loads(sys.stdin.read() or "null")
