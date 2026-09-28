@@ -5,7 +5,13 @@
   "kind": "fix",
   "review": {
     "commit": "995c7f451463d54237e0297673db4eda47e978f6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "tests/test_setup.py:339 the generated hooks and workflows are checked by what they do (host hooks fail closed, git hooks refuse the default branch, the workflow's checks) in test_setup.py, test_codex_setup.py and test_githooks.py; this fix's contract is that sync writes what the source says without pinned hashes, which the test now proves",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The expected content for the generated files comes from `sync.files()` and `githooks.shims()`, the same renderers used by `forge sync` (`src/forge/sync.py:235-257`). If a renderer consistently emits an incorrect hook or workflow, both the expected value and the written file change together, so the assertion at line 73 passes. The previous review\u2019s generated-content gap remains. Check these files against an independent source or behavior contract without restoring skill hashes.",
@@ -15,10 +21,10 @@
         "title": "Not done: tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "ec22b3db24c4ee1e96dc0dc2785a7a1d52f96743a942536ec164dcd44468eea3"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T18:45:19+00:00",
