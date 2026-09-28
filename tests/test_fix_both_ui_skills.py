@@ -85,6 +85,7 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     (skills / "impeccable" / "SKILL.md").write_text("impeccable\n", "utf-8")
     # Doctor checks UI skills only when the client has a frontend.
     (client / "web").mkdir()
+    (client / "web" / "package.json").write_text('{"name":"web"}\n', encoding="utf-8")
 
     missing = repo.forge("doctor", cwd=client)
     assert missing.returncode == 1

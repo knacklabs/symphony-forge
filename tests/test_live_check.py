@@ -64,6 +64,24 @@ def test_5_only_named_tests_job_ships_and_doctor_compares_protection(repo, gh, t
     matching = repo.forge("doctor")
     assert "branch protection" not in matching.stdout.lower()
 
+    gh.respond("api", endpoint, exit=1, stdout=json.dumps({
+        "message": "Branch not protected", "status": "404"}))
+    unprotected = repo.forge("doctor")
+    assert unprotected.returncode == 1
+    assert "protection requires none" in unprotected.stdout
+    assert "reconcile checks in forge.toml with branch protection" in unprotected.stdout
+
+    gh.respond("api", endpoint, stdout=json.dumps({"required_status_checks": {
+        "checks": [{"context": "lint"}, {"context": "forge-pr-check"}]}}))
+    (repo.path / "web").mkdir()
+    backend = repo.forge("doctor")
+    assert "impeccable is required" not in backend.stdout
+    assert "emil-design-eng is required" not in backend.stdout
+
+    repo.write("web/package.json", '{"name":"web"}\n')
+    web = repo.forge("doctor")
+    assert "impeccable is required for UI work" in web.stdout
+
     repo.write("package.json", '{"dependencies":{"react":"*"}}\n')
     frontend = repo.forge("doctor")
     assert "impeccable is required for UI work" in frontend.stdout

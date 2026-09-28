@@ -141,7 +141,8 @@ def doctor(args: argparse.Namespace) -> None:
     protection = (repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/branches/"
                            f"{repo.default_branch(top)}/protection", cwd=top)
                   if shutil.which("gh") else None)
-    if protection and protection.returncode == 0:
+    if protection and (protection.returncode == 0 or
+                       "Branch not protected" in protection.stdout + protection.stderr):
         try:
             required = json.loads(protection.stdout).get("required_status_checks") or {}
             protected = {entry["context"] for entry in required.get("checks") or []
@@ -183,7 +184,8 @@ def doctor(args: argparse.Namespace) -> None:
     package = top / "package.json"
     packages = json.loads(sync.read(package)) if package.is_file() else {}
     dependencies = {**packages.get("dependencies", {}), **packages.get("devDependencies", {})}
-    has_frontend = (any((top / path).is_dir() for path in ("frontend", "web", "apps/web"))
+    has_frontend = (any((top / path / "package.json").is_file()
+                        for path in ("frontend", "web", "apps/web"))
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
