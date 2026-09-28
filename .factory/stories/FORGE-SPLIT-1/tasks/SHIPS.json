@@ -1,21 +1,13 @@
 {
   "branch": "task/FORGE-SPLIT-1-SHIPS",
   "review": {
-    "commit": "e5bad6b6cedd7b27542ce8c9afd1f3fcf831668b",
+    "commit": "103474fe0caef77997d4253e7ab19dfd27d7f955",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The launcher embeds its source path using `{src!r}` (`tests/conftest.py:24,123`), so Windows backslashes are escaped in its Python source. Searching for `str(source.parent)` cannot match that escaped path. The replacement therefore leaves the launcher pointing at the original package, which cannot discover `new_ship.py`, and the assertion at line 81 fails. Windows runs this test in the suite (`.github/workflows/forge-next.yml:23\u201335`). Regenerate the launcher with `FORGE_SHIM.format(...)`, as `tests/test_split_commands.py:404` already does.",
-        "file": "tests/test_split_ships.py",
-        "line": 74,
-        "priority": "P1",
-        "title": "Fix the fixture launcher rewrite on Windows"
-      }
-    ],
-    "status": "blocked",
-    "tree": "8b69b7df06a0d2e230b407ebc63d17b9f4ed196f084f92cecbb28d13cfb28027"
+    "findings": [],
+    "status": "clean",
+    "tree": "4b8450c0cf190ebf0fa355b92f2404fa97a2a70b6010956004d62ee8982405fb"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T09:45:36+00:00",
@@ -27,6 +19,10 @@
     },
     {
       "at": "2026-09-28T10:09:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T10:15:12+00:00",
       "step": "review"
     }
   ]
