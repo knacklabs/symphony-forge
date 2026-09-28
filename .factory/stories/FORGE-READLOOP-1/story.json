@@ -1,9 +1,9 @@
 {
   "approval": {
-    "at": "2026-09-28T17:23:08+00:00",
+    "at": "2026-09-28T17:37:40+00:00",
     "by": "human-via-Claude",
-    "event": "toolu_01Wg89w4723dHFd6QAMH48eB",
-    "hash": "b6b3f7ce7ebb144cd3fffc8a8ff2049556095860356a4160e14f732905e90ba1",
+    "event": "toolu_01T5HNp37L694RG8cS6x2TmZ",
+    "hash": "9e01daade7f7bbae004968d241d156df90316dd12af5c6944eb21dad781e7402",
     "runtime": "claude",
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
@@ -21,8 +21,12 @@
     {
       "at": "2026-09-28T17:23:08+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T17:37:40+00:00",
+      "step": "approved"
     }
   ],
   "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
-  "touches": 1
+  "touches": 2
 }
