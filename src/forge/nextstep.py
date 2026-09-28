@@ -76,17 +76,20 @@ def parse_answers(top: Path) -> dict[str, list[tuple[str, str] | None]]:
                       if line == f"- {name}" or line.startswith((f"- {name}:", f"- {name} "))), None)
         if topic is None:
             continue
+        if line[2:].partition(":")[0] != topic:
+            found.setdefault(topic, []).append(None)
+            continue
         answer = ANSWER_LINE.fullmatch(line)
         later = LATER_LINE.fullmatch(line)
-        if answer and answer[1].strip() and answer[2].strip():
+        if later:
+            found.setdefault(topic, []).append(("later", ""))
+        elif answer and answer[1].strip() and answer[2].strip():
             try:
                 date.fromisoformat(answer[3])
             except ValueError:
                 found.setdefault(topic, []).append(None)
             else:
                 found.setdefault(topic, []).append((answer[1], answer[2]))
-        elif later:
-            found.setdefault(topic, []).append(("later", ""))
         else:
             found.setdefault(topic, []).append(None)
     return found

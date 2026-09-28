@@ -35,6 +35,17 @@ def test_6_next_lists_open_must_answer_topics_before_signoff(repo):
     assert settled.returncode == 0, settled.stderr
     assert "Open before sign-off" not in settled.stdout
 
+    page.write_text(page.read_text(encoding="utf-8").replace(
+        "- Sign-in: settled", "- Sign-in method: settled").replace(
+        "- Production host: settled (client, 2026-09-28)",
+        "- Production host: later, when procurement approves (client, 2026-09-28)"),
+        encoding="utf-8")
+    malformed = repo.forge("next")
+    assert malformed.returncode == 0, malformed.stderr
+    assert "- Sign-in\n" in malformed.stdout
+    assert "- Production host\n" in malformed.stdout
+    assert "- Personal data\n" not in malformed.stdout
+
     page.write_text("# Product brief\n\n## Answers\n", encoding="utf-8")
     repo.write("docs/decisions/0001-client-signoff.md", "---\nstatus: accepted\n---\n")
     signed = repo.forge("next")
