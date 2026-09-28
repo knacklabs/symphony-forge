@@ -5,28 +5,13 @@
   "done_when": "forge sync ships a pre-compaction hook for Claude Code (and Codex where supported) that writes a local handoff file in the repo's .git Forge folder from forge next's state, never committed, and the Forge skill tells the agent to add the owner's decisions and lessons to it at milestones and read it first after a compaction; a test through forge sync and the hook shows it",
   "kind": "fix",
   "review": {
-    "commit": "5cb34e902d481c7708edc38b84b09f1ca395f646",
+    "commit": "479cada6fdb328aeed67c61beaad672a4cda90db",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The test invokes the shipped hook twice, but changes only the handoff notes between calls. Forge state stays the same, so an implementation that keeps the first current-state section would pass every assertion while leaving later handoffs stale. Change a real `forge next` input between invocations and assert that the second handoff contains the new state and removes the old state.",
-        "file": "tests/test_fix_client_repos_lose_the_agent_s_state_the.py",
-        "line": 41,
-        "priority": "P1",
-        "title": "Not done: a sync-and-hook test that proves current state refreshes on the next compaction"
-      },
-      {
-        "body": "Every worktree writes through the shared `.git/forge/handoff.tmp`. If two sessions compact together, both can write that file before either replaces it; the first replacement removes the path and the second raises `FileNotFoundError`. One compaction then fails to save its handoff. Give each invocation its own temporary file in the same directory.",
-        "file": "src/forge/nextstep.py",
-        "line": 131,
-        "priority": "P2",
-        "title": "Concurrent hooks share one temporary handoff path"
-      }
-    ],
-    "status": "blocked",
-    "tree": "39f74fcd032c4e8846eb935fa3c560c71684b0b090e3d0b347e5924afe96b45e"
+    "findings": [],
+    "status": "clean",
+    "tree": "b0e9041c7253c0761516381a29444434d78cd707d2bbe343bec9379dfd1e6486"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T14:52:34+00:00",
@@ -34,6 +19,10 @@
     },
     {
       "at": "2026-09-28T15:46:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T16:05:51+00:00",
       "step": "review"
     }
   ],
