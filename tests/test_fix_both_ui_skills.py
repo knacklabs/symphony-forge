@@ -1,6 +1,9 @@
 """Forge delivers the two-skill UI contract to workers and reviewers."""
 
+import json
+
 from test_close import env  # noqa: F401 (pytest fixture)
+from test_setup import _autoreview, _executable, _fresh_client, _stub_forge
 from test_worker import calls, install_claude
 
 STORY = "FIX-BOTH-UI-SKILLS"
@@ -52,3 +55,40 @@ def test_2_worker_and_review_get_both_ui_skills_and_blocking_checks(env):
     assert "P1 `Not done`" in review
     assert "failed emil-design-eng checklist item" in review
     assert "not a `Simpler:` finding" in review
+
+
+def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, tmp_path,
+                                                                       monkeypatch):
+    client, initialized = _fresh_client(repo, gh, tmp_path)
+    assert initialized.returncode == 0, initialized.stderr
+    config = client / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"',
+                                                       'workers = "claude"', 1), "utf-8")
+    gh.respond("auth", "status")
+    _autoreview(tmp_path, monkeypatch)
+    _stub_forge(tmp_path, monkeypatch)
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    codex_home = tmp_path / "codex"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    (codex_home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', "utf-8")
+    _executable(repo.bin / "claude", "#!/bin/sh\n")
+    skills = home / ".claude" / "skills"
+    (skills / "impeccable").mkdir(parents=True)
+    (skills / "impeccable" / "SKILL.md").write_text("impeccable\n", "utf-8")
+
+    missing = repo.forge("doctor", cwd=client)
+    assert missing.returncode == 1
+    assert ("emil-design-eng is required for UI work but isn't installed where the claude "
+            "worker reads skills.\n  Fix: ") in missing.stdout
+    assert "impeccable is required" not in missing.stdout
+
+    (skills / "emil-design-eng").mkdir()
+    (skills / "emil-design-eng" / "SKILL.md").write_text("emil-design-eng\n", "utf-8")
+    ready = repo.forge("doctor", cwd=client)
+    assert ready.returncode == 0, ready.stdout + ready.stderr
+    assert ready.stdout.startswith("Everything checks out")

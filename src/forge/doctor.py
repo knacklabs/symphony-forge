@@ -35,6 +35,7 @@ INSTALL = {
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh",
     "claude": "npm install -g @anthropic-ai/claude-code",
     "impeccable": "npx skills add pbakaus/impeccable -g",
+    "emil-design-eng": "install emil-design-eng where the worker reads skills",
     "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
                    f"{review.AUTOREVIEW_PIN} into {review.HELPER.parents[1]}"),
 }
@@ -155,16 +156,17 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append(("Codex doesn't trust this project, so it would skip Forge's hooks and the "
                      "project's Codex settings.", trust))
 
-    # impeccable is the one required UI skill, so it must be where the configured worker reads
-    # skills: its own config folder (Claude's is $CLAUDE_CONFIG_DIR when set), or the repo's.
+    # Both UI skills must be where the configured worker reads skills: its own config folder
+    # (Claude's is $CLAUDE_CONFIG_DIR when set), or the repo's.
     skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"),
                          top / ".claude"],
               "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
                         top / ".agents"]}
-    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file()
-               for folder in skills[cfg["workers"]]):
-        rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
-                     f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
+    for skill in ("impeccable", "emil-design-eng"):
+        if not any((folder / "skills" / skill / "SKILL.md").is_file()
+                   for folder in skills[cfg["workers"]]):
+            rows.append((f"{skill} is required for UI work but isn't installed where the "
+                         f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")
