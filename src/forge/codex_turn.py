@@ -25,6 +25,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from typing import Any
 
 from openai_codex import ApprovalMode, Codex, Sandbox, api
@@ -63,6 +64,13 @@ class Client(CodexClient):
             SERVER.append(self._proc.pid)
         emit(pid=self._proc.pid)
         RECORDED.acquire()
+
+    def close(self) -> None:
+        if os.name == "nt" and self._proc is not None:
+            # The SDK stops only the .cmd launcher; stop its app-server child first.
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(self._proc.pid)],
+                           capture_output=True)
+        super().close()
 
 
 # ponytail: Codex() makes its client from this module global and takes no other; SDK_PIN keeps it.
@@ -111,6 +119,10 @@ def main() -> int:
             emit(refused="handler")
             return 3
         client._approval_handler = decline
+        if request.get("archive"):
+            codex.thread_archive(request["thread"])
+            emit(archived=True)
+            return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
@@ -130,7 +142,15 @@ def main() -> int:
             try:
                 resumed = codex.thread_resume(request["thread"], **settings)
             except JsonRpcError as error:
-                emit(fresh=f"Codex couldn't resume its conversation: {error.message}")
+                reason = error.message
+                if "already has an active writer" in reason:
+                    time.sleep(2)
+                    try:
+                        resumed = codex.thread_resume(request["thread"], **settings)
+                    except JsonRpcError as retry_error:
+                        reason = retry_error.message
+                if resumed is None:
+                    emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()

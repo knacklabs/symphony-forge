@@ -179,14 +179,14 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert Path(start["cwd"]).resolve() == folder.resolve()
     assert (start["sandbox"], start["approvalPolicy"]) == ("danger-full-access", "never")
     assert [named["name"] for named in _sent(calls, "thread/name/set")] == [
-        "Build · BOARD/PAGE · The page"]
+        "BOARD · The page"]
     [turn] = _sent(calls, "turn/start")
     assert (turn["sandboxPolicy"], turn["approvalPolicy"]) == ({"type": "dangerFullAccess"}, "never")
     brief = turn["input"][0]["text"]
     assert "You are the worker." in brief and "| PAGE | The page | The board page |" in brief
 
     # Progress shows in the terminal and in the work log, and the task is working.
-    expected = ["Codex app-server: process", 'Codex conversation "Build · BOARD/PAGE · The page": '
+    expected = ["Codex app-server: process", 'Codex conversation "BOARD · The page": '
                 "thr-stub-1", "stub codex: built it with", "$ touch ran-stub-ask-1 (declined)",
                 "Changed web/board.py (declined)", "Codex ended the turn: completed"]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text(encoding="utf-8")
@@ -209,7 +209,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     built = repo.forge("work", "fix-the-login-typo")
     assert built.returncode == 0, built.stdout + built.stderr
     assert _sent(calls, "thread/name/set")[-1]["name"] == (
-        "Lite · fix-the-login-typo · Fix the login typo")
+        "Fix · Fix the login typo")
     assert "Why: Fix the login typo" in _sent(calls, "turn/start")[-1]["input"][0]["text"]
 
 

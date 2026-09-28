@@ -609,7 +609,7 @@ def _empty_commit_check(env):
 # --- criterion 27: the pull request's title and summary ----------------------------------------
 
 @pytest.mark.parametrize("kind, title, summary", [
-    ("task", "Save a basket", "Shoppers can save their basket with one click"),
+    ("task", "Shoppers can save a basket: Save a basket", "Shoppers can save their basket with one click"),
     ("fix", "Readme greets new readers", "The readme opens with a greeting")])
 def test_27_title_and_summary(env, kind, title, summary):
     item, where = env.start_task() if kind == "task" else env.start_fix()
@@ -618,7 +618,7 @@ def test_27_title_and_summary(env, kind, title, summary):
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
     assert "--draft" not in create  # a clean review opens ready for review
-    assert body(create).splitlines()[0] == summary
+    assert body(create).splitlines()[1] == f"Done when: {summary}"
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
     edited = body(create) + "Checked by hand on the staging shop.\n"

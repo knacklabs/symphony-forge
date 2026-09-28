@@ -1,0 +1,25 @@
+{
+  "branch": "task/FORGE-TRIM-1-SKILLS",
+  "review": {
+    "commit": "a237253abb551402d3e9bcd7a9453b9b7f8440aa",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "df80c35f8060e1ef33171b39c87e3021392043a7980711dfc49cb0cd2d51995d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T16:28:38+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:16:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:29:15+00:00",
+      "step": "review"
+    }
+  ]
+}
