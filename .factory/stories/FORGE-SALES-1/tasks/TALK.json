@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-SALES-1-TALK",
-  "status": "working",
+  "review": {
+    "commit": "5596c6600722a5fd46e2cc68db185356fbafc7a5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When `forge close` has saved `waiting for checks` and CI later turns green, `forge next` treats the PR as ready at `nextstep.py:357-363`. The new agent-merge rule only handles `status == \"ready\"`, so an unsigned client repo with a PR URL still gets `Next: merge <url>, then forge next`. That directs a human merge instead of completing `forge close` and using `forge merge`.",
+        "file": "src/forge/nextstep.py",
+        "line": 343,
+        "priority": "P1",
+        "title": "Not done: Prototype changes merge themselves"
+      },
+      {
+        "body": "This test calls `forge close` until it has written a ready receipt before checking `forge next`. It never exercises a green PR whose saved state is still `waiting for checks`, so it passes while the command tells an unsigned client to merge manually. Add a real `forge next` check for that state.",
+        "file": "tests/test_sales_talk.py",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: test the green-checks path before close completes"
+      }
+    ],
+    "status": "blocked",
+    "tree": "d0e00d0c44ea726cd79ff0518257acbbb957be83cd4c4ef2f9fc9b7962dc6534"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T15:45:44+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T16:06:51+00:00",
+      "step": "review"
     }
   ]
 }
