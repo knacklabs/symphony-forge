@@ -4,11 +4,22 @@
   "branch": "fix/a-fix-s-first-codex-round-runs-as-the-li",
   "done_when": "This repo's forge.toml and the forge.toml that forge init writes give [models.lite] subagents gpt-6-luna with subagent_effort max, like build and fix, and a test through forge work shows a fix's first Codex round passing them",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "ee0c59096ab188fc6c0099dd212ba22f037cc46a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "f93666c97df1338107265fdae5fb20593bdb706ace84743d3f53a3c28bc33bf5"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:22:51+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:44:09+00:00",
+      "step": "review"
     }
   ],
   "why": "A fix's first Codex round runs as the lite kind, which sets no subagents, so it gets no Luna max helpers while story tasks and fix rounds do"
