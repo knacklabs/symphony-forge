@@ -1,13 +1,13 @@
 {
   "branch": "task/FORGE-PROTO-1-DEPLOY",
   "review": {
-    "commit": "ac4829d34b8c067a0c960036159e2e9f64015c1a",
+    "commit": "db09073d20116ff6bbd3bbda3472170de372ffc1",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "5d2e665a0b3fd03f0ba7af2f0dcce6546a8cd760fad6e18c9f9e81882e2fe105"
+    "tree": "dbfad86cd77f2b015bd63385c1647950536aa846f978e598896063174507ee85"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T12:02:25+00:00",
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-28T13:08:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:29:46+00:00",
       "step": "review"
     }
   ]
