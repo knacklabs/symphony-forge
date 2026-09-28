@@ -3,11 +3,30 @@
   "branch": "fix/forge-s-code-sits-at-its-8-000-line-ceil",
   "done_when": "src/forge counts at most 7,850 lines by the ceiling test's count on this branch, only dead or duplicated code is removed with no behaviour change, no change joins lines or removes blank lines to save lines, and the full test suite passes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "3b201cc0ab8b6b6539ba94437057faa747323cd7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The measured total is 7,848 lines, but the branch achieves much of that reduction by stripping documentation from still-used functions, rather than removing dead or duplicated code. For example, this function retains its implementation while losing the explanation of when restarting a migration branch is permitted. Similar deletions span migrate.py, records.py and story.py; the story.py opening docstring also loses blank lines. This does not satisfy the explicit restriction on how headroom is obtained. Restore these documentation-only cuts and obtain the required reduction from dead code or equivalent implementation consolidation.",
+        "file": "src/forge/migrate.py",
+        "line": 550,
+        "priority": "P1",
+        "title": "Not done: src/forge counts at most 7,850 lines by the ceiling test's count on this branch, only dead or duplicated code is removed with no !"
+      }
+    ],
+    "status": "blocked",
+    "tree": "f0d4b77fdaeaad1016f08ef978c922791c79ebb382adbc367336f53921ff7ed9"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T06:35:34+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T07:17:20+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's code sits at its 8,000-line ceiling, so the open tasks (registry, chat names, pull request link, approve anywhere, split) can't land without each one hunting for lines"
