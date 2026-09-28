@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-ONECHAT-1-APPROVE",
-  "status": "working",
+  "review": {
+    "commit": "2117605ee067b69144b3b86078b21253388b57da",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The cross-repo test checks that a commit exists, but never installs or observes a Git hook. Its setup helper only writes configuration and creates stories (`tests/test_story.py:67\u2013102`). Consequently, bypassing hooks during approval would still pass these tests despite item 3 explicitly requiring them. Install an observable hook in the destination repo and assert that `forge hook approval` executes it on the story branch.",
+        "file": "tests/test_onechat_approval.py",
+        "line": 44,
+        "priority": "P1",
+        "title": "Not done: test that cross-repo approval runs the story repo's Git hooks"
+      },
+      {
+        "body": "The single-line extraction cannot parse a valid multiline TOML version string. For example, a triple-quoted string opening on the `version =` line and containing the installed version on the following line makes this partial parse fail. `repo.check_pin(path)` then successfully validates the complete configuration (`src/forge/repo.py:248\u2013259`), but the unconditional return reports success without recording approval. Leading whitespace or quoted version keys also bypass the early version comparison and let full configuration validation run first. Read the actual top-level version value and continue approval when it matches; do not treat successful fallback validation as completion.",
+        "file": "src/forge/approval.py",
+        "line": 145,
+        "priority": "P2",
+        "title": "Handle valid TOML pin syntax without silently abandoning approval"
+      }
+    ],
+    "status": "blocked",
+    "tree": "1d28e8b042a8baeb33439b982bb51959570336e05998a3d78e61c89486baacc6"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T07:31:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:03:53+00:00",
+      "step": "review"
     }
   ]
 }
