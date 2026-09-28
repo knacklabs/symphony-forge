@@ -1,0 +1,28 @@
+{
+  "base": "32316be6f5338ab1f12934dfc89a858682b78aa1",
+  "branch": "task/FORGE-LIVE-1-SPEC",
+  "done_when": "A live app joins Forge in one human-merged pull request and never gets prototype rules",
+  "review": {
+    "commit": "1b99b42a757607924a6bb263359dec01fe4d086f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "cc4b23cb6996da131b70cb2c6d13be45058d2ca5cf067e26b51c21a28c7fed75"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T13:34:46+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T14:35:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:49:50+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches"
+}
