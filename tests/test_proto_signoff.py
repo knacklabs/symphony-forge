@@ -77,14 +77,6 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
-    queue.write_text(json.dumps([{"say": "codex model gpt-6-sol is unavailable for this account; "
-                                "retrying with gpt-6-astra", "report": {
-                                    "review_status": "complete", "findings": []}}]))
-    fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert fallback.returncode == 1
-    assert "model or effort changed" in fallback.stderr
-    assert "status: proposed" in page.read_text()
-
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default ")
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
     _decision(fix, changed)
@@ -92,7 +84,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert default.returncode == 1
     assert "Sign-in" in default.stderr
     assert "forge next" in default.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
     open_answer = answers.replace("Sign-in: agreed (client, 2026-09-28)",
                                   "Sign-in: ask the client (Ravi, 2026-09-28)")
@@ -102,12 +94,25 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert open_topic.returncode == 1
     assert "Sign-in" in open_topic.stderr
     assert "forge next" in open_topic.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
-
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
-    page = _decision(fix, answers)
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
     queue.write_text(json.dumps([{"report": {"review_status": "complete", "findings": []}}]))
+    changed = answers.replace("Demo workflow: agreed (client", "Demo workflow: revised (client")
+    repo.git("rm", "--cached", "docs/product/BRIEF.md", cwd=fix)
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    _decision(fix, changed)
+    unreviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert unreviewed.returncode == 1
+    assert "prototype differs from the reviewed commit" in unreviewed.stderr
+    assert "commit the changes" in unreviewed.stderr
+    assert "status: proposed" in page.read_text()
+
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    repo.git("add", "docs/product/BRIEF.md", cwd=fix)
+    page = _decision(fix, answers)
+
+    # Sign-off used to judge model and effort from progress text. It now pins the
+    # requested values in Autoreview's arguments; progress is not an attestation.
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()

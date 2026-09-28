@@ -273,10 +273,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 break
             print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
-            if (reason or selected.get("model", "gpt-6-sol") != "gpt-6-sol"
-                    or selected.get("effort", "xhigh") != "xhigh"):
-                repo.refuse(("The required GPT-6 Sol xhigh review did not finish: "
-                             + (reason or "the model or effort changed") + ".",
+            if reason:
+                repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             serious = [f for f in findings if f["priority"] in SERIOUS]
             if serious:
@@ -284,7 +282,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                              + "; ".join(f["title"] for f in serious) + ".",
                              "fix the prototype, then forge decision accept client-signoff --by \"<name>\""))
             if repo.git("rev-parse", "HEAD", cwd=top) != head or repo.git(
-                    "status", "--porcelain", "--", *product, cwd=top):
+                    "status", "--porcelain", "--", "docs/product/BRIEF.md", *product, cwd=top):
                 repo.refuse(("The prototype differs from the reviewed commit.",
                              "commit the changes, then forge decision accept client-signoff --by \"<name>\""))
             return {"commit": head}
