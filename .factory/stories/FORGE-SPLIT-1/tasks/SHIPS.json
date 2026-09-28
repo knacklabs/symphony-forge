@@ -1,19 +1,19 @@
 {
   "branch": "task/FORGE-SPLIT-1-SHIPS",
   "review": {
-    "commit": "618d8169d3fff096efe94093b1246e65664eb9c2",
+    "commit": "e5bad6b6cedd7b27542ce8c9afd1f3fcf831668b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The `before` snapshot comes from the already-refactored package, so comparing it with another run only proves stability when adding a module. A rendering change introduced by this branch would appear in both snapshots and pass. Existing coverage does not complete this proof: `tests/test_setup.py:126` also compares consecutive runs, while `tests/test_trim_skills.py:27` pins only selected skill contents. Add an end-to-end compatibility test against independently captured pre-change output, checking the complete shipped path set and bytes, including conditional files and git hook shims.",
+        "body": "The launcher embeds its source path using `{src!r}` (`tests/conftest.py:24,123`), so Windows backslashes are escaped in its Python source. Searching for `str(source.parent)` cannot match that escaped path. The replacement therefore leaves the launcher pointing at the original package, which cannot discover `new_ship.py`, and the assertion at line 81 fails. Windows runs this test in the suite (`.github/workflows/forge-next.yml:23\u201335`). Regenerate the launcher with `FORGE_SHIM.format(...)`, as `tests/test_split_commands.py:404` already does.",
         "file": "tests/test_split_ships.py",
-        "line": 28,
+        "line": 74,
         "priority": "P1",
-        "title": "Not done: byte-for-byte compatibility test for Done-when 3"
+        "title": "Fix the fixture launcher rewrite on Windows"
       }
     ],
     "status": "blocked",
-    "tree": "9637d944d36bd83eda6062126bcf6f792f66f6beafeccdc89a283fcb441a9830"
+    "tree": "8b69b7df06a0d2e230b407ebc63d17b9f4ed196f084f92cecbb28d13cfb28027"
   },
   "status": "fixing",
   "steps": [
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-28T09:56:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T10:09:06+00:00",
       "step": "review"
     }
   ]
