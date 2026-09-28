@@ -1,10 +1,21 @@
 {
   "branch": "task/FORGE-STEER-1-ASK-MODEL",
-  "status": "working",
+  "review": {
+    "commit": "5891726447e1fa30de893ee921289f5b0a3ad2fd",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "70a93f73aa208c955fdca4b409571992a3d9bd68fe38d0f827faa10c2b756231"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T01:50:00+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T02:09:48+00:00",
+      "step": "review"
     }
   ]
 }
