@@ -35,6 +35,28 @@ the install line to fix it.
 Run `forge next` whenever you're unsure. It says where things stand in one sentence and prints the
 exact next command. The same text appears when a Claude Code or Codex session starts.
 
+### A new client project
+
+Start with FDE discovery: ask about the customer's job, current workaround, its cost and the
+evidence. Choose the smallest working prototype that tests the riskiest part of that problem.
+A salesperson can lead at first; a developer can take over from `docs/product/DISCOVERY.md` and
+the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it first matters,
+one at a time, and record the answer and who gave it. If a requested feature does not help test
+the problem, say why and offer to note it for after sign-off.
+
+Build and demo the prototype through `forge fix start`, `forge work` and `forge close`. A prototype
+fix started before sign-off can exceed the usual fix size and change an interface; it still gets
+tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
+`forge next` shows which required answers are still open. Resolve those, then have the whole
+prototype and answers strictly reviewed. The customer's named person approves the demo and the
+quoted answers; record that with `forge decision new client-signoff` and `forge decision accept`.
+
+Only after accepted client sign-off, add confirmed specs to the roadmap with `forge roadmap add`
+and create stories with `forge story new`. This includes stories promoted from fixes. In a client
+repo, trying either command early tells you to build and demo the prototype and run `forge next`.
+Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
+[prototype sign-off spec](specs/prototype-signoff.md).
+
 ## Commands
 
 See the [command list](commands.md) for every Forge command.
@@ -42,6 +64,8 @@ See the [command list](commands.md) for every Forge command.
 You never run the hook commands yourself: git, the host hooks and CI call them.
 
 ## How a story runs
+
+In a client repo, finish the prototype review and customer sign-off above before starting here.
 
 1. Add the story to the roadmap from its confirmed spec with `forge roadmap add <spec>`.
 2. `forge story new <KEY> "<title>"` makes the story's branch, worktree and doc. The doc says what
@@ -104,7 +128,9 @@ answer and tells you to check `git status` before asking again.
   decisions, the roadmap and discovery notes always ship as fixes, since planning documents don't
   count toward the limit. A fix that grows past five code files or touches an interface is
   refused at commit; either promote it with `forge story new <KEY> --from-fix <fix>`, which keeps
-  its commits, or have the human allow it with `forge fix allow-large "<reason>"`.
+  its commits, or have the human allow it with `forge fix allow-large "<reason>"`. In a client repo,
+  fixes started before sign-off have the prototype allowance; a fix keeps that allowance after
+  sign-off, and a later fix starts without it.
 
 Planning records follow the same lane: `forge spec save <slug>`, a cold read with
 `forge read <slug>`, then `forge spec confirm <slug> --by "<name>"` once the human confirms in
