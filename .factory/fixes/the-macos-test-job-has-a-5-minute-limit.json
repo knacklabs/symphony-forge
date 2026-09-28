@@ -3,11 +3,22 @@
   "branch": "fix/the-macos-test-job-has-a-5-minute-limit",
   "done_when": "The macOS test jobs in .github/workflows/forge-next.yml get the same 10-minute limit as Windows, Linux keeps 5, and the full test suite passes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "37c6940d51e2dff86623ef69185871e3deec1b52",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "0f611e6f8f203c0748b490c09e1645ac257e25234d1971e3164739d72bc10620"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T08:21:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:40:54+00:00",
+      "step": "review"
     }
   ],
   "why": "The macOS test job has a 5-minute limit and its shard now takes about 4 minutes 50 seconds, so CI cancels it on a slow runner"
