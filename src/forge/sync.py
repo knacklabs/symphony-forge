@@ -203,6 +203,24 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     return wanted
 
 
+def command_page() -> str:
+    """The source repo's command list, in the order shown by Forge's declarations."""
+    commands = []
+    for info in pkgutil.iter_modules(forge.__path__):
+        if info.ispkg:
+            continue
+        source = Path(info.module_finder.path) / f"{info.name}.py"
+        if not any(isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "COMMANDS" for target in node.targets)
+                   for node in ast.parse(source.read_text(encoding="utf-8")).body):
+            continue
+        module = importlib.import_module(f"forge.{info.name}")
+        commands.extend(module.COMMANDS)
+    rows = [command["listing"] for command in sorted(
+        commands, key=lambda command: (command["position"], command["words"]))]
+    return "# Forge commands\n\n| Command | What it does |\n|---|---|\n" + "\n".join(rows) + "\n"
+
+
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     """Write the files that differ from what sync makes; returns them. Never on the default branch."""
     wanted = files(top, cfg)
@@ -245,6 +263,12 @@ def sync(args: argparse.Namespace) -> None:
     top = repo.root()
     cfg = repo.config(top)
     changed = write(top, cfg)
+    if cfg.get("repo") == "forge-source":
+        page = command_page()
+        if read(top / "docs/commands.md") != page:
+            repo._work_branch(top)
+            write_file(top, "docs/commands.md", page)
+            changed.append("docs/commands.md")
     for rel in changed:
         print(f"Wrote {rel}")
     if install_shims(top, cfg):
