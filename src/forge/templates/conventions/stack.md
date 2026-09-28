@@ -30,6 +30,9 @@ README.md            how to run it, and a short plain-English "How it works"
 The root `package.json` declares the workspaces and one `test` script that runs lint, typecheck
 and every workspace's tests (see testing.md).
 
+A prototype's first version also builds a demo-data loader, so the client sees their own work
+(see demo-data.md).
+
 ## Added later
 
 Each of these is a moving part the client pays for as long as the app runs, so none is set up in

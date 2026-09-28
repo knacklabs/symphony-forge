@@ -48,6 +48,22 @@ already caches it and tracks loading and errors.
 - Style with Tailwind and the theme's tokens (`bg-primary`, not a raw colour), so the look changes
   in one place.
 
+## Pointing at the screen in a demo
+
+A demo build adds the Agentation feedback toolbar, so a salesperson can click an element, write
+what's wrong and paste the output to the agent, which then knows exactly which element was meant.
+Add it only when `APP_ENV=demo`, never in production builds: import it behind that check, so a
+production bundle doesn't contain it.
+
+```tsx
+// vite.config.ts: envPrefix: ['VITE_', 'APP_ENV'], so the build can see APP_ENV
+const Agentation = import.meta.env.APP_ENV === 'demo'
+  ? lazy(() => import('agentation').then((m) => ({ default: m.Agentation })))
+  : null;
+
+// in App: {Agentation && <Suspense fallback={null}><Agentation /></Suspense>}
+```
+
 ## Design and accessibility
 
 - impeccable is the one UI skill: use it to shape and critique screens, and run its `distill`
