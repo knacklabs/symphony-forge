@@ -34,7 +34,9 @@ expensive to find in review.
    current doc, every earlier finding with its disposition, and the doc's diff since the previous
    round. The reader stays the one recorded in the notes; a round started from the app that is
    itself the recorded reader, while the other app is installed, refuses and names the app to run
-   it from. When the conversation can't be continued, the round starts fresh with the same text
+   it from. When the recorded reader's app is no longer installed, the round starts fresh on the
+   reader Forge would pick now, and Forge says so and records the new reader in the notes. When
+   the conversation can't be continued, the round starts fresh with the same text
    plus the reader's first-round instructions, and Forge says so. When the previous round's text
    can't be found (notes written before this change), the round starts fresh without a diff. A
    round that fails or is discarded because a file changed records nothing and drops its
@@ -45,9 +47,10 @@ expensive to find in review.
    round's prompt, the first included, carries the `## Known traps` section of the repo's
    AGENTS.md, outside Forge's block, as the default branch has it, so a story branch made before a
    trap was learned still gets it. Tests cover a continued Codex round, a continued Claude round,
-   a Codex-only and a Claude-only reader, a fresh round after the conversation is gone, a fresh
+   a Codex-only and a Claude-only reader, a fresh round after a Codex conversation or a Claude
+   session is gone, a recorded reader that is no longer installed, a fresh
    round from old notes whose text is gone, a wrong-app refusal, a retry after a failed round and
-   after a discarded round, an undisposed finding, an unnumbered reply, an older story branch
+   after a discarded round for each app, an undisposed finding, an unnumbered reply, an older story branch
    getting a trap learned after it was made, and the round-four nudge.
 2. **A story passes only on "No findings".** A round passes only when its whole text, trimmed,
    is exactly `No findings.`; anything else, including `No findings.` followed by a finding, is
@@ -57,16 +60,17 @@ expensive to find in review.
    latest round had findings or whose doc changed after that round, naming `forge read <KEY>` as
    the next step, so a story doc edited after approval, including its Tasks table, gets a new
    round before its next task starts. `forge task start` reads the story doc and its notes from
-   the story branch while that branch exists, and the new task branch merges the story branch, with the
-   story branch's copy of the doc and notes winning any conflict (tasks are squash-merged, so
-   the default branch doesn't share the story branch's history), so the passing doc and notes
-   reach the task's pull request. Notes written before this change
+   the story branch while that branch exists, and the new task branch, which still starts from the default
+   branch, gets the story branch's copy of the doc and notes as its first commit, so the passing
+   doc and notes reach the task's pull request without merging branches that don't share history
+   after a squash merge. Notes written before this change
    count as round 1: an unapproved story with such notes needs a passing round, and a story
    approved before this change starts tasks as today until its doc changes. Tests cover each
    refusal, a task pull request that changes only the Tasks table, the exact-text rule and its near misses, the commit, `forge next` naming the read and
    its round for an approved story whose doc changed, a changed Tasks table stopping
    `forge task start` before and after the story's first task has merged with the task branch
-   containing the passing doc and notes after a squash-merged first task, and an old approved story before and after an edit.
+   containing the passing doc and notes after a squash-merged first task and still starting from
+   the default branch, and an old approved story before and after an edit.
    The reader's Codex conversation is archived only when a round passes; a round with findings
    leaves it for the next round, and a failed archive only prints a note. Tests cover both.
 3. **Kept findings are settled, not argued.** The reader raises a finding the agent kept again
@@ -123,7 +127,7 @@ Risks: none
 | SPEC | What the reader asks | The first-round and next-round prompt text, the general traps, and the skill's steps for disputed keeps, edge cases and trap lines | 3, 4, 5 | `src/forge/templates/cold-read.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | `tests/test_readloop_prompt.py`, `tests/test_split_ships.py`, `tests/test_trim_skills.py` | none | yes |
 | ROUNDS | Read again | Continued and fresh rounds, the round notes, the reader pinning, and `forge next`'s round nudge | 1, 6 | `src/forge/story.py`, `src/forge/codex.py`, `src/forge/worker.py`, `src/forge/nextstep.py` | `tests/test_readloop_rounds.py` | SPEC | yes |
 | CUT | No more amendment | `--amended` removed everywhere, and every read check on the latest round's pass | 8 | `src/forge/story.py`, `src/forge/records.py`, `src/forge/prcheck.py`, `docs/commands.md`, `docs/guide.md`, `src/forge/templates/adapters/AGENTS.md`, `AGENTS.md`, `src/forge/templates/skill.md`, `src/forge/templates/cold-read.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `src/forge/templates/skeleton/docs/specs/README.md`, `tests/test_split_ships.py`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | `tests/test_readloop_cut.py`, `tests/test_split_ships.py`, `tests/test_approval.py`, `tests/test_codex_reader.py`, `tests/test_prcheck.py`, `tests/test_records.py`, `tests/test_split_commands.py`, `tests/test_story.py` | ROUNDS | yes |
-| GATES | Stories pass first | The story pass gate in approval, `forge next` and task start, the passing round's commit, reading from the story branch, and old stories | 2 | `src/forge/story.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py` | `tests/test_readloop_gates.py` | CUT | yes |
+| GATES | Stories pass first | The story pass gate in approval, `forge next` and task start, the passing round's commit, reading from the story branch, and old stories | 2 | `src/forge/story.py`, `src/forge/approval.py`, `src/forge/task.py`, `src/forge/nextstep.py`, `tests/test_task.py` | `tests/test_readloop_gates.py`, `tests/test_task.py` | CUT | yes |
 | SPECS | Specs pass first | The spec pass gate in `spec confirm` and the pull-request check | 7 | `src/forge/records.py`, `src/forge/prcheck.py` | `tests/test_readloop_specs.py` | GATES | yes |
 
 New moving parts: none
@@ -154,4 +158,5 @@ New moving parts: none
 - Each new test file starts with `STORY = "FORGE-READLOOP-1"`, and its `test_<n>_` names cite the
   Done-when items its task covers; existing test files keep their own story and only change the
   cases this story breaks. The round tests run the real SDK against the stub app-server,
-  as `tests/test_codex_reader.py` does.
+  as `tests/test_codex_reader.py` does, and a fake `claude` on PATH for Claude readers, as
+  `tests/test_worker.py` does.

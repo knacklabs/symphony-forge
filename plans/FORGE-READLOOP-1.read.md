@@ -153,3 +153,17 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 39. **Unproven: item 7, a passing but unconfirmed spec in a pull request.** [Spec save commits the draft](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:136), while read notes are currently written without a commit; [spec confirm commits them](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/records.py:165) only after changing the spec to confirmed. Item 7 gates unconfirmed specs, but does not say how a passing round’s notes reach that pull request. Pin whether a passing draft may pass the check and test its committed PR head.
    Disposition: cut: item 7 has a passing round commit the spec and its notes (GATES does the commit), tested on the pull-request head.
 
+## Round 9 (by hand on gpt-6-sol xhigh, one kept conversation from here)
+
+40. **GATES omits an existing test it must reconcile.** Item 2 makes later task branches merge the story branch, but [test_task.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/tests/test_task.py:131) asserts that their parent is `origin/main`. GATES lists only its new suite in Scope and Tests. Assign that test to GATES and update it, or state and test a legacy exception.
+   Disposition: cut: GATES owns tests/test_task.py; the task branch still starts from the default branch, so its parent check stays true.
+
+41. **Item 2 leaves failed task-start merges unhandled.** It resolves conflicts in the doc and read notes, but a full story-branch merge can conflict in other files, including the roadmap. [Task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/task.py:106) creates the branch and worktree first. Pin the refusal and cleanup so a conflict does not strand a task branch that blocks retry; test that path in GATES.
+   Disposition: cut: task start no longer merges the story branch; it commits the story branch's copy of the doc and notes on the new task branch, so no other file can conflict.
+
+42. **Unproven: item 1’s Claude recovery paths.** The plan names a continued Claude round, but its fresh-session and failed/discarded retry cases do not identify a backend; the [test note](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:154) names only the Codex SDK harness. ROUNDS needs tests showing that a missing Claude session gets the full fresh prompt and that failed or discarded Claude rounds retry with a new session id.
+   Disposition: cut: item 1 tests Claude's missing session and both retries with a fake claude on PATH.
+
+43. **Unproven: item 1 when the recorded reader app becomes unavailable.** [The plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:29) pins the reader family, but specifies a wrong-app refusal only while the other app is installed. Pin and test what `forge read` does if that recorded family is no longer installed, without silently switching readers.
+   Disposition: cut: item 1 starts fresh on the reader Forge would pick now when the recorded app is gone, says so and records it, with a test.
+
