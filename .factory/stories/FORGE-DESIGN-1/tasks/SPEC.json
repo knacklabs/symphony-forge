@@ -3,21 +3,13 @@
   "branch": "task/FORGE-DESIGN-1-SPEC",
   "done_when": "User-facing story tasks and prototype fixes run on a Claude worker with the models in forge.toml's [models.design] (Opus 5.5, high), falling back to Codex with [models.design.codex] (Sol, high) only when Claude can't run; other work is unchanged",
   "review": {
-    "commit": "231a96a1aa075bc9bcd2fdd072ffc9196ffe8cbe",
+    "commit": "00ae257538a07a3f76ad4eccd732070564a5bac1",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The story assigns `tests/test_design_docs.py` to this task for Done-when items 1 and 5, but that file is absent from the branch and repository. Add the required suite-discovered test for the decision and guide's design-model and fallback claims.",
-        "file": "docs/guide.md",
-        "line": 99,
-        "priority": "P1",
-        "title": "Not done: tests/test_design_docs.py"
-      }
-    ],
-    "status": "blocked",
-    "tree": "c049e94021b8a6d60f436a65a1ba0c4447c73b6cdd2ec4abbef27be56ee2303a"
+    "findings": [],
+    "status": "clean",
+    "tree": "5d8b369fbfb56f5df7a5a79ba0b7ca9c6484b5af6391778336d2e4bf8f9c2739"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:05:30+00:00",
@@ -25,6 +17,10 @@
     },
     {
       "at": "2026-09-28T14:34:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:54:10+00:00",
       "step": "review"
     }
   ],
