@@ -1,0 +1,46 @@
+{
+  "branch": "task/FORGE-DESIGN-1-ROUTE",
+  "review": {
+    "commit": "0b13e91058d77db27ecc754aeac120fae38a95df",
+    "dismissals": [
+      {
+        "because": "src/forge/worker.py:393 the story's Done-when 4 defines an unchanged checkout by HEAD, index and working tree as git reports them; files git ignores (.env, build output) are outside that definition",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "`git ls-files --others --exclude-standard` omits ignored files, while both `git diff` calls cover tracked files. If Claude changes an ignored file such as `.env` and then fails, the snapshots match and Forge starts Codex even though the working tree changed. The fallback guard must account for ignored files; the new command-level test does not exercise this case.",
+        "file": "src/forge/worker.py",
+        "line": 393,
+        "priority": "P1",
+        "title": "Not done: Sol high is the fallback"
+      },
+      {
+        "body": "The snapshot hashes the names of untracked files, then concatenates their contents without lengths or separators. With two untracked files, moving bytes from one file to the other can leave the digest unchanged. A failed Claude run could therefore change the checkout and still trigger the Codex fallback. Hash each file's name and content with explicit boundaries.",
+        "file": "src/forge/worker.py",
+        "line": 400,
+        "priority": "P2",
+        "title": "Keep untracked file boundaries in the checkout fingerprint"
+      }
+    ],
+    "status": "clean",
+    "tree": "bca4a46032bf87a4376ac48e39accc5b92d4c2e5e2c816190ce53d4ba40a11b9"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T12:02:30+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:09:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:27:40+00:00",
+      "step": "review"
+    }
+  ]
+}

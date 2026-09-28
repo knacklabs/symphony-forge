@@ -48,7 +48,7 @@ Risks: none
 |---|---|---|---|---|---|---|---|
 | SPEC | Record and explain | The decision record for design work on Opus 5.5, and the guide's models section | 1, 5 | `docs/decisions/`, `docs/guide.md` | `tests/test_design_docs.py` | none | no |
 | MODELS | Design models | The design kind with its two family entries, the defaults, init's forge.toml and this repo's forge.toml | 2 | `src/forge/repo.py`, `src/forge/init.py`, `forge.toml`, `tests/test_codex_worker.py`, `tests/test_codex_reader.py` | `tests/test_design_models.py` | none | no |
-| ROUTE | Route design work | Choosing the Claude worker for design items and the Codex fallback | 3, 4 | `src/forge/worker.py` | `tests/test_design_route.py` | MODELS | no |
+| ROUTE | Route design work | Choosing the Claude worker for design items and the Codex fallback | 3, 4 | `src/forge/worker.py`, `src/forge/codex.py`, `tests/test_rules.py` | `tests/test_design_route.py` | MODELS | no |
 
 New moving parts: none
 
