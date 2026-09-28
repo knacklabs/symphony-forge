@@ -201,7 +201,7 @@ def helper() -> Path:
 
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-        base: str) -> dict[str, Any]:
+        base: str, selected: dict[str, str]) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = instructions(top, item, state, cfg, base)
     path = helper()
@@ -223,7 +223,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if launcher:
             argv += ["--codex-bin", str(launcher)]
         for attempt in (1, 2):
-            findings, reason = _attempt(argv, tree, out)
+            findings, reason = _attempt(argv, tree, out, selected)
             if not reason:
                 break
             print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
@@ -237,7 +237,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             "dismissals": []}
 
 
-def _attempt(argv: list[str], cwd: Path, out: Path) -> tuple[list[dict[str, Any]], str]:
+def _attempt(argv: list[str], cwd: Path, out: Path,
+             selected: dict[str, str]) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -247,6 +248,13 @@ def _attempt(argv: list[str], cwd: Path, out: Path) -> tuple[list[dict[str, Any]
         sys.stderr.buffer.write(line)
         sys.stderr.flush()
         last = line.decode("utf-8", "replace").strip() or last
+        if last.startswith("model: ") and "model" not in selected:
+            selected["model"] = last.removeprefix("model: ")
+        elif last.startswith("thinking: ") and "effort" not in selected:
+            selected["effort"] = last.removeprefix("thinking: ")
+        elif match := re.fullmatch(
+                r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
+            selected["model"] = match[1]
     code = proc.wait()
     try:
         report = json.loads(out.read_text(encoding="utf-8"))
