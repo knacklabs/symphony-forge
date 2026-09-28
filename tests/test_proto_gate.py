@@ -34,6 +34,26 @@ def _fix_path(repo, why: str) -> Path:
 
 
 def test_2_stories_wait_for_client_signoff(repo):
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n')
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "FREE"}]}))
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Set up Forge source")
+    repo.git("push", "-q", "origin", "main")
+    assert not (repo.path / "docs/decisions").exists()
+    source_fix = _fix_path(repo, "Plan Forge work")
+    source_body = "# Forge work\n\n## Roadmap\n\n- TOOL: Improve Forge\n"
+    source_digest = hashlib.sha256(source_body.encode()).hexdigest()
+    (source_fix / "docs/specs").mkdir(parents=True)
+    (source_fix / "docs/specs/tool.md").write_text(
+        f"---\nstatus: confirmed\nconfirmed_hash: {source_digest}\n---\n{source_body}",
+        encoding="utf-8")
+    added = repo.forge("roadmap", "add", "tool", cwd=source_fix)
+    assert added.returncode == 0, added.stderr
+    assert "TOOL" in (source_fix / "plans/roadmap.json").read_text(encoding="utf-8")
+    source_story = repo.forge("story", "new", "FREE", "Improve Forge")
+    assert source_story.returncode == 0, source_story.stderr
+
     _client(repo)
     fix = _fix_path(repo, "Prototype discovery")
     body = "# Shop\n\n## Roadmap\n\n- SELL: Shoppers can buy\n"
