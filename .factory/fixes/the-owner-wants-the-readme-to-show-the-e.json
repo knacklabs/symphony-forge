@@ -1,0 +1,14 @@
+{
+  "base": "d95280ffa7b33fefa4d6a7db95e33a07f85b0eed",
+  "branch": "fix/the-owner-wants-the-readme-to-show-the-e",
+  "done_when": "README.md shows the explainer once, as the animated preview linked to the video, with no player link above it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T07:40:43+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants the README to show the explainer only as the animated preview linked to the video, without the player"
+}
