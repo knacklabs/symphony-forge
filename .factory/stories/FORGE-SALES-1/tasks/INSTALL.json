@@ -1,61 +1,61 @@
 {
   "branch": "task/FORGE-SALES-1-INSTALL",
   "review": {
-    "commit": "e2c068d7d4462aacaeeb0114b8efbd8feff18958",
+    "commit": "bd72fc9cb120e23c9a46d621e2d902df1f2adab7",
     "dismissals": [],
     "findings": [
       {
-        "body": "On a clean Mac without cached sudo authorization, NONINTERACTIVE=1 prevents Homebrew from requesting the administrator password. The [Homebrew installer](https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh) uses sudo -n in this mode, so setup fails before installing the tools. Authenticate through the terminal during the promised curl | bash invocation and explain how to recover if authorization fails.",
+        "body": "Both scripts install `symphony-forge==1.1.0` (Windows: scripts/install-windows.ps1:61). [uv resolves a bare package name from an index by default](https://docs.astral.sh/uv/concepts/indexes/), while README.md:119 and docs/specs/lean-forge-v1.md:47-48 define this release as the GitHub tag `v1.1.0` and install it from Git. The scripts therefore do not select the release the repository names; on a clean laptop, Forge installation may fail before the final version check. Install the tagged Git source using the script\u2019s version variable.",
         "file": "scripts/install-mac.sh",
-        "line": 33,
+        "line": 67,
         "priority": "P1",
-        "title": "Not done: One script sets up a laptop \u2014 Homebrew bootstrap"
+        "title": "Not done: One script sets up a laptop \u2014 install the named Forge release"
       },
       {
-        "body": "Installing uv through winget does not add uv's tool executable directory to PATH. On a fresh Windows account, Forge installs but the final forge --version cannot find it. The Mac script's export at scripts/install-mac.sh:63 lasts only inside the piped Bash process, leaving Forge unavailable afterward. Configure the tool directory persistently, expose it during setup, and explain any shell restart needed. [uv documents update-shell as the separate PATH configuration step](https://docs.astral.sh/uv/guides/tools/#installing-tools).",
+        "body": "Using `npm.cmd` lets installation run under Windows PowerShell\u2019s default Restricted policy, but npm also creates `.ps1` shims for installed commands. A salesperson who follows the printed next step and types `claude` or `codex` in PowerShell can hit the same execution-policy block; the script gives no usable command or recovery step. [npm documents its PowerShell shims](https://github.com/npm/rfcs/blob/main/implemented/0032-powershell-bins.md), and [Microsoft documents the Restricted default](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1). Make the installed agents usable through the promised PowerShell flow.",
         "file": "scripts/install-windows.ps1",
-        "line": 59,
+        "line": 79,
         "priority": "P1",
-        "title": "Not done: One script sets up a laptop \u2014 Forge command availability"
+        "title": "Not done: One script sets up a laptop \u2014 usable Windows agent commands"
       },
       {
-        "body": "The promised irm | iex invocation can run under Windows PowerShell's default Restricted policy, but npm resolves to npm.ps1 and is blocked, stopping setup before Claude Code installs. The npx invocation at line 82 has the same defect. Call npm.cmd and npx.cmd explicitly. See the [Node reproduction and workaround](https://github.com/nodejs/node/issues/62427) and [Microsoft's default execution policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1).",
-        "file": "scripts/install-windows.ps1",
-        "line": 72,
-        "priority": "P1",
-        "title": "Not done: One script sets up a laptop \u2014 Windows npm execution"
-      },
-      {
-        "body": "The fixture retains the host PATH while expecting GitHub CLI and uv to be missing. The Windows suite runs through .github/workflows/forge-next.yml:23\u201335, where line 31 installs uv; the [Windows runner also includes GitHub CLI](https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md). Consequently, check mode skips gh and the assertion at line 87 fails. If execution reaches installation, it can select real uv instead of the stub. Isolate tool discovery while retaining only the system commands the harness requires, including across the script's PATH refresh.",
+        "body": "The Windows tests invoke the script only with `powershell -File`; none exercises the promised `irm \u2026 | iex` entry point. That leaves the user-facing invocation untested even though the Mac test exercises piped Bash. Add an isolated full-run test that evaluates the Windows script as the one-liner does, with third-party commands stubbed.",
         "file": "tests/test_sales_install.py",
-        "line": 81,
+        "line": 159,
         "priority": "P1",
-        "title": "Not done: isolated Windows install test"
+        "title": "Not done: Windows piped install test"
       },
       {
-        "body": "These assertions permit extra installer calls, so reinstalling already-present Git and Node would still pass. Neither platform exercises all-present tools or existing browsers; Homebrew is always present, and Windows always reports WSL2 ready, leaving both bootstrap paths untested. Windows also omits assertions for the uv, Claude Code, Codex and Playwright installer calls. Extend the script-entry-point tests to verify no installation for present tools, each missing installer exactly once, and the Homebrew and WSL2 authorization/restart paths.",
-        "file": "tests/test_sales_install.py",
-        "line": 61,
-        "priority": "P1",
-        "title": "Not done: skip-present and bootstrap setup tests"
-      },
-      {
-        "body": "The supplied functional-check paragraph records observed Mac runs but only says the Windows test is routed through CI; it records no Windows execution or observed result. The amended contract requires recording the stubbed runs for both scripts. Run the isolated Windows check and install paths and record their outcomes, including the WSL2 guidance. Clean-laptop installations may remain with the owner after merge, as explicitly allowed here.",
+        "body": "The head commit\u2019s `Functional check:` paragraph records Mac observations but says the Windows check, install, all-present and WSL2 test result is still pending. The plan here requires observed stubbed runs for both scripts. Record the Windows outcomes, including the WSL2 guidance; the specified clean-laptop checks may remain with the owner after merge.",
         "file": "plans/FORGE-SALES-1.md",
         "line": 86,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "Any directory matching each browser prefix is considered sufficient, including obsolete or incomplete browser installations. Check mode therefore reports nothing missing and setup skips installation even when the intended Playwright version cannot launch those browsers. scripts/install-windows.ps1:23 uses the same predicate. Validate the required revisions and executable files; [Playwright requires specific browser binaries for each version](https://playwright.dev/docs/browsers).",
+        "body": "Any directory matching each browser prefix counts as installed, including obsolete or incomplete downloads; Windows uses the same predicate at scripts/install-windows.ps1:21. Check mode can therefore list nothing missing while the Playwright version used by a project cannot launch a browser. [Playwright requires browser binaries specific to its version](https://playwright.dev/docs/browsers). Check usable revisions and executables before skipping installation.",
         "file": "scripts/install-mac.sh",
         "line": 20,
         "priority": "P2",
         "title": "Check usable Playwright revisions before skipping installation"
+      },
+      {
+        "body": "If `docker` is already on PATH from a CLI-only install, this check skips the Docker cask even when there is no Docker Desktop or working engine. Windows similarly treats any `docker` command as proof that Desktop is installed at scripts/install-windows.ps1:50. In that case the laptop still cannot run the Docker-based prototype tests. Check the usable Docker installation, or give the user the step needed to start it.",
+        "file": "scripts/install-mac.sh",
+        "line": 56,
+        "priority": "P2",
+        "title": "Treat a Docker CLI without Docker Desktop as missing"
+      },
+      {
+        "body": "Done-when item 2 calls for running each script with a one-liner from the checklist, but the checklist and README link are assigned to SPEC on this line and are not present in this branch. SPEC needs to publish the `curl \u2026 | bash` and `irm \u2026 | iex` commands before that user path is complete.",
+        "file": "plans/FORGE-SALES-1.md",
+        "line": 66,
+        "priority": "P2",
+        "title": "Later: SPEC \u2014 publish the checklist one-liners"
       }
     ],
     "status": "blocked",
-    "tree": "5d36003f51a206ef018cb6a2a1f4e4efd9e5c081650f7cda0ce8dd1259b22761"
+    "tree": "c5cf1166ac1ab5de03ad820195113c013f0661a5af1d1a0f5663b1b0e6ab291a"
   },
   "status": "fixing",
   "steps": [
@@ -69,6 +69,10 @@
     },
     {
       "at": "2026-09-28T12:08:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:02:39+00:00",
       "step": "review"
     }
   ]
