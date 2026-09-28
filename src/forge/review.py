@@ -233,8 +233,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    product = ([name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
-                if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))]
+    product = (sorted({name for command in (("ls-files", "-z"),
+                                            ("ls-tree", "-r", "-z", "--name-only", head))
+                       for name in repo.git(*command, cwd=top).split("\0")
+                       if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
                if signoff_prompt else [])
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
@@ -268,13 +270,17 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if launcher:
             argv += ["--codex-bin", str(launcher)]
         for attempt in ((1,) if signoff_prompt else (1, 2)):
-            findings, reason = _attempt(argv, tree, out, selected)
+            findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
             if not reason:
                 break
             print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
+                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
+            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "xhigh":
+                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at xhigh effort: "
+                             "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             serious = [f for f in findings if f["priority"] in SERIOUS]
             if serious:
@@ -304,7 +310,7 @@ def signoff(top: Path, answers: str) -> str:
 
 
 def _attempt(argv: list[str], cwd: Path, out: Path,
-             selected: dict[str, str]) -> tuple[list[dict[str, Any]], str]:
+             selected: dict[str, str], strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -329,11 +335,10 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     if code not in (0, 1, 2) or not isinstance(report, dict):
         return [], last or f"it exited with code {code}"
     # The helper moves a finding pinned outside the changed files to scope_rejected_findings and
-    # calls the review incomplete for it. Forge keeps those findings like any other, so none is
-    # lost. ponytail: the helper doesn't say whether the engine also stopped early in that run,
-    # so a run with rejected findings always counts as finished; its findings still block.
+    # calls the review incomplete for it. Ordinary reviews keep those findings; sign-off requires
+    # a complete run even when rejected findings are present.
     rejected = report.get("scope_rejected_findings") or []
-    if not rejected and (code == 2 or report.get("review_status") == "incomplete"):
+    if (strict or not rejected) and (code == 2 or report.get("review_status") == "incomplete"):
         return [], "it reported the review as incomplete"
     raw = report.get("findings")
     findings = ([_finding(f) for f in [*raw, *rejected]]

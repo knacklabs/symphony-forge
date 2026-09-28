@@ -10,6 +10,7 @@ from pathlib import Path
 
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
+SOL_XHIGH = "model: gpt-6-sol\nthinking: xhigh\nautoreview done"
 MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems",
         "Sign-in", "Personal data", "Production host")
 
@@ -68,7 +69,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
-    queue.write_text(json.dumps([{"report": {"review_status": "complete", "findings": [{
+    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {"review_status": "complete", "findings": [{
         "priority": "P1", "title": "Prototype fails", "body": "Demo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     blocked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -96,7 +97,8 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "forge next" in open_topic.stderr
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
-    queue.write_text(json.dumps([{"report": {"review_status": "complete", "findings": []}}]))
+    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+                                  "report": {"review_status": "complete", "findings": []}}]))
     changed = answers.replace("Demo workflow: agreed (client", "Demo workflow: revised (client")
     repo.git("rm", "--cached", "docs/product/BRIEF.md", cwd=fix)
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
@@ -111,13 +113,62 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     repo.git("add", "docs/product/BRIEF.md", cwd=fix)
     page = _decision(fix, answers)
 
-    # Sign-off used to judge model and effort from progress text. It now pins the
-    # requested values in Autoreview's arguments; progress is not an attestation.
+    queue.write_text(json.dumps([{"report": {"review_status": "complete", "findings": []}}]))
+    missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert missing_selection.returncode == 1
+    assert "model and effort" in missing_selection.stderr
+    assert "status: proposed" in page.read_text()
+
+    queue.write_text(json.dumps([{"say": SOL_XHIGH + "\n"
+                                   "codex model gpt-6-sol is unavailable for this account; "
+                                   "retrying with gpt-6-astra",
+                                  "report": {"review_status": "complete", "findings": []}}]))
+    fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert fallback.returncode == 1
+    assert "model and effort" in fallback.stderr
+    assert "status: proposed" in page.read_text()
+
+    queue.write_text(json.dumps([{"say": "model: gpt-6-sol\nthinking: high",
+                                  "report": {"review_status": "complete", "findings": []}}]))
+    lower_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert lower_effort.returncode == 1
+    assert "model and effort" in lower_effort.stderr
+    assert "status: proposed" in page.read_text()
+
+    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {
+        "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
+            "priority": "P2", "title": "Outside scope", "body": "Review did not finish",
+            "code_location": {"file_path": "app.py", "line": 1}}]}}]))
+    incomplete = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert incomplete.returncode == 1
+    assert "incomplete" in incomplete.stderr
+    assert "status: proposed" in page.read_text()
+
+    queue.write_text(json.dumps([{"say": SOL_XHIGH, "exit": 2, "report": {
+        "review_status": "complete", "findings": [], "scope_rejected_findings": [{
+            "priority": "P2", "title": "Outside scope", "body": "Review stopped early",
+            "code_location": {"file_path": "app.py", "line": 1}}]}}]))
+    unfinished = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert unfinished.returncode == 1
+    assert "incomplete" in unfinished.stderr
+    assert "status: proposed" in page.read_text()
+
+    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+                                  "report": {"review_status": "complete", "findings": []}}]))
+    repo.git("rm", "--cached", "app.py", cwd=fix)
+    (fix / "app.py").write_text("print('unreviewed prototype')\n")
+    unreviewed_app = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert unreviewed_app.returncode == 1
+    assert "prototype differs from the reviewed commit" in unreviewed_app.stderr
+    assert "status: proposed" in page.read_text()
+    (fix / "app.py").write_text("print('prototype')\n")
+    repo.git("add", "app.py", cwd=fix)
+
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 3
+    assert len(calls) == 9
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--model"] == "codex=gpt-6-sol"
     assert options["--thinking"] == "codex=xhigh"
