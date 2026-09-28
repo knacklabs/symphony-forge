@@ -1,26 +1,19 @@
 {
   "branch": "task/FORGE-ONECHAT-1-APPROVE",
   "review": {
-    "commit": "2117605ee067b69144b3b86078b21253388b57da",
+    "commit": "174c631f8cd871a3cb36fb948722d6988ad99bbb",
     "dismissals": [],
     "findings": [
       {
-        "body": "The cross-repo test checks that a commit exists, but never installs or observes a Git hook. Its setup helper only writes configuration and creates stories (`tests/test_story.py:67\u2013102`). Consequently, bypassing hooks during approval would still pass these tests despite item 3 explicitly requiring them. Install an observable hook in the destination repo and assert that `forge hook approval` executes it on the story branch.",
-        "file": "tests/test_onechat_approval.py",
-        "line": 44,
-        "priority": "P1",
-        "title": "Not done: test that cross-repo approval runs the story repo's Git hooks"
-      },
-      {
-        "body": "The single-line extraction cannot parse a valid multiline TOML version string. For example, a triple-quoted string opening on the `version =` line and containing the installed version on the following line makes this partial parse fail. `repo.check_pin(path)` then successfully validates the complete configuration (`src/forge/repo.py:248\u2013259`), but the unconditional return reports success without recording approval. Leading whitespace or quoted version keys also bypass the early version comparison and let full configuration validation run first. Read the actual top-level version value and continue approval when it matches; do not treat successful fallback validation as completion.",
+        "body": "The regex misses valid TOML pins with indentation or quoted keys, such as `  version = \"v0.0.1\"`. Those configurations reach `repo.check_pin`, which validates the entire configuration first (`src/forge/repo.py:257` and `167\u2013179`). With the test's incompatible `repo` value, this produces a configuration error instead of the required version refusal; otherwise it recommends installing the old version rather than upgrading the destination pin. Multiline version strings also enter the exception handler, whose unconditional return silently abandons approval even when `check_pin` succeeds. Extract the actual top-level version value before full validation, and continue approval when it matches.",
         "file": "src/forge/approval.py",
-        "line": 145,
-        "priority": "P2",
-        "title": "Handle valid TOML pin syntax without silently abandoning approval"
+        "line": 139,
+        "priority": "P1",
+        "title": "Not done: 4. Read the story repo's pin before validating its configuration"
       }
     ],
     "status": "blocked",
-    "tree": "1d28e8b042a8baeb33439b982bb51959570336e05998a3d78e61c89486baacc6"
+    "tree": "de515757f7d98567d7447edfc24e741286b3822884e647c4d2f7e788ad393a71"
   },
   "status": "fixing",
   "steps": [
@@ -30,6 +23,10 @@
     },
     {
       "at": "2026-09-28T08:03:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:15:27+00:00",
       "step": "review"
     }
   ]
