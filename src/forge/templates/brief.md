@@ -161,6 +161,8 @@ Joining lines or removing blank lines never counts as a reduction.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
+Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
+conventions apply only to a repo on the default stack.
 
 ## When you finish
 
