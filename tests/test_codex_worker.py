@@ -262,7 +262,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
             ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
              "models.fix sets only one of subagents and subagent_effort; set both or neither"),
             ({**MODELS, "debug": lite},
-             "debug is not a kind of work; the kinds are build, fix, lite, grill and review"),
+             "debug is not a kind of work; the kinds are build, fix, lite, grill, design and review"),
             ({"lite": lite}, "it has no [models.build], which this work uses")):
         toml.write_text(_toml(version, "codex", models), encoding="utf-8")
         refused = repo.forge("work", "BOARD/PAGE")

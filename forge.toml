@@ -31,6 +31,14 @@ effort = "high"
 model = "opus"
 effort = "high"
 
+[models.design.claude]
+model = "claude-opus-5-5"
+effort = "high"
+
+[models.design.codex]
+model = "gpt-6-sol"
+effort = "high"
+
 [models.review]
 model = "gpt-6-sol"
 effort = "xhigh"
