@@ -71,4 +71,4 @@ def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(real_home)})) == real_before
     assert json.loads(_sdk(THREADS, env={"CODEX_HOME": str(configured_home)})) == configured_before
     ask_threads = json.loads(_sdk(THREADS))
-    assert any(name == "Ask · this checkout" for _, name, archived in ask_threads if not archived)
+    assert ask_threads == []

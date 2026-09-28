@@ -212,7 +212,8 @@ def recover(checkout: Path, item: str) -> None:
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
-        archive_thread: bool = False) -> dict[str, Any]:
+        archive_thread: bool = False, model: str | None = None,
+        effort: str | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. `fresh` says why a new one
     starts, and the conversation is recorded with the story's `approval`. With `read`, run no
@@ -233,7 +234,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     """
     request = {"cwd": str(checkout), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": {} if archive_thread else settings(repo.config(checkout), kind),
-               "thread": thread, "read": read, "archive": archive_thread}
+               "thread": thread, "read": read, "archive": archive_thread,
+               "ephemeral": kind == "Ask"}
+    if model is not None:
+        request["config"]["model"] = model
+    if effort is not None:
+        request["config"]["model_reasoning_effort"] = effort
     log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
            repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))

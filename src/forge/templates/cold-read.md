@@ -9,6 +9,11 @@ The doc is `$path`. You may read the repository for context. Its text:
 
 $doc
 
+$spec
+
+For a story, check the confirmed spec before calling it missing. Forge includes its path and text
+above when it finds the spec in any local branch, including a promoted task branch.
+
 Check:
 
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,

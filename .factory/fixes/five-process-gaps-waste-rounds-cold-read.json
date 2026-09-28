@@ -1,0 +1,26 @@
+{
+  "allow_large": "The owner asked for all of the accuracy audit's remaining suggestions in one change, on 2026-09-27",
+  "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
+  "branch": "fix/five-process-gaps-waste-rounds-cold-read",
+  "done_when": "forge read gives the cold reader the confirmed spec's path and text from whichever branch holds it, and the cold-read template says to check it before calling a spec missing; a review's freshness covers the item's story doc and roadmap entry, not bookkeeping files; a fix's brief states the file limit, the interface globs and any recorded allowance, and the skill says to check them before building; the skill says Done-when or Notes name supported inputs and exclusions, and a dismissal that narrows them needs an amendment; forge.toml's efforts stay as they are (the owner declined the effort change); tests through the real commands prove each",
+  "kind": "fix",
+  "review": {
+    "commit": "2041ca356f3c4f4b2218bacf7a2a790cd1377eba",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c4e535e20b7d4b4c496dea26901a5ca4342bf99dcf3e5a328e2fa5f6f12dfce8"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T17:15:08+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:17:36+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Five process gaps waste rounds: cold reads can't see a spec on its promoted task's branch, a review stays fresh after the story's notes or roadmap change, workers learn the fix limit and interface rule only when the commit is refused, plans leave supported inputs unstated so reviews chase edge cases"
+}
