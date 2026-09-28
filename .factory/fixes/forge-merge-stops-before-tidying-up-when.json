@@ -3,7 +3,7 @@
   "branch": "fix/forge-merge-stops-before-tidying-up-when",
   "done_when": "When archiving a recorded Codex conversation fails, forge merge still finishes its tidy-up (branch, worktree, records), prints which conversations it could not archive and that they can be archived later, and exits successfully; a test through forge merge with a stub that refuses archiving shows it",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T09:11:52+00:00",
