@@ -2,7 +2,23 @@
   "branch": "task/FORGE-AHA-1-REVIEW",
   "review": {
     "commit": "bc052809d98c4fc128fdd4a217bcb9b72a26c71f",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:327 checking the model a review actually used is the sign-off review's strict rule; a prototype tweak's P0-only review that falls back to another model has still been reviewed, which is this item's purpose",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_aha_review.py:47 same reason: light reviews don't verify the model used, so there is no selection to test",
+        "finding": 2,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_aha_review.py:31 FORGE-LIVE-1/STAGE replaces this check with repo.is_prototype and its test proves Forge's own repo and signed-off repos never get prototype rules (tests/test_live_stage.py)",
+        "finding": 3,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The light path requests GPT-6 Sol at medium effort but accepts a completed report without checking the model and effort actually used. `_attempt` records a model fallback at src/forge/review.py:354-360, while the sign-off path verifies its selection at lines 311-314. If Autoreview falls back, `forge close` can accept a P0-only review performed with another model.",
@@ -26,10 +42,10 @@
         "title": "Not done: strict review boundary test"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "084f63e0368c2918a762e59cff9c7014f483d2af3fbc2bf85a662d87ad77bca9"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T16:00:16+00:00",
