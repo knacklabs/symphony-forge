@@ -23,7 +23,7 @@ def test_4_sync_keeps_the_command_page_current(repo):
     assert result.returncode == 0, result.stderr
     assert "Wrote docs/commands.md" in result.stdout
     generated = (repo.path / "docs/commands.md").read_bytes()
-    assert generated == (ROOT / "docs/commands.md").read_bytes(), "Command page is stale; run forge sync."
+    assert generated == (ROOT / "docs/commands.md").read_text(encoding="utf-8").encode("utf-8"), "Command page is stale; run forge sync."
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
     assert "[command list](commands.md)" in guide
     assert "| Command | What it does |" not in guide
