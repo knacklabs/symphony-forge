@@ -138,10 +138,29 @@ def doctor(args: argparse.Namespace) -> None:
     if not cfg["checks"]:
         rows.append(("forge.toml names no checks, so close has nothing to wait for.",
                      "ask your agent to set checks in forge.toml"))
+    protection = (repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/branches/"
+                           f"{repo.default_branch(top)}/protection", cwd=top)
+                  if shutil.which("gh") else None)
+    if protection and (protection.returncode == 0 or
+                       "Branch not protected" in protection.stdout + protection.stderr):
+        try:
+            required = json.loads(protection.stdout).get("required_status_checks") or {}
+            protected = {entry["context"] for entry in required.get("checks") or []
+                         if isinstance(entry, dict) and isinstance(entry.get("context"), str)}
+            protected.update(name for name in required.get("contexts") or []
+                             if isinstance(name, str))
+        except (ValueError, AttributeError):
+            protected = set()
+        if protected != set(cfg["checks"]):
+            rows.append(("forge.toml checks differ from branch protection's required checks: "
+                         f"Forge names {', '.join(sorted(cfg['checks'])) or 'none'}; protection "
+                         f"requires {', '.join(sorted(protected)) or 'none'}.",
+                         "ask your agent to reconcile checks in forge.toml with branch protection"))
     if not cfg["test"]:
         rows.append(("forge.toml has no test command.",
                      "ask your agent to set test in forge.toml, then run forge sync"))
-    elif f"run: {json.dumps(cfg['test'])}" not in sync.read(top / sync.WORKFLOW_PATH):
+    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read(
+            top / sync.WORKFLOW_PATH):
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
                      "command.", "forge sync"))
 
@@ -162,11 +181,19 @@ def doctor(args: argparse.Namespace) -> None:
                          top / ".claude"],
               "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
                         top / ".agents"]}
-    for skill in ("impeccable", "emil-design-eng"):
-        if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                   for folder in skills[cfg["workers"]]):
-            rows.append((f"{skill} is required for UI work but isn't installed where the "
-                         f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
+    package = top / "package.json"
+    packages = json.loads(sync.read(package)) if package.is_file() else {}
+    dependencies = {**packages.get("dependencies", {}), **packages.get("devDependencies", {})}
+    has_frontend = (any((top / path / "package.json").is_file()
+                        for path in ("frontend", "web", "apps/web"))
+                    or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
+                                                             "@angular/core", "next", "vite")))
+    if has_frontend:
+        for skill in ("impeccable", "emil-design-eng"):
+            if not any((folder / "skills" / skill / "SKILL.md").is_file()
+                       for folder in skills[cfg["workers"]]):
+                rows.append((f"{skill} is required for UI work but isn't installed where the "
+                             f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")
