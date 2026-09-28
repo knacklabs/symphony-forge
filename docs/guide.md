@@ -79,7 +79,9 @@ You never run the hook commands yourself: git, the host hooks and CI call them.
 3. `forge read <KEY>` runs one independent cold read. Answer every finding (cut, defer or keep),
    amend the doc once, then run `forge read <KEY> --amended`.
 4. The human approves once. In Claude Code, exit Plan Mode with the story doc as the plan; in Codex,
-   ask the approval question `forge next` gives. `forge hook approval` records it.
+   ask the approval question `forge next` gives. Do this from one main chat for stories in
+   every Forge repo this machine has used, including its worktrees. Forge remembers those repos
+   automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
    the same time.

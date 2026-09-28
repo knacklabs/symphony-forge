@@ -137,6 +137,12 @@ name a released version, not "main".
 Open Claude Code or Codex in the project and ask "what's next?", or run `forge next` yourself.
 Then describe the change you want.
 
+## Contributing
+
+Clone this repository, then run `uv sync` and `uv run pytest` to run the tests. The Codex SDK is
+not needed for the tests. Start fixes with `forge fix start "<why>" --done "<done when>"` so the
+pull request uses a Forge branch; the pull-request check accepts only Forge branches.
+
 ## Commands you'll see
 
 Your agent runs these for you. You'll see them in its messages.
