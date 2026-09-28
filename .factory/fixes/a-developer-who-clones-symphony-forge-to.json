@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed it on 2026-09-28: each extra file is a one-line switch of CI and forge.toml to the new dev group",
   "base": "d95280ffa7b33fefa4d6a7db95e33a07f85b0eed",
   "branch": "fix/a-developer-who-clones-symphony-forge-to",
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
