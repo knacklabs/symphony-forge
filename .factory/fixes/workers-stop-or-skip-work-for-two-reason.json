@@ -3,11 +3,22 @@
   "branch": "fix/workers-stop-or-skip-work-for-two-reason",
   "done_when": "The worker brief says the tests a task's Tests column names are always required, docs tasks included, and that a real-Codex or process-cleanup test failing locally under machine load is CI's to judge: commit, say so, don't stop; a test through forge work shows both lines in a brief",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "fca1814b0a75fa4c0eb0f6a4f4b7a8dd756410d3",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "7e03f2a20c192e145bc318593d7d9498123950813ef666f2fc2e346808ea94af"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T15:01:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:18:19+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers stop or skip work for two reasons the brief could prevent: docs tasks skip the test their Tests column names because the brief says doc-only changes need no test, and workers stop when a real-Codex or process test fails locally under machine load"
