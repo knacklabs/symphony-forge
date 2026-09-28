@@ -484,8 +484,8 @@ def test_8_plain_english(env):
     creates = env.gh_calls("pr", "create")
     shown = [text for call in creates for text in (call[call.index("--title") + 1],
                                                    body(call).splitlines()[0])]
-    assert shown == ["Save a basket", "Shoppers can save their basket with one click",
-                     "Readme greets new readers", "The readme opens with a greeting"]
+    assert shown == ["Shoppers can save a basket: Save a basket", "Why: Shoppers lose their basket when they leave.",
+                     "Readme greets new readers", "Why: Readme greets new readers"]
     assert not [(text, _not_plain(text)) for text in shown if _not_plain(text)]
 
     # A story waiting for approval: the question is exactly "Approve this plan?".

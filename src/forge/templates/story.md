@@ -1,5 +1,7 @@
 # $title
 
+<n> parts · Risks: ... · New moving parts: ...
+
 ## What changes for you
 
 <What the people who use this will notice, in plain English. No IDs, codes or jargon.>
@@ -10,7 +12,15 @@ $why
 
 ## Done when
 
-1. $done
+1. **$done** <Detail: evidence, edge cases or technical notes, if needed.>
+
+## Risks
+
+<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+
+Risks: none
+
+## For the builders
 
 ## Tasks
 
@@ -27,11 +37,5 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|
 $tasks
 New moving parts: none
-
-## Risks
-
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
-
-Risks: none
 
 ## Notes

@@ -110,7 +110,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
     assert all((turn["sandboxPolicy"]["type"], turn["approvalPolicy"]) == ("readOnly", "never")
                for turn in turns)
-    assert _sent(stub, "thread/name/set")[-1]["name"] == "Grill · SHOP · plans/SHOP.md"
+    assert _sent(stub, "thread/name/set")[-1]["name"] == "Read · SHOP"
     written = notes.read_text("utf-8")
     # The reader gets exactly the bytes whose hash the notes record: one read, after the baseline.
     data = doc.read_bytes()

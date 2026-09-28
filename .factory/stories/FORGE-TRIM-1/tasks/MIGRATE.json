@@ -1,0 +1,21 @@
+{
+  "branch": "task/FORGE-TRIM-1-MIGRATE",
+  "review": {
+    "commit": "f4606551490f6950f43a719638dab8a93a3d3a72",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "829ec7283b6696d39a5056ee9d0edd26ad488e7939178b52cdee9b4b34bf6bca"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T16:28:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:50:41+00:00",
+      "step": "review"
+    }
+  ]
+}

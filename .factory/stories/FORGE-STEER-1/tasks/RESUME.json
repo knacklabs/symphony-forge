@@ -1,0 +1,53 @@
+{
+  "branch": "task/FORGE-STEER-1-RESUME",
+  "review": {
+    "commit": "445e76315bb820194acc0f127481d3a5c22d0b34",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "RESUME permits the driver change and its explicitly required test file. The ASK-MODEL plan additions and changes to `plans/FORGE-STEER-1.read.md`, `.factory/stories/FORGE-STEER-1/story.json`, and `.factory/stories/FORGE-STEER-1/tasks/RESUME.json` are unnecessary for active-writer recovery. Remove these four files' changes from this branch to preserve the requested scope.",
+        "file": "plans/FORGE-STEER-1.md",
+        "line": 40,
+        "priority": "P2",
+        "title": "Remove the out-of-scope plan and workflow-record changes"
+      }
+    ],
+    "status": "clean",
+    "tree": "4766feee7b584048da0aba03f5883ce8e3268ebbc5b1d24e6de3c6d864a11398"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T04:59:02+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T05:01:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T14:57:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:05:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T15:22:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:14:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T16:25:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T17:06:22+00:00",
+      "step": "review"
+    }
+  ]
+}

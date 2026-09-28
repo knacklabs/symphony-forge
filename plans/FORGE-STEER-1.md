@@ -10,7 +10,8 @@
 - A worker whose earlier conversation is still held for a moment by a Codex process that is
   shutting down waits and picks that conversation back up, instead of starting over from scratch.
 - The coordinator can ask Codex a quick question about the code, answered read-only, without
-  starting a fix.
+  starting a fix, on any model and effort it names, and the question leaves no chat behind in your
+  Codex list.
 
 ## Why
 
@@ -36,6 +37,9 @@ builds the confirmed spec `docs/specs/codex-steering.md`.
    checkout, keeps its records under `.git/forge/`, and discards the answer if a tracked or
    untracked file changed during the turn.
 5. The Forge skill and the guide describe notes, questions and `forge ask`, and when to use each.
+6. `forge ask` accepts `--model` and `--effort`, falls back to `forge.toml`'s `[models.lite]`
+   without them, stays read-only, and runs as an ephemeral Codex conversation that is never saved
+   to the Codex chat list.
 
 ## Tasks
 
@@ -43,7 +47,8 @@ builds the confirmed spec `docs/specs/codex-steering.md`.
 |---|---|---|---|---|---|---|---|
 | RESUME | Resume past a leftover writer | In the driver, on the exact "already has an active writer" resume error: wait a few seconds and retry once, stopping nothing; every other resume error unchanged | 3 | `src/forge/codex_turn.py` | `tests/test_steer_resume.py` | — | no |
 | STEER | Notes, questions and ask | `forge work --note` and its "From the coordinator" brief section and turn-log `note`; the `Question:` contract with the thread-record `question`, the refusals and the answer round; `forge ask` under its own `ask` records; the `--note` flag and the `ask` command row, in the CLI and in the guide's command list | 1, 2, 4 | `src/forge/cli.py`, `src/forge/worker.py`, `src/forge/close.py`, `src/forge/codex.py`, `src/forge/ask.py`, `src/forge/templates/brief.md`, `docs/guide.md` | `tests/test_steer_note.py`, `tests/test_steer_question.py`, `tests/test_steer_ask.py` | — | yes |
-| DOCS | Tell the coordinator | The Forge skill's rules for notes, questions and `forge ask`, and the guide's section on them | 5 | `src/forge/templates/skill.md`, `docs/guide.md` | `tests/test_steer_docs.py` | STEER | yes |
+| ASK-MODEL | Ask on any model | `forge ask --model` and `--effort`, with `[models.lite]` as the fallback, and the ask turn started as an ephemeral conversation through the driver | 6 | `src/forge/ask.py`, `src/forge/cli.py`, `src/forge/codex.py`, `src/forge/codex_turn.py` | `tests/test_steer_ask_model.py` | RESUME | yes |
+| DOCS | Tell the coordinator | The Forge skill's rules for notes, questions and `forge ask`, and the guide's section on them | 5 | `src/forge/templates/skill.md`, `docs/guide.md` | `tests/test_steer_docs.py` | STEER, ASK-MODEL | yes |
 
 New moving parts: none
 
@@ -73,3 +78,6 @@ New moving parts: none
   tracked-and-untracked snapshot to detect changes.
 - Each test file starts with `STORY = "FORGE-STEER-1"`, and its `test_<n>_` names cite the Done-when
   items its task covers.
+- ASK-MODEL waits for RESUME, which also changes `codex_turn.py`, and passes `ephemeral` to the
+  SDK's thread start only for `forge ask`; workers keep saved conversations, since rounds resume
+  them.

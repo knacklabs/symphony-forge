@@ -87,11 +87,18 @@
       "order": 55
     },
     {
+      "key": "FORGE-TRIM-1",
+      "title": "Forge sheds dead and duplicated code before it grows again",
+      "status": "pending",
+      "order": 56,
+      "spec": "docs/specs/forge-trim.md"
+    },
+    {
       "key": "FORGE-CHATVIEW-1",
       "title": "Forge's Codex chats are easy to follow in the Codex app",
-      "spec": "docs/specs/codex-chat-view.md",
       "status": "pending",
-      "order": 56
+      "order": 57,
+      "spec": "docs/specs/codex-chat-view.md"
     }
   ],
   "epics": [

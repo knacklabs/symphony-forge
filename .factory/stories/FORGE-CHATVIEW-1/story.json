@@ -1,0 +1,28 @@
+{
+  "approval": {
+    "at": "2026-09-27T17:03:21+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_012k1caenSNqouWwKHGFVvd5",
+    "hash": "8adb600cd594c05b49471b16bb8c66e47fdb0bbd666b2b738c059e4ab0b4a296",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-CHATVIEW-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-27T16:59:22+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T17:02:41+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-27T17:03:21+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
+  "touches": 1
+}
