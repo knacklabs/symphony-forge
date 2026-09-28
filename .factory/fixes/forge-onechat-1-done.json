@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "Stories in any Forge repo on this machine are approved from one main chat; Forge remembers each repo it runs in and the approval hook finds the story there",
-  "status": "started",
+  "review": {
+    "commit": "4d9c0d4a765d021cf64e0b17160c75c2112d8917",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "5194a3fd1079b6a4e306c491142ecb5c1a0d6b55b906206c6fcef6ad0ad5fbb8"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T08:53:23+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:54:13+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
