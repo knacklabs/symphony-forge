@@ -5,11 +5,11 @@
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
   "kind": "fix",
   "review": {
-    "commit": "df6c5adfdef7d2c854d90202e90aea5de0d3ed99",
+    "commit": "c455858433f97bc530d50bcd797439387fdcee27",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "db4591d53062d30e2e5b8a85ff21d41ed50c0d78b1f407b8dce948cd5b018731"
+    "tree": "c9de970803f7852c9bffe96aac462cb9421ccdb7523337dd2a14bd0d39cbbef3"
   },
   "status": "waiting for checks",
   "steps": [
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-09-28T08:47:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T09:04:22+00:00",
       "step": "review"
     }
   ],
