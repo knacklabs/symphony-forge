@@ -1,0 +1,14 @@
+{
+  "base": "b77433c204e8d43a5c2a5a3fc00360ddb6848583",
+  "branch": "fix/reviewers-reverse-the-coordinator-s-earl",
+  "done_when": "The next review's brief lists every Ruling: line from the branch's commit messages and every dismissal with its reason, and tells the reviewer to raise a ruled or dismissed point again only with new evidence; a test runs forge close twice and sees both in the second brief",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T19:22:56+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviewers reverse the coordinator's earlier rulings, because a ruling's reason never reaches the next review"
+}
