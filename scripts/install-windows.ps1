@@ -1,0 +1,90 @@
+param([switch]$Check)
+
+$ErrorActionPreference = 'Stop'
+$ForgeVersion = '1.1.0'
+
+function Has-Tool($Name) { return [bool](Get-Command $Name -ErrorAction SilentlyContinue) }
+function Missing($Name) { Write-Output "Missing: $Name" }
+function Install-Package($Label, $Command, $Id) {
+    if (Has-Tool $Command) {
+        if (-not $Check) { Write-Output "$Label is ready." }
+        return
+    }
+    if ($Check) { Missing $Label; return }
+    Write-Output "Installing $Label..."
+    & winget install --id $Id --exact --source winget --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -ne 0) { throw "$Label did not install. Check the message above, then run this script again." }
+    $env:PATH += ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                 [Environment]::GetEnvironmentVariable('Path', 'User')
+}
+function Browsers-Present {
+    $root = Join-Path $env:LOCALAPPDATA 'ms-playwright'
+    foreach ($kind in @('chromium', 'firefox', 'webkit')) {
+        if (-not (Get-ChildItem -Path $root -Directory -Filter "$kind-*" -ErrorAction SilentlyContinue)) { return $false }
+    }
+    return $true
+}
+
+if (-not (Has-Tool winget)) {
+    if ($Check) { Missing 'Windows Package Manager (winget)' }
+    else { throw 'Windows Package Manager is missing. Install App Installer from Microsoft Store, then run this script again.' }
+}
+
+Install-Package 'Git' git 'Git.Git'
+Install-Package 'GitHub CLI' gh 'GitHub.cli'
+Install-Package 'Node' node 'OpenJS.NodeJS.LTS'
+Install-Package 'uv' uv 'astral-sh.uv'
+
+$wslReady = (Has-Tool wsl) -and ((& wsl --status 2>$null) -match 'Default Version: 2')
+if (-not $wslReady) {
+    if ($Check) { Missing 'WSL2 for Docker' }
+    else {
+        $admin = [Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+        if (-not $admin.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            Write-Output 'Docker needs WSL2. Open PowerShell as administrator, run this script again, then restart your laptop once.'
+            exit 1
+        }
+        Write-Output 'Switching on WSL2 for Docker. Restart your laptop once after setup, then run this script again.'
+        & wsl --install --no-distribution
+        if ($LASTEXITCODE -ne 0) { throw 'WSL2 did not switch on. Check the message above, then run this script again as administrator.' }
+    }
+}
+Install-Package 'Docker' docker 'Docker.DockerDesktop'
+
+$forgeReady = (Has-Tool forge) -and ((& forge --version 2>$null) -eq "forge v$ForgeVersion")
+if (-not $forgeReady) {
+    if ($Check) { Missing 'Forge' }
+    else {
+        Write-Output 'Installing Forge...'
+        & uv tool install --force "symphony-forge==$ForgeVersion"
+        if ($LASTEXITCODE -ne 0) { throw 'Forge did not install. Check the message above, then run this script again.' }
+    }
+} elseif (-not $Check) { Write-Output 'Forge is ready.' }
+
+foreach ($tool in @(@('claude', 'Claude Code', '@anthropic-ai/claude-code'),
+                    @('codex', 'Codex', '@openai/codex'))) {
+    if (Has-Tool $tool[0]) {
+        if (-not $Check) { Write-Output "$($tool[1]) is ready." }
+        continue
+    }
+    if ($Check) { Missing $tool[1]; continue }
+    Write-Output "Installing $($tool[1])..."
+    & npm install -g $tool[2]
+    if ($LASTEXITCODE -ne 0) { throw "$($tool[1]) did not install. Check the message above, then run this script again." }
+}
+
+if (Browsers-Present) {
+    if (-not $Check) { Write-Output 'Playwright browsers are ready.' }
+}
+elseif ($Check) { Missing 'Playwright browsers' }
+else {
+    Write-Output 'Installing Playwright browsers...'
+    & npx --yes playwright install chromium firefox webkit
+    if ($LASTEXITCODE -ne 0) { throw 'Playwright browsers did not install. Check the message above, then run this script again.' }
+}
+
+if (-not $Check) {
+    Write-Output 'Setup finished. Forge version:'
+    & forge --version
+    Write-Output 'Next: sign in to Claude Code or Codex, then open your new repo.'
+}
