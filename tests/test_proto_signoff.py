@@ -78,6 +78,16 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
+    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {"review_status": "findings", "findings": [{
+        "priority": "P0", "title": "Prototype exposes data", "body": "Demo leaks records",
+        "code_location": {"file_path": "app.py", "line": 1}}]}}]))
+    critical = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert critical.returncode == 1
+    assert "Prototype exposes data" in critical.stderr
+    assert "Next: fix the prototype" in critical.stderr
+    assert "status: proposed" in page.read_text()
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default ")
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
     _decision(fix, changed)
@@ -85,7 +95,17 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert default.returncode == 1
     assert "Sign-in" in default.stderr
     assert "forge next" in default.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+
+    changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent")
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    _decision(fix, changed)
+    agent = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert agent.returncode == 1
+    assert "Sign-in" in agent.stderr
+    assert "forge next" in agent.stderr
+    assert "status: proposed" in page.read_text()
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     open_answer = answers.replace("Sign-in: agreed (client, 2026-09-28)",
                                   "Sign-in: ask the client (Ravi, 2026-09-28)")
@@ -95,7 +115,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert open_topic.returncode == 1
     assert "Sign-in" in open_topic.stderr
     assert "forge next" in open_topic.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     queue.write_text(json.dumps([{"say": SOL_XHIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
@@ -181,7 +201,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 11
+    assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--model"] == "codex=gpt-6-sol"
     assert options["--thinking"] == "codex=xhigh"
@@ -219,6 +239,17 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
     assert wrong_person.returncode == 1
     assert "Sign-off person" in wrong_person.stderr
 
+    for customer in ("Sam Lee", ", director"):
+        changed = answers.replace("Sam Lee, director", customer)
+        (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+        page = _decision(fix, changed, customer=customer)
+        no_identity = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert no_identity.returncode == 1
+        assert "customer" in no_identity.stderr.lower()
+        assert "status: proposed" in page.read_text()
+        assert not queue.with_suffix(".calls.jsonl").exists()
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+
     for field in ("approved_via", "approved_on", "demo"):
         _decision(fix, answers)
         page.write_text(page.read_text().replace(f"{field}: " + {
@@ -228,3 +259,18 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
         assert refused.returncode == 1
         assert field in refused.stderr
         assert not queue.with_suffix(".calls.jsonl").exists()
+
+    page = _decision(fix, answers, via="call")
+    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+                                  "report": {"review_status": "scoped-clean", "findings": []}}]))
+    accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi Recorder", cwd=fix)
+    assert accepted.returncode == 0, accepted.stderr
+    record = page.read_text()
+    assert "status: accepted" in record
+    assert 'confirmed_by: "Ravi Recorder"' in record
+    assert "customer: Sam Lee, director" in record
+    assert "approved_via: call" in record
+    assert "approved_on: 2026-09-28" in record
+    assert "demo: https://demo.example.test" in record
+    assert answers in record
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
