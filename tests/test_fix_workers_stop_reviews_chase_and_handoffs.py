@@ -35,17 +35,16 @@ def test_2_worker_requires_default_branch_match_for_unrelated_failure(worker_bri
     assert "otherwise treat it as unresolved" in worker_brief
 
 
-def test_3_doc_only_guidance_reaches_worker_and_reviewer(worker_brief, env):
-    assert worker_brief.count("Documentation-only changes need no new behaviour test") == 2
-    assert worker_brief.count("check claims, commands and links") == 2
+def test_3_reviewer_requires_named_doc_tests(env):
+    # The old reviewer exemption is replaced by the named-test requirement.
     item, _ = env.start_fix({"README.md": "# Hello\n"})
     env.reviews(CLEAN)
     env.checks(GREEN)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     prompt = env.prompt()
-    assert "Documentation-only changes need no new behaviour test" in prompt
-    assert "check claims, commands and links" in prompt
+    assert "Documentation-only changes still need every test named in the task's Tests column" in prompt
+    assert "check claims,\ncommands and links" in prompt
 
 
 def test_4_worker_cannot_count_reformatting_as_reduction(worker_brief):
