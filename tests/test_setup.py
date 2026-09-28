@@ -309,9 +309,10 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert done.stdout.startswith("Everything checks out"), done.stdout
         # Each host hook command ran, with a payload.
         calls = log.read_text(encoding="utf-8")
-        for hook in ("context", "deny", "approval"):
+        # Each host now probes the handoff hook as well as the three earlier hooks.
+        for hook in ("context", "handoff", "deny", "approval"):
             assert calls.count(f"hook {hook}\n") == 2, calls
-        assert calls.count('"hook_event_name"') == 6
+        assert calls.count('"hook_event_name"') == 8
     elif case == "codex doesn't trust the project":
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
@@ -351,7 +352,9 @@ def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 
     commands = _hook_commands(repo.path)
-    assert len(commands) == 6
+    # Both new PreCompact commands must fail closed when Forge cannot launch.
+    assert len(commands) == 8
+    assert sum(event == "PreCompact" for _, event, _ in commands) == 2
     for rel, event, command in commands:
         build = claude_payload if rel.startswith(".claude") else codex_payload
         tool, tool_input = tools.get(event, (None, None))
