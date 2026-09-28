@@ -1,0 +1,10 @@
+{
+  "branch": "task/FORGE-LIVE-1-ADOPT",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T19:22:51+00:00",
+      "step": "start"
+    }
+  ]
+}
