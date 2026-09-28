@@ -210,3 +210,8 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 54. **Unproven: the legacy exemption at `forge next` and pull-request check.** Item 2 says older approved stories keep today’s rules entirely, but its legacy test covers only [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:68). GATES also adds read gates to `forge next` and the pull-request check. Test that both preserve the exemption for an older approved story whose Tasks table changed on the default branch.
    Disposition: cut: item 2's legacy test covers forge next, the pull-request check and task start.
 
+## Round 15
+
+55. **The promoted-task merge can fail before a conflict exists.** [`story new --from-fix`](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:544) does not require the promoted task worktree to be clean. A local edit that the approval merge would overwrite makes Git refuse before entering a merge state, so the planned [abort-and-retry path](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:72) does not apply. Pin the refusal and recovery with approval already recorded, and test an overlapping local edit in GATES.
+   Disposition: cut: item 2 covers any failed merge, including uncommitted edits in the way, leaving branch and folder as they were, with a test.
+
