@@ -258,8 +258,9 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         assert (line["kind"], line["continued"], line["fresh_start"]) == ("Fix", False, why)
         assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
         assert _sent(calls, "thread/start")[-1]["config"] == FIX_CONFIG
-        if not why.startswith("Codex couldn't"):
-            assert "You are the worker." in _text(calls)
+        full_brief = _text(calls)
+        assert "You are the worker." in full_brief
+        assert "### Done when" in full_brief and "## Your task" in full_brief
         tried = len(_sent(calls, "thread/resume")) - resumed
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why
 

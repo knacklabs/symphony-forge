@@ -85,9 +85,12 @@ def work(args: argparse.Namespace) -> None:
                                 if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread))
+        fresh_brief = None
         if thread:
             saved = codex.record(top, item)
             brief += _changes(top, saved.get("head") or saved["start"])
+            fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
+                                   round_number)
         state["status"] = "fixing" if findings or failing else "working"
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
@@ -104,7 +107,7 @@ def work(args: argparse.Namespace) -> None:
                 name = (prefix.rstrip() if name[59].isspace() else
                         prefix.rsplit(" ", 1)[0] or prefix) + "…"
             result = codex.run(top, item, kind, name, brief, "full-access",
-                               thread, fresh, approval, note=note)
+                               thread, fresh, approval, note=note, fresh_prompt=fresh_brief)
             outcome = "completed" if result["status"] == "completed" else "failed"
         finally:
             repo.record_timing(top, item, "worker round", start, clock, outcome,

@@ -213,12 +213,12 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
         archive_thread: bool = False, model: str | None = None,
-        effort: str | None = None) -> dict[str, Any]:
+        effort: str | None = None, fresh_prompt: str | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
-    resume it, else on a new one, and name the conversation `name`. `fresh` says why a new one
-    starts, and the conversation is recorded with the story's `approval`. With `read`, run no
-    turn: read back each turn of `thread` with its status, returned as "read" ([] when Codex has
-    no such conversation).
+    resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
+    when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
+    `approval`. With `read`, run no turn: read back each turn of `thread` with its status, returned
+    as "read" ([] when Codex has no such conversation).
 
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
     `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
@@ -236,6 +236,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                "config": {} if archive_thread else settings(repo.config(checkout), kind),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask"}
+    if fresh_prompt is not None:
+        request["fresh_prompt"] = fresh_prompt
     if model is not None:
         request["config"]["model"] = model
     if effort is not None:
