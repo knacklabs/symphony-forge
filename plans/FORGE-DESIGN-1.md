@@ -1,22 +1,40 @@
-# Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high
+# Screens and flows are built by Opus 5.5
 
-<n> parts · Risks: ... · New moving parts: ...
+4 parts · Risks: none · New moving parts: none
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
+- Any story task that changes what people see, and every prototype fix before sign-off, is built by
+  Claude on Opus 5.5 at high effort, using impeccable, Emil's design engineering and the app
+  baseline. Backend and Forge's own work stays on Codex, as today.
+- If Claude can't run on the machine, the same work goes to Codex on Sol at high effort instead,
+  and the work log says so and why.
+- Both choices sit in the repo's `forge.toml`, next to the other models, so they can be changed in
+  one place.
 
 ## Why
 
-Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high
+The owner wants every screen to be flawless and judges Opus 5.5 the best designer, with Sol at
+high effort as the last resort. Today every worker in a Codex repo is a Codex worker, whatever the
+work is.
 
 ## Done when
 
-1. **User-facing story tasks and prototype fixes run on a Claude worker with the models in forge.toml's [models.design] (Opus 5.5, high), falling back to Codex with [models.design.codex] (Sol, high) only when Claude can't run; other work is unchanged** <Detail: evidence, edge cases or technical notes, if needed.>
+1. **The choice is recorded.** A decision says design work runs on Claude with Opus 5.5 at high
+   effort and falls back to Codex with Sol at high effort, and why.
+2. **Design work has its own models.** `forge.toml` accepts `[models.design.claude]` and
+   `[models.design.codex]`; `forge init` writes them as Opus 5.5 (`claude-opus-5-5`) high and
+   `gpt-6-sol` high; a repo without them uses those same values; this repo's `forge.toml` has them.
+3. **Design work goes to Opus 5.5.** `forge work` on a story task whose row is user-facing, or on a
+   fix whose allowance is "Prototype before sign-off", runs a Claude worker with
+   `[models.design.claude]`, whatever `workers` says; every other item runs as today.
+4. **Sol high is the fallback.** When the `claude` command is missing, or the Claude run fails
+   before it changes the checkout, `forge work` runs the same brief on Codex with
+   `[models.design.codex]` and prints and logs that it fell back and why; a Claude run that changed
+   the checkout and then failed is reported as a failure, not retried on Codex.
+5. **The guide says so.** The guide's models section explains the design models and the fallback.
 
 ## Risks
-
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
 
 Risks: none
 
@@ -24,19 +42,26 @@ Risks: none
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high | Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high | 1 | `docs/specs/prototype-signoff.md`, `docs/specs/prototype-signoff.read.md`, `plans/FORGE-PROTO-1.md`, `plans/FORGE-PROTO-1.read.md`, `plans/roadmap.json` | | none | no |
+| SPEC | The decision | The decision record for design work on Opus 5.5 | 1 | `docs/decisions/` | | none | no |
+| MODELS | Design models | The design kind with its two family entries, the defaults, init's forge.toml and this repo's forge.toml | 2 | `src/forge/repo.py`, `src/forge/init.py`, `forge.toml` | `tests/test_design_models.py` | none | no |
+| ROUTE | Route design work | Choosing the Claude worker for design items and the Codex fallback | 3, 4 | `src/forge/worker.py` | `tests/test_design_route.py` | MODELS | no |
+| DOCS | Say so | The guide's models section | 5 | `docs/guide.md` | `tests/test_design_docs.py` | none | no |
 
 New moving parts: none
 
 ## Notes
+
+- MODELS adds `design` to the kinds with one entry per family, like `grill`, and a
+  `repo.design_models(cfg, family)` that returns the table's entry or the default when the table
+  has none: claude `{"model": "claude-opus-5-5", "effort": "high"}`, codex
+  `{"model": "gpt-6-sol", "effort": "high"}`. ROUTE uses it.
+- ROUTE reads the prototype allowance exactly as FORGE-PROTO-1's GATE records it: the fix state's
+  `allow_large` equals "Prototype before sign-off". A task is user-facing when its row's
+  User-facing cell says yes, as the brief already reads it.
+- A Claude worker round starts fresh each time, so it always gets the full brief; the Codex
+  fallback continues the item's Codex conversation when it has one, as any Codex round does.
+- "Changed the checkout" means HEAD moved or `git status --porcelain` is not empty after the run.
+- Each test file starts with `STORY = "FORGE-DESIGN-1"`, and its `test_<n>_` names cite the
+  Done-when items its task covers.
