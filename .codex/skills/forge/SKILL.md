@@ -53,6 +53,15 @@ options, then make the change yourself in a fix: `forge fix start`, the edit, th
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
+## Handoff
+
+`.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across
+a compaction. Before each compaction Forge rewrites its current-state part from `forge next` and
+keeps everything under `## Decisions and lessons`. Add one line there at each milestone: a story
+approved, a task merged, a decision the owner made, a lesson learned or a mistake you won't
+repeat. After a compaction or in a new session, read it first. The file is local and never
+committed.
+
 ## New directions
 
 Grill any request with more than one reasonable reading or no stated done-when before starting a

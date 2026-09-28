@@ -44,3 +44,9 @@ def test_1_sync_ships_precompact_handoff_and_hook_preserves_decisions(repo, monk
     assert updated.endswith(notes)
     assert updated.count("## Current state (") == 1
     assert "handoff.md" not in repo.git("ls-files", "--others", "--exclude-standard")
+
+    for path in (".claude/skills/forge/SKILL.md", ".codex/skills/forge/SKILL.md"):
+        skill = " ".join((repo.path / path).read_text(encoding="utf-8").split())
+        for phrase in ("`.git/forge/handoff.md`", "at each milestone", "read it first",
+                       "never committed"):
+            assert phrase in skill
