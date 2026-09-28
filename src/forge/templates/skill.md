@@ -155,35 +155,8 @@ discards the answer.
 
 ## Build simple
 
-Rules for the client's app in every phase; Forge's own principles govern Forge. Their checks run
-in the cold reads, the review, the functional check and the check-back, and add no record.
-
-**Challenge first.** Treat every feature the client or the FDE asks for as a guess about a
-problem, and find that problem through Discovery before building.
-
-1. Problem first: a spec's Why names the problem and what today's workaround costs.
-2. Smallest slice: the first story is the thinnest end-to-end path that moves the success
-   measure, deployed where the client can use it.
-3. Only what Done-when needs: every task, screen, field, setting, role and integration traces to
-   a Done-when item; anything else is cut, or goes under the spec's Out of scope.
-4. Fewest moving parts: climb the ladder below. The story doc's Tasks section ends with one
-   `New moving parts:` line: `none`, or each new dependency, service, datastore, queue,
-   background job or abstraction layer with the Done-when item that needs it.
-5. Delete before adding: prefer removing a step, screen or workaround.
-6. One home per fact: store each piece of data once; everything else reads or derives it.
-7. Simplest UI: one path per job, the fewest screens, fields and clicks, native controls first.
-   impeccable is the one UI skill; run its `distill` before a demo. Use a motion skill only when a
-   Done-when item needs motion.
-8. Measure: success means the client's number moved, not that a feature shipped.
-9. Reversible: every change is a pull request a revert undoes; one-way steps go under Risks.
-10. Operable: messages say in plain words what to do next, and the README keeps a short "How it
-    works" that a non-technical client can follow.
-11. Never simplified away: input checks at trust boundaries, permission checks, secrets kept out
-    of code and logs, protection against data loss, and accessibility basics.
-
-**The ladder.** Stop at the first rung that holds: does it need software at all; does a Done-when
-item need this code; is it already in the repo; the standard library; a platform feature; an
-installed dependency; one line; then the least new code. A new moving part is always last.
+Read [standards.md](standards.md) beside this skill for Forge's principles, the client's app
+rules and the build-simple ladder. Apply its rules in every phase.
 
 **Finding forms.** `Simpler: <cut> → <replacement>` is P2, or P1 when a new moving part isn't
 named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when item:
