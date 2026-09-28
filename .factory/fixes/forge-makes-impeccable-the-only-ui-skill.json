@@ -5,13 +5,13 @@
   "done_when": "The standards, the frontend conventions, the worker brief and the review brief require both impeccable and emil-design-eng for UI work, with impeccable owning visual design and the checking pass and Emil owning interaction feel, and state the owner's resolutions of their conflicts; review reports a missing impeccable pass or a failed Emil checklist item as blocking; the synced copies match and the full test suite passes",
   "kind": "fix",
   "review": {
-    "commit": "348dcc3e1bbcbf693d9f1413072c21f0b7598244",
+    "commit": "c87c51778c75cdd17177013520a66df181967e8e",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "177c71f971864c8cea3828a3af2dbf1b0226bbea9e1edfe58d409242d179d5fb"
+    "tree": "f334122ea066772c78fa259257123d85751d489419b39bbf950257f3e33571b1"
   },
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T10:27:25+00:00",
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-28T11:28:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:00:42+00:00",
       "step": "review"
     }
   ],
