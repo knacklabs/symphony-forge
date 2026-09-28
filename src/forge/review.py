@@ -221,8 +221,8 @@ def _test_file(path: str) -> bool:
     name = parts[-1]
     return (any(fnmatch(name, pattern) for pattern in ("test_*.py", "*_test.py",
                                                         "*.test.*", "*.spec.*"))
-            or (Path(path).suffix in {".py", ".js", ".jsx", ".ts", ".tsx"}
-                and any(part.startswith("test") for part in parts[:-1])))
+            or (any(part.startswith("test") for part in parts[:-1])
+                and "fixtures" not in parts[:-1]))
 
 
 # --- the round -------------------------------------------------------------------------
