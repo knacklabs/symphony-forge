@@ -1,8 +1,7 @@
 {
   "base": "6adcdc7f44b8822a57f0f7e16bcd21f8c0257e7b",
-  "branch": "fix/forge-covers-building-and-sign-off-recor",
+  "branch": "task/FORGE-AHA-1-SPEC",
   "done_when": "The skill and templates carry the aha journey from the first meeting to sign-off",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
