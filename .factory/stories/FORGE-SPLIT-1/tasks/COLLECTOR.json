@@ -1,26 +1,33 @@
 {
   "branch": "task/FORGE-SPLIT-1-COLLECTOR",
   "review": {
-    "commit": "113c7eb65b1ea4bcde4b6a8f65c74907bf8bcf56",
+    "commit": "f0dfcc5a26da8c6db2d054d878249ecd9182aae2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The declaration contract promises today's argument tuples, but `ast.literal_eval` rejects callable values such as `int`. Moving the existing `close --dismiss` tuple from `src/forge/cli.py:49` into `COMMANDS` therefore breaks parser construction, including `forge --help`. The conversion at lines 144\u2013145 only supports the replacement string `\"int\"`, and `tests/test_split_commands.py:430` tests that replacement rather than the promised representation. Support the existing tuple format and exercise it through the real CLI; this collector work is within this task's scope.",
+        "body": "The collector only visits six hard-coded modules. A new module declaring COMMANDS or GROUP_HELP is ignored, so its commands remain unavailable until cli.py is edited. This directly misses COLLECTOR's required package discovery, also specified in plans/FORGE-SPLIT-1.md:61\u201363. Discover modules with pkgutil and collect their declarations while retaining the permitted transitional table.",
         "file": "src/forge/cli.py",
-        "line": 123,
+        "line": 106,
         "priority": "P1",
-        "title": "Not done: command declarations accept today's argument tuples"
+        "title": "Not done: discover every module's command declarations"
       },
       {
-        "body": "Done-when item 2 remains partially unmet: parser construction still consumes the central `TABLE` and `GROUPS`. The remaining declarations require changes to owners outside this task's scope. `plans/FORGE-SPLIT-1.md:41` assigns those changes to COMMANDS, and lines 63\u201364 explicitly permit this intermediate arrangement. Complete the table and group-help removal in COMMANDS; this is deferred advice rather than a blocker for COLLECTOR.",
+        "body": "The discovery test inserts its probe into board.py, which is already in the collector's fixed list. It therefore passes despite the missing package discovery. Add a fixture module outside that list and verify through the real Forge entry point that its command appears in help and runs without editing cli.py. The existing callable-argument and group-help checks remain useful, but do not prove discovery.",
+        "file": "tests/test_split_commands.py",
+        "line": 418,
+        "priority": "P1",
+        "title": "Not done: test command discovery from a new module"
+      },
+      {
+        "body": "Parser construction still consumes TABLE and GROUPS, so Done-when item 2's complete removal of centralized declarations remains unfinished. plans/FORGE-SPLIT-1.md:41 assigns the remaining owner migrations to COMMANDS, and lines 63\u201364 explicitly allow this intermediate arrangement. Complete that removal in COMMANDS; it is deferred advice for this branch.",
         "file": "src/forge/cli.py",
-        "line": 129,
+        "line": 118,
         "priority": "P2",
         "title": "Later: remove the remaining command table in COMMANDS"
       }
     ],
     "status": "blocked",
-    "tree": "83368010b3299b97a695a8e5fb827ab2e67ab8690acd3d497a2d2b6612038622"
+    "tree": "e59320c006692498300467086bbaf80fc7c7138b536f1eed1710979eb5c1e949"
   },
   "status": "fixing",
   "steps": [
@@ -46,6 +53,10 @@
     },
     {
       "at": "2026-09-28T08:49:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:57:58+00:00",
       "step": "review"
     }
   ]
