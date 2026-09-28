@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-28T11:26:22+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01PXmvSDmeULXe9cXkfDpqia",
+    "hash": "bdd79717e0f2f84a19464ada84d3a15a2974e08233400575366da71b00d97e75",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-SALES-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-28T11:15:52+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:21:41+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T11:26:22+00:00",
+      "step": "approved"
     }
   ],
   "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
-  "touches": 0
+  "touches": 1
 }
