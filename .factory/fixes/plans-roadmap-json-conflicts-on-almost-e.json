@@ -3,7 +3,7 @@
   "branch": "fix/plans-roadmap-json-conflicts-on-almost-e",
   "done_when": "Git merges plans/roadmap.json itself: forge sync registers a merge rule that keeps both sides' new items and the latest status of each, so two branches that each add an item merge without a conflict; a test merges two such branches",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-28T18:45:21+00:00",
