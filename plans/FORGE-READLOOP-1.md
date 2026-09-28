@@ -158,7 +158,9 @@ New moving parts: none
 
 - SPEC also changes `read` in `story.py` so round 1 sends only the part before
   `<!-- forge:round -->` and fills `$traps` from the default branch's AGENTS.md, so SPEC can merge
-  before ROUNDS without round 1 carrying the next-round text.
+  before ROUNDS without round 1 carrying the next-round text. SPEC's `tests/test_readloop_prompt.py`
+  runs `forge read` and checks that round 1's prompt has no next-round text and that a story branch
+  made before a trap landed on the default branch still gets it.
 - SPEC pins the next-round prompt as a second part of `cold-read.md`, after a
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
   `$path`, `$diff`, `$dispositions` (the previous round's findings with their dispositions, plus
