@@ -1,21 +1,21 @@
 {
   "branch": "task/FORGE-ONECHAT-1-REGISTRY",
   "review": {
-    "commit": "e359f84b4533db58c691d6b919ea95a682a3c1f0",
+    "commit": "03a41240552f1a7e4de01586f207bf0484f281b5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The only registry test always sets XDG_CONFIG_HOME on Unix, so it never verifies the explicitly required ~/.config fallback. Removing or breaking that fallback in machine.py would leave this test passing, and no other test asserts the registry location. Add a case through the real Forge command with XDG_CONFIG_HOME unset and HOME isolated, then assert that the checkout is recorded in ~/.config/forge/repos.",
-        "file": "tests/test_onechat_registry.py",
-        "line": 18,
-        "priority": "P1",
-        "title": "Not done: test the default ~/.config registry location"
+        "body": "This new dispatch write makes existing CLI tests modify the developer's real `forge/repos` file. The shared fixture in `tests/conftest.py:99\u2013130` does not isolate XDG_CONFIG_HOME or APPDATA, and existing tests such as `tests/test_setup.py:101` successfully invoke `sync` on temporary Forge repositories. Only the new registry test sets an isolated config folder. Consequently, ordinary suite runs append temporary checkout paths to persistent user configuration. Isolate the registry location in the shared test environment so all command tests keep their writes inside their temporary directories.",
+        "file": "src/forge/cli.py",
+        "line": 157,
+        "priority": "P2",
+        "title": "Isolate the registry for the existing CLI test suite"
       }
     ],
-    "status": "blocked",
-    "tree": "3b411ad01a40cd5139beed1cea92ecb104ae8a986376affeaf80a5d864060f59"
+    "status": "clean",
+    "tree": "90b335ff3ca2a357f79e4be47b384531594648c6b77c9c41c77346cc85c1e6fb"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T05:28:26+00:00",
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-09-28T06:57:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T07:02:42+00:00",
       "step": "review"
     }
   ]
