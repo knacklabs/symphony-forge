@@ -3,11 +3,44 @@
   "branch": "fix/the-owner-moved-this-repo-s-workers-from",
   "done_when": "This repo's forge.toml sets workers = \"claude\" and [models.build], [models.fix] and [models.lite] to claude-opus-5-5 at medium effort without subagents; review stays on Codex; forge doctor passes",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "5e786455e08cef3bb1cdb205d811f12ca9586625",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The test at tests/test_codex_config.py:15-22 runs in the configured `pytest tests` suite and still asserts `workers == \"codex\"`, `gpt-6-sol`, and Luna subagents. It fails against this config. Update it to verify the requested Claude settings and unchanged Codex review setting.",
+        "file": "forge.toml",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: the repository worker-model config test"
+      },
+      {
+        "body": "tests/test_fix_first_codex_round_luna_helpers.py:34-53 copies this repository's `forge.toml`, invokes `forge work`, then expects a Codex `thread/start`. With `workers = \"claude\"`, src/forge/worker.py:66 and :73 route that first fix round to Claude using `[models.lite]`, so the expected Codex call cannot occur; the test also supplies no Claude stub. Give the old Codex contract an explicit Codex fixture or adapt this test to check the new Claude route.",
+        "file": "forge.toml",
+        "line": 19,
+        "priority": "P1",
+        "title": "Not done: the first-fix worker integration test"
+      },
+      {
+        "body": "src/forge/ask.py:25-30 still starts a Codex conversation, and src/forge/codex.py:137-138 takes its default model from `[models.lite]`. This setting therefore sends `claude-opus-5-5` to Codex on an ordinary `forge ask` call. Codex's [config reference](https://developers.openai.com/ja-JP/docs/config-file/config-reference) specifies OpenAI as the default model provider, so the command cannot use that Anthropic model without a separate provider setup. Give `ask` a Codex-compatible default or route it through Claude.",
+        "file": "forge.toml",
+        "line": 19,
+        "priority": "P2",
+        "title": "Keep `forge ask` from sending the Claude lite model to Codex"
+      }
+    ],
+    "status": "blocked",
+    "tree": "36c18f91d879b9b49fdd0c8baa6941a5b4550581bc1dcea3107b2d45f6d6c1ac"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T14:54:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T14:59:59+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner moved this repo's workers from Codex to Claude on Opus 5.5 at medium effort, keeping Autoreview on Codex"
