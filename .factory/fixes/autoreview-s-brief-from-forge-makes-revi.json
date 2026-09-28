@@ -4,21 +4,13 @@
   "done_when": "Forge's review brief shows the previous round's findings and asks for every blocking gap at once; a test the story assigns to another task is an advisory Later finding; the end-to-end test rule applies to user-facing behaviour, not CI, config or test-only items; the edge-case rule sits with the blocking rules; Forge's bookkeeping files are left out of the out-of-scope list; the reviewer's checkout has readable git history; tests through forge close show each",
   "kind": "fix",
   "review": {
-    "commit": "892e1a398480a28342687d968f87e0041c0b73b4",
+    "commit": "69c965bf3bc6ac6cd12f293ba2ed800c60574675",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The clone's `origin/main` tracks the source repository's local `main`, not its `origin/main` ([Git clone documentation](https://git-scm.com/docs/git-clone)). `src/forge/close.py:170\u2013171` fetches and merges the remote default branch into the task worktree without updating local `main`. When local `main` lags, Autoreview therefore receives an older base and reviews already-merged changes alongside this branch's changes; if the local default branch is absent, the base cannot resolve. Preserve the source base's exact commit in the clone before passing it to Autoreview. Add coverage through `forge close` with local `main` behind `origin/main`; the new history test only checks HEAD and cannot detect this mismatch.",
-        "file": "src/forge/review.py",
-        "line": 228,
-        "priority": "P1",
-        "title": "Preserve the fetched review base in the cloned checkout"
-      }
-    ],
-    "status": "blocked",
-    "tree": "54dd9acf42aa27205b1edcd89453f7790f9ffbad502cc2001a3b7b813ea80a20"
+    "findings": [],
+    "status": "clean",
+    "tree": "679857c5d1ec095eb25211104bfc63111004bef1a786392e291d9470a0e5231c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T09:49:07+00:00",
@@ -26,6 +18,10 @@
     },
     {
       "at": "2026-09-28T10:04:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T10:13:24+00:00",
       "step": "review"
     }
   ],
