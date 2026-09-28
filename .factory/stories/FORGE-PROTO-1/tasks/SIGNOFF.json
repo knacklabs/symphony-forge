@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-PROTO-1-SIGNOFF",
-  "status": "working",
+  "review": {
+    "commit": "caaf2196080c8b7bcac1b146380c7ad5d275d0a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The model guard treats missing telemetry as proof that Sol xhigh ran. `_attempt` only populates `selected` from progress lines, but this check defaults absent values to the required model and effort. A complete report with no such lines is accepted, as the clean stub in `test_7_review_guards_client_signoff` demonstrates. The no-fallback requirement needs positive verification of the model and effort actually used.",
+        "file": "src/forge/review.py",
+        "line": 276,
+        "priority": "P1",
+        "title": "Not done: A strict review guards sign-off"
+      },
+      {
+        "body": "A default-only answer passes this check when its source has trailing whitespace, for example `(our default , 2026-09-28)`. `nextstep.py:57` permits that whitespace and `nextstep.py:92` stores the source without trimming it; `forge next` treats the line as settled. Comparing only `.lower()` here then misses the default source, so a clean review can accept the sign-off despite an explicitly disallowed source.",
+        "file": "src/forge/records.py",
+        "line": 280,
+        "priority": "P1",
+        "title": "Not done: A strict review guards sign-off"
+      },
+      {
+        "body": "The sign-off command test exercises a blocking finding, fallback, default-only source and successful acceptance, but never attempts acceptance with a missing, ask-the-client, later, repeated or malformed must-answer topic. `test_proto_next.py` checks only `forge next`. Replacing the sign-off call to `open_must_answer_topics` with an empty list would therefore leave the sign-off tests passing while removing a required acceptance guard. Add a command-level refusal case for an open topic.",
+        "file": "tests/test_proto_signoff.py",
+        "line": 83,
+        "priority": "P1",
+        "title": "Not done: test_7_review_guards_client_signoff open-topic case"
+      },
+      {
+        "body": "The review clone uses HEAD, while acceptance reads the answers page from the working tree. If `docs/product/BRIEF.md` is removed from the index with `git rm --cached` and then edited, it drops out of this `product` path list and the later path-limited status check misses it. The reviewer sees HEAD's old page, while the decision quotes and validates the different working-tree page, yet records HEAD as its reviewed commit. Check the answers page explicitly against the reviewed commit.",
+        "file": "src/forge/review.py",
+        "line": 236,
+        "priority": "P2",
+        "title": "Keep the quoted answers tied to the reviewed commit"
+      }
+    ],
+    "status": "blocked",
+    "tree": "bdb9ae10ca4d01ea539bad31e2fcfa4479dd63e5cf6608f6208b59f0c0750e40"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T11:50:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:11:58+00:00",
+      "step": "review"
     }
   ]
 }
