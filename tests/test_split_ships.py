@@ -12,15 +12,14 @@ import pytest
 STORY = "FORGE-SPLIT-1"
 
 # Captured from forge sync with these two client setups. Hashes use LF newlines.
-# The two host-hook hashes include the new PreCompact handoff; other output keeps its contract.
-# The standards hash includes the approved two-skill UI contract.
+# The skill hash now includes prototype demo-round guidance; all other output stays pinned.
 GOLDEN = {
     "plain": {
         "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
         ".claude/settings.json": "f0e550f035db6feb93de9aeea566253326500d5925bee3d2a41faf8b5f40df7d",
         ".codex/hooks.json": "6359773ba4fb597c6f1e4e6fc504227b419afcaa2236abd459942f8fcf99dbd8",
-        ".claude/skills/forge/SKILL.md": "108e305067c9c41386cc3f35afd1898de2d6ed1fb52b2b6839d45e270bb1154d",
-        ".codex/skills/forge/SKILL.md": "108e305067c9c41386cc3f35afd1898de2d6ed1fb52b2b6839d45e270bb1154d",
+        ".claude/skills/forge/SKILL.md": "3d1c11ae51f1dd5841597fc4416a0380442c35e3d2d1de5fb2960360cafd600d",
+        ".codex/skills/forge/SKILL.md": "3d1c11ae51f1dd5841597fc4416a0380442c35e3d2d1de5fb2960360cafd600d",
         ".claude/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
         ".codex/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
         ".claude/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
