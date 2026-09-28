@@ -1,0 +1,14 @@
+{
+  "base": "6f934a6b045ed08c4059a8df59b39aaa93df5b1e",
+  "branch": "fix/design-work-screens-and-flows-runs-on-co",
+  "done_when": "User-facing story tasks and prototype fixes run on a Claude worker with the models in forge.toml's [models.design] (Opus 5.5, high), falling back to Codex with [models.design.codex] (Sol, high) only when Claude can't run; other work is unchanged",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T11:05:30+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high"
+}
