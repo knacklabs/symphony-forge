@@ -8,6 +8,7 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
@@ -29,6 +30,12 @@ COMMANDS = [
         "help": "Session start: print forge next and the story state",
         "args": [], "position": 240,
         "listing": "| `forge hook context` | Session start: prints `forge next` and the story's state |",
+    },
+    {
+        "words": "hook handoff", "run": "handoff_hook", "changes_state": False,
+        "help": "Before compaction: save forge next beside the agent's decisions and lessons",
+        "args": [], "position": 245,
+        "listing": "| `forge hook handoff` | Saves current state before context compaction |",
     },
 ]
 
@@ -111,6 +118,20 @@ def next_step(args: Any) -> int:
 def context_hook(args: Any) -> int:
     lines, states = _report(repo.root())
     print("\n".join(lines + states))
+    return 0
+
+
+def handoff_hook(args: Any) -> int:
+    top = repo.root()
+    path = repo.forge_dir(top) / "handoff.md"
+    old = path.read_text(encoding="utf-8") if path.is_file() else ""
+    heading = "## Decisions and lessons\n"
+    notes = old[old.index(heading):] if heading in old else heading
+    current = "\n".join(_report(top)[0])
+    temp = path.with_suffix(".tmp")
+    temp.write_text(f"# Forge handoff\n\n## Current state ({repo.now()[:10]})\n\n"
+                    f"{current}\n\n{notes}", encoding="utf-8")
+    os.replace(temp, path)
     return 0
 
 
