@@ -28,6 +28,7 @@ REFUSALS = {
 }
 
 TEMPLATES = Path(__file__).with_name("templates")
+SOURCE = Path(__file__).resolve().parents[2]
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 WORKFLOW_PATH = ".github/workflows/forge.yml"
 # A Forge host hook command: v1's, or the copied-in Forge's ("$(git rev-parse ...)/forge" hook x).
@@ -67,7 +68,7 @@ SHIM = """\
 if [ -x "$0.pre-forge" ]; then
   input=$(mktemp) || exit 1
   cat > "$input"
-  "$0.pre-forge" "$@" < "$input" || { status=$?; rm -f "$input"; exit "$status"; }
+  <run-prior> < "$input" || { status=$?; rm -f "$input"; exit "$status"; }
   exec < "$input"
   rm -f "$input"
 fi
@@ -239,6 +240,12 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
+def _synced_text(source: str, packaged: str) -> str:
+    """Read the checkout's copy in editable installs, or the bundled copy in built installs."""
+    checked_in = SOURCE / source
+    return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
+
+
 def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
@@ -269,16 +276,21 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **{rel: _hooks(top, rel, events) for rel, events in HOSTS.items()},
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
+        **{f"{host}/skills/forge/standards.md":
+           (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
         # Discovery's worked example, question bank and call script, opened only when needed.
-        **{f"{host}/skills/forge/fde.md": (TEMPLATES / "fde.md").read_text(encoding="utf-8")
+        **{f"{host}/skills/forge/fde.md": _synced_text(".codex/skills/forge/fde.md", "fde.md")
            for host in (".claude", ".codex")},
         # The test-audit skill (MIT, with its NOTICE) that workers and reviewers use for tests.
-        **{f"{host}/skills/test-audit/{path.name}": path.read_text(encoding="utf-8")
+        **{f"{host}/skills/test-audit/{name}":
+           _synced_text(f".codex/skills/test-audit/{name}", f"skills/test-audit/{name}")
            for host in (".claude", ".codex")
-           for path in sorted((TEMPLATES / "skills" / "test-audit").glob("*.md"))},
+           for name in ("NOTICE.md", "SKILL.md")},
         # Claude Code only: the Remote Control session it starts is a Claude feature.
         ".claude/skills/remote-approval/SKILL.md":
-            (TEMPLATES / "skills" / "remote-approval" / "SKILL.md").read_text(encoding="utf-8"),
+            _synced_text(".claude/skills/remote-approval/SKILL.md",
+                         "skills/remote-approval/SKILL.md"),
         ".codex/config.toml": _codex_config(top),
         WORKFLOW_PATH: workflow,
     }
@@ -289,9 +301,20 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     # Asked from the checkout's top: git gives core.hooksPath when set, and resolves a relative
     # one from the worktree's root, where git runs its hooks (checked with git 2.47).
     folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
-    return {folder / hook: SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
-            .replace("<what>", what).replace("<install>", install_line(cfg["version"]))
-            for hook, what in (("pre-commit", "commit"), ("pre-push", "push"))}
+    wanted = {}
+    for hook, what in (("pre-commit", "commit"), ("pre-push", "push")):
+        path = folder / hook
+        prior = read(path.with_name(f"{hook}.pre-forge")) or read(path)
+        # Husky's wrapper sources h, whose user-script lookup uses $0; a rename changes it.
+        husky = ('. "$(dirname "$0")/h"' in prior or
+                 ('n=$(basename "$0")' in prior and
+                  's=$(dirname "$(dirname "$0")")/$n' in prior))
+        run_prior = ('sh -c \'. "$0.pre-forge"\' "$0" "$@"' if husky
+                     else '"$0.pre-forge" "$@"')
+        wanted[path] = (SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
+                        .replace("<what>", what).replace("<install>", install_line(cfg["version"]))
+                        .replace("<run-prior>", run_prior))
+    return wanted
 
 
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:

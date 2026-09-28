@@ -28,7 +28,7 @@ def ask(args: argparse.Namespace) -> None:
     before = story._snapshot(top)
     with codex.hold(top, "ask", "Ask"):
         result = codex.run(top, "ask", "Ask", "Ask · this checkout", prompt, "read-only",
-                           echo=False)
+                           echo=False, model=args.model, effort=args.effort)
     if story._snapshot(top) != before:
         repo.refuse(REFUSALS["discarded"])
     if result["status"] != "completed" or not (result["text"] or "").strip():

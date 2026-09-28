@@ -55,7 +55,7 @@
         "Workflow rules are enforced by forge commands and git hooks, with the PR check as backstop, identically on Claude and Codex",
         "Clients install a pinned Forge tool; forge sync regenerates the adapter; forge migrate moves a vendored client in one PR",
         "The board tells history and current state in plain English for non-technical readers",
-        "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating myclaw; then the old tree is deleted"
+        "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating a copied-in client; then the old tree is deleted"
       ],
       "order": 52,
       "status": "active",
@@ -73,10 +73,39 @@
       "order": 53
     },
     {
-      "key": "FORGE-ONECHAT-1",
-      "title": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in",
+      "key": "FORGE-MERGE-1",
+      "title": "The agent can merge a ready pull request when the owner allows it",
+      "spec": "docs/specs/agent-merge.md",
       "status": "pending",
       "order": 54
+    },
+    {
+      "key": "FORGE-ONECHAT-1",
+      "title": "One main chat approves every Forge repo's stories",
+      "spec": "docs/specs/one-chat-approval.md",
+      "status": "pending",
+      "order": 55
+    },
+    {
+      "key": "FORGE-TRIM-1",
+      "title": "Forge sheds dead and duplicated code before it grows again",
+      "status": "pending",
+      "order": 56,
+      "spec": "docs/specs/forge-trim.md"
+    },
+    {
+      "key": "FORGE-CHATVIEW-1",
+      "title": "Forge's Codex chats are easy to follow in the Codex app",
+      "status": "pending",
+      "order": 57,
+      "spec": "docs/specs/codex-chat-view.md"
+    },
+    {
+      "key": "FORGE-SPLIT-1",
+      "title": "Each Forge behaviour owns its own entry",
+      "spec": "docs/specs/own-your-entry.md",
+      "status": "pending",
+      "order": 58
     }
   ],
   "epics": [

@@ -19,6 +19,7 @@ from test_close import PIN
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 LISTED = {"AGENTS.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+          ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
@@ -203,6 +204,10 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
 def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
+    toml = client / "forge.toml"
+    # These doctor cases exercise Claude workers, including its optional Codex trust advice.
+    toml.write_text(toml.read_text(encoding="utf-8").replace(
+        'workers = "codex"', 'workers = "claude"', 1), encoding="utf-8")
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)
     home = tmp_path / "home"  # so skills installed on this machine don't count
@@ -217,7 +222,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_config))
     else:
         monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
-    # impeccable where the configured worker (claude, from forge init) reads skills, or only
+    # impeccable where the configured Claude worker reads skills, or only
     # where Codex reads them, or only in the repo's .agents (Claude Code never reads that), or
     # nowhere.
     skills = {"no impeccable": None, "impeccable only for codex": codex_home,
@@ -239,7 +244,6 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         if os.name == "nt":
             (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
     log = _stub_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")
-    toml = client / "forge.toml"
     edit = {"version mismatch": (r'version = ".*"', 'version = "v0.0.1"'),
             "no checks or test": (r'(?s)test = .*?\nchecks = .*?\n', 'test = ""\nchecks = []\n'),
             "workflow skips test": (r"test = .*", 'test = "make test"'),

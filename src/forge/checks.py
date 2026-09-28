@@ -33,11 +33,11 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
         # check, and every one must pass. Checks forge.toml doesn't name go by their own name.
         groups: dict[str, list[str]] = {want: [] for want in names}
         for name, state in seen:
-            want = next((want for want in names if name == want or name.startswith(want + " (")),
-                        None)
+            matches = [want for want in names if name == want or name.startswith(want + " (")]
             if state == SKIPPED:
-                state = RED if want else PASS
-            groups.setdefault(want or name, []).append(state)
+                state = RED if matches else PASS
+            for want in matches or [name]:
+                groups.setdefault(want, []).append(state)
         red, missing, pending = [], [], []
         for want, states in groups.items():
             if not states:

@@ -1,0 +1,28 @@
+{
+  "approval": {
+    "at": "2026-09-27T16:52:21+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01CEeJxwwszpL253a5ithCDu",
+    "hash": "5cb4d78e4d7d983e52c099dd28906386f0a3b7f3b1225a5f50c94d963c702be2",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-SPLIT-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-27T16:47:35+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T16:51:07+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-27T16:52:21+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others",
+  "touches": 1
+}

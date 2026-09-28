@@ -1,0 +1,60 @@
+{
+  "allow_large": "The owner added UX items to this fix on 2026-09-27",
+  "base": "6dafcff28bd6366038cf47dc5f2b0ef745389a97",
+  "branch": "fix/forge-s-pull-requests-and-status-output",
+  "done_when": "PR titles are short (a task: story title: task name; a fix: the why's first clause, 70 characters at most), a promoted spec task's ID is SPEC, the PR body labels Why and Done when and the review block opens with a plain verdict and no hash, the board's GitHub call succeeds on this repo and links each item to its PR, and forge next says which items are ready to merge with their PR link and names the findings a close stopped on; tests through the real commands prove each; the board also lists active stories first, folds finished fixes into one collapsed line with their count, and uses plainer status words; existing tests that expect the old titles, IDs, PR body or output are updated to the new wording, since that change is deliberate",
+  "kind": "fix",
+  "review": {
+    "commit": "fb775207e2e963f15370ba9292d0e4508b5ff00f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If the configured checks pass but an additional check fails or remains pending, this path announces that the PR is ready to merge. `board._green_at` checks only configured names (src/forge/board.py:269\u2013274), while close also blocks on additional checks (src/forge/checks.py:34\u201350). A rejected close leaves the saved status as `waiting for checks` (src/forge/close.py:81\u201395), so this scenario reaches the new readiness path. Use the same check policy before recommending a merge.",
+        "file": "src/forge/nextstep.py",
+        "line": 247,
+        "priority": "P2",
+        "title": "Apply close's check policy before announcing merge readiness"
+      },
+      {
+        "body": "Only the newest 25 PRs across all states now receive files and checks, but consumers still process the larger listing. The metric selects the last 25 merged changes (src/forge/board.py:248\u2013257), treating missing files as no Forge changes. Newer open or closed PRs therefore cause an undercount. Older open PRs also lose their check-derived readiness at lines 215\u2013223. Fetch bounded details for the relevant PRs instead of treating omitted details as negative results.",
+        "file": "src/forge/board.py",
+        "line": 152,
+        "priority": "P2",
+        "title": "Fetch details for the PRs used by board statuses and metrics"
+      },
+      {
+        "body": "This second read uses the platform's default encoding, although `review.task` already reads and returns the document as UTF-8 (src/forge/review.py:85\u201391). On supported Windows/Python configurations without UTF-8 mode, non-ASCII story content can corrupt the title or raise `UnicodeDecodeError`, stopping close before PR creation. Use the returned text or specify `encoding=\"utf-8\"`.",
+        "file": "src/forge/close.py",
+        "line": 243,
+        "priority": "P2",
+        "title": "Reuse the UTF-8 story text when extracting its title"
+      }
+    ],
+    "status": "clean",
+    "tree": "639121cf6ae3558dd13f19fd4cdf1ddae2be1988c393f8ccc74649a2da0eb7c8"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T17:02:23+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-27T18:09:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:31:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T18:57:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-27T19:05:27+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's pull requests and status output bury what the owner must do: titles run to 300 characters, promoted spec tasks get 40-character IDs, PR bodies and review blocks carry hashes and jargon, the board times out on GitHub and has no links, and forge next never says what is ready to merge or why a close stopped"
+}

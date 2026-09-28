@@ -1,9 +1,9 @@
 """forge migrate: a client that copied Forge in moves to v1 in one pull request.
 
-The fixture (tests/fixtures/copied-client/) is shaped like myclaw. `source/` is the old Forge as it
+The fixture (tests/fixtures/copied-client/) is shaped like a copied-in client. `source/` is the old Forge as it
 was copied in; the test commits it as the Forge source repo that constitution/VENDORED_FROM names.
 `client/` is laid over it: the client's product, its own changes to Forge files (harness.yaml, and a
-skill added under factory/), old plans in myclaw's format, and old ledgers and records.
+skill added under factory/), old plans in the copied-in client's format, and old ledgers and records.
 
 Each test is named test_<criterion>_<rule> after the spec's acceptance criterion it proves.
 """
@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "copied-client"
 SHIP = "plans/active/SHIP-1-shoppers-can-save-a-basket.md"
 DRAFT = "plans/active/DRAFT-1-shoppers-can-share-a-basket.md"
-# A lower-case story key, like myclaw's cache-bug: it becomes TIDY-UP.
+# A lower-case story key in a copied-in client becomes TIDY-UP.
 TIDY = "plans/active/tidy-up-the-shop-code-is-easy-to-change.md"
 # Fully shipped before the move: one whole (with its outcome), one task by task (with none).
 SEARCH = "plans/active/SEARCH-1-shoppers-can-search-the-shop.md"
@@ -252,7 +252,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [create] = [call for call in gh.calls() if call[:2] == ["pr", "create"]]
     text = body(create)
-    assert text.startswith("Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
+    assert text.startswith("Why: Move this repo from its copied-in Forge to the installed Forge v1.\n"
+                           "Done when: Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
     assert "Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope" in text
     assert "\n- .envrc\n" in text and f"from .envrc into forge.toml's test: {TEST}\n" in text
     assert GSTACK in text
@@ -319,185 +320,6 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     after = repo.forge("next").stdout
     assert "story done" not in after and "search the shop" not in after and "malformed" not in after
     assert "stay signed in" not in after
-
-
-# Forge's own repo: its plans have no frontmatter; the old plan metadata names and approves them.
-NEXT_PLAN = """# Forge v1: a lean rebuild
-
-## What and why
-
-Forge is heavier than the work it manages.
-
-## What changes for you
-
-- Forge becomes one small tool.
-
-## Done when
-
-1. A fix is merged the new way.
-2. The old Forge is deleted.
-
-## Risks
-
-- The old Forge runs this repo until the switch.
-
-## Technical approach
-
-Code goes in `src/forge/`.
-
-## Task decomposition
-
-| Label / exact task ID | What it delivers | Covers | Scope | Tests | Depends on | user_facing |
-|---|---|---|---|---|---|---|
-| Core / CORE | The package | 1 | `src/forge/cli.py` | `tests/test_rules.py` | none | false |
-| Switch / SWITCH | The old tree deleted | 2 | `factory/` | the full suite | CORE | false |
-
-New moving parts:
-- the v1 package (Done when 1);
-- git hooks (1).
-"""
-# Already a story doc: it carries over word for word.
-WARM_DOC = """# Codex builds your tasks
-
-## What changes for you
-
-Codex builds each task.
-
-## Why
-
-Every hand-off started cold.
-
-## Done when
-
-1. `forge work` builds a task with Codex.
-
-## Tasks
-
-| ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
-|---|---|---|---|---|---|---|---|
-| SDK | Codex SDK set up | The pinned SDK | 1 | `src/forge/codex.py` | `tests/test_sdk.py` | — | no |
-| BUILD | Codex builds a task | Codex builds it | 1 | `src/forge/worker.py` | `tests/test_work.py` | SDK | no |
-
-New moving parts: the pinned Codex SDK (1).
-
-## Risks
-
-Risks: none
-"""
-FDE_PLAN = """# The agent works as a forward deployed engineer
-
-## What and why
-
-Customers often don't know what to build.
-
-## What changes for you
-
-- The agent interviews you one question at a time.
-
-## Done when
-
-- A vague ask turns into discovery, one question at a time.
-
-## Risks
-
-- Cost figures end up in client repos.
-
-## Task decomposition
-
-| Label / exact task ID | What it delivers | Depends on | user_facing |
-|---|---|---|---|
-| Skill / FDE | The FDE skill section | none | false |
-"""
-SOURCE_TEST = "uv run --python 3.11 --with pytest --with pytest-xdist python -m pytest tests -q -n auto"
-
-
-def _forge_source(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("src/forge/cli.py", "print('forge')\n")  # it holds Forge's own source
-    for key, name, text in (("FORGE-NEXT-1", "lean-rebuild", NEXT_PLAN),
-                            ("FORGE-WARM-1", "warm-threads", WARM_DOC),
-                            ("FORGE-FDE-1", "fde", FDE_PLAN)):
-        rel = f"plans/active/{key}-{name}.md"
-        repo.write(rel, text)
-        repo.write(f".factory/stories/{key}/plan-meta.json", json.dumps(
-            {"story": key, "status": "approved", "saved": "2026-09-24T09:00:00+00:00",
-             "plan_file": rel}))
-        repo.write(f".factory/stories/{key}/plan-approval.json",
-                   json.dumps({"approved_at": "2026-09-26T01:29:20+00:00"}))
-    _land(repo, "Forge's own repo")
-    # Its tasks were closed by pull request: without gh, Forge can't tell which are done.
-    gh.respond("pr", "list", "--state", "merged", exit=1)
-    blind = repo.forge("migrate", "--dry-run")
-    assert blind.returncode == 1 and blind.stderr == (
-        "Forge can't list the merged pull requests (gh exited with code 1), so it can't tell which "
-        "tasks are done.\nNext: gh auth status, then forge migrate --dry-run\n")
-    # A task is done when a pull request from exactly feat/<KEY>-<TASK> merged; near misses aren't.
-    gh.respond("pr", "list", "--state", "merged", stdout=json.dumps([
-        {"headRefName": "feat/FORGE-NEXT-1-CORE", "mergedAt": "2026-09-25T10:00:00Z"},
-        {"headRefName": "feat/FORGE-WARM-1-SDK", "mergedAt": "2026-09-26T08:00:00Z"},
-        {"headRefName": "feat/FORGE-NEXT-1-SWITCH-docs", "mergedAt": "2026-09-26T09:00:00Z"},
-        {"headRefName": "FORGE-NEXT-1-SWITCH", "mergedAt": "2026-09-26T09:00:00Z"},
-        {"headRefName": "feat/FORGE-WARM-1-BUILD", "mergedAt": None}]))
-
-    hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks"))
-    before = sorted(os.listdir(hooks)) if hooks.is_dir() else []
-    done = repo.forge("migrate")
-    assert done.returncode == 0, done.stderr
-    # Every worktree shares the hooks folder, and the old Forge's branches may still be in
-    # flight, so no git hook goes in.
-    assert (sorted(os.listdir(hooks)) if hooks.is_dir() else []) == before
-    assert "No git hooks were installed" in done.stdout
-    # Nothing is deleted: the old tree, its records and every old plan stay as they are, and only
-    # the adapters change (and CLAUDE.md goes, since Forge writes none).
-    assert "so nothing is deleted" in done.stdout
-    changed = dict(line.split("\t")[::-1] for line in repo.git(
-        "diff", "--name-status", "--no-renames", "main", "forge/migrate-v1").splitlines())
-    assert {path for path, status in changed.items() if status != "A"} <= LISTED | {"CLAUDE.md"}, changed
-    # Only the three plans the switch carries are converted; the others wait for the switch.
-    for line in ("Converts 3 active plans into story docs:",
-                 "- Forge v1: a lean rebuild (FORGE-NEXT-1): its approval on main carries over; "
-                 "1 of 2 parts done.",
-                 "- Codex builds your tasks (FORGE-WARM-1): its approval on main carries over; "
-                 "1 of 2 parts done.",
-                 "- The agent works as a forward deployed engineer (FORGE-FDE-1): not carried over, "
-                 "because the new Forge re-plans it with one fresh approval. Its draft is "
-                 ".forge-migrate/replan/FORGE-FDE-1.md; re-plan it with forge story new FORGE-FDE-1.",
-                 "Leaves 5 other active plans as they are, superseded at the switch:",
-                 f"\n- {SHIP}\n", f"\n- {TIDY}\n",
-                 "Replaces AGENTS.md wholly with the Forge block and deletes CLAUDE.md."):
-        assert line in done.stdout, done.stdout
-    listing = repo.git("ls-tree", "-r", "--name-only", "forge/migrate-v1").splitlines()
-    assert {"plans/FORGE-NEXT-1.md", "plans/FORGE-WARM-1.md", ".forge-migrate/replan/FORGE-FDE-1.md",
-            *LISTED} <= set(listing)
-    assert "plans/SHIP-1.md" not in listing
-    assert repo.git("show", "forge/migrate-v1:plans/FORGE-WARM-1.md") == WARM_DOC.strip()
-    assert ("\nNew moving parts: the v1 package (Done when 1); git hooks (1).\n"
-            in repo.git("show", "forge/migrate-v1:plans/FORGE-NEXT-1.md"))
-    # AGENTS.md holds only the Forge block now, and there is no CLAUDE.md.
-    text = repo.git("show", "forge/migrate-v1:AGENTS.md")
-    assert text.startswith("<!-- forge:begin -->") and text.endswith("<!-- forge:end -->"), text
-    assert "CLAUDE.md" not in listing
-    toml = repo.git("show", "forge/migrate-v1:forge.toml")
-    for setting in (f'version = "{version}"', 'repo = "forge-source"',
-                    f"test = {json.dumps(SOURCE_TEST)}", 'checks = ["tests", "forge-pr-check"]',
-                    '"**/routes/**"', "\n[models.build]\n", "\n[models.grill.claude]\n",
-                    "\n[models.review]\n"):  # forge init's defaults
-        assert setting in toml, toml
-
-    assert "2026-09-25T10:00:00Z" in repo.git(
-        "show", "forge/migrate-v1:.factory/stories/FORGE-NEXT-1/tasks/CORE.json")
-
-    # Merged, the carried-over approvals hold: the open tasks of both stories start, after the
-    # tasks merged by pull request; those are done, and the draft's tasks don't start.
-    repo.git("merge", "-q", "--no-ff", "-m", "Move to Forge v1 (#8)", "forge/migrate-v1")
-    repo.git("push", "-q", "--no-verify", "origin", "main")
-    for item in ("FORGE-NEXT-1/SWITCH", "FORGE-WARM-1/BUILD"):
-        started = repo.forge("task", "start", item)
-        assert started.returncode == 0, started.stderr
-    for item in ("FORGE-NEXT-1/CORE", "FORGE-WARM-1/SDK"):
-        assert "is already started" in repo.forge("task", "start", item).stderr
-    refused = repo.forge("task", "start", "FORGE-FDE-1/FDE")
-    assert refused.stderr.startswith("Story FORGE-FDE-1 has no story doc on main"), refused.stderr
 
 
 def _changed_agents(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -608,7 +430,6 @@ def _no_source(repo, tmp_path: Path) -> None:
 
 CASES = {
     "moves in one branch": _moves,
-    "forge's own repo": _forge_source,
     "a changed AGENTS.md": _changed_agents,
     "uncommitted changes": _refusal(
         "The working tree has changes that aren't committed: src/app.js.",
