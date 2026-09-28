@@ -71,7 +71,7 @@ def close(args: argparse.Namespace) -> int:
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}", selected)
+            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 number = dismissal["finding"]
