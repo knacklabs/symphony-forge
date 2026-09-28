@@ -1,8 +1,7 @@
 {
   "base": "d5e8736c6dde2dc96ba6c70da344511b46329ff4",
-  "branch": "fix/forge-lets-a-client-repo-create-stories",
+  "branch": "task/FORGE-PROTO-1-SPEC",
   "done_when": "docs/specs/prototype-signoff.md is confirmed by the owner and on the roadmap",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
