@@ -1,0 +1,14 @@
+{
+  "base": "a3a59b3a01ce42c68610bfa596d44fd4dcc1a9ac",
+  "branch": "fix/forge-merge-stops-before-tidying-up-when",
+  "done_when": "When archiving a recorded Codex conversation fails, forge merge still finishes its tidy-up (branch, worktree, records), prints which conversations it could not archive and that they can be archived later, and exits successfully; a test through forge merge with a stub that refuses archiving shows it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T09:11:52+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge merge stops before tidying up when Codex refuses to archive a chat that another Codex app has open, so every merge needs a retry"
+}
