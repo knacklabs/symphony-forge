@@ -220,3 +220,12 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 ## Round 16
 
 No findings.
+
+## Round 17
+
+56. **A settled older keep can become visible as unsettled again.** After a disputed keep, item 3 updates both the original finding’s disposition and the dispute to cite the human’s `Decided:` line. A continued prompt sends only the previous round’s dispositions, so the reader never receives the updated disposition of an original finding from an older round ([item 1](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:33), [item 3](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:93)). Pin how changed older dispositions reach the reader, and test a third round after a human settles a dispute.
+   Disposition: cut: item 1 sends older findings whose disposition changed since, tested with a third round after a settled dispute.
+
+57. **Continued rounds can use stale story context.** The first-round [prompt](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/templates/cold-read.md:8) supplies the confirmed spec and asks the reader to check `BRIEF.md` answers. Item 1 now sends only the story doc diff and tells the reader to reread that doc. If the linked spec or answers change between rounds, neither change appears in that diff. Pin how each continued round checks current linked context, and test a change between rounds.
+   Disposition: cut: item 1 tells the reader to re-read the confirmed spec and BRIEF.md from their paths, tested with a change between rounds.
+
