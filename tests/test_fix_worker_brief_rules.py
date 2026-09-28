@@ -4,7 +4,7 @@ from test_worker import calls, install_claude
 STORY = "FIX-WORKER-BRIEF-RULES"
 
 
-def test_1_worker_brief_says_when_to_skip_tests_and_run_forge(repo):
+def test_1_worker_brief_does_not_exempt_docs_and_runs_forge(repo):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
@@ -18,6 +18,7 @@ def test_1_worker_brief_says_when_to_skip_tests_and_run_forge(repo):
     built = repo.forge("work", "clarify-worker-tests")
     assert built.returncode == 0, built.stderr
     brief = calls(log)[-1]["brief"]
-    assert "A change to documentation only needs no test." in brief
+    # The old brief exempted documentation changes; the task's Tests column now wins.
+    assert "A change to documentation only needs no test." not in brief
     assert ("In a repo whose tests run Forge (forge-source), a test runs the forge command "
             "and never imports forge.") in brief
