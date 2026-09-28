@@ -1,0 +1,39 @@
+{
+  "branch": "task/FORGE-ONECHAT-1-APPROVE",
+  "review": {
+    "commit": "174c631f8cd871a3cb36fb948722d6988ad99bbb",
+    "dismissals": [
+      {
+        "because": "src/forge/init.py:69 Forge writes forge.toml itself with an unindented, unquoted version = line (and the agent edits it the same way); indented or quoted-key pins are not a supported form",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "The regex misses valid TOML pins with indentation or quoted keys, such as `  version = \"v0.0.1\"`. Those configurations reach `repo.check_pin`, which validates the entire configuration first (`src/forge/repo.py:257` and `167\u2013179`). With the test's incompatible `repo` value, this produces a configuration error instead of the required version refusal; otherwise it recommends installing the old version rather than upgrading the destination pin. Multiline version strings also enter the exception handler, whose unconditional return silently abandons approval even when `check_pin` succeeds. Extract the actual top-level version value before full validation, and continue approval when it matches.",
+        "file": "src/forge/approval.py",
+        "line": 139,
+        "priority": "P1",
+        "title": "Not done: 4. Read the story repo's pin before validating its configuration"
+      }
+    ],
+    "status": "clean",
+    "tree": "de515757f7d98567d7447edfc24e741286b3822884e647c4d2f7e788ad393a71"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T07:31:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T08:03:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:15:27+00:00",
+      "step": "review"
+    }
+  ]
+}

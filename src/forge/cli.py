@@ -1,14 +1,12 @@
 """The forge command. One table maps every command to the module function that runs it."""
-from __future__ import annotations
-
 import argparse
 import importlib
 import subprocess
 import sys
-from collections.abc import Callable
+from pathlib import Path
 from typing import Any, NoReturn
 
-from forge import __version__, repo
+from forge import __version__, machine, repo
 
 REFUSALS = {
     "usage": ("{problem}.", "{prog} --help"),
@@ -123,13 +121,11 @@ def _parser() -> _Parser:
     groups: dict[str, Any] = {}
     for words, target, changes, text, arguments in TABLE:
         name, _, sub = words.partition(" ")
-        if sub:
-            if name not in groups:
-                group = commands.add_parser(name, help=GROUPS[name], description=GROUPS[name])
-                groups[name] = group.add_subparsers(required=True, title="commands")
-            command = groups[name].add_parser(sub, help=text, description=text)
-        else:
-            command = commands.add_parser(name, help=text, description=text)
+        if sub and name not in groups:
+            group = commands.add_parser(name, help=GROUPS[name], description=GROUPS[name])
+            groups[name] = group.add_subparsers(required=True, title="commands")
+        command = (groups[name] if sub else commands).add_parser(sub or name, help=text,
+                                                                 description=text)
         for names, options in arguments:
             command.add_argument(*names, **options)
         # "handler", not "target": `forge read` has a positional argument named target.
@@ -137,32 +133,29 @@ def _parser() -> _Parser:
     return parser
 
 
-def _function(args: argparse.Namespace) -> Callable[[argparse.Namespace], int | None]:
-    module, name = args.handler.split(":")
-    try:
-        found = importlib.import_module(f"forge.{module}")
-    except ModuleNotFoundError as exc:
-        if exc.name != f"forge.{module}":
-            raise
-        found = None
-    function = getattr(found, name, None)
-    if function is None:
-        repo.refuse(REFUSALS["not_built"], command=args.words)
-    return function
-
-
 def _run(argv: list[str] | None) -> int:
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
-        prog = f"forge {args.words}"
-        repo.refuse(REFUSALS["usage"], problem=f"{prog}: unrecognized arguments: {' '.join(extra)}",
-                    prog=prog)
+        repo.refuse(REFUSALS["usage"],
+                    problem=f"forge {args.words}: unrecognized arguments: {' '.join(extra)}",
+                    prog=f"forge {args.words}")
     args.args = extra
     if args.changes:
         repo.check_pin()
-    function = _function(args)
+    module, name = args.handler.split(":")
     try:
-        return function(args) or 0
+        function = getattr(importlib.import_module(f"forge.{module}"), name, None)
+    except ModuleNotFoundError as exc:
+        if exc.name != f"forge.{module}":
+            raise
+        function = None
+    if function is None:
+        repo.refuse(REFUSALS["not_built"], command=args.words)
+    try:
+        result = function(args) or 0
+        if result == 0 and args.words in ("init", "migrate", "sync", "next") and not getattr(args, "dry_run", False):
+            machine.remember(Path.cwd())
+        return result
     except subprocess.CalledProcessError as exc:
         # A git (or gh) failure the command didn't expect: show what the tool said.
         repo.refuse(REFUSALS["failed"], command=" ".join(map(str, exc.cmd[:2])),
