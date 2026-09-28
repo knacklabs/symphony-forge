@@ -29,6 +29,16 @@ SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
 
+
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    return {f"{host}/skills/test-audit/{name}":
+            sync._synced_text(f".codex/skills/test-audit/{name}",
+                              f"skills/test-audit/{name}")
+            for host in (".claude", ".codex")
+            for name in ("NOTICE.md", "SKILL.md")}
+
 REFUSALS = {
     "helper": ("The Autoreview helper at {path} is not the pinned version {pin} (found: {found}).",
                "forge doctor"),
