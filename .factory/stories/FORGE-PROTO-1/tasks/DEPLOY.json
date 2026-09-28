@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-PROTO-1-DEPLOY",
-  "status": "started",
+  "review": {
+    "commit": "680a36d3da7296b6c224bcd5b2283ecac9e60a9c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch only records that DEPLOY started; it delivers none of item 10. The skeleton contains no Dockerfile, and `src/forge/init.py:88\u201389` copies that skeleton into new repositories. `src/forge/templates/conventions/stack.md:22\u201331` still specifies `apps/api` and `apps/web` without the required frontend/backend build, serve, migration and readiness contract, and there is no deploy conventions page. Add the Dockerfile and conventions so a new client repository can build the frontend, serve it through the backend, and start serving only after migrations succeed.",
+        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: A prototype deploys from one Dockerfile"
+      },
+      {
+        "body": "The required test file does not exist, and this branch adds no tests. `plans/FORGE-PROTO-1.md:83` explicitly assigns this file and item 10 to DEPLOY, so this is not deferred to another task. Add tests through the real initialization entry point and exercise the generated Dockerfile with a contract-following app and real database, including successful frontend serving and health readiness, and migration failure preventing serving.",
+        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
+        "line": 3,
+        "priority": "P1",
+        "title": "Not done: tests/test_proto_deploy.py"
+      },
+      {
+        "body": "The last commit message is only `Start FORGE-PROTO-1/DEPLOY`; it contains no required `Functional check:` paragraph. After implementing item 10, walk the new-repository deployment path, exercise migration success and failure, and record what was actually exercised and observed in the commit message, including the actionable next step shown on failure.",
+        "file": ".factory/stories/FORGE-PROTO-1/tasks/DEPLOY.json",
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e3a67dc65fe72e1770d50d9fda21c5c13dc3247217b407144e3dcd24f5b25984"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T12:02:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:03:49+00:00",
+      "step": "review"
     }
   ]
 }
