@@ -9,8 +9,6 @@ A *pull request* is a proposed change to the code that gets checked before it is
 
 https://github.com/user-attachments/assets/1a7ec040-190e-4c14-9671-c2271ecedbf7
 
-The five-minute explainer. [Download it](https://github.com/knacklabs/symphony-forge/releases/download/v1.1.0/forge-explainer.mp4) from the v1.1.0 release.
-
 ## Where it comes from
 
 In April 2026 OpenAI published
