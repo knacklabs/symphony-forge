@@ -1,33 +1,33 @@
 {
   "branch": "task/FORGE-AHA-1-REVIEW",
   "review": {
-    "commit": "84e5c234f57187173a59233c71f23dae3ea28a85",
+    "commit": "bc052809d98c4fc128fdd4a217bcb9b72a26c71f",
     "dismissals": [],
     "findings": [
       {
-        "body": "A light review requests GPT-6 Sol at medium effort, but this return path accepts a completed report without checking the model and effort actually used. `_attempt` records a model fallback at `src/forge/review.py:358-360`; the sign-off path checks its selected model and effort at lines 311-314. If Autoreview falls back, `forge close` can commit a P0-only review performed by another model. Require the light review's reported selection to match before accepting it.",
+        "body": "The light path requests GPT-6 Sol at medium effort but accepts a completed report without checking the model and effort actually used. `_attempt` records a model fallback at src/forge/review.py:354-360, while the sign-off path verifies its selection at lines 311-314. If Autoreview falls back, `forge close` can accept a P0-only review performed with another model.",
         "file": "src/forge/review.py",
         "line": 327,
         "priority": "P1",
         "title": "Not done: Prototype changes are reviewed lightly"
       },
       {
-        "body": "Every case supplies green checks. The test therefore still passes if `forge close` stops waiting for tests or CI on the light-review path. The red-check cases in `tests/test_close.py:273-317` start fixes without the prototype allowance, so they exercise only the strict path. Add a light-review case with a failed test check and one with a failed or missing required CI check, asserting that close does not report ready.",
+        "body": "The test checks only the arguments sent to Autoreview. Its stub emits no selected model or effort, so the test remains green if a completed light review uses a fallback model or lower effort. Add command-level cases that report those selections and assert that `forge close` refuses to mark the fix ready.",
+        "file": "tests/test_aha_review.py",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: prototype review model-selection test"
+      },
+      {
+        "body": "Every case sets `repo = \"client\"`, and accepted sign-off is tested only on the default branch before the fix starts. No command-level case proves that a Forge source fix with the same allowance stays strict, or that sign-off accepted on the fix branch switches its review to strict. Removing the repo check or the head scan in `blocking_level` would violate the stated boundary while leaving this test green.",
         "file": "tests/test_aha_review.py",
         "line": 31,
         "priority": "P1",
-        "title": "Not done: light prototype CI gate test"
-      },
-      {
-        "body": "This assertion checks only the arguments sent to Autoreview. The stub emits no selected model or effort, so the test passes even when the completed review used a fallback model. `tests/test_proto_signoff.py:148-167` shows the existing way to supply and check fallback and lower-effort output. Add that case through `forge close` so the required GPT-6 Sol medium review is verified at the command boundary.",
-        "file": "tests/test_aha_review.py",
-        "line": 37,
-        "priority": "P1",
-        "title": "Not done: prototype review model-selection test"
+        "title": "Not done: strict review boundary test"
       }
     ],
     "status": "blocked",
-    "tree": "2fb75fde08bb6382146f3f01da78a8118c8fabd69d149488f32c0f7b06c26107"
+    "tree": "084f63e0368c2918a762e59cff9c7014f483d2af3fbc2bf85a662d87ad77bca9"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-28T16:51:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T17:14:54+00:00",
       "step": "review"
     }
   ]
