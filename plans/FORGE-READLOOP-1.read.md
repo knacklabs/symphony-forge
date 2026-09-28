@@ -202,3 +202,11 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 52. **Unproven: item 2’s first-task roadmap path for a promoted fix.** The roadmap entry is added on the story branch by [`story new --from-fix`](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:121), but that command turns the existing fix branch into the first task branch without copying the story doc, read notes or roadmap entry ([`_promote`](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:544)). The promised first-task test could pass for an ordinary story whose roadmap entry was already on the default branch. Pin how the promoted task’s pull-request head receives and checks the passing story artifacts, and test that path.
    Disposition: cut: item 2 has approval merge the story branch into a promoted task's branch, tested on that task's pull request.
 
+## Round 14
+
+53. **The promoted-task merge needs a failure path.** [Item 2](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:72) merges the story branch into an existing task branch during approval. The promoted fix may have changed the roadmap or another file also changed on the story branch, so that merge can conflict. Pin whether approval is recorded before or after a successful merge, how Forge leaves both worktrees on failure, and how the agent retries. Test a conflict in GATES; the promised successful pull-request test does not prove recovery.
+   Disposition: cut: item 2 records approval first, aborts a conflicting merge leaving the task branch as it was, names the merge to resolve, and tests the conflict.
+
+54. **Unproven: the legacy exemption at `forge next` and pull-request check.** Item 2 says older approved stories keep today’s rules entirely, but its legacy test covers only [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:68). GATES also adds read gates to `forge next` and the pull-request check. Test that both preserve the exemption for an older approved story whose Tasks table changed on the default branch.
+   Disposition: cut: item 2's legacy test covers forge next, the pull-request check and task start.
+
