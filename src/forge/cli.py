@@ -1,12 +1,15 @@
 """The forge command. One table maps every command to the module function that runs it."""
 import argparse
+import ast
 import importlib
+import pkgutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, NoReturn
 
 from forge import __version__, machine, repo
+import forge
 
 REFUSALS = {
     "usage": ("{problem}.", "{prog} --help"),
@@ -23,21 +26,6 @@ def _arg(*names: str, **options: Any) -> tuple[tuple[str, ...], dict[str, Any]]:
 # A command that changes state refuses unless the installed Forge matches the forge.toml pin.
 # Each function takes the parsed arguments and returns an exit code (None means 0).
 TABLE = [
-    ("init", "init:init", True,
-     "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync", []),
-    ("sync", "sync:sync", True,
-     "Write the generated adapter files and git hooks for the pinned version", []),
-    ("doctor", "doctor:doctor", False,
-     "Check tools, versions, hooks, adapter drift and the named CI checks",
-     [_arg("--fix", action="store_true",
-           help="with Codex workers, install the pinned Codex SDK if it is missing or wrong")]),
-    ("migrate", "migrate:migrate", True,
-     "Move a client from the copied-in Forge to v1 in one pull request",
-     [_arg("--dry-run", action="store_true", help="print the full plan and change nothing")]),
-    ("next", "nextstep:next_step", False,
-     "Say where things stand and give the exact next command", []),
-    ("board", "board:board", False, "Write and open the plain-English board page",
-     [_arg("--out", metavar="PATH", help="write the page here instead of .git/forge/board.html")]),
     ("story new", "story:new", True, "Start a story branch, worktree and story doc, or promote a fix",
      [_arg("key"), _arg("title", nargs="?"), _arg("--from-fix", metavar="FIX")]),
     ("story done", "story:done", True, "Record a finished story's outcome sentence and dates",
@@ -119,10 +107,34 @@ def _parser() -> _Parser:
     parser.add_argument("--version", action="version", version=f"forge v{__version__}")
     commands = parser.add_subparsers(required=True, title="commands")
     groups: dict[str, Any] = {}
-    for words, target, changes, text, arguments in TABLE:
+    declarations = []
+    group_help = dict(GROUPS)
+    for info in pkgutil.iter_modules(forge.__path__):
+        if info.ispkg:
+            continue
+        source = Path(info.module_finder.path) / f"{info.name}.py"
+        for node in ast.parse(source.read_text(encoding="utf-8")).body:
+            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                continue
+            name = getattr(node.targets[0], "id", None)
+            if name == "GROUP_HELP":
+                for group, help_text in ast.literal_eval(node.value).items():
+                    if group in group_help:
+                        raise ValueError(f"group help declared twice: {group}")
+                    group_help[group] = help_text
+            elif name == "COMMANDS":
+                for command in ast.literal_eval(node.value):
+                    declarations.append((command["position"], command["words"],
+                                         f"{info.name}:{command['run']}", command["changes_state"],
+                                         command["help"], command["args"]))
+    declarations.extend((position * 10, *row) for position, row in
+                        enumerate(TABLE, start=7))
+    for _, words, target, changes, text, arguments in sorted(declarations):
         name, _, sub = words.partition(" ")
         if sub and name not in groups:
-            group = commands.add_parser(name, help=GROUPS[name], description=GROUPS[name])
+            if name not in group_help:
+                raise ValueError(f"group help missing: {name}")
+            group = commands.add_parser(name, help=group_help[name], description=group_help[name])
             groups[name] = group.add_subparsers(required=True, title="commands")
         command = (groups[name] if sub else commands).add_parser(sub or name, help=text,
                                                                  description=text)

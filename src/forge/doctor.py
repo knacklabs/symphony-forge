@@ -14,6 +14,15 @@ from pathlib import Path
 
 from forge import __version__, codex, repo, review, sync
 
+COMMANDS = [{
+    "words": "doctor", "run": "doctor", "changes_state": False,
+    "help": "Check tools, versions, hooks, adapter drift and the named CI checks",
+    "args": [(('--fix',), {"action": "store_true", "help":
+              "with Codex workers, install the pinned Codex SDK if it is missing or wrong"})],
+    "position": 30,
+    "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix |",
+}]
+
 REFUSALS = {
     "problems": ("forge doctor found {count} problem(s); each row above gives its fix.",
                  "forge doctor"),

@@ -16,6 +16,13 @@ from typing import Any
 
 from forge import approval, board, records, repo, review, story
 
+COMMANDS = [{
+    "words": "next", "run": "next_step", "changes_state": False,
+    "help": "Say where things stand and give the exact next command",
+    "args": [], "position": 50,
+    "listing": "| `forge next` | Says where things stand and gives the exact next command |",
+}]
+
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
     "started": ("{label} is started; its worker hasn't run yet.", "forge work {item}"),
