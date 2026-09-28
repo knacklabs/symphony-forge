@@ -88,13 +88,15 @@ def work(args: argparse.Namespace) -> None:
             question = None
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
                          (None, "first turn"))
-        # A Claude worker continues the session its item's last round ran in, in this checkout.
-        session = None if on_codex or design else codex.record(top, item).get("claude")
+        # A Claude worker, design ones too, continues the session its item's last round ran in, in
+        # this checkout. Without one, a round after the first starts fresh and says why.
+        session = None if on_codex else codex.record(top, item).get("claude")
         if session and session["checkout"] != str(top):
             fresh = f"its session was started in another checkout, {session['checkout']}"
-            session = None
         elif session:
             thread = session["id"]
+        elif not on_codex and state.get("status", "started") != "started":
+            fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         turns = codex._item_file(top, item, ".log", kind)
@@ -121,8 +123,9 @@ def work(args: argparse.Namespace) -> None:
                 before = _checkout_snapshot(top)
                 claude_model = repo.design_models(config, "claude")
                 try:
-                    _run(item, top, brief, ["--model", claude_model["model"],
-                                            "--effort", claude_model["effort"]])
+                    _claude(item, top, brief, fresh_brief, ["--model", claude_model["model"],
+                                                            "--effort", claude_model["effort"]],
+                            session, thread, None if fresh == "first turn" else fresh)
                 except (repo.Refused, OSError) as error:
                     if _checkout_snapshot(top) != before:
                         raise
@@ -141,6 +144,7 @@ def work(args: argparse.Namespace) -> None:
                         refuse(REFUSALS["question"], item=item, question=question)
                     thread, fresh = (codex.conversation(top, item, approval) if later else
                                      (None, "first turn"))
+                    brief, fresh_brief = fresh_brief or brief, None
                     if thread:
                         saved = codex.record(top, item)
                         fresh_brief = brief
@@ -152,7 +156,7 @@ def work(args: argparse.Namespace) -> None:
                     outcome = "completed"
                     return
             if not on_codex:
-                _claude(item, top, brief, fresh_brief, claude, session,
+                _claude(item, top, brief, fresh_brief, claude, session, thread,
                         None if fresh == "first turn" else fresh)
                 outcome = "completed"
                 return
@@ -375,36 +379,42 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
-            session: dict[str, Any] | None, why: str | None) -> None:
-    """A Claude worker's round: continue the item's session with the short brief, else start a new
-    session with the whole brief and say why when there was one to continue. The session, its
-    checkout, its rounds and HEAD when a round ends go in the item's record on this machine."""
+            session: dict[str, Any] | None, resume: str | None, why: str | None) -> None:
+    """A Claude worker's round: continue session `resume` with the short brief, else start a new
+    session with the whole brief and say why when there was one to continue. A resume that fails
+    before it changes the checkout, whatever claude said, starts fresh. The session, its checkout,
+    the item's rounds and HEAD when a round ends go in the item's record on this machine."""
     path = codex._item_file(top, item, ".json", "Fix")
-    head = git("rev-parse", "HEAD", cwd=top)
+    rounds = session["rounds"] if session else 0
     try:
-        if session:
-            lost = _run(item, top, brief, models, ["--resume", session["id"]])
-            if not lost:
+        if resume:
+            before = _checkout_snapshot(top)
+            status = _run(item, top, brief, models, ["--resume", resume])
+            if not status:
                 return
-            why = f"Claude couldn't continue session {session['id']}: {lost}"
+            if _checkout_snapshot(top) != before:
+                refuse(REFUSALS["failed"], status=status, log=repo.work_log(top, item), item=item)
+            why = f"Claude couldn't continue session {resume}; it stopped with exit code {status}"
         if why:
             message = f"Starting a new Claude session with the whole brief, because {why}."
             print(message, flush=True)
             with repo.work_log(top, item).open("a", encoding="utf-8") as out:
                 out.write(message + "\n")
-        session = {"id": str(uuid.uuid4()), "checkout": str(top), "start": head, "rounds": 0}
+        # A replaced session keeps the item's round count.
+        session = {"id": str(uuid.uuid4()), "checkout": str(top),
+                   "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
         codex._record(path, claude=session)
         _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
     finally:
         if session:
-            codex._record(path, claude={**session, "rounds": session["rounds"] + 1,
+            codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
 
 
 def _run(item: str, top: Path, brief: str, models: list[str],
-         session: list[str] | None = None) -> str | None:
+         session: list[str] | None = None) -> int:
     """Run Claude Code headless in the checkout; its output goes to the terminal and the log.
-    Resuming, returns claude's line saying the session can't be continued, if it said one."""
+    Refuses when it fails, except a --resume run, which returns claude's exit code."""
     exe = shutil.which("claude")
     if exe is None:
         refuse(repo.REFUSALS["missing_tool"], tool="claude")
@@ -418,16 +428,12 @@ def _run(item: str, top: Path, brief: str, models: list[str],
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()
-        lost = None
         for line in worker.stdout:
             print(line, end="", flush=True)
             out.write(line)
-            if session and session[0] == "--resume" and line.startswith("No conversation found"):
-                lost = line.strip()
-    if worker.returncode and lost:
-        return lost
-    if worker.returncode:
+    if worker.returncode and not (session and session[0] == "--resume"):
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
+    return worker.returncode
 
 
 def _checkout_snapshot(top: Path) -> str:
