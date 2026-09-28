@@ -1,0 +1,14 @@
+{
+  "base": "28bd79a1563da375fedea26a7a829770166def7a",
+  "branch": "fix/clients-pin-forge-v1-0-2-but-main-has-28",
+  "done_when": "Forge's version, forge.toml's pin and the release tests say 1.1.0, and the full test suite passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T02:10:28+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients pin Forge v1.0.2, but main has 28 merged changes since then, so client repos can't get them"
+}
