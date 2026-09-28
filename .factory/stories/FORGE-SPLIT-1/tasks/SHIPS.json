@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-SPLIT-1-SHIPS",
-  "status": "working",
+  "review": {
+    "commit": "618d8169d3fff096efe94093b1246e65664eb9c2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The `before` snapshot comes from the already-refactored package, so comparing it with another run only proves stability when adding a module. A rendering change introduced by this branch would appear in both snapshots and pass. Existing coverage does not complete this proof: `tests/test_setup.py:126` also compares consecutive runs, while `tests/test_trim_skills.py:27` pins only selected skill contents. Add an end-to-end compatibility test against independently captured pre-change output, checking the complete shipped path set and bytes, including conditional files and git hook shims.",
+        "file": "tests/test_split_ships.py",
+        "line": 28,
+        "priority": "P1",
+        "title": "Not done: byte-for-byte compatibility test for Done-when 3"
+      }
+    ],
+    "status": "blocked",
+    "tree": "9637d944d36bd83eda6062126bcf6f792f66f6beafeccdc89a283fcb441a9830"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T09:45:36+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T09:56:34+00:00",
+      "step": "review"
     }
   ]
 }
