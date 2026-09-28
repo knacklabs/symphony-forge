@@ -1,0 +1,16 @@
+{
+  "base": "2dc4da9b872b02bc8d6896323549a68904419031",
+  "branch": "fix/forge-sales-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "A salesperson can set up a Mac or Windows laptop with one script, build and demo a prototype whose small changes merge themselves before sign-off, and hears the demo's words instead of Forge's",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T18:54:01+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's is finished, and what it achieved."
+}
