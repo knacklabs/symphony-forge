@@ -5,7 +5,13 @@
   "kind": "fix",
   "review": {
     "commit": "dde0143275bba8af52bab519bfe65374f4112a64",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "README.md:10 the owner replaced the preview image with GitHub's inline player (uploaded in issue 377); the video stays a v1.1.0 release asset, linked on README.md:12, and nothing video is committed",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The explainer block adds a user-attachment URL and a separate text download link, but no preview image linked to the release video. Even if GitHub renders the attachment inline, that URL is not a release asset, contrary to the explicit acceptance criteria. Replace it with a linked preview image whose image and video URLs both reference the v1.1.0 release assets. This requirement can be completed within this branch.",
@@ -15,10 +21,10 @@
         "title": "Not done: Link the v1.1.0 explainer with a preview image using only release assets"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "98fc4b652e381a248701265b183be2470a6b309d2a40c14cba3094fc7f1fc018"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T02:31:32+00:00",
