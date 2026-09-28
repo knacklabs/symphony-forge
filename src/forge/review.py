@@ -28,6 +28,7 @@ PRIORITIES = ("P0", "P1", "P2", "P3")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
+EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
@@ -263,6 +264,59 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         shutil.rmtree(tmp, ignore_errors=True)
     return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
             "dismissals": []}
+
+
+def signoff(top: Path, answers: str) -> str:
+    """Review every tracked product file once, against an empty root, before client acceptance."""
+    tracked = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0") if name]
+    product = [name for name in tracked if not name.startswith((*BOOKKEEPING, "docs/decisions/"))]
+    if repo.git("status", "--porcelain", "--", *product, cwd=top):
+        repo.refuse(("Product files changed since the last commit; commit them before sign-off.",
+                     "commit the prototype, then forge decision accept client-signoff --by \"<name>\""))
+    head = repo.git("rev-parse", "HEAD", cwd=top)
+    skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
+    table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
+    prompt = string.Template((Path(__file__).parent / "templates" / "review.md")
+                             .read_text(encoding="utf-8").split("<!-- signoff -->\n", 1)[1]
+                             .split("\n<!-- ", 1)[0]).substitute(answers=answers,
+                                                topics=table[0] if table else "")
+    path = helper()
+    tmp = Path(tempfile.mkdtemp(prefix="forge-signoff-review-"))
+    tree, out = tmp / "tree", tmp / "review.json"
+    try:
+        repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
+        repo.git("checkout", "-q", "--detach", head, cwd=tree)
+        repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
+                 ".factory", "plans", "docs/decisions", cwd=tree)
+        product_tree = repo.git("write-tree", cwd=tree)
+        base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base", cwd=tree)
+        snapshot = repo.git("commit-tree", product_tree, "-p", base,
+                            "-m", "Product snapshot for sign-off", cwd=tree)
+        repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+        argv = [sys.executable, str(path), "--mode", "branch", "--base", base,
+                "--engine", "codex", "--max-priority", "P3", "--prompt", prompt,
+                "--json-output", str(out), "--model", "codex=gpt-6-sol",
+                "--thinking", "codex=xhigh"]
+        argv += ["--codex-bin", str(_launcher(tmp / "bin", tree))]
+        selected: dict[str, str] = {}
+        findings, reason = _attempt(argv, tree, out, selected)
+        if reason or (selected.get("model", "gpt-6-sol") != "gpt-6-sol"
+                      or selected.get("effort", "xhigh") != "xhigh"):
+            repo.refuse(("The required GPT-6 Sol xhigh review did not finish: "
+                         + (reason or "the model or effort changed") + ".",
+                         "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
+        serious = [f for f in findings if f["priority"] in SERIOUS]
+        if serious:
+            repo.refuse(("Customer sign-off review found a blocking issue: "
+                         + "; ".join(f["title"] for f in serious) + ".",
+                         "fix the prototype, then forge decision accept client-signoff --by \"<name>\""))
+        if repo.git("rev-parse", "HEAD", cwd=top) != head or repo.git(
+                "status", "--porcelain", "--", *product, cwd=top):
+            repo.refuse(("The prototype changed during review.",
+                         "commit the changes, then forge decision accept client-signoff --by \"<name>\""))
+        return head
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def _attempt(argv: list[str], cwd: Path, out: Path,
