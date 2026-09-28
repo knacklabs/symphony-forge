@@ -1,11 +1,11 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-START",
   "review": {
-    "commit": "85e20e197304f95b860906c937c05c133b996e34",
+    "commit": "c157aafb4a85dea270abd073f06fee4a361a3550",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new attachment interface has no executable coverage. tests/test_chatview_start.py:29 accepts thread/attachment/add in the stub, but no test invokes codex.attach or reaches this driver branch. Removing the implementation or breaking its identity, payload, or error handling would leave the suite green. Add integration coverage through codex.attach and the real SDK driver, faking only the app-server, for the recorded thread, pinned request fields, missing conversation, and non-fatal request failure. This transport coverage can be added within START without waiting for ATTACH's forge close integration; the review contract keeps missing tests at P1.",
+        "body": "The stub accepts `thread/attachment/add`, but no test calls `codex.attach` or reaches this driver branch. The request could be removed, its identity or payload changed, or its failure handling broken without failing the suite. Add coverage through `codex.attach` and the real SDK driver, faking the app-server, for the recorded thread, pinned fields, missing conversation, and request failure.",
         "file": "src/forge/codex_turn.py",
         "line": 117,
         "priority": "P1",
@@ -13,7 +13,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "0a25c5185a8727f40cdd3c2db48d163aef2aee72771ffa271219cb3dcd32ec76"
+    "tree": "2ac88273826daf8287aaf55ede18e52386d0964bca93760aca8517c153a77702"
   },
   "status": "fixing",
   "steps": [
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-09-28T09:12:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:42:31+00:00",
       "step": "review"
     }
   ]
