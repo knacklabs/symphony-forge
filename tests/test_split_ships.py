@@ -16,6 +16,7 @@ STORY = "FORGE-SPLIT-1"
 # all other output stays pinned.
 GOLDEN = {
     "plain": {
+        ".gitattributes": "a843f971979438197905e041ead7a83c1ecb514a06ecdbb47126cd3f42c64c7a",
         "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
         ".claude/settings.json": "f0e550f035db6feb93de9aeea566253326500d5925bee3d2a41faf8b5f40df7d",
         ".codex/hooks.json": "6359773ba4fb597c6f1e4e6fc504227b419afcaa2236abd459942f8fcf99dbd8",
