@@ -4,11 +4,30 @@
   "branch": "fix/forge-makes-impeccable-the-only-ui-skill",
   "done_when": "The standards, the frontend conventions, the worker brief and the review brief require both impeccable and emil-design-eng for UI work, with impeccable owning visual design and the checking pass and Emil owning interaction feel, and state the owner's resolutions of their conflicts; review reports a missing impeccable pass or a failed Emil checklist item as blocking; the synced copies match and the full test suite passes",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "8449f324bbb5341ac8190d5ce2b79e002a99d504",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new doctor test creates only an extensionless `claude` stub. Python 3.11 uses PATHEXT to find executables on Windows ([documentation](https://docs.python.org/3.11/library/shutil.html#shutil.which)), so doctor cannot discover this stub and still reports Claude missing after both skills are installed. Consequently, the success assertion at line 93 fails on a clean Windows runner. `.github/workflows/forge-next.yml:23` includes Windows, and line 35 runs the full suite with Python 3.11. Add the Windows `claude.cmd` stub already used in `tests/test_setup.py:248\u2013249` so this test satisfies the full-suite acceptance requirement.",
+        "file": "tests/test_fix_both_ui_skills.py",
+        "line": 79,
+        "priority": "P1",
+        "title": "Not done: The full test suite passes on Windows"
+      }
+    ],
+    "status": "blocked",
+    "tree": "77a2d139bf3bea1e2afa83b2a3aca721bc38720094b7fd60c6b328ed0e80d84f"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T10:27:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:18:56+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge makes impeccable the only UI skill and treats other motion as a defect, but the owner wants impeccable and Emil's design engineering both required so every UI, prototypes included, is flawless"
