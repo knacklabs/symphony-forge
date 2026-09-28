@@ -25,13 +25,13 @@ def test_1_forge_init_gives_lite_luna_max_helpers(repo, gh, tmp_path):
     assert lite["subagent_effort"] == "max"
 
 
-def test_2_first_fix_round_sends_this_repos_lite_helpers(repo, monkeypatch, sdk_data):
+def test_2_first_fix_round_sends_a_codex_repos_lite_helpers(repo, monkeypatch, sdk_data):
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    repo.write("forge.toml", (ROOT / "forge.toml").read_text(encoding="utf-8"))
+    repo.write("forge.toml", (ROOT / "tests/fixtures/codex-forge.toml").read_text(encoding="utf-8"))
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")

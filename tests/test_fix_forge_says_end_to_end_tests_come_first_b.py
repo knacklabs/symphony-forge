@@ -12,7 +12,7 @@ def guidance(path: str) -> str:
 def test_1_sync_gives_package_client_tests_ten_minutes(repo):
     repo.git("checkout", "-q", "-b", "fix/client-browser-tests")
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\ntest = "npm test"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\ntest = "npm test"\nchecks = ["tests", "forge-pr-check"]\n')
     repo.write("package.json", '{"scripts":{"test":"playwright test"}}\n')
 
     result = repo.forge("sync")

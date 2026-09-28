@@ -11,6 +11,7 @@ STORY = "FORGE-SPLIT-1"
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
+# The hook group's expected help now includes the handoff command shipped for PreCompact.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,spec,decision,roadmap,hook}\n'
@@ -74,7 +75,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         "    allow-large        Record the human's permission for this fix to go over\n"
         '                       the fix limit\n',
  'hook': 'usage: forge hook [-h]\n'
-         '                  {context,approval,deny,pre-commit,pre-push,pr-check} ...\n'
+         '                  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '                  ...\n'
          '\n'
          'Internal: the one entry point that git hooks, host hooks and CI call\n'
          '\n'
@@ -82,8 +84,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '  -h, --help            show this help message and exit\n'
          '\n'
          'commands:\n'
-         '  {context,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
          '    context             Session start: print forge next and the story state\n'
+         '    handoff             Before compaction: save forge next beside the agent\'s\n'
+         '                        decisions and lessons\n'
          '    approval            After a plan or question tool: record approvals and\n'
          '                        count human touches\n'
          '    deny                Before a shell command: block destructive commands,\n'

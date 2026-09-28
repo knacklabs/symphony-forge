@@ -213,8 +213,8 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert (resume["threadId"], resume["config"]) == ("thr-stub-1", FIX_CONFIG)
     assert (resume["sandbox"], resume["approvalPolicy"]) == ("danger-full-access", "never")
     assert Path(resume["cwd"]).resolve() == folder.resolve()
-    assert [named["name"] for named in _sent(calls, "thread/name/set")] == [
-        "BOARD · The page", "BOARD · The page"]
+    # The chat is named on start and keeps that name when this fix round resumes it.
+    assert [named["name"] for named in _sent(calls, "thread/name/set")] == ["BOARD · The page"]
     assert "stub codex: turn-stub-2 on thr-stub-1" in fixed.stdout
 
     # The old contract repeated the whole brief and the worker's own commit. A continued

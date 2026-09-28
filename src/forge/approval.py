@@ -92,11 +92,11 @@ def waiting_digest(key: str, top: Path) -> str | None:
     return None if (state.get("approval") or {}).get("hash") == digest else digest
 
 
-def signed_off(top: Path) -> bool:
+def signed_off(top: Path, cfg: dict[str, Any] | None = None) -> bool:
     """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
     checkout or on the default branch: exactly the record forge.toml's signoff pins, or, with none
     pinned, a decision whose slug ends in client-signoff."""
-    cfg = repo.config(top)
+    cfg = cfg if cfg is not None else repo.config(top)
     if cfg["repo"] == "forge-source":
         return True
     pinned = cfg["signoff"]

@@ -17,9 +17,12 @@ STORY = "FORGE-CHATVIEW-1"
 
 
 def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data):
-    _, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    _, calls, _ = _resuming(repo, monkeypatch, sdk_data)
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
+    assert repo.forge("work", "BOARD/PAGE").returncode == 0
+    # A resumed round keeps the first name; the old contract sent that name again.
+    assert len(_sent(calls, "thread/name/set")) == 1
 
     why = "Fix the login page title when customers enter their email address on mobile devices"
     started = repo.forge("fix", "start", why, "--done", "The title is readable")
@@ -35,6 +38,8 @@ def test_3_new_chats_get_short_names(repo, monkeypatch, sdk_data):
     (story / "forge.toml").write_text(_toml(version, "claude", {
         **MODELS, "grill.codex": {"model": "gpt-6-sol", "effort": "high"},
         "grill.claude": {"model": "opus", "effort": "high"}}), encoding="utf-8")
+    _install(repo.bin, "codex-app-server",
+             (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID")
     read = repo.forge("read", "BOARD")
