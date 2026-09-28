@@ -20,6 +20,8 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
+| "Tell the worker this round" | `forge work <item> --note "<text>"` |
+| "Ask Codex about this code" | `forge ask "<question>"` |
 | "Close it" or "Is it ready?" | `forge close <item>` |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
 | "What should we build?" or "Find the real problem" | Discovery, below |
@@ -128,6 +130,27 @@ setup-only, platform or "foundation" stories. A story that no spec behaviour lin
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes.
+
+## Steering a Codex worker
+
+When one sentence would help a worker finish its next round, give it with
+`forge work <item> --note "<text>"`. The note appears under "From the coordinator" in that
+round's brief and is recorded with the turn. Give it again if a later round needs it; a note
+does not change the item's Scope. Read a close finding and the code it cites before deciding
+whether the worker needs a note or the finding should be dismissed with evidence.
+
+If a worker ends with a `Question:` paragraph, answer with
+`forge work <item> --note "<answer>"`. The worker waits for that answer: another work round
+without a note and `forge close <item>` both refuse until the answering round completes. The
+answer returns to the same conversation when it can resume; a fresh brief carries both the
+question and answer. If the answer needs work outside Scope or a choice the item does not settle,
+resolve that boundary before sending the note.
+
+For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
+Codex read-only in this checkout and prints the answer. Use `--model <model>` and
+`--effort <effort>` to choose for this question; without them it uses `[models.lite]` in
+`forge.toml`. The conversation is temporary and does not appear in the Codex chat list. If a
+tracked or untracked file changes during the turn, Forge discards the answer.
 
 ## Build simple
 
