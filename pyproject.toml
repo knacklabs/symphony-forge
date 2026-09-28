@@ -22,12 +22,14 @@ path = "src/forge/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/forge"]
 [tool.hatch.build.targets.wheel.force-include]
+".codex/skills/app-baseline/SKILL.md" = "forge/templates/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = "forge/templates/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = "forge/templates/skills/test-audit/NOTICE.md"
 ".codex/skills/forge/fde.md" = "forge/templates/fde.md"
 ".claude/skills/remote-approval/SKILL.md" = "forge/templates/skills/remote-approval/SKILL.md"
 
 [tool.hatch.build.targets.sdist.force-include]
+".codex/skills/app-baseline/SKILL.md" = ".codex/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = ".codex/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = ".codex/skills/test-audit/NOTICE.md"
 ".codex/skills/forge/fde.md" = ".codex/skills/forge/fde.md"
