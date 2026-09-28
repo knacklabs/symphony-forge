@@ -33,6 +33,8 @@ def _docker(*args, check=True):
 
 
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
+    if not shutil.which("sh"):
+        pytest.skip("The Linux container startup script requires sh on the test host")
     if not shutil.which("docker"):
         pytest.skip("Docker daemon is required for the deployment lifecycle test")
     host = subprocess.run(["docker", "context", "inspect", "--format",
