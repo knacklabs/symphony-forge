@@ -4,33 +4,33 @@
   "done_when": "A Claude worker's fix round continues the session its first round started and gets only the short fix prompt; when that session can't be continued it starts fresh with the full brief and says so; tests run forge work twice on a Claude worker and check both paths",
   "kind": "fix",
   "review": {
-    "commit": "24be26bcf5ef6acbd507c520a55358ce4ac12c30",
+    "commit": "0ea41be60b83b7c12b4c8f6b8478c4d61c2e88dd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Any nonzero exit from `claude --resume` is treated as proof that the session cannot continue when the checkout is unchanged. A valid resumed session can instead fail during its turn. Forge then starts another session with the full brief, discards the valid session record, and may repeat work. Claude's [error reference](https://code.claude.com/docs/en/errors) says an exit code alone does not identify the failure and warns that resending after a mid-response failure can repeat tool calls. Restart only for a resume failure, rather than every failed resumed turn.",
+        "body": "Every nonzero exit from `--resume` increments `failed_resumes`, whether Claude rejected the session or accepted it and failed during the turn. An explicit \u201cNo conversation found\u201d rejection leaves that fix round failed; Forge tries the same unusable session in the next round and starts fresh only in the third. Conversely, two failed turns in a valid session cause Forge to discard its context and send the full brief. Claude documents a missing session as a distinct resume error, so exit status alone cannot justify either decision. Handle a confirmed resume rejection in that fix round and retain the session after ordinary turn failures. See the [Claude Code error reference](https://code.claude.com/docs/en/errors).",
         "file": "src/forge/worker.py",
         "line": 397,
         "priority": "P1",
         "title": "Not done: A Claude worker's fix round continues the session its first round started and gets only the short fix prompt; when that session ca"
       },
       {
-        "body": "The new tests cover successful resumes and cases where Claude rejects a resume, but none covers a saved session that accepts `--resume` and then exits nonzero. A two-round `forge work` test using the existing stub with `STUB_CLAUDE_EXIT=3` on the second round would catch the unintended new session and repeated full brief. The current test's forced resume error cannot detect that behavior.",
+        "body": "This test expects two failed `forge work` calls after the stub rejects `--resume`, then checks a fresh session on a third call. It therefore passes while the required fix round fails instead of restarting with the full brief and an explanation. Test the rejection on the second `forge work` call and assert its fresh session, full brief, and reason.",
         "file": "tests/test_fix_claude_workers_start_a_fresh_session_eve.py",
-        "line": 103,
+        "line": 110,
         "priority": "P1",
-        "title": "Not done: a forge work test for failure during a valid Claude resume"
+        "title": "Not done: a two-round forge work test for a rejected Claude resume"
       },
       {
-        "body": "Ordinary Claude workers use `nullcontext` at `worker.py:81`. Two concurrent `forge work` calls can therefore both read this session record, resume the same ID, and write the same `rounds + 1` value at `worker.py:410`; one round is lost from the record. The writes also share the temporary record path used at `codex.py:463`. Apply the existing item lock to ordinary Claude rounds before reading and updating their session.",
-        "file": "src/forge/worker.py",
-        "line": 93,
-        "priority": "P2",
-        "title": "Serialize ordinary Claude rounds that share a session record"
+        "body": "The test makes one accepted resume fail and then succeed; its two-consecutive-failure case deletes the stub\u2019s session first. It never exercises two failed turns while the session remains resumable. In that case, the next `forge work` starts a new session because of the counter at `worker.py:96`. Keep the stub session registered through two failing resumed turns and assert that the following round still sends the short prompt with `--resume`.",
+        "file": "tests/test_fix_claude_workers_start_a_fresh_session_eve.py",
+        "line": 127,
+        "priority": "P1",
+        "title": "Not done: a forge work test for two failed turns in a valid Claude session"
       }
     ],
     "status": "blocked",
-    "tree": "603b826f0aaf7fed7e46c910a89b410df43348b6c3f68bf9aa946b24920fbe50"
+    "tree": "98a7cf6df34ad88ec95b6c617a0945b51a89d6df30c6b04111868f919884a5c8"
   },
   "status": "fixing",
   "steps": [
@@ -44,6 +44,10 @@
     },
     {
       "at": "2026-09-28T17:44:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T17:55:43+00:00",
       "step": "review"
     }
   ],
