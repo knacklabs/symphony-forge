@@ -3,11 +3,37 @@
   "branch": "fix/workers-stop-to-ask-before-updating-an-e",
   "done_when": "The worker brief lets a worker update any existing test its intended change breaks, outside its scope, naming each changed test and why in its handoff; the review brief no longer reports such test files as outside scope but reports a test weakened to hide a real defect as a P1; tests through forge work and forge close show both",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "9b0070e7fd37a064701438b22869068fa7d0bb90",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The exemption only recognizes Python files named test_* under the root tests directory. An existing web/test_board.py or src/component.test.ts broken by the intended change still appears in the review's outside-scope list. Forge already supports these layouts in src/forge/worker.py:23\u201325, and tests/test_worker.py:42 explicitly exercises a colocated test. This misses the acceptance criterion covering any existing test. Extend the exemption to supported test layouts and cover them through forge close.",
+        "file": "src/forge/review.py",
+        "line": 168,
+        "priority": "P1",
+        "title": "Not done: Existing tests outside tests/test_*.py still appear as outside scope"
+      },
+      {
+        "body": "The two independent substring assertions do not verify the required severity. Changing the new review instruction to report weakened tests as P2 would leave this test passing because unrelated instructions already contain P1. Assert that the weakened-test instruction itself requires P1 in the prompt produced through forge close, so the test fails when this acceptance criterion breaks.",
+        "file": "tests/test_fix_workers_stop_to_ask_before_updating_an_e.py",
+        "line": 65,
+        "priority": "P1",
+        "title": "Not done: forge close test enforces P1 for tests weakened to hide defects"
+      }
+    ],
+    "status": "blocked",
+    "tree": "6dba8d13be3bf09fc1b2679dcd23b8a17d0aee2a9ef32a2b8d63538e638dfc3d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T11:31:23+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:51:29+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers stop to ask before updating an existing test their intended change breaks, because the test file is outside the task's scope; it happened seven times on 2026-09-28"
