@@ -1,10 +1,29 @@
 {
   "branch": "task/FORGE-PROTO-1-DOCS",
-  "status": "working",
+  "review": {
+    "commit": "4d6df63ae66ebbc69842a772b5694f55faf64fa1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The explicitly required `tests/test_proto_docs.py` is absent, and this branch adds or changes no tests. The task table in `plans/FORGE-PROTO-1.md:84` assigns that file to DOCS, so this is not another task's deferred check. Add the named documentation-contract checks for item 11, including the documented order and decision links; no new runtime-behaviour test is needed.",
+        "file": "README.md",
+        "line": 77,
+        "priority": "P1",
+        "title": "Not done: tests/test_proto_docs.py"
+      }
+    ],
+    "status": "blocked",
+    "tree": "7d8051f5ecc8b999a72c605c677ae1f9c14ab2b7a00f5c3ce871872730a1deaf"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T11:34:52+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T12:15:41+00:00",
+      "step": "review"
     }
   ]
 }
