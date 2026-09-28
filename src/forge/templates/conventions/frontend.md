@@ -6,7 +6,7 @@ changes a screen.
 ## Layout
 
 ```
-apps/web/src/
+frontend/src/
   main.tsx
   api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors, sends an x-correlation-id
   pages/            one file per screen
