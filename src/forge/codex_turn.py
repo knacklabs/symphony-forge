@@ -158,7 +158,9 @@ def main() -> int:
         RECORDED.acquire()
         if not request.get("ephemeral"):
             thread.set_name(request["name"])
-        turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
+        prompt = (request["prompt"] if resumed is not None else
+                  request.get("fresh_prompt", request["prompt"]))
+        turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
         emit(turn=turn.id)
         usage, items = None, []
         for event in turn.stream():
