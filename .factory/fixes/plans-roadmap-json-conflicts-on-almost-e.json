@@ -3,11 +3,37 @@
   "branch": "fix/plans-roadmap-json-conflicts-on-almost-e",
   "done_when": "Git merges plans/roadmap.json itself: forge sync registers a merge rule that keeps both sides' new items and the latest status of each, so two branches that each add an item merge without a conflict; a test merges two such branches",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "6f62c19904acb52ee028fa1a841a97b0ecc60b3e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`forge sync` registers the driver only in the local clone\u2019s Git config. Forge\u2019s actual merge path calls `gh pr merge --squash` (`src/forge/merge.py:64`), so GitHub cannot run that locally configured driver. After one PR adds a roadmap item, a second PR adding another item can still have a roadmap conflict on GitHub. The new test exercises a local `git merge`, so it does not catch this gap. Git documents that [custom drivers are defined in local Git config](https://git-scm.com/docs/gitattributes); GitHub [blocks PR merges with unresolved conflicts](https://docs.github.com/en/pull-requests/reference/merge-conflicts). Resolve and push the roadmap merge before the PR merge, and test that flow.",
+        "file": "src/forge/sync.py",
+        "line": 305,
+        "priority": "P1",
+        "title": "Not done: Git merges plans/roadmap.json itself for PRs that each add an item"
+      },
+      {
+        "body": "The driver selects an entire item from one side based on status rank. For example, if ours updates an existing item\u2019s title while theirs changes its status from `pending` to `done`, this condition copies theirs and silently discards the title edit. Merge independent fields separately, or leave incompatible edits as a conflict.",
+        "file": "src/forge/sync.py",
+        "line": 210,
+        "priority": "P2",
+        "title": "Preserve independent edits when choosing an item's later status"
+      }
+    ],
+    "status": "blocked",
+    "tree": "987de92229ed873a2980c52575f3685c7eab88a0d5c1175152df48bff6b70e84"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T18:45:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:26:53+00:00",
+      "step": "review"
     }
   ],
   "why": "plans/roadmap.json conflicts on almost every merge, because every story and fix appends to it"
