@@ -33,8 +33,9 @@ expensive to find in review.
    notes has a disposition, continues the previous round's recorded reader conversation (a Codex
    conversation, or a Claude Code session started with a known session id) and sends it only what
    changed: the doc's diff since the previous round, the previous round's findings with their
-   dispositions, and the number to start new findings from, telling it to re-read the whole doc
-   from its path. It never resends the first-round instructions, the whole doc or older rounds'
+   dispositions plus any older finding whose disposition changed since, and the number to start
+   new findings from, telling it to re-read the whole doc from its path and, for a story, the
+   confirmed spec's and `docs/product/BRIEF.md`'s current text from theirs. It never resends the first-round instructions, the whole doc or older rounds'
    findings, which the conversation already has. The reader stays the one recorded in the notes; a round started from the app that is
    itself the recorded reader, while the other app is installed, refuses and names the app to run
    it from. When the recorded reader's app is no longer installed, the round starts fresh on the
@@ -50,7 +51,8 @@ expensive to find in review.
    round's prompt, the first included, carries the `## Known traps` section of the repo's
    AGENTS.md, outside Forge's block, as the default branch has it, so a story branch made before a
    trap was learned still gets it. Tests cover a continued Codex round and a continued Claude round each sending only the diff,
-   the previous round's dispositions and the next number,
+   the previous round's dispositions, a changed older disposition and the next number, a third
+   round after the human settles a dispute, a spec or answers change between rounds,
    a Codex-only and a Claude-only reader, a fresh round after a Codex conversation or a Claude
    session is gone, a recorded reader that is no longer installed, a fresh
    round from old notes whose text is gone, a wrong-app refusal, a retry after a failed round and
@@ -153,7 +155,9 @@ New moving parts: none
 
 - SPEC pins the next-round prompt as a second part of `cold-read.md`, after a
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
-  `$path`, `$diff`, `$dispositions` (the previous round's findings with their dispositions),
+  `$path`, `$diff`, `$dispositions` (the previous round's findings with their dispositions, plus
+  any older finding whose disposition changed since), `$spec_path` (the confirmed spec's path, or
+  empty),
   `$next` (the first new finding's number) and `$traps` (the default branch's `## Known traps`
   section, also added to the first-round prompt); it has no `$doc` or `$findings`. ROUNDS
   fills them and adds nothing to the wording.
