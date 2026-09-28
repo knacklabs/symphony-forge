@@ -103,7 +103,7 @@ def _python(env: Path) -> Path:
 def sdk_problem() -> str:
     """Why the pinned SDK can't be used, in one sentence, or "" when it can."""
     env = sdk_env()
-    if not _python(env).is_file() or sync.read(env / READY).strip() != SDK_PIN:
+    if not installed():
         return f"The Codex SDK {SDK_PIN} isn't installed in {env}."
     done = repo.run(str(_python(env)), "-c", PROBE)
     said = (done.stdout.strip() or done.stderr.strip() or "it printed nothing").splitlines()[-1]
@@ -139,8 +139,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
 
 
 def installed() -> bool:
-    """Whether the pinned SDK, which is how Forge runs Codex, is installed; sdk_problem() says
-    whether it works."""
+    """Whether the pinned SDK, which is how Forge runs Codex, is installed."""
     return _python(sdk_env()).is_file() and sync.read(sdk_env() / READY).strip() == SDK_PIN
 
 
