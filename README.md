@@ -7,6 +7,8 @@ charge of the decisions: what gets built, which option to pick, and when it goes
 A *pull request* is a proposed change to the code that gets checked before it is added.
 *Merging* it is the moment the change becomes part of the real project.
 
+[![A five-minute explainer of Forge; click to watch it with sound](https://github.com/knacklabs/symphony-forge/releases/download/v1.1.0/forge-explainer-preview.webp)](https://github.com/knacklabs/symphony-forge/releases/download/v1.1.0/forge-explainer.mp4)
+
 ## Where it comes from
 
 In April 2026 OpenAI published
