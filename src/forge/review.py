@@ -340,6 +340,9 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     rejected = report.get("scope_rejected_findings") or []
     if (strict or not rejected) and (code == 2 or report.get("review_status") == "incomplete"):
         return [], "it reported the review as incomplete"
+    if strict and report.get("review_status") not in (
+            "scoped-clean", "findings", "filtered", "incorrect"):
+        return [], "it did not report a completed review"
     raw = report.get("findings")
     findings = ([_finding(f) for f in [*raw, *rejected]]
                 if isinstance(raw, list) and isinstance(rejected, list) else [None])
