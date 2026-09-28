@@ -1,47 +1,54 @@
 {
   "branch": "task/FORGE-SALES-1-INSTALL",
   "review": {
-    "commit": "7c932d5ab73187fa9333528f346e61768494c83d",
+    "commit": "4fb546d3f013c4712a77edfec619cc53f0a09bb4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The head commit records observed Mac stub runs but explicitly says no Windows result is claimed. The plan requires the functional check to record stubbed runs of both scripts. The Windows piped install, all-present path, and WSL2 guidance therefore still lack an observed outcome in the supplied evidence.",
-        "file": "plans/FORGE-SALES-1.md",
-        "line": 84,
+        "body": "When `wsl --status` reports default version 1, this branch only runs `wsl --set-default-version 2`. That sets the default for future distributions; it does not enable the Virtual Machine Platform feature required for WSL2. An existing WSL1 laptop without that feature can therefore finish or retry this path without Docker's WSL2 backend working. [Microsoft's WSL installation steps](https://learn.microsoft.com/en-us/windows/wsl/install-manual) enable the feature before setting the default version. The test at `tests/test_sales_install.py:244-256` asserts only that the insufficient command was called.",
+        "file": "scripts/install-windows.ps1",
+        "line": 47,
+        "priority": "P1",
+        "title": "Not done: enable WSL2 for existing WSL1 installs"
+      },
+      {
+        "body": "The head commit's Functional check says the prior Windows piped stub run failed its assertion and that the all-present and WSL2 guidance paths still await a Windows CI run. The plan at `plans/FORGE-SALES-1.md:81-86` requires the worker to record stubbed runs of both scripts. No successful result for those Windows paths is recorded in the supplied evidence.",
+        "file": "tests/test_sales_install.py",
+        "line": 267,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "The Mac fixture always provides `git` and `node` here, and the Windows fixture does the same at `tests/test_sales_install.py:116`. No test makes either tool missing. Removing or breaking either script's Git or Node installer call would leave this test green, despite those being required laptop setup steps. Add missing-tool cases that assert the Homebrew and winget calls.",
+        "body": "The test accepts either the administrator path or the non-administrator message according to the runner's privilege level. The repository's Windows CI uses `windows-latest` (`.github/workflows/forge-next.yml:23-25`), and [GitHub documents that these runners run as administrators](https://docs.github.com/en/actions/reference/runners/github-hosted-runners). Consequently, removing the plain non-administrator next action from `scripts/install-windows.ps1:43` would leave this test green. Exercise that user-facing failure path explicitly.",
         "file": "tests/test_sales_install.py",
-        "line": 22,
+        "line": 240,
         "priority": "P1",
-        "title": "Not done: test missing Git and Node installations"
+        "title": "Not done: test Windows non-administrator WSL2 guidance"
       },
       {
-        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or an old revision; Windows makes the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even when the project's tests cannot launch a browser. [Playwright requires browser binaries matched to its version](https://playwright.dev/docs/browsers).",
+        "body": "Any directory with each browser prefix counts as installed, including an incomplete download or binaries from an older Playwright release; Windows makes the same check at `scripts/install-windows.ps1:21`. Check mode can report nothing missing even though the project's Playwright cannot launch a browser. [Playwright requires browser binaries matched to its version](https://playwright.dev/docs/browsers).",
         "file": "scripts/install-mac.sh",
         "line": 20,
         "priority": "P2",
-        "title": "Check usable Playwright revisions before skipping installation"
+        "title": "Check usable Playwright browser revisions before skipping installation"
       },
       {
-        "body": "A standalone `docker` command causes the Mac script to skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:52`. The script can then say Docker is ready while there is no Desktop engine for prototype work. Check for a usable Desktop installation or give a plain instruction to start it. [Docker distinguishes the CLI from Desktop setup and startup](https://docs.docker.com/desktop/setup/install/mac-install/).",
+        "body": "A standalone `docker` command makes this script skip Docker Desktop; Windows uses the same command-only check at `scripts/install-windows.ps1:52`. Even after a fresh Desktop installation, neither script tells the user to launch it, so setup can finish with no usable Docker engine. Check Desktop separately and give a plain first-launch action. [Docker's Mac](https://docs.docker.com/desktop/setup/install/mac-install/) and [Windows](https://docs.docker.com/desktop/setup/install/windows-install/) instructions both require starting Desktop after installation.",
         "file": "scripts/install-mac.sh",
         "line": 56,
         "priority": "P2",
-        "title": "Treat a Docker CLI without Docker Desktop as missing"
+        "title": "Check Docker Desktop and tell the user to start it"
       },
       {
-        "body": "Done-when item 2 calls for running each script from a checklist one-liner. The task table assigns the checklist and README link to SPEC, and this branch has neither `docs/start-a-prototype.md` nor that README link. SPEC must publish the Mac `curl \u2026 | bash` and Windows `irm \u2026 | iex` commands to complete the user path.",
-        "file": "plans/FORGE-SALES-1.md",
-        "line": 66,
+        "body": "If `curl` fails, its command substitution can supply an empty string to `/bin/bash -c`; that command succeeds, so `set -e` does not stop the script at the failed download. On a Mac without Homebrew, setup then reaches `brew install` and fails with `brew: command not found` instead of explaining that the download failed and what to retry. Check the download result before invoking Bash.",
+        "file": "scripts/install-mac.sh",
+        "line": 38,
         "priority": "P2",
-        "title": "Later: SPEC \u2014 publish the checklist one-liners"
+        "title": "Stop when the Homebrew installer download fails"
       }
     ],
     "status": "blocked",
-    "tree": "631a6ac5031b2db610556ffb3c2f8d515c160b5f61ed825e32829e21aaa04470"
+    "tree": "e785ba48932c2a6ad0c1f8fea5d3a4465c0fe4a65d155b66b9d04adb8d92a408"
   },
   "status": "fixing",
   "steps": [
@@ -67,6 +74,10 @@
     },
     {
       "at": "2026-09-28T13:53:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:19:13+00:00",
       "step": "review"
     }
   ]
