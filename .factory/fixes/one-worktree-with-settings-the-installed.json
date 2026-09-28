@@ -3,11 +3,30 @@
   "branch": "fix/one-worktree-with-settings-the-installed",
   "done_when": "forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test through forge next shows it",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "2af181ed27c2b4b00518ddbde351df0ba3b885d6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Running `forge next` from the worktree with rejected settings still prints nothing. This catch converts the refusal into an item line, but `_report` then calls `repo.config(top)` at `src/forge/nextstep.py:143`; because `top` is that same worktree, the refusal escapes before `next_step` prints the report. The new test invokes `forge next` only from the healthy main checkout (`tests/test_fix_one_worktree_with_settings_the_installed.py:27`), so it misses this case. Handle that configuration refusal as an item diagnostic and test the command from the rejected worktree.",
+        "file": "src/forge/nextstep.py",
+        "line": 336,
+        "priority": "P1",
+        "title": "Not done: forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test though"
+      }
+    ],
+    "status": "blocked",
+    "tree": "671c66b00fc405b2512e546d655b8e6847ac991b4bc166a562acb227dff9e163"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T14:52:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:02:59+00:00",
+      "step": "review"
     }
   ],
   "why": "One worktree with settings the installed Forge rejects makes forge next refuse to show anything, for every item"
