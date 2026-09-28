@@ -1,10 +1,36 @@
 {
   "branch": "task/FORGE-PROTO-1-GATE",
-  "status": "working",
+  "review": {
+    "commit": "a849c3226ae110a6e2aaff447971c8daaa904aa8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new CLI test covers unsigned and signed client repositories, but never checks `roadmap add` in an unsigned `repo = \"forge-source\"` repository. Existing roadmap tests use the bare fixture from tests/conftest.py:130, which creates no forge.toml and therefore bypasses the new guard entirely. Add a CLI case proving that Forge can still add confirmed specs without client sign-off, as Done-when 2 explicitly requires.",
+        "file": "tests/test_proto_gate.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: Forge-repo roadmap exemption test"
+      },
+      {
+        "body": "This adds tests/test_split_ships.py to the TOPICS task's scope, although GATE delivers only items 2 and 3 and does not change that test. This amendment is outside the selected task's scope and is unnecessary for its implementation or fixture updates. Leave it to TOPICS.",
+        "file": "plans/FORGE-PROTO-1.md",
+        "line": 80,
+        "priority": "P2",
+        "title": "Keep the unrelated TOPICS scope change out of GATE"
+      }
+    ],
+    "status": "blocked",
+    "tree": "d313fc02f4a7d119bb4a5dbd55bc490e5436f754f610bd29e285da20fea8783f"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T10:30:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:08:18+00:00",
+      "step": "review"
     }
   ]
 }
