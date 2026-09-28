@@ -137,10 +137,12 @@ CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building and fixing may add their subagents' model and effort, as a pair.
-# The cold read runs on either family, so the grill kind has one such entry per family.
-KINDS = ("build", "fix", "lite", "grill", "review")
+# The cold read and design work have one entry per family.
+KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
+DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+                   "codex": {"model": "gpt-6-sol", "effort": "high"}}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -197,6 +199,11 @@ def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
     return chosen
 
 
+def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
+    """The design model for a family, including the default in older repos."""
+    return cfg["models"].get("design", {}).get(family, DESIGN_DEFAULTS[family])
+
+
 def _models_problem(table: Any) -> str:
     if not isinstance(table, dict):
         return "models must be a table"
@@ -205,10 +212,12 @@ def _models_problem(table: Any) -> str:
             return f"{kind} is not a kind of work; the kinds are {', '.join(KINDS[:-1])} and {KINDS[-1]}"
         if not isinstance(chosen, dict):
             return f"models.{kind} must be a table"
-        wrong = [key for key in chosen if key not in FAMILIES] if kind == "grill" else []
+        wrong = [key for key in chosen if key not in FAMILIES] if kind in ("grill", "design") else []
         if wrong:
-            return f"models.grill has one entry per family, codex and claude, so it can't set {wrong[0]}"
-        entries = ({f"grill.{family}": entry for family, entry in chosen.items()} if kind == "grill"
+            return (f"models.{kind} has one entry per family, codex and claude, "
+                    f"so it can't set {wrong[0]}")
+        entries = ({f"{kind}.{family}": entry for family, entry in chosen.items()}
+                   if kind in ("grill", "design")
                    else {kind: chosen})
         for name, entry in entries.items():
             if not isinstance(entry, dict):
