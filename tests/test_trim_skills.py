@@ -19,7 +19,7 @@ SOURCES = {
 # SHA-256 of the four package copies before the trim, with LF endings as sync writes.
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
-    ".codex/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
+    ".codex/skills/forge/fde.md": "b6d2644c32593e06aa40598f8e9018d983770ad2c34679052778718e48e02442",
     ".codex/skills/test-audit/SKILL.md": "d0bd6a7f13510241a334a5991f2b860c80283933f963603c5d88abb1e4859126",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",

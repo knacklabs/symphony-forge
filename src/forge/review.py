@@ -28,6 +28,7 @@ PRIORITIES = ("P0", "P1", "P2", "P3")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
+EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
@@ -226,20 +227,36 @@ def helper() -> Path:
 
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-        base: str, selected: dict[str, str], previous: dict[str, Any]) -> dict[str, Any]:
+        base: str, selected: dict[str, str], previous: dict[str, Any],
+        signoff_prompt: str = "") -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
-    prompt = instructions(top, item, state, cfg, base, previous)
+    prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    tmp = Path(tempfile.mkdtemp(prefix="forge-review-"))
-    tree, out = tmp / "tree", tmp / "review.json"
-    try:
+    product = (sorted({name for command in (("ls-files", "-z"),
+                                            ("ls-tree", "-r", "-z", "--name-only", head))
+                       for name in repo.git(*command, cwd=top).split("\0")
+                       if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
+               if signoff_prompt else [])
+    with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
+        tmp = Path(folder)
+        tree, out = tmp / "tree", tmp / "review.json"
         # A local clone keeps Git history inside the reviewer's read-only sandbox.
         repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
-        repo.git("fetch", "-q", str(top),
-                 f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
-        review_base = repo.git("rev-parse", base, cwd=tree)
+        if signoff_prompt:
+            repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
+                     ".factory", "plans", "docs/decisions", cwd=tree)
+            product_tree = repo.git("write-tree", cwd=tree)
+            review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
+                                   cwd=tree)
+            snapshot = repo.git("commit-tree", product_tree, "-p", review_base,
+                                "-m", "Product snapshot for sign-off", cwd=tree)
+            repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+        else:
+            repo.git("fetch", "-q", str(top),
+                     f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
+            review_base = repo.git("rev-parse", base, cwd=tree)
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
@@ -252,21 +269,48 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree)
         if launcher:
             argv += ["--codex-bin", str(launcher)]
-        for attempt in (1, 2):
-            findings, reason = _attempt(argv, tree, out, selected)
+        for attempt in ((1,) if signoff_prompt else (1, 2)):
+            findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
             if not reason:
                 break
             print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
-        else:
+        if signoff_prompt:
+            if reason:
+                repo.refuse(("The sign-off review did not finish: " + reason + ".",
+                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
+            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "xhigh":
+                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at xhigh effort: "
+                             "model and effort must match.",
+                             "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
+            serious = [f for f in findings if f["priority"] in SERIOUS]
+            if serious:
+                repo.refuse(("Customer sign-off review found a blocking issue: "
+                             + "; ".join(f["title"] for f in serious) + ".",
+                             "fix the prototype, then forge decision accept client-signoff --by \"<name>\""))
+            if repo.git("rev-parse", "HEAD", cwd=top) != head or repo.git(
+                    "status", "--porcelain", "--", "docs/product/BRIEF.md", *product, cwd=top):
+                repo.refuse(("The prototype differs from the reviewed commit.",
+                             "commit the changes, then forge decision accept client-signoff --by \"<name>\""))
+            return {"commit": head}
+        if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
     return {"commit": head, "tree": fingerprint(head, item, top, state, base), "findings": findings,
             "dismissals": []}
 
 
+def signoff(top: Path, answers: str) -> str:
+    """Review every tracked product file once, against an empty root, before client acceptance."""
+    skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
+    table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
+    block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
+        answers=answers, topics=table[0] if table else "")
+    cfg = {"models": {"review": {"model": "gpt-6-sol", "effort": "xhigh"}}}
+    return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
+
+
 def _attempt(argv: list[str], cwd: Path, out: Path,
-             selected: dict[str, str]) -> tuple[list[dict[str, Any]], str]:
+             selected: dict[str, str], strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -291,12 +335,14 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     if code not in (0, 1, 2) or not isinstance(report, dict):
         return [], last or f"it exited with code {code}"
     # The helper moves a finding pinned outside the changed files to scope_rejected_findings and
-    # calls the review incomplete for it. Forge keeps those findings like any other, so none is
-    # lost. ponytail: the helper doesn't say whether the engine also stopped early in that run,
-    # so a run with rejected findings always counts as finished; its findings still block.
+    # calls the review incomplete for it. Ordinary reviews keep those findings; sign-off requires
+    # a complete run even when rejected findings are present.
     rejected = report.get("scope_rejected_findings") or []
-    if not rejected and (code == 2 or report.get("review_status") == "incomplete"):
+    if (strict or not rejected) and (code == 2 or report.get("review_status") == "incomplete"):
         return [], "it reported the review as incomplete"
+    if strict and report.get("review_status") not in (
+            "scoped-clean", "findings", "filtered", "incorrect"):
+        return [], "it did not report a completed review"
     raw = report.get("findings")
     findings = ([_finding(f) for f in [*raw, *rejected]]
                 if isinstance(raw, list) and isinstance(rejected, list) else [None])

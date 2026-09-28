@@ -103,7 +103,10 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
                 UNTRUSTED, APPROVE):
         assert row in first.stdout, first.stdout
     assert not env.exists()
-    assert hooks.read_text(encoding="utf-8").count('"hook_event_name"') == 6
+    # The two new PreCompact hooks join the six existing host hooks in doctor's probe.
+    calls = hooks.read_text(encoding="utf-8")
+    assert calls.count('"hook_event_name"') == 8
+    assert calls.count("hook handoff\n") == 2
     monkeypatch.setenv("PATH", path)
     _install(repo.bin, "uv", UV_STUB.format(python=sys.executable, pin=PIN, program=str(program)))
 

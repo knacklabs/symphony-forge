@@ -8,9 +8,11 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
+import tempfile
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -29,6 +31,12 @@ COMMANDS = [
         "help": "Session start: print forge next and the story state",
         "args": [], "position": 240,
         "listing": "| `forge hook context` | Session start: prints `forge next` and the story's state |",
+    },
+    {
+        "words": "hook handoff", "run": "handoff_hook", "changes_state": False,
+        "help": "Before compaction: save forge next beside the agent's decisions and lessons",
+        "args": [], "position": 245,
+        "listing": "| `forge hook handoff` | Saves current state before context compaction |",
     },
 ]
 
@@ -111,6 +119,25 @@ def next_step(args: Any) -> int:
 def context_hook(args: Any) -> int:
     lines, states = _report(repo.root())
     print("\n".join(lines + states))
+    return 0
+
+
+def handoff_hook(args: Any) -> int:
+    top = repo.root()
+    path = repo.forge_dir(top) / "handoff.md"
+    old = path.read_text(encoding="utf-8") if path.is_file() else ""
+    heading = "## Decisions and lessons\n"
+    notes = old[old.index(heading):] if heading in old else heading
+    current = "\n".join(_report(top)[0])
+    temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
+                                       prefix="handoff-", suffix=".tmp", delete=False)
+    try:
+        with temp:
+            temp.write(f"# Forge handoff\n\n## Current state ({repo.now()[:10]})\n\n"
+                       f"{current}\n\n{notes}")
+        os.replace(temp.name, path)
+    finally:
+        Path(temp.name).unlink(missing_ok=True)
     return 0
 
 
