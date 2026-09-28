@@ -98,6 +98,52 @@ build or smallest slice first; a tie goes to the smaller build. If none does, re
 build, or find out first when an option's value can't be estimated. The human chooses; write the
 choice and one line of why into the spec's Behaviour.
 
+## Prototype
+
+In a new client repo, follow the FDE route: start with discovery of the customer's job,
+workaround, cost, people, frequency and evidence; build the smallest working prototype that tests
+the riskiest part of that problem; demo it; review the whole prototype and answers; obtain the
+customer's named sign-off;
+then create stories. Use prototype fixes before sign-off. The salesperson can be the FDE at first;
+the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
+call script. Push back when a requested feature does not serve the problem card: explain why and
+offer to note it for after sign-off. Keep the same app as it grows into production.
+
+Ask one topic at a time when it first changes what you are building. Skip a topic the repo already
+answers. In the options column, our default is first where there is one; questions of fact have
+no default. Offer **Ask the client** on every question and add it to the customer call script in
+`docs/product/DISCOVERY.md`. For a topic that may wait, also offer **Decide later**. Standards
+already decide logging, security and error handling; take those defaults and include them in the
+read-back without asking again. The first seven topics must have answers from the client,
+salesperson or developer before sign-off; a default or agent-only answer does not settle them.
+
+| Topic | Question | Options (default first) | Before sign-off |
+|---|---|---|---|
+| Sign-off person | Who at the customer approves the prototype? | name and role | must |
+| Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
+| Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
+| Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
+| Sign-in | How will people sign in? | email and password; company sign-in (Google or Microsoft) | must |
+| Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
+| Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
+| Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
+| Email or SMS | Which provider sends messages? | none yet; the client's provider | may wait |
+| Domain | Which web address? | our subdomain; the client's domain | may wait |
+| Backups and uptime | How much downtime or data loss is acceptable? | the platform's daily backups; stricter | may wait |
+| Log retention | How long must logs be kept? | the platform's default; longer | may wait |
+
+Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Record an answer as
+`- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
+default or agent as its source. Record an open request as
+`- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
+client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`. Before the
+sign-off review, use `forge next` to find each open must-answer topic and resolve it one at a time.
+
+When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
+Ask that one question, put the answer in the finding's disposition and the story's Notes as
+`Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
+Until the decision, use a fake provider for an external service. No second cold read is needed.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
