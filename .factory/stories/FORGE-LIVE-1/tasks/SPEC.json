@@ -1,8 +1,7 @@
 {
   "base": "32316be6f5338ab1f12934dfc89a858682b78aa1",
-  "branch": "fix/forge-can-t-tell-a-live-production-app-f",
+  "branch": "task/FORGE-LIVE-1-SPEC",
   "done_when": "A live app joins Forge in one human-merged pull request and never gets prototype rules",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
