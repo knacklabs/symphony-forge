@@ -34,8 +34,10 @@ expensive to find in review.
    conversation, or a Claude Code session started with a known session id) and sends it only what
    changed: the doc's diff since the previous round, the previous round's findings with their
    dispositions plus any older finding whose disposition changed since, and the number to start
-   new findings from, telling it to re-read the whole doc from its path and, for a story, the
-   confirmed spec's and `docs/product/BRIEF.md`'s current text from theirs. It never resends the first-round instructions, the whole doc or older rounds'
+   new findings from, telling it to re-read the whole doc from its path. For a story it also sends
+   the confirmed spec's diff since the previous round, found the way the first round finds the
+   spec (empty when unchanged), and tells the reader to re-read `docs/product/BRIEF.md` from the
+   story checkout. It never resends the first-round instructions, the whole doc or older rounds'
    findings, which the conversation already has. The reader stays the one recorded in the notes; a round started from the app that is
    itself the recorded reader, while the other app is installed, refuses and names the app to run
    it from. When the recorded reader's app is no longer installed, the round starts fresh on the
@@ -52,7 +54,8 @@ expensive to find in review.
    AGENTS.md, outside Forge's block, as the default branch has it, so a story branch made before a
    trap was learned still gets it. Tests cover a continued Codex round and a continued Claude round each sending only the diff,
    the previous round's dispositions, a changed older disposition and the next number, a third
-   round after the human settles a dispute, a spec or answers change between rounds,
+   round after the human settles a dispute, a spec found only on a promoted task branch changing between rounds, an answers change
+   between rounds, unchanged older findings left out,
    a Codex-only and a Claude-only reader, a fresh round after a Codex conversation or a Claude
    session is gone, a recorded reader that is no longer installed, a fresh
    round from old notes whose text is gone, a wrong-app refusal, a retry after a failed round and
@@ -156,17 +159,19 @@ New moving parts: none
 - SPEC pins the next-round prompt as a second part of `cold-read.md`, after a
   `<!-- forge:round -->` line and before the `<!-- forge:notes -->` part, using `$round`,
   `$path`, `$diff`, `$dispositions` (the previous round's findings with their dispositions, plus
-  any older finding whose disposition changed since), `$spec_path` (the confirmed spec's path, or
-  empty),
+  any older finding whose disposition changed since), `$spec_diff` (the confirmed spec's diff since
+  the previous round, or empty),
   `$next` (the first new finding's number) and `$traps` (the default branch's `## Known traps`
   section, also added to the first-round prompt); it has no `$doc` or `$findings`. ROUNDS
   fills them and adds nothing to the wording.
 - ROUNDS pins the notes contract CUT, GATES and SPECS read: the frontmatter keeps `reader`,
   `read_at` and `read_hash` for the latest round and adds `round` (a number) and `passed` (`yes`
   only when that round's whole text, trimmed, is exactly `No findings.`, else `no`). Each round's
-  text sits under `## Round <n>`; notes without `round` are round 1. The doc's diff is taken
-  against the previous round's text when it can be found, which `read` stores with
-  `git hash-object -w`. ROUNDS leaves `amended_hash`, `--amended` and today's read gate working
+  text sits under `## Round <n>`; notes without `round` are round 1. Each round `read` stores, with `git hash-object -w`,
+  the doc, the confirmed spec and the notes as that round's reader saw them, and records their
+  object ids in the frontmatter (`doc_seen`, `spec_seen`, `notes_seen`); the next round's diffs
+  and changed older dispositions are taken against those, and when one can't be found the round
+  starts fresh. ROUNDS leaves `amended_hash`, `--amended` and today's read gate working
   as they are; CUT drops them and moves every read check to the latest round's pass.
 - GATES makes a passing round commit its doc and notes for specs as well as story docs; SPECS
   relies on that commit.
