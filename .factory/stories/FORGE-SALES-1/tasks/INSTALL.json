@@ -1,61 +1,61 @@
 {
   "branch": "task/FORGE-SALES-1-INSTALL",
   "review": {
-    "commit": "c830047dcb22df2f60dae93c41e14655008b15fa",
+    "commit": "e2c068d7d4462aacaeeb0114b8efbd8feff18958",
     "dismissals": [],
     "findings": [
       {
-        "body": "On a clean Mac, an administrator normally has no cached sudo authorization. Setting NONINTERACTIVE=1 prevents Homebrew from asking for the password: its installer uses sudo -n, so installation fails before any tools are installed. The script neither authenticates first nor explains how to recover. Support password authorization through the terminal when invoked with curl | bash. See the [Homebrew installer](https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh).",
+        "body": "On a clean Mac without cached sudo authorization, NONINTERACTIVE=1 prevents Homebrew from requesting the administrator password. The [Homebrew installer](https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh) uses sudo -n in this mode, so setup fails before installing the tools. Authenticate through the terminal during the promised curl | bash invocation and explain how to recover if authorization fails.",
         "file": "scripts/install-mac.sh",
         "line": 33,
         "priority": "P1",
         "title": "Not done: One script sets up a laptop \u2014 Homebrew bootstrap"
       },
       {
-        "body": "Installing uv through winget does not put uv-installed tools on PATH. Forge normally lands in %USERPROFILE%\\.local\\bin, but this script never adds that directory, so the final forge --version fails on a fresh Windows account. The Mac counterpart at scripts/install-mac.sh:63 exports the directory only inside the piped Bash process; after it exits, the user's shell still cannot find Forge. Configure the tool executable directory persistently and make it available during setup. uv documents this separate step as [uv tool update-shell](https://docs.astral.sh/uv/guides/tools/#installing-tools).",
+        "body": "Installing uv through winget does not add uv's tool executable directory to PATH. On a fresh Windows account, Forge installs but the final forge --version cannot find it. The Mac script's export at scripts/install-mac.sh:63 lasts only inside the piped Bash process, leaving Forge unavailable afterward. Configure the tool directory persistently, expose it during setup, and explain any shell restart needed. [uv documents update-shell as the separate PATH configuration step](https://docs.astral.sh/uv/guides/tools/#installing-tools).",
         "file": "scripts/install-windows.ps1",
         "line": 59,
         "priority": "P1",
         "title": "Not done: One script sets up a laptop \u2014 Forge command availability"
       },
       {
-        "body": "The promised irm | iex invocation can start under Windows PowerShell's default Restricted policy, but the unqualified npm command resolves to npm.ps1 and is blocked. Setup therefore stops before installing Claude Code; npx at line 82 has the same problem. Invoke npm.cmd and npx.cmd explicitly so setup works without changing the user's execution policy. This behavior is documented in the [Node issue](https://github.com/nodejs/node/issues/62427), and [Microsoft documents Restricted as the Windows client default](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1).",
+        "body": "The promised irm | iex invocation can run under Windows PowerShell's default Restricted policy, but npm resolves to npm.ps1 and is blocked, stopping setup before Claude Code installs. The npx invocation at line 82 has the same defect. Call npm.cmd and npx.cmd explicitly. See the [Node reproduction and workaround](https://github.com/nodejs/node/issues/62427) and [Microsoft's default execution policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1).",
         "file": "scripts/install-windows.ps1",
         "line": 72,
         "priority": "P1",
         "title": "Not done: One script sets up a laptop \u2014 Windows npm execution"
       },
       {
-        "body": "The Windows test retains the host PATH while assuming gh and uv are missing. The Windows jobs in .github/workflows/forge-next.yml:23 run this suite, and line 31 installs real uv; the [Windows runner also includes GitHub CLI](https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md). Consequently, the script skips gh and the assertion at line 87 fails. If execution proceeds, real uv can be selected instead of the intended installer stub. Isolate command discovery from installed host tools while explicitly retaining the system commands needed by the harness.",
+        "body": "The fixture retains the host PATH while expecting GitHub CLI and uv to be missing. The Windows suite runs through .github/workflows/forge-next.yml:23\u201335, where line 31 installs uv; the [Windows runner also includes GitHub CLI](https://github.com/actions/runner-images/blob/main/images/windows/Windows2025-Readme.md). Consequently, check mode skips gh and the assertion at line 87 fails. If execution reaches installation, it can select real uv instead of the stub. Isolate tool discovery while retaining only the system commands the harness requires, including across the script's PATH refresh.",
         "file": "tests/test_sales_install.py",
         "line": 81,
         "priority": "P1",
         "title": "Not done: isolated Windows install test"
       },
       {
-        "body": "The required skip behavior is not protected: these assertions allow extra installer calls, so reinstalling the already-present Git and Node would still pass. Neither platform exercises an all-present setup or existing browsers, and the Windows fixture always reports WSL2 ready, leaving the administrator/restart installation path untested. Windows also does not assert the Claude Code, Codex or Playwright installer calls. Extend the entry-point tests to verify no installs for present tools and the missing-WSL2 flow, and assert every required Windows installer is called exactly once.",
+        "body": "These assertions permit extra installer calls, so reinstalling already-present Git and Node would still pass. Neither platform exercises all-present tools or existing browsers; Homebrew is always present, and Windows always reports WSL2 ready, leaving both bootstrap paths untested. Windows also omits assertions for the uv, Claude Code, Codex and Playwright installer calls. Extend the script-entry-point tests to verify no installation for present tools, each missing installer exactly once, and the Homebrew and WSL2 authorization/restart paths.",
         "file": "tests/test_sales_install.py",
         "line": 61,
         "priority": "P1",
-        "title": "Not done: skip-present and WSL2 setup tests"
+        "title": "Not done: skip-present and bootstrap setup tests"
       },
       {
-        "body": "The recorded functional check explicitly leaves clean Mac and Windows installations pending until after merge. It exercises only Mac check mode and a stubbed Mac installation, and says the Windows path was not run locally. That does not satisfy the required real installation on both clean platforms, including Windows elevation and restart. Complete those walkthroughs and record their observed outcomes before treating this item as done.",
+        "body": "The supplied functional-check paragraph records observed Mac runs but only says the Windows test is routed through CI; it records no Windows execution or observed result. The amended contract requires recording the stubbed runs for both scripts. Run the isolated Windows check and install paths and record their outcomes, including the WSL2 guidance. Clean-laptop installations may remain with the owner after merge, as explicitly allowed here.",
         "file": "plans/FORGE-SALES-1.md",
-        "line": 85,
+        "line": 86,
         "priority": "P1",
         "title": "Not done: functional check"
       },
       {
-        "body": "Any directory matching each browser prefix is accepted, including browsers left by an older Playwright release. Such a machine produces no missing-browser warning and skips installation even when the Playwright version being used cannot launch those binaries. The Windows predicate at scripts/install-windows.ps1:23 has the same issue. Check the required browser revisions and executables rather than directory prefixes; [Playwright requires specific browser binaries for each version](https://playwright.dev/docs/browsers).",
+        "body": "Any directory matching each browser prefix is considered sufficient, including obsolete or incomplete browser installations. Check mode therefore reports nothing missing and setup skips installation even when the intended Playwright version cannot launch those browsers. scripts/install-windows.ps1:23 uses the same predicate. Validate the required revisions and executable files; [Playwright requires specific browser binaries for each version](https://playwright.dev/docs/browsers).",
         "file": "scripts/install-mac.sh",
         "line": 20,
         "priority": "P2",
-        "title": "Check usable Playwright revisions before skipping browser installation"
+        "title": "Check usable Playwright revisions before skipping installation"
       }
     ],
     "status": "blocked",
-    "tree": "764907e522e40fa0edbdbcfa5abcd63a4d0ad82dca835af53c2b176add111130"
+    "tree": "5d36003f51a206ef018cb6a2a1f4e4efd9e5c081650f7cda0ce8dd1259b22761"
   },
   "status": "fixing",
   "steps": [
@@ -65,6 +65,10 @@
     },
     {
       "at": "2026-09-28T12:05:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:08:28+00:00",
       "step": "review"
     }
   ]
