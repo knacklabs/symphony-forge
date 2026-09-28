@@ -83,9 +83,11 @@ def work(args: argparse.Namespace) -> None:
         round_number = 1 + len({(entry["conversation"], entry["turn"])
                                 for line in turns.read_text(encoding="utf-8").splitlines()
                                 if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
-        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number)
+        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
+                                continued=bool(thread))
         if thread:
-            brief += _changes(top, codex.record(top, item)["start"])
+            saved = codex.record(top, item)
+            brief += _changes(top, saved.get("head") or saved["start"])
         state["status"] = "fixing" if findings or failing else "working"
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
@@ -170,7 +172,7 @@ def _approval(key: str, item: str, top: Path) -> str:
 
 
 def _changes(top: Path, start: str) -> str:
-    """For a continued conversation: the commits since its last turn started, and every change git
+    """For a continued conversation: the commits since its last turn ended, and every change git
     sees in the checkout since then, untracked files included through a temporary index, so git's
     own index stays as it is. A very large change is listed by file."""
     commits = git("log", "--oneline", f"{start}..HEAD", cwd=top) or "None."
@@ -188,7 +190,7 @@ def _changes(top: Path, start: str) -> str:
             diff = ("The change is over 200 KB, so here are the files it touches:\n"
                     + cached("diff", "--cached", "--name-status", start))
     return (f"\n## Since your last turn\n\nThe new commits:\n\n{commits}\n\nEvery change in "
-            "the checkout since your last turn started, new files included:\n\n"
+            "the checkout since your last turn ended, new files included:\n\n"
             f"```diff\n{diff}```\n")
 
 
@@ -230,7 +232,7 @@ def _failing(branch: str) -> list[tuple[str, str]]:
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
            findings: list[dict[str, Any]], failing: list[tuple[str, str]],
            note: str | None = None, question: str | None = None,
-           round_number: int = 1) -> tuple[str, str]:
+           round_number: int = 1, continued: bool = False) -> tuple[str, str]:
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
@@ -275,6 +277,16 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             for f in findings) or "None."
         values["checks"] = "\n\n".join(
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
+    if continued:
+        brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        if note is not None:
+            brief += f"\n## From the coordinator\n\n{note}\n"
+        if question:
+            brief += f"\n## Your pending question\n\n{question}\n\nThe coordinator answered: {note or ''}\n"
+        if findings or failing:
+            brief += (f"\n## Fix round\n\n### Open serious findings\n\n{values['findings']}\n"
+                      f"\n### Failing checks\n\n{values['checks']}\n")
+        return brief, subject
     standards = HERE / "standards.md"
     if standards.is_file():  # ponytail: DOCS-STANDARDS ships the standards page
         on.add("standards")

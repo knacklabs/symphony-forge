@@ -184,7 +184,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     monkeypatch.delenv("STUB_CODEX_COMMIT")
     assert repo.git("log", "-1", "--format=%s", cwd=folder) == "Build the page"
-    start = repo.git("rev-parse", "HEAD~1", cwd=folder)  # the commit the first turn started from
+    ended = repo.git("rev-parse", "HEAD", cwd=folder)  # the commit the first turn ended on
 
     # Since that turn: a commit, an edit, a new file and an ignored one, and a serious finding.
     (folder / "notes.md").write_text("First notes\n", encoding="utf-8")
@@ -202,7 +202,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         {"priority": "P1", "title": "Archived stories are missing", "body": "Show them too.",
          "file": "web/board.py", "line": 12}]}
     state_file.write_text(json.dumps(state), encoding="utf-8")
-    commits = repo.git("log", "--oneline", f"{start}..HEAD", cwd=folder)
+    commits = repo.git("log", "--oneline", f"{ended}..HEAD", cwd=folder)
 
     # The fix round continues the same conversation on the fix kind's models, with
     # full access and approvals "never"; no new conversation starts.
@@ -217,14 +217,15 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         "BOARD · The page", "BOARD · The page"]
     assert "stub codex: turn-stub-2 on thr-stub-1" in fixed.stdout
 
-    # It tells the conversation the findings, the new commits, and every change git sees since
-    # the last turn started, new files included and ignored ones left out.
+    # The old contract repeated the whole brief and the worker's own commit. A continued
+    # conversation now gets the findings and changes since its last turn ended.
     text = _text(calls)
-    assert "You are the worker." in text
+    assert "The earlier brief in this conversation still applies." in text
+    assert "You are the worker." not in text
     assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in text
     assert f"The new commits:\n\n{commits}\n" in text
     assert "Add the notes" in text and "+First notes" in text
-    assert "Build the page" in text and "+BUILT = True" in text
+    assert "Build the page" not in text and "+BUILT = True" not in text
     assert "+Edited after the turn" in text and "+NEW_FILE = True" in text
     assert "IGNORED CONTENT" not in text and "secret.log" not in text
     # Git's own index is left as it was: the new file is still untracked.
@@ -257,6 +258,8 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         assert (line["kind"], line["continued"], line["fresh_start"]) == ("Fix", False, why)
         assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
         assert _sent(calls, "thread/start")[-1]["config"] == FIX_CONFIG
+        if not why.startswith("Codex couldn't"):
+            assert "You are the worker." in _text(calls)
         tried = len(_sent(calls, "thread/resume")) - resumed
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why
 
