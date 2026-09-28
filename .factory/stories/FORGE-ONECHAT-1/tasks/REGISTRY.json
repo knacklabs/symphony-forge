@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-ONECHAT-1-REGISTRY",
-  "status": "working",
+  "review": {
+    "commit": "6ca9324643ca6a2dec4f86707b29ba5af6febb8e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The test sets only XDG_CONFIG_HOME, but machine.py:9 selects APPDATA on Windows. After init, line 24 therefore reads a nonexistent temporary registry while Forge writes to the runner's actual config folder. The Windows jobs in .github/workflows/forge-next.yml:23\u201325 run this test through the suite command at line 36. Set the platform-appropriate config variable so the test both isolates and checks the registry on Windows.",
+        "file": "tests/test_onechat_registry.py",
+        "line": 14,
+        "priority": "P1",
+        "title": "Not done: Windows registry command test"
+      },
+      {
+        "body": "No test supplies repeated registry lines, a missing checkout, or an existing folder without forge.toml and verifies the reader's result. The current assertions inspect the writer's file contents only. Removing the filtering or dict.fromkeys from machine.py:25\u201326 would leave this test passing, so the explicitly required reading behavior has no effective coverage.",
+        "file": "tests/test_onechat_registry.py",
+        "line": 31,
+        "priority": "P1",
+        "title": "Not done: registry reader filtering and deduplication tests"
+      },
+      {
+        "body": "Several command checks pass for unrelated reasons. Sync runs only after init has already registered the checkout, so removing sync from the dispatch registration list would pass. The dry-run assertion also passes if the dry-run guard is removed: _copied_client (tests/test_migrate.py:60\u201370) supplies no forge.toml in the main checkout, so machine.remember rejects it independently. The refusal check at line 18 likewise uses a checkout without forge.toml. Exercise successful sync with an eligible, unregistered checkout, and exercise dry-run/refusal exclusions where the checkout otherwise qualifies for registration. Each assertion must fail when its corresponding dispatch behavior breaks.",
+        "file": "tests/test_onechat_registry.py",
+        "line": 35,
+        "priority": "P1",
+        "title": "Not done: effective command registration and exclusion tests"
+      }
+    ],
+    "status": "blocked",
+    "tree": "98571dbb9a31b89b3de61d9cd31d7e6306741aace989d62e6a4fe1d4b7e571d7"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T05:28:26+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:55:14+00:00",
+      "step": "review"
     }
   ]
 }
