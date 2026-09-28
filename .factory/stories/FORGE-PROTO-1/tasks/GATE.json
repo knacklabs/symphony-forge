@@ -1,0 +1,33 @@
+{
+  "branch": "task/FORGE-PROTO-1-GATE",
+  "review": {
+    "commit": "9714311984bbbef067d1a19296923e79a9c24045",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported scope amendment remains: this adds `tests/test_split_ships.py` to TOPICS, although GATE covers only items 2 and 3 and does not modify that test. Remove this unrelated amendment and leave TOPICS scope changes to that task.",
+        "file": "plans/FORGE-PROTO-1.md",
+        "line": 80,
+        "priority": "P2",
+        "title": "Keep the unrelated TOPICS scope change out of GATE"
+      }
+    ],
+    "status": "clean",
+    "tree": "932854f975842b3beee70fb39ad99f1de19ac883e6fff5e0fe512d34a08d4a16"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T10:30:57+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:08:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T11:24:57+00:00",
+      "step": "review"
+    }
+  ]
+}

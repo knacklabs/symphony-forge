@@ -115,10 +115,16 @@
       "order": 59
     },
     {
+      "key": "FORGE-DESIGN-1",
+      "title": "Design work (screens and flows) runs on Codex like everything else, but the owner wants UI and UX built by Opus 5.5 with impeccable, Emil and the app baseline, falling back to Codex Sol high",
+      "status": "pending",
+      "order": 60
+    },
+    {
       "key": "FORGE-SALES-1",
       "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
       "status": "pending",
-      "order": 60
+      "order": 61
     }
   ],
   "epics": [
