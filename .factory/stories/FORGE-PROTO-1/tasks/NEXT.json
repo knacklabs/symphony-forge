@@ -1,0 +1,40 @@
+{
+  "branch": "task/FORGE-PROTO-1-NEXT",
+  "review": {
+    "commit": "a5604657455a236eae5b9a712af93b10a8863bb4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "An entry such as `- Sign-in: ask the client  (salesperson, 2026-09-28)` passes ANSWER_LINE but stores `ask the client ` with a trailing space. The exact comparison in open_must_answer_topics then treats it as settled, so `forge next` omits the unanswered topic. Normalize surrounding whitespace before classifying reserved markers, or classify these entries as malformed.",
+        "file": "src/forge/nextstep.py",
+        "line": 92,
+        "priority": "P2",
+        "title": "Keep whitespace-padded open markers unresolved"
+      },
+      {
+        "body": "If Answers contains both `- Sign-in: email and password (client, 2026-09-28)` and `* Sign-in: ask the client (salesperson, 2026-09-28)`, the second entry is silently discarded because topic recognition requires the exact `- ` prefix. The first entry therefore makes Sign-in appear settled despite the repeated, malformed entry. Identify recognizable topic labels independently of format validation, then retain invalid entries as malformed so they keep the topic open.",
+        "file": "src/forge/nextstep.py",
+        "line": 76,
+        "priority": "P2",
+        "title": "Retain malformed duplicates when identifying topic entries"
+      }
+    ],
+    "status": "clean",
+    "tree": "6e77287c533682d000727876a8f327d7f54c2af2af19c3dbfd8ec46d7a0e8386"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T10:31:01+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T10:52:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T11:05:38+00:00",
+      "step": "review"
+    }
+  ]
+}

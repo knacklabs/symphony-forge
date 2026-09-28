@@ -26,7 +26,7 @@ LISTED = {"AGENTS.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
             for name in ("SKILL.md", "NOTICE.md"))}
 SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
-NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "
+NO_IMPECCABLE = ("impeccable is required for UI work but isn't installed where the claude "
                  "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
 OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
 
@@ -222,16 +222,20 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_config))
     else:
         monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
-    # impeccable where the configured Claude worker reads skills, or only
-    # where Codex reads them, or only in the repo's .agents (Claude Code never reads that), or
-    # nowhere.
+    # The old contract checked only impeccable. Both skills now have to be where the configured
+    # Claude worker reads them; these cases vary impeccable's location.
     skills = {"no impeccable": None, "impeccable only for codex": codex_home,
               "impeccable only in the repo's .agents": client / ".agents",
               "impeccable in CLAUDE_CONFIG_DIR": claude_config}.get(case, home / ".claude")
     if skills:
-        skill = skills / "skills" / "impeccable" / "SKILL.md"
-        skill.parent.mkdir(parents=True)
-        skill.write_text("---\nname: impeccable\n---\n", encoding="utf-8")
+        for name in ("impeccable", "emil-design-eng"):
+            skill = skills / "skills" / name / "SKILL.md"
+            skill.parent.mkdir(parents=True, exist_ok=True)
+            skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
+    else:
+        emil = home / ".claude" / "skills" / "emil-design-eng" / "SKILL.md"
+        emil.parent.mkdir(parents=True)
+        emil.write_text("---\nname: emil-design-eng\n---\n", encoding="utf-8")
     if case != "codex doesn't trust the project":
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")

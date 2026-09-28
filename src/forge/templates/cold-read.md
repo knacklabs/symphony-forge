@@ -14,6 +14,12 @@ $spec
 For a story, check the confirmed spec before calling it missing. Forge includes its path and text
 above when it finds the spec in any local branch, including a promoted task branch.
 
+For a story, read this checkout's `docs/product/BRIEF.md` `## Answers` section. When a Done-when
+item needs a topic marked `later`, report `Decide first: <topic>` as a finding. The agent must ask
+that one question, record the answer in the finding's disposition and the story's Notes as
+`Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
+page. Do not call a deferred topic open when no Done-when item needs it.
+
 Check:
 
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,

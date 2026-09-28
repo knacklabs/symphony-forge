@@ -120,8 +120,18 @@ Forge copies it into the pull request, and the reviewer reads it there. Close re
 commit's paragraph, so in every round, fix rounds included, it walks every Done-when item this
 part covers, not only what the round changed.
 
-impeccable is the one UI skill for the screens. Use a motion skill only when a Done-when item needs
-motion.
+impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
+visual design (layout, type, colour, states and copy): shape before building, then audit and polish
+before a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection,
+with at most one more round. Invoke emil-design-eng with a specific task, never bare. It owns
+interaction feel (press feedback, easing, durations, popovers, tooltips, drag and when not to
+animate). Follow the frontend convention's motion rules: stagger only when a list appears as a
+list; keep routine app-screen motion under 300 ms; reserve longer timing for one authored landing
+page moment; keep content visible by default and enter with `@starting-style` or transitions;
+share the ease-out token `cubic-bezier(0.23, 1, 0.32, 1)`; use CSS or the Web Animations API first
+and Motion only when a Done-when item needs springs or drag. Prototypes use impeccable's Operate
+mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's transform-origin
+variable. Do not animate keyboard-driven or very frequent actions.
 
 <!-- end -->
 <!-- if fix-round -->
