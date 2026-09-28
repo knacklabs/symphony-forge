@@ -464,9 +464,12 @@ def test_18_close(env, kind):
     [call] = env.review_calls()
     env.repo.git("merge-base", "--is-ancestor", moved, call["head"])  # raises if main wasn't merged
     options = dict(zip(call["args"][::2], call["args"][1::2]))
+    # The old contract passed origin/main, which a clone could resolve to stale local main.
+    # The reviewer now gets the exact fetched remote commit.
     assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority",
                                              "--model", "--thinking")} == {
-        "--mode": "branch", "--base": "origin/main", "--engine": "codex", "--max-priority": "P3",
+        "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
+        "--engine": "codex", "--max-priority": "P3",
         "--model": "codex=gpt-6-astra", "--thinking": "codex=high"}
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree

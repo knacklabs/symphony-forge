@@ -227,9 +227,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # A local clone keeps Git history inside the reviewer's read-only sandbox.
         repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
+        repo.git("fetch", "-q", str(top),
+                 f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
+        review_base = repo.git("rev-parse", base, cwd=tree)
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
-        argv = [sys.executable, str(path), "--mode", "branch", "--base", base, "--engine", "codex",
+        argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
+                "--engine", "codex",
                 "--max-priority", "P3", "--prompt", prompt, "--json-output", str(out)]
         chosen = cfg["models"].get("review")
         if chosen:  # forge.toml's review kind: its model, and its effort when it sets one

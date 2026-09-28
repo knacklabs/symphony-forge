@@ -82,3 +82,32 @@ path.write_text(json.dumps({{"git_directory": (folder / ".git").is_dir(),
     assert env.close(item).returncode == 0
     result = json.loads((env.repo.bin / "review-history.json").read_text("utf-8"))
     assert result == {"git_directory": True, "history": "Work", "exit": 0}
+
+
+def test_7_review_base_is_fetched_remote_commit_when_local_main_lags(env):
+    item, _ = env.start_fix()
+    other = env.tmp / "other-clone"
+    remote = env.repo.git("config", "--get", "remote.origin.url")
+    env.repo.git("clone", "-q", remote, str(other))
+    (other / "NEWS.md").write_text("Already merged upstream\n", encoding="utf-8")
+    env.repo.git("add", "NEWS.md", cwd=other)
+    env.repo.git("commit", "-q", "-m", "Already merged upstream", cwd=other)
+    env.repo.git("push", "-q", "origin", "main", cwd=other)
+    remote_head = env.repo.git("rev-parse", "HEAD", cwd=other)
+    assert env.repo.git("rev-parse", "main") != remote_head
+
+    probe = '''#!{python}
+import json, pathlib, subprocess, sys
+folder = pathlib.Path(sys.argv[sys.argv.index("-C") + 1])
+base = pathlib.Path(__file__).resolve().parent / "expected-base"
+sha = base.read_text().strip()
+read = subprocess.run(["git", "cat-file", "-e", sha + "^{{commit}}"], cwd=folder)
+(base.parent / "review-base.json").write_text(json.dumps({{"base_readable": read.returncode == 0}}))
+'''
+    (env.repo.bin / "expected-base").write_text(remote_head, encoding="utf-8")
+    conftest._install(env.repo.bin, "codex", probe.format(python=sys.executable))
+    assert env.close(item).returncode == 0
+    args = env.review_calls()[-1]["args"]
+    assert args[args.index("--base") + 1] == remote_head
+    observed = json.loads((env.repo.bin / "review-base.json").read_text("utf-8"))
+    assert observed["base_readable"]
