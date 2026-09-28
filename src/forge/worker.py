@@ -259,7 +259,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     else:
         on.add("fix")
         subject = state.get("why", "")
-        values.update(why=subject, done=state.get("done_when", ""))
+        values.update(why=subject, done=state.get("done_when", ""),
+                      interfaces=", ".join(f"`{pattern}`" for pattern in
+                                           repo.config(top)["interfaces"]) or "none",
+                      allowance=state.get("allow_large") or "No recorded allowance")
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")

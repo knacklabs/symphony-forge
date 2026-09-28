@@ -104,6 +104,8 @@ Use one framing line before showing a story in Plan Mode:
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Open each item with one bold plain sentence before its detail.
   "Code exists" is not a result.
+- Done-when or Notes names supported inputs and exclusions. A dismissal that narrows those
+  inputs needs an amendment to the story doc before the review can close.
 - Put Risks right after Done when, then a `For the builders` heading before Tasks, so the owner's
   sections come first.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
@@ -164,6 +166,10 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 `Not done: <item>` (P1). A missing rule-11 basic is its own P1, never `Simpler:`.
 
 ## Closing
+
+Before building a fix, check its brief for the five-code-file limit, interface globs and any
+recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
+recorded before editing.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
