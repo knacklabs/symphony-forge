@@ -3,11 +3,22 @@
   "branch": "fix/the-ubuntu-test-job-is-cancelled-at-its",
   "done_when": "The Ubuntu test job in .github/workflows/forge-next.yml allows 10 minutes, like Windows and macOS",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "67a80bf0e8524f64ace665258cd69b33b202b0f2",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "889b0e93d6ced7415e241f451e05f854c6ed546a152893a2de6d04cd7e138aa8"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T16:25:30+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T16:34:22+00:00",
+      "step": "review"
     }
   ],
   "why": "The Ubuntu test job is cancelled at its 5-minute limit even when every test passes, because the suite now takes almost 5 minutes"
