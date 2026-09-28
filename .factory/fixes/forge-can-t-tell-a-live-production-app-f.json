@@ -1,0 +1,14 @@
+{
+  "base": "32316be6f5338ab1f12934dfc89a858682b78aa1",
+  "branch": "fix/forge-can-t-tell-a-live-production-app-f",
+  "done_when": "A live app joins Forge in one human-merged pull request and never gets prototype rules",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T13:34:46+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches"
+}
