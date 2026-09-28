@@ -5,19 +5,19 @@
   "done_when": "uv sync installs a declared dev dependency group with the test tools, uv run pytest runs the suite, CI installs the same group instead of adding tools at run time, and the README has a short Contributing section: clone, uv sync, uv run pytest, and fixes go through Forge",
   "kind": "fix",
   "review": {
-    "commit": "32a450402f4ca6880f55ca675ed264959d01c8fb",
+    "commit": "ee460dfdedbf5604428f09425363ef7cf6d1db81",
     "dismissals": [],
     "findings": [
       {
-        "body": "The integration test runs only `pytest --version`, and its temporary checkout contains no tests. It verifies tool installation but cannot detect collection or execution failures through the documented contributor command. CI explicitly selects the dev group and runs `python -m pytest`, so it does not cover this exact workflow either. Add coverage that performs plain `uv sync` in a fresh checkout and executes the repository suite through `uv run pytest`, preventing recursive invocation of this integration test and asserting successful test execution.",
+        "body": "The integration test creates a synthetic test suite containing only `forge --version`, so it passes even if the repository's actual suite cannot collect or execute through the documented contributor command. The CI command in `.github/workflows/forge-next.yml:36` instead runs `python -m pytest` with an explicit dev group. Under the requested test audit, the contributor workflow still lacks end-to-end proof. Exercise plain `uv sync` followed by `uv run pytest` against the repository suite in a fresh checkout, preventing recursive invocation of this integration test, and assert successful execution.",
         "file": "tests/test_fix_clone_gets_test_tools.py",
-        "line": 42,
+        "line": 44,
         "priority": "P1",
         "title": "Not done: uv run pytest runs the suite in a freshly synced checkout"
       }
     ],
     "status": "blocked",
-    "tree": "724518d900d1f3fcd7eb83f9355b680361d7bb24c26194c770c79f3cab2c7fa5"
+    "tree": "69b5a3620a58bb502716aeb6d38bd4b162861d161fe6caa3ff3b22e5df4d2a0a"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-09-28T08:27:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T08:37:28+00:00",
       "step": "review"
     }
   ],
