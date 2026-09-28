@@ -2,7 +2,13 @@
   "branch": "task/FORGE-DESIGN-1-MODELS",
   "review": {
     "commit": "d532cea258a99b813a193fbed4d1372cb7b49656",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/repo.py:202 design_models is first called by forge work in the story's ROUTE task, whose tests/test_design_route.py covers the defaults through the real command",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The old-repository assertion only checks that `doctor` accepts a configuration without `[models.design]`. `src/forge/doctor.py:74` reads the configuration but never resolves design models, and no test exercises the default selection. Changing either `DESIGN_DEFAULTS` value or breaking the fallback at `src/forge/repo.py:204` would therefore leave this test passing. MODELS explicitly owns the defaults and their configuration coverage (plans/FORGE-DESIGN-1.md:50). The required test must establish that an existing repository receives `claude-opus-5-5` high and `gpt-6-sol` high when those entries are absent.",
@@ -12,10 +18,10 @@
         "title": "Not done: test the design defaults for existing repositories"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "d2e0566f26a6a74b1ca746242d82c1d6066f474d4877f668f4c3f3f347b4cc8f"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:12:24+00:00",
