@@ -4,26 +4,26 @@
   "done_when": "The worker brief lets a worker update any existing test its intended change breaks, outside its scope, naming each changed test and why in its handoff; the review brief no longer reports such test files as outside scope but reports a test weakened to hide a real defect as a P1; tests through forge work and forge close show both",
   "kind": "fix",
   "review": {
-    "commit": "9b0070e7fd37a064701438b22869068fa7d0bb90",
+    "commit": "11609ec484bec3ef05b91746a9028884e5f1f3c6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The exemption only recognizes Python files named test_* under the root tests directory. An existing web/test_board.py or src/component.test.ts broken by the intended change still appears in the review's outside-scope list. Forge already supports these layouts in src/forge/worker.py:23\u201325, and tests/test_worker.py:42 explicitly exercises a colocated test. This misses the acceptance criterion covering any existing test. Extend the exemption to supported test layouts and cover them through forge close.",
+        "body": "The extension allowlist still excludes existing tests such as `tests/check_api.mjs`, `tests/check_api.cjs`, or `tests/test_api.sh`. None matches the filename patterns above, so an intended change updating these tests still lists them outside scope. The worker already recognizes these test-folder paths through `TEST_PATHS` in `src/forge/worker.py:23\u201325`. This leaves the acceptance criterion covering any existing test incomplete. Extend recognition and cover these cases through `forge close`.",
         "file": "src/forge/review.py",
-        "line": 168,
+        "line": 224,
         "priority": "P1",
-        "title": "Not done: Existing tests outside tests/test_*.py still appear as outside scope"
+        "title": "Not done: Existing tests with other extensions still appear outside scope"
       },
       {
-        "body": "The two independent substring assertions do not verify the required severity. Changing the new review instruction to report weakened tests as P2 would leave this test passing because unrelated instructions already contain P1. Assert that the weakened-test instruction itself requires P1 in the prompt produced through forge close, so the test fails when this acceptance criterion breaks.",
+        "body": "The fix-brief assertions check isolated words without checking that permission is granted. Changing the fix-specific instruction to `You must not update an existing test your intended change breaks` while retaining its scope and handoff text leaves every assertion passing. The stronger assertions below inspect only the separate task brief. Assert the permission, outside-scope exception, and handoff requirement together in the fix prompt returned through `forge work`, so reversing that permission fails this test.",
         "file": "tests/test_fix_workers_stop_to_ask_before_updating_an_e.py",
-        "line": 65,
+        "line": 27,
         "priority": "P1",
-        "title": "Not done: forge close test enforces P1 for tests weakened to hide defects"
+        "title": "Not done: forge work test enforces permission in the fix brief"
       }
     ],
     "status": "blocked",
-    "tree": "6dba8d13be3bf09fc1b2679dcd23b8a17d0aee2a9ef32a2b8d63538e638dfc3d"
+    "tree": "c4153b81b91f2b165941d8de3b2dd9b98d23f2262ffc6fb83c494212fee99c1c"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-09-28T11:51:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:05:17+00:00",
       "step": "review"
     }
   ],
