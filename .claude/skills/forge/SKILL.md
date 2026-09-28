@@ -68,7 +68,8 @@ the changes.
 ## Discovery
 
 Every ask is a guess about a problem: find the problem before anything is planned. The worked
-example, question bank and customer call script are in [the reference page](fde.md).
+example, question bank, customer call script and outlines for the pre-meeting brief and recap are
+in [the reference page](fde.md).
 
 **By size.** On a fix or an everyday story, interview the engineer, and through them the
 customer: one question per turn, about something that already happened. Offer no solutions while
@@ -77,13 +78,17 @@ your recommendation first. Add a one-line `Why I ask:` to each question until th
 they know why. Ask at most two questions for a fix and eight for a story, then write what is
 still unanswered as `unknown`.
 
-**Office-hours.** On a new project, or an ask no confirmed spec covers, run gstack's
-`/office-hours` first. At its end it names its design doc, kept under
-`~/.gstack/projects/<project>/` as `*-design-*.md`; copy that file unchanged into `docs/context/`
-in the discovery fix. Fill the card from it, write what it leaves open as `unknown`, and name the
-doc in the card's Evidence. Without `/office-hours`, say it comes with gstack
-(github.com/garrytan/gstack), then run your own interview with the story limit. Use gstack for
-nothing else.
+**A new project.** On a new project, or an ask no confirmed spec covers, run this discovery
+with the story limit. Before the first meeting, draft a one-page pre-meeting brief in
+`docs/context/` from the prospect's website: their likely jobs, two or three guessed problem cards
+each marked `(guess)`, their terms, and the first five questions to ask. During discovery, keep
+the customer's own words in `## Words they use` in `docs/product/DISCOVERY.md`, one
+`- <their word>: <what it means>` line each. Ask for the spreadsheet or form they use today and
+keep only its column headers, never its rows. The same day, draft a recap in `docs/context/` for
+the customer to confirm: their problem in their words, the cost in their numbers, the one task
+the demo will cover, who signs off, the open "ask the client" questions and the demo date. When
+they reply, record the Demo workflow and Sign-off person answers from it, with
+`client recap reply` as the source. The salesperson sends the recap; Forge sends nothing.
 
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
