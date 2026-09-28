@@ -3,11 +3,22 @@
   "branch": "fix/the-sign-off-review-runs-only-when-the-c",
   "done_when": "forge decision accept on a sign-off decision with no approval details yet runs the strict sign-off review and stops without accepting, saying the review passed and the sign-off email can go out (or naming the gaps); with the reply recorded, it accepts as today; tests run both through forge decision accept",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "ea43b5b0282053668ccdc671f12f9ebbe169b3df",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "77ec954308ee79c9ef3444c7c1d4cdca887f5ddfcd8fa7aa02ee11c3af5b0fce"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T21:02:05+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T21:19:21+00:00",
+      "step": "review"
     }
   ],
   "why": "The sign-off review runs only when the customer's reply is recorded, so the customer is asked to approve a version that hasn't passed review"
