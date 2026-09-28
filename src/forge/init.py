@@ -84,7 +84,7 @@ def _scaffold(top: Path) -> dict[str, str]:
         "forge.toml": (
             "# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
-            f'version = "v{__version__}"\nrepo = "client"\nworkers = "codex"\n'
+            f'version = "v{__version__}"\nrepo = "client"\nstage = "prototype"\nworkers = "codex"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(['tests', 'forge-pr-check'])}\n"
             f"interfaces = {json.dumps(INTERFACES)}\n{MODELS}"),

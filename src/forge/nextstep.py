@@ -170,7 +170,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
-        if cfg["repo"] == "client" and not approval.signed_off(top, cfg):
+        if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
                 notice = ["Open before sign-off in docs/product/BRIEF.md:",
@@ -193,17 +193,8 @@ def _needs_demo_address(top: Path) -> bool:
     ref = story.landed_ref(top)
     if story.show(top, ref, "Dockerfile") is None:
         return False
-    cfg = repo.default_config(top)
-    if cfg["repo"] != "client":
+    if not repo.is_prototype(top, repo.default_config(top), (ref,)):
         return False
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-    pinned = cfg["signoff"]
-    for name in names.splitlines():
-        if (name == pinned if pinned else name.endswith("client-signoff.md")):
-            record = story.show(top, ref, name) or ""
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
     return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
@@ -329,7 +320,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path, _report_config(path, refusals)):
+    if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)

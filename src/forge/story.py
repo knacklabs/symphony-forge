@@ -94,9 +94,7 @@ def new(args: Any) -> int:
     top, key, fix = repo.root(), args.key, args.from_fix
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
-    from forge import approval
-
-    if (top / "forge.toml").is_file() and not approval.signed_off(top):
+    if (top / "forge.toml").is_file() and repo.is_prototype(top):
         repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
                      "forge next"))
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
