@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-READLOOP-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-28T15:42:18+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
+  "touches": 0
+}
