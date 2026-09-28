@@ -51,6 +51,8 @@ effort = "medium"
 [models.lite]
 model = "gpt-6-sol"
 effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
 
 [models.grill.codex]
 model = "gpt-6-sol"

@@ -18,6 +18,7 @@ def test_14_this_repo_builds_with_codex_on_its_old_per_role_models() -> None:
     lead = {"model": "gpt-6-sol", "effort": "medium"}
     assert config["models"]["build"] == config["models"]["fix"] == {
         **lead, "subagents": "gpt-6-luna", "subagent_effort": "max"}
-    assert config["models"]["lite"] == lead
+    # Lite used to carry only the lead model; first fix rounds now give it the same helpers.
+    assert config["models"]["lite"] == config["models"]["build"]
     assert config["models"]["grill"]["codex"] == {"model": "gpt-6-sol", "effort": "high"}
     assert config["models"]["review"] == {"model": "gpt-6-astra"}

@@ -136,7 +136,8 @@ CHOICES = {"repo": ("client", "forge-source"), "workers": ("claude", "codex"),
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
-# effort is optional); building and fixing may add their subagents' model and effort, as a pair.
+# effort is optional); building, fixing and lite work may add their subagents' model and effort,
+# as a pair.
 # The cold read runs on either family, so the grill kind has one such entry per family.
 KINDS = ("build", "fix", "lite", "grill", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
@@ -214,7 +215,7 @@ def _models_problem(table: Any) -> str:
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
             for key, value in entry.items():
-                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix") else ())):
+                if key not in ("model", "effort", *(SUBAGENTS if kind in ("build", "fix", "lite") else ())):
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"
