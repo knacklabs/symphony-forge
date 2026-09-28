@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -41,6 +42,10 @@ def _client(repo, tmp_path, monkeypatch):
                      "names = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD^', 'HEAD'], cwd=tree, text=True)\n"
                      "pathlib.Path(os.environ['SIGNOFF_DIFF']).write_text(names)\n")
     codex.chmod(0o755)
+    if os.name == "nt":
+        launcher = tmp_path / "codex-stub.cmd"
+        launcher.write_text(f'@"{sys.executable}" "{codex}" %*\n')
+        codex = launcher
     monkeypatch.setenv("CODEX_BIN", str(codex))
     monkeypatch.setenv("SIGNOFF_DIFF", str(tmp_path / "reviewed-files.txt"))
     return fix, answers, queue
@@ -80,13 +85,25 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "model or effort changed" in fallback.stderr
     assert "status: proposed" in page.read_text()
 
-    changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default")
+    changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default ")
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
     _decision(fix, changed)
     default = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert default.returncode == 1
     assert "Sign-in" in default.stderr
     assert "forge next" in default.stderr
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+
+    open_answer = answers.replace("Sign-in: agreed (client, 2026-09-28)",
+                                  "Sign-in: ask the client (Ravi, 2026-09-28)")
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + open_answer)
+    _decision(fix, open_answer)
+    open_topic = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert open_topic.returncode == 1
+    assert "Sign-in" in open_topic.stderr
+    assert "forge next" in open_topic.stderr
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+
     (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
     page = _decision(fix, answers)
 

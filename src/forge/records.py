@@ -277,7 +277,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         open_topics = nextstep.open_must_answer_topics(top)
         answers = nextstep.parse_answers(top)
         open_topics += [topic for topic in nextstep.MUST_ANSWER_TOPICS
-                        if topic not in open_topics and answers[topic][0][1].lower()
+                        if topic not in open_topics and answers[topic][0][1].strip().lower()
                         in ("our default", "agent")]
         if open_topics:
             repo.refuse(("Customer sign-off needs client answers for: "
