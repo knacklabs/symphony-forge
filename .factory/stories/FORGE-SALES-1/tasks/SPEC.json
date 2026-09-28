@@ -1,8 +1,7 @@
 {
   "base": "e717b3c8a4e43d30b254ac6bbde476c732983ed2",
-  "branch": "fix/salespeople-can-run-the-fde-route-but-tr",
+  "branch": "task/FORGE-SALES-1-SPEC",
   "done_when": "Before sign-off in a client repo, ready prototype fixes merge by the agent; one install script sets up a Mac for prototyping; the skill tells the agent to batch changes per demo round, speak in demo terms and say when to connect the deploy platform; a start-a-prototype checklist exists",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
