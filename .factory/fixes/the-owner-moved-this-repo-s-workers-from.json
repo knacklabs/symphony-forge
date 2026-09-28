@@ -1,0 +1,14 @@
+{
+  "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
+  "branch": "fix/the-owner-moved-this-repo-s-workers-from",
+  "done_when": "This repo's forge.toml sets workers = \"claude\" and [models.build], [models.fix] and [models.lite] to claude-opus-5-5 at medium effort without subagents; review stays on Codex; forge doctor passes",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T14:54:57+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner moved this repo's workers from Codex to Claude on Opus 5.5 at medium effort, keeping Autoreview on Codex"
+}
