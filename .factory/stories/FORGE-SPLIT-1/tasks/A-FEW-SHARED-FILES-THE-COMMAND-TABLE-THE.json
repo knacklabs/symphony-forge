@@ -1,0 +1,54 @@
+{
+  "base": "22064f6ca3e9dbf50a90d6a33213d2211f91479d",
+  "branch": "task/FORGE-SPLIT-1-A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE",
+  "done_when": "docs/specs/own-your-entry.md is confirmed by the owner and on the roadmap as FORGE-SPLIT-1",
+  "review": {
+    "commit": "dc1212c66a42dcd4138bbf367f4eb21494f67bfb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The spec requires a fixed module list, while the supplied COLLECTOR contract requires discovering modules with `pkgutil` without a fixed list. Following this spec would require editing shared code whenever a command introduces a new module, contradicting the acceptance criterion at lines 61\u201362. Update this requirement and the corresponding read-note disposition to match the agreed discovery contract.",
+        "file": "docs/specs/own-your-entry.md",
+        "line": 28,
+        "priority": "P2",
+        "title": "Align command discovery with the agreed pkgutil contract"
+      },
+      {
+        "body": "The spec assigns the CI workflow to the init module and the Forge skill to a skill module. The supplied SHIPS contract instead assigns these to `prcheck.py` and `story.py`, respectively, and excludes `init.py` from that task's scope. Reconcile these ownership requirements so implementation can follow the confirmed spec within the agreed task boundaries.",
+        "file": "docs/specs/own-your-entry.md",
+        "line": 37,
+        "priority": "P2",
+        "title": "Align shipped-file ownership with the SHIPS contract"
+      },
+      {
+        "body": "This part permits only the two spec files and `plans/roadmap.json`, but the branch also adds the parent-story plan, its read notes, `.factory/stories/FORGE-SPLIT-1/story.json`, and the task JSON beneath that story. Those additions record parent-story planning, approval, and review state; they are unnecessary to deliver the confirmed spec and roadmap entry. Move these four files to the change that owns the parent story.",
+        "file": "plans/FORGE-SPLIT-1.md",
+        "line": 1,
+        "priority": "P2",
+        "title": "Remove the parent-story additions outside this part's scope"
+      }
+    ],
+    "status": "clean",
+    "tree": "706eeee12d6eb96c85bf10761006a5759410867316c46b3303ae4d944d0d021b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-27T16:41:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T05:29:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:31:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T05:43:55+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others"
+}

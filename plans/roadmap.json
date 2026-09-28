@@ -99,6 +99,13 @@
       "status": "pending",
       "order": 57,
       "spec": "docs/specs/codex-chat-view.md"
+    },
+    {
+      "key": "FORGE-SPLIT-1",
+      "title": "Each Forge behaviour owns its own entry",
+      "spec": "docs/specs/own-your-entry.md",
+      "status": "pending",
+      "order": 58
     }
   ],
   "epics": [
