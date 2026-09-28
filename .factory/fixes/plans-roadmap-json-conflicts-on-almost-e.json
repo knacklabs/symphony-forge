@@ -5,7 +5,13 @@
   "kind": "fix",
   "review": {
     "commit": "6f62c19904acb52ee028fa1a841a97b0ecc60b3e",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/close.py:24 forge close merges the default branch into the branch locally before its pull request, where the registered driver runs, and that local merge is where these conflicts happen; GitHub then sees an up-to-date branch with no conflict",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "`forge sync` registers the driver only in the local clone\u2019s Git config. Forge\u2019s actual merge path calls `gh pr merge --squash` (`src/forge/merge.py:64`), so GitHub cannot run that locally configured driver. After one PR adds a roadmap item, a second PR adding another item can still have a roadmap conflict on GitHub. The new test exercises a local `git merge`, so it does not catch this gap. Git documents that [custom drivers are defined in local Git config](https://git-scm.com/docs/gitattributes); GitHub [blocks PR merges with unresolved conflicts](https://docs.github.com/en/pull-requests/reference/merge-conflicts). Resolve and push the roadmap merge before the PR merge, and test that flow.",
@@ -22,10 +28,10 @@
         "title": "Preserve independent edits when choosing an item's later status"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "987de92229ed873a2980c52575f3685c7eab88a0d5c1175152df48bff6b70e84"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T18:45:21+00:00",
