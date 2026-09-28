@@ -3,11 +3,30 @@
   "branch": "fix/autoreview-s-brief-from-forge-makes-revi",
   "done_when": "Forge's review brief shows the previous round's findings and asks for every blocking gap at once; a test the story assigns to another task is an advisory Later finding; the end-to-end test rule applies to user-facing behaviour, not CI, config or test-only items; the edge-case rule sits with the blocking rules; Forge's bookkeeping files are left out of the out-of-scope list; the reviewer's checkout has readable git history; tests through forge close show each",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "commit": "892e1a398480a28342687d968f87e0041c0b73b4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The clone's `origin/main` tracks the source repository's local `main`, not its `origin/main` ([Git clone documentation](https://git-scm.com/docs/git-clone)). `src/forge/close.py:170\u2013171` fetches and merges the remote default branch into the task worktree without updating local `main`. When local `main` lags, Autoreview therefore receives an older base and reviews already-merged changes alongside this branch's changes; if the local default branch is absent, the base cannot resolve. Preserve the source base's exact commit in the clone before passing it to Autoreview. Add coverage through `forge close` with local `main` behind `origin/main`; the new history test only checks HEAD and cannot detect this mismatch.",
+        "file": "src/forge/review.py",
+        "line": 228,
+        "priority": "P1",
+        "title": "Preserve the fetched review base in the cloned checkout"
+      }
+    ],
+    "status": "blocked",
+    "tree": "54dd9acf42aa27205b1edcd89453f7790f9ffbad502cc2001a3b7b813ea80a20"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T09:49:07+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-28T10:04:01+00:00",
+      "step": "review"
     }
   ],
   "why": "Autoreview's brief from Forge makes reviews take extra rounds: findings arrive one round at a time, tests owned by a later task block, the end-to-end rule and edge cases block non-user items, Forge's own records show as out of scope, and the reviewer cannot read git history"
