@@ -1,21 +1,13 @@
 {
   "branch": "task/FORGE-LIVE-1-STAGE",
   "review": {
-    "commit": "074f57bc847afdbe918179fdc77f73eb59c69899",
+    "commit": "b37db6a506d396227f705d6fe39a82ce0c181515",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Defaulting an omitted stage to live changes the behavior of existing tests that still create client repos without `stage`. `tests/test_proto_gate.py:16` expects those repos to block stories and grant the prototype fix allowance; `tests/test_proto_next.py:11` expects sign-off notices. The shared fixture at `tests/test_close.py:229` also omits stage, while `tests/test_sales_merge.py:20` and `tests/test_aha_review.py:29` expect prototype merge and light-review behavior. These tests are in the configured `pytest tests` suite and will fail. Set `stage = \"prototype\"` in fixtures exercising prototype behavior, while retaining unstaged fixtures for the new live-default checks.",
-        "file": "src/forge/repo.py",
-        "line": 132,
-        "priority": "P1",
-        "title": "Not done: existing prototype command tests"
-      }
-    ],
-    "status": "blocked",
-    "tree": "ba8558ec6db2bf022b2c34927653a90e1e9aaab535ec281d82e77dba9a04fb52"
+    "findings": [],
+    "status": "clean",
+    "tree": "ac10694d20e6fc706b298b8dab68beadf58134361e8b1657c49c3feca6a915e8"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T18:21:34+00:00",
@@ -23,6 +15,10 @@
     },
     {
       "at": "2026-09-28T18:37:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T19:07:04+00:00",
       "step": "review"
     }
   ]
