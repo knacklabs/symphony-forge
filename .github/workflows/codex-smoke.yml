@@ -1,6 +1,6 @@
 name: codex-smoke
 
-# The smoke test against the real pinned Codex SDK (tests/test_codex_smoke.py). Optional, never a
+# The tests against the real pinned Codex SDK. Optional, never a
 # required check: it runs a few small Codex turns on the OPENAI_API_KEY secret's account, so it
 # runs only when the Codex driver or the test changes, or by hand.
 
@@ -11,6 +11,8 @@ on:
       - src/forge/codex.py
       - src/forge/codex_turn.py
       - tests/test_codex_smoke.py
+      - tests/test_fix_codex_test_home.py
+      - tests/conftest.py
       - .github/workflows/codex-smoke.yml
 
 permissions:
@@ -35,4 +37,4 @@ jobs:
           python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.156.1/bin/python"
           printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
       - if: env.OPENAI_API_KEY != ''
-        run: uv run --python 3.11 --with pytest python -m pytest tests/test_codex_smoke.py -v -s
+        run: uv run --python 3.11 --with pytest python -m pytest tests/test_fix_codex_test_home.py -v -s

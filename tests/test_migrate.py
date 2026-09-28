@@ -252,7 +252,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [create] = [call for call in gh.calls() if call[:2] == ["pr", "create"]]
     text = body(create)
-    assert text.startswith("Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
+    assert text.startswith("Why: Move this repo from its copied-in Forge to the installed Forge v1.\n"
+                           "Done when: Forge v1 runs this repo:") and "\n- harness.yaml\n" in text
     assert "Needs you in .forge-migrate/replan/SHIP-1.md: T3: no Scope" in text
     assert "\n- .envrc\n" in text and f"from .envrc into forge.toml's test: {TEST}\n" in text
     assert GSTACK in text

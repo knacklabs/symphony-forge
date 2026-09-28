@@ -1,3 +1,5 @@
+$summary
+
 # Worker brief
 
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and

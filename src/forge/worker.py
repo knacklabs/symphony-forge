@@ -78,7 +78,11 @@ def work(args: argparse.Namespace) -> None:
         thread, fresh = codex.conversation(top, item, approval) if later else (None, "first turn")
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
-        brief, subject = _brief(match, top, state, findings, failing, note, question)
+        turns = codex._item_file(top, item, ".log", kind)
+        round_number = 1 + len({(entry["conversation"], entry["turn"])
+                                for line in turns.read_text(encoding="utf-8").splitlines()
+                                if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
+        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number)
         if thread:
             brief += _changes(top, codex.record(top, item)["start"])
         state["status"] = "fixing" if findings or failing else "working"
@@ -87,7 +91,12 @@ def work(args: argparse.Namespace) -> None:
         if not on_codex:
             _run(item, top, brief, claude)
             return
-        result = codex.run(top, item, kind, f"{kind} · {item} · {subject}", brief, "full-access",
+        name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
+        if len(name) > 60:
+            prefix = name[:59]
+            name = (prefix.rstrip() if name[59].isspace() else
+                    prefix.rsplit(" ", 1)[0] or prefix) + "…"
+        result = codex.run(top, item, kind, name, brief, "full-access",
                            thread, fresh, approval, note=note)
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
@@ -211,7 +220,8 @@ def _failing(branch: str) -> list[tuple[str, str]]:
 
 def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
            findings: list[dict[str, Any]], failing: list[tuple[str, str]],
-           note: str | None = None, question: str | None = None) -> tuple[str, str]:
+           note: str | None = None, question: str | None = None,
+           round_number: int = 1) -> tuple[str, str]:
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
@@ -241,6 +251,9 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         on.add("fix")
         subject = state.get("why", "")
         values.update(why=subject, done=state.get("done_when", ""))
+    values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
+                         f"Build {subject} for {match['key']}." if match["task"] else
+                         f"Fix: {subject}.")
     if findings or failing:
         on.add("fix-round")
         values["findings"] = "\n".join(
