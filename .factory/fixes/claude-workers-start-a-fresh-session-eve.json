@@ -1,0 +1,14 @@
+{
+  "base": "e68bb29c212e3b1f6639aca00dfe6b8f1adbafbb",
+  "branch": "fix/claude-workers-start-a-fresh-session-eve",
+  "done_when": "A Claude worker's fix round continues the session its first round started and gets only the short fix prompt; when that session can't be continued it starts fresh with the full brief and says so; tests run forge work twice on a Claude worker and check both paths",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T16:48:02+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Claude workers start a fresh session every round and get the whole brief again, so fix rounds lose the worker's context, unlike Codex workers"
+}
