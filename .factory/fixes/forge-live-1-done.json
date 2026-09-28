@@ -1,0 +1,16 @@
+{
+  "base": "a8edc14d80d7c3b1a70856c3f7c374a03263d9c6",
+  "branch": "fix/forge-live-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "A live production app joins Forge through one pull request that brings its history and house rules, stays marked live with no prototype rules, and keeps its team's own branches and CI checks working",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-28T21:02:06+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Forge can't tell a live production app from a prototype: without a sign-off record it applies prototype rules, it has no route to adopt a repo with history, and its pull-request check blocks the team's own branches is finished, and what it achieved."
+}
