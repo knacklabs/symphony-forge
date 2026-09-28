@@ -1,8 +1,8 @@
 """forge doctor: tools, the pins (Forge's and the Autoreview helper's), the git hooks, the host
 hooks, adapter drift, CI and, for Codex workers, the Codex SDK and the project's trust; a row per
-problem. With Codex workers, or under Claude Code, whose cold read runs on Codex, it checks the SDK
-and --fix installs it. Whatever the workers, it stops the Codex processes a crashed forge work or
-read left, never a running one's."""
+problem. With Codex workers, or under Claude Code with Codex installed, whose cold read runs on
+Codex, it checks the SDK and --fix installs it. Whatever the workers, it stops the Codex processes
+a crashed forge work or read left, never a running one's."""
 from __future__ import annotations
 
 import argparse
@@ -77,8 +77,10 @@ def doctor(args: argparse.Namespace) -> None:
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     on_codex = cfg["workers"] == "codex"
-    # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too.
-    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE"))
+    # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too, unless
+    # Codex isn't installed: a Claude-only team.
+    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE")
+                                 and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
     # Without uv there is nothing to install with; the uv row below says how to get it.
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         codex.install()

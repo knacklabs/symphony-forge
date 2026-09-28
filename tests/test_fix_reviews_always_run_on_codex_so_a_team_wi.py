@@ -42,6 +42,7 @@ def test_1_close_without_codex_reviews_with_claude_on_the_grill_claude_model(
     env.repo.git("push", "-q", "origin", "main")
     _claude_only(tmp_path, monkeypatch, env.repo.bin,
                  (ROOT / "tests" / "stubs" / "autoreview").read_text("utf-8"))
+    assert shutil.which("gh") == str(env.repo.bin / "gh")  # close still reaches the gh stub
     item, _ = env.start_fix()
     env.open_pr("Readme greets new readers")
 
@@ -65,6 +66,7 @@ def test_2_doctor_accepts_a_claude_only_setup(repo, gh, tmp_path, monkeypatch):
     _claude_only(tmp_path, monkeypatch, repo.bin)
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "no-codex"))
     monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")  # run from Claude Code, as a Claude-only team does
     _executable(repo.bin / "claude", "#!/bin/sh\n")
     if os.name == "nt":
         (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
