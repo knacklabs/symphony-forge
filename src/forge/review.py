@@ -173,7 +173,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -207,6 +207,24 @@ def _previous(result: dict[str, Any]) -> str:
         f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
         f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
         for n, finding in enumerate(findings, 1)) or "- none"
+
+
+def _rulings(top: Path, item: str, base: str) -> str:
+    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
+    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
+    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
+    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    path = repo.state_path(item)
+    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            line = (f"{finding['title']} ({finding['file']}): dismissed because "
+                    f"{dismissal['because']}")
+            if line not in found:
+                found.append(line)
+    return _bullets(found)
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:

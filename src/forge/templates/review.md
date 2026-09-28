@@ -126,6 +126,11 @@ The previous review's findings and dismissals are below; recheck them against th
 report any still-open gap alongside new ones:
 $previous
 
+The coordinator's rulings and dismissals on this branch so far, with their reasons:
+$rulings
+Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
+weigh, and name that evidence in the finding's body.
+
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
