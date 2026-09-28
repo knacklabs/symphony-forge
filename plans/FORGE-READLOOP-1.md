@@ -55,28 +55,30 @@ expensive to find in review.
    getting a trap learned after it was made, and the round-four nudge.
 2. **A story passes only on "No findings".** A round passes only when its whole text, trimmed,
    is exactly `No findings.`; anything else, including `No findings.` followed by a finding, is
-   a round with findings. A passing round commits the doc and its notes on the branch it was read on.
-   Story approval, `forge next`'s approval step, `forge task start` and Forge's pull-request
-   check refuse a story whose
-   latest round had findings or whose doc changed after that round, naming `forge read <KEY>` as
-   the next step, so a story doc edited after approval, including its Tasks table, gets a new
-   round before its next task starts. `forge task start` reads the story doc and its notes from
-   the story branch while that branch exists, and the new task branch, which still starts from the default
-   branch, gets the story branch's copy of the doc, its notes and the story's state file (which holds the
-   approval) as its first commit, so the passing
-   doc and notes reach the task's pull request without merging branches that don't share history
-   after a squash merge. Notes written before this change
-   count as round 1: an unapproved story with such notes needs a passing round, and a story
-   approved before this change starts tasks as today until its doc changes. Tests cover each
-   refusal, a task pull request that changes only the Tasks table, the exact-text rule and its near misses, the commit, `forge next` naming the read and
-   its round for an approved story whose doc changed, a changed Tasks table stopping
-   `forge task start` before and after the story's first task has merged with the task branch
-   containing the passing doc, notes and a renewed approval after a squash-merged first task and still starting from
-   the default branch, and an old approved story before and after an edit.
-   The reader's Codex conversation is archived only when a round passes; a round with findings
-   leaves it for the next round, and a failed archive only prints a note. A passing round archives only its own conversation; an
-   earlier one left by an app that is no longer installed is left as it is, with a note naming it.
-   Tests cover all three.
+   a round with findings. A passing round commits the doc and its notes on the branch it was
+   read on. Story approval, `forge next`'s approval step, `forge task start` and Forge's
+   pull-request check refuse a story whose latest round had findings or whose doc changed after
+   that round, naming `forge read <KEY>` as the next step, so a story doc edited after approval,
+   including its Tasks table, gets a new round before its next task starts. Before the story's
+   first task merges, tasks start from the story branch as today, carrying everything on it,
+   the roadmap entry included. After that, for a story whose notes have rounds, `forge task
+   start` reads the doc and notes from the story branch while it exists, and the new task branch
+   starts from the default branch with the story branch's copy of the doc, its notes and the
+   story's state file (which holds the approval) as its first commit, so they reach the task's
+   pull request without merging branches that don't share history after a squash merge. Notes
+   written before this change count as round 1: an unapproved story with such notes needs a
+   passing round, and a story approved before this change keeps today's task start throughout,
+   reading the default branch after its first merge. Tests cover each refusal, a task pull
+   request that changes only the Tasks table, the exact-text rule and its near misses, the
+   commit, `forge next` naming the read and its round for an approved story whose doc changed, a
+   first task starting from the story branch with its roadmap entry, a later task starting from
+   the default branch with the passing doc, notes and a renewed approval after a squash-merged
+   first task, a changed Tasks table stopping `forge task start`, and an old approved story whose
+   Tasks table changed on the default branch still starting from that copy. The reader's Codex
+   conversation is archived only when a round passes; a round with findings leaves it for the
+   next round, and a failed archive only prints a note. A passing round archives only its own
+   conversation; an earlier one left by an app that is no longer installed is left as it is,
+   with a note naming it. Tests cover all three.
 3. **Kept findings are settled, not argued.** The reader raises a finding the agent kept again
    only when it disagrees with the stated reason, as a new finding `Disputed keep <n>: <why>`. The
    skill tells the agent to put each disputed keep to the human as one question with options,

@@ -186,3 +186,11 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 48. **The legacy exception can copy a stale story doc over the default branch’s copy.** Before this change, [task start](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/task.py:128) reads the default branch after the first task merges, and the old [pull-request check](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/src/forge/story.py:369) permits a Tasks-table-only edit. For an already approved story in that state, item 2’s new story-branch source can miss the newer table and commit the older one into the next task. Pin how GATES detects this legacy divergence and test it.
    Disposition: cut: item 2 limits the copy to stories whose notes have rounds; older stories keep today's task start throughout.
 
+## Round 12
+
+49. **Finding 47 remains open.** The disposition says the first task starts from the story branch and carries the roadmap entry, but [item 2](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:63) still says the new branch starts from the default branch and copies only the doc, notes and state. It names no first-task exception or roadmap test.
+   Disposition: cut: item 2 now says the first task starts from the story branch with its roadmap entry, with a test (the earlier edit had failed to apply).
+
+50. **Finding 48 remains open.** The disposition limits copying to stories whose notes have rounds, but [item 2](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-READLOOP-1/plans/FORGE-READLOOP-1.md:63) still gives task start the story-branch copy while that branch exists. Its legacy exception lasts only “until its doc changes”; it does not preserve the existing default-branch path for an older approved story whose Tasks table diverged after a merge, or name a test for that case.
+   Disposition: cut: item 2 keeps today's task start throughout for old approved stories, tested with a Tasks table changed on the default branch.
+
