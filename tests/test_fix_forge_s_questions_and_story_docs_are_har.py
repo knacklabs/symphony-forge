@@ -30,14 +30,16 @@ def test_1_questions_have_short_context_headers_and_outcome_options_after_sync(r
 
 def test_2_story_done_when_and_builder_sections_are_readable_after_sync(repo):
     skill = synced_skills(repo)
-    assert "one bold plain sentence before its detail" in skill
+    # FORGE-SHORTPLAN-1: each item was a bold sentence followed by its detail; now it is the bold
+    # sentence alone, and the detail moves under the same number in Done-when details below.
+    assert "one bold plain sentence and nothing more" in skill
     assert "Risks right after Done when" in skill
     assert "For the builders" in skill
 
     made = repo.forge("story", "new", "SHOP", "Shoppers can save a basket")
     assert made.returncode == 0, made.stderr
     doc = (worktree(repo, "story/SHOP") / "plans/SHOP.md").read_text(encoding="utf-8")
-    assert re.search(r"^1\. \*\*[^*]+\.\*\* .+", doc, re.M)
+    assert re.search(r"^1\. \*\*[^*]+\.\*\*$", doc, re.M)
     headings = re.findall(r"^## (.+)$", doc, re.M)
     assert headings.index("Done when") + 1 == headings.index("Risks")
     assert headings.index("Risks") < headings.index("For the builders") < headings.index("Tasks")

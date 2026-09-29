@@ -12,7 +12,11 @@ $why
 
 ## Done when
 
-1. **$done** <Detail: evidence, edge cases or technical notes, if needed.>
+<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
+test names. Its evidence, edge cases and proving tests go under the same number in Done-when
+details. -->
+
+1. **$done**
 
 ## Risks
 
@@ -21,6 +25,17 @@ $why
 Risks: none
 
 ## For the builders
+
+<!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
+tightening it needs no new approval. -->
+
+### Done-when details
+
+<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
+Workers and reviewers get the entries of the items they cover. An item with nothing to add has
+no entry. -->
+
+1. <Evidence, edge cases and the tests that prove item 1.>
 
 ## Tasks
 

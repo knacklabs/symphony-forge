@@ -295,7 +295,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
-        return _approval(top, key, path, title, digest, refusals), []
+        return _approval(top, key, path, title, digest, refusals, "\n## For the builders" in text), []
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -330,7 +330,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
-              refusals: dict[Path, str]) -> list[str]:
+              refusals: dict[Path, str], builders: bool) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
@@ -345,13 +345,13 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
-    last = approval.last_refusal(top)
-    why = last.read_text(encoding="utf-8").strip().rstrip(".") if last.is_file() else ""
+    why = story._text(approval.last_refusal(top)).strip().rstrip(".")  # pyright: ignore[reportPrivateUsage]
+    shown = f"plans/{key}.md" + (" from its title down to ## For the builders" if builders else "")
     return [f"{title} is waiting for approval" + (f" (the last answer was not recorded: {why})." if why
                                                   else "."),
-            f"Next: in Claude Code, show plans/{key}.md in Plan Mode and exit Plan Mode with it as the plan",
-            f"Next: in Codex, ask request_user_input with id approve_plan_{digest}, question "
-            '"Approve this plan?", header "Approve plan" and choices "Approve plan", '
+            f"Next: in Claude Code, show {shown} in Plan Mode and exit Plan Mode with it as the plan",
+            f"Next: in Codex, show {shown}, then ask request_user_input with id approve_plan_{digest}, "
+            'question "Approve this plan?", header "Approve plan" and choices "Approve plan", '
             '"Request changes", "Stop"']
 
 
