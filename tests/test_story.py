@@ -230,10 +230,12 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
     for fact in ("reader: claude (opus)", "read_at: 2026-09-25T10:00:00+00:00",
                  f"read_hash: {read_hash}", "1. Saving needs sign-in first."):
         assert fact in written
+    # The old contract allowed one read. FORGE-READLOOP-1 reads again in rounds, but only once
+    # every finding has a disposition.
     again = repo.forge("read", "SHOP")
     assert again.returncode == 1
-    assert again.stderr == ("plans/SHOP.md already has its one cold read.\n"
-                            "Next: forge read SHOP --amended\n")
+    assert again.stderr == ("Finding 1 in plans/SHOP.read.md has no disposition: cut, defer, or "
+                            "keep with a reason.\nNext: edit plans/SHOP.read.md, then forge next\n")
 
     # A finding with no disposition blocks approval.
     refused = approve(DOC)

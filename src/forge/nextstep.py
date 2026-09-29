@@ -315,6 +315,15 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
+    notes = f"plans/{key}.read.md"
+    record, findings = story._record(story._text(path / notes))  # pyright: ignore[reportPrivateUsage]
+    if record.get("passed") == "no":  # the read hasn't passed: name its next round
+        done, number = int(record.get("round") or 1), story.undisposed(findings)
+        nudge = " It isn't converging: ask the human whether to split the story instead of reading on."
+        return [f"Planning {title}: round {done} of its cold read had findings, so round {done + 1} "
+                f"is next.{nudge if done + 1 >= 4 else ''}",
+                f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
+                f"forge read {key}"]
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
