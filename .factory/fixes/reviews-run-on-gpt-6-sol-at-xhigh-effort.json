@@ -1,0 +1,14 @@
+{
+  "base": "df73e3580ce08be618605362ef7fe373c2325ff2",
+  "branch": "fix/reviews-run-on-gpt-6-sol-at-xhigh-effort",
+  "done_when": "Every Forge review runs on GPT-6 Sol at high effort: this repo's forge.toml, the default forge init writes, and the prototype sign-off review's pinned model and effort; the light prototype review stays at medium; docs and skill text that name xhigh for reviews say high; tests check the default and the sign-off pin",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T14:13:58+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviews run on GPT-6 Sol at xhigh effort, which costs more than the owner wants"
+}
