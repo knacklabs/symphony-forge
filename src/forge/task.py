@@ -127,8 +127,7 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
-    from forge import story
-
+    from forge import story  # story imports this module's helpers
     main = main_ref()
     doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the
@@ -142,6 +141,10 @@ def start(args: argparse.Namespace) -> None:
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
+    try:
+        story.parse(text)
+    except ValueError as exc:
+        refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)

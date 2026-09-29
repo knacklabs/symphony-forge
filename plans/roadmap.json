@@ -151,10 +151,16 @@
       "order": 65
     },
     {
+      "key": "FORGE-SHORTPLAN-1",
+      "title": "The plan the owner approves is long and full of test lists, tasks and notes that only agents use",
+      "status": "pending",
+      "order": 66
+    },
+    {
       "key": "FORGE-MERGESWITCH-1",
       "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
       "status": "pending",
-      "order": 66
+      "order": 67
     }
   ],
   "epics": [

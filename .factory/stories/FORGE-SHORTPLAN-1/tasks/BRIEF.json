@@ -1,0 +1,31 @@
+{
+  "branch": "task/FORGE-SHORTPLAN-1-BRIEF",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "467028f329dd73c9beddfbefa40c46a70a113edd70b2de6bcc978f7b2a479569",
+    "commit": "2ba1dc39adaebe180c78dc20625940b031d69d6c",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e6eb21674da57670deb8b8689579f4c058919c52e587233b6702d899197c0681"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T10:39:34+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T11:12:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T11:33:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T11:38:20+00:00",
+      "step": "review"
+    }
+  ]
+}

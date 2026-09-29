@@ -92,7 +92,7 @@ effort = "high"
 
 [models.review]
 model = "gpt-6-sol"
-effort = "xhigh"
+effort = "high"
 """
 
 
