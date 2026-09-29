@@ -3,11 +3,32 @@
   "branch": "fix/tests-test-codex-worker-py-test-4-turn-l-2",
   "done_when": "The root cause of test_4_turn_log's Windows failures is found and fixed so the test is deterministic, never skipped or loosened; the fix names the cause in its commit and the test passes 20 times in a row on the Windows runner (a CI loop or repeated parametrization)",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "fd3fa15cd42ccdb70541d8cfdad9492a28d3b0c7040ba74b094f0dd3e941f735",
+    "commit": "743171d281325b2cbff038933b4f86243675bb98",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The Windows leak check treats a zero exit time from GetProcessTimes as proof that the process is running. Microsoft documents that the exit-time field is undefined until the process exits (https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes). If it is nonzero for a live launcher, `_running` returns false and `test_4_turn_log` passes despite the process being left behind. This weakens the test's process-leak assertion. Use a defined liveness check, such as WaitForSingleObject with a zero timeout, and verify that a live launcher makes the assertion fail.",
+        "file": "tests/test_codex_worker.py",
+        "line": 170,
+        "priority": "P1",
+        "title": "Not done: The root cause of test_4_turn_log's Windows failures is found and fixed so the test is deterministic, never skipped or loosened; a"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e7932e1f987d9c3fa8f923d1dc6610c82a6a0f49fa335e98ac73d3a5ec37e8d6"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T18:01:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T19:39:28+00:00",
+      "step": "review"
     }
   ],
   "why": "tests/test_codex_worker.py::test_4_turn_log fails now and then on Windows CI on branches that don't touch it"
