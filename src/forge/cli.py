@@ -2,6 +2,7 @@
 import argparse
 import ast
 import importlib
+import os
 import pkgutil
 import subprocess
 import sys
@@ -40,15 +41,14 @@ def _parser() -> _Parser:
                  if isinstance(target, ast.Name)}
         if not names.intersection({"COMMANDS", "GROUP_HELP"}):
             continue
-        module_name = info.name
-        module = importlib.import_module(f"forge.{module_name}")
+        module = importlib.import_module(f"forge.{info.name}")
         for group, help_text in getattr(module, "GROUP_HELP", {}).items():
             if group in group_help:
                 raise ValueError(f"group help declared twice: {group}")
             group_help[group] = help_text
         for command in getattr(module, "COMMANDS", []):
             declarations.append((command["position"], command["words"],
-                                 f"{module_name}:{command['run']}", command["changes_state"],
+                                 f"{info.name}:{command['run']}", command["changes_state"],
                                  command["help"], command["args"]))
     for _, words, target, changes, text, arguments in sorted(declarations):
         name, _, sub = words.partition(" ")
@@ -67,6 +67,13 @@ def _parser() -> _Parser:
 
 
 def _run(argv: list[str] | None) -> int:
+    # In Forge's own repo an install from an older checkout would run old code: run this one's.
+    src = Path(repo.run("git", "rev-parse", "--show-toplevel").stdout.strip() or os.devnull) / "src"
+    if (os.environ.get("FORGE_FROM_CHECKOUT") != str(src) and Path(forge.__file__).resolve().parent != src / "forge"
+            and (src / "forge").is_dir() and (src.parent / "forge.toml").is_file() and repo.config(src.parent)["repo"] == "forge-source"):
+        print(f"Running this checkout's code in {src / 'forge'}, not the installed Forge.", file=sys.stderr)
+        return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
+                              env={**os.environ, "PYTHONPATH": str(src), "FORGE_FROM_CHECKOUT": str(src)}).returncode
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
         repo.refuse(REFUSALS["usage"],
