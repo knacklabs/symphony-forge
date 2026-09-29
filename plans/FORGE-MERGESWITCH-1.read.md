@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:29:03+00:00
-read_hash: 20be2892434148987b7d062d19dd3bf177b5d52a
+read_at: 2026-09-29T08:31:08+00:00
+read_hash: 3106eb9454a0f74aec5c8cb4c5b6fe25ed0ee5d9
 amended_hash:
-round: 7
+round: 8
 passed: no
-doc_seen: 20be2892434148987b7d062d19dd3bf177b5d52a
+doc_seen: 3106eb9454a0f74aec5c8cb4c5b6fe25ed0ee5d9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 25ea24b2677d5fb5714ef38d188ddcc394c4f0c5
+notes_seen: 7423e7dc44c523b6da15352ec881305bb97cf242
 ---
 # Cold read notes
 
@@ -93,4 +93,10 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 15. Unproven: item 1: cleanup after the owner merges the switch pull request.
     Once that merge makes the default branch’s setting `agent`, `forge next` can tell the owner to run `forge merge <item>` to tidy the remaining worktree. The new guard refuses that command. Pin and test the post-merge next step and cleanup path.
    Disposition: cut: item 1's guard only stops merging; after the owner's merge, forge merge cleans up as usual; tested with forge next.
+
+## Round 8
+
+16. Unproven: item 1: `forge next` after the pull request opens but before `forge close` records Ready.
+    In a prototype, the existing waiting-for-checks path says it is preparing an “automatic merge.” The test covers `forge next` only after Ready. Test this interrupted state and make its message point to the owner’s merge path.
+   Disposition: cut: item 1 now has one rule for every Forge message about the fix at every stage, and the test runs forge next at each stage.
 
