@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:06:54+00:00
-read_hash: 13d26c80804c7c78eb49be1c983ae127177fa08c
+read_at: 2026-09-29T08:11:51+00:00
+read_hash: bf7fa68d9522642c71cbef26c6fb2ebf81502a37
 amended_hash:
-round: 3
+round: 4
 passed: no
-doc_seen: 13d26c80804c7c78eb49be1c983ae127177fa08c
+doc_seen: bf7fa68d9522642c71cbef26c6fb2ebf81502a37
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9992a93fa5885865a86cac1b823966831783cf9f
+notes_seen: 0ffd543724e482a1bb22e9b90bedb93fbba68554
 ---
 # Cold read notes
 
@@ -61,4 +61,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 9. Contradiction: item 1: a prototype still tells the owner to run `forge merge`.
    `forge close` currently prints `Next: forge merge <item>` before `enable` can print its owner-merge instruction. The new merge refusal would make that next step fail. Pin and test the complete output so it gives the owner one valid next step.
    Disposition: cut: item 1 has close name the owner's merge for this fix, never forge merge, tested on the whole prototype output.
+
+## Round 4
+
+10. Contradiction: item 1: the retry before the config change conflicts with the collision rule.
+    At that point the command’s own fix has no `forge.toml` merge-switch change, so the stated rule would classify it as unrelated and refuse. Pin an identity that works before the edit, and test that state.
+   Disposition: cut: item 1 identifies its fix by the recorded kind merge-switch, which exists before the edit; tested.
+
+11. Unproven: item 1: `forge merge` rejects every merge-setting change.
+    The promised guard applies to any fix that changes the setting, but the test covers only the switch’s pull request. Test a differently named fix that changes `merge` while agent merges are otherwise allowed.
+   Disposition: cut: item 1 tests a differently named fix changing merge refused by forge merge in a prototype.
 
