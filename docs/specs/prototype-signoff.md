@@ -85,7 +85,7 @@ must-answer topic that is missing or still "ask the client", and the agent walks
 at a time. A topic that "may wait" and is marked later does not block.
 
 **A strict review before sign-off.** The sign-off decision is committed as a fix. Accepting it
-first merges the default branch into that fix's checkout and runs one fresh review on GPT-6 Astra
+first merges the default branch into that fix's checkout and runs one fresh review on GPT-6 Sol
 at high effort, with no model fallback, over every product file in that checkout together with the
 answers page and the topic table. A must-answer topic that is missing, "ask the client", or sourced
 only from our default or the agent is a blocking finding, as is a prototype that doesn't match the
@@ -125,7 +125,7 @@ after sign-off.
    above.
 5. `forge next` in a client repo without an accepted sign-off lists the must-answer topics that are
    missing or "ask the client" on the answers page.
-6. Accepting a client sign-off decision runs the Astra-high review first and refuses on a blocking
+6. Accepting a client sign-off decision runs the Sol-high review first and refuses on a blocking
    finding; a missing must-answer topic, an "ask the client" one, or one sourced only from our
    default or the agent blocks; the accepted decision records the reviewed commit.
 7. The sign-off decision template asks for the customer's named person, where and when they

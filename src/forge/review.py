@@ -381,8 +381,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "xhigh":
-                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at xhigh effort: "
+            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "high":
+                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at high effort: "
                              "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             serious = [f for f in findings if f["priority"] in SERIOUS]
@@ -410,7 +410,7 @@ def signoff(top: Path, answers: str) -> str:
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
-    cfg = {"models": {"review": {"model": "gpt-6-sol", "effort": "xhigh"}}}
+    cfg = {"models": {"review": {"model": "gpt-6-sol", "effort": "high"}}}
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
 

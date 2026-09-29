@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 
-from test_proto_signoff import SOL_XHIGH, _client, _decision
+from test_proto_signoff import SOL_HIGH, _client, _decision
 
 STORY = "the-sign-off-review-runs-only-when-the-c"
-CLEAN = [{"say": SOL_XHIGH, "report": {"review_status": "scoped-clean", "findings": []}}]
+CLEAN = [{"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}]
 
 
 def _calls(queue):
@@ -19,7 +19,7 @@ def test_1_accept_before_the_reply_runs_the_review_and_stops(repo, tmp_path, mon
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers, via="", on="")
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {"review_status": "findings", "findings": [{
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P1", "title": "Prototype fails", "body": "Demo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     gaps = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
