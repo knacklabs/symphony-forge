@@ -127,6 +127,12 @@ the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.m
 call script. Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
+Always build the demo-data loader in the first version, so the customer sees their own kind of
+work instead of empty screens (see demo-data.md). Use the customer's words
+from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
+they can point at the screen: click an element in the demo build, write what's wrong and paste the
+output to the agent.
+
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
 the demo: "the next version is live" or "the reviewer found a missing error message". Do not
