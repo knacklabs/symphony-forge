@@ -1,28 +1,13 @@
 {
   "branch": "task/FORGE-READLOOP-1-ROUNDS",
   "review": {
-    "commit": "b6ec02ef6c7b5614e1d45d75f49b4050d78edf0f",
+    "commit": "1af1dea175f2dfdd2a2d687d4295ba7fee79d232",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The wrong-app refusal runs before checking whether the recorded reader is still installed. If a round was read by the only available app, that app's Forge reader installation is later removed, and the other app becomes available, running `forge read` from the original coordinating app is refused instead of starting fresh with the available reader. Check `installed[recorded]` before applying this refusal, and cover that transition in the round test.",
-        "file": "src/forge/story.py",
-        "line": 170,
-        "priority": "P1",
-        "title": "Not done: The same reader reads again"
-      },
-      {
-        "body": "The changed source brings `src/forge` to 7,613 Python lines. `tests/test_rules.py:62-68` enforces the 7,500-line ceiling set in `pyproject.toml:40`, so the repository test suite fails on this branch. Consolidate enough source to satisfy the existing gate before merging.",
-        "file": "src/forge/story.py",
-        "line": 565,
-        "priority": "P1",
-        "title": "Bring src/forge back under the enforced line ceiling"
-      }
-    ],
-    "status": "blocked",
-    "tree": "89bf882a74529a48738c9ca86483cf89b9dd49a64126f98578a1ae6026f1a398"
+    "findings": [],
+    "status": "clean",
+    "tree": "48dd0b9dcf42e00770c937a2f7540ff15b0f5697b48f316a5120fee419f4f12c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T19:22:52+00:00",
@@ -42,6 +27,10 @@
     },
     {
       "at": "2026-09-28T21:23:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:02:15+00:00",
       "step": "review"
     }
   ]
