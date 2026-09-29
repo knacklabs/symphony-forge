@@ -1,18 +1,18 @@
 {
   "branch": "task/FORGE-AHA-1-DEMO",
   "review": {
-    "commit": "a7567cc6386a5c6c2fdbdeb555d6944c659893de",
+    "commit": "6a15fb712c02eed73dc6ff98c6cfe8588e2ed622",
     "dismissals": [],
     "findings": [
       {
-        "body": "The functional check says swapping two demo steps produces a failure that names what needs fixing. For that case, this assertion reports only two lists of numeric positions; it does not identify the swapped steps or say to restore their order. Add a plain-language failure message for the order check.",
-        "file": "tests/test_aha_demo.py",
-        "line": 52,
+        "body": "Following the skill\u2019s discovery instructions leaves the two required answers sourced as `client recap reply` (`src/forge/templates/skill.md:101-102`). The newly instructed `forge decision accept` call rejects every must-answer source other than `client`, `salesperson`, or `developer` (`src/forge/records.py:278-285`). It therefore stops before the strict review for a client who followed this workflow. Reconcile the recorded source with the validator so the read-back can lead to review.",
+        "file": "src/forge/templates/skill.md",
+        "line": 189,
         "priority": "P1",
-        "title": "Not done: functional check"
+        "title": "Not done: Sign-off is read back and reviewed first"
       },
       {
-        "body": "The skill says `forge next` lists every open must-answer topic, but `src/forge/nextstep.py:106-111` omits answers sourced from `agent` or `our default`. The strict sign-off check rejects those sources at `src/forge/records.py:278-285`. An agent relying on the list could leave a topic unresolved after the single read-back call.",
+        "body": "`forge next` uses `open_must_answer_topics`, which does not list a syntactically valid answer sourced from `agent` or `our default` (`src/forge/nextstep.py:106-111`). Sign-off rejects those sources (`src/forge/records.py:278-285`). The instruction can therefore send the agent into the single read-back call with an incomplete list of topics to settle.",
         "file": "src/forge/templates/skill.md",
         "line": 186,
         "priority": "P2",
@@ -20,7 +20,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "2441ac70b382e60266ab1fecfed274147dd81c2ff99c2cfca22c92b89b5187d3"
+    "tree": "c5daef5e3ae00fe70bf6c0b399b5caf25e201045b046e8e3e41e1a93e05c3515"
   },
   "status": "fixing",
   "steps": [
@@ -46,6 +46,10 @@
     },
     {
       "at": "2026-09-29T03:04:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T03:41:20+00:00",
       "step": "review"
     }
   ]
