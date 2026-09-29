@@ -557,8 +557,9 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
                     "refs/remotes/origin", cwd=top).splitlines()
     refs.sort(key=lambda ref: (not ref.startswith(f"task/{key}-"), ref))
     for ref in refs:
-        paths = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/specs", cwd=top).splitlines()
-        for path in paths:
+        # A merge can delete a listed branch before we look inside it: skip it.
+        listing = repo.run("git", "ls-tree", "-r", "--name-only", ref, "--", "docs/specs", cwd=top)
+        for path in listing.stdout.splitlines() if listing.returncode == 0 else []:
             if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
                 continue
             spec = show(top, ref, path) or ""
