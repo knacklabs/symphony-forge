@@ -153,12 +153,17 @@ def _enable(top: Path) -> int:
     diff = repo.git("diff", "-U0", repo.git("merge-base", "HEAD", ref, cwd=path), "--", ".", f":!{rel}", cwd=path)
     state = repo.read_state(ENABLE, path) or {}
     if (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
-            r"^[+-](?!\+\+ |-- |merge[ \t]*=)", diff, re.M):  # anything but the merge line
+            r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)", diff, re.M):  # anything but the merge line
         repo.refuse(REFUSALS["taken"])
-    toml = path / "forge.toml"  # bytes, so its line endings stay; the setting goes above any table
-    text = re.sub(r"^merge[ \t]*=[^\n]*\n?", "", toml.read_bytes().decode("utf-8"), flags=re.M)
+    toml = path / "forge.toml"  # bytes, so its line endings stay; the setting is the key above any table
+    text = toml.read_bytes().decode("utf-8")
+    top = re.search(r"^[ \t]*\[|\Z", text, re.M).start()  # its value changes; its comment and spacing stay
+    head, found = re.subn(r"""^([ \t]*(merge|"merge"|'merge')[ \t]*=[ \t]*)("[^"\n]*"|'[^'\n]*'|[^\s#]*)""", r'\1"agent"', text[:top], 1, re.M)
     ending = "\r\n" if "\r\n" in text else "\n"
-    toml.write_bytes(re.sub(r"^(?!#)", f'merge = "agent"{ending}', text, count=1, flags=re.M).encode("utf-8"))
+    text = (head if found else re.sub(r"^(?!#)", f'merge = "agent"{ending}', head, count=1, flags=re.M)) + text[top:]
+    if repo._config_text(text)["merge"] != "agent":  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
+    toml.write_bytes(text.encode("utf-8"))
     repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")
