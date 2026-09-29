@@ -92,7 +92,7 @@ def _story_done_when_changed_after_review(env):
     # A changed Done when is caught first by the story doc's approval check, before review freshness.
     return "task/SHOP-T1", where, (
         "The approval of plans/SHOP.md doesn't match its \"What changes for you\" and \"Done when\".",
-        "fix the story doc, then forge read <KEY> --amended if it changed after its read")
+        "fix the story doc, then forge read <KEY>")
 
 
 def _fix_done_when_changed_after_review(env):

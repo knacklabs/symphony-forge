@@ -9,8 +9,8 @@ A spec's cold read, written by `forge read <slug>`, lives in the notes file besi
     ---
     reader: <who read it>
     read_at: <when>
-    read_hash: <git hash-object of the spec as read>
-    amended_hash: <git hash-object after the one amendment, recorded by --amended>
+    read_hash: <git hash-object of the spec as read by the latest round>
+    round, passed: <n>, and yes only when that round's whole text, trimmed, is "No findings."
     ---
     1. <finding>
        Disposition: cut | defer | keep <one-line reason>
@@ -48,9 +48,9 @@ REFUSALS = {
     "not_draft": ("docs/specs/{slug}.md is not a saved draft (status: {status}).",
                   "forge spec save {slug}"),
     "no_read": ("docs/specs/{slug}.md has no cold read.", "forge read {slug}"),
-    "changed": ("docs/specs/{slug}.md changed after its cold read.", "forge read {slug} --amended"),
-    "changed_again": ("docs/specs/{slug}.md changed after its one recorded amendment.",
-                      "git diff -- docs/specs/{slug}.md"),
+    "changed": ("docs/specs/{slug}.md changed after its last round of cold read.", "forge read {slug}"),
+    "not_passed": ("Round {round} of the cold read of docs/specs/{slug}.md hasn't passed, so it "
+                   "needs another round.", "forge read {slug}"),
     "no_disposition": ("Finding {number} in docs/specs/{slug}.read.md has no disposition: cut, "
                        "defer, or keep with a reason.", 'forge spec confirm {slug} --by "{by}"'),
     "unconfirmed": ("docs/specs/{slug}.md is not confirmed (status: {status}); only a confirmed "
@@ -152,14 +152,15 @@ def spec_confirm(args: argparse.Namespace) -> None:
     record, findings = _front(_text(top, notes))
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], slug=args.slug)
-    amended = record.get("amended_hash")
-    if repo.git("hash-object", "--", rel, cwd=top) != (amended or record["read_hash"]):
-        repo.refuse(REFUSALS["changed_again" if amended else "changed"], slug=args.slug)
     parts = FINDING.split(findings)
     for number, finding in zip(parts[1::2], parts[2::2]):
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
             repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
+    if record.get("passed") != "yes":  # notes written before rounds count as round 1
+        repo.refuse(REFUSALS["not_passed"], slug=args.slug, round=record.get("round") or 1)
+    if repo.git("hash-object", "--", rel, cwd=top) != record["read_hash"]:
+        repo.refuse(REFUSALS["changed"], slug=args.slug)
     _write(top, rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
                           confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)

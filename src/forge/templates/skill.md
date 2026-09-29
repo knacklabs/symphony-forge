@@ -14,7 +14,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Show me progress" | `forge board` |
 | "Plan a new story" | `forge story new <KEY> "<title>"` |
 | "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
-| "I've amended it" | `forge read <KEY> --amended` |
+| "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
@@ -206,7 +206,7 @@ records.
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
-Until the decision, use a fake provider for an external service. No second cold read is needed.
+Until the decision, use a fake provider for an external service.
 
 ## Adopt a live app
 

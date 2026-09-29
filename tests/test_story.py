@@ -1,4 +1,4 @@
-"""The story doc, its one cold read, and promotion from a fix (spec criteria 1, 11, 12 and 22).
+"""The story doc, its cold read, and promotion from a fix (spec criteria 1, 11, 12 and 22).
 
 The helpers here set up stories; test_approval.py and test_next.py use them too.
 """
@@ -243,18 +243,20 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
                               "keep with a reason.\nNext: edit plans/SHOP.read.md, then forge next\n")
     notes.write_text(written + "   Disposition: keep because shoppers asked for it\n", encoding="utf-8")
 
-    # A doc changed after its read blocks approval until the amendment is recorded.
+    # The old contract recorded one amendment with --amended and approved on it. FORGE-READLOOP-1
+    # removes that: a round with findings blocks approval, and so does a doc changed after the
+    # round that passed.
+    refused = approve(DOC)
+    assert refused.stderr == ("Round 1 of the cold read of plans/SHOP.md hasn't passed, so it needs "
+                              "another round.\nNext: forge read SHOP\n")
     amended = DOC.replace("People lose", "Shoppers lose")
     doc.write_text(amended, encoding="utf-8")
-    refused = approve(amended)
-    assert refused.stderr == ("plans/SHOP.md changed after its cold read.\n"
-                              "Next: forge read SHOP --amended\n")
-    assert repo.forge("read", "SHOP", "--amended").returncode == 0
-    assert f"amended_hash: {repo.git('hash-object', 'plans/SHOP.md', cwd=shop)}" in notes.read_text("utf-8")
+    (repo.bin / "claude-says.md").unlink()  # the next round finds nothing
+    assert repo.forge("read", "SHOP").returncode == 0
     doc.write_text(amended + "More notes.\n", encoding="utf-8")
     refused = approve(amended)
-    assert refused.stderr == ("plans/SHOP.md changed after its recorded amendment.\n"
-                              "Next: forge read SHOP --amended\n")
+    assert refused.stderr == ("plans/SHOP.md changed after its last round of cold read.\n"
+                              "Next: forge read SHOP\n")
     doc.write_text(amended, encoding="utf-8")
     recorded = approve(amended)
     assert recorded.returncode == 0, recorded.stderr

@@ -75,8 +75,9 @@ In a client repo, finish the prototype review and customer sign-off above before
 1. Add the story to the roadmap from its confirmed spec with `forge roadmap add <spec>`.
 2. `forge story new <KEY> "<title>"` makes the story's branch, worktree and doc. The doc says what
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
-3. `forge read <KEY>` runs one independent cold read. Answer every finding (cut, defer or keep),
-   amend the doc once, then run `forge read <KEY> --amended`.
+3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
+   amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
+   and this repeats until a round finds nothing.
 4. The human approves once. In Claude Code, exit Plan Mode with the story doc as the plan; in Codex,
    ask the approval question `forge next` gives. Do this from one main chat for stories in
    every Forge repo this machine has used, including its worktrees. Forge remembers those repos
