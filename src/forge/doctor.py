@@ -104,12 +104,19 @@ def doctor(args: argparse.Namespace) -> None:
 
     try:
         wanted = sync.files(top, cfg)
+        compared = ("- Note: doctor compared the synced files with the installed Forge "
+                    f"v{__version__}")
+        compared += "." if pinned == f"v{__version__}" else (
+            f", not the pinned {pinned}.\n  To check with {pinned}: {install}, then run forge "
+            "doctor again.")
     except repo.Refused as refused:
         problem, _, fix = str(refused).partition("\nNext: ")
-        rows.append((problem, fix))
-        wanted = {}
-    rows += [(f"{rel} differs from what forge sync writes for Forge {cfg['version']}.", "forge sync")
-             for rel, text in wanted.items() if sync.read(top / rel) != text]
+        rows.append((f"doctor couldn't compare the synced files with what forge sync writes: "
+                     f"{problem}", fix))
+        wanted, compared = {}, ""
+    # The installed Forge's templates make these files, whatever version the repo pins.
+    rows += [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
+              "forge sync") for rel, text in wanted.items() if sync.read(top / rel) != text]
     # Forge's own repo runs without the default hooks until the switch: every worktree shares
     # that folder. An explicitly configured hooks folder must still be checked.
     checks_hooks = (cfg["repo"] != "forge-source" or
@@ -209,6 +216,10 @@ def doctor(args: argparse.Namespace) -> None:
     elif not trusted:
         print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
               f"trust this one yet.\n  Fix: {trust}")
+    # Said whenever the comparison ran, whatever else fails; after the verdict when all is well.
     if rows:
+        if compared:
+            print(compared)
         repo.refuse(REFUSALS["problems"], count=len(rows))
     print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
+    print(compared)
