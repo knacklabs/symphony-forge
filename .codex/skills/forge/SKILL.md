@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
-| "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
+| "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
@@ -126,6 +126,12 @@ then create stories. Use prototype fixes before sign-off. The salesperson can be
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
 call script. Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
+
+Always build the demo-data loader in the first version, so the customer sees their own kind of
+work instead of empty screens (see demo-data.md). Use the customer's words
+from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
+they can point at the screen: click an element in the demo build, write what's wrong and paste the
+output to the agent.
 
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
@@ -232,6 +238,20 @@ On a live app, every story and fix also follows these:
 - Migrations only add, and work with the previous version of the app still running.
 - A change users would notice ships behind the team's own feature flags.
 - No production credentials on this machine; never ask for them.
+
+## Upgrade Forge
+
+An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
+repo, rewritten by that version.
+
+1. Ask which release to move to, recommending the newest.
+2. `forge fix start "Upgrade Forge to <release>" --done "Forge runs <release>"`.
+3. In the fix's folder, set `version` in `forge.toml` to the release, such as `"v1.2.0"`.
+4. Install that release: `uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`.
+5. Run `forge sync` in the fix's folder and commit everything it wrote.
+6. `forge close <fix>`. If it names files that aren't what `forge sync` writes, go back to step 5.
+
+Until the upgrade merges, the default branch keeps working with the new release installed.
 
 ## Planning a story
 

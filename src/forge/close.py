@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import checks, codex, init, repo, review
+from forge import checks, codex, init, repo, review, sync
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -36,6 +36,8 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
+                 "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
 }
@@ -62,6 +64,8 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    if not migrating:
+        _synced(top, item, cfg)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
@@ -187,6 +191,19 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
+
+
+def _synced(top: Path, item: str, cfg: dict[str, Any]) -> None:
+    """An upgrade is ready only once its committed files are what the installed Forge's sync
+    writes: doctor's comparison, read from the commit close pushes."""
+    if cfg["version"].removeprefix("v") == repo.default_config(top)["version"].removeprefix("v"):
+        return
+    stale = [rel for rel, text in sync.files(top, cfg).items()
+             if repo.run("git", "show", f"HEAD:{rel}", cwd=top).stdout != text]
+    if stale:
+        repo.refuse(REFUSALS["unsynced"], kind="task" if "/" in item else "fix",
+                    files=", ".join(stale), verb="aren't" if len(stale) > 1 else "isn't",
+                    path=top, item=item)
 
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:

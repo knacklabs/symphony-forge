@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
-| "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
+| "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
@@ -238,6 +238,20 @@ On a live app, every story and fix also follows these:
 - Migrations only add, and work with the previous version of the app still running.
 - A change users would notice ships behind the team's own feature flags.
 - No production credentials on this machine; never ask for them.
+
+## Upgrade Forge
+
+An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
+repo, rewritten by that version.
+
+1. Ask which release to move to, recommending the newest.
+2. `forge fix start "Upgrade Forge to <release>" --done "Forge runs <release>"`.
+3. In the fix's folder, set `version` in `forge.toml` to the release, such as `"v1.2.0"`.
+4. Install that release: `uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`.
+5. Run `forge sync` in the fix's folder and commit everything it wrote.
+6. `forge close <fix>`. If it names files that aren't what `forge sync` writes, go back to step 5.
+
+Until the upgrade merges, the default branch keeps working with the new release installed.
 
 ## Planning a story
 
