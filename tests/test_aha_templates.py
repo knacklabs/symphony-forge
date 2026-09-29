@@ -79,8 +79,9 @@ def test_3_agentation_toolbar_is_demo_only(repo, gh, tmp_path):
     frontend = _conventions(repo, _client(repo, gh, tmp_path))["frontend.md"]
     for rule in ("Agentation feedback toolbar", "click an element, write what's wrong and paste the "
                  "output to the agent", "only when `APP_ENV=demo` at run time",
-                 "backend injects", "served `index.html`", "window.__APP_ENV__",
-                 "window.__APP_ENV__ === 'demo'", "never loads in production",
-                 'window.__APP_ENV__ = "%APP_ENV%"', "replace %APP_ENV% with",
-                 "import('agentation')"):
+                 "served `index.html`", '<meta name="app-env" content="%APP_ENV%">',
+                 "replace %APP_ENV% with", "document.querySelector<HTMLMetaElement>('meta[name=app-env]')?.content",
+                 "=== 'demo'", "never loads in production", "import('agentation')"):
         assert rule in frontend, rule
+    # Helmet's default CSP (script-src 'self') blocks inline scripts, so the flag travels in a meta tag.
+    assert "window.__APP_ENV__" not in frontend

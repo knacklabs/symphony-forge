@@ -54,19 +54,21 @@ already caches it and tracks loading and errors.
 A demo build adds the Agentation feedback toolbar, so a salesperson can click an element, write
 what's wrong and paste the output to the agent, which then knows exactly which element was meant.
 Show it only when `APP_ENV=demo` at run time. The Dockerfile builds the frontend without `APP_ENV`,
-so Vite's `import.meta.env` cannot decide this. When serving `index.html`, the backend injects a
-script setting `window.__APP_ENV__` to `"demo"` only if its validated `APP_ENV` is `demo`, and to
-`"production"` otherwise. Replace a fixed placeholder in the served `index.html`, never a value
-from the request, and do not cache that response. Keep the dynamic import behind the run-time
-check so the toolbar never loads in production. The built assets may contain its lazy chunk.
+so Vite's `import.meta.env` cannot decide this. The served `index.html` carries
+`<meta name="app-env" content="%APP_ENV%">`, and the backend replaces the placeholder with `demo`
+only if its validated `APP_ENV` is `demo`, and with `production` otherwise. A meta tag, not an
+inline script, because Helmet's default content security policy (`script-src 'self'`) blocks inline
+scripts. Replace a fixed placeholder, never a value from the request, and do not cache that
+response. Keep the dynamic import behind the run-time check so the toolbar never loads in
+production. The built assets may contain its lazy chunk.
 
 ```tsx
-// index.html: <script>window.__APP_ENV__ = "%APP_ENV%";</script>
+// index.html: <meta name="app-env" content="%APP_ENV%">
 // backend: replace %APP_ENV% with APP_ENV === 'demo' ? 'demo' : 'production'
-declare global { interface Window { __APP_ENV__?: 'demo' | 'production' } }
+const isDemo = document.querySelector<HTMLMetaElement>('meta[name=app-env]')?.content === 'demo';
 const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Agentation })));
 
-// in App: {window.__APP_ENV__ === 'demo' && <Suspense fallback={null}><Agentation /></Suspense>}
+// in App: {isDemo && <Suspense fallback={null}><Agentation /></Suspense>}
 ```
 
 ## Design and accessibility
