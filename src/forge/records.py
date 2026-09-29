@@ -289,8 +289,9 @@ def decision_accept(args: argparse.Namespace) -> None:
                          f"correct {rel}, then {next_step}"))
         text = _set(text, reviewed_commit=review.signoff(top, quote))
         if not replied:  # so the customer is only asked to approve a reviewed version
-            return print("The sign-off review passed; the sign-off email can go out. Record the "
-                         f"customer's reply in approved_via and approved_on, then {next_step}")
+            return print("The sign-off review passed; you can now ask the customer's named person "
+                         "for sign-off. Record their reply in approved_via and approved_on, then "
+                         f"{next_step}")
     changed = [rel]
     old = fields.get("supersedes")
     if old:

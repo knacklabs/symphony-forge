@@ -50,7 +50,8 @@ tests, review and a pull request. Save and confirm specs as the work reveals the
 `forge next` shows which required answers are still open. Resolve those, then have the whole
 prototype and answers strictly reviewed before the customer is asked: write the record with
 `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`, which runs the review and says whether the sign-off email can go out.
+`forge decision accept`, which runs the review and either names the gaps or says you can now ask
+the customer's named person for sign-off.
 The customer's named person approves the demo and the quoted answers; fill in their reply and run
 `forge decision accept` again to record it.
 

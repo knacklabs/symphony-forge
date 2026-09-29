@@ -33,7 +33,8 @@ def test_1_accept_before_the_reply_runs_the_review_and_stops(repo, tmp_path, mon
     passed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert passed.returncode == 0, passed.stderr
     assert "review passed" in passed.stdout
-    assert "sign-off email can go out" in passed.stdout
+    assert "ask the customer's named person for sign-off" in passed.stdout
+    assert "email" not in passed.stdout
     assert _calls(queue) == 2
     assert page.read_text() == before
 
