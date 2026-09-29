@@ -7,7 +7,13 @@
     "blocking_level": "P1",
     "changed": "29ab9015203eb256c8a18e171e520d6a757fc231ee5477352c7517941cafed8f",
     "commit": "64f5955eeb61069154e2078de38e308a14a21ac2",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/merge.py:161 the fix's contract covers indented, single- or double-quoted and commented keys; a triple-quoted value is outside it, and there the command refuses without changing forge.toml, so no file is broken",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Forge accepts `merge = \"\"\"human\"\"\"`, but this regex replaces only the first two quotes, leaving invalid TOML, so enable refuses instead of changing the key. The new test at tests/test_fix_forge_merge_enable_adds_a_second_merge_k.py:36 expects that refusal rather than a successful command-level edit. A double-quoted key containing a TOML escape, such as `\"mer\\u0067e\"`, also parses as `merge` but is missed by the regex; inserting another key then creates a duplicate. The parser in src/forge/repo.py:205 uses tomllib, and its merge validation at line 138 accepts the resulting `human` value. Cover these valid forms through `forge merge enable` and change the existing key.",
@@ -24,10 +30,10 @@
         "title": "Handle a table-looking line inside a multiline config string"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "dcb4d3dd83e2f8d06bf9521550b99e78624249370122939e4d2d217199ae0fe2"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T15:21:36+00:00",
