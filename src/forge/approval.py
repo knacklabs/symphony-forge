@@ -12,7 +12,6 @@ import hashlib
 import json
 import re
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -37,10 +36,9 @@ REFUSALS = {
     "no_signoff": ("This client's sign-off isn't recorded yet, so the approval was not recorded.",
                    'forge decision new client-signoff, then forge decision accept client-signoff '
                    '--by "<client name>"'),
-    "other_version": ("{repo} pins Forge {pinned}, but {installed} is installed, so nothing was "
-                      "recorded.",
-                      "ask your agent to upgrade {repo} to {installed}, then approve again"),
 }
+OTHER_VERSION = ("{repo} pins Forge {pinned}, but {installed} is installed; the approval is recorded "
+                 "anyway. Ask your agent to upgrade {repo} to {installed}.")
 
 TOOLS = {"claude": "ExitPlanMode", "codex": "request_user_input"}
 QUESTIONS = ("AskUserQuestion", "request_user_input")
@@ -92,27 +90,6 @@ def waiting_digest(key: str, top: Path) -> str | None:
     return None if (state.get("approval") or {}).get("hash") == digest else digest
 
 
-def signed_off(top: Path, cfg: dict[str, Any] | None = None) -> bool:
-    """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
-    checkout or on the default branch: exactly the record forge.toml's signoff pins, or, with none
-    pinned, a decision whose slug ends in client-signoff."""
-    cfg = cfg if cfg is not None else repo.config(top)
-    if cfg["repo"] == "forge-source":
-        return True
-    pinned = cfg["signoff"]
-
-    def wanted(name: str) -> bool:
-        return name == pinned if pinned else name.endswith("client-signoff.md")
-
-    texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*.md")
-             if wanted(path.relative_to(top).as_posix())]
-    ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-    texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
-    return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-               for text in texts if text.startswith("---"))
-
-
 def last_refusal(top: Path) -> Path:
     """Why the last approval recorded nothing, for `forge next`. Local, never committed."""
     return repo.forge_dir(top) / "approval-refused.txt"
@@ -141,29 +118,23 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     if len(matches) > 1:
         repo.refuse(REFUSALS["several"], count=len(matches))
     key, path = matches[0]
-    story_repo = machine.main_checkout(path)
-    # Read the pin alone before full config validation or any write in the story repo.
-    config_text = (path / "forge.toml").read_text(encoding="utf-8")
-    version_line = re.search(r'^version\s*=\s*[^\n]+', config_text, re.M)
-    if version_line:
-        try:
-            pinned = tomllib.loads(version_line[0])["version"]
-        except tomllib.TOMLDecodeError:
-            repo.check_pin(path)
-            return
-        if isinstance(pinned, str) and pinned.removeprefix("v") != __version__:
-            repo.refuse(REFUSALS["other_version"], repo=story_repo,
-                        pinned=pinned, installed=f"v{__version__}")
-    repo.check_pin(path)
+    # A version mismatch warns but never blocks the approval.
+    pinned = repo.config(path)["version"]
+    if pinned.removeprefix("v") != __version__:
+        print(OTHER_VERSION.format(repo=machine.main_checkout(path), pinned=pinned,
+                                   installed=f"v{__version__}"), file=sys.stderr)
     story_used = repo.forge_dir(path) / "approvals" / marker
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
     story.check_read(key, path)
-    if not signed_off(path):
+    if repo.is_prototype(path):
         repo.refuse(REFUSALS["no_signoff"])
     state = repo.read_state(key, path) or {}
+    notes = story._record(story._text(path / "plans" / f"{key}.read.md"))[0]  # pyright: ignore[reportPrivateUsage]
+    # The round it passed, so the story keeps needing a passing round even if its notes go.
     approval = {"by": f"human-via-{runtime.capitalize()}", "at": repo.now(), "hash": digest,
-                "runtime": runtime, "session": session, "event": event}
+                "runtime": runtime, "session": session, "event": event,
+                "round": int(notes.get("round") or 1)}
     state.update(status="approved", approval=approval, touches=state.get("touches", 0) + 1)
     rel = repo.write_state(key, repo.add_step(state, "approved"), path)
     title = state.get("title") or key
@@ -173,6 +144,28 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
         used.parent.mkdir(exist_ok=True)
         used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
+    _to_promoted(key, path)
+
+
+def _to_promoted(key: str, path: Path) -> None:
+    """Merge the story branch into a task promoted from a fix, so the approved doc, its notes, the
+    story's state and its roadmap entry reach that task's pull request. On any failure, leave the
+    task as it was and name the merge to finish."""
+    folder = story.worktrees(path).get(f"task/{key}-SPEC")
+    state = repo.read_state(f"{key}/SPEC", folder) if folder else None
+    if not state or "done_when" not in state:  # only a promoted fix's state has a done-when
+        return
+    if repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode == 0:
+        print(f"{key}/SPEC's folder has a merge in progress, so Forge left it untouched.\n"
+              f"Next: in {folder}, finish that merge, then git merge story/{key}")
+        return
+    merged = repo.run("git", "merge", "-q", "--no-edit", "-m", "Bring in the approved plan",
+                      f"story/{key}", cwd=folder)
+    if merged.returncode:
+        if repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode == 0:
+            repo.run("git", "merge", "--abort", cwd=folder)
+        print(f"Forge couldn't bring the approved plan into {key}/SPEC's branch.\n"
+              f"Next: in {folder}, git merge story/{key}, then forge close {key}/SPEC")
 
 
 def _completed(payload: dict[str, Any]) -> bool:

@@ -1,0 +1,50 @@
+{
+  "branch": "task/FORGE-READLOOP-1-GATES",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "2af69956b314932af008ff4e181b450afa7917b337b6e7c2ff25d845328457cd",
+    "commit": "bdc09a7e047fd7ce3e55c87a31fa4e04bcfc6a1e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After the first task merges, a changed Done-when section can receive a passing new read on the story branch while its approval still refers to the old text. If the story worktree is then removed, this path reads the new branch doc and finds a passing round, but skips the approval check because `path` is None (`nextstep.py:295`). It recommends starting a task; `task.py:154-158` then refuses that task for stale approval. Check the selected branch's approval before recommending task start.",
+        "file": "src/forge/nextstep.py",
+        "line": 320,
+        "priority": "P2",
+        "title": "Check renewed approval when forge next has no story worktree"
+      },
+      {
+        "body": "The search takes the first heading with the recorded round number. If round 1's reader text mentions `## Round 2`, then round 2's reply is exactly `No findings.`, `story.py:246-247` preserves both headings in the notes. This search starts at the heading inside round 1, includes the real round 2 heading in the text being checked, and refuses the valid passing round. The gate needs a boundary that distinguishes stored round headings from reader text.",
+        "file": "src/forge/story.py",
+        "line": 419,
+        "priority": "P2",
+        "title": "A prior reply can make an exact passing round fail"
+      }
+    ],
+    "status": "clean",
+    "tree": "2a942ef51b1369d6b7347b9a3925ea35569f4151f6a8a11bc98d6de2ade7c05a"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T08:33:42+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T09:17:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:35:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:59:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T10:30:02+00:00",
+      "step": "review"
+    }
+  ]
+}

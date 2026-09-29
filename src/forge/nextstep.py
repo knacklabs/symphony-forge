@@ -170,7 +170,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
-        if cfg["repo"] == "client" and not approval.signed_off(top, cfg):
+        if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
                 notice = ["Open before sign-off in docs/product/BRIEF.md:",
@@ -193,17 +193,8 @@ def _needs_demo_address(top: Path) -> bool:
     ref = story.landed_ref(top)
     if story.show(top, ref, "Dockerfile") is None:
         return False
-    cfg = repo.default_config(top)
-    if cfg["repo"] != "client":
+    if not repo.is_prototype(top, repo.default_config(top), (ref,)):
         return False
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-    pinned = cfg["signoff"]
-    for name in names.splitlines():
-        if (name == pinned if pinned else name.endswith("client-signoff.md")):
-            record = story.show(top, ref, name) or ""
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
     return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
@@ -283,6 +274,19 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            refusals: dict[Path, str]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
+    notes, doc_hash, required = "", "", False
+    if path is None:  # like forge task start: the story branch's copy while it exists
+        for ref in (f"story/{key}", story.landed_ref(top)):
+            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+            required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+            if required:
+                text = story.show(top, ref, f"plans/{key}.md") or text
+                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
+                break
+    elif (path / "plans" / f"{key}.md").is_file():
+        notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
+        required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     try:
         doc = story.parse(text)
     except ValueError as exc:
@@ -313,6 +317,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
+    reread = _next_round(key, notes, doc_hash, title, required)
+    if reread:  # a doc changed after approval gets a round before its next task starts
+        return lines + reread, list(states.values())
     if ready:
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
@@ -324,12 +331,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
+    notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
+                         story.rounds(notes))
+    if reread:
+        return reread
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path, _report_config(path, refusals)):
+    if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)
@@ -340,6 +352,28 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             f"Next: in Codex, ask request_user_input with id approve_plan_{digest}, question "
             '"Approve this plan?", header "Approve plan" and choices "Approve plan", '
             '"Request changes", "Stop"']
+
+
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) -> list[str]:
+    """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
+    changed: `text` is the notes, `doc_hash` the doc's git hash."""
+    notes = f"plans/{key}.read.md"
+    record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
+    done, number = int(record.get("round") or 1), story.undisposed(findings)
+    if not required:
+        return []
+    if not record.get("round"):
+        return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
+    if not story.passed(record, findings):
+        why = f"round {done} of its cold read had findings"
+    elif record.get("read_hash") != doc_hash:
+        why = f"plans/{key}.md changed after round {done} of its cold read"
+    else:
+        return []
+    nudge = " It isn't converging: ask the human whether to split the story instead of reading on."
+    return [f"Planning {title}: {why}, so round {done + 1} is next.{nudge if done + 1 >= 4 else ''}",
+            f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
+            f"forge read {key}"]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],

@@ -80,6 +80,8 @@ def _archiving_codex(repo, sdk_data, tmp_path, monkeypatch):
     stub = (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8")
     stub = stub.replace('THREAD, TURN = "thr-stub-1", "turn-stub-1"',
                         'THREAD, TURN = os.environ.get("STUB_THREAD", "thr-stub-1"), "turn-stub-1"')
+    stub = stub.replace('"text": "stub codex: built it with "',
+                        '"text": os.environ.get("STUB_TEXT") or "stub codex: built it with "')
     stub = stub.replace('        elif method == "turn/start":',
                         '        elif method == "turn/start":\n'
                         '            if os.environ.get("STUB_NO_TURN"):\n'
@@ -319,7 +321,7 @@ def test_5_merge_cleans_up_and_preserves_local_work(
 
 def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
         repo, gh, tmp_path, monkeypatch, sdk_data):
-    setup(repo, keys=("SHOP", "WISH"))
+    setup(repo, keys=("SHOP", "PASS", "WISH"))
     stub = _archiving_codex(repo, sdk_data, tmp_path, monkeypatch)
     monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("CLAUDECODE", "1")
@@ -330,13 +332,27 @@ def test_7_cold_read_archives_after_writing_notes_and_reports_archive_failure(
     notes = shop / "plans" / "SHOP.read.md"
     monkeypatch.setenv("STUB_NOTES", str(notes))
     monkeypatch.setenv("STUB_THREAD", "thr-shop-read")
+    # FORGE-READLOOP-1 changed the contract: the read's conversation was archived after every read;
+    # now a round with findings leaves it for the next round, and only a passing round archives it.
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stderr
     calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
     assert any(call.get("method") == "thread/start" for call in calls)
-    assert [call["params"]["threadId"] for call in calls
-            if call.get("method") == "thread/archive"] == ["thr-shop-read"]
-    assert any(call.get("notes_exist") is True for call in calls)
+    assert notes.is_file() and not [call for call in calls if call.get("method") == "thread/archive"]
+    shop_calls = len(calls)
+
+    monkeypatch.setenv("STUB_TEXT", "No findings.")
+    monkeypatch.setenv("STUB_THREAD", "thr-pass-read")
+    passing = new_story(repo, "PASS")
+    (passing / "plans" / "PASS.md").write_text(DOC, encoding="utf-8")
+    (passing / "forge.toml").write_text((shop / "forge.toml").read_text("utf-8"), encoding="utf-8")
+    monkeypatch.setenv("STUB_NOTES", str(passing / "plans" / "PASS.read.md"))
+    read = repo.forge("read", "PASS")
+    assert read.returncode == 0, read.stderr
+    calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
+    assert [call["params"]["threadId"] for call in calls[shop_calls:]
+            if call.get("method") == "thread/archive"] == ["thr-pass-read"]
+    assert any(call.get("notes_exist") is True for call in calls[shop_calls:])
 
     wish = new_story(repo, "WISH")
     (wish / "plans" / "WISH.md").write_text(DOC, encoding="utf-8")

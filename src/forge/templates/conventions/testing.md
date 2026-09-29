@@ -81,5 +81,7 @@ Each event handler gets an idempotency test (the same event twice runs once) and
 
 - Each test creates what it needs through the running app's API on a fresh database per run.
   Do not use a shared seed or insert rows directly into the database.
+- Shared seed data stays out of tests, the demo loader's too: demo data is allowed on the demo
+  host only (see demo-data.md).
 - Unit tests for pure logic with many cases (a price rule, a date calculation) need no database.
 - No sleeps: wait for the thing itself (`findBy...`, an awaited promise).

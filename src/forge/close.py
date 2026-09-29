@@ -12,11 +12,12 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from forge import checks, codex, init, repo, review
+from forge import __version__, checks, codex, init, repo, review, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -36,6 +37,12 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
+                 "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
+    "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
+                       "so it can't tell whether the {kind}'s files are what {pinned} writes.",
+                       "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
+                       "then forge close {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
 }
@@ -54,17 +61,20 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = repo.current_branch(top), repo.default_branch(top)
     pr = _pull_request(top, branch)
-    migrating = state.get("kind") == "migrate"
+    migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
+        _attach(top, item, branch)
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    if not migrating:
+        _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
-    fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
+    fresh = result.get("changed") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -102,9 +112,15 @@ def close(args: argparse.Namespace) -> int:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
         _save(top, item, state, f"Review of {item}: {result['status']}")
+    elif result.get("tree") != (tree := review.whole_tree("HEAD", item, top, state,
+                                                          f"origin/{default}")):
+        # The clean review still covers the change; keep the v1.1.0 check's fingerprint current.
+        result["tree"] = tree
+        _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
     _publish(top, item, state, branch, default, pr, result)
+    _attach(top, item, branch)
 
     if serious:
         for number, finding in serious:
@@ -112,7 +128,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
+    # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:
@@ -180,6 +196,36 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
+
+
+def _synced(top: Path, item: str) -> None:
+    """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
+    close pushes, changes and deletes nothing."""
+    toml = story.show(top, "HEAD", "forge.toml") or ""
+    pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
+    if pinned == repo.default_config(top)["version"].removeprefix("v"):
+        return
+    kind = "task" if "/" in item else "fix"
+    if pinned != __version__:
+        repo.refuse(REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
+                    installed=f"v{__version__}", item=item)
+    # forge sync refuses a detached HEAD, so the throwaway checkout gets a throwaway branch.
+    check, branch = Path(tempfile.mkdtemp()) / "sync", f"forge-synced-{os.getpid()}"
+    repo.git("worktree", "add", "-q", "-b", branch, str(check), "HEAD", cwd=top)
+    try:
+        done = repo.run("forge", "sync", cwd=check)
+        if done.returncode:
+            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
+                                                done.stderr)
+        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
+                          cwd=check).stdout
+        stale = [entry[3:] for entry in status.split("\0") if entry]
+    finally:
+        repo.git("worktree", "remove", "-f", str(check), cwd=top)
+        repo.git("branch", "-D", branch, cwd=top)
+    if stale:
+        repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
+                    verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
 
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
@@ -276,6 +322,17 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = state.get("why", ""), state.get("done_when", "")
         title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
+
+
+def _attach(top: Path, item: str, branch: str) -> None:
+    """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    try:
+        if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
+                _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):
+            raise RuntimeError(f"see {repo.work_log(top, item)}")
+    except Exception as error:
+        print(f"Could not link the pull request in its Codex chat "
+              f"({(getattr(error, 'stderr', '') or str(error)).strip()}). The next forge close tries again.")
 
 
 def _merged(top: Path, item: str) -> int:

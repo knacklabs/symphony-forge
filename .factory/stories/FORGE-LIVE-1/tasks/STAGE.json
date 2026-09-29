@@ -1,0 +1,25 @@
+{
+  "branch": "task/FORGE-LIVE-1-STAGE",
+  "review": {
+    "commit": "b37db6a506d396227f705d6fe39a82ce0c181515",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "ac10694d20e6fc706b298b8dab68beadf58134361e8b1657c49c3feca6a915e8"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T18:21:34+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T18:37:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T19:07:04+00:00",
+      "step": "review"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "base": "79af562bf260f110ad6a0b158c6847bcac95165c",
+  "branch": "task/FORGE-READLOOP-1-SPEC",
+  "done_when": "The same cold reader reads the plan again until it has no findings",
+  "review": {
+    "commit": "88cd15aa53828aede5ce5decbd204ad97509d317",
+    "dismissals": [
+      {
+        "because": "src/forge/story.py:418 found holds git rev-parse's return code, which is 0 when origin/<default> exists, so landed_ref returns the fetched remote ref in that case and the local branch only when there is no remote; a trap merged upstream and fetched reaches the prompt",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "The new trap loader calls `landed_ref(top)`, but that helper returns the local default branch whenever `origin/<default>` exists (`src/forge/story.py:414-419`). Forge fetches the remote branch after a squash merge without advancing the local branch (`src/forge/merge.py:104`). A trap learned through an outcome fix can therefore be present on the fetched default branch yet absent from an older story\u2019s cold-read prompt. The test advances local `main` before pushing, so it misses this case. Read the fetched remote ref and test a remote-only advancement.",
+        "file": "src/forge/story.py",
+        "line": 487,
+        "priority": "P1",
+        "title": "Not done: Known traps are shipped and learned"
+      }
+    ],
+    "status": "clean",
+    "tree": "7a54ccf6e17a4a5da683ccfe885ef513aae4662fa2409ac0d63893014e353873"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T15:42:12+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T17:50:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T18:12:15+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan"
+}

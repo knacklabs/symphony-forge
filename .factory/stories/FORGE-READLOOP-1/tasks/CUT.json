@@ -1,0 +1,23 @@
+{
+  "branch": "task/FORGE-READLOOP-1-CUT",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "4d83055cf3b4aab11149988e72a244799545ae12d0183a4cca8fd1a371f5f9c7",
+    "commit": "14281d1cd3b8be5fdb34aa1c8814c1dae57b94d6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "d3da4da07ab959474c118586c0df6b4fb3ff5a6fa2cccd077e1b72eb8c38548a"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T07:34:37+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T08:00:55+00:00",
+      "step": "review"
+    }
+  ]
+}

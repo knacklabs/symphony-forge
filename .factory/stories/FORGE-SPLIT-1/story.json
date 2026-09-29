@@ -8,7 +8,16 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-SPLIT-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T11:21:18+00:00",
+  "merged": {
+    "A-FEW-SHARED-FILES-THE-COMMAND-TABLE-THE": "2026-09-28T05:48:09+00:00",
+    "COLLECTOR": "2026-09-28T09:11:21+00:00",
+    "COMMANDS": "2026-09-28T09:45:26+00:00",
+    "PAGE": "2026-09-28T11:21:18+00:00",
+    "SHIPS": "2026-09-28T10:22:25+00:00"
+  },
+  "outcome": "Each command, shipped file and command-list entry now lives with the module that owns it, so new features stop queueing behind the shared tables",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-27T16:47:35+00:00",
@@ -21,6 +30,10 @@
     {
       "at": "2026-09-27T16:52:21+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T11:50:15+00:00",
+      "step": "done"
     }
   ],
   "title": "A few shared files, the command table, the sync file list and the guide's command table, make every new feature queue behind the others",
