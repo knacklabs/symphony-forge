@@ -2,7 +2,7 @@
   "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
   "branch": "task/FORGE-MERGESWITCH-1-SPEC",
   "done_when": "The owner switches a repo to agent merges with one command run in their own terminal",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T07:50:27+00:00",
