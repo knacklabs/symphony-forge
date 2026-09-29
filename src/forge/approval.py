@@ -144,6 +144,11 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
         used.parent.mkdir(exist_ok=True)
         used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
+    # Tasks start from origin, so the approval must reach it; a failed push never undoes the approval.
+    if repo.run("git", "remote", "get-url", "origin", cwd=path).returncode == 0 and repo.run(
+            "git", "push", "-q", "origin", f"story/{key}", cwd=path).returncode:
+        print(f"Forge couldn't push story/{key}; run git push origin story/{key} so tasks see "
+              "this approval.")
     _to_promoted(key, path)
 
 
