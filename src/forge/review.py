@@ -145,21 +145,10 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
-    cfg = repo.config(top)
     if ("/" in item or state.get("kind") != "fix" or
-            state.get("allow_large") != "Prototype before sign-off" or cfg["repo"] != "client"):
+            state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
-    for ref in (base, commit):
-        names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-        for name in names.splitlines():
-            wanted = name == cfg["signoff"] if cfg["signoff"] else name.endswith("client-signoff.md")
-            if not wanted:
-                continue
-            record = repo.git("show", f"{ref}:{name}", cwd=top)
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return "P1"
-    return "P0"
+    return "P0" if repo.is_prototype(top, refs=(base, commit)) else "P1"
 
 
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
@@ -184,7 +173,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -218,6 +207,24 @@ def _previous(result: dict[str, Any]) -> str:
         f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
         f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
         for n, finding in enumerate(findings, 1)) or "- none"
+
+
+def _rulings(top: Path, item: str, base: str) -> str:
+    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
+    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
+    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
+    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    path = repo.state_path(item)
+    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            line = (f"{finding['title']} ({finding['file']}): dismissed because "
+                    f"{dismissal['because']}")
+            if line not in found:
+                found.append(line)
+    return _bullets(found)
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:

@@ -141,12 +141,20 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          'commands:\n'
          '  {start}\n'
          '    start     Start a task in its own branch and worktree\n',
- 'init': 'usage: forge init [-h]\n'
+ # FORGE-LIVE-1 adds the answers forge init takes when it adopts a repo with history.
+ 'init': 'usage: forge init [-h] [--test TEST] [--checks CHECK] [--interfaces GLOB]\n'
+         '                  [--approver APPROVER] [--merger MERGER] [--never-touch PATH]\n'
          '\n'
          'Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n',
+         '  -h, --help           show this help message and exit\n'
+         '  --test TEST          a repo with history: the test command CI runs\n'
+         '  --checks CHECK       a repo with history: a check branch protection requires\n'
+         '  --interfaces GLOB    a repo with history: its route or migration folders\n'
+         '  --approver APPROVER  a repo with history: who approves stories\n'
+         '  --merger MERGER      a repo with history: who merges pull requests\n'
+         '  --never-touch PATH   a repo with history: a path agents never change\n',
  'sync': 'usage: forge sync [-h]\n'
          '\n'
          'Write the generated adapter files and git hooks for the pinned version\n'

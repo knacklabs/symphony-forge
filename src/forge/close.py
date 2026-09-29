@@ -54,7 +54,7 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = repo.current_branch(top), repo.default_branch(top)
     pr = _pull_request(top, branch)
-    migrating = state.get("kind") == "migrate"
+    migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
@@ -112,7 +112,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
+    # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:
