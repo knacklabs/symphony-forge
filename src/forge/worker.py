@@ -57,7 +57,9 @@ def work(args: argparse.Namespace) -> None:
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
-        sections = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
+        doc = f"plans/{match['key']}.md"
+        story._parsed(top / doc, doc)  # pyright: ignore[reportPrivateUsage]
+        sections = task.sections((top / doc).read_text(encoding="utf-8"))
         row = task.rows(sections).get(match["task"], {})
         design = row.get("User-facing", "").lower() in ("yes", "true")
     else:
@@ -297,15 +299,18 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         on.add("answer")
         values.update(question=question, answer=note or "")
     if match["task"]:
-        doc = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
+        text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
+        doc, parsed = task.sections(text), story.parse(text)
         row = task.rows(doc).get(match["task"], {})
+        covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
         subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
         on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
                           else set())
         values.update(
             title=doc["#"], what=doc.get("What changes for you", ""), why=doc.get("Why", ""),
-            done=doc.get("Done when", ""), risks=doc.get("Risks", ""), notes=doc.get("Notes", ""),
+            done="\n".join(story.item(parsed, n, n in covers) for n in parsed["done"]),
+            risks=doc.get("Risks", ""), notes=doc.get("Notes", ""),
             moving=moving[0].strip() if moving else "New moving parts: none",
             row="\n".join(f"| {' | '.join(cells)} |" for cells in (
                 list(row), ["---"] * len(row), list(row.values()))),

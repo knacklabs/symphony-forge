@@ -64,6 +64,8 @@ APPROVED = ("What changes for you", "Done when")  # the sections an approval bin
 RECORD = ("reader", "read_at", "read_hash", "amended_hash")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
+NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
+DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
 # The variable each coordinating app sets in the commands it runs, and the other family, which does
@@ -262,7 +264,12 @@ def parse(text: str) -> dict[str, Any]:
     moving = re.search(r"^New moving parts:.*$", found["Tasks"], re.M)
     if not moving:
         raise ValueError('its Tasks section has no "New moving parts:" line')
-    done = {int(n): item for n, item in re.findall(r"^(\d+)\.\s+(.*)$", found["Done when"], re.M)}
+    done = {n: " ".join(item.split())
+            for n, item in _numbered(found["Done when"], "Done when items").items()}
+    notes = details(text)
+    extra = [n for n in notes if n not in done]
+    if extra:
+        raise ValueError(f"its Done-when details have an entry {extra[0]}, which is no Done-when item")
     table = [[cell.strip() for cell in line.strip().strip("|").split("|")]
              for line in found["Tasks"].splitlines() if line.strip().startswith("|")]
     header = table[0] if table else []
@@ -297,7 +304,30 @@ def parse(text: str) -> dict[str, Any]:
     _no_cycle(tasks)
     title = re.search(r"^# (.+)$", text, re.M)
     return {"title": title[1].strip() if title else "", "sections": found, "done": done,
-            "tasks": list(tasks.values()), "moving_parts": moving[0]}
+            "details": notes, "tasks": list(tasks.values()), "moving_parts": moving[0]}
+
+
+def details(text: str) -> dict[int, str]:
+    """The numbered entries of `### Done-when details`, each with its wrapped lines; {} when the doc
+    has no such section. Raises ValueError naming a number used twice."""
+    found = DETAILS.search(text.replace("\r\n", "\n"))
+    return _numbered(found[1] if found else "", "Done-when details")
+
+
+def item(doc: dict[str, Any], number: int, covered: bool) -> str:
+    """Done-when item `number` of a parsed doc: its sentence, then its details when covered."""
+    more = doc["details"].get(number) if covered else None
+    return f"{number}. {doc['done'][number]}" + (f"\n   {more}" if more else "")
+
+
+def _numbered(body: str, name: str) -> dict[int, str]:
+    parts = NUMBERED.split(body)
+    found: dict[int, str] = {}
+    for number, entry in zip(parts[1::2], parts[2::2]):
+        if int(number) in found:
+            raise ValueError(f"its {name} use the number {number} twice")
+        found[int(number)] = entry.strip()
+    return found
 
 
 def approval_hash(text: str) -> str | None:

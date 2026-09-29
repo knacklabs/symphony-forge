@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from forge import repo
+from forge import repo, story
 from forge.repo import git, refuse, run
 
 REFUSALS = {
@@ -131,6 +131,10 @@ def start(args: argparse.Namespace) -> None:
     text = show(base, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
+    try:
+        story.parse(text)
+    except ValueError as exc:
+        refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)
