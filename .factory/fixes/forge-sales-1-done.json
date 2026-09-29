@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "A salesperson can set up a Mac or Windows laptop with one script, build and demo a prototype whose small changes merge themselves before sign-off, and hears the demo's words instead of Forge's",
-  "status": "started",
+  "review": {
+    "commit": "391b4b836222ee54a1a782612f4e4581a5861053",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "874846b520062d37615f1f7e8dd2bdc46e19dc534bb20ce9faba5bb859a46745"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T18:54:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T01:33:48+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
