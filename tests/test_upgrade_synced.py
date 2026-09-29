@@ -57,6 +57,25 @@ def test_2_upgrade_is_not_ready_while_synced_files_are_out_of_date(env):
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
 
+    # A file sync deletes counts too: an old Forge-only CLAUDE.md that sync removed in the folder
+    # but that is still committed stays in the pull request.
+    env.commit(where, "CLAUDE.md", "@AGENTS.md\n", "The old release's CLAUDE.md")
+    _sync(env, where)
+    assert not (where / "CLAUDE.md").exists()
+    reviews = len(env.review_calls())
+    done = env.repo.forge("close", item, cwd=where)
+
+    assert done.returncode == 1
+    assert done.stderr.startswith("This fix changes Forge's version, but CLAUDE.md isn't what "
+                                  "forge sync writes for it.\n")
+    assert len(env.review_calls()) == reviews
+
+    _commit(env, where)
+    done = env.repo.forge("close", item, cwd=where)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
+
     # Only the Forge the fix pins can call it synced: once the synced upgrade has landed on the
     # default branch and the fix then pins a newer release, close run from the default checkout
     # passes the pin check there, but the installed Forge can't know what the newer one writes.

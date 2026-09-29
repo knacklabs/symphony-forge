@@ -12,11 +12,12 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, story, sync
+from forge import __version__, checks, codex, init, repo, review, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -69,7 +70,7 @@ def close(args: argparse.Namespace) -> int:
 
     _merge_default(top, item, branch, default)
     if not migrating:
-        _synced(top, item, cfg)
+        _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
@@ -197,9 +198,9 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
                 path=top, item=item)
 
 
-def _synced(top: Path, item: str, cfg: dict[str, Any]) -> None:
-    """An upgrade is ready only once its committed files are what its pinned Forge's sync writes:
-    doctor's comparison, read from the commit close pushes, run only by the Forge it pins."""
+def _synced(top: Path, item: str) -> None:
+    """An upgrade is ready only once forge sync, run by the Forge it pins on a copy of the commit
+    close pushes, changes and deletes nothing."""
     toml = story.show(top, "HEAD", "forge.toml") or ""
     pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
     if pinned == repo.default_config(top)["version"].removeprefix("v"):
@@ -208,8 +209,20 @@ def _synced(top: Path, item: str, cfg: dict[str, Any]) -> None:
     if pinned != __version__:
         repo.refuse(REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
                     installed=f"v{__version__}", item=item)
-    stale = [rel for rel, text in sync.files(top, cfg).items()
-             if repo.run("git", "show", f"HEAD:{rel}", cwd=top).stdout != text]
+    # forge sync refuses a detached HEAD, so the throwaway checkout gets a throwaway branch.
+    check, branch = Path(tempfile.mkdtemp()) / "sync", f"forge-synced-{os.getpid()}"
+    repo.git("worktree", "add", "-q", "-b", branch, str(check), "HEAD", cwd=top)
+    try:
+        done = repo.run("forge", "sync", cwd=check)
+        if done.returncode:
+            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
+                                                done.stderr)
+        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
+                          cwd=check).stdout
+        stale = [entry[3:] for entry in status.split("\0") if entry]
+    finally:
+        repo.git("worktree", "remove", "-f", str(check), cwd=top)
+        repo.git("branch", "-D", branch, cwd=top)
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)

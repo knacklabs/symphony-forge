@@ -73,6 +73,16 @@ def _released_checker(tag: str, dest) -> list[str]:
     return [sys.executable, str(shim)]
 
 
+def _upgrade(env, where, value: str) -> None:
+    """Pin the installed release and commit what its forge sync writes, as the skill's upgrade
+    steps say; close refuses an upgrade whose synced files are out of date."""
+    _pin(env, where, value)
+    done = env.repo.forge("sync", cwd=where)
+    assert done.returncode == 0, done.stdout + done.stderr
+    env.repo.git("add", "-A", cwd=where)
+    env.repo.git("commit", "-q", "-m", "Sync Forge's files", cwd=where)
+
+
 def _close(env, item, where) -> None:
     # Run in the fix's folder, which pins the release now installed.
     done = env.repo.forge("close", item, cwd=where)
@@ -84,8 +94,9 @@ def _upgrade_from_v1_1_0_passes_that_release_check(env):
     _pin(env, env.repo.path, '"v1.1.0"')
     env.repo.git("push", "-q", "origin", "main")
     _install_release(env, "v1.2.0")
-    item, where = env.start_fix()
-    _pin(env, where, "'v1.2.0'")
+    # This repo was never synced, so the fix writes every synced file and needs a reason to be large.
+    item, where = env.start_fix(allow_large="Forge's synced files")
+    _upgrade(env, where, "'v1.2.0'")
     _close(env, item, where)
     checker = _released_checker("v1.1.0", env.tmp / "v1.1.0")
 
@@ -101,9 +112,12 @@ def _upgrade_from_v1_1_0_passes_that_release_check(env):
         done.stderr
 
     # The default branch moves on; close merges it in and keeps the clean review without
-    # rerunning it, and v1.1.0's check still passes.
-    env.commit(env.repo.path, "README.md", "# Shop\n", "Readme on main")
-    env.repo.git("push", "-q", "origin", "main")
+    # rerunning it, and v1.1.0's check still passes. The upgrade's sync installed Forge's hooks,
+    # which refuse commits to the default branch; GitHub's merge moves it where no hook runs.
+    (env.repo.path / "README.md").write_text("# Shop\n", "utf-8")
+    no_hooks = ("-c", f"core.hooksPath={env.tmp / 'no-hooks'}")
+    env.repo.git(*no_hooks, "commit", "-q", "-am", "Readme on main")
+    env.repo.git(*no_hooks, "push", "-q", "origin", "main")
     _close(env, item, where)
     done = check()
     assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
@@ -164,9 +178,9 @@ def _uv_calls(env) -> list[list[str]]:
 
 def _upgrade_installs_and_passes_the_release_it_pins(env):
     steps = _on_v1_2_0(env)
-    item, where = env.start_fix()
-    _pin(env, where, "'v1.3.0'  # the upgrade")
+    item, where = env.start_fix(allow_large="Forge's synced files")
     _install_release(env, "v1.3.0")
+    _upgrade(env, where, "'v1.3.0'  # the upgrade")
     _close(env, item, where)
 
     done = _run_pr_check_job(env, where, steps)
