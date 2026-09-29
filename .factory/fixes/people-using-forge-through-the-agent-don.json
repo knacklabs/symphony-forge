@@ -1,0 +1,14 @@
+{
+  "base": "dfb2aa074193e4ec1524c6ef39ade90c816b39b1",
+  "branch": "fix/people-using-forge-through-the-agent-don",
+  "done_when": "The synced Forge skill tells the agent, the first time each of these happens for a person, to add one plain sentence saying what just happened and what they can do next: a story plan shown for approval, a cold read finding, a part starting, a pull request ready, a merge, a prototype demo, sign-off; never repeating it, never naming commands unless asked; a test checks each moment through forge sync and forge init",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T16:15:22+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "People using Forge through the agent don't learn how Forge works, because the agent does each step without telling them what just happened or what they can do next"
+}
