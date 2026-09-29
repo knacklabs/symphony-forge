@@ -120,7 +120,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.1.0"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.0"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge
@@ -138,7 +138,7 @@ prints the exact install line if yours doesn't match.
 
 ### Upgrade a project
 
-Tell your agent "upgrade Forge to v1.1.0" (or whichever version). It does it as a small fix:
+Tell your agent "upgrade Forge to v1.2.0" (or whichever version). It does it as a small fix:
 changes the version in `forge.toml`, installs that release, runs `forge sync` to refresh Forge's
 own files (your own text stays), checks with `forge doctor`, and opens the pull request. Always
 name a released version, not "main".
