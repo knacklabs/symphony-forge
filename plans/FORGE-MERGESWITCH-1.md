@@ -34,8 +34,9 @@ Risks: none
    it then prints that the owner merges that pull request to switch on agent merges. Its fix always has the same name, so run again
    after an interruption (before or after the commit, the push, or the pull request) it finds that
    fix and continues from where it stopped, and never touches any other fix: the command knows its fix by the `why` and `done_when` it records
-   when it starts it, and a fix with that name but any other `why` is left alone while the command
-   refuses naming it. `forge merge` never
+   when it starts it, and it continues only when that fix's changes are nothing yet or exactly the
+   merge-setting line; a fix with that name but any other `why`, or with any other change, is left
+   alone while the command refuses naming it. `forge merge` never
    merges a change to the `merge` setting, even where agent merges are otherwise allowed (a
    prototype before sign-off), so the owner always merges this pull request;
    `forge close` and `forge next` on that fix say the owner merges it, never `forge merge`, so the command's whole
@@ -46,7 +47,7 @@ Risks: none
    Tests run the command in a throwaway repo with fake `gh` and review: a normal run reaching
    Ready, a CRLF `forge.toml` ending in a table, a rerun after an interruption before the commit, after it, after the push and after
    the pull request, `forge merge` refusing the switch's pull request in a prototype, the whole output of a
-   prototype run and `forge next` afterwards naming only the owner's merge, an unrelated fix already using the name, a rerun before the `forge.toml` edit, a
+   prototype run and `forge next` afterwards naming only the owner's merge, an unrelated fix already using the name, a same-named fix with other edits left alone, a rerun before the `forge.toml` edit, a
    differently named fix that changes `merge` refused by `forge merge` in a prototype, each refusal with
    nothing created, and a prototype before sign-off.
 2. `forge merge`'s disabled message says to run `forge merge enable` in your own terminal. The

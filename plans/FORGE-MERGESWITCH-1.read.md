@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:16:37+00:00
-read_hash: 03028a2baff420e645f02eadb55c5bcc7cd051b8
+read_at: 2026-09-29T08:25:56+00:00
+read_hash: c256a00caad3af60f82620db0092bdb696f1b0f4
 amended_hash:
-round: 5
+round: 6
 passed: no
-doc_seen: 03028a2baff420e645f02eadb55c5bcc7cd051b8
+doc_seen: c256a00caad3af60f82620db0092bdb696f1b0f4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e36956ee742d8f4843eaacb626c98ffd583337af
+notes_seen: 73ed7fe4abee78d32d41baf00a85c59219fd5254
 ---
 # Cold read notes
 
@@ -81,4 +81,10 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 13. Simpler: new `merge-switch` kind → the fix’s existing `why` and `done_when` fields.
     Those fields are recorded when the fix starts and can identify it before the config edit. A new kind also changes the prototype review level because `review.blocking_level()` treats only `kind = "fix"` as a prototype fix.
    Disposition: cut: item 1 identifies the fix by its recorded why and done_when instead of a new kind.
+
+## Round 6
+
+14. Unproven: item 1: a same-name fix with matching `why` and `done_when` but other changes.
+    Those fields can match while the worktree contains unrelated edits. The command would treat it as its own and continue closing it. Test that a retry accepts only an empty change or the intended merge-setting change, and leaves other edits alone.
+   Disposition: cut: item 1 continues only when the fix's changes are none or exactly the merge line; other edits leave it alone; tested.
 
