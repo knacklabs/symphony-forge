@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:01:45+00:00
-read_hash: 493824e6856c55b82d33513cfe7ffe2fe0e873ca
+read_at: 2026-09-29T08:06:54+00:00
+read_hash: 13d26c80804c7c78eb49be1c983ae127177fa08c
 amended_hash:
-round: 2
+round: 3
 passed: no
-doc_seen: 493824e6856c55b82d33513cfe7ffe2fe0e873ca
+doc_seen: 13d26c80804c7c78eb49be1c983ae127177fa08c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 8b9dd34a411bc3410f7a0e06a8c952761dac6dc3
+notes_seen: 9992a93fa5885865a86cac1b823966831783cf9f
 ---
 # Cold read notes
 
@@ -51,4 +51,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 7. Contradiction: item 2: a prototype can agent-merge the switch pull request.
    Before sign-off, `repo.merge_setting()` permits `forge merge` even when the default branch says `merge = "human"`. `forge close` will therefore point to agent merge for this fix. Pin a rule that keeps this pull request for the owner to merge, and test it in the prototype case.
    Disposition: cut: item 1 has forge merge never merge a change to the merge setting, tested in a prototype.
+
+## Round 3
+
+8. Unproven: item 1: the fixed name is already used by another fix.
+   “Never touches any other fix” needs a collision test: the command must recognize that the existing branch or worktree is unrelated and leave it unchanged.
+   Disposition: cut: item 1 refuses and names an unrelated fix that holds the name, tested.
+
+9. Contradiction: item 1: a prototype still tells the owner to run `forge merge`.
+   `forge close` currently prints `Next: forge merge <item>` before `enable` can print its owner-merge instruction. The new merge refusal would make that next step fail. Pin and test the complete output so it gives the owner one valid next step.
+   Disposition: cut: item 1 has close name the owner's merge for this fix, never forge merge, tested on the whole prototype output.
 

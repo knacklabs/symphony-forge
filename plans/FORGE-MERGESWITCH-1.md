@@ -33,15 +33,19 @@ Risks: none
    commits it, and runs `forge close` on it, so the change is reviewed and its pull request opened;
    it then prints that the owner merges that pull request to switch on agent merges. Its fix always has the same name, so run again
    after an interruption (before or after the commit, the push, or the pull request) it finds that
-   fix and continues from where it stopped, and never touches any other fix. `forge merge` never
+   fix and continues from where it stopped, and never touches any other fix: a fix with that name whose `forge.toml` change is anything
+   other than the merge switch is left alone, and the command refuses naming it. `forge merge` never
    merges a change to the `merge` setting, even where agent merges are otherwise allowed (a
-   prototype before sign-off), so the owner always merges this pull request. It refuses,
+   prototype before sign-off), so the owner always merges this pull request;
+   `forge close` on that fix says the owner merges it, never `forge merge`, so the command's whole
+   output gives one valid next step. It refuses,
    changing nothing, when run from an agent (the `CLAUDECODE` or `CODEX_THREAD_ID` variable is
    set), when not on the default branch, and when the default branch's `forge.toml` already says
    `merge = "agent"`; a prototype that merges by agent only before sign-off doesn't count as on.
    Tests run the command in a throwaway repo with fake `gh` and review: a normal run reaching
    Ready, a CRLF `forge.toml` ending in a table, a rerun after an interruption before the commit, after it, after the push and after
-   the pull request, `forge merge` refusing the switch's pull request in a prototype, each refusal with
+   the pull request, `forge merge` refusing the switch's pull request in a prototype, the whole output of a
+   prototype run naming only the owner's merge, an unrelated fix already using the name, each refusal with
    nothing created, and a prototype before sign-off.
 2. `forge merge`'s disabled message says to run `forge merge enable` in your own terminal. The
    skill says the `merge` setting is the owner's: the agent never changes it to `"agent"` and
@@ -54,7 +58,7 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/cli.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
+| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/cli.py`, `src/forge/close.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
 
 New moving parts: none
 
