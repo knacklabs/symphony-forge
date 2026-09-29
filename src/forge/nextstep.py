@@ -274,6 +274,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            refusals: dict[Path, str]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
+    notes, doc_hash = "", ""
+    if path is None:  # like forge task start: the story branch's copy while it exists
+        for ref in (f"story/{key}", story.landed_ref(top)):
+            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+            if story.rounds(notes):
+                text = story.show(top, ref, f"plans/{key}.md") or text
+                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
+                break
+    elif (path / "plans" / f"{key}.md").is_file():
+        notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
     try:
         doc = story.parse(text)
     except ValueError as exc:
@@ -304,7 +315,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
-    reread = _next_round(key, path, title) if path else []
+    reread = _next_round(key, notes, doc_hash, title)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
     if ready:
@@ -318,7 +329,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
-    reread = _next_round(key, path, title)
+    notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title)
     if reread:
         return reread
     try:
@@ -339,15 +351,15 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, path: Path, title: str) -> list[str]:
-    """The next round of a read in rounds whose latest round had findings or whose doc changed."""
+def _next_round(key: str, text: str, doc_hash: str, title: str) -> list[str]:
+    """The next round of a read in rounds whose latest round had findings or whose doc changed:
+    `text` is the notes, `doc_hash` the doc's git hash."""
     notes = f"plans/{key}.read.md"
-    record, findings = story._record(story._text(path / notes))  # pyright: ignore[reportPrivateUsage]
+    record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
     done, number = int(record.get("round") or 1), story.undisposed(findings)
     if record.get("passed") == "no":
         why = f"round {done} of its cold read had findings"
-    elif record.get("round") and record.get("read_hash") != repo.git(
-            "hash-object", "--", f"plans/{key}.md", cwd=path):
+    elif record.get("round") and record.get("read_hash") != doc_hash:
         why = f"plans/{key}.md changed after round {done} of its cold read"
     else:
         return []

@@ -431,7 +431,9 @@ def undisposed(findings: str) -> str:
 def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
     """The story-doc part of forge-pr-check: the problem with the first bad story doc among the
     pull request's changed paths, or None. Everything is read from head, as data."""
-    for path in changed:
+    # A change to a story's notes alone checks its doc too.
+    docs = [re.sub(r"\.read\.md$", ".md", path) for path in changed]
+    for path in dict.fromkeys(docs):
         match = re.fullmatch(r"plans/([A-Z][A-Z0-9-]*)\.md", path)
         text = show(top, head, path) if match else None
         if text is None:

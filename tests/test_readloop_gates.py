@@ -180,6 +180,19 @@ def _later_task_after_squash(repo, claude_payload, monkeypatch, tmp_path,
     repo.git("commit", "-q", "-m", "Save baskets (#1)")
     repo.git("push", "-q", "origin", "main")
 
+    # A pull request that changes only the notes, to a latest round with findings, is refused.
+    repo.git("checkout", "-q", "-b", "task/SHOP-NOTES", "origin/main")
+    repo.write(".factory/stories/SHOP/tasks/NOTES.json", '{"branch": "task/SHOP-NOTES"}\n')
+    repo.write("plans/SHOP.read.md", (repo.path / "plans" / "SHOP.read.md").read_text("utf-8")
+               .replace("passed: yes", "passed: no"))
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Only the notes")
+    repo.git("checkout", "-q", "main")
+    done = pr_check(repo, "task/SHOP-NOTES")
+    assert done.stderr.splitlines()[-2:] == [
+        "Round 1 of the cold read of plans/SHOP.md hasn't passed, so it needs another round.",
+        "Next: fix the story doc, then forge read <KEY>"]
+
     # The plan changes after approval: a new round passes and the approval is renewed.
     renewed = DOC.replace("come back to it later", "come back to it any day")
     doc.write_text(renewed, encoding="utf-8")
@@ -199,6 +212,16 @@ def _later_task_after_squash(repo, claude_payload, monkeypatch, tmp_path,
                      for name in ("What changes for you", "Done when"))
     assert state["approval"]["hash"] == hashlib.sha256(both.encode()).hexdigest()
     assert repo.git("status", "--porcelain", cwd=worktree(repo, "task/SHOP-SHOW")) == ""
+
+    # With no story worktree, forge next reads the story branch, as forge task start does.
+    doc.write_text(TASKS.replace("come back to it later", "come back to it any day"), encoding="utf-8")
+    repo.git("commit", "-q", "-am", "Rename a task", cwd=shop)
+    repo.git("worktree", "remove", str(shop))
+    assert repo.forge("next").stdout.splitlines()[-2:] == [
+        "Planning Shoppers can save a basket: plans/SHOP.md changed after round 2 of its cold read, "
+        "so round 3 is next.",
+        "Next: forge read SHOP"]
+    assert repo.forge("task", "start", "SHOP/SHOW").returncode == 1
 
 
 OLD_NOTES = ("---\nreader: claude (opus)\nread_at: 2026-09-01T10:00:00+00:00\nread_hash: {digest}\n"
