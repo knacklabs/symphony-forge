@@ -1,0 +1,14 @@
+{
+  "base": "3a7bcb40090c2bb9c82ee210fb33ef9cb8ce070a",
+  "branch": "fix/tests-test-codex-worker-py-test-4-turn-l-2",
+  "done_when": "The root cause of test_4_turn_log's Windows failures is found and fixed so the test is deterministic, never skipped or loosened; the fix names the cause in its commit and the test passes 20 times in a row on the Windows runner (a CI loop or repeated parametrization)",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T18:01:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "tests/test_codex_worker.py::test_4_turn_log fails now and then on Windows CI on branches that don't touch it"
+}
