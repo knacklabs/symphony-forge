@@ -157,17 +157,21 @@ def _running(pid: int, before: int | None = None) -> bool:
         kernel32 = ctypes.WinDLL("kernel32")
         kernel32.OpenProcess.restype = wintypes.HANDLE
         kernel32.GetProcessTimes.argtypes = (wintypes.HANDLE, *([ctypes.POINTER(wintypes.FILETIME)] * 4))
+        kernel32.WaitForSingleObject.argtypes = (wintypes.HANDLE, wintypes.DWORD)
         kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
-        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        # PROCESS_QUERY_LIMITED_INFORMATION and SYNCHRONIZE, to read its start time and wait on it
+        handle = kernel32.OpenProcess(0x1000 | 0x100000, False, pid)
         if not handle:  # no process has the id, or one of another user's
             return False
         try:
-            times = [wintypes.FILETIME() for _ in range(4)]
-            kernel32.GetProcessTimes(handle, *map(ctypes.byref, times))
+            running = kernel32.WaitForSingleObject(handle, 0) == 0x102  # WAIT_TIMEOUT: not ended
+            created = wintypes.FILETIME()
+            kernel32.GetProcessTimes(handle, ctypes.byref(created),
+                                     *(ctypes.byref(wintypes.FILETIME()) for _ in range(3)))
         finally:
             kernel32.CloseHandle(handle)
-        created, exited = (time.dwHighDateTime << 32 | time.dwLowDateTime for time in times[:2])
-        return not exited and (before is None or created <= before)
+        started = created.dwHighDateTime << 32 | created.dwLowDateTime
+        return running and (before is None or started <= before)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
