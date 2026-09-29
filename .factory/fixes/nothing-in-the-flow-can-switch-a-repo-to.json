@@ -1,0 +1,14 @@
+{
+  "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
+  "branch": "fix/nothing-in-the-flow-can-switch-a-repo-to",
+  "done_when": "The owner switches a repo to agent merges with one command run in their own terminal",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T07:50:27+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself"
+}
