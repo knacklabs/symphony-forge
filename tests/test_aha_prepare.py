@@ -44,8 +44,9 @@ def test_1_the_agent_prepares_listens_and_recaps(repo):
         "their problem in their words", "the cost in their numbers",
         "the one task the demo will cover", "who signs off",
         'the open "ask the client" questions', "the demo date",
-        "record the Demo workflow and Sign-off person answers from it, with `client recap reply` "
-        "as the source",
+        # The source was once `client recap reply`, which `forge decision accept` refuses; the
+        # reply's answers are now sourced to `client`, a source it accepts.
+        "record the Demo workflow and Sign-off person answers from it with `client` as the source",
     ):
         assert rule in discovery, rule
 
@@ -58,7 +59,7 @@ def test_1_the_agent_prepares_listens_and_recaps(repo):
     for field in ("`docs/context/`", "same day", "Your problem: <in their words>",
                   "What it costs: <in their numbers>", "The demo will cover:", "Who signs off:",
                   'Still to find out: <each open "ask the client" question>', "Demo date:",
-                  "- Demo workflow: <task> (client recap reply, <YYYY-MM-DD>)"):
+                  "- Demo workflow: <task> (client, <YYYY-MM-DD>)"):
         assert field in recap, field
     script = fde.split(" ## Customer call script ")[1]
     assert "keep only its column headers, never its rows" in script
