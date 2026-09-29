@@ -3,11 +3,30 @@
   "branch": "fix/forge-s-python-is-at-its-7-500-line-cap",
   "done_when": "pyproject.toml's line ceiling is 8,000, and an accepted decision records the owner's choice on 2026-09-29, superseding the 7,500 decision",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "commit": "7da67b163b86cb9907ca8443749e0e6e4a413be2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new value makes the repository's test suite fail: `tests/test_trim_standards.py:34` still asserts `ceiling == 7500`. That test is included in the `pytest tests` command in `forge.toml:6`. Update its expected value and decision reference so it verifies the new ceiling.",
+        "file": "pyproject.toml",
+        "line": 40,
+        "priority": "P1",
+        "title": "Not done: update the Python ceiling test for 8,000"
+      }
+    ],
+    "status": "blocked",
+    "tree": "86aa3168bc01e9b59d3d7a3a2c2780b629d87a0e10de2da47fb7f57f3e70a0af"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T01:00:13+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T01:45:14+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's Python is at its 7,500-line cap while approved stories still need a few hundred lines"
