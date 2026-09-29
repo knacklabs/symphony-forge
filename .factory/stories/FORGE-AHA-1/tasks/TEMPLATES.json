@@ -1,48 +1,35 @@
 {
   "branch": "task/FORGE-AHA-1-TEMPLATES",
   "review": {
-    "commit": "043fdc32fef741235ff7467bd6cab6b79e493dff",
-    "dismissals": [
-      {
-        "because": "src/forge/templates/conventions/frontend.md:61 Done-when 3 asks that production never shows the toolbar; the run-time check never loads its chunk outside APP_ENV=demo, and one Dockerfile builds one image for both, so a separate production build adds a moving part the item doesn't need",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "commit": "1aa9a8627ec4bb7f3a4c1db3ac134b0180510ce2",
+    "dismissals": [],
     "findings": [
       {
-        "body": "The example sets `window.__APP_ENV__` with an inline script, but the unchanged security convention at `src/forge/templates/conventions/security.md:9` requires `app.use(helmet())`. [Helmet\u2019s default policy](https://helmet.js.org/) uses `script-src 'self'`, which blocks that inline script. Following both conventions leaves the property unset, so the demo-only condition at line 69 never renders Agentation. Use a CSP-compatible way to provide the environment value.",
-        "file": "src/forge/templates/conventions/frontend.md",
-        "line": 64,
-        "priority": "P1",
-        "title": "Not done: Anyone can point at the screen"
-      },
-      {
-        "body": "The loader counts tables before opening the insertion transaction at line 38. During an overlapping deployment, which `src/forge/templates/conventions/deploy.md:5-6` permits, the previous instance can insert a row after these counts. The loader would then add demo records to a database that is no longer empty. Coordinate the check and insertion with concurrent writers.",
+        "body": "The loader counts tables before opening the insertion transaction. During an overlapping deployment, which the unchanged `src/forge/templates/conventions/deploy.md:5-6` permits, another instance can insert rows after these counts. The loader can then add demo records to a database that is no longer empty. Coordinate the check and insertion with concurrent writers.",
         "file": "src/forge/templates/conventions/demo-data.md",
         "line": 31,
         "priority": "P2",
-        "title": "Make the empty-table check atomic with demo insertion"
+        "title": "Coordinate the empty-table check with demo insertion"
       },
       {
-        "body": "The stack convention calls for a first-version loader, but the unchanged prototype instructions at `src/forge/templates/skill.md:118-127` still do not tell the agent to build it or use `Words they use` for screen labels. The skill is outside TEMPLATES\u2019 scope; SPEC must supply this instruction.",
+        "body": "The stack convention calls for a first-version loader, but the unchanged prototype instructions at `src/forge/templates/skill.md:118-127` do not tell the agent to build it or use `Words they use` for screen labels. The skill is outside this branch's scope; SPEC's skill work still needs that instruction.",
         "file": "src/forge/templates/conventions/stack.md",
         "line": 43,
         "priority": "P2",
-        "title": "Later: SPEC must put first-version demo data and customer labels in the skill"
+        "title": "Later: SPEC must require first-version demo data and customer labels"
       },
       {
-        "body": "This convention describes the click, write and paste flow, but the unchanged prototype instructions at `src/forge/templates/skill.md:118-135` give salespeople no Agentation instructions. The skill is outside TEMPLATES\u2019 scope; DEMO must add them.",
+        "body": "This convention describes clicking an element, writing feedback and pasting the output, but the unchanged prototype instructions at `src/forge/templates/skill.md:118-135` give salespeople no Agentation instructions. DEMO owns the skill text outside this branch's scope.",
         "file": "src/forge/templates/conventions/frontend.md",
         "line": 54,
         "priority": "P2",
-        "title": "Later: DEMO must put the pointing instructions in the skill"
+        "title": "Later: DEMO must add the pointing workflow to the skill"
       }
     ],
     "status": "clean",
-    "tree": "c2fe0d3eeab3a54f79ed04849db3914b4dab3c943e507a1b76a3a4f54785c54a"
+    "tree": "86fb23bdcb86b20ec8750252a2c32247cf828915fd920b35d7c4faf0dc737ef0"
   },
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T14:18:51+00:00",
@@ -62,6 +49,10 @@
     },
     {
       "at": "2026-09-29T02:48:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T03:00:55+00:00",
       "step": "review"
     }
   ]
