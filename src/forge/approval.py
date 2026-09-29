@@ -141,6 +141,24 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
         used.parent.mkdir(exist_ok=True)
         used.write_text(json.dumps(approval), encoding="utf-8")
     print(f"Recorded the approval of {title}.")
+    _to_promoted(key, path)
+
+
+def _to_promoted(key: str, path: Path) -> None:
+    """Merge the story branch into a task promoted from a fix, so the approved doc, its notes, the
+    story's state and its roadmap entry reach that task's pull request. On any failure, leave the
+    task as it was and name the merge to finish."""
+    folder = story.worktrees(path).get(f"task/{key}-SPEC")
+    state = repo.read_state(f"{key}/SPEC", folder) if folder else None
+    if not state or "done_when" not in state:  # only a promoted fix's state has a done-when
+        return
+    merged = repo.run("git", "merge", "-q", "--no-edit", "-m", "Bring in the approved plan",
+                      f"story/{key}", cwd=folder)
+    if merged.returncode:
+        if repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode == 0:
+            repo.run("git", "merge", "--abort", cwd=folder)
+        print(f"Forge couldn't bring the approved plan into {key}/SPEC's branch.\n"
+              f"Next: in {folder}, git merge story/{key}, then forge close {key}/SPEC")
 
 
 def _completed(payload: dict[str, Any]) -> bool:

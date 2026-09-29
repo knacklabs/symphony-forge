@@ -165,6 +165,8 @@ def read(args: Any) -> int:
                     target=target)
     reader = recorded if recorded in NAMES and not gone else other if installed[other] else here
     why = f"its reader, {NAMES[recorded]}, is no longer installed" if gone else ""
+    left = codex.record(top, target, "Grill") if gone else {}
+    left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
     config = repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
     first, again, head = re.split(r"<!-- forge:(?:round|notes) -->\n",
@@ -251,10 +253,18 @@ def read(args: Any) -> int:
         if not archived:
             print(f"Forge could not archive the cold read's Codex conversation for {target}; "
                   "archive it in Codex when it is available.")
+    if passed and left:
+        print(f"The cold read's earlier {NAMES[recorded]} conversation for {target}, {left}, is left "
+              f"as it is, because {NAMES[recorded]} is no longer installed.")
+    changed = [rel, _rel(top, notes)]
     if is_story:
         state = repo.read_state(target, top) or {}
-        state["status"] = "read"
-        repo.write_state(target, repo.add_step(state, "read"), top)
+        if (state.get("approval") or {}).get("hash") != approval_hash(text.decode("utf-8")):
+            state["status"] = "read"
+        changed.append(repo.write_state(target, repo.add_step(state, "read"), top))
+    if passed:  # a passing round is committed, so tasks and pull requests carry what passed
+        repo.commit_state(f"Round {round_number} of the cold read of {rel} found nothing", *changed,
+                          top=top)
     print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if passed else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every finding a disposition, amend the doc, then forge read {target}")
@@ -384,18 +394,28 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    record, findings = _record(_text(notes))
+    gate(target, rel, _text(notes), _hash(top, doc))
+    if is_story:
+        _parsed(doc, rel)
+
+
+def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
+    """check_read on a doc's notes text and the doc's git hash (a worktree file or a commit's)."""
+    record, findings = _record(notes)
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], doc=rel, target=target)
     number = undisposed(findings)
     if number:
-        repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
+        repo.refuse(REFUSALS["no_disposition"], number=number, notes=rel.removesuffix(".md") + ".read.md")
     if record.get("passed") != "yes":
         repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
-    if _hash(top, doc) != record["read_hash"]:
+    if doc_hash != record["read_hash"]:
         repo.refuse(REFUSALS["changed"], doc=rel, target=target)
-    if is_story:
-        _parsed(doc, rel)
+
+
+def rounds(notes: str | None) -> bool:
+    """Notes written with rounds. A story approved on older notes keeps the rules it had."""
+    return bool(_record(notes or "")[0].get("round"))
 
 
 def undisposed(findings: str) -> str:
@@ -420,12 +440,18 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
             parse(text)
         except ValueError as exc:
             return f"The story doc {path} is malformed: {exc}."
-        number = undisposed(_record(show(top, head, f"plans/{match[1]}.read.md") or "")[1])
+        notes = show(top, head, f"plans/{match[1]}.read.md")
+        number = undisposed(_record(notes or "")[1])
         if number:
             return f"Finding {number} in plans/{match[1]}.read.md has no disposition."
         approval = json_of(show(top, head, repo.state_path(match[1]))).get("approval") or {}
         if approval.get("hash") != approval_hash(text):
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
+        if rounds(notes):
+            try:
+                gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top))
+            except repo.Refused as refusal:
+                return str(refusal).partition("\nNext: ")[0]
     return None
 
 

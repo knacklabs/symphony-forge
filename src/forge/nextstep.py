@@ -304,6 +304,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
+    reread = _next_round(key, path, title) if path else []
+    if reread:  # a doc changed after approval gets a round before its next task starts
+        return lines + reread, list(states.values())
     if ready:
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
@@ -315,15 +318,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
-    notes = f"plans/{key}.read.md"
-    record, findings = story._record(story._text(path / notes))  # pyright: ignore[reportPrivateUsage]
-    if record.get("passed") == "no":  # the read hasn't passed: name its next round
-        done, number = int(record.get("round") or 1), story.undisposed(findings)
-        nudge = " It isn't converging: ask the human whether to split the story instead of reading on."
-        return [f"Planning {title}: round {done} of its cold read had findings, so round {done + 1} "
-                f"is next.{nudge if done + 1 >= 4 else ''}",
-                f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
-                f"forge read {key}"]
+    reread = _next_round(key, path, title)
+    if reread:
+        return reread
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
@@ -340,6 +337,24 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             f"Next: in Codex, ask request_user_input with id approve_plan_{digest}, question "
             '"Approve this plan?", header "Approve plan" and choices "Approve plan", '
             '"Request changes", "Stop"']
+
+
+def _next_round(key: str, path: Path, title: str) -> list[str]:
+    """The next round of a read in rounds whose latest round had findings or whose doc changed."""
+    notes = f"plans/{key}.read.md"
+    record, findings = story._record(story._text(path / notes))  # pyright: ignore[reportPrivateUsage]
+    done, number = int(record.get("round") or 1), story.undisposed(findings)
+    if record.get("passed") == "no":
+        why = f"round {done} of its cold read had findings"
+    elif record.get("round") and record.get("read_hash") != repo.git(
+            "hash-object", "--", f"plans/{key}.md", cwd=path):
+        why = f"plans/{key}.md changed after round {done} of its cold read"
+    else:
+        return []
+    nudge = " It isn't converging: ask the human whether to split the story instead of reading on."
+    return [f"Planning {title}: {why}, so round {done + 1} is next.{nudge if done + 1 >= 4 else ''}",
+            f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
+            f"forge read {key}"]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],

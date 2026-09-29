@@ -24,8 +24,9 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     ready(repo, "WISH", DOC.replace("save a basket", "keep a wish list →"))
     monkeypatch.setenv("PYTHONIOENCODING", "ascii")
 
-    # Claude Code: a successful ExitPlanMode showing the doc records the approval, and commits the
-    # doc, its read notes and its state on the story branch.
+    # Claude Code: a successful ExitPlanMode showing the doc records the approval, and commits its
+    # state on the story branch. FORGE-READLOOP-1: the passing round already committed the doc and
+    # its read notes there, so they are in the commit before the approval's.
     # The payload's "→" arrives as UTF-8 bytes, not a JSON escape, as Claude Code sends it.
     claude_approval = claude_plan(claude_payload, shop)
     sent = json.dumps(claude_approval, ensure_ascii=False)
@@ -34,7 +35,8 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     assert recorded.returncode == 0, recorded.stderr
     assert "Recorded the approval of Shoppers can save a basket → and find it later." in recorded.stdout
     committed = repo.git("show", "--name-only", "--format=", "story/SHOP").splitlines()
-    assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(committed)
+    read = repo.git("show", "--name-only", "--format=", "story/SHOP~1").splitlines()
+    assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(read)
     assert any(path.startswith(".factory/") for path in committed)
     shown = repo.forge("next").stdout
     assert "Next: forge task start SHOP/SAVE" in shown and "SHOP/SHOW" not in shown
@@ -64,6 +66,8 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     (card / "plans" / "CARD.md").write_text(shared.replace("2. The basket", "2. The card"),
                                             encoding="utf-8")
     assert repo.forge("read", "CARD").returncode == 0  # the next round passes
+    # FORGE-READLOOP-1: a passing round commits the doc and its notes, so CARD's head moves here.
+    heads[1] = repo.git("rev-parse", "story/CARD")
     cancelled = codex_question(codex_payload, digest)
     cancelled["tool_response"]["status"] = "cancelled"
     refused(cancelled, "The approval question was cancelled or failed, so nothing was recorded.")
