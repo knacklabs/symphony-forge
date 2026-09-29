@@ -1,10 +1,45 @@
 {
   "branch": "task/FORGE-READLOOP-1-GATES",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "45b5dbf6624ab6f6fcb521dc41312e31550c28e765535dd3c8f57c51ec6ee977",
+    "commit": "a9491af5326a743635f423dcdb0f54d8a4eb33b7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After the first task merges, removing the story worktree leaves `_stories` reading the story from the default branch (`src/forge/nextstep.py:257-269`). This `if path else []` then skips the round check entirely, even while `forge task start` can still read the existing story branch and refuse its failed or stale round. `forge next` can recommend a task that cannot start, and can miss tasks added to the story branch. Read the selected branch's notes and doc when no story worktree exists.",
+        "file": "src/forge/nextstep.py",
+        "line": 307,
+        "priority": "P1",
+        "title": "Not done: forge next checks the latest story round without a worktree"
+      },
+      {
+        "body": "`pr_check` supplies only changed paths to this function (`src/forge/prcheck.py:155,171`). When a task pull request changes `plans/KEY.read.md` to a latest round with findings but leaves `plans/KEY.md` identical to its base, the loop never reaches this new gate because it considers only story doc paths. The pull request can proceed to the review check without the required story read refusal. Include changed story notes when deciding which story docs to check.",
+        "file": "src/forge/story.py",
+        "line": 450,
+        "priority": "P1",
+        "title": "Not done: the PR check rejects a failed round when only notes change"
+      },
+      {
+        "body": "The story's GATES Tests cell explicitly requires changing `tests/test_task.py`, but this branch leaves it unchanged. Its `story()` fixture constructs an approval without round notes (`tests/test_task.py:47-66`), so that required test file still exercises only the legacy task-start path and cannot catch regressions in this new branch-selection and round-gate logic. Add the assigned task-start case there.",
+        "file": "src/forge/task.py",
+        "line": 138,
+        "priority": "P1",
+        "title": "Not done: tests/test_task.py"
+      }
+    ],
+    "status": "blocked",
+    "tree": "b7f600f99c07ee6cac4d9f3cbb9c1222cdacb49603e60296a2c4336056c8578d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T08:33:42+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T09:17:42+00:00",
+      "step": "review"
     }
   ]
 }
