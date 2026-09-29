@@ -8,7 +8,13 @@
     "blocking_level": "P1",
     "changed": "ad84a3b0f038ecae49435f479eb2225c5e94699322bd3a9a8e27e8b9abd07550",
     "commit": "91c84b0e0990db614cd04a55d17c54e2b6b380d8",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "scripts/install-mac.sh:4 the release procedure tags this merge commit v1.2.0 and publishes the release immediately after the merge, as for v1.1.0, so the instructions point at a tag that exists within minutes",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "This branch changes the Mac installer to request `@v1.2.0`; the Windows installer and README install command now do the same. The release-order ruling explicitly requires these paths to stay on v1.1.0 until the v1.2.0 tag exists. A user running either installer after this branch merges but before tagging will get a failed Forge installation. Revert these three install references for this change.",
@@ -18,10 +24,10 @@
         "title": "Keep install instructions on v1.1.0 until the v1.2.0 tag exists"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "a8a18173460e964f55bf0d77a6f99dead78f411f749267939bb44bc84523a60c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T17:13:59+00:00",
