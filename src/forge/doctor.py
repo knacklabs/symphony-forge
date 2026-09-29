@@ -108,8 +108,9 @@ def doctor(args: argparse.Namespace) -> None:
         problem, _, fix = str(refused).partition("\nNext: ")
         rows.append((problem, fix))
         wanted = {}
-    rows += [(f"{rel} differs from what forge sync writes for Forge {cfg['version']}.", "forge sync")
-             for rel, text in wanted.items() if sync.read(top / rel) != text]
+    # The installed Forge's templates make these files, whatever version the repo pins.
+    rows += [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
+              "forge sync") for rel, text in wanted.items() if sync.read(top / rel) != text]
     # Forge's own repo runs without the default hooks until the switch: every worktree shares
     # that folder. An explicitly configured hooks folder must still be checked.
     checks_hooks = (cfg["repo"] != "forge-source" or
@@ -202,6 +203,10 @@ def doctor(args: argparse.Namespace) -> None:
         print(f"- {line}")
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
+    if pinned != f"v{__version__}":
+        print(f"- Note: doctor compared these files with the installed Forge v{__version__}, not "
+              f"the pinned {pinned}.\n  To check with {pinned}: {install}, then run forge doctor "
+              "again.")
     if on_codex:
         # Codex also asks the user to approve each project hook, and no outside program sees that.
         print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see "
