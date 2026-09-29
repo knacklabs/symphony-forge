@@ -3,7 +3,7 @@
   "branch": "fix/forge-read-fails-when-a-merge-deletes-a",
   "done_when": "forge read skips a branch that disappears while it looks for the confirmed spec and carries on; a test deletes a branch between the listing and the lookup and sees the read succeed",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T08:33:58+00:00",
