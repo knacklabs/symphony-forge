@@ -83,3 +83,12 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     log = (repo.path / ".git/forge/work-BOARD-PAGE.log").read_text("utf-8")
     assert "Could not attach the pull request to the Codex chat" in log
     assert "stub unavailable" in log
+
+    # A close that finds the pull request already merged still links it in the recorded chat.
+    monkeypatch.delenv("STUB_CHATVIEW_FAIL")
+    gh.respond("pr", "list", stdout=json.dumps(
+        [{"number": 12, "state": "MERGED", "body": "", "isDraft": False}]))
+    merged = repo.forge("close", "BOARD/PAGE")
+    assert merged.returncode == 0, merged.stdout + merged.stderr
+    assert "is merged" in merged.stdout
+    assert len(_sent(calls, "thread/attachment/add")) == 4

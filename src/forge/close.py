@@ -58,6 +58,7 @@ def close(args: argparse.Namespace) -> int:
     if pr and pr["state"] == "MERGED":
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
+        _attach(top, item, branch)
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
@@ -105,13 +106,7 @@ def close(args: argparse.Namespace) -> int:
     head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
     _publish(top, item, state, branch, default, pr, result)
-    try:  # link the pull request in the item's recorded Codex chat; a failure never stops the close
-        if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
-                _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):
-            raise RuntimeError(f"see {repo.work_log(top, item)}")
-    except Exception as error:
-        print(f"Could not link the pull request in its Codex chat "
-              f"({(getattr(error, 'stderr', '') or str(error)).strip()}). The next forge close tries again.")
+    _attach(top, item, branch)
 
     if serious:
         for number, finding in serious:
@@ -283,6 +278,17 @@ def _title(top: Path, item: str, state: dict[str, Any]) -> tuple[str, str, str]:
         why, summary = state.get("why", ""), state.get("done_when", "")
         title = re.split(r"[,;:.!?]", why, maxsplit=1)[0][:70]
     return " ".join(title.split()) or item, " ".join(why.split()), " ".join(summary.split())
+
+
+def _attach(top: Path, item: str, branch: str) -> None:
+    """Link the pull request in the item's recorded Codex chat; a failure never stops the close."""
+    try:
+        if codex.record(top, item).get("conversation") and not codex.attach(top, item, json.loads(
+                _gh(top, "pr", "view", branch, "--json", "number,url,headRefName"))):
+            raise RuntimeError(f"see {repo.work_log(top, item)}")
+    except Exception as error:
+        print(f"Could not link the pull request in its Codex chat "
+              f"({(getattr(error, 'stderr', '') or str(error)).strip()}). The next forge close tries again.")
 
 
 def _merged(top: Path, item: str) -> int:
