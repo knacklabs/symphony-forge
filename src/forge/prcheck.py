@@ -9,13 +9,11 @@ import argparse
 import importlib
 import json
 import re
-import sys
-import tomllib
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, repo, review
+from forge import repo, review
 
 REFUSALS = {
     "usage": ("forge hook pr-check needs the pull request's --base, --head and --branch.",
@@ -29,9 +27,6 @@ REFUSALS = {
                 'forge fix allow-large "<reason>")'),
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
-    "bad_version": ('The pull request on {branch} pins Forge "{version}", which isn\'t a Forge '
-                    "release such as v1.2.0.",
-                    "set forge.toml's version to a Forge release, then push {branch} again"),
     "story_doc": ("{problem}", "fix the story doc, then forge read <KEY> --amended if it changed after its read"),
 }
 CODE_LIMIT = 5
@@ -74,16 +69,34 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
-      - run: <install>
       - env:
           PR: ${{ github.event.pull_request.number }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
-          forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+<choose>      - run: <install>
+      - env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+"""
+
+# A client's check runs the Forge release its default branch pins. A pull request that changes
+# that pin (an upgrade) is checked by the release it pins instead, installed from Forge's own
+# repo by its tag. The pin is read through git as text and must look like a release before it is
+# used; nothing from the pull request runs.
+CHOOSE = r"""          pin() { git show "$1:forge.toml" | sed -n 's/^version *= *"\(.*\)" *$/\1/p' | head -n 1; }
+          release=$(pin "$HEAD_SHA")
+          if [ "$release" = "$(pin "$(git merge-base "$BASE_SHA" "$HEAD_SHA")")" ]; then
+            release="<version>"
+          elif [[ ! "$release" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "This pull request sets Forge's version in forge.toml to \"$release\", which isn't a Forge release such as v1.2.0. Set it to a Forge release, then push again." >&2
+            exit 1
+          fi
+          echo "FORGE_RELEASE=$release" >> "$GITHUB_ENV"
 """
 
 
@@ -102,9 +115,11 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = package.get("engines", {}).get("node")
             if isinstance(version, str) and version.strip():
                 node += f"        with:\n          node-version: {json.dumps(version)}\n"
-    workflow = (WORKFLOW.replace("<version>", cfg["version"])
-                .replace("<install>", "uv tool install ." if cfg.get("repo") == "forge-source"
-                         else sync.install_line(cfg["version"]))
+    source = cfg.get("repo") == "forge-source"
+    workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
+                .replace("<version>", cfg["version"])
+                .replace("<install>", "uv tool install ." if source
+                         else sync.install_line("${FORGE_RELEASE#v}"))
                 .replace("<tests-timeout>", "    timeout-minutes: 10\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
@@ -129,20 +144,6 @@ def pr_check(args: argparse.Namespace) -> int:
         return 0
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
-    pinned = _pinned(top, head)
-    if pinned != _pinned(top, repo.git("merge-base", base, head, cwd=top)):
-        # An upgrade: the pull request changes the pin, so the release it pins judges it,
-        # installed from Forge's own repo by its tag. Any other pull request, even one that
-        # predates an upgrade of the default branch, stays with the default branch's Forge.
-        if not re.fullmatch(r"v\d+\.\d+\.\d+", pinned):
-            repo.refuse(REFUSALS["bad_version"], branch=branch, version=pinned)
-        if pinned != f"v{__version__}":
-            source = repo.REFUSALS["pin"][1].format(pinned=pinned).split()[-1]
-            done = repo.run("uv", "tool", "run", "--from", source, "forge", "hook", "pr-check",
-                            *args.args, cwd=top)
-            print(done.stdout, end="")
-            print(done.stderr, end="", file=sys.stderr)
-            return done.returncode
     item, state = _started(top, head, branch)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
     if "/" not in item:
@@ -191,15 +192,6 @@ def promote_problem(changed: list[str], interfaces: list[str]) -> str:
     if len(code) > CODE_LIMIT:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
     return ""
-
-
-def _pinned(top: Path, head: str) -> str:
-    """The Forge version the head's forge.toml pins, or "" when it has none that can be read."""
-    try:
-        data = tomllib.loads(repo.run("git", "show", f"{head}:forge.toml", cwd=top).stdout)
-    except tomllib.TOMLDecodeError:
-        return ""
-    return str(data.get("version", ""))
 
 
 def _on_branch(top: Path, commit: str, head: str) -> bool:
