@@ -1,0 +1,64 @@
+{
+  "base": "e717b3c8a4e43d30b254ac6bbde476c732983ed2",
+  "branch": "task/FORGE-SALES-1-SPEC",
+  "done_when": "Before sign-off in a client repo, ready prototype fixes merge by the agent; one install script sets up a Mac for prototyping; the skill tells the agent to batch changes per demo round, speak in demo terms and say when to connect the deploy platform; a start-a-prototype checklist exists",
+  "review": {
+    "commit": "8beb0d3231baeb187f875ff63d91c8b18927d664",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The decision says `forge next` tells the agent to merge unsigned prototype work, but `src/forge/nextstep.py:304` and `:317` still read the raw `merge` setting. With `merge = \"human\"`, `forge next` recommends a human merge while `forge close` recommends `forge merge`. The agent skill also still says a human merges by default (`src/forge/templates/skill.md:41-44`). The story assigns these changes to TALK (`plans/FORGE-SALES-1.md:69`).",
+        "file": "docs/decisions/0097-agent-merges-before-client-signoff.md",
+        "line": 20,
+        "priority": "P2",
+        "title": "Later: TALK must make forge next recommend agent merging"
+      },
+      {
+        "body": "The checklist tells the salesperson to wait until the agent says the repo is ready to connect. `src/forge/nextstep.py` has no Dockerfile or Demo-address check, and the prototype instructions in `src/forge/templates/skill.md` do not tell the agent to give that cue. A salesperson following this step has no stated trigger to put the demo online. The story assigns the cue to TALK (`plans/FORGE-SALES-1.md:69`).",
+        "file": "docs/start-a-prototype.md",
+        "line": 66,
+        "priority": "P2",
+        "title": "Later: TALK must provide the deploy-platform cue"
+      },
+      {
+        "body": "The Mac command and the Windows command at line 22 point to install scripts that are absent from this checkout, so the laptop setup step cannot yet be followed. The story assigns both scripts to INSTALL (`plans/FORGE-SALES-1.md:68`).",
+        "file": "docs/start-a-prototype.md",
+        "line": 16,
+        "priority": "P2",
+        "title": "Later: INSTALL must publish the checklist's scripts"
+      },
+      {
+        "body": "If `forge init` fails while reading branch protection, its printed `Next:` command is a read-only `gh api` GET (`src/forge/init.py:107-117`). Running that command after fixing authentication or access does not create the protection rule; that requires the later PUT at `src/forge/init.py:121`. Because `forge init` refuses a second run after its first commit (`src/forge/init.py:205-208`), the suggested recovery can leave setup incomplete. Give the agent a recovery step that applies and verifies the rule.",
+        "file": "docs/start-a-prototype.md",
+        "line": 50,
+        "priority": "P2",
+        "title": "The printed recovery command may leave branch protection unset"
+      },
+      {
+        "body": "The URL is needed in the fifth section, \u201cOpen the repo and set up Forge,\u201d where the checklist runs `git clone` (line 42). The fourth section is GitHub sign-in, so \u201cKeep it for step 4\u201d points readers to the wrong step.",
+        "file": "docs/start-a-prototype.md",
+        "line": 9,
+        "priority": "P3",
+        "title": "Correct the repo URL's step reference"
+      }
+    ],
+    "status": "clean",
+    "tree": "57cf6a6879b3d322ffa23a044bb00218f152068bab62f692d3a26531fbb01c0b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T11:15:41+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T14:38:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:56:46+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's"
+}

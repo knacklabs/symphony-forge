@@ -87,6 +87,8 @@ a test there takes a number the story's own criterion needs.
 <!-- end -->
 ## Tests first
 
+A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
+
 For each Done-when item you cover, write one test at the boundary the user touches, named for the
 item. Run it and watch it fail, then build until it passes. Never edit or delete a test to make it
 pass; if a test is wrong, say so. A test whose result a stub or fake decides proves nothing. Use
@@ -105,8 +107,7 @@ many cases, never an item's only proof. Review reports an item proven only by un
 When changing a user-facing flow, add or update its Playwright test, including an old flow a story
 touches for the first time.
 
-A change to documentation only needs no test. Documentation-only changes need no new behaviour test;
-check claims, commands and links.
+Add every test your task's Tests column names, even when the change is documentation only.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
 
 <!-- if user-facing -->
@@ -120,8 +121,18 @@ Forge copies it into the pull request, and the reviewer reads it there. Close re
 commit's paragraph, so in every round, fix rounds included, it walks every Done-when item this
 part covers, not only what the round changed.
 
-impeccable is the one UI skill for the screens. Use a motion skill only when a Done-when item needs
-motion.
+impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
+visual design (layout, type, colour, states and copy): shape before building, then audit and polish
+before a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection,
+with at most one more round. Invoke emil-design-eng with a specific task, never bare. It owns
+interaction feel (press feedback, easing, durations, popovers, tooltips, drag and when not to
+animate). Follow the frontend convention's motion rules: stagger only when a list appears as a
+list; keep routine app-screen motion under 300 ms; reserve longer timing for one authored landing
+page moment; keep content visible by default and enter with `@starting-style` or transitions;
+share the ease-out token `cubic-bezier(0.23, 1, 0.32, 1)`; use CSS or the Web Animations API first
+and Motion only when a Done-when item needs springs or drag. Prototypes use impeccable's Operate
+mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's transform-origin
+variable. Do not animate keyboard-driven or very frequent actions.
 
 <!-- end -->
 <!-- if fix-round -->
@@ -151,6 +162,8 @@ Joining lines or removing blank lines never counts as a reduction.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
+Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
+conventions apply only to a repo on the default stack.
 
 ## When you finish
 

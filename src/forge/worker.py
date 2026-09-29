@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
+import hashlib
 import json
 import os
 import re
@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -54,21 +55,28 @@ def work(args: argparse.Namespace) -> None:
     top = _checkout(item, [f"task/{match['key']}-{match['task']}"] if match["task"]
                     else [f"fix/{item}", f"forge/{item}"])
     config = repo.config(top)  # the item's own forge.toml, not the caller's
-    on_codex = config["workers"] == "codex"
+    state = repo.read_state(item, top) or {}
+    if match["task"]:
+        sections = task.sections((top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8"))
+        row = task.rows(sections).get(match["task"], {})
+        design = config["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
+    else:
+        design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
+    on_codex = config["workers"] == "codex" and not design
     if on_codex and note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
     # round: it continues the item's conversation.
-    later = on_codex and bool(codex.record(top, item).get("start") or (
-        repo.read_state(item, top) or {}).get("status", "started") != "started")
+    later = (on_codex or design) and bool(codex.record(top, item).get("start") or
+                                           state.get("status", "started") != "started")
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = ready(top, config, kind, on_codex)
-    # Codex workers take the item's lock, stop a leftover Codex process and read back a turn it
-    # left before the status commit, and leave none running when this ends, whether it succeeds,
-    # fails or is interrupted.
-    with codex.hold(top, item, kind) if on_codex else contextlib.nullcontext():
+    claude = [] if design else ready(top, config, kind, on_codex)
+    # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
+    # workers also stop a leftover Codex process and read back a turn it left before the status
+    # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
+    with codex.hold(top, item, kind):
         if on_codex:
             codex.recover(top, item)
             question = codex.record(top, item).get("question")
@@ -76,18 +84,30 @@ def work(args: argparse.Namespace) -> None:
                 refuse(REFUSALS["question"], item=item, question=question)
         else:
             question = None
-        thread, fresh = codex.conversation(top, item, approval) if later else (None, "first turn")
+        thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
+                         (None, "first turn"))
+        # A Claude worker, design ones too, continues the session its item's last round ran in, in
+        # this checkout. Without one, a round after the first starts fresh and says why.
+        session = None if on_codex else codex.record(top, item).get("claude")
+        if session and session["checkout"] != str(top):
+            fresh = f"its session was started in another checkout, {session['checkout']}"
+        elif session:
+            thread = session["id"]
+        elif not on_codex and state.get("status", "started") != "started":
+            fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         turns = codex._item_file(top, item, ".log", kind)
         round_number = 1 + len({(entry["conversation"], entry["turn"])
                                 for line in turns.read_text(encoding="utf-8").splitlines()
                                 if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
+        if session:
+            round_number = session["rounds"] + 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread))
         fresh_brief = None
         if thread:
-            saved = codex.record(top, item)
+            saved = session or codex.record(top, item)
             brief += _changes(top, saved.get("head") or saved["start"])
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
@@ -97,8 +117,45 @@ def work(args: argparse.Namespace) -> None:
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         try:
+            if design:
+                before = _checkout_snapshot(top)
+                claude_model = repo.design_models(config, "claude")
+                try:
+                    _claude(item, top, brief, fresh_brief, ["--model", claude_model["model"],
+                                                            "--effort", claude_model["effort"]],
+                            session, thread, None if fresh == "first turn" else fresh)
+                except (repo.Refused, OSError) as error:
+                    if _checkout_snapshot(top) != before:
+                        raise
+                    reason = ("claude command missing" if shutil.which("claude") is None else
+                              str(error).split("\n", 1)[0].removeprefix("The worker "))
+                    codex_model = repo.design_models(config, "codex")
+                    message = (f"Claude {reason}; fell back to Codex with "
+                               f"{codex_model['model']} at {codex_model['effort']} effort.")
+                    print(message, flush=True)
+                    with repo.work_log(top, item).open("a", encoding="utf-8") as out:
+                        out.write(message + "\n")
+                    ready(top, config, kind, True, design=True)
+                    codex.recover(top, item)
+                    question = codex.record(top, item).get("question")
+                    if question and note is None:
+                        refuse(REFUSALS["question"], item=item, question=question)
+                    thread, fresh = (codex.conversation(top, item, approval) if later else
+                                     (None, "first turn"))
+                    brief, fresh_brief = fresh_brief or brief, None
+                    if thread:
+                        saved = codex.record(top, item)
+                        fresh_brief = brief
+                        brief, _ = _brief(match, top, state, findings, failing, note, question,
+                                          round_number, continued=True)
+                        brief += _changes(top, saved.get("head") or saved["start"])
+                    on_codex = True
+                else:
+                    outcome = "completed"
+                    return
             if not on_codex:
-                _run(item, top, brief, claude)
+                _claude(item, top, brief, fresh_brief, claude, session, thread,
+                        None if fresh == "first turn" else fresh)
                 outcome = "completed"
                 return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -107,11 +164,13 @@ def work(args: argparse.Namespace) -> None:
                 name = (prefix.rstrip() if name[59].isspace() else
                         prefix.rsplit(" ", 1)[0] or prefix) + "…"
             result = codex.run(top, item, kind, name, brief, "full-access",
-                               thread, fresh, approval, note=note, fresh_prompt=fresh_brief)
+                               thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
+                               design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
         finally:
             repo.record_timing(top, item, "worker round", start, clock, outcome,
-                               repo.models(config, kind.lower()))
+                               repo.design_models(config, "codex" if on_codex else "claude")
+                               if design else repo.models(config, kind.lower()))
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
@@ -124,7 +183,8 @@ def work(args: argparse.Namespace) -> None:
             print(f"{asked[1]}\nNext: forge work {item} --note \"<answer>\"")
 
 
-def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[str]:
+def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
+          design: bool = False) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
     the SDK with the declining handler's place and, for a worker, the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
@@ -137,7 +197,10 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool) -> list[
     problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
-    codex.settings(config, kind)
+    if design:
+        repo.design_models(config, "codex")
+    else:
+        codex.settings(config, kind)
     if kind == "Grill":  # a read-only turn with approvals "never" can't write, so it needs no trust
         return []
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
@@ -313,7 +376,45 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
     return ", ".join(f"`{path}`" for path in found) or "none found"
 
 
-def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
+def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
+            session: dict[str, Any] | None, resume: str | None, why: str | None) -> None:
+    """A Claude worker's round: continue session `resume` with the short brief, else start a new
+    session with the whole brief and say why when there was one to continue. When Claude says it
+    has no such session, the same round starts fresh; any other failure fails the round and keeps
+    the session, so the next forge work continues it. The session, its checkout, the item's rounds
+    and HEAD when a round ends go in the item's record on this machine."""
+    path = codex._item_file(top, item, ".json", "Fix")
+    log = repo.work_log(top, item)
+    rounds = session["rounds"] if session else 0
+    try:
+        if resume:
+            size = log.stat().st_size if log.exists() else 0
+            try:
+                _run(item, top, brief, models, ["--resume", resume])
+                return
+            except repo.Refused:
+                # Claude refuses a session it doesn't have before the turn starts, with this line.
+                output = log.read_bytes()[size:].decode("utf-8", "replace").split("\n", 1)[-1]
+                if not output.startswith("No conversation found"):
+                    raise
+            why = f"Claude no longer has session {resume}"
+        if why:
+            message = f"Starting a new Claude session with the whole brief, because {why}."
+            print(message, flush=True)
+            with log.open("a", encoding="utf-8") as out:
+                out.write(message + "\n")
+        # A replaced session keeps the item's round count.
+        session = {"id": str(uuid.uuid4()), "checkout": str(top),
+                   "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
+        codex._record(path, claude=session)
+        _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
+    finally:
+        if session:
+            codex._record(path, claude={**session, "rounds": rounds + 1,
+                                        "head": git("rev-parse", "HEAD", cwd=top)})
+
+def _run(item: str, top: Path, brief: str, models: list[str],
+         session: list[str] | None = None) -> None:
     """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
     exe = shutil.which("claude")
     if exe is None:
@@ -321,7 +422,7 @@ def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
-               "--add-dir", str(CONVENTIONS)]
+               "--add-dir", str(CONVENTIONS), *(session or [])]
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:
@@ -333,6 +434,24 @@ def _run(item: str, top: Path, brief: str, models: list[str]) -> None:
             out.write(line)
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
+
+
+def _checkout_snapshot(top: Path) -> str:
+    """Fingerprint HEAD, index, tracked edits and untracked contents before a fallback."""
+    digest = hashlib.sha256()
+    for command in (("rev-parse", "HEAD"), ("diff", "--binary"),
+                    ("diff", "--cached", "--binary"),
+                    ("ls-files", "--others", "--exclude-standard", "-z")):
+        output = subprocess.run(["git", *command], cwd=top, capture_output=True, check=True).stdout
+        digest.update(output)
+        if command[0] == "ls-files":
+            for name in output.split(b"\0"):
+                if name:
+                    path = top / os.fsdecode(name)
+                    digest.update(os.readlink(path).encode() if path.is_symlink() else path.read_bytes())
+    index = Path(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top))
+    digest.update(index.read_bytes())
+    return digest.hexdigest()
 
 
 COMMANDS = [{

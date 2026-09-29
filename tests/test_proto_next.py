@@ -8,7 +8,7 @@ MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems
 
 def test_6_next_lists_open_must_answer_topics_before_signoff(repo):
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nstage = "prototype"\n')
     page = repo.write("docs/product/BRIEF.md", "# Product brief\n\n## Answers\n"
                       "- Sign-off person: Sam Lee, director (client, 2026-09-28)\n"
                       "- Demo workflow: ask the client (salesperson, 2026-09-28)\n"

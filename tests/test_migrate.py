@@ -219,7 +219,9 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Only the old Forge's gstack lines go; the client's own stay.
     assert repo.git("show", "forge/migrate-v1:.gitignore") == (
         "node_modules/\n.env\n.gstack/slug-cache/")
-    assert repo.git("show", "forge/migrate-v1:.gitattributes") == "*.png binary"
+    # ... and sync adds the roadmap's merge rule after them.
+    assert repo.git("show", "forge/migrate-v1:.gitattributes") == (
+        "*.png binary\nplans/roadmap.json merge=forge-roadmap")
     toml = repo.git("show", "forge/migrate-v1:forge.toml")
     assert f'version = "{version}"' in toml and f"\ntest = {json.dumps(TEST)}\n" in toml
     # The client's sign-off record, pinned in harness.yaml, is pinned in forge.toml.
