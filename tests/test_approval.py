@@ -63,7 +63,7 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
             "The approved plan matches 2 story docs, so nothing was recorded.")
     (card / "plans" / "CARD.md").write_text(shared.replace("2. The basket", "2. The card"),
                                             encoding="utf-8")
-    assert repo.forge("read", "CARD", "--amended").returncode == 0
+    assert repo.forge("read", "CARD").returncode == 0  # the next round passes
     cancelled = codex_question(codex_payload, digest)
     cancelled["tool_response"]["status"] = "cancelled"
     refused(cancelled, "The approval question was cancelled or failed, so nothing was recorded.")

@@ -9,7 +9,6 @@ same format RECORDS reads for `spec confirm`. The frontmatter is the latest roun
     reader: <who read it>
     read_at: <when>
     read_hash: <git hash-object of the doc as read>
-    amended_hash: <git hash-object after the amendment, recorded by --amended; empty until then>
     round, passed: <n>, and yes only when that round's whole text, trimmed, is "No findings."
     doc_seen, spec_seen, notes_seen: <what its reader saw, kept by git hash-object -w>
     ---
@@ -57,9 +56,9 @@ REFUSALS = {
     "wrong_app": ("{reader} is the cold reader of {doc}, so its next round can't start from {reader}.",
                   "run forge read {target} from {app}"),
     "no_read": ("{doc} has no cold read.", "forge read {target}"),
-    "changed": ("{doc} changed after its cold read.", "forge read {target} --amended"),
-    # ponytail: --amended may run again, which is how a doc edited after approval gets re-approved.
-    "changed_again": ("{doc} changed after its recorded amendment.", "forge read {target} --amended"),
+    "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
+    "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
+                   "forge read {target}"),
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
@@ -69,8 +68,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "amended_hash", "round", "passed", "doc_seen",
-          "spec_seen", "notes_seen")
+RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
@@ -147,12 +145,6 @@ def read(args: Any) -> int:
     repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
-    if args.amended:
-        if not record.get("read_hash"):
-            repo.refuse(REFUSALS["no_read"], doc=rel, target=target)
-        _write(notes, _notes({**record, "amended_hash": _hash(top, doc)}, findings))
-        print(f"Recorded the amendment of {rel}.\nNext: forge next")
-        return 0
     later = bool(record.get("read_hash"))
     number = undisposed(findings) if later else ""
     if number:
@@ -245,7 +237,7 @@ def read(args: Any) -> int:
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
                   if reader == here else ""),
-              "read_at": repo.now(), "read_hash": read_hash, "amended_hash": "",
+              "read_at": repo.now(), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if passed else "no",
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8"))}
@@ -387,19 +379,21 @@ def overlaps(scope: list[str], other: list[str]) -> bool:
 
 
 def check_read(target: str, top: Path | None = None) -> None:
-    """Refuse unless a story doc or spec has its cold read, is unchanged since the read (or its
-    amendment), and every finding has a disposition. Approval calls this; so can `spec confirm`."""
+    """Refuse unless a story doc or spec has a cold read whose latest round passed, is unchanged
+    since that round, and every finding has a disposition. Approval and `forge next` call this.
+    Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
     record, findings = _record(_text(notes))
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], doc=rel, target=target)
-    amended = record.get("amended_hash")
-    if _hash(top, doc) != (amended or record["read_hash"]):
-        repo.refuse(REFUSALS["changed_again" if amended else "changed"], doc=rel, target=target)
     number = undisposed(findings)
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
+    if record.get("passed") != "yes":
+        repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
+    if _hash(top, doc) != record["read_hash"]:
+        repo.refuse(REFUSALS["changed"], doc=rel, target=target)
     if is_story:
         _parsed(doc, rel)
 
@@ -704,11 +698,10 @@ COMMANDS = [
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
      "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
     {"words": "read", "run": "read", "changes_state": True,
-     "help": "Run the one cold read of a story doc or spec",
-     "args": [(('target',), {"help": "a story key or a spec slug"}),
-              (('--amended',), {"action": "store_true", "help": "record the one amendment"})],
+     "help": "Run a round of the cold read of a story doc or spec",
+     "args": [(('target',), {"help": "a story key or a spec slug"})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec>` | Runs the one cold read of a story doc or spec (`--amended` records the one amendment) |'},
+     "listing": '| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

@@ -138,11 +138,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert str(shop.resolve()) not in written and str(shop) not in written and win not in written
     assert "see /plans/SHOP.md, /docs/a.md and /docs/c.md" in written
 
-    # Recording the amendment runs no model, so it needs no coordinator.
+    # The old contract recorded an amendment here with --amended; FORGE-READLOOP-1 removed it.
     monkeypatch.delenv("CLAUDECODE")
     before = len(_stub(stub))
-    assert repo.forge("read", "SHOP", "--amended").returncode == 0
-    assert len(_stub(stub)) == before and not claude.exists()
 
     # Under Codex the reader is Claude, read-only, on the grill kind's model and effort.
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-coordinator")

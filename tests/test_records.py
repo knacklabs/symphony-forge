@@ -58,10 +58,10 @@ def _ok(done) -> str:
     return done.stdout
 
 
-def _notes(repo, slug: str, read_hash: str, amended_hash: str = "", findings: str = "") -> None:
+def _notes(repo, slug: str, read_hash: str, findings: str = "", round: int = 1, passed: str = "yes") -> None:
     repo.write(f"docs/specs/{slug}.read.md",
                f"---\nreader: codex\nread_at: 2026-09-25T10:00:00+00:00\nread_hash: {read_hash}\n"
-               f"amended_hash: {amended_hash}\n---\n\n# Cold read\n\n{findings}")
+               f"round: {round}\npassed: {passed}\n---\n\n# Cold read\n\n{findings}")
 
 
 def _hash(repo, slug: str) -> str:
@@ -148,28 +148,30 @@ def test_41_records_ship_through_the_fix_lane(repo, monkeypatch):
              "docs/specs/invoices.md is not confirmed (status: draft); only a confirmed spec adds "
              "roadmap items.", 'forge spec confirm invoices --by "<name>"')
 
-    # Confirm needs the cold read, the amended hash and a disposition under every finding.
+    # Confirm needs a cold read whose latest round passed on this text, and a disposition under
+    # every finding. The old contract confirmed on one recorded amendment; FORGE-READLOOP-1 cut it.
     confirm = ("spec", "confirm", "invoices", "--by", "Ravi")
     _refused(repo.forge("spec", "confirm", "invoices", "--by", " "),
              "--by needs the name of the human who confirmed, on one line.",
              'forge spec confirm invoices --by "<name>"')
     _refused(repo.forge(*confirm), "docs/specs/invoices.md has no cold read.", "forge read invoices")
     read_hash = _hash(repo, "invoices")
-    _notes(repo, "invoices", read_hash, findings=FINDINGS.format(reason=""))
+    _notes(repo, "invoices", read_hash, findings=FINDINGS.format(reason=""), passed="no")
     _refused(repo.forge(*confirm),
              "Finding 2 in docs/specs/invoices.read.md has no disposition: cut, defer, or keep "
              "with a reason.", 'forge spec confirm invoices --by "Ravi"')
     findings = FINDINGS.format(reason=" - clients file PDFs")
-    _notes(repo, "invoices", read_hash, findings=findings)
+    _notes(repo, "invoices", read_hash, findings=findings, passed="no")
+    _refused(repo.forge(*confirm),
+             "Round 1 of the cold read of docs/specs/invoices.md hasn't passed, so it needs another "
+             "round.", "forge read invoices")
     amended = draft.replace("- INV-2: Clients can resend an invoice\n", "") + (
         "\n## Out of scope\n\nResending an invoice.\n")
     repo.write("docs/specs/invoices.md", amended)
-    _refused(repo.forge(*confirm), "docs/specs/invoices.md changed after its cold read.",
-             "forge read invoices --amended")
-    _notes(repo, "invoices", read_hash, _hash(repo, "invoices"), findings)
+    _notes(repo, "invoices", _hash(repo, "invoices"), findings + "\n## Round 2\n\nNo findings.\n", 2)
     repo.write("docs/specs/invoices.md", amended + "One more edit.\n")
-    _refused(repo.forge(*confirm), "docs/specs/invoices.md changed after its one recorded amendment.",
-             "git diff -- docs/specs/invoices.md")
+    _refused(repo.forge(*confirm), "docs/specs/invoices.md changed after its last round of cold read.",
+             "forge read invoices")
     repo.write("docs/specs/invoices.md", amended)
     assert _ok(repo.forge(*confirm)) == (
         "docs/specs/invoices.md is confirmed by Ravi. Next: forge roadmap add invoices\n")
