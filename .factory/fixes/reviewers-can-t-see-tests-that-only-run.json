@@ -5,26 +5,26 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "62fdd0fd15fae62fa29e257280c1cb3a55235dbdad9921786ccc898685f8b4a5",
-    "commit": "2ec605f93a5535be5728a1b84f6f37d83c013b58",
+    "changed": "d789e0cb059f9a7e1203cae0b352cbd1d810bb884127799b9cb879ec27608d83",
+    "commit": "9f82b65abe1e2e5e746a1db04b80d59e69516141",
     "dismissals": [],
     "findings": [
       {
-        "body": "Forge's default Go test command is `go test ./...` (`src/forge/init.py:55`). This new call runs that command unchanged. In package-list mode, Go prints only an `ok` summary for a passing package unless `-v` is set, so a skipped test and its reason never reach the output filter. This is evidence the earlier generic-summary ruling did not account for: the reviewer can see that the package passed, but cannot see what was skipped or why. See the [Go command documentation](https://pkg.go.dev/cmd/go).",
-        "file": "src/forge/review.py",
-        "line": 237,
+        "body": "The new `-v` default applies only when Forge creates a new Go repo. Existing Forge repos retain the previous `go test ./...` value in forge.toml, and adoption copies the supplied `--test` command unchanged (`src/forge/init.py:283`). The close runner executes that stored command as-is (`src/forge/review.py:237`). As established by the earlier review, `go test ./...` reports only a passing package summary, so close still cannot tell the reviewer which tests skipped or why. This persisted-config path is new evidence beyond the ruling about the new init default.",
+        "file": "src/forge/init.py",
+        "line": 56,
         "priority": "P1",
-        "title": "Not done: forge close reports skipped Go tests with reasons"
+        "title": "Not done: existing Go repos still hide skipped tests"
       },
       {
-        "body": "The new Go-style test runs `gotest.py`, which prints canned `--- SKIP` and reason lines. It never runs Forge's supported `go test ./...` command (`src/forge/init.py:55`), so it passes while the Go skip-reporting defect remains. This is new evidence relative to the earlier finding about pytest-only coverage: the added case still cannot fail when real Go skips disappear. Exercise `forge close` with an actual skipped Go test and assert that its reason reaches the review brief.",
+        "body": "The coordinator accepted the new init assertion plus the Go-style output test as proof for newly created repos. Neither test covers the distinct persisted-config case: test 4 feeds Forge canned verbose output, while this test checks only the command written by a fresh init. A forge close test with the previously generated `go test ./...` configuration is needed to fail when its skipped test and reason never reach the brief.",
         "file": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py",
-        "line": 77,
+        "line": 101,
         "priority": "P1",
-        "title": "Not done: a forge close test proves skipped Go tests reach the reviewer"
+        "title": "Not done: a close test covers skipped Go tests in existing repos"
       },
       {
-        "body": "The revised cap still drops the middle of the selected output when it exceeds 80 lines. For example, a pytest `-rs` summary with 100 skipped tests can lose skip entries and their reasons while retaining the final skipped count. That leaves the reviewer without the promised reason for every listed skip.",
+        "body": "This still removes the middle of selected output once it exceeds 80 lines. A pytest `-rs` run with many skipped tests can retain the final skip count while dropping individual skip entries and their reasons. The reviewer then lacks the promised reason for each omitted skip.",
         "file": "src/forge/review.py",
         "line": 245,
         "priority": "P2",
@@ -32,7 +32,7 @@
       }
     ],
     "status": "blocked",
-    "tree": "f4abe460985cf85ad2b03aab2b6fe018f8fff89af53945a1d34fba3a1e0e1914"
+    "tree": "102c93af64321c69d8552639210ba762d6b370de770644f7e15a4c16b27b829a"
   },
   "status": "fixing",
   "steps": [
@@ -46,6 +46,10 @@
     },
     {
       "at": "2026-09-29T08:43:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:07:08+00:00",
       "step": "review"
     }
   ],
