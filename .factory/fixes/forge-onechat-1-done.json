@@ -5,11 +5,11 @@
   "kind": "story-done",
   "outcome": "Stories in any Forge repo on this machine are approved from one main chat; Forge remembers each repo it runs in and the approval hook finds the story there",
   "review": {
-    "commit": "4d9c0d4a765d021cf64e0b17160c75c2112d8917",
+    "commit": "d8cccfa1e5d6c4dc3d5cd428056947c2e438e892",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "5194a3fd1079b6a4e306c491142ecb5c1a0d6b55b906206c6fcef6ad0ad5fbb8"
+    "tree": "1428e4f4375396b138f3c8381163f52c74f33262ba69b9b6ce9d6d1fd27d8ad2"
   },
   "status": "waiting for checks",
   "steps": [
@@ -19,6 +19,10 @@
     },
     {
       "at": "2026-09-28T08:54:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:04:36+00:00",
       "step": "review"
     }
   ],
