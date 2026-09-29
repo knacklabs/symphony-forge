@@ -1,0 +1,16 @@
+{
+  "base": "046f755e87975b414aed89bb31bf84d85197b0b4",
+  "branch": "fix/forge-readloop-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "The cold read now continues the same reader, sending only what changed, until it finds nothing, hunts edge cases item by item against known traps, and every story and spec must pass it before approval and each task",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T11:05:45+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan is finished, and what it achieved."
+}
