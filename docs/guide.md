@@ -78,10 +78,13 @@ In a client repo, finish the prototype review and customer sign-off above before
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
-4. The human approves once. In Claude Code, exit Plan Mode with the story doc as the plan; in Codex,
-   ask the approval question `forge next` gives. Do this from one main chat for stories in
-   every Forge repo this machine has used, including its worktrees. Forge remembers those repos
-   automatically. `forge hook approval` records the approval in the story's repo.
+4. The human approves once, and sees only the top of the story doc: from its title down to
+   `## For the builders`, or the whole doc when it has no such heading. In Claude Code, exit
+   Plan Mode with that part as the plan; in Codex, show it, then ask the approval question
+   `forge next` gives. The approval binds "What changes for you" and "Done when", so tightening
+   the details, tasks or notes below needs no new approval. Do this from one main chat for
+   stories in every Forge repo this machine has used, including its worktrees. Forge remembers
+   those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
    the same time.
