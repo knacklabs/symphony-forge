@@ -1,0 +1,16 @@
+{
+  "base": "42a3be5c4b4c93b7d597acd1c42e6435d8bec4ad",
+  "branch": "fix/forge-chatview-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Forge's Codex chats now sit in one project per repo with short plain names and a summary preview, and each chat links to its pull request",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T02:30:06+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app is finished, and what it achieved."
+}
