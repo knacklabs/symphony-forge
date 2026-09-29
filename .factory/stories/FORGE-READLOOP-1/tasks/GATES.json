@@ -2,41 +2,27 @@
   "branch": "task/FORGE-READLOOP-1-GATES",
   "review": {
     "blocking_level": "P1",
-    "changed": "7520e5837056d2786a9368189693c0397c7b47e6e19f7311a7384fbb1ebbdb0e",
-    "commit": "839b25fcd3bafd8eab0f845604d1c549be582fe5",
+    "changed": "afe1fdebd965bb6686825376821f6ee99c27229f2a2f0ac6f1e8021b9678118f",
+    "commit": "b890919c229cf68e4f73db48bdae7000c31154fd",
     "dismissals": [],
     "findings": [
       {
-        "body": "The gate trusts `passed: yes` without checking the latest round's text. A failed round with a disposed finding can be changed to `passed: yes` in the notes, after which approval, task start and the PR check accept it. The new test in `tests/test_task.py` does exactly this: it puts `1. Too big.` in round 1, marks that round passed, and asserts task start succeeds. Verify the latest round's text against `No findings.` when enforcing the gate.",
+        "body": "The gate treats any `## Round <n>` heading in the notes as a round boundary. If a reader's latest response contains a finding followed by a heading such as `## Round 99` and `No findings.`, disposing of that finding makes `passed()` return true even though the actual round's whole text is not `No findings.`. Approval, task start, and the PR check can then accept it. Delimit the latest round using its recorded round number and require that round's entire text to match exactly.",
         "file": "src/forge/story.py",
-        "line": 410,
+        "line": 418,
         "priority": "P1",
         "title": "Not done: A story passes only on \"No findings\""
       },
       {
-        "body": "For a newly approved story, a task PR can edit only the Tasks table and delete `plans/KEY.read.md`. The approval hash still matches because it excludes Tasks, `undisposed` finds nothing in the missing notes, and `rounds(None)` is false, so this condition skips the read gate. The PR check can then accept a doc changed after its passing round. The legacy exception needs to be distinguished from a missing round record on a story that used rounds.",
-        "file": "src/forge/story.py",
-        "line": 452,
-        "priority": "P1",
-        "title": "Not done: the PR check retains the read gate when round notes are removed"
-      },
-      {
-        "body": "If the promoted task already has an unfinished merge when approval runs, this `git merge` fails because `MERGE_HEAD` already exists. The failure handler treats that pre-existing merge as its own and runs `git merge --abort`, removing the task's prior merge state and potentially its conflict resolutions. That violates the required behavior of leaving the task branch and folder as they were on any failure. Check whether a merge was already in progress before starting this one, and abort only a merge Forge started.",
-        "file": "src/forge/approval.py",
-        "line": 158,
-        "priority": "P1",
-        "title": "Not done: a failed promoted-task merge preserves the task folder"
-      },
-      {
-        "body": "After the first task merges, a changed Done-when section can pass a new round on `story/KEY` while still awaiting renewed approval. If the story worktree is removed, `_stories` supplies the old default-branch state (`src/forge/nextstep.py:257-269`), while this path reads the newer story-branch doc. The approval check is skipped when `path` is `None`, and the passing round makes `_next_round` return nothing, so `forge next` recommends a task that `forge task start` refuses for its stale approval. Check the selected branch's approval against its selected doc.",
+        "body": "After a first task is squash-merged, a changed Done-when section can pass a new read on `story/<KEY>` while still awaiting renewed approval. If its worktree is then removed, this path selects the newer story-branch doc, but the approval check is skipped because `path` is `None` (line 295). `_next_round` finds a passing round and `forge next` recommends starting a task. `forge task start` reads the story branch's stale approval and refuses it. Check the selected branch's approval against its selected doc before recommending task start.",
         "file": "src/forge/nextstep.py",
-        "line": 293,
+        "line": 320,
         "priority": "P2",
         "title": "Check renewed approval without a story worktree in forge next"
       }
     ],
     "status": "blocked",
-    "tree": "25c5b5816d07148cffd9ff0d60427d2e175992910fb4028b43764a50423df971"
+    "tree": "df4cdd329c77af1664ed7e1af5f5102761632f0b490625faccc8edf55e6d3490"
   },
   "status": "fixing",
   "steps": [
@@ -50,6 +36,10 @@
     },
     {
       "at": "2026-09-29T09:35:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:59:00+00:00",
       "step": "review"
     }
   ]
