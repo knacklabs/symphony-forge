@@ -1,6 +1,7 @@
 """forge close runs the repo's test command and hands its result to the reviewer."""
 from __future__ import annotations
 
+import subprocess
 import sys
 
 from test_close import env  # noqa: F401
@@ -95,3 +96,19 @@ def test_5_close_runs_the_test_command_merged_from_the_default_branch(env):
     assert env.close(item).returncode == 0
     result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
     assert "-p no:cacheprovider -v checks` exited" in result
+
+
+def test_6_forge_init_in_a_go_repo_writes_a_test_command_that_prints_skips(repo, gh, tmp_path):
+    # Plain `go test ./...` prints only a package's "ok" line, so skips and reasons never show.
+    client, remote = tmp_path / "client", tmp_path / "client.git"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
+    repo.git("remote", "add", "origin", str(remote), cwd=client)
+    (client / "go.mod").write_text("module example.com/app\n\ngo 1.22\n", encoding="utf-8")
+    gh.respond("api", stdout="{}")
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
+    initialized = repo.forge("init", cwd=client)
+    assert initialized.returncode == 0, initialized.stderr
+    toml = (client / "forge.toml").read_text(encoding="utf-8")
+    assert 'test = "go test -v ./..."' in toml
