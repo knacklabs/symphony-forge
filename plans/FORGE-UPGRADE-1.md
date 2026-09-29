@@ -1,6 +1,6 @@
 # Upgrading Forge in a client repo just works
 
-4 parts · Risks: one (deleting old untracked files, after confirmation) · New moving parts: none
+4 parts · Risks: none · New moving parts: none
 
 ## What changes for you
 
@@ -9,9 +9,7 @@
 - An upgrade isn't called ready while the files Forge keeps in the repo are out of date.
 - While an upgrade waits for its merge, Forge keeps working on the default branch, and the approval
   step never blocks.
-- Messages point at the real fix, and moving an old repo to Forge v1 clears the old files it leaves.
-- A Forge installed from unreleased code says so, so a client repo is never checked with a build
-  that only claims to be a release.
+- Messages point at the real fix.
 
 ## Why
 
@@ -26,15 +24,11 @@ hit the same wall.
 2. **An upgrade is not ready while synced files are out of date.**
 3. **The default branch keeps working while an upgrade waits.**
 4. **Close run from the wrong folder points at the right one.**
-5. **Moving to Forge v1 clears the old untracked files.**
-6. **Doctor says which Forge version it compares with.**
-7. **A Forge built from unreleased code says so.**
+5. **Doctor says which Forge version it compares with.**
 
 ## Risks
 
-- Item 5 deletes untracked files, which git can't bring back. Only the four exact paths older
-  Forge wrote are ever removed, they are listed first, and nothing is removed until the human
-  confirms through the agent.
+Risks: none
 
 ## For the builders
 
@@ -70,29 +64,9 @@ hit the same wall.
 4. When the version check refuses and a local worktree of the item the command names pins the
    installed version, the message names that worktree's folder instead of blaming the version.
    A test runs `forge close <fix>` from another fix's folder that pins an older version.
-5. `forge doctor` lists the untracked files older Forge left (`.factory/briefs/`,
-   `.factory/diagnostic-briefs/`, `.factory/delegations.jsonl`, `.factory/scratchpad.md`) as
-   leftovers, showing every file inside them, and records that list in the repo's local Git
-   folder; `forge doctor --fix` removes exactly the recorded files, after the agent has shown the
-   list and the human confirmed, and refuses, removing nothing, when a file under those paths is
-   missing from the list, asking to run `forge doctor` again. Nothing outside those paths is
-   touched. These files are ignored by git in repos older Forge set up, so `forge migrate` runs
-   with them present; they stay in the original checkout, where the agent runs `forge doctor`
-   after the migration merges and that checkout has pulled it. A test migrates a repo with them
-   ignored, pulls the merge into the original checkout, and there runs doctor and doctor --fix:
-   a nested file is listed and removed, a file added after doctor stops the removal, and an
-   unrelated untracked file survives.
-6. `forge doctor` says which Forge version its comparison uses, and when that isn't the pinned
+5. `forge doctor` says which Forge version its comparison uses, and when that isn't the pinned
    version, says the comparison is against the installed version and how to check with the pinned
    one. A test runs doctor with a mismatched pin.
-7. Forge reads how it was installed from its package metadata (`direct_url.json`): installed
-   from its repo at the tag `v<version>` it is that release; installed from a local folder or any
-   other revision it reports `<version>+<commit, or local>`. In a client repo such a development
-   build is refused by the version check and by `forge init` and `forge migrate` before they
-   create any file or branch, naming the release to install; in Forge's own repo it is accepted.
-   Tests install a fake distribution record for each case and run public commands: a client
-   command, `forge init` and `forge migrate` refusing a development build with nothing created,
-   Forge's own repo accepting it, and a tag install reporting the release.
 
 ## Tasks
 
@@ -100,8 +74,8 @@ hit the same wall.
 |---|---|---|---|---|---|---|---|
 | SPEC | Upgrade check | The workflow's pinned-release install for upgrade pull requests, and the review-compatibility test | 1 | `src/forge/prcheck.py`, `src/forge/sync.py`, `src/forge/review.py`, `src/forge/close.py`, `.github/workflows/forge.yml`, `tests/test_split_ships.py` | `tests/test_upgrade_check.py` | none | yes |
 | SYNCED | Synced before ready | Close refusing a stale upgrade, and the skill's upgrade steps | 2 | `src/forge/close.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_upgrade_synced.py` | SPEC | yes |
-| PENDING | Pending upgrade | The version check's pending-upgrade exception, the warning-only approval hook, the right-folder message, and development builds naming their commit | 3, 4, 7 | `src/forge/repo.py`, `src/forge/approval.py`, `src/forge/cli.py`, `src/forge/__init__.py`, `src/forge/init.py`, `src/forge/migrate.py` | `tests/test_upgrade_pending.py` | none | yes |
-| DOCTOR | Doctor clean-up | The leftovers list and removal, and the version doctor compares with | 5, 6 | `src/forge/doctor.py` | `tests/test_upgrade_doctor.py` | none | yes |
+| PENDING | Pending upgrade | The version check's pending-upgrade exception, the warning-only approval hook, and the right-folder message | 3, 4 | `src/forge/repo.py`, `src/forge/approval.py`, `src/forge/cli.py` | `tests/test_upgrade_pending.py` | none | yes |
+| DOCTOR | Doctor's version | The version doctor compares with | 5 | `src/forge/doctor.py` | `tests/test_upgrade_doctor.py` | none | yes |
 
 New moving parts: none
 
@@ -110,6 +84,8 @@ New moving parts: none
 - No client repo is named anywhere in this story's code, tests, texts or commits.
 - Only DOCTOR changes `doctor.py`; SYNCED calls its existing comparison. SYNCED waits for SPEC
   because both change `close.py`.
+- Clearing the old untracked files and development builds naming their commit moved to a
+  follow-up story after v1.2.0, at the owner's choice on 2026-09-29.
 - The story comes from a bug report rather than a spec; the Why states the evidence.
 - Claude workers build every part; Opus writes SYNCED's skill text.
 - Each new test file starts with `STORY = "FORGE-UPGRADE-1"`, and its `test_<n>_` names cite the
