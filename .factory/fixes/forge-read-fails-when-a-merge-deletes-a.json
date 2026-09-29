@@ -1,0 +1,14 @@
+{
+  "base": "f10aab8ac26e4f6d7ecdb3292ce1a998ee05f6d0",
+  "branch": "fix/forge-read-fails-when-a-merge-deletes-a",
+  "done_when": "forge read skips a branch that disappears while it looks for the confirmed spec and carries on; a test deletes a branch between the listing and the lookup and sees the read succeed",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T08:33:58+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge read fails when a merge deletes a branch while it is listing branches to find the confirmed spec"
+}
