@@ -127,8 +127,6 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
-    from forge import story
-
     main = main_ref()
     doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the

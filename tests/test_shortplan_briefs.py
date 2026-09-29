@@ -160,12 +160,17 @@ def _bad_details_number(env):
     worker_repo(env)
     item, where = env.start_approved_task(NEW, "T1", {"app.py": "print('saved')\n"})
     install_claude(env.repo)
+    story_tree = conftest.Path(re.search(
+        r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/SHOP$",
+        env.repo.git("worktree", "list", "--porcelain"), re.M)[1])
     for details, problem in BAD.values():
         bad = NEW.replace(DETAILS, details)
         # An edit under "For the builders" keeps the approval, so only the details refuse.
         env.commit(env.repo.path, "plans/SHOP.md", bad, "Tighten the details")
         env.repo.git("push", "-q", "origin", "main")
         env.commit(where, "plans/SHOP.md", bad, "Tighten the details")
+        # A story read in rounds starts its tasks from its own branch, so the doc changes there too.
+        env.commit(story_tree, "plans/SHOP.md", bad, "Tighten the details")
         want = [f"plans/SHOP.md is malformed: {problem}.",
                 "Next: edit plans/SHOP.md, then run forge next"]
         for args in (("task", "start", "SHOP/T2"), ("work", item), ("close", item)):
