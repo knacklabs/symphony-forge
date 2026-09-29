@@ -386,6 +386,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
+    if status == "started" and state.get("kind") == "merge-enable":  # forge merge enable made it already
+        sentence, step = "{label} lets the agent merge ready pull requests.", "forge close {item}"
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already
         sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,

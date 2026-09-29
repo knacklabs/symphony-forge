@@ -5,18 +5,24 @@ import json
 import os
 import re
 from pathlib import Path
-from forge import checks, close, codex, repo
+from forge import checks, close, codex, repo, story
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
     "help": "Merge a ready item when this repo allows it",
     "args": [(('item',), {})], "position": 160,
-    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |",
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |\n"
+               "| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |",
 }]
+ENABLE = "let-the-agent-merge"
 
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
-                 "ask the repo owner to set merge = \"agent\" on the default branch"),
+                 "the repo owner runs forge merge enable in their own terminal"),
+    "owner_only": ("Only the repo owner switches on agent merges, so Forge won't do it from an agent's shell.",
+                   "the repo owner runs forge merge enable in their own terminal"),
+    "enabled": ("The default branch's forge.toml already lets the agent merge.", "forge next"),
+    "enable_open": ("The change that lets the agent merge is already open.", "forge close let-the-agent-merge"),
     "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
     "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
     "pr": ("Forge needs an open pull request for {item} targeting {default} from {branch}.",
@@ -30,6 +36,8 @@ REFUSALS = {
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
+    if item == "enable":
+        return _enable(top)
     config = repo.default_config(top)
     if repo.merge_setting(top) != "agent":
         repo.refuse(REFUSALS["disabled"])
@@ -126,6 +134,35 @@ def merge(args: argparse.Namespace) -> int:
         print(f"Forge could not archive these Codex conversations for {item}: "
               f"{', '.join(failed_archives)}. Codex can archive them later.")
     return 0
+
+
+def _enable(top: Path) -> int:
+    """Open the fix that sets merge = "agent", then close it so the owner can merge it. Agent merges
+    loosen a gate on the agent itself, so an agent's shell may never run this."""
+    if any(os.environ.get(variable) for variable in story.COORDINATORS):
+        repo.refuse(REFUSALS["owner_only"])
+    repo.check_pin(top, item=ENABLE, words="merge enable")
+    if repo.default_config(top)["merge"] == "agent":
+        repo.refuse(REFUSALS["enabled"])
+    branch = f"fix/{ENABLE}"
+    if repo.run("git", "show-ref", "--verify", "-q", f"refs/heads/{branch}", cwd=top).returncode == 0:
+        repo.refuse(REFUSALS["enable_open"])
+    ref = f"origin/{repo.default_branch(top)}"
+    path = story.add_worktree(top, branch, ref)
+    toml = path / "forge.toml"
+    text = toml.read_text(encoding="utf-8")
+    # Replace the setting, or add it above the first line that isn't a comment: still the top level.
+    text, found = re.subn(r"^merge[ \t]*=.*$", 'merge = "agent"', text, count=1, flags=re.M)
+    if not found:
+        text = re.sub(r"^(?!#)", 'merge = "agent"\n', text, count=1, flags=re.M)
+    toml.write_bytes(text.encode("utf-8"))
+    fix = {"kind": "merge-enable", "why": "Let the agent merge this repo's ready pull requests.",
+           "done_when": 'The default branch\'s forge.toml sets merge = "agent".', "branch": branch,
+           "base": repo.git("rev-parse", ref, cwd=top), "status": "started"}
+    repo.commit_state("Let the agent merge ready pull requests",
+                      repo.write_state(ENABLE, repo.add_step(fix, "start"), path), "forge.toml", top=path)
+    print(f"Opened the change that lets the agent merge in {path}.")
+    return close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
 
 
 def _save_ready(path: Path, receipt: dict) -> None:
