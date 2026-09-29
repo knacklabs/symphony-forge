@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, merge, records, repo, review, story
+from forge import approval, board, close, records, repo, review, story
 
 COMMANDS = [
     {
@@ -147,8 +147,9 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     states: list[str] = []
     refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
-    merged_prs = _merged_prs(top) if trees else set()
-    prs = _open_prs(top) if trees else {}
+    merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
+    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,statusCheckRollup,isDraft")
+           if isinstance(pr.get("url"), str)} if trees else {}
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
@@ -415,15 +416,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 == receipt.get("commit")):
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
-    switch = state.get("why") == merge.WHY  # only the repo owner merges forge merge enable's fix
+    switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
     if status == "started" and switch:
-        sentence, step = ("{label} is started; the repo owner finishes it.",
-                          "the repo owner runs forge merge enable in their own terminal")
+        sentence, step = "{label} is started.", "the repo owner runs forge merge enable in their own terminal"
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already
         sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,
@@ -448,31 +448,17 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
 
 
-def _open_prs(top: Path) -> dict[str, dict[str, Any]]:
+def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
+    """GitHub's pull requests in a state, when gh is available; git's landed state still works offline."""
     if not shutil.which("gh"):
-        return {}
-    done = repo.run("gh", "pr", "list", "--state", "open", "--limit", "1000",
-                    "--json", "headRefName,url,statusCheckRollup,isDraft", cwd=top)
+        return []
+    done = repo.run("gh", "pr", "list", "--state", state, "--limit", "1000", "--json", fields, cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else []
     except ValueError:
-        prs = []
-    return {pr["headRefName"]: pr for pr in prs if isinstance(pr, dict)
-            and isinstance(pr.get("headRefName"), str) and isinstance(pr.get("url"), str)}
-
-
-def _merged_prs(top: Path) -> set[str]:
-    """Merged GitHub branches, when gh is available; git's landed state still works offline."""
-    if not shutil.which("gh"):
-        return set()
-    done = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "1000",
-                    "--json", "headRefName", cwd=top)
-    try:
-        prs = json.loads(done.stdout) if done.returncode == 0 else []
-    except ValueError:
-        return set()
-    return {pr["headRefName"] for pr in prs if isinstance(pr, dict)
-            and isinstance(pr.get("headRefName"), str)} if isinstance(prs, list) else set()
+        return []
+    return [pr for pr in prs if isinstance(pr, dict) and isinstance(pr.get("headRefName"), str)
+            ] if isinstance(prs, list) else []
 
 
 def _touches(count: int) -> str:

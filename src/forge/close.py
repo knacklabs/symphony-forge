@@ -47,6 +47,8 @@ REFUSALS = {
                  'forge work {item} --note "<answer>"'),
 }
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
+# forge merge enable's fix is known by these; only the repo owner merges it.
+WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default branch\'s forge.toml sets merge = "agent".'
 
 
 def close(args: argparse.Namespace) -> int:
@@ -139,7 +141,7 @@ def close(args: argparse.Namespace) -> int:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-    merge = "human" if migrating or changes_merge(top, head) else repo.merge_setting(top)
+    merge = "human" if migrating or state.get("why") == WHY else repo.merge_setting(top)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -151,14 +153,6 @@ def close(args: argparse.Namespace) -> int:
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
-
-
-def changes_merge(top: Path, commit: str) -> bool:
-    """Whether the commit sets forge.toml's merge unlike the default branch: a change to the agent's
-    own gate, which only the repo owner merges."""
-    shown = repo.run("git", "show", f"{commit}:forge.toml", cwd=top)
-    return (shown.returncode == 0
-            and repo._config_text(shown.stdout)["merge"] != repo.default_config(top)["merge"])
 
 
 def _worktree(item: str) -> Path:

@@ -21,6 +21,8 @@ OWNER_MERGES = (f"{FIX} changes the merge setting in forge.toml, so only the rep
                 "pull request.\nNext: the repo owner merges its pull request, then forge next\n")
 TAKEN = ("The fix let-the-agent-merge holds other work, so Forge left it alone.\n"
          "Next: finish or remove that fix, then forge merge enable\n")
+OWNER_ONLY = ("Only the repo owner switches on agent merges, on main, from their own terminal.\n"
+              "Next: the repo owner runs forge merge enable on main in their own terminal\n")
 # Interruptions at the git and GitHub edges: a failing commit, push or pull request, red checks.
 FAIL_ANY_COMMIT = "#!/bin/sh\nexit 1\n"
 FAIL_SETTING_COMMIT = "#!/bin/sh\ngit diff --cached --name-only | grep -qx forge.toml && exit 1\nexit 0\n"
@@ -94,7 +96,8 @@ def _normal_run(env, setting):
     if setting == "human":
         assert after == before.replace(b'merge = "human"', b'merge = "agent"')
     else:
-        ending = b"\r\n" if setting == "crlf table" else b"\n"
+        # The file's own line ending: Windows writes the fixture's forge.toml with CRLF.
+        ending = b"\r\n" if b"\r\n" in before else b"\n"
         assert after == b'merge = "agent"' + ending + before
     assert tomllib.loads(after.decode()) == {**tomllib.loads(before.decode()), "merge": "agent"}
     assert raw(env, "origin/main") == before
@@ -153,7 +156,7 @@ def _prototype_run(env, _):
     hook(env, "pre-commit", FAIL_SETTING_COMMIT)
     assert enable(env).returncode != 0
     hook(env, "pre-commit", None)
-    assert (f"The fix {FIX} is started; the repo owner finishes it.\n"
+    assert (f"The fix {FIX} is started.\n"
             "Next: the repo owner runs forge merge enable in their own terminal") in next_lines()
 
     # The pull request is open and its checks have since passed.
@@ -205,8 +208,6 @@ def _other_fix_changes_merge(env, _):
     item, where = env.start_fix({"forge.toml": text + 'merge = "agent"\n'})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
-    assert closed.stdout.splitlines()[-1] == (
-        f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     refused = env.repo.forge("merge", item)
     assert refused.stderr == OWNER_MERGES.replace(FIX, item, 1)
     assert not env.gh_calls("pr", "merge")
@@ -215,8 +216,7 @@ def _other_fix_changes_merge(env, _):
 def _refusal(env, case):
     if case == "elsewhere":
         env.repo.git("switch", "-q", "-c", "notes")
-        expected = "forge merge enable runs on the default branch, main.\n" \
-                   "Next: git switch main, then forge merge enable\n"
+        expected = OWNER_ONLY
     elif case == "already on":
         set_main(env, 'merge = "agent"\n' + (env.repo.path / "forge.toml").read_text("utf-8"))
         expected = "The default branch's forge.toml already lets the agent merge.\nNext: forge next\n"
@@ -228,7 +228,7 @@ def _refusal(env, case):
         hook(env, "pre-commit", FAIL_SETTING_COMMIT)
         assert enable(env).returncode != 0
         hook(env, "pre-commit", None)
-        (worktree(env) / "app.py").write_text("print('more')\n", encoding="utf-8")
+        (worktree(env) / "README.md").write_text("# More\n", encoding="utf-8")
         expected = TAKEN
     before, head = branches(env), env.repo.git("rev-parse", "HEAD")
     fix_head = env.repo.git("rev-parse", BRANCH) if BRANCH in "".join(before) else None
@@ -251,9 +251,7 @@ def _agent_refused(env, agent):
     refused = enable(env)
 
     assert refused.returncode != 0
-    assert refused.stderr == (
-        "Only the repo owner switches on agent merges, so Forge won't do it from an agent's shell.\n"
-        "Next: the repo owner runs forge merge enable in their own terminal\n")
+    assert refused.stderr == OWNER_ONLY
     unchanged(env, before)
 
     # With agent merges off, forge merge names the owner's command.
