@@ -64,3 +64,19 @@ def test_2_another_repo_claiming_to_be_forge_never_runs_its_code(tmp_path):
     assert ran.returncode == 0, ran.stdout + ran.stderr
     assert ran.stdout.strip() == "forge v1.0.0"
     assert "this checkout's code" not in ran.stderr
+
+
+def test_3_a_worktree_of_the_install_s_repo_runs_that_worktree_s_code(tmp_path):
+    checkout = _checkout(tmp_path / "checkout")
+    git = ["git", "-C", str(checkout), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*git, "add", "-A"], check=True)
+    subprocess.run([*git, "commit", "-qm", "v7.7.7"], check=True)
+    subprocess.run([*git, "worktree", "add", "-q", str(tmp_path / "tree")], check=True)
+    init = tmp_path / "tree" / "src" / "forge" / "__init__.py"
+    init.write_text(init.read_text(encoding="utf-8").replace("7.7.7", "8.8.8"), "utf-8")
+
+    ran = _version(_install(tmp_path, made_from=checkout), tmp_path / "tree")
+
+    assert ran.returncode == 0, ran.stdout + ran.stderr
+    assert ran.stdout.strip() == "forge v8.8.8"
+    assert ran.stderr.count("this checkout's code") == 1, ran.stderr

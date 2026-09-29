@@ -7,6 +7,7 @@ import os
 import pkgutil
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -68,11 +69,15 @@ def _parser() -> _Parser:
 
 
 def _run(argv: list[str] | None) -> int:
-    # A forge installed from this very checkout runs its old code, so run the checkout's; never another repo's.
+    # A forge installed from this repo runs its old code, so run this checkout's; never another repo's.
     top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
-    url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url")
+    url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url") or ""
+    made = urllib.request.url2pathname(urllib.parse.urlparse(url).path) if url.startswith("file:") else ""
+    # Without git's variables: inside a hook GIT_DIR would answer for every folder.
+    common = [Path(subprocess.run(["git", "-C", path or os.devnull, "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True,
+                                  env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}).stdout.strip() or os.devnull).resolve() for path in (top, made)]
     src = str(Path(top, "src"))
-    if (top and url == Path(top).as_uri() and os.environ.get("FORGE_FROM_CHECKOUT") != src
+    if (top and common[0] == common[1] and os.environ.get("FORGE_FROM_CHECKOUT") != src
             and Path(forge.__file__).resolve().parent != Path(src, "forge")):
         print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
         return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
