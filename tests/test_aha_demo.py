@@ -39,6 +39,14 @@ def _prototype(skill: str) -> str:
     return skill.split(" ## Prototype ")[1].split(" ## Adopt a live app ")[0]
 
 
+def _assert_in_order(section: str, steps: tuple[str, ...]) -> None:
+    places = [section.find(step) for step in steps]
+    assert -1 not in places, [s for s, p in zip(steps, places) if p == -1]
+    swapped = [f"move {a!r} back before {b!r}" for (a, pa), (b, pb)
+               in zip(zip(steps, places), zip(steps[1:], places[1:])) if pa > pb]
+    assert not swapped, "Steps are out of order in the skill; " + "; ".join(swapped)
+
+
 def test_4_every_demo_follows_the_script(skill):
     section = _prototype(skill)
     steps = (
@@ -47,9 +55,7 @@ def test_4_every_demo_follows_the_script(skill):
         "3. the time or money it saves, in their numbers;", "4. they take the controls;",
         '5. ask "what would stop you using this?"',
     )
-    places = [section.find(step) for step in steps]
-    assert -1 not in places, [s for s, p in zip(steps, places) if p == -1]
-    assert places == sorted(places)
+    _assert_in_order(section, steps)
     assert "Send the demo link only after the guided demo, never before it." in section
     assert (
         'With each new version, draft a three-line "what changed" note for the salesperson to '
@@ -88,9 +94,7 @@ def test_6_signoff_is_read_back_and_reviewed_first(skill):
         "When they bring the reply back, record it in `approved_via` and `approved_on`",
         'run `forge decision accept client-signoff --by "<name>"` again to accept.',
     )
-    places = [section.find(step) for step in steps]
-    assert -1 not in places, [s for s, p in zip(steps, places) if p == -1]
-    assert places == sorted(places)
+    _assert_in_order(section, steps)
     assert "Draft no sign-off email; Forge sends nothing." in section
     assert "The customer's reply is the approval evidence the sign-off decision records." in section
     assert "sign-off email for" not in section and "Before the sign-off email" not in section
