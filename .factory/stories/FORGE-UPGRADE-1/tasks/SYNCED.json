@@ -2,7 +2,13 @@
   "branch": "task/FORGE-UPGRADE-1-SYNCED",
   "review": {
     "commit": "f4d65aaba9bec13d37e6fe097f23b719f31b0ffe",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/close.py:220 a file git ignores is never committed, so it never reaches the pull request and can't leave the upgrade's committed files stale; the check compares what the pull request carries",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "`git status --porcelain --untracked-files=all` omits ignored, untracked files. If a client ignores a generated path newly added by the pinned release, `forge sync` creates it in the temporary worktree, but it remains absent from the commit and `stale` is empty. Close can then report Ready with a missing synced file. `sync.write` writes generated paths at `src/forge/sync.py:264-275`; compare those paths explicitly with the commit so ignore rules cannot hide them.",
@@ -26,10 +32,10 @@
         "title": "Remove the temporary parent directory after the sync check"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "dc92de7648160cbb2c99478e678e3be6849126249bdb652148bc5f79b9a01edc"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T05:53:37+00:00",
