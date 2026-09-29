@@ -4,11 +4,24 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "A client repo's Forge upgrade now passes Forge's own check, isn't ready while synced files are stale, and leaves the default branch working while it waits to merge",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "68854816bedcfb048e268e1855dd5fc812ec549278d3405d9c73d9177f931d22",
+    "commit": "864284082f95e975959b158084269a05c6ead9e4",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "4fe4de72193fcec81138f6251e60b4c48ef1f99043d76d211792ec08841efbea"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T08:24:04+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T08:26:32+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
