@@ -13,6 +13,9 @@ $scope
 Files the branch changes outside that scope (report any that the work doesn't need):
 $outside
 
+An existing test changed because the intended work broke it is allowed outside Scope. Check the
+worker's handoff names each such test and why it changed.
+
 ## Done when
 This part covers the items below. Report every one the branch does not meet as a P1 finding
 titled `Not done: <the item>`, citing the line that shows the gap.
@@ -70,6 +73,7 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
   P2 `Later:` finding naming that task, not `Not done`.
 
 Missing tests this branch owns and the functional check stay P1.
+Report a test weakened to hide a real defect as a P1 finding.
 
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the

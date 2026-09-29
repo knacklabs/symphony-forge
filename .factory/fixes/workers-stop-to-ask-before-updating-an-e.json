@@ -1,0 +1,52 @@
+{
+  "base": "f95f0f0b274eef24f1b052d05b77d3b5bc7b30cb",
+  "branch": "fix/workers-stop-to-ask-before-updating-an-e",
+  "done_when": "The worker brief lets a worker update any existing test its intended change breaks, outside its scope, naming each changed test and why in its handoff; the review brief no longer reports such test files as outside scope but reports a test weakened to hide a real defect as a P1; tests through forge work and forge close show both",
+  "kind": "fix",
+  "review": {
+    "commit": "fbadf4b895d354b8c678f91dd7b684bd4daf5b35",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new instruction asks the reviewer to check that the worker named and explained each changed test. But `forge close` passes a generated prompt and a fresh Git clone to review (`src/forge/review.py:285-298, 315-318`). Claude output goes to an uncommitted work log (`src/forge/worker.py:422-434`; `src/forge/repo.py:100-110`), while the Codex path records only a pending question from its final text (`src/forge/worker.py:178-181`). A handoff given only in the worker's final response is therefore unavailable to the reviewer. Pass the handoff into review or remove this unverifiable check.",
+        "file": "src/forge/templates/review.md",
+        "line": 17,
+        "priority": "P2",
+        "title": "Reviewer cannot inspect the worker handoff it is told to verify"
+      },
+      {
+        "body": "This condition exempts every pre-existing test-shaped path without checking whether the intended work broke it. The new `forge close` test demonstrates the gap: it changes `app.py` to print a string and separately changes `tests/test_old.py` from `assert True` to `assert False`, then expects that test to be absent from the outside-Scope list (`tests/test_fix_workers_stop_to_ask_before_updating_an_e.py:58-60, 79-82`). Such an unrelated edit is outside the stated exception, so the review prompt should still identify it for scope review.",
+        "file": "src/forge/review.py",
+        "line": 189,
+        "priority": "P2",
+        "title": "Unrelated existing tests disappear from the outside-Scope list"
+      }
+    ],
+    "status": "clean",
+    "tree": "c0f72ad94279a3c354e1aea1e31fa68bea655dde4dbacc940373b09c9e866e77"
+  },
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-09-28T11:31:23+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T11:51:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T12:05:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:09:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T01:31:56+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers stop to ask before updating an existing test their intended change breaks, because the test file is outside the task's scope; it happened seven times on 2026-09-28"
+}
