@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner picked this fix on 2026-09-29 (Forge's repo runs current code); its only home is the command entry in src/forge/cli.py, which the hook treats as an interface file",
   "base": "3a7bcb40090c2bb9c82ee210fb33ef9cb8ce070a",
   "branch": "fix/in-forge-s-own-repo-a-forge-installed-ea",
   "done_when": "In Forge's own repo, a forge command whose installed code differs from the checkout's src/forge runs the checkout's own code instead, and says so once; a test runs forge from an older install inside a newer checkout and sees the checkout's version answer",
