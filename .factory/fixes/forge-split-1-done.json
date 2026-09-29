@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "Each command, shipped file and command-list entry now lives with the module that owns it, so new features stop queueing behind the shared tables",
-  "status": "started",
+  "review": {
+    "commit": "aeca2c3bd35c8fc04145731e8b041c8319bee796",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "795f7ab1534dfa4215dd0529737573134e7bc7fa8e74cb3b8419bdb789caabb9"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T11:50:15+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T01:53:16+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
