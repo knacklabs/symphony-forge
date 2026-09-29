@@ -66,6 +66,8 @@ def test_2_new_client_keeps_their_words_and_gets_guarded_demo_data(repo, gh, tmp
                  "no real personal data",
                  "only when `APP_ENV=demo` and `DEMO_DATA=1` are both set and every app table is empty",
                  "Otherwise it refuses, logs why and inserts nothing",
+                 "the app tables already hold rows. Point DATABASE_URL at an empty demo database, "
+                 "or empty it, then start the app again",
                  "`npx prisma migrate deploy` before `node dist/main.js`",
                  "await app.get(DemoDataService).loadIfAllowed(); await app.listen(port);"):
         assert rule in demo, rule
@@ -79,5 +81,6 @@ def test_3_agentation_toolbar_is_demo_only(repo, gh, tmp_path):
                  "output to the agent", "only when `APP_ENV=demo` at run time",
                  "backend injects", "served `index.html`", "window.__APP_ENV__",
                  "window.__APP_ENV__ === 'demo'", "never loads in production",
+                 'window.__APP_ENV__ = "%APP_ENV%"', "replace %APP_ENV% with",
                  "import('agentation')"):
         assert rule in frontend, rule

@@ -31,7 +31,9 @@ export class DemoDataService {
     const counts = await Promise.all(models.map((m) =>
       (this.prisma as any)[m[0].toLowerCase() + m.slice(1)].count()));  // every app table
     if (counts.some((n) => n > 0)) {
-      return this.logger.warn('Demo data refused: the app tables already hold rows', 'DemoData');
+      return this.logger.warn(
+        'Demo data refused: the app tables already hold rows. Point DATABASE_URL at an empty demo database, or empty it, then start the app again',
+        'DemoData');
     }
     await this.prisma.$transaction(async (tx) => { /* insert the records, all or nothing */ });
   }

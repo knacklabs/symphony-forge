@@ -61,8 +61,8 @@ from the request, and do not cache that response. Keep the dynamic import behind
 check so the toolbar never loads in production. The built assets may contain its lazy chunk.
 
 ```tsx
-// index.html: <script>window.__APP_ENV__ = "__APP_ENV__";</script>
-// backend: replace __APP_ENV__ with APP_ENV === 'demo' ? 'demo' : 'production'
+// index.html: <script>window.__APP_ENV__ = "%APP_ENV%";</script>
+// backend: replace %APP_ENV% with APP_ENV === 'demo' ? 'demo' : 'production'
 declare global { interface Window { __APP_ENV__?: 'demo' | 'production' } }
 const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Agentation })));
 
