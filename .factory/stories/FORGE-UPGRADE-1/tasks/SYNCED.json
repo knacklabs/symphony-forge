@@ -1,33 +1,33 @@
 {
   "branch": "task/FORGE-UPGRADE-1-SYNCED",
   "review": {
-    "commit": "e9a068490f870f34a9a2533f403e7bb65d5b8606",
+    "commit": "f4d65aaba9bec13d37e6fe097f23b719f31b0ffe",
     "dismissals": [],
     "findings": [
       {
-        "body": "`sync.files(top, cfg)` builds its expected file list from the worktree, but this guard compares it with `HEAD`. `githooks.ships` includes `CLAUDE.md` only while it exists in the worktree (`src/forge/githooks.py:71`), and `forge sync` deletes an old Forge-only copy (`src/forge/sync.py:271-274`). If that deletion remains uncommitted, this comparison omits the path even though the pull request still contains the obsolete file, so close can reach Ready. Build the comparison from committed inputs and include files that sync removes.",
+        "body": "`git status --porcelain --untracked-files=all` omits ignored, untracked files. If a client ignores a generated path newly added by the pinned release, `forge sync` creates it in the temporary worktree, but it remains absent from the commit and `stale` is empty. Close can then report Ready with a missing synced file. `sync.write` writes generated paths at `src/forge/sync.py:264-275`; compare those paths explicitly with the commit so ignore rules cannot hide them.",
         "file": "src/forge/close.py",
-        "line": 211,
+        "line": 220,
         "priority": "P1",
         "title": "Not done: An upgrade is not ready while synced files are out of date"
       },
       {
-        "body": "The SPEC-owned `tests/test_upgrade_check.py` calls `_close` after changing the upgrade pin without syncing (`tests/test_upgrade_check.py:82-89` and `165-170`). This new guard refuses those fixtures before they reach their check assertions, so the existing parameterized suite fails. Update SPEC's fixtures to commit the output of `forge sync` before closing.",
+        "body": "Running the full `forge sync` command also calls `install_shims` (`src/forge/sync.py:322`). Its hook paths are in the Git hooks directory shared by every worktree (`src/forge/githooks.py:46-50`), and `install_shims` can rewrite or rename those hooks (`src/forge/sync.py:278-307`). Thus checking a stale upgrade can change the real repository's hooks before close refuses it. Compare generated files in the scratch checkout without installing hooks.",
         "file": "src/forge/close.py",
-        "line": 72,
+        "line": 216,
         "priority": "P2",
-        "title": "Later: SPEC upgrade-check tests must sync before close"
+        "title": "Keep the close comparison from rewriting shared Git hooks"
       },
       {
-        "body": "For `repo = \"forge-source\"`, `forge sync` also writes `docs/commands.md` (`src/forge/sync.py:314-319`), but `sync.files` does not include it. An upgrade of the source repo can therefore be marked Ready with a stale committed command page. Include that generated file in the close comparison.",
+        "body": "`mkdtemp()` creates a parent directory, but the cleanup removes only its `sync` worktree and branch. Every upgrade close leaves an empty temporary directory behind. Clean up the parent after removing the worktree.",
         "file": "src/forge/close.py",
-        "line": 211,
-        "priority": "P2",
-        "title": "Include the command page that forge sync writes for the source repo"
+        "line": 213,
+        "priority": "P3",
+        "title": "Remove the temporary parent directory after the sync check"
       }
     ],
     "status": "blocked",
-    "tree": "80d3a95a64fd5546bbd35f210ce832880886cb5b8ccdc1677a461de506b23e52"
+    "tree": "dc92de7648160cbb2c99478e678e3be6849126249bdb652148bc5f79b9a01edc"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-29T06:38:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T07:04:44+00:00",
       "step": "review"
     }
   ]
