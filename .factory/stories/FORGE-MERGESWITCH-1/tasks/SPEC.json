@@ -4,50 +4,50 @@
   "done_when": "The owner switches a repo to agent merges with one command run in their own terminal",
   "review": {
     "blocking_level": "P1",
-    "changed": "9361c2683e72a957229caaeaf2547385c7c1d5b39c8697bda3550d1d0489c53c",
-    "commit": "269ec28725f4674c0820fa9708c63549ab51cf66",
+    "changed": "8df8dfe02a903bb93eca809d592f02ec60a2d0bf3ae1b7c9a1ef81b1b8cece12",
+    "commit": "0e8f3b1762783460c870e4ea79c2a716acab5c2f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The replacement recognizes only an unquoted `merge` at column one. A valid `forge.toml` containing `  merge = \"human\"` or `\"merge\" = \"human\"` passes Forge's TOML parser, but this code inserts a second root key. It commits invalid TOML, so `forge close` cannot finish the switch.",
+        "body": "The rewrite removes only an unquoted `merge` key at column one. An indented or quoted root key is valid TOML, but remains in place when this code inserts another `merge` key. Forge commits invalid `forge.toml`, and `forge close` cannot finish the switch.",
         "file": "src/forge/merge.py",
-        "line": 189,
+        "line": 159,
         "priority": "P2",
         "title": "Handle valid indented or quoted merge keys"
       },
       {
-        "body": "This check sees only local branches. If `origin/fix/let-the-agent-merge` belongs to another fix but has no local branch, `forge merge enable` creates and commits a new local fix before its push fails. A rerun repeats the failed push. The existing fix-start path checks remote refs too (`src/forge/task.py:226-227`).",
+        "body": "The diff check accepts any added or removed line beginning `merge =`, regardless of its file. A same-named fix with the recorded why and done-when can therefore include a committed change to `merge = ...` in another tracked file and pass this guard. The command then edits and commits `forge.toml` instead of leaving that other work alone.",
         "file": "src/forge/merge.py",
-        "line": 162,
+        "line": 156,
         "priority": "P2",
-        "title": "Check for an existing remote switch branch before creating a worktree"
+        "title": "Restrict the retry guard to the merge key in forge.toml"
       },
       {
-        "body": "A differently named fix that changes `merge` can reach Ready in a prototype. `forge close` correctly assigns its pull request to a human, but this condition uses the prototype's effective agent setting and tells the user to run `forge merge <item>`. That command then refuses the setting change. The prototype override is in `src/forge/repo.py:174-177`.",
+        "body": "`story.worktrees` finds checked-out local branches only (`src/forge/story.py:502-511`). If `origin/fix/let-the-agent-merge` exists without a local worktree, this path creates and commits a new local fix before its push fails against the remote branch. Rerunning repeats the failure. The existing fix-start path checks remote refs as well (`src/forge/task.py:226-227`).",
+        "file": "src/forge/merge.py",
+        "line": 150,
+        "priority": "P2",
+        "title": "Check the remote switch branch before creating a worktree"
+      },
+      {
+        "body": "This condition excludes only the named switch fix. A differently named fix that changes `merge` can reach Ready in a prototype, where `repo.merge_setting` returns `agent` (`src/forge/repo.py:174-177`). `forge next` then recommends `forge merge <item>`, but the new guard in `merge.py` refuses that command. The user is given a next step that cannot succeed.",
         "file": "src/forge/nextstep.py",
-        "line": 419,
+        "line": 420,
         "priority": "P2",
         "title": "Keep forge next on the owner path for other merge-setting fixes"
       },
       {
-        "body": "`_enable` requires both `why` and `done_when` to recognize its fix (`src/forge/merge.py:174`), but `forge next` checks only `why`. A normal fix started with the same why and a different done-when is treated as the switch: at Started, its next step points to `forge merge enable`, which creates or resumes a different fix.",
-        "file": "src/forge/nextstep.py",
-        "line": 418,
-        "priority": "P2",
-        "title": "Identify the switch fix by its full recorded contract in forge next"
-      },
-      {
-        "body": "`forge fix start \"Enable\" --done ...` can create the valid item `fix/enable` through the existing slug logic (`src/forge/task.py:223-235`). Its `forge merge enable` invocation now always enters the switch command, so Forge can no longer merge that ready fix through its item command.",
+        "body": "`forge fix start \"Enable\" --done ...` can create the valid item `fix/enable` through the existing slug rules (`src/forge/task.py:223-235`). Dispatching every `forge merge enable` invocation to `_enable` makes the existing item command unusable for that fix, even when its pull request is Ready.",
         "file": "src/forge/merge.py",
-        "line": 45,
+        "line": 39,
         "priority": "P2",
         "title": "Preserve merging an existing fix named enable"
       }
     ],
     "status": "clean",
-    "tree": "5b4cf94895ea52ab62f8908d01ccaef6d67455ddc6a81f95f5627aa84b8119e2"
+    "tree": "6c601ff6ad79f3b6af002df079108075eae8aa197ba044f8d23d4109fc30d1f9"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T07:50:27+00:00",
@@ -67,6 +67,10 @@
     },
     {
       "at": "2026-09-29T14:46:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T15:12:05+00:00",
       "step": "review"
     }
   ],
