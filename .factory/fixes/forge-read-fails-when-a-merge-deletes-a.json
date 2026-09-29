@@ -3,11 +3,32 @@
   "branch": "fix/forge-read-fails-when-a-merge-deletes-a",
   "done_when": "forge read skips a branch that disappears while it looks for the confirmed spec and carries on; a test deletes a branch between the listing and the lookup and sees the read succeed",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "1fad81034a53b562a9968a1251b107c59583e57b1ba9c59aedb5adce2df6cfc3",
+    "commit": "455c84ea8f78417ba78e74589837cda553cbd6a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The test creates only an extensionless `#!/bin/sh` Git wrapper. On Windows, Forge's `shutil.which(\"git\")` will use the real `git.exe` instead, so the branch is never deleted and the assertion on line 34 fails. The repository's test fixture explicitly creates `.cmd` shims for Windows (`tests/conftest.py:51-52`), and `.github/workflows/forge-next.yml` runs the suite on Windows. Add a Windows-compatible wrapper that deletes the branch before delegating to Git, so the required race test runs in that suite.",
+        "file": "tests/test_fix_forge_read_fails_when_a_merge_deletes_a.py",
+        "line": 28,
+        "priority": "P1",
+        "title": "Not done: the branch deletion regression test runs on Windows"
+      }
+    ],
+    "status": "blocked",
+    "tree": "39ea21ba8a14f9e2996495c3e06cdc35d22730a005d901bb815c0240a4e68ade"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T08:33:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T08:45:57+00:00",
+      "step": "review"
     }
   ],
   "why": "forge read fails when a merge deletes a branch while it is listing branches to find the confirmed spec"
