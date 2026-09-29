@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-UPGRADE-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T07:34:27+00:00",
+  "merged": {
+    "DOCTOR": "2026-09-29T05:03:47+00:00",
+    "PENDING": "2026-09-29T04:34:26+00:00",
+    "SPEC": "2026-09-29T05:53:27+00:00",
+    "SYNCED": "2026-09-29T07:34:27+00:00"
+  },
+  "outcome": "A client repo's Forge upgrade now passes Forge's own check, isn't ready while synced files are stale, and leaves the default branch working while it waits to merge",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-29T03:39:56+00:00",
@@ -21,6 +29,10 @@
     {
       "at": "2026-09-29T04:03:24+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T08:24:04+00:00",
+      "step": "done"
     }
   ],
   "title": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges",
