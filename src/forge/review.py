@@ -195,7 +195,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              "test_run": _test_run(top, cfg["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -223,6 +224,23 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _test_run(top: Path, command: str) -> str:
+    """Run forge.toml's test command here and keep its outcome and summary lines, so the reviewer
+    sees tests its sandbox can't run. pytest also lists each skip's reason (-rs)."""
+    if not command:
+        return "forge.toml names no test command, so close ran none."
+    env = {**os.environ, "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+    done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                          encoding="utf-8", errors="replace")
+    lines = [line.strip() for line in done.stdout.splitlines()
+             if re.search(r"\b(pass|passed|fail|failed|failures?|skip|skipped|errors?)\b", line, re.I)]
+    # ponytail: the last 40 summary lines; raise it if a long skip list gets cut.
+    return "\n".join([f"`{command}` {'passed' if done.returncode == 0 else 'failed'} "
+                      f"(exit code {done.returncode}) on the machine running forge close.",
+                      *lines[-40:]])
 
 
 def _previous(result: dict[str, Any]) -> str:
