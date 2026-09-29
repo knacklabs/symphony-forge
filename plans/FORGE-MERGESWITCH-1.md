@@ -33,12 +33,12 @@ Risks: none
    commits it, and runs `forge close` on it, so the change is reviewed and its pull request opened;
    it then prints that the owner merges that pull request to switch on agent merges. Its fix always has the same name, so run again
    after an interruption (before or after the commit, the push, or the pull request) it finds that
-   fix and continues from where it stopped, and never touches any other fix: the command records its fix's kind as `merge-switch` when it starts
-   it, and a fix with that name but any other kind is left alone while the command refuses naming
-   it. `forge merge` never
+   fix and continues from where it stopped, and never touches any other fix: the command knows its fix by the `why` and `done_when` it records
+   when it starts it, and a fix with that name but any other `why` is left alone while the command
+   refuses naming it. `forge merge` never
    merges a change to the `merge` setting, even where agent merges are otherwise allowed (a
    prototype before sign-off), so the owner always merges this pull request;
-   `forge close` on that fix says the owner merges it, never `forge merge`, so the command's whole
+   `forge close` and `forge next` on that fix say the owner merges it, never `forge merge`, so the command's whole
    output gives one valid next step. It refuses,
    changing nothing, when run from an agent (the `CLAUDECODE` or `CODEX_THREAD_ID` variable is
    set), when not on the default branch, and when the default branch's `forge.toml` already says
@@ -46,7 +46,7 @@ Risks: none
    Tests run the command in a throwaway repo with fake `gh` and review: a normal run reaching
    Ready, a CRLF `forge.toml` ending in a table, a rerun after an interruption before the commit, after it, after the push and after
    the pull request, `forge merge` refusing the switch's pull request in a prototype, the whole output of a
-   prototype run naming only the owner's merge, an unrelated fix already using the name, a rerun before the `forge.toml` edit, a
+   prototype run and `forge next` afterwards naming only the owner's merge, an unrelated fix already using the name, a rerun before the `forge.toml` edit, a
    differently named fix that changes `merge` refused by `forge merge` in a prototype, each refusal with
    nothing created, and a prototype before sign-off.
 2. `forge merge`'s disabled message says to run `forge merge enable` in your own terminal. The
@@ -60,7 +60,7 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/cli.py`, `src/forge/close.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
+| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/cli.py`, `src/forge/close.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
 
 New moving parts: none
 

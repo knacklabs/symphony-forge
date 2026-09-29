@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:11:51+00:00
-read_hash: bf7fa68d9522642c71cbef26c6fb2ebf81502a37
+read_at: 2026-09-29T08:16:37+00:00
+read_hash: 03028a2baff420e645f02eadb55c5bcc7cd051b8
 amended_hash:
-round: 4
+round: 5
 passed: no
-doc_seen: bf7fa68d9522642c71cbef26c6fb2ebf81502a37
+doc_seen: 03028a2baff420e645f02eadb55c5bcc7cd051b8
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 0ffd543724e482a1bb22e9b90bedb93fbba68554
+notes_seen: e36956ee742d8f4843eaacb626c98ffd583337af
 ---
 # Cold read notes
 
@@ -71,4 +71,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 11. Unproven: item 1: `forge merge` rejects every merge-setting change.
     The promised guard applies to any fix that changes the setting, but the test covers only the switch’s pull request. Test a differently named fix that changes `merge` while agent merges are otherwise allowed.
    Disposition: cut: item 1 tests a differently named fix changing merge refused by forge merge in a prototype.
+
+## Round 5
+
+12. Unproven: item 1: `forge next` gives the owner the wrong command in a prototype.
+    For a ready fix, `nextstep.py` still uses the prototype’s effective agent setting and says `Next: forge merge <item>`, which the new guard refuses. Include that output in Scope and test the next step after the switch pull request is ready.
+   Disposition: cut: item 1 has forge next name the owner's merge for this fix too; nextstep.py joins Scope; tested.
+
+13. Simpler: new `merge-switch` kind → the fix’s existing `why` and `done_when` fields.
+    Those fields are recorded when the fix starts and can identify it before the config edit. A new kind also changes the prototype review level because `review.blocking_level()` treats only `kind = "fix"` as a prototype fix.
+   Disposition: cut: item 1 identifies the fix by its recorded why and done_when instead of a new kind.
 
