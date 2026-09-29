@@ -5,35 +5,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "29ab9015203eb256c8a18e171e520d6a757fc231ee5477352c7517941cafed8f",
-    "commit": "64f5955eeb61069154e2078de38e308a14a21ac2",
-    "dismissals": [
-      {
-        "because": "src/forge/merge.py:161 the fix's contract covers indented, single- or double-quoted and commented keys; a triple-quoted value is outside it, and there the command refuses without changing forge.toml, so no file is broken",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "changed": "f00b8de27262bbbde092940bab349f59162c86994786e4ea55bdecad89993c2d",
+    "commit": "7e6fce5212a203ebd6b52660b4c6b0b01d6669a2",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Forge accepts `merge = \"\"\"human\"\"\"`, but this regex replaces only the first two quotes, leaving invalid TOML, so enable refuses instead of changing the key. The new test at tests/test_fix_forge_merge_enable_adds_a_second_merge_k.py:36 expects that refusal rather than a successful command-level edit. A double-quoted key containing a TOML escape, such as `\"mer\\u0067e\"`, also parses as `merge` but is missed by the regex; inserting another key then creates a duplicate. The parser in src/forge/repo.py:205 uses tomllib, and its merge validation at line 138 accepts the resulting `human` value. Cover these valid forms through `forge merge enable` and change the existing key.",
+        "body": "The regex selects the first line that looks like a merge assignment, even if it is content inside a multiline string. For example, a valid forge.toml can contain `test = \"\"\"\\nmerge = \"human\"\\n\"\"\"` before a real top-level `merge = \"human\"`. The substitution changes the test string, leaves the actual merge key unchanged, and then refuses the command. `test` is an accepted string setting in `src/forge/repo.py:132` and its validation at line 281 permits multiline strings. Locate the actual TOML key before editing it. This is a different case from the previously ruled table-looking line: the new matcher itself now selects the line inside the string.",
         "file": "src/forge/merge.py",
-        "line": 161,
-        "priority": "P1",
-        "title": "Not done: forge merge enable changes existing merge keys in valid quoted forms"
-      },
-      {
-        "body": "The search treats any line beginning with `[` as the first table, even when that line is inside a multiline TOML string. For example, a valid root `test = \"\"\"\\n[options]\\n\"\"\"` followed by `merge = \"human\"` makes `top` stop before the existing merge key. Enable inserts a second root key and then refuses the duplicate. `test` is an accepted string setting in src/forge/repo.py:132 and is not restricted to one line by its validation at line 281. Locate actual TOML tables so this valid placement can be edited.",
-        "file": "src/forge/merge.py",
-        "line": 160,
+        "line": 150,
         "priority": "P2",
-        "title": "Handle a table-looking line inside a multiline config string"
+        "title": "Handle merge-looking lines inside multiline TOML strings"
       }
     ],
     "status": "clean",
-    "tree": "dcb4d3dd83e2f8d06bf9521550b99e78624249370122939e4d2d217199ae0fe2"
+    "tree": "a64003a47e0e1c44300819da60b547b4843f50dc6e20a4693c925792e532b46b"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T15:21:36+00:00",
@@ -41,6 +28,10 @@
     },
     {
       "at": "2026-09-29T15:45:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T16:28:11+00:00",
       "step": "review"
     }
   ],
