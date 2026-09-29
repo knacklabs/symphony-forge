@@ -3,11 +3,39 @@
   "branch": "fix/in-forge-s-own-repo-a-forge-installed-ea",
   "done_when": "In Forge's own repo, a forge command whose installed code differs from the checkout's src/forge runs the checkout's own code instead, and says so once; a test runs forge from an older install inside a newer checkout and sees the checkout's version answer",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "1a1539bd8a489af319de332cfd1699f7304061b9e059cabcef2f9b87142158be",
+    "commit": "c3a5790a47c8119fa2998848bf20513a6bbcbb31",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch adds only this status record. The command entry point in src/forge/cli.py:98-104 still runs the imported installation, and its version answer comes from that installation at src/forge/cli.py:29. There is no checkout comparison, switch to src/forge, or one-time notice. An older installed Forge therefore still runs its old code inside a newer Forge checkout.",
+        "file": ".factory/fixes/in-forge-s-own-repo-a-forge-installed-ea.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: Forge must run the checkout's code when its installed code differs"
+      },
+      {
+        "body": "The branch adds no test for the stated scenario. tests/test_version.py:9-12 checks a source string and packaging declaration; it does not run an older installed command in a newer checkout or assert the checkout's version answer. The reported passing suite cannot establish this missing behavior.",
+        "file": ".factory/fixes/in-forge-s-own-repo-a-forge-installed-ea.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: an end-to-end test runs an older Forge install in a newer checkout"
+      }
+    ],
+    "status": "blocked",
+    "tree": "18fb17fe4b223fac1241dded3d7feca1e44eea8514d842259fc2add0b442bf48"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T18:00:55+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T19:06:29+00:00",
+      "step": "review"
     }
   ],
   "why": "In Forge's own repo a forge installed earlier from the checkout keeps running old code after changes merge, so it can write reviews in an old format that CI rejects"
