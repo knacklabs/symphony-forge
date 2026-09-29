@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T07:57:01+00:00
-read_hash: 75fc220163975ea335841650f80fb9d009684366
+read_at: 2026-09-29T08:01:45+00:00
+read_hash: 493824e6856c55b82d33513cfe7ffe2fe0e873ca
 amended_hash:
-round: 1
+round: 2
 passed: no
-doc_seen: 75fc220163975ea335841650f80fb9d009684366
+doc_seen: 493824e6856c55b82d33513cfe7ffe2fe0e873ca
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 8b9dd34a411bc3410f7a0e06a8c952761dac6dc3
 ---
 # Cold read notes
 
@@ -41,4 +41,14 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 5. Trap: Windows line endings and shells: item 1.
    The test plan does not prove that editing `forge.toml` preserves a CRLF file or places the root `merge` key correctly when the file ends in a `[models]` table. Add those cases to `tests/test_merge_enable.py`.
    Disposition: cut: item 1 keeps line endings and places the key before the first table; tested with CRLF ending in a table.
+
+## Round 2
+
+6. Unproven: item 1: retries at every stated interruption point.
+   The amended test covers a failed push, but the command also promises to continue after an interrupted commit or pull request creation. Pin how it identifies its own fix without taking over an unrelated fix, and test those states.
+   Disposition: cut: item 1 gives the fix a fixed name and tests a rerun after each interruption point.
+
+7. Contradiction: item 2: a prototype can agent-merge the switch pull request.
+   Before sign-off, `repo.merge_setting()` permits `forge merge` even when the default branch says `merge = "human"`. `forge close` will therefore point to agent merge for this fix. Pin a rule that keeps this pull request for the owner to merge, and test it in the prototype case.
+   Disposition: cut: item 1 has forge merge never merge a change to the merge setting, tested in a prototype.
 

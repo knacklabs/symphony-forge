@@ -31,13 +31,17 @@ Risks: none
 1. `forge merge enable`, run on the default branch, starts a fix that sets `merge = "agent"` in
    `forge.toml` (a top-level key placed before the first table, keeping the file's line endings),
    commits it, and runs `forge close` on it, so the change is reviewed and its pull request opened;
-   it then prints that the owner merges that pull request to switch on agent merges. Run again
-   after an interruption, it finds its own fix and continues from where it stopped. It refuses,
+   it then prints that the owner merges that pull request to switch on agent merges. Its fix always has the same name, so run again
+   after an interruption (before or after the commit, the push, or the pull request) it finds that
+   fix and continues from where it stopped, and never touches any other fix. `forge merge` never
+   merges a change to the `merge` setting, even where agent merges are otherwise allowed (a
+   prototype before sign-off), so the owner always merges this pull request. It refuses,
    changing nothing, when run from an agent (the `CLAUDECODE` or `CODEX_THREAD_ID` variable is
    set), when not on the default branch, and when the default branch's `forge.toml` already says
    `merge = "agent"`; a prototype that merges by agent only before sign-off doesn't count as on.
    Tests run the command in a throwaway repo with fake `gh` and review: a normal run reaching
-   Ready, a CRLF `forge.toml` ending in a table, a rerun after a failed push, each refusal with
+   Ready, a CRLF `forge.toml` ending in a table, a rerun after an interruption before the commit, after it, after the push and after
+   the pull request, `forge merge` refusing the switch's pull request in a prototype, each refusal with
    nothing created, and a prototype before sign-off.
 2. `forge merge`'s disabled message says to run `forge merge enable` in your own terminal. The
    skill says the `merge` setting is the owner's: the agent never changes it to `"agent"` and
