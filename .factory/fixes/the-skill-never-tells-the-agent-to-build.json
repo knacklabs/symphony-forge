@@ -1,0 +1,14 @@
+{
+  "base": "67b72a7ed1e908f0fea51df552093f36c288ffc3",
+  "branch": "fix/the-skill-never-tells-the-agent-to-build",
+  "done_when": "The synced Forge skill's prototype steps tell the agent to build the demo-data loader in the first version, to use the Words they use list for screen labels, and to tell the salesperson to click an element in the demo build, write what's wrong and paste the output to the agent; a test checks each through forge sync and forge init",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T04:39:21+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The skill never tells the agent to build the demo-data loader in a prototype's first version, label screens with the customer's words, or teach salespeople to point at the screen with the demo toolbar"
+}
