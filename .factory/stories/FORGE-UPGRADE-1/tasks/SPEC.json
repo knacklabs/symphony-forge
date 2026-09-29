@@ -2,7 +2,7 @@
   "base": "8f037314f4064b84b4a5a05529ccb5995ee6f7ed",
   "branch": "task/FORGE-UPGRADE-1-SPEC",
   "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T03:39:51+00:00",
