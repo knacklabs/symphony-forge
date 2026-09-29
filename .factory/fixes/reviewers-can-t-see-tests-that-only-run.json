@@ -3,11 +3,53 @@
   "branch": "fix/reviewers-can-t-see-tests-that-only-run",
   "done_when": "forge close runs the repo's test command on the machine it runs on and gives the reviewer the result, listing what passed and what was skipped with the reason; the review brief says a skipped test that the close run passed is not a missing test, and that for a pure deletion a test showing the old input is now refused is enough; tests run forge close with a test command that passes and one that skips",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "f22d35cf38cad2831877d87d65e6ae9903c8b21ae4fa32fab6c59c9a0704601e",
+    "commit": "28a28d7ccbcdce4080f5e20db0b320a14a330d86",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Forge scaffolds Go repositories with `go test ./...` (`src/forge/init.py:55`). Its passing package summary is `ok <package> <duration>`, which this filter discards, and the default Go command does not print skipped tests or their reasons. The reviewer therefore receives only the overall exit code for a supported repo type. This is new evidence against the ruling that other runners' summary lines survive the generic match. [Go command documentation](https://pkg.go.dev/cmd/go).",
+        "file": "src/forge/review.py",
+        "line": 239,
+        "priority": "P1",
+        "title": "Not done: forge close reports passed and skipped Go tests with their reasons"
+      },
+      {
+        "body": "The end-to-end skip test uses only pytest. It passes even though Forge's supported `go test ./...` command (`src/forge/init.py:55`) leaves the reviewer without skip reasons. Add a `forge close` test using that command with a skipped test, asserting that the review brief names the skip and its reason.",
+        "file": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py",
+        "line": 41,
+        "priority": "P1",
+        "title": "Not done: a forge close test proves skipped Go tests reach the reviewer"
+      },
+      {
+        "body": "A pytest run with more than 40 matching summary lines loses the earlier skip entries and their reasons, while the final count still reports those tests as skipped. The cap directly removes information this change promises to give the reviewer.",
+        "file": "src/forge/review.py",
+        "line": 243,
+        "priority": "P2",
+        "title": "Preserve skip reasons beyond the last 40 matching lines"
+      },
+      {
+        "body": "`close` reads `cfg` before merging the default branch (`src/forge/close.py:58,71`). If that merge updates `forge.toml`'s test command, this call runs the old command and presents it as the repository's current test result. Read the merged configuration before selecting the command.",
+        "file": "src/forge/review.py",
+        "line": 199,
+        "priority": "P2",
+        "title": "Read the test command after merging the default branch"
+      }
+    ],
+    "status": "blocked",
+    "tree": "94cdba5846cf089fc0522d2af572ba173c9c1191690df167d8eac490e21314f3"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T08:04:17+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T08:29:19+00:00",
+      "step": "review"
     }
   ],
   "why": "Reviewers can't see tests that only run outside the worker's sandbox, such as database tests, so every database change is flagged as untested even when those tests pass"
