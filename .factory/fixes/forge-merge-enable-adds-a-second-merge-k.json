@@ -3,11 +3,39 @@
   "branch": "fix/forge-merge-enable-adds-a-second-merge-k",
   "done_when": "forge merge enable changes an existing merge key wherever and however forge.toml writes it (indented, single- or double-quoted, with a comment) and adds one only when there is none, and the file still parses; a test covers each form",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "29ab9015203eb256c8a18e171e520d6a757fc231ee5477352c7517941cafed8f",
+    "commit": "64f5955eeb61069154e2078de38e308a14a21ac2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Forge accepts `merge = \"\"\"human\"\"\"`, but this regex replaces only the first two quotes, leaving invalid TOML, so enable refuses instead of changing the key. The new test at tests/test_fix_forge_merge_enable_adds_a_second_merge_k.py:36 expects that refusal rather than a successful command-level edit. A double-quoted key containing a TOML escape, such as `\"mer\\u0067e\"`, also parses as `merge` but is missed by the regex; inserting another key then creates a duplicate. The parser in src/forge/repo.py:205 uses tomllib, and its merge validation at line 138 accepts the resulting `human` value. Cover these valid forms through `forge merge enable` and change the existing key.",
+        "file": "src/forge/merge.py",
+        "line": 161,
+        "priority": "P1",
+        "title": "Not done: forge merge enable changes existing merge keys in valid quoted forms"
+      },
+      {
+        "body": "The search treats any line beginning with `[` as the first table, even when that line is inside a multiline TOML string. For example, a valid root `test = \"\"\"\\n[options]\\n\"\"\"` followed by `merge = \"human\"` makes `top` stop before the existing merge key. Enable inserts a second root key and then refuses the duplicate. `test` is an accepted string setting in src/forge/repo.py:132 and is not restricted to one line by its validation at line 281. Locate actual TOML tables so this valid placement can be edited.",
+        "file": "src/forge/merge.py",
+        "line": 160,
+        "priority": "P2",
+        "title": "Handle a table-looking line inside a multiline config string"
+      }
+    ],
+    "status": "blocked",
+    "tree": "dcb4d3dd83e2f8d06bf9521550b99e78624249370122939e4d2d217199ae0fe2"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T15:21:36+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T15:45:33+00:00",
+      "step": "review"
     }
   ],
   "why": "forge merge enable adds a second merge key when forge.toml writes it indented or quoted, which breaks the file"
