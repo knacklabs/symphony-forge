@@ -5,41 +5,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f22d35cf38cad2831877d87d65e6ae9903c8b21ae4fa32fab6c59c9a0704601e",
-    "commit": "28a28d7ccbcdce4080f5e20db0b320a14a330d86",
+    "changed": "62fdd0fd15fae62fa29e257280c1cb3a55235dbdad9921786ccc898685f8b4a5",
+    "commit": "2ec605f93a5535be5728a1b84f6f37d83c013b58",
     "dismissals": [],
     "findings": [
       {
-        "body": "Forge scaffolds Go repositories with `go test ./...` (`src/forge/init.py:55`). Its passing package summary is `ok <package> <duration>`, which this filter discards, and the default Go command does not print skipped tests or their reasons. The reviewer therefore receives only the overall exit code for a supported repo type. This is new evidence against the ruling that other runners' summary lines survive the generic match. [Go command documentation](https://pkg.go.dev/cmd/go).",
+        "body": "Forge's default Go test command is `go test ./...` (`src/forge/init.py:55`). This new call runs that command unchanged. In package-list mode, Go prints only an `ok` summary for a passing package unless `-v` is set, so a skipped test and its reason never reach the output filter. This is evidence the earlier generic-summary ruling did not account for: the reviewer can see that the package passed, but cannot see what was skipped or why. See the [Go command documentation](https://pkg.go.dev/cmd/go).",
         "file": "src/forge/review.py",
-        "line": 239,
+        "line": 237,
         "priority": "P1",
-        "title": "Not done: forge close reports passed and skipped Go tests with their reasons"
+        "title": "Not done: forge close reports skipped Go tests with reasons"
       },
       {
-        "body": "The end-to-end skip test uses only pytest. It passes even though Forge's supported `go test ./...` command (`src/forge/init.py:55`) leaves the reviewer without skip reasons. Add a `forge close` test using that command with a skipped test, asserting that the review brief names the skip and its reason.",
+        "body": "The new Go-style test runs `gotest.py`, which prints canned `--- SKIP` and reason lines. It never runs Forge's supported `go test ./...` command (`src/forge/init.py:55`), so it passes while the Go skip-reporting defect remains. This is new evidence relative to the earlier finding about pytest-only coverage: the added case still cannot fail when real Go skips disappear. Exercise `forge close` with an actual skipped Go test and assert that its reason reaches the review brief.",
         "file": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py",
-        "line": 41,
+        "line": 77,
         "priority": "P1",
         "title": "Not done: a forge close test proves skipped Go tests reach the reviewer"
       },
       {
-        "body": "A pytest run with more than 40 matching summary lines loses the earlier skip entries and their reasons, while the final count still reports those tests as skipped. The cap directly removes information this change promises to give the reviewer.",
+        "body": "The revised cap still drops the middle of the selected output when it exceeds 80 lines. For example, a pytest `-rs` summary with 100 skipped tests can lose skip entries and their reasons while retaining the final skipped count. That leaves the reviewer without the promised reason for every listed skip.",
         "file": "src/forge/review.py",
-        "line": 243,
+        "line": 245,
         "priority": "P2",
-        "title": "Preserve skip reasons beyond the last 40 matching lines"
-      },
-      {
-        "body": "`close` reads `cfg` before merging the default branch (`src/forge/close.py:58,71`). If that merge updates `forge.toml`'s test command, this call runs the old command and presents it as the repository's current test result. Read the merged configuration before selecting the command.",
-        "file": "src/forge/review.py",
-        "line": 199,
-        "priority": "P2",
-        "title": "Read the test command after merging the default branch"
+        "title": "Preserve skip reasons beyond the 80-line cap"
       }
     ],
     "status": "blocked",
-    "tree": "94cdba5846cf089fc0522d2af572ba173c9c1191690df167d8eac490e21314f3"
+    "tree": "f4abe460985cf85ad2b03aab2b6fe018f8fff89af53945a1d34fba3a1e0e1914"
   },
   "status": "fixing",
   "steps": [
@@ -49,6 +42,10 @@
     },
     {
       "at": "2026-09-29T08:29:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T08:43:23+00:00",
       "step": "review"
     }
   ],
