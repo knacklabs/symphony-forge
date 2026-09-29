@@ -27,7 +27,7 @@ REFUSALS = {
                 'forge fix allow-large "<reason>")'),
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
-    "story_doc": ("{problem}", "fix the story doc, then forge read <KEY> --amended if it changed after its read"),
+    "story_doc": ("{problem}", "fix the story doc, then forge read <KEY>"),
 }
 CODE_LIMIT = 5
 WORKFLOW_PATH = ".github/workflows/forge.yml"
