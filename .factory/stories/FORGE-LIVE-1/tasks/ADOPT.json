@@ -1,0 +1,40 @@
+{
+  "branch": "task/FORGE-LIVE-1-ADOPT",
+  "review": {
+    "commit": "af364f6a2abdb3cce605eda43ecb8c067f2262fd",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If the hooks directory contains both a non-Forge `pre-commit` hook and `pre-commit.pre-forge`, the adoption commit can succeed, but `sync.install_shims` then refuses the conflict (src/forge/sync.py:289-294). `forge init` exits after creating the branch, worktree, and commit. Check hook conflicts before `story.add_worktree` so this failure leaves nothing changed.",
+        "file": "src/forge/init.py",
+        "line": 311,
+        "priority": "P2",
+        "title": "Preflight conflicting Git hooks before committing adoption"
+      },
+      {
+        "body": "A tracked `AGENTS.md` symlink to a file inside the repo passes preflight because `AGENTS.md` is treated as mergeable. `sync.write_file` follows that link (src/forge/sync.py:85-91), so adoption writes the House rules and Forge block to its target in the new worktree. The later `git add` stages `AGENTS.md`, whose symlink entry has not changed, but not the target. The command can report success with both additions absent from its commit and the worktree dirty. Refuse this link before creating the branch or account for its target in the commit.",
+        "file": "src/forge/init.py",
+        "line": 300,
+        "priority": "P2",
+        "title": "Handle an existing AGENTS.md symlink before writing adoption rules"
+      }
+    ],
+    "status": "clean",
+    "tree": "7d433e031a345dbde4330ab3b5840e910b0b09612ec0d370236c7db24aa155f2"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T19:22:51+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:57:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T20:17:42+00:00",
+      "step": "review"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "base": "b77433c204e8d43a5c2a5a3fc00360ddb6848583",
+  "branch": "fix/reviewers-reverse-the-coordinator-s-earl",
+  "done_when": "The next review's brief lists every Ruling: line from the branch's commit messages and every dismissal with its reason, and tells the reviewer to raise a ruled or dismissed point again only with new evidence; a test runs forge close twice and sees both in the second brief",
+  "kind": "fix",
+  "review": {
+    "commit": "3b1945eab0df483688187be78c47433a1683014b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The `--no-merges` flag omits every merge commit message. When a default-branch conflict is resolved manually, as directed by `src/forge/close.py:171-182`, the resulting merge commit can contain a `Ruling:` line, but that ruling will never appear in the next review brief. Include merge commit messages when collecting rulings.",
+        "file": "src/forge/review.py",
+        "line": 215,
+        "priority": "P2",
+        "title": "Include Ruling lines from merge commits"
+      }
+    ],
+    "status": "clean",
+    "tree": "988963e6c9b61ed65371e28cfafe033abd50fe2485f859c7540e975102786e7d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T19:22:56+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T19:37:34+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Reviewers reverse the coordinator's earlier rulings, because a ruling's reason never reaches the next review"
+}

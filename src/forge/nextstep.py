@@ -170,17 +170,34 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
-        if cfg["repo"] == "client" and not approval.signed_off(top, cfg):
+        if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
                 notice = ["Open before sign-off in docs/product/BRIEF.md:",
                           *(f"- {topic}" for topic in open_topics),
                           "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
                 lines = notice + lines if len(trees) > 1 else lines + notice
+    if _needs_demo_address(top):
+        lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
+                  "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     return lines, states
+
+
+def _needs_demo_address(top: Path) -> bool:
+    """Read the fetched default branch, not a demo address still being edited here."""
+    if not (top / "forge.toml").is_file():
+        return False
+    ref = story.landed_ref(top)
+    if story.show(top, ref, "Dockerfile") is None:
+        return False
+    if not repo.is_prototype(top, repo.default_config(top), (ref,)):
+        return False
+    brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
+    demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
+    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
 
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
@@ -303,7 +320,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path, _report_config(path, refusals)):
+    if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)
@@ -343,7 +360,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if receipt.get("tidied") is True:
         return []
     if status == "merged" and path:
-        if repo.default_config(top)["merge"] == "agent" and receipt.get("review") == "clean":
+        if repo.merge_setting(top) == "agent" and receipt.get("review") == "clean":
             return [f"{label} is merged; Forge needs to finish tidying up.",
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
@@ -356,7 +373,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     if (status == "ready" and state.get("kind") != "migrate"
-            and repo.default_config(top)["merge"] == "agent"):
+            and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
@@ -375,6 +392,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
+        if status == "waiting for checks" and repo.merge_setting(top) == "agent":
+            return [f"{label}'s checks passed; finish preparing its automatic merge.",
+                    f"Next: forge close {item}"]
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]

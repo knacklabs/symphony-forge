@@ -28,7 +28,7 @@ LIGHT = (False, "Prototype before sign-off", "P1")
 def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         env, signed_off, allowance, priority, ready, checks, problem):
     env.repo.write("forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
-                   + 'repo = "client"\n'
+                   + 'repo = "client"\nstage = "prototype"\n'
                    + '[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     if signed_off:
         env.repo.write("docs/decisions/0001-client-signoff.md",

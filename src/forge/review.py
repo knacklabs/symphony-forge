@@ -23,7 +23,9 @@ from forge import repo
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
-HELPER = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
+# Its standard installs: the Codex skills folder, then the Claude one.
+HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
+           for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
@@ -143,21 +145,10 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
-    cfg = repo.config(top)
     if ("/" in item or state.get("kind") != "fix" or
-            state.get("allow_large") != "Prototype before sign-off" or cfg["repo"] != "client"):
+            state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
-    for ref in (base, commit):
-        names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-        for name in names.splitlines():
-            wanted = name == cfg["signoff"] if cfg["signoff"] else name.endswith("client-signoff.md")
-            if not wanted:
-                continue
-            record = repo.git("show", f"{ref}:{name}", cwd=top)
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return "P1"
-    return "P0"
+    return "P0" if repo.is_prototype(top, refs=(base, commit)) else "P1"
 
 
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
@@ -182,7 +173,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -218,6 +209,24 @@ def _previous(result: dict[str, Any]) -> str:
         for n, finding in enumerate(findings, 1)) or "- none"
 
 
+def _rulings(top: Path, item: str, base: str) -> str:
+    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
+    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
+    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
+    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    path = repo.state_path(item)
+    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            line = (f"{finding['title']} ({finding['file']}): dismissed because "
+                    f"{dismissal['because']}")
+            if line not in found:
+                found.append(line)
+    return _bullets(found)
+
+
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     """The worker's functional check: the `Functional check:` paragraph of its last commit message,
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
@@ -246,8 +255,9 @@ def _within(path: str, entry: str) -> bool:
 
 
 def helper() -> Path:
-    """The Autoreview helper ($AUTOREVIEW, else the standard install), refused unless pinned."""
-    path = Path(os.environ.get("AUTOREVIEW") or HELPER)
+    """The Autoreview helper ($AUTOREVIEW, else the first standard install), refused unless pinned."""
+    path = Path(os.environ.get("AUTOREVIEW")
+                or next((found for found in HELPERS if found.is_file()), HELPERS[0]))
     stamp = path.parent.parent / ".upstream-sha"
     found = stamp.read_text(encoding="utf-8").strip() if path.is_file() and stamp.is_file() else ""
     if found != AUTOREVIEW_PIN:
@@ -286,16 +296,20 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = repo.git("rev-parse", base, cwd=tree)
+        engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
-                "--engine", "codex",
+                "--engine", engine,
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
                 "--json-output", str(out)]
-        chosen = {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review")
+        # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
+        # on Codex, or its Claude cold-read model when only Claude is installed.
+        chosen = (repo.models(cfg, "grill", "claude") if engine == "claude" else
+                  {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review"))
         if chosen:
-            argv += ["--model", f"codex={chosen['model']}"]
-            argv += ["--thinking", f"codex={chosen['effort']}"] if "effort" in chosen else []
+            argv += ["--model", f"{engine}={chosen['model']}"]
+            argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []
         launcher = _launcher(tmp / "bin", tree)
         if launcher:
             argv += ["--codex-bin", str(launcher)]
