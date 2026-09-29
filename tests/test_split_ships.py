@@ -12,7 +12,7 @@ import pytest
 STORY = "FORGE-SPLIT-1"
 
 # Captured from forge sync with these two client setups. Hashes use LF newlines.
-# The skill hash now includes the demo script, reactions, read-back and sign-off email;
+# The skill hash now includes the demo script, reactions, read-back and the review before sign-off;
 # all other output stays pinned.
 GOLDEN = {
     "plain": {
@@ -20,8 +20,8 @@ GOLDEN = {
         "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
         ".claude/settings.json": "f0e550f035db6feb93de9aeea566253326500d5925bee3d2a41faf8b5f40df7d",
         ".codex/hooks.json": "6359773ba4fb597c6f1e4e6fc504227b419afcaa2236abd459942f8fcf99dbd8",
-        ".claude/skills/forge/SKILL.md": "262517afc9718e6f1fdd072f91c7a11dd965f9619006de0598c451cb6779a664",
-        ".codex/skills/forge/SKILL.md": "262517afc9718e6f1fdd072f91c7a11dd965f9619006de0598c451cb6779a664",
+        ".claude/skills/forge/SKILL.md": "a1819fef775ced7b9a33f5a4b9e47e8293b3187d4d515d9739274538d7ebe365",
+        ".codex/skills/forge/SKILL.md": "a1819fef775ced7b9a33f5a4b9e47e8293b3187d4d515d9739274538d7ebe365",
         ".claude/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
         ".codex/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
         ".claude/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
