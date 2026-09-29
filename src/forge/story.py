@@ -71,6 +71,22 @@ DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|de
 READERS = {"CLAUDECODE": "codex", "CODEX_THREAD_ID": "claude"}
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
+    return {
+        ".claude/skills/forge/SKILL.md": skill,
+        ".codex/skills/forge/SKILL.md": skill,
+        **{f"{host}/skills/forge/standards.md":
+           (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
+        **{f"{host}/skills/forge/fde.md":
+           sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
+           for host in (".claude", ".codex")},
+    }
+
+
 # --- commands ------------------------------------------------------------------------------
 
 
@@ -78,6 +94,9 @@ def new(args: Any) -> int:
     top, key, fix = repo.root(), args.key, args.from_fix
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
+    if (top / "forge.toml").is_file() and repo.is_prototype(top):
+        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                     "forge next"))
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
     done = "Something anyone can observe once this is done."
     if fix:
@@ -135,13 +154,14 @@ def read(args: Any) -> int:
     reader, config = readers[0], repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
     prompt, head = (TEMPLATES / "cold-read.md").read_text(encoding="utf-8").split("<!-- forge:notes -->\n")
+    prompt = prompt.split("<!-- forge:round -->\n")[0]  # the first round's part
     before = _snapshot(top)  # first, so any change from here on discards the read
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = subprocess.run(["git", "hash-object", "--stdin", f"--path={rel}"], cwd=top, input=text,
                                capture_output=True, check=True).stdout.decode().strip()
     prompt = Template(prompt).safe_substitute(
         path=rel, doc=text.decode("utf-8"), target=target,
-        spec=_confirmed_spec(top, target) if is_story else "")
+        spec=_confirmed_spec(top, target) if is_story else "", traps=_known_traps(top))
     if reader == "claude":
         done = repo.run("claude", "-p", *models, "--permission-mode", "plan", cwd=top, input=prompt)
         said, failed = done.stdout.strip(), done.returncode
@@ -460,6 +480,13 @@ def _confirmed_spec(top: Path, key: str) -> str:
     return "\nNo linked confirmed spec was found in the local branches.\n"
 
 
+def _known_traps(top: Path) -> str:
+    """The `## Known traps` section of AGENTS.md on the default branch, outside Forge's block."""
+    text = show(top, landed_ref(top), "AGENTS.md") or ""
+    text = re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", "", text, flags=re.S)
+    return sections(text).get("Known traps", "").strip()
+
+
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:
     try:
         return parse(_text(doc))
@@ -565,3 +592,24 @@ def _text(path: Path) -> str:
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))  # bytes, so Windows writes the same LF file
+
+
+COMMANDS = [
+    {"words": "story new", "run": "new", "changes_state": True,
+     "help": "Start a story branch, worktree and story doc, or promote a fix",
+     "args": [(('key',), {}), (('title',), {"nargs": "?"}),
+              (('--from-fix',), {"metavar": "FIX"})], "position": 70,
+     "listing": '| `forge story new <KEY> "<title>"` | Starts a story\'s branch, worktree and doc (`--from-fix <fix>` promotes a fix) |'},
+    {"words": "story done", "run": "done", "changes_state": True,
+     "help": "Record a finished story's outcome sentence and dates",
+     "args": [(('key',), {}), (('outcome',), {})], "position": 80,
+     "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
+    {"words": "read", "run": "read", "changes_state": True,
+     "help": "Run the one cold read of a story doc or spec",
+     "args": [(('target',), {"help": "a story key or a spec slug"}),
+              (('--amended',), {"action": "store_true", "help": "record the one amendment"})],
+     "position": 90,
+     "listing": '| `forge read <KEY or spec>` | Runs the one cold read of a story doc or spec (`--amended` records the one amendment) |'},
+]
+
+GROUP_HELP = {"story": "Start a story, or record its outcome"}

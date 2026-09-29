@@ -252,43 +252,6 @@ def _check_later_local_commit(env):
     assert env.repo.git("show", "origin/main:app.py") == "print('hello')"
 
 
-def _check_archive_retry(env, sdk_data, tmp_path, monkeypatch):
-    item, where = _ready(env)
-    stub = _archiving_codex(env.repo, sdk_data, tmp_path, monkeypatch)
-    record = env.repo.path / ".git" / "forge" / "threads" / "fix" / f"{item}.log"
-    record.parent.mkdir(parents=True, exist_ok=True)
-    record.write_text(''.join(json.dumps({"conversation": thread}) + "\n"
-                              for thread in ("thr-one", "thr-two")), encoding="utf-8")
-    head = env.repo.git("rev-parse", "HEAD", cwd=where)
-    env.gh.respond("pr", "view", stdout=json.dumps({
-        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
-        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
-    _merge_at_github(env, local_commit=where)
-    monkeypatch.setenv("STUB_ARCHIVE_FAIL_THREAD", "thr-two")
-    failed = env.repo.forge("merge", item)
-    assert failed.returncode != 0
-    assert failed.stderr == (f"Forge could not archive every Codex conversation for {item}.\n"
-                             f"Next: try forge merge {item} again\n")
-    assert where.is_dir()
-    assert env.repo.git("ls-remote", "--heads", "origin", "fix/tidy-readme")
-    env.gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(
-        [{"headRefName": "fix/tidy-readme"}]))
-    assert f"Next: forge merge {item}" in env.repo.forge("next").stdout
-    monkeypatch.delenv("STUB_ARCHIVE_FAIL_THREAD")
-    retried = env.repo.forge("merge", item)
-    assert retried.returncode == 0, retried.stderr
-    assert where.is_dir()
-    assert env.repo.git("status", "--porcelain", cwd=where) == ""
-    assert env.repo.git("log", "-1", "--format=%s", "fix/tidy-readme") == "Keep this local work"
-    assert "local commits" in retried.stdout.lower()
-    calls = [json.loads(line) for line in stub.read_text("utf-8").splitlines()]
-    archived = [call["params"]["threadId"] for call in calls
-                if call.get("method") == "thread/archive"]
-    assert archived.count("thr-one") == 1
-    assert archived.count("thr-two") == 2
-    assert item not in env.repo.forge("next").stdout
-
-
 def _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     env.commit(env.repo.path, "forge.toml", config.replace('workers = "claude"', 'workers = "codex"')
@@ -340,16 +303,14 @@ def _check_locked_worktree(env):
     assert not where.exists()
 
 
-@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "archive_retry", "locked_worktree",
+@pytest.mark.parametrize("scenario", ("dirty", "local_commit", "locked_worktree",
                                      "record_without_turn"))
-def test_5_merge_cleans_up_only_after_archiving_and_preserves_local_work(
+def test_5_merge_cleans_up_and_preserves_local_work(
         env, sdk_data, tmp_path, monkeypatch, scenario):
     if scenario == "dirty":
         _check_dirty_merge(env, sdk_data, tmp_path, monkeypatch)
     elif scenario == "local_commit":
         _check_later_local_commit(env)
-    elif scenario == "archive_retry":
-        _check_archive_retry(env, sdk_data, tmp_path, monkeypatch)
     elif scenario == "record_without_turn":
         _check_record_without_turn(env, sdk_data, tmp_path, monkeypatch)
     else:

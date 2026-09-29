@@ -23,6 +23,15 @@ from typing import Any
 
 from forge import repo, story, task
 
+COMMANDS = [{
+    "words": "board", "run": "board", "changes_state": False,
+    "help": "Write and open the plain-English board page",
+    "args": [(('--out',), {"metavar": "PATH", "help":
+              "write the page here instead of .git/forge/board.html"})],
+    "position": 60,
+    "listing": "| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |",
+}]
+
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
 PREFIXES = ("story/", "task/", "fix/", "forge/")  # the branches Forge starts; forge/ is migrate's
 STATE = re.compile(r"\.factory/(?:stories/(?P<key>[A-Z][A-Z0-9-]*)/(?:story|tasks/(?P<task>[A-Z0-9][A-Z0-9-]*))"
@@ -49,16 +58,16 @@ def board(args: Any) -> int:
     return 0
 
 
-def numbers_line(top: Path) -> str:
+def numbers_line(top: Path, checks: list[str]) -> str:
     """The three success numbers in one line, for `forge next`."""
-    stories, _, prs = _gather(top)
+    stories, _, prs = _gather(top, checks)
     return "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + "."
 
 
 # --- reading the state and GitHub ------------------------------------------------------------
 
 
-def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
+def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], list[Item], list[Item] | None]:
     """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
     requests (None without a working gh)."""
     landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
@@ -74,7 +83,8 @@ def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
     for pr in prs or []:  # newest first; a merged one wins
         if pr.get("headRefName") not in by_branch or pr.get("state") == "MERGED":
             by_branch[str(pr.get("headRefName"))] = pr
-    checks = repo.config(top)["checks"] if (top / "forge.toml").is_file() else []
+    if checks is None:
+        checks = repo.config(top)["checks"] if (top / "forge.toml").is_file() else []
 
     def part(rel: str, state: Item, branch: str, noun: str) -> Item:
         pr = by_branch.get(state.get("branch") or branch)

@@ -77,3 +77,21 @@ def answer(args: argparse.Namespace) -> str:
 
 def payback(args: argparse.Namespace) -> None:
     print(answer(args))
+
+
+COMMANDS = [{
+    "words": "spec payback", "run": "payback", "changes_state": False,
+    "help": "Say whether a build pays back: build, smallest slice first, don't build or find out first",
+    "args": [(('--build-days',), {"metavar": "DAYS"}),
+             (('--day-rate',), {"metavar": "AMOUNT"}),
+             (('--hours-per-month',), {"metavar": "HOURS", "help": "hours saved per person each month"}),
+             (('--people',), {"metavar": "COUNT"}),
+             (('--hourly-rate',), {"metavar": "AMOUNT"}),
+             (('--revenue-per-month',), {"metavar": "AMOUNT"}),
+             (('--incident-cost',), {"metavar": "AMOUNT"}),
+             (('--incident-chance',), {"metavar": "CHANCE", "help": "the chance each month, from 0 to 1"}),
+             (('--confidence',), {"choices": ("measured", "estimated", "guessed"),
+                                   "default": "guessed", "help": "weighs the value by 1, 1/2 or 1/5 (default: guessed)"})],
+    "position": 200,
+    "listing": "| `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |",
+}]

@@ -220,8 +220,13 @@ def decision_new(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["decision_exists"], rel=existing, slug=args.slug)
     number = max(_decision_numbers(top), default=0) + 1
     rel = f"docs/decisions/{number:04d}-{args.slug}.md"
-    _write(top, rel, DECISION.format(date=repo.now()[:10],
-                                     title=args.slug.replace("-", " ").capitalize()))
+    text = DECISION.format(date=repo.now()[:10],
+                           title=args.slug.replace("-", " ").capitalize())
+    if args.slug.endswith("client-signoff"):
+        text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
+                            "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
+        text += "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n"
+    _write(top, rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
           f'confirms in chat: forge decision accept {args.slug} --by "<name>"')
@@ -247,6 +252,41 @@ def decision_accept(args: argparse.Namespace) -> None:
     if unfilled:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
+    if Path(rel).stem.endswith("client-signoff"):
+        from forge import nextstep, review
+
+        next_step = f'forge decision accept {args.slug} --by "{by}"'
+        invalid = [name for name, valid in {
+            "customer": re.fullmatch(r"\S[^,]*,\s*\S.*", fields.get("customer", "")),
+            "approved_via": fields.get("approved_via", "").lower() in ("email", "call"),
+            "demo": re.fullmatch(r"https?://[^\s/]+(?:/\S*)?", fields.get("demo", "")),
+        }.items() if not valid]
+        if invalid:
+            repo.refuse((f"{rel} needs valid {', '.join(invalid)} for customer sign-off.",
+                         f"correct {rel}, then {next_step}"))
+        try:
+            date.fromisoformat(fields.get("approved_on", ""))
+        except ValueError:
+            repo.refuse((f"{rel} needs a real approved_on date.",
+                         f"correct {rel}, then {next_step}"))
+        brief = _text(top, "docs/product/BRIEF.md")
+        quote = _answer_section(body)
+        if not brief or not quote or quote != _answer_section(brief):
+            repo.refuse((f"{rel}'s Answers must quote docs/product/BRIEF.md word for word.",
+                         f"copy its Answers section, then {next_step}"))
+        open_topics = nextstep.open_must_answer_topics(top)
+        answers = nextstep.parse_answers(top)
+        open_topics += [topic for topic in nextstep.MUST_ANSWER_TOPICS
+                        if topic not in open_topics and answers[topic][0][1].strip().lower()
+                        not in ("client", "salesperson", "developer")]
+        if open_topics:
+            repo.refuse(("Customer sign-off needs a client, salesperson, or developer answer for: "
+                         + ", ".join(open_topics) + ".",
+                         "forge next, then update docs/product/BRIEF.md and the decision quote"))
+        if fields["customer"] != answers["Sign-off person"][0][0]:
+            repo.refuse((f"{rel}'s customer must match the Sign-off person answer.",
+                         f"correct {rel}, then {next_step}"))
+        text = _set(text, reviewed_commit=review.signoff(top, quote))
     changed = [rel]
     old = fields.get("supersedes")
     if old:
@@ -269,6 +309,9 @@ def decision_accept(args: argparse.Namespace) -> None:
 def roadmap_add(args: argparse.Namespace) -> None:
     slug = args.spec
     top = _start(args, slug)
+    if (top / "forge.toml").is_file() and repo.is_prototype(top):
+        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                     "forge next"))
     rel, _, fields, body = _spec(top, slug)
     if fields.get("status") != "confirmed":
         repo.refuse(REFUSALS["unconfirmed"], slug=slug, status=fields.get("status") or "none")
@@ -421,6 +464,11 @@ def _sections(body: str) -> dict[str, str]:
     return dict(zip(parts[1::2], parts[2::2]))
 
 
+def _answer_section(body: str) -> str:
+    match = re.search(r"(?ms)^## Answers\r?\n.*?(?=^## |\Z)", body)
+    return match[0] if match else ""
+
+
 def _text(top: Path, rel: str) -> str:
     path = top / rel
     return path.read_text(encoding="utf-8") if path.is_file() else ""
@@ -430,3 +478,38 @@ def _write(top: Path, rel: str, text: str) -> None:
     path = top / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode("utf-8"))  # bytes, so Windows writes the same LF file
+
+
+COMMANDS = [
+    {"words": "spec save", "run": "spec_save", "changes_state": True,
+     "help": "Save a spec as a draft", "args": [(('slug',), {})], "position": 170,
+     "listing": "| `forge spec save <slug>` | Saves a spec as a draft |"},
+    {"words": "spec confirm", "run": "spec_confirm", "changes_state": True,
+     "help": "Mark a spec confirmed after the human confirms in chat",
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "position": 180,
+     "listing": "| `forge spec confirm <slug> --by \"<name>\"` | Marks a spec confirmed after the human confirms it in chat |"},
+    {"words": "spec measure", "run": "spec_measure", "changes_state": True,
+     "help": "Record the measured result in a confirmed spec's Success measure; it stays confirmed",
+     "args": [(('slug',), {}), (('--result',), {"required": True, "metavar": "TEXT"})],
+     "position": 190,
+     "listing": '| `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec\'s Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |'},
+    {"words": "decision new", "run": "decision_new", "changes_state": True,
+     "help": "Write a decision record", "args": [(('slug',), {})], "position": 210,
+     "listing": "| `forge decision new <slug>` | Writes a decision record |"},
+    {"words": "decision accept", "run": "decision_accept", "changes_state": True,
+     "help": "Accept a decision after the human confirms in chat",
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "position": 220,
+     "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat |"},
+    {"words": "roadmap add", "run": "roadmap_add", "changes_state": True,
+     "help": "Add roadmap items from a confirmed spec", "args": [(('spec',), {})],
+     "position": 230,
+     "listing": "| `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |"},
+]
+
+GROUP_HELP = {
+    "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
+    "decision": "Write and accept decisions",
+    "roadmap": "Add roadmap items",
+}

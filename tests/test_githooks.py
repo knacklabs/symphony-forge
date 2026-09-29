@@ -12,7 +12,9 @@ NEXT_PROMOTE = "Next: forge story new <KEY> --from-fix {fix}\n"
 def hooked(repo, interfaces=()):
     """Pin Forge on main, then install the two git hook shims the way forge sync does."""
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\ninterfaces = {json.dumps(list(interfaces))}\n')
+    # Forge's own repo retains the normal fix limit; unsigned client fixes get an allowance.
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
+               f'interfaces = {json.dumps(list(interfaces))}\n')
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")

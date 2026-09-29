@@ -92,7 +92,12 @@ def _decision(repo, rel, status):
 
 def test_32_client_signoff(repo, claude_payload):
     setup(repo, kind="client", keys=("SHOP", "OWN", "PIN"))
+    # This story predates the new creation gate; its approval still needs the sign-off check.
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     shop = ready(repo, "SHOP")
+    (shop / "forge.toml").write_text(
+        f'version = "{version}"\nrepo = "client"\nstage = "prototype"\n{GRILL}', encoding="utf-8")
     head = repo.git("rev-parse", "story/SHOP")
     approval = claude_plan(claude_payload, DOC)
 
@@ -108,8 +113,6 @@ def test_32_client_signoff(repo, claude_payload):
     assert repo.git("rev-parse", "story/SHOP") == head
 
     # Forge's own repo needs no sign-off.
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     repo.git("commit", "-q", "-am", "This is Forge's own repo")
     own = DOC.replace("save a basket", "own a basket")
     ready(repo, "OWN", own)
@@ -130,10 +133,13 @@ def test_32_client_signoff(repo, claude_payload):
     # forge.toml's signoff pins the client's sign-off record, and approval needs exactly that one
     # accepted: the other accepted sign-off decision above doesn't count.
     pin = "docs/decisions/0002-client-signoff.md"
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nsignoff = "{pin}"\n{GRILL}')
-    _decision(repo, pin, "proposed")
     pinned = DOC.replace("save a basket", "pin a basket")
-    ready(repo, "PIN", pinned)
+    pin_story = ready(repo, "PIN", pinned)
+    (pin_story / "forge.toml").write_text(
+        f'version = "{version}"\nrepo = "client"\nstage = "prototype"\nsignoff = "{pin}"\n{GRILL}',
+        encoding="utf-8")
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nstage = "prototype"\nsignoff = "{pin}"\n{GRILL}')
+    _decision(repo, pin, "proposed")
     approval = claude_plan(claude_payload, pinned)
     refused = hook(repo, approval)
     assert refused.returncode == 1

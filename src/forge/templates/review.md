@@ -61,12 +61,15 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 
 <!-- rules -->
 ## What blocks the merge
+Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
   naming that task;
-- an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+- when the story's Tasks table assigns a test or check to another task, report it as a
+  P2 `Later:` finding naming that task, not `Not done`.
 
-Missing tests and the functional check are unchanged: they stay P1.
+Missing tests this branch owns and the functional check stay P1.
 
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
@@ -75,11 +78,14 @@ nothing the change does, is skipped, or always passes), as a P1 finding titled
 `Not done: <the test>`. The test-audit skill (`.codex/skills/test-audit/SKILL.md`) has the full
 checklist.
 
-Documentation-only changes need no new behaviour test; check claims, commands and links.
+Documentation-only changes still need every test named in the task's Tests column; check claims,
+commands and links.
 
-Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-for client apps, the running API with a real database and user flows in a browser through
-Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+Every Done-when item needs an end-to-end test through the real entry point when it covers
+user-facing behaviour: Forge's own command; for client apps, the running API with a real database
+and user flows in a browser through Playwright. CI, config, packaging and test-only items are proven
+by the test the item names.
+Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Report an item proven only by unit tests as a P1 finding
 titled `Not done: <the item>`. Never ask for unit tests of helpers.
 
@@ -97,12 +103,52 @@ Complexity the diff adds that no Done-when item needs is a defect, not a style p
 - complexity the diff didn't add, in a file the branch changes, is an advisory P3 titled
   `Simpler (existing): <what>`.
 
-impeccable is the one UI skill. A motion skill, or motion in the UI, belongs only when a
-Done-when item needs motion; anything else is a P2 `Simpler:` finding.
+impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
+visual design (layout, type, colour, states and copy) and its checking pass: shape before building,
+then audit and polish before a demo. Run emil-design-eng's review checklist inside impeccable's
+one batched inspection, with at most one more round. Invoke emil-design-eng with a specific task,
+never bare. It owns interaction feel (press feedback, easing, durations, popovers, tooltips, drag
+and when not to animate). Report a missing impeccable pass on a UI change or a failed
+emil-design-eng checklist item on the changed screens as P1 `Not done`.
+
+Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
+routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
+keep content visible by default and enter with `@starting-style` or transitions, never wait for a
+script to reveal it; share `cubic-bezier(0.23, 1, 0.32, 1)` as the one ease-out token; use CSS or
+the Web Animations API first and Motion only when a Done-when item needs springs or drag. Prototypes
+use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
+shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
+Motion that follows these rules is not a `Simpler:` finding.
 
 ## How to report
+Report every blocking gap you see in this round, together, even when one finding already blocks.
+The previous review's findings and dismissals are below; recheck them against this branch and
+report any still-open gap alongside new ones:
+$previous
+
+The coordinator's rulings and dismissals on this branch so far, with their reasons:
+$rulings
+Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
+weigh, and name that evidence in the finding's body.
+
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap). P0 and P1 block the merge; P2 and P3 are advice.
+<!-- signoff -->
+## Client prototype sign-off review
+Review the complete product snapshot against the customer's answers and the topic table below.
+The base is an empty root commit, so every tracked product file is in this diff. Check the
+working prototype as a whole: the demo workflow, data handling, sign-in, integrations, host,
+security, accessibility, and whether the implementation matches the answers. Report every
+blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
+the strength of a template or a test stub alone. Give concrete file and line evidence.
+
+The exact docs/product/BRIEF.md answers page section reviewed and quoted by the sign-off decision:
+
+$answers
+
+The twelve topics and their required timing:
+
+$topics

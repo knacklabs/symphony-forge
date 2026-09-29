@@ -108,9 +108,13 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
 
 
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
+    # FORGE-LIVE-1: a repo with history is adopted on a fix branch, not refused; without the
+    # human's confirmed answers it names the ones it needs.
     return (("init",), None, "",
-            "forge init sets up a new repo, and this one already has commits; a repo with the "
-            "copied-in Forge moves over with forge migrate.\nNext: forge migrate\n")
+            "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
+            "the answers you confirmed: --test, --checks, --interfaces, --approver, --merger.\n"
+            'Next: forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+            '--approver "<who>" --merger "<who>" --never-touch "<path>"\n')
 
 
 def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):
@@ -529,11 +533,16 @@ def test_8_plain_english(env):
 # --- criterion 9: nothing changes outside a pull request --------------------------------------
 
 def _commands() -> dict[str, bool]:
-    """Each command in cli.py's table, and whether it changes state, read from its source."""
-    tree = ast.parse((SOURCE / "cli.py").read_text(encoding="utf-8"))
-    table = next(node.value for node in tree.body if isinstance(node, ast.Assign)
-                 and [getattr(t, "id", "") for t in node.targets] == ["TABLE"])
-    return {row.elts[0].value: row.elts[2].value for row in table.elts}
+    """Each declared command and whether it changes state."""
+    commands = {}
+    for path in SOURCE.glob("*.py"):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if not isinstance(node, ast.Assign) or [getattr(t, "id", "") for t in node.targets] != ["COMMANDS"]:
+                continue
+            for row in node.value.elts:
+                fields = {key.value: value for key, value in zip(row.keys, row.values)}
+                commands[fields["words"].value] = fields["changes_state"].value
+    return commands
 
 
 def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch):

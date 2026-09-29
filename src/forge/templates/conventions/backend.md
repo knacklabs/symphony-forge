@@ -6,12 +6,12 @@ module, the config, logging or error handling.
 ## Layout
 
 ```
-apps/api/src/
+backend/src/
   main.ts               start-up: validation, the exception filter, security, Swagger, JSON logs
   app.module.ts
   config/               the one place that reads environment variables
   common/               the exception filter, the response envelope, the correlation id
-  health/               GET /health, so a deploy can check the app is up
+  health/               GET /health, after migrations have succeeded at start-up
   <domain>/             one folder per business domain
     <domain>.module.ts
     <domain>.controller.ts

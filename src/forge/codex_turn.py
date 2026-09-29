@@ -1,26 +1,15 @@
-"""One Codex turn for Forge, run by the Codex SDK's own Python; Forge itself never imports the SDK.
+"""Run a Codex turn or chat request in the SDK's Python, away from Forge's own install.
 
-This prints its own process id first, and once Forge has it on record, Forge sends one JSON
-request line on stdin: the checkout (cwd), the conversation's name, the prompt, the sandbox, the
-kind's settings (config), and the conversation to continue (thread), if any. This then prints one
-JSON line per step, in order: the app-server's process id, before Codex starts; why a new
-conversation starts when Codex can't resume that one; the thread, and whether it continued; the
-turn; each event and each declined request; then the turn's end with its status, error, final text
-and token usage, only when Codex reports it. With read, this runs no turn: after the app-server's
-id it prints each turn of the conversation with its status as Codex reports it. After the
-app-server's id and after the thread's, this waits for Forge to answer with a line saying it has
-them on record, so nothing starts that Forge hasn't recorded. Codex gets two minutes to start, or
-this prints a refusal and ends.
-
-Forge starts this in its own process group and keeps stdin open while it runs. Once stdin closes,
-Forge has gone, and this ends the whole group, itself and the app-server it started, even while
-Codex is still starting. Windows has no such group, so there this ends the app-server's process
-tree by the id it kept when the app-server started.
+Forge sends one JSON request after recording this driver's process id. The driver records the
+app-server and thread ids with Forge before it acts, emits progress as JSON lines, and stops the
+app-server if Forge closes stdin. A read, archive or attachment request runs no turn. A worker or
+cold-read turn may assign its chat to the main checkout's Codex project after start or resume.
 """
 from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import signal
 import subprocess
 import sys
@@ -123,6 +112,16 @@ def main() -> int:
             codex.thread_archive(request["thread"])
             emit(archived=True)
             return 0
+        if request.get("attach"):
+            try:
+                client._request_raw("thread/attachment/add", {
+                    "threadId": request["thread"], "attachmentType": "pull_request",
+                    "identityKey": request["identity"],
+                    "payload": request["payload"]})
+                emit(attached=True)
+            except Exception as error:
+                emit(attachment_failed=str(error))
+            return 0
         if request.get("read"):  # after a crash: how the turns Forge never saw end, ended
             try:
                 turns = client.thread_read(request["thread"], include_turns=True).thread.turns
@@ -157,8 +156,34 @@ def main() -> int:
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
         if not request.get("ephemeral"):
+            try:
+                matches = set()
+                cursor = None
+                root = Path(request["root"]).resolve()
+                while True:
+                    page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
+                    for project in page["data"]:
+                        if any(Path(path).resolve() == root for path in project.get("roots", [])):
+                            matches.add(project["id"])
+                    cursor = page.get("nextCursor")
+                    if not cursor:
+                        break
+                if len(matches) == 1:
+                    project_id = next(iter(matches))
+                    client._request_raw("thread/metadata/update", {
+                        "threadId": thread.id, "projectId": project_id})
+                    emit(project=project_id)
+                else:
+                    emit(project_skipped="no matching project" if not matches else
+                         "several matching projects")
+            except Exception as error:
+                emit(project_skipped=f"Codex could not update the chat project: {error}. "
+                     "Check Codex and try again")
+        if not request.get("ephemeral") and resumed is None:
             thread.set_name(request["name"])
-        turn = thread.turn(request["prompt"], approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
+        prompt = (request["prompt"] if resumed is not None else
+                  request.get("fresh_prompt", request["prompt"]))
+        turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
         emit(turn=turn.id)
         usage, items = None, []
         for event in turn.stream():

@@ -8,13 +8,41 @@ in progress and an empty roadmap, it offers discovery until a problem card is fi
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
+import tempfile
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from forge import approval, board, records, repo, review, story
+
+COMMANDS = [
+    {
+        "words": "next", "run": "next_step", "changes_state": False,
+        "help": "Say where things stand and give the exact next command",
+        "args": [], "position": 50,
+        "listing": "| `forge next` | Says where things stand and gives the exact next command |",
+    },
+    {
+        "words": "hook context", "run": "context_hook", "changes_state": False,
+        "help": "Session start: print forge next and the story state",
+        "args": [], "position": 240,
+        "listing": "| `forge hook context` | Session start: prints `forge next` and the story's state |",
+    },
+    {
+        "words": "hook handoff", "run": "handoff_hook", "changes_state": False,
+        "help": "Before compaction: save forge next beside the agent's decisions and lessons",
+        "args": [], "position": 245,
+        "listing": "| `forge hook handoff` | Saves current state before context compaction |",
+    },
+]
+
+GROUP_HELP = {
+    "hook": "Internal: the one entry point that git hooks, host hooks and CI call",
+}
 
 # A task's or fix's status, as WORK and CLOSE write it: what it means and what to run next.
 STATUS = {
@@ -30,6 +58,57 @@ STATUS = {
 DISCOVERY = "docs/product/DISCOVERY.md"
 # A problem card's six fields; a card is filled once any of them reads something other than unknown.
 CARD_FIELD = re.compile(r"^- (?:Job|Workaround|Cost|Who feels it|How often|Evidence):(.*)$", re.M)
+MUST_ANSWER_TOPICS = ("Sign-off person", "Demo workflow", "Users and roles",
+                      "Existing systems", "Sign-in", "Personal data", "Production host")
+ANSWER_TOPICS = (*MUST_ANSWER_TOPICS, "Data import", "Email or SMS", "Domain",
+                 "Backups and uptime", "Log retention")
+ANSWER_LINE = re.compile(r"^- [^:]+: (.+) \(([^(),]+), (\d{4}-\d{2}-\d{2})\)$")
+LATER_LINE = re.compile(r"^- [^:]+: later, when (\S.*)$")
+
+
+def parse_answers(top: Path) -> dict[str, list[tuple[str, str] | None]]:
+    """Read topic entries from this checkout's answers section; None marks a malformed entry."""
+    page = top / "docs/product/BRIEF.md"
+    text = page.read_text(encoding="utf-8") if page.is_file() else ""
+    found: dict[str, list[tuple[str, str] | None]] = {}
+    in_answers = False
+    for line in text.splitlines():
+        if line == "## Answers":
+            in_answers = True
+            continue
+        if line.startswith("#") and re.match(r"^#{1,6} ", line):
+            in_answers = False
+        if not in_answers:
+            continue
+        topic = next((name for name in ANSWER_TOPICS
+                      if line == f"- {name}" or line.startswith((f"- {name}:", f"- {name} "))), None)
+        if topic is None:
+            continue
+        if line[2:].partition(":")[0] != topic:
+            found.setdefault(topic, []).append(None)
+            continue
+        answer = ANSWER_LINE.fullmatch(line)
+        later = LATER_LINE.fullmatch(line)
+        if later:
+            found.setdefault(topic, []).append(("later", ""))
+        elif answer and answer[1].strip() and answer[2].strip():
+            try:
+                date.fromisoformat(answer[3])
+            except ValueError:
+                found.setdefault(topic, []).append(None)
+            else:
+                found.setdefault(topic, []).append((answer[1], answer[2]))
+        else:
+            found.setdefault(topic, []).append(None)
+    return found
+
+
+def open_must_answer_topics(top: Path) -> list[str]:
+    """Topics that cannot be treated as one settled answer before client sign-off."""
+    answers = parse_answers(top)
+    return [topic for topic in MUST_ANSWER_TOPICS
+            if len(answers.get(topic, [])) != 1 or answers[topic][0] is None
+            or answers[topic][0][0] in ("ask the client", "later")]
 
 
 def next_step(args: Any) -> int:
@@ -43,10 +122,30 @@ def context_hook(args: Any) -> int:
     return 0
 
 
+def handoff_hook(args: Any) -> int:
+    top = repo.root()
+    path = repo.forge_dir(top) / "handoff.md"
+    old = path.read_text(encoding="utf-8") if path.is_file() else ""
+    heading = "## Decisions and lessons\n"
+    notes = old[old.index(heading):] if heading in old else heading
+    current = "\n".join(_report(top)[0])
+    temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
+                                       prefix="handoff-", suffix=".tmp", delete=False)
+    try:
+        with temp:
+            temp.write(f"# Forge handoff\n\n## Current state ({repo.now()[:10]})\n\n"
+                       f"{current}\n\n{notes}")
+        os.replace(temp.name, path)
+    finally:
+        Path(temp.name).unlink(missing_ok=True)
+    return 0
+
+
 def _report(top: Path) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
+    refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
     merged_prs = _merged_prs(top) if trees else set()
     prs = _open_prs(top) if trees else {}
@@ -54,7 +153,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs)
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals)
         lines += found
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
@@ -65,13 +164,48 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         if state is not None:
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
-            lines += _item(name, f"The fix {name}", state, top, path, prs)
+            lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
     lines = _due(top) + (lines or _idle(top))
+    if (top / "forge.toml").is_file():
+        cfg = _report_config(top, refusals)
+        if repo.is_prototype(top, cfg):
+            open_topics = open_must_answer_topics(top)
+            if open_topics:
+                notice = ["Open before sign-off in docs/product/BRIEF.md:",
+                          *(f"- {topic}" for topic in open_topics),
+                          "Next: answer these topics in docs/product/BRIEF.md, then forge next"]
+                lines = notice + lines if len(trees) > 1 else lines + notice
+    if _needs_demo_address(top):
+        lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
+                  "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
-        lines.append(board.numbers_line(top))
+        lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
+    lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     return lines, states
+
+
+def _needs_demo_address(top: Path) -> bool:
+    """Read the fetched default branch, not a demo address still being edited here."""
+    if not (top / "forge.toml").is_file():
+        return False
+    ref = story.landed_ref(top)
+    if story.show(top, ref, "Dockerfile") is None:
+        return False
+    if not repo.is_prototype(top, repo.default_config(top), (ref,)):
+        return False
+    brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
+    demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
+    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
+
+
+def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
+    try:
+        return repo.config(path)
+    except repo.Refused as refusal:
+        refusals[path] = str(refusal).splitlines()[0]
+        return repo.DEFAULTS
 
 
 def _due(top: Path) -> list[str]:
@@ -136,7 +270,8 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
-           title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]]
+           title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
+           refusals: dict[Path, str]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     try:
@@ -146,14 +281,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
-        return _approval(top, key, path, title, digest), []
+        return _approval(top, key, path, title, digest, refusals), []
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
-                                 states[task["id"]], top, tree, prs)]
+                                 states[task["id"]], top, tree, prs, refusals)]
     if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -164,7 +299,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]], top, prs=prs)
+            lines += _item(item, item, states[task["id"]], top,
+                           trees.get(f"task/{key}-{task['id']}"), prs, refusals)
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -176,14 +312,15 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                      "Next: git fetch origin, then forge next"], list(states.values())
 
 
-def _approval(top: Path, key: str, path: Path, title: str, digest: str) -> list[str]:
+def _approval(top: Path, key: str, path: Path, title: str, digest: str,
+              refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path):
+    if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)
@@ -210,7 +347,8 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 
 
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
-          path: Path | None = None, prs: dict[str, dict[str, Any]] | None = None) -> list[str]:
+          path: Path | None, prs: dict[str, dict[str, Any]] | None,
+          refusals: dict[Path, str]) -> list[str]:
     status = state.get("status") or "started"
     ready = repo.ready_path(item, top)
     try:
@@ -222,7 +360,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     if receipt.get("tidied") is True:
         return []
     if status == "merged" and path:
-        if repo.default_config(top)["merge"] == "agent" and receipt.get("review") == "clean":
+        if repo.merge_setting(top) == "agent" and receipt.get("review") == "clean":
             return [f"{label} is merged; Forge needs to finish tidying up.",
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
@@ -235,7 +373,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     if (status == "ready" and state.get("kind") != "migrate"
-            and repo.default_config(top)["merge"] == "agent"):
+            and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
@@ -249,10 +387,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if findings:
             values["reason"] = "; ".join(findings)
     pr = (prs or {}).get(state.get("branch", "")) or {}
-    checks = repo.config(path or top)["checks"] if pr and status == "waiting for checks" else []
+    checks = (_report_config(path or top, refusals)["checks"]
+              if pr and status == "waiting for checks" else [])
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
+        if status == "waiting for checks" and repo.merge_setting(top) == "agent":
+            return [f"{label}'s checks passed; finish preparing its automatic merge.",
+                    f"Next: forge close {item}"]
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]

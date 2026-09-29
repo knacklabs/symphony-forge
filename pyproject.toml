@@ -9,6 +9,9 @@ description = "Forge: one small tool that takes a story from approval to a merge
 requires-python = ">=3.11"
 dependencies = []
 
+[dependency-groups]
+dev = ["pytest", "pytest-xdist", "pytest-split", "pytest-timeout"]
+
 [project.scripts]
 forge = "forge.cli:main"
 
@@ -19,12 +22,14 @@ path = "src/forge/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/forge"]
 [tool.hatch.build.targets.wheel.force-include]
+".codex/skills/app-baseline/SKILL.md" = "forge/templates/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = "forge/templates/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = "forge/templates/skills/test-audit/NOTICE.md"
 ".codex/skills/forge/fde.md" = "forge/templates/fde.md"
 ".claude/skills/remote-approval/SKILL.md" = "forge/templates/skills/remote-approval/SKILL.md"
 
 [tool.hatch.build.targets.sdist.force-include]
+".codex/skills/app-baseline/SKILL.md" = ".codex/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = ".codex/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = ".codex/skills/test-audit/NOTICE.md"
 ".codex/skills/forge/fde.md" = ".codex/skills/forge/fde.md"
@@ -32,4 +37,4 @@ packages = ["src/forge"]
 
 [tool.forge]
 # Only Python lines under src/forge/ count (decision 0094). Raising this needs an accepted decision.
-line_ceiling = 7000
+line_ceiling = 8000

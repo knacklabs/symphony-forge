@@ -26,9 +26,9 @@ def test_5_sync_places_standards_beside_both_forge_skills(repo):
         assert "Problem first:" not in build_simple
 
 
-def test_6_forge_fits_trim_target_without_raising_ceiling(repo):
+def test_6_forge_fits_decided_python_ceiling(repo):
     assert repo.forge("--help").returncode == 0
-    # Decision 0094 replaces the 8,000-line all-file cap with a 7,000-line Python cap.
+    # Decision 0099 raises the Python cap from 7,500 to 8,000.
     ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
         "tool"]["forge"]["line_ceiling"]
-    assert ceiling == 7000
+    assert ceiling == 8000

@@ -1,0 +1,41 @@
+{
+  "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
+  "branch": "fix/the-owner-moved-this-repo-s-workers-from",
+  "done_when": "This repo's forge.toml sets workers = \"claude\" and [models.build], [models.fix] and [models.lite] to claude-opus-5-5 at medium effort without subagents; review stays on Codex; forge doctor passes",
+  "kind": "fix",
+  "review": {
+    "commit": "7711f724bde8e772b17f19aa75cfa2beefb70e85",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`src/forge/ask.py:25-31` starts a Codex conversation, and `src/forge/codex.py:132-138` selects `[models.lite]` for Ask. A normal `forge ask` therefore sends `claude-opus-5-5` to Codex. The committed `.codex/config.toml` supplies no custom provider, and the [Codex configuration reference](https://developers.openai.com/ja-JP/docs/config-file/config-reference) specifies OpenAI as the default provider. Give Ask a Codex-compatible default or route it through Claude.",
+        "file": "forge.toml",
+        "line": 19,
+        "priority": "P2",
+        "title": "Keep `forge ask` from sending the Claude lite model to Codex"
+      }
+    ],
+    "status": "clean",
+    "tree": "25a259d691b8e360fbfca274a3995c559fe958668d7968aa732067bc38c86fa5"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T14:54:57+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T14:59:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:24:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T16:19:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner moved this repo's workers from Codex to Claude on Opus 5.5 at medium effort, keeping Autoreview on Codex"
+}

@@ -48,6 +48,14 @@ SUCCESS = {"success", "succeeded", "completed"}
 CHOICES = ["Approve plan", "Request changes", "Stop"]
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    from forge import sync
+
+    return {".claude/skills/remote-approval/SKILL.md":
+            sync._synced_text(".claude/skills/remote-approval/SKILL.md",
+                              "skills/remote-approval/SKILL.md")}
+
+
 def hook(args: Any) -> int:
     try:
         payload = json.loads(sys.stdin.read() or "null")
@@ -82,27 +90,6 @@ def waiting_digest(key: str, top: Path) -> str | None:
         return None
     digest = story.approval_hash(doc.read_text(encoding="utf-8"))
     return None if (state.get("approval") or {}).get("hash") == digest else digest
-
-
-def signed_off(top: Path) -> bool:
-    """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
-    checkout or on the default branch: exactly the record forge.toml's signoff pins, or, with none
-    pinned, a decision whose slug ends in client-signoff."""
-    cfg = repo.config(top)
-    if cfg["repo"] == "forge-source":
-        return True
-    pinned = cfg["signoff"]
-
-    def wanted(name: str) -> bool:
-        return name == pinned if pinned else name.endswith("client-signoff.md")
-
-    texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*.md")
-             if wanted(path.relative_to(top).as_posix())]
-    ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-    texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
-    return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-               for text in texts if text.startswith("---"))
 
 
 def last_refusal(top: Path) -> Path:
@@ -151,7 +138,7 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
     story.check_read(key, path)
-    if not signed_off(path):
+    if repo.is_prototype(path):
         repo.refuse(REFUSALS["no_signoff"])
     state = repo.read_state(key, path) or {}
     approval = {"by": f"human-via-{runtime.capitalize()}", "at": repo.now(), "hash": digest,
@@ -255,3 +242,11 @@ def _item_here(top: Path) -> str:
 
 def _text(value: object) -> str:
     return str(value).strip() if value is not None else ""
+
+
+COMMANDS = [{
+    "words": "hook approval", "run": "hook", "changes_state": True,
+    "help": "After a plan or question tool: record approvals and count human touches",
+    "args": [], "position": 250,
+    "listing": "| `forge hook approval` | After the plan and question tools: records approvals and counts human touches |",
+}]
