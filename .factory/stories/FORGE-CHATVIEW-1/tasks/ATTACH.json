@@ -1,21 +1,13 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-ATTACH",
   "review": {
-    "commit": "a3ea0143d55dac28409f379122df15e21a632bc3",
+    "commit": "6a22f2d111399152fe8a842769156b346c777b06",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The command test always supplies an existing OPEN pull request here, so it never exercises `forge close` when `_pull_request` returns none and `_publish` creates a pull request (src/forge/close.py:231-244) before the new attachment call at src/forge/close.py:109. A regression that skips attachment only for newly opened pull requests would pass this test. Add a `forge close` case that creates the PR and asserts the attachment request and its pinned fields.",
-        "file": "tests/test_chatview_attach.py",
-        "line": 35,
-        "priority": "P1",
-        "title": "Not done: newly opened pull request attachment test"
-      }
-    ],
-    "status": "blocked",
-    "tree": "4f5e88868cc8a44eb4410fcee298dc151cd32d7f04368483cb2ed5e46b7e689c"
+    "findings": [],
+    "status": "clean",
+    "tree": "fa2d7a78833984055895da11b55e8946acd139e416f61e356cda60ff7c189f9a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T21:02:08+00:00",
@@ -27,6 +19,10 @@
     },
     {
       "at": "2026-09-29T01:34:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:19:21+00:00",
       "step": "review"
     }
   ]
