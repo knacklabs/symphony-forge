@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "1fad81034a53b562a9968a1251b107c59583e57b1ba9c59aedb5adce2df6cfc3",
-    "commit": "455c84ea8f78417ba78e74589837cda553cbd6a3",
+    "changed": "c5eff1eef7d44b8347a1fc509d0669e94e83abb40455def4631f3d28b6c86117",
+    "commit": "28fe3489a12f40927d840c68082c81e685c0cce9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The test creates only an extensionless `#!/bin/sh` Git wrapper. On Windows, Forge's `shutil.which(\"git\")` will use the real `git.exe` instead, so the branch is never deleted and the assertion on line 34 fails. The repository's test fixture explicitly creates `.cmd` shims for Windows (`tests/conftest.py:51-52`), and `.github/workflows/forge-next.yml` runs the suite on Windows. Add a Windows-compatible wrapper that deletes the branch before delegating to Git, so the required race test runs in that suite.",
-        "file": "tests/test_fix_forge_read_fails_when_a_merge_deletes_a.py",
-        "line": 28,
-        "priority": "P1",
-        "title": "Not done: the branch deletion regression test runs on Windows"
-      }
-    ],
-    "status": "blocked",
-    "tree": "39ea21ba8a14f9e2996495c3e06cdc35d22730a005d901bb815c0240a4e68ade"
+    "findings": [],
+    "status": "clean",
+    "tree": "ac76395608f480459cd9d0da0d8d92ede888690b474ded94a590a849a33d5736"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T08:33:58+00:00",
@@ -28,6 +20,10 @@
     },
     {
       "at": "2026-09-29T08:45:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:33:07+00:00",
       "step": "review"
     }
   ],
