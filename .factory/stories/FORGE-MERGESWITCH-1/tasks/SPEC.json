@@ -2,11 +2,81 @@
   "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
   "branch": "task/FORGE-MERGESWITCH-1-SPEC",
   "done_when": "The owner switches a repo to agent merges with one command run in their own terminal",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "341fde50e4180fc270b707405e4683e0b2bf1bb59d048f54e3c7c44cd17c750c",
+    "commit": "a5b31cfc9589ae518fcb84cb79439d0ce210dc67",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The owner-only check applies only to `enable`. In an unsigned client prototype, `repo.merge_setting()` returns `agent` even while the default branch says `human` (src/forge/repo.py:174-177). A ready switch pull request can therefore pass through `forge merge let-the-agent-merge` and reach `gh pr merge` (src/forge/merge.py:68-73). `forge merge` needs to refuse pull requests that change the merge setting.",
+        "file": "src/forge/merge.py",
+        "line": 40,
+        "priority": "P1",
+        "title": "Not done: The agent never makes the switch and points you to the command."
+      },
+      {
+        "body": "Any existing `fix/let-the-agent-merge` branch causes an unconditional refusal. An interrupted run after worktree creation, commit, push, or pull-request creation cannot be resumed with `forge merge enable`; the owner is instead sent to a second command. The check also labels an unrelated branch as the switch without examining its recorded purpose or changes. Identify the command's own fix and continue it safely.",
+        "file": "src/forge/merge.py",
+        "line": 148,
+        "priority": "P1",
+        "title": "Not done: You switch a repo to agent merges with one command."
+      },
+      {
+        "body": "This call uses `forge close` without a switch-specific owner-merge rule. The earlier ruling relies on close's human-merge Ready line, but an unsigned client prototype follows its agent branch instead: src/forge/close.py:142-152 prints `Next: forge merge let-the-agent-merge`. That instruction would let the agent merge the permission change. The switch fix must always tell the owner to merge its pull request.",
+        "file": "src/forge/merge.py",
+        "line": 165,
+        "priority": "P1",
+        "title": "Keep the switch fix's close output on the owner's merge path"
+      },
+      {
+        "body": "The added exception changes only the `started` status. In a prototype, a ready switch fix still gets `Next: forge merge <item>` from src/forge/nextstep.py:384-386, and the green-checks waiting state still says it is preparing an automatic merge at src/forge/nextstep.py:403-408. Those messages contradict the required owner-only path at stages after the fix starts.",
+        "file": "src/forge/nextstep.py",
+        "line": 389,
+        "priority": "P1",
+        "title": "Keep forge next on the owner's merge path for the switch fix"
+      },
+      {
+        "body": "The required default-branch check is absent before `story.add_worktree()`. `repo.check_pin()` only validates the installed version (src/forge/repo.py:293-325), so invoking `forge merge enable` from another branch creates and closes the switch fix instead of refusing without changes.",
+        "file": "src/forge/merge.py",
+        "line": 144,
+        "priority": "P1",
+        "title": "Refuse enable when the owner is outside the default branch"
+      },
+      {
+        "body": "`Path.read_text()` reads CRLF through universal-newline translation; writing the resulting string as UTF-8 bytes at line 158 changes the entire file to LF. A valid CRLF `forge.toml` therefore loses its line endings even though the switch is meant to preserve them. The table test uses LF only.",
+        "file": "src/forge/merge.py",
+        "line": 153,
+        "priority": "P1",
+        "title": "Preserve the requested forge.toml line endings"
+      },
+      {
+        "body": "The rerun test explicitly accepts the refusal that breaks interrupted one-command recovery. The file has no command-level cases for interruption before commit, after push or pull-request creation, unrelated same-name fixes, prototype agent-merge refusal, or the switch fix's `forge next` output. Its skill check at line 75 reads committed source files rather than exercising `forge sync`, so it cannot detect a broken delivered skill.",
+        "file": "tests/test_merge_enable.py",
+        "line": 39,
+        "priority": "P1",
+        "title": "Not done: tests/test_merge_enable.py"
+      },
+      {
+        "body": "The new `merge-enable` kind creates a special state path and a separate `forge next` branch, although the fix's recorded `why` and `done_when` can identify it before the config edit. Using the existing fix kind removes that extra distinction while retaining collision checks.",
+        "file": "src/forge/merge.py",
+        "line": 159,
+        "priority": "P2",
+        "title": "Simpler: merge-enable kind \u2192 existing fix kind and recorded purpose"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e265bdbe2761534327e3f03e64c3cdfa16cf3cb367bbe8b37b61f1619e1d69d2"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T07:50:27+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T09:53:29+00:00",
+      "step": "review"
     }
   ],
   "why": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself"
