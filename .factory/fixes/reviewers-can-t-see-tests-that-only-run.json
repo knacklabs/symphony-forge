@@ -1,0 +1,68 @@
+{
+  "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
+  "branch": "fix/reviewers-can-t-see-tests-that-only-run",
+  "done_when": "forge close runs the repo's test command on the machine it runs on and gives the reviewer the result, listing what passed and what was skipped with the reason; the review brief says a skipped test that the close run passed is not a missing test, and that for a pure deletion a test showing the old input is now refused is enough; tests run forge close with a test command that passes and one that skips",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d789e0cb059f9a7e1203cae0b352cbd1d810bb884127799b9cb879ec27608d83",
+    "commit": "9f82b65abe1e2e5e746a1db04b80d59e69516141",
+    "dismissals": [
+      {
+        "because": "src/forge/init.py:56 a repo's configured test command is the team's own setting (house rules beat Forge's defaults); close passes on whatever that command prints, and Forge doesn't rewrite a team's test command",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py:101 same reason: existing repos keep their own test command, so there is no Forge behaviour to test there",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "The new `-v` default applies only when Forge creates a new Go repo. Existing Forge repos retain the previous `go test ./...` value in forge.toml, and adoption copies the supplied `--test` command unchanged (`src/forge/init.py:283`). The close runner executes that stored command as-is (`src/forge/review.py:237`). As established by the earlier review, `go test ./...` reports only a passing package summary, so close still cannot tell the reviewer which tests skipped or why. This persisted-config path is new evidence beyond the ruling about the new init default.",
+        "file": "src/forge/init.py",
+        "line": 56,
+        "priority": "P1",
+        "title": "Not done: existing Go repos still hide skipped tests"
+      },
+      {
+        "body": "The coordinator accepted the new init assertion plus the Go-style output test as proof for newly created repos. Neither test covers the distinct persisted-config case: test 4 feeds Forge canned verbose output, while this test checks only the command written by a fresh init. A forge close test with the previously generated `go test ./...` configuration is needed to fail when its skipped test and reason never reach the brief.",
+        "file": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py",
+        "line": 101,
+        "priority": "P1",
+        "title": "Not done: a close test covers skipped Go tests in existing repos"
+      },
+      {
+        "body": "This still removes the middle of selected output once it exceeds 80 lines. A pytest `-rs` run with many skipped tests can retain the final skip count while dropping individual skip entries and their reasons. The reviewer then lacks the promised reason for each omitted skip.",
+        "file": "src/forge/review.py",
+        "line": 245,
+        "priority": "P2",
+        "title": "Preserve skip reasons beyond the 80-line cap"
+      }
+    ],
+    "status": "clean",
+    "tree": "102c93af64321c69d8552639210ba762d6b370de770644f7e15a4c16b27b829a"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T08:04:17+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T08:29:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T08:43:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T09:07:08+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Reviewers can't see tests that only run outside the worker's sandbox, such as database tests, so every database change is flagged as untested even when those tests pass"
+}

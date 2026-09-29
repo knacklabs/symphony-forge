@@ -103,7 +103,7 @@ def _python(env: Path) -> Path:
 def sdk_problem() -> str:
     """Why the pinned SDK can't be used, in one sentence, or "" when it can."""
     env = sdk_env()
-    if not _python(env).is_file() or sync.read(env / READY).strip() != SDK_PIN:
+    if not installed():
         return f"The Codex SDK {SDK_PIN} isn't installed in {env}."
     done = repo.run(str(_python(env)), "-c", PROBE)
     said = (done.stdout.strip() or done.stderr.strip() or "it printed nothing").splitlines()[-1]
@@ -138,10 +138,15 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
         cfg, "lite" if kind == "Ask" else kind.lower(), "codex").items()}
 
 
-def record(checkout: Path, item: str) -> dict[str, Any]:
+def installed() -> bool:
+    """Whether the pinned SDK, which is how Forge runs Codex, is installed."""
+    return _python(sdk_env()).is_file() and sync.read(sdk_env() / READY).strip() == SDK_PIN
+
+
+def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
     """The item's record: its Codex processes, conversation, checkout, approval, the commit its
-    last turn started from, and HEAD when a turn last ended."""
-    return _json(_item_file(checkout, item, ".json", "Fix"))
+    last turn started from, and HEAD when a turn last ended. A cold read's (Grill) is its own."""
+    return _json(_item_file(checkout, item, ".json", kind))
 
 
 def archive(checkout: Path, item: str, kind: str, thread: str) -> bool:
@@ -164,9 +169,10 @@ def attach(top: Path, item: str, pr: dict[str, Any]) -> bool:
     return bool(result.get("attached"))
 
 
-def conversation(checkout: Path, item: str, approval: str | None) -> tuple[str | None, str]:
+def conversation(checkout: Path, item: str, approval: str | None,
+                 kind: str = "Fix") -> tuple[str | None, str]:
     """The item's conversation to continue and "", or None and why Forge starts a new one."""
-    saved = record(checkout, item)
+    saved = record(checkout, item, kind)
     if not saved.get("start"):
         return None, "Forge has no record of its conversation on this machine"
     if saved.get("checkout") != str(checkout):

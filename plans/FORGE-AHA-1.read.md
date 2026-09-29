@@ -2,7 +2,7 @@
 reader: codex (gpt-6-sol)
 read_at: 2026-09-28T12:25:42+00:00
 read_hash: 4f2103e7a9f965d90e3fd7a1d07f43b3c9e7b8cf
-amended_hash: 1470f6a33a6bac1d513139906dde90336daca6bb
+amended_hash: 39ad086d16136438b6fae62569705a3110a5aa41
 ---
 # Cold read notes
 
@@ -38,3 +38,13 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 6. **Test removal of the old discovery instruction.**
    The proposed tests check that new text exists (`plans/FORGE-AHA-1.md:79-81`). They should also check the generated skill and FDE page for the old `/office-hours` route; otherwise Done-when 6 can pass while the two instructions conflict.
    Disposition: cut Done-when 8 and the Notes add a test that the synced copies no longer mention /office-hours.
+
+
+## Amendment 2026-09-29 (no sign-off email draft), round 1
+
+1. **Item 6 cannot be implemented within DEMO’s scope.** The proposed instruction to run `forge decision accept` before the customer replies conflicts with the command: it requires `approved_via` and `approved_on` before starting the strict review, then records the reviewed commit and accepts the decision in the same call ([records.py](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-AHA-1/src/forge/records.py:259)). Running it before the reply is refused; running it after the reply puts the review too late. DEMO owns only skill and test files ([plan](/Users/ravikiranvemula/Workdir/symphony-forge-story-FORGE-AHA-1/plans/FORGE-AHA-1.md:90)). The plan needs an owned review-before-acceptance change and a test proving that order before item 6 is buildable.
+   Disposition: keep: the review-first fix makes forge decision accept run the review alone before a reply; Notes say DEMO merges after it.
+
+## Round 2
+
+No findings.

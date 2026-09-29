@@ -14,7 +14,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Show me progress" | `forge board` |
 | "Plan a new story" | `forge story new <KEY> "<title>"` |
 | "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
-| "I've amended it" | `forge read <KEY> --amended` |
+| "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
-| "Upgrade Forge" | Ask, then in a fix: set `version` in `forge.toml`, install that release, `forge sync`, `forge close <fix>` |
+| "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
@@ -98,8 +98,9 @@ the customer's own words in `## Words they use` in `docs/product/DISCOVERY.md`, 
 keep only its column headers, never its rows. The same day, draft a recap in `docs/context/` for
 the customer to confirm: their problem in their words, the cost in their numbers, the one task
 the demo will cover, who signs off, the open "ask the client" questions and the demo date. When
-they reply, record the Demo workflow and Sign-off person answers from it, with
-`client recap reply` as the source. The salesperson sends the recap; Forge sends nothing.
+they reply, record the Demo workflow and Sign-off person answers from it with `client` as the
+source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off person: <name, role>
+(client, <YYYY-MM-DD>)`. The salesperson sends the recap; Forge sends nothing.
 
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
@@ -126,6 +127,12 @@ the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.m
 call script. Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
+Always build the demo-data loader in the first version, so the customer sees their own kind of
+work instead of empty screens (see demo-data.md). Use the customer's words
+from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
+they can point at the screen: click an element in the demo build, write what's wrong and paste the
+output to the agent.
+
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
 the demo: "the next version is live" or "the reviewer found a missing error message". Do not
@@ -133,6 +140,24 @@ use Forge's words (fix, worktree, branch, pull request) in progress updates to t
 When `forge next` says to connect the repo to our deploy platform, tell the salesperson to use
 their own login, pick a subdomain and record its address under `## Demo` in
 `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off decision.
+
+**The demo.** Every demo follows five steps, in order:
+
+1. their workaround today;
+2. the same job in the app;
+3. the time or money it saves, in their numbers;
+4. they take the controls;
+5. ask "what would stop you using this?"
+
+Send the demo link only after the guided demo, never before it. With each new version, draft a
+three-line "what changed" note for the salesperson to send: what they can do now, what changed
+since their last look, and what to try first, all in their words.
+
+After each demo, ask the salesperson one question at a time: what the customer did themselves,
+what they said word for word, and what they asked for. Write the answers under
+`## Prototype notes` in `docs/product/DISCOVERY.md` as one `### <YYYY-MM-DD>` block with `- Did:`,
+`- Said: "<their words>"` and one `- Asked:` line per request, ending each request in
+`(serves the problem)` or `(after sign-off)`.
 
 Ask one topic at a time when it first changes what you are building. Skip a topic the repo already
 answers. In the options column, our default is first where there is one; questions of fact have
@@ -161,13 +186,27 @@ Keep one `## Answers` section in `docs/product/BRIEF.md`, one line per topic. Re
 `- <Topic>: <answer> (<source>, <YYYY-MM-DD>)`, with the client, salesperson, developer, our
 default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
-client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`. Before the
-sign-off review, use `forge next` to find each open must-answer topic and resolve it one at a time.
+client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
+
+**Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
+goes through every answer on the answers page: our defaults, the agent's guesses and the topics
+marked later. Settle every open must-answer topic in that call: `forge next` lists those still
+missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
+our default or the agent, so record each as the client, salesperson or developer answered it. Then
+run the strict sign-off review before anyone asks for sign-off: write `forge decision new
+client-signoff` (customer, demo address, and the answers page copied word for word, leaving
+approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
+before any reply is recorded; it runs the strict review alone and stops. Fix what it finds and run
+it again. Once it passes, tell the salesperson to ask the customer's named person for sign-off
+their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
+it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
+"<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
+records.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
-Until the decision, use a fake provider for an external service. No second cold read is needed.
+Until the decision, use a fake provider for an external service.
 
 ## Adopt a live app
 
@@ -199,6 +238,20 @@ On a live app, every story and fix also follows these:
 - Migrations only add, and work with the previous version of the app still running.
 - A change users would notice ships behind the team's own feature flags.
 - No production credentials on this machine; never ask for them.
+
+## Upgrade Forge
+
+An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
+repo, rewritten by that version.
+
+1. Ask which release to move to, recommending the newest.
+2. `forge fix start "Upgrade Forge to <release>" --done "Forge runs <release>"`.
+3. In the fix's folder, set `version` in `forge.toml` to the release, such as `"v1.2.0"`.
+4. Install that release: `uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`.
+5. Run `forge sync` in the fix's folder and commit everything it wrote.
+6. `forge close <fix>`. If it names files that aren't what `forge sync` writes, go back to step 5.
+
+Until the upgrade merges, the default branch keeps working with the new release installed.
 
 ## Planning a story
 

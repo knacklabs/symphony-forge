@@ -1,0 +1,54 @@
+{
+  "branch": "task/FORGE-UPGRADE-1-SYNCED",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "c64aba279bbf839cca3932504d9aa4ebeee920c2ce9ac88c4896757ded664d3a",
+    "commit": "b9113e324ab03100e89775a8eca13b20562d7c32",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When close checks an upgrade, it runs the full `forge sync` command in a temporary worktree. `src/forge/sync.py:322` also calls `install_shims`, which can rewrite or rename hooks in the Git hooks directory shared by every worktree (`src/forge/githooks.py:46-50`) and update the shared merge-driver configuration (`src/forge/sync.py:278-307`). Thus even a close that refuses stale files can change the real repository's hooks. Compare the generated files without installing hooks.",
+        "file": "src/forge/close.py",
+        "line": 216,
+        "priority": "P2",
+        "title": "Keep the sync comparison from changing shared Git hooks"
+      },
+      {
+        "body": "`mkdtemp()` creates a parent directory, but the `finally` block removes only its `sync` worktree and branch. Every successful upgrade check leaves the empty parent directory behind. Remove it after the worktree cleanup.",
+        "file": "src/forge/close.py",
+        "line": 213,
+        "priority": "P3",
+        "title": "Remove the temporary parent directory after the sync check"
+      }
+    ],
+    "status": "clean",
+    "tree": "8edd106e96f8d9fa237a7a50fec5d4b6045f6b293b8251ee08aada2c28ad4a9d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T05:53:37+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T06:10:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T06:38:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T07:04:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T07:18:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T07:25:00+00:00",
+      "step": "review"
+    }
+  ]
+}

@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-ONECHAT-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T08:53:12+00:00",
+  "merged": {
+    "APPROVE": "2026-09-28T08:24:22+00:00",
+    "DOCS": "2026-09-28T08:53:12+00:00",
+    "REGISTRY": "2026-09-28T07:31:14+00:00",
+    "THE-OWNER-WANTS-EVERY-FORGE-REPO-S-STORI": "2026-09-27T16:17:59+00:00"
+  },
+  "outcome": "Stories in any Forge repo on this machine are approved from one main chat; Forge remembers each repo it runs in and the approval hook finds the story there",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-27T15:23:02+00:00",
@@ -21,6 +29,10 @@
     {
       "at": "2026-09-27T15:34:47+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T08:53:23+00:00",
+      "step": "done"
     }
   ],
   "title": "The owner wants every Forge repo's stories approved from one main chat, but the approval hook only sees stories in the repo the chat started in",

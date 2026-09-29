@@ -142,6 +142,28 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     return digest.hexdigest()
 
 
+def whole_tree(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
+    """The v1.1.0 release's fingerprint, kept under the record's `tree` key so that release's
+    forge-pr-check passes an upgrade pull request this version reviewed: the whole product tree
+    at commit, what the change must do and the worker's functional check.
+    ponytail: one release only; delete it, and close's refresh of `tree`, after v1.2.0."""
+    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
+    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
+    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
+    key, _, name = item.partition("/")
+    if name:
+        text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
+        doc = sections(text)
+        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
+                 moving_parts(text)]
+    else:
+        parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
+    parts.append(functional_check(top, base, commit))
+    for part in parts:
+        digest.update(b"\0" + part.encode("utf-8"))
+    return digest.hexdigest()
+
+
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
@@ -173,17 +195,22 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              # read after close merged the default branch, which may change the command
+              "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
         items = {items[i]: " ".join(items[i + 1].split()) for i in range(1, len(items), 2)}
         covers = set(re.findall(r"\d+", row.get("covers", "")))
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
+        existing_tests = set(repo.git("ls-tree", "-r", "--name-only", base,
+                                      cwd=top).splitlines())
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
-            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
+            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)
+                             and not (p in existing_tests and _test_file(p))),
             covered=_bullets(f"{n}. {t}" for n, t in items.items() if n in covers),
             context=_bullets(f"{n}. {t}" for n, t in items.items() if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
@@ -198,6 +225,26 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _test_run(top: Path, command: str) -> str:
+    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
+    exit status, every line that mentions a skip with the line before it (where Go's -v prints the
+    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs)."""
+    if not command:
+        return "forge.toml names no test command, so close ran none."
+    env = {**os.environ, "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+    done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                          encoding="utf-8", errors="replace")
+    out = [line.rstrip() for line in done.stdout.splitlines()]
+    picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
+                     for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+    lines = [out[i] for i in picked]
+    if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
+        lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+    return "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+                      "forge close.", *lines])
 
 
 def _previous(result: dict[str, Any]) -> str:
@@ -249,6 +296,16 @@ def _bullets(items: Any) -> str:
 def _within(path: str, entry: str) -> bool:
     """A changed path is inside a Scope entry: the same file, under the folder, or a glob match."""
     return path == entry or path.startswith(entry.rstrip("/") + "/") or fnmatch(path, entry)
+
+
+def _test_file(path: str) -> bool:
+    """Test files named as tests or kept in a test folder, including colocated tests."""
+    parts = Path(path).parts
+    name = parts[-1]
+    return (any(fnmatch(name, pattern) for pattern in ("test_*.py", "*_test.py",
+                                                        "*.test.*", "*.spec.*"))
+            or (any(part.startswith("test") for part in parts[:-1])
+                and "fixtures" not in parts[:-1]))
 
 
 # --- the round -------------------------------------------------------------------------
@@ -338,8 +395,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    return {"commit": head, "tree": fingerprint(head, item, top, state, base,
-                                                  "P0" if light else "P1"), "findings": findings,
+    return {"commit": head, "changed": fingerprint(head, item, top, state, base,
+                                                     "P0" if light else "P1"),
+            "tree": whole_tree(head, item, top, state, base), "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
 

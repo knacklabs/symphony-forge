@@ -110,11 +110,11 @@ If there is nothing to report, write exactly `No findings.` and nothing else.
 <!-- forge:notes -->
 # Cold read notes
 
-Written by `forge read`. Under every finding, write one disposition line, amend the doc once, then
-run `forge read <doc> --amended`:
+Written by `forge read`. Under every finding, write one disposition line, amend the doc, then run
+`forge read <doc>` again for the next round, until a round finds nothing:
 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;
 - `Disposition: keep <one-line reason>` otherwise.
 
-Only a genuine trade-off goes to the human, as a question with options. There is no second read.
+Only a genuine trade-off goes to the human, as a question with options.

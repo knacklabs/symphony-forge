@@ -112,7 +112,8 @@ Drafted in `docs/context/` the same day as the meeting, for the customer to conf
 ```
 
 Their reply is the source of the Demo workflow and Sign-off person answers:
-`- Demo workflow: <task> (client recap reply, <YYYY-MM-DD>)`.
+`- Demo workflow: <task> (client, <YYYY-MM-DD>)` and
+`- Sign-off person: <name, role> (client, <YYYY-MM-DD>)`.
 
 ## Question bank
 

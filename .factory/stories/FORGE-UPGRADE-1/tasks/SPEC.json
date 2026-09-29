@@ -1,0 +1,36 @@
+{
+  "base": "8f037314f4064b84b4a5a05529ccb5995ee6f7ed",
+  "branch": "task/FORGE-UPGRADE-1-SPEC",
+  "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
+  "review": {
+    "commit": "c646416a44fd375e604c6f27db02fb62032d1353",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e6b59da11117a7430b9daeaeaf0c16a5135bd9ec3666ee8bf2c2ad0b0c2bf21a"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T03:39:51+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T04:38:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:01:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:22:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:44:50+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges"
+}

@@ -13,6 +13,9 @@ $scope
 Files the branch changes outside that scope (report any that the work doesn't need):
 $outside
 
+An existing test changed because the intended work broke it is allowed outside Scope. Check the
+worker's handoff names each such test and why it changed.
+
 ## Done when
 This part covers the items below. Report every one the branch does not meet as a P1 finding
 titled `Not done: <the item>`, citing the line that shows the gap.
@@ -60,6 +63,13 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 `Promote: <the interface>`: a change like that needs a story, not a fix.
 
 <!-- rules -->
+## Tests on the close run
+forge close ran the repo's test command before this review, outside your sandbox:
+$test_run
+
+A test skipped in your sandbox that the close run passed is not a missing test. For a pure
+deletion, a test showing the old input is now refused is enough.
+
 ## What blocks the merge
 Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
 
@@ -70,6 +80,7 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
   P2 `Later:` finding naming that task, not `Not done`.
 
 Missing tests this branch owns and the functional check stay P1.
+Report a test weakened to hide a real defect as a P1 finding.
 
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
