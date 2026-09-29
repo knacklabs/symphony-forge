@@ -1,0 +1,30 @@
+{
+  "allow_large": "The owner asked on 2026-09-28 for the handoff hook in every client repo; the new hook changes existing hook-count, generated-output and help-text tests",
+  "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
+  "branch": "fix/client-repos-lose-the-agent-s-state-the",
+  "done_when": "forge sync ships a pre-compaction hook for Claude Code (and Codex where supported) that writes a local handoff file in the repo's .git Forge folder from forge next's state, never committed, and the Forge skill tells the agent to add the owner's decisions and lessons to it at milestones and read it first after a compaction; a test through forge sync and the hook shows it",
+  "kind": "fix",
+  "review": {
+    "commit": "479cada6fdb328aeed67c61beaad672a4cda90db",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "b0e9041c7253c0761516381a29444434d78cd707d2bbe343bec9379dfd1e6486"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T14:52:34+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:46:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T16:05:51+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Client repos lose the agent's state, the owner's decisions and lessons when the agent's context is compacted"
+}

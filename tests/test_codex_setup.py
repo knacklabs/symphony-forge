@@ -103,7 +103,10 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
                 UNTRUSTED, APPROVE):
         assert row in first.stdout, first.stdout
     assert not env.exists()
-    assert hooks.read_text(encoding="utf-8").count('"hook_event_name"') == 6
+    # The two new PreCompact hooks join the six existing host hooks in doctor's probe.
+    calls = hooks.read_text(encoding="utf-8")
+    assert calls.count('"hook_event_name"') == 8
+    assert calls.count("hook handoff\n") == 2
     monkeypatch.setenv("PATH", path)
     _install(repo.bin, "uv", UV_STUB.format(python=sys.executable, pin=PIN, program=str(program)))
 
@@ -181,8 +184,10 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     assert not env.exists()
     assert len((repo.bin / "uv-calls.jsonl").read_text(encoding="utf-8").splitlines()) == 2
 
-    # Under Claude Code the cold read runs on Codex, so with Claude workers doctor checks the SDK
-    # and --fix installs it; trust stays advice.
+    # Under Claude Code with Codex installed the cold read runs on Codex, so with Claude workers
+    # doctor checks the SDK and --fix installs it; trust stays advice. (Without a codex command it
+    # is a Claude-only team and doctor skips the SDK; that case has its own fix test.)
+    _install(repo.bin, "codex", "#!/bin/sh\n")
     monkeypatch.setenv("CLAUDECODE", "1")
     reader = repo.forge("doctor", cwd=client)
     assert reader.returncode == 1

@@ -11,21 +11,23 @@ import pytest
 
 STORY = "FORGE-SPLIT-1"
 
-# Captured from origin/main's forge sync with these two client setups. Hashes use LF newlines.
-# The standards hash includes the approved two-skill UI contract.
+# Captured from forge sync with these two client setups. Hashes use LF newlines.
+# The skill hash now includes prototype demo-round guidance; all other output stays pinned.
+# .gitattributes is new: it carries the roadmap's merge rule.
 GOLDEN = {
     "plain": {
+        ".gitattributes": "a843f971979438197905e041ead7a83c1ecb514a06ecdbb47126cd3f42c64c7a",
         "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
-        ".claude/settings.json": "66addb73e7a10f1341e2f82ad694e69e93563d01ffa1f0c56b6a8c5c3f86f90f",
-        ".codex/hooks.json": "6fe7fdfc37c7bc7a8f761b344753fc3d3ca8a43a821d5888d6792b8bd3627ab3",
-        ".claude/skills/forge/SKILL.md": "59852584050ed4ea73bf9ab9bd1ec091c4aefd071be0766e54447bf3644b6855",
-        ".codex/skills/forge/SKILL.md": "59852584050ed4ea73bf9ab9bd1ec091c4aefd071be0766e54447bf3644b6855",
-        ".claude/skills/forge/standards.md": "d6a34c1073515134779f4022fe55b90e09b8ddf64ed86af453ae09961f09ed35",
-        ".codex/skills/forge/standards.md": "d6a34c1073515134779f4022fe55b90e09b8ddf64ed86af453ae09961f09ed35",
+        ".claude/settings.json": "f0e550f035db6feb93de9aeea566253326500d5925bee3d2a41faf8b5f40df7d",
+        ".codex/hooks.json": "6359773ba4fb597c6f1e4e6fc504227b419afcaa2236abd459942f8fcf99dbd8",
+        ".claude/skills/forge/SKILL.md": "3d1c11ae51f1dd5841597fc4416a0380442c35e3d2d1de5fb2960360cafd600d",
+        ".codex/skills/forge/SKILL.md": "3d1c11ae51f1dd5841597fc4416a0380442c35e3d2d1de5fb2960360cafd600d",
+        ".claude/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
+        ".codex/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
         ".claude/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
         ".codex/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
-        ".claude/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
-        ".codex/skills/forge/fde.md": "460d63d0333e119dfd8b11128af2eecdde62b22d81e05514b288a07efdeee4d0",
+        ".claude/skills/forge/fde.md": "b6d2644c32593e06aa40598f8e9018d983770ad2c34679052778718e48e02442",
+        ".codex/skills/forge/fde.md": "b6d2644c32593e06aa40598f8e9018d983770ad2c34679052778718e48e02442",
         ".claude/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
         ".claude/skills/test-audit/SKILL.md": "d0bd6a7f13510241a334a5991f2b860c80283933f963603c5d88abb1e4859126",
         ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
@@ -46,7 +48,8 @@ GOLDEN["claude_node"] = {**GOLDEN["plain"],
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
-    repo.write("forge.toml", 'version = "v1.1.0"\ntest = "echo ok"\n')
+    repo.write("forge.toml", 'version = "v1.1.0"\ntest = "echo ok"\n'
+                             'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")
         repo.write("package.json", json.dumps({"engines": {"node": "20"}}))

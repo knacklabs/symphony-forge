@@ -60,9 +60,9 @@ def test_3_one_chat_approves_other_repo_once(repo, tmp_path, claude_payload):
     client_story = ready(client, "SHOP", client_doc)
     (client_story / "forge.toml").write_text(
         (client_story / "forge.toml").read_text("utf-8").replace(
-            'repo = "forge-source"', 'repo = "client"'), encoding="utf-8")
+            'repo = "forge-source"', 'repo = "client"\nstage = "prototype"'), encoding="utf-8")
     client.write("forge.toml", (client.path / "forge.toml").read_text("utf-8").replace(
-        'repo = "forge-source"', 'repo = "client"'))
+        'repo = "forge-source"', 'repo = "client"\nstage = "prototype"'))
     client.git("commit", "-q", "-am", "Make this a client repo")
     client.git("push", "-q", "origin", "main")
     assert client.forge("next").returncode == 0
