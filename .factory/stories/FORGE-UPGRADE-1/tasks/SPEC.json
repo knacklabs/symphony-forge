@@ -3,35 +3,13 @@
   "branch": "task/FORGE-UPGRADE-1-SPEC",
   "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
   "review": {
-    "commit": "41b01ae3bda3b6340ddfa773b6d354b665cc831a",
+    "commit": "c646416a44fd375e604c6f27db02fb62032d1353",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The workflow test stops at the install step (`steps[:install + 1]`), and its uv stub records a request without installing Forge. The compatibility case compares `tree` with a copied fingerprint algorithm but never runs v1.1.0's released `forge hook pr-check`; it does not change the pin either. The test can pass without any upgrade pull request passing a real checker. Run the generated job through the check command against an upgrade PR, using the released base checker for the v1.1.0 compatibility case.",
-        "file": "tests/test_upgrade_check.py",
-        "line": 61,
-        "priority": "P1",
-        "title": "Not done: tests/test_upgrade_check.py"
-      },
-      {
-        "body": "The reported walkthrough records what uv would install, then checks a copied v1.1.0 fingerprint for an ordinary fix. The fix created here does not change `forge.toml`, and the walkthrough never invokes either release's `forge hook pr-check` on an upgrade PR. It therefore skips the covered outcome: an upgrade pull request passing Forge's check.",
-        "file": "tests/test_upgrade_check.py",
-        "line": 138,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      },
-      {
-        "body": "The `sed` expression recognizes only an unindented, double-quoted version with no trailing comment, although Forge parses `forge.toml` with `tomllib` (`src/forge/repo.py:205-218`). If a client uses valid single-quoted pins such as `version = 'v1.1.0'` on the base and `version = 'v1.2.0'` on the PR, both `pin` calls return empty. The workflow treats the upgrade as unchanged and installs v1.1.0, so the pinned release's check never runs. Read the version using TOML parsing before comparing it.",
-        "file": "src/forge/prcheck.py",
-        "line": 91,
-        "priority": "P2",
-        "title": "Read valid TOML versions when selecting the release"
-      }
-    ],
-    "status": "blocked",
-    "tree": "810ee4763339fc464a58226e992893c15165613a93d782ae671589f900c3104a"
+    "findings": [],
+    "status": "clean",
+    "tree": "e6b59da11117a7430b9daeaeaf0c16a5135bd9ec3666ee8bf2c2ad0b0c2bf21a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T03:39:51+00:00",
@@ -47,6 +25,10 @@
     },
     {
       "at": "2026-09-29T05:22:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:44:50+00:00",
       "step": "review"
     }
   ],
