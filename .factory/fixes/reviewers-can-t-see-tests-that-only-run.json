@@ -1,0 +1,14 @@
+{
+  "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
+  "branch": "fix/reviewers-can-t-see-tests-that-only-run",
+  "done_when": "forge close runs the repo's test command on the machine it runs on and gives the reviewer the result, listing what passed and what was skipped with the reason; the review brief says a skipped test that the close run passed is not a missing test, and that for a pure deletion a test showing the old input is now refused is enough; tests run forge close with a test command that passes and one that skips",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T08:04:17+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviewers can't see tests that only run outside the worker's sandbox, such as database tests, so every database change is flagged as untested even when those tests pass"
+}
