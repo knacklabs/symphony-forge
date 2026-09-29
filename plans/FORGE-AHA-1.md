@@ -20,8 +20,9 @@
   and sends a three-line "what changed" note with each new version.
 - Prototype changes come back faster: before sign-off their review blocks only on serious problems
   (security, lost data, broken migrations); the full strict review still happens at sign-off.
-- Before sign-off, one call reads every assumption back to the customer. Then the agent drafts the
-  sign-off email the customer replies to.
+- Before sign-off, one call reads every assumption back to the customer, and the strict review
+  runs; once it passes, the salesperson asks the customer's named person for sign-off their own way
+  and gives the agent the reply to record.
 - New projects no longer point at a discovery tool Forge removed.
 
 ## Why
@@ -59,12 +60,12 @@ customer sees, and every prototype round waits on a full review.
    customer did themselves, what they said word for word, and what they asked for, and write them
    under `## Prototype notes` in `docs/product/DISCOVERY.md`, tagging each request "serves the
    problem" or "after sign-off".
-6. **Sign-off is read back and drafted.** Before the sign-off review the skill has the agent hold
-   one read-back call that goes through every answer on the answers page (our defaults, the
-   agent's guesses and the topics marked later) and settles every open must-answer topic in that
-   call; after the review passes, the agent drafts the sign-off email for the reviewed version
-   (its demo address, what the app does, the problem and the saving, every answer in plain words
-   with the defaults called out, what happens next), whose reply is the approval evidence the
+6. **Sign-off is read back and reviewed first.** Before the sign-off review the skill has the
+   agent hold one read-back call that goes through every answer on the answers page (our
+   defaults, the agent's guesses and the topics marked later) and settles every open must-answer
+   topic in that call; then the agent runs the strict review before anyone asks for sign-off, and
+   once it passes tells the salesperson to ask the customer's named person for sign-off their own
+   way. The agent drafts no sign-off email. The customer's reply is the approval evidence the
    sign-off decision records.
 7. **Prototype changes are reviewed lightly.** In a client repo without an accepted sign-off,
    `forge close` on a fix whose allowance is "Prototype before sign-off" reviews with GPT-6 Sol at
@@ -86,7 +87,7 @@ Risks: none
 |---|---|---|---|---|---|---|---|
 | SPEC | Prepare and listen | The pre-meeting brief, their words, the spreadsheet ask and the recap in the skill and FDE guidance, and the decision and edits that remove `/office-hours` | 1, 8 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/decisions/`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_aha_prepare.py` | TEMPLATES | yes |
 | TEMPLATES | Their words, demo data and pointing | The discovery template's Words they use and Prototype notes formats, and the demo-data, testing and frontend conventions | 2, 3 | `src/forge/templates/skeleton/docs/product/`, `src/forge/templates/conventions/` | `tests/test_aha_templates.py` | none | yes |
-| DEMO | Demo to sign-off | The demo script, the what-changed note, reactions, the read-back and the sign-off email in the skill | 4, 5, 6 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_aha_demo.py` | SPEC | yes |
+| DEMO | Demo to sign-off | The demo script, the what-changed note, reactions, the read-back and the review before sign-off in the skill | 4, 5, 6 | `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `tests/test_trim_skills.py`, `tests/test_split_ships.py` | `tests/test_aha_demo.py` | SPEC | yes |
 | REVIEW | Light prototype review | The lighter review for prototype fixes before sign-off | 7 | `src/forge/review.py`, `src/forge/close.py` | `tests/test_aha_review.py` | none | no |
 
 New moving parts: the Agentation feedback toolbar in prototype demo builds (Done-when 3)
@@ -104,6 +105,8 @@ New moving parts: the Agentation feedback toolbar in prototype demo builds (Done
   builds to the conventions; Forge ships the conventions, not the code.
 - REVIEW reads the prototype allowance exactly as FORGE-PROTO-1's GATE records it and passes
   Autoreview `--model codex=gpt-6-sol --thinking medium --max-priority P0`.
-- The recap and sign-off email are drafts the salesperson sends; Forge sends nothing.
+- The recap is a draft the salesperson sends; there is no sign-off email draft, and Forge sends
+  nothing. The strict review before sign-off comes from running `forge decision accept` on the
+  sign-off decision before the reply is recorded.
 - Each test file starts with `STORY = "FORGE-AHA-1"`, and its `test_<n>_` names cite the Done-when
   items its task covers.
