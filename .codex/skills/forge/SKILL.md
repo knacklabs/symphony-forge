@@ -98,8 +98,9 @@ the customer's own words in `## Words they use` in `docs/product/DISCOVERY.md`, 
 keep only its column headers, never its rows. The same day, draft a recap in `docs/context/` for
 the customer to confirm: their problem in their words, the cost in their numbers, the one task
 the demo will cover, who signs off, the open "ask the client" questions and the demo date. When
-they reply, record the Demo workflow and Sign-off person answers from it, with
-`client recap reply` as the source. The salesperson sends the recap; Forge sends nothing.
+they reply, record the Demo workflow and Sign-off person answers from it with `client` as the
+source, as `- Demo workflow: <task> (client, <YYYY-MM-DD>)` and `- Sign-off person: <name, role>
+(client, <YYYY-MM-DD>)`. The salesperson sends the recap; Forge sends nothing.
 
 **The card.** Write each problem as a card under `## Problems` in `docs/product/DISCOVERY.md`,
 adding the section to an older file on first use: `### <short problem title>`, then Job,
@@ -183,8 +184,10 @@ client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>
 
 **Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
 goes through every answer on the answers page: our defaults, the agent's guesses and the topics
-marked later. Settle every open must-answer topic in that call; `forge next` lists them. Then run
-the strict sign-off review before anyone asks for sign-off: write `forge decision new
+marked later. Settle every open must-answer topic in that call: `forge next` lists those still
+missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
+our default or the agent, so record each as the client, salesperson or developer answered it. Then
+run the strict sign-off review before anyone asks for sign-off: write `forge decision new
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded; it runs the strict review alone and stops. Fix what it finds and run

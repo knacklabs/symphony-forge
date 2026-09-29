@@ -3,10 +3,13 @@
 Checked in the skill as `forge sync` writes it into a client repo, for both hosts, and as
 `forge init` writes it into a new client repo.
 """
+import json
+import re
 import subprocess
 
 import pytest
 from test_aha_prepare import HOSTS, _synced
+from test_proto_signoff import SOL_XHIGH, _client, _decision
 
 STORY = "FORGE-AHA-1"
 
@@ -26,6 +29,12 @@ def _initialized(repo, gh, tmp_path) -> str:
               for host in HOSTS}
     assert len(copies) == 1
     return " ".join(copies.pop().split())
+
+
+@pytest.fixture
+def signoff(repo, tmp_path, monkeypatch):
+    """A prototype ready for sign-off, made before the skill fixture syncs into the same repo."""
+    return _client(repo, tmp_path, monkeypatch)
 
 
 @pytest.fixture(params=["sync", "init"])
@@ -75,7 +84,7 @@ def test_5_reactions_are_kept_after_each_demo(skill):
     ) in section
 
 
-def test_6_signoff_is_read_back_and_reviewed_first(skill):
+def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     # Old contract: the agent drafted a sign-off email and the review ran only at accept, after
     # the reply. New contract (owner, 2026-09-29): read-back call, then accept before any reply
     # (the strict review alone), then the salesperson asks in their own way, then record and accept.
@@ -98,3 +107,20 @@ def test_6_signoff_is_read_back_and_reviewed_first(skill):
     assert "Draft no sign-off email; Forge sends nothing." in section
     assert "The customer's reply is the approval evidence the sign-off decision records." in section
     assert "sign-off email for" not in section and "Before the sign-off email" not in section
+
+    # The skill once recorded the recap reply's answers as `client recap reply`, a source
+    # `forge decision accept` refuses, so a client following it never reached the review.
+    examples = dict(re.findall(r"`- (Sign-off person|Demo workflow): <[^>]+> \(([^,()]+), "
+                               r"<YYYY-MM-DD>\)`", skill))
+    assert set(examples) == {"Sign-off person", "Demo workflow"}, examples
+    fix, answers, queue = signoff
+    for topic, source in examples.items():
+        answers = re.sub(rf"(- {topic}: .+) \([^,()]+, ", rf"\1 ({source}, ", answers)
+    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    repo.git("commit", "-qam", "Record the recap reply", cwd=fix)
+    _decision(fix, answers, via="", on="")
+    queue.write_text(json.dumps(
+        [{"say": SOL_XHIGH, "report": {"review_status": "scoped-clean", "findings": []}}]))
+    reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert reviewed.returncode == 0, reviewed.stderr
+    assert "The sign-off review passed" in reviewed.stdout
