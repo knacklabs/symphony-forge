@@ -2,11 +2,24 @@
   "base": "f618876eb66cc005809c7c4681a3e1926bbb34d8",
   "branch": "task/FORGE-SHORTPLAN-1-SPEC",
   "done_when": "The owner approves a short plan: what changes for them, why, one plain sentence per Done-when item, and risks; the details sit below for the agents",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "73ca74a37ea45ea414dfab5c8124d27cd1f20b79d9c2a8d4a33886beb2b88c3c",
+    "commit": "d516ad135ae13ccbff8df8b021d7371de5d05527",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "48e09fc99717de9449e9fabfc86259753b67103031f3b6a5be9e3823ce145548"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T18:17:23+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T16:02:12+00:00",
+      "step": "review"
     }
   ],
   "why": "The plan the owner approves is long and full of test lists, tasks and notes that only agents use"
