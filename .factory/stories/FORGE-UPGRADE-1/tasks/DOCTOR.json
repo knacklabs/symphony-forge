@@ -1,28 +1,13 @@
 {
   "branch": "task/FORGE-UPGRADE-1-DOCTOR",
   "review": {
-    "commit": "f2d936a2fb0becd0f2e8dd7caf334b714c6764f3",
+    "commit": "21dc0ec2d0617f2e66d35ff20961a0fa78256017",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "When the pin matches the installed version and synced files are clean, doctor prints the version only in its final success line. If another check fails, `rows` is nonempty and doctor refuses before that line (`src/forge/doctor.py:217-219`); this new note is also skipped. For example, a GitHub authentication failure leaves the user with no statement of which Forge version was used for the sync comparison. The new test always creates drift, so it misses this path.",
-        "file": "src/forge/doctor.py",
-        "line": 206,
-        "priority": "P1",
-        "title": "Not done: Doctor says which Forge version it compares with"
-      },
-      {
-        "body": "If `sync.files` refuses, doctor catches that refusal and sets `wanted = {}` (`src/forge/doctor.py:105-110`), so it performs no synced-file comparison. With a mismatched pin, this new note still says doctor compared the files. A malformed Forge block can trigger that refusal (`src/forge/sync.py:94-100`), making the note falsely imply that the files were checked.",
-        "file": "src/forge/doctor.py",
-        "line": 207,
-        "priority": "P2",
-        "title": "Do not say files were compared when sync generation failed"
-      }
-    ],
-    "status": "blocked",
-    "tree": "3ff25f976fd2d739e21e6428bdd9eacaba507ae2da2fdccb6b287667c8d3cd67"
+    "findings": [],
+    "status": "clean",
+    "tree": "87b14cfc30fbf0e3394fa6f51bbce829dc4fa24a683329d9394b1a3b5b3e91a0"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T04:03:41+00:00",
@@ -30,6 +15,10 @@
     },
     {
       "at": "2026-09-29T04:18:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T04:54:53+00:00",
       "step": "review"
     }
   ]
