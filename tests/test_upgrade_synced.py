@@ -57,6 +57,15 @@ def test_2_upgrade_is_not_ready_while_synced_files_are_out_of_date(env):
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
 
+    # The review close recorded, after its throwaway sync checkout, is the one forge-pr-check
+    # finds current on the same head.
+    head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    base = env.repo.git("merge-base", "origin/main", head, cwd=where)
+    done = env.repo.forge("hook", "pr-check", "--base", base, "--head", head,
+                          "--branch", "fix/tidy-readme", cwd=where)
+    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
+        done.stderr
+
     # A file sync deletes counts too: an old Forge-only CLAUDE.md that sync removed in the folder
     # but that is still committed stays in the pull request.
     env.commit(where, "CLAUDE.md", "@AGENTS.md\n", "The old release's CLAUDE.md")
