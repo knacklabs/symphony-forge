@@ -58,7 +58,9 @@ def _ok(done) -> str:
     return done.stdout
 
 
-def _notes(repo, slug: str, read_hash: str, findings: str = "", round: int = 1, passed: str = "yes") -> None:
+def _notes(repo, slug: str, read_hash: str, findings: str = "## Round 1\n\nNo findings.\n", round: int = 1,
+           passed: str = "yes") -> None:
+    """A round passes on its text, "No findings.", not on the passed flag (FORGE-READLOOP-1)."""
     repo.write(f"docs/specs/{slug}.read.md",
                f"---\nreader: codex\nread_at: 2026-09-25T10:00:00+00:00\nread_hash: {read_hash}\n"
                f"round: {round}\npassed: {passed}\n---\n\n# Cold read\n\n{findings}")
