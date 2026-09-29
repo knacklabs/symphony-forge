@@ -19,7 +19,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import repo, story
+from forge import repo
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -101,6 +101,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
     row = next((r for r in rows(doc.get("Tasks", "")) if r.get("id", "").strip("`") == name), None)
     if row is None:
         repo.refuse(REFUSALS["bad_doc"], key=key, task=name, item=item)
+    from forge import story  # story imports review indirectly
     story._parsed(path, f"plans/{key}.md")  # pyright: ignore[reportPrivateUsage]
     return text, doc, row
 
@@ -201,6 +202,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
+        from forge import story  # story imports review indirectly
         parsed = story.parse(doc_text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
