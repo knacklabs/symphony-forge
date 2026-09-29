@@ -133,10 +133,16 @@
       "order": 62
     },
     {
+      "key": "FORGE-READLOOP-1",
+      "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
+      "status": "pending",
+      "order": 63
+    },
+    {
       "key": "FORGE-AHA-1",
       "title": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step",
       "status": "pending",
-      "order": 63
+      "order": 64
     }
   ],
   "epics": [

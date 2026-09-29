@@ -126,8 +126,29 @@ The previous review's findings and dismissals are below; recheck them against th
 report any still-open gap alongside new ones:
 $previous
 
+The coordinator's rulings and dismissals on this branch so far, with their reasons:
+$rulings
+Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
+weigh, and name that evidence in the finding's body.
+
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap). P0 and P1 block the merge; P2 and P3 are advice.
+<!-- signoff -->
+## Client prototype sign-off review
+Review the complete product snapshot against the customer's answers and the topic table below.
+The base is an empty root commit, so every tracked product file is in this diff. Check the
+working prototype as a whole: the demo workflow, data handling, sign-in, integrations, host,
+security, accessibility, and whether the implementation matches the answers. Report every
+blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
+the strength of a template or a test stub alone. Give concrete file and line evidence.
+
+The exact docs/product/BRIEF.md answers page section reviewed and quoted by the sign-off decision:
+
+$answers
+
+The twelve topics and their required timing:
+
+$topics

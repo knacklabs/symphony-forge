@@ -108,9 +108,13 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
 
 
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
+    # FORGE-LIVE-1: a repo with history is adopted on a fix branch, not refused; without the
+    # human's confirmed answers it names the ones it needs.
     return (("init",), None, "",
-            "forge init sets up a new repo, and this one already has commits; a repo with the "
-            "copied-in Forge moves over with forge migrate.\nNext: forge migrate\n")
+            "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
+            "the answers you confirmed: --test, --checks, --interfaces, --approver, --merger.\n"
+            'Next: forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+            '--approver "<who>" --merger "<who>" --never-touch "<path>"\n')
 
 
 def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):

@@ -58,16 +58,16 @@ def board(args: Any) -> int:
     return 0
 
 
-def numbers_line(top: Path) -> str:
+def numbers_line(top: Path, checks: list[str]) -> str:
     """The three success numbers in one line, for `forge next`."""
-    stories, _, prs = _gather(top)
+    stories, _, prs = _gather(top, checks)
     return "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + "."
 
 
 # --- reading the state and GitHub ------------------------------------------------------------
 
 
-def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
+def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], list[Item], list[Item] | None]:
     """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
     requests (None without a working gh)."""
     landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
@@ -83,7 +83,8 @@ def _gather(top: Path) -> tuple[list[Item], list[Item], list[Item] | None]:
     for pr in prs or []:  # newest first; a merged one wins
         if pr.get("headRefName") not in by_branch or pr.get("state") == "MERGED":
             by_branch[str(pr.get("headRefName"))] = pr
-    checks = repo.config(top)["checks"] if (top / "forge.toml").is_file() else []
+    if checks is None:
+        checks = repo.config(top)["checks"] if (top / "forge.toml").is_file() else []
 
     def part(rel: str, state: Item, branch: str, noun: str) -> Item:
         pr = by_branch.get(state.get("branch") or branch)

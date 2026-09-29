@@ -18,6 +18,10 @@ SIGNOFF = ('---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n'
                                   "pinned_other", "pinned_signed", "forge-source",
                                   "forge-source-agent"])
 def test_1_merge_setting_follows_default_branch_signoff(env, case):
+    # A client repo counts as live unless forge.toml says prototype.
+    env.commit(env.repo.path, "forge.toml", (env.repo.path / "forge.toml").read_text("utf-8")
+               + 'stage = "prototype"\n')
+    env.repo.git("push", "-q", "origin", "main")
     if case in ("signed", "signed_unprefixed", "pinned_other", "pinned_signed"):
         other = env.tmp / "signed-off-clone"
         env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(other))

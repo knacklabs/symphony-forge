@@ -12,6 +12,8 @@ import importlib
 import json
 import pkgutil
 import re
+import shlex
+import sys
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -66,6 +68,10 @@ FEATURES = re.compile(r"^[ \t]*\[[ \t]*features[ \t]*\][ \t]*(#.*)?$", re.M)
 TABLE = re.compile(r"^[ \t]*\[", re.M)
 
 shims = githooks.shims
+
+# Every story and fix adds to the roadmap, so git merges it with Forge's rule instead of by line.
+ROADMAP_RULE = "plans/roadmap.json merge=forge-roadmap"
+RANK = {"pending": 0, "done": 2}  # planning, started and the rest sit between the two
 
 def install_line(version: str) -> str:
     """The command that installs the pinned Forge (the pin refusal's own Next line)."""
@@ -179,6 +185,40 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    text = read(top / ".gitattributes")
+    if ROADMAP_RULE in text.splitlines():
+        return {".gitattributes": text}
+    return {".gitattributes": f"{text.rstrip()}\n{ROADMAP_RULE}\n" if text.strip()
+            else f"{ROADMAP_RULE}\n"}
+
+
+def merge_roadmap(base: str, ours: str, theirs: str) -> int:
+    """Git's merge driver for the roadmap: writes the merge over ours; 1 leaves git's conflict.
+
+    Every item on either side stays, in ours' order then theirs' new ones. When both sides changed
+    an item, the one whose status is further along wins, otherwise ours.
+    """
+    try:
+        old, mine, other = (json.loads(Path(path).read_text(encoding="utf-8") or "{}")
+                            for path in (base, ours, theirs))
+        was = {item["key"]: item for item in old.get("items", [])}
+        items = {item["key"]: item for item in mine["items"]}
+        rank = lambda entry: RANK.get(entry.get("status"), 1)  # noqa: E731
+        for item in other["items"]:
+            key, kept = item["key"], items.get(item["key"])
+            if kept is None or kept == was.get(key) or (item != was.get(key) and rank(item) > rank(kept)):
+                items[key] = item
+        # The other top-level fields: theirs only where ours left the base's value alone.
+        merged = {**mine, **{name: value for name, value in other.items()
+                             if name != "items" and mine.get(name) == old.get(name)}}
+        merged["items"] = list(items.values())
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return 1
+    Path(ours).write_bytes((json.dumps(merged, indent=2) + "\n").encode("utf-8"))
+    return 0
+
+
 def _synced_text(source: str, packaged: str) -> str:
     """Read the checkout's copy in editable installs, or the bundled copy in built installs."""
     checked_in = SOURCE / source
@@ -256,6 +296,14 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             path.write_bytes(text.encode("utf-8"))
             changed = True
         path.chmod(0o755)
+    # The roadmap's merge driver runs this Forge's own code with the Python running it now.
+    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
+            "from forge.sync import merge_roadmap; sys.exit(merge_roadmap(*sys.argv[1:]))")
+    driver = f"{shlex.quote(sys.executable)} -c {shlex.quote(code)} %O %A %B"
+    current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
+    if current.strip() != driver:
+        repo.git("config", "merge.forge-roadmap.driver", driver, cwd=top)
+        changed = True
     return changed
 
 

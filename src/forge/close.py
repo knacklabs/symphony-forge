@@ -54,13 +54,14 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = repo.current_branch(top), repo.default_branch(top)
     pr = _pull_request(top, branch)
-    migrating = state.get("kind") == "migrate"
+    migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":
         if migrating:  # forge-pr-check can run now that the default branch has Forge, so require it
             init.protect(top, default, cfg["checks"])
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
     fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
@@ -71,7 +72,8 @@ def close(args: argparse.Namespace) -> int:
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous)
+            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
+                                light=light)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 number = dismissal["finding"]
@@ -110,7 +112,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    # forge-pr-check runs from the base branch, which has no Forge until the migrate pull request merges.
+    # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:
@@ -256,7 +258,8 @@ def _block(result: dict[str, Any], check: str) -> str:
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if finding["priority"] in review.SERIOUS else "advisory")
+                else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
+                else "advisory")
         lines.append(f"{n}. {finding['priority']} {finding['title']} "
                      f"({finding['file']}:{finding['line']}): {note}")
     return "\n".join([*lines, *(["", check] if check else []), END])

@@ -1,0 +1,66 @@
+{
+  "base": "d0d2be8ecc65bd89e16acaef9cc9352bff1b3329",
+  "branch": "fix/one-worktree-with-settings-the-installed",
+  "done_when": "forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test through forge next shows it",
+  "kind": "fix",
+  "review": {
+    "commit": "89bb85bea32da54379e01991476fa610d3e69dd1",
+    "dismissals": [
+      {
+        "because": "src/forge/nextstep.py:373 the contract is that forge next keeps listing every item when a worktree's settings are refused; a worktree whose settings forge next never reads causes no refusal, so there is nothing to name",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_one_worktree_with_settings_the_installed.py:23 an unread worktree's settings cause no refusal, so there is nothing for that test to prove",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "From a healthy checkout, a worktree with rejected settings and a `started` fix is listed without any refusal or reason. This line reads that worktree's config only when it has an open PR and is `waiting for checks`; `_report` later validates only the checkout running the command. The same gap affects working fixes without an open PR. Read each active worktree's settings so the command can name the unreadable worktree while listing the other items.",
+        "file": "src/forge/nextstep.py",
+        "line": 373,
+        "priority": "P1",
+        "title": "Not done: forge next lists every other item and names the worktree whose settings it can't read with the refusal's reason, and a test thr..."
+      },
+      {
+        "body": "Both unreadable worktrees in this command test have `waiting for checks` state and an open PR. That forces the only path that reads their config, so the test still passes when a started or working worktree's rejected settings go unnamed. Add a `forge next` test from a healthy checkout with an unreadable started worktree and assert that the output includes its path and refusal reason alongside the other items.",
+        "file": "tests/test_fix_one_worktree_with_settings_the_installed.py",
+        "line": 23,
+        "priority": "P1",
+        "title": "Not done: test forge next with an unreadable started worktree"
+      },
+      {
+        "body": "When the current Forge-source worktree's config is rejected, `_report_config` returns `repo.DEFAULTS`, whose `repo` value is `client` (`src/forge/repo.py:131`). This branch then prints instructions to answer client sign-off topics in `docs/product/BRIEF.md`, even though the actual problem is the rejected config. Suppress that sign-off advice when config validation failed.",
+        "file": "src/forge/nextstep.py",
+        "line": 173,
+        "priority": "P2",
+        "title": "Do not request client sign-off for a refused Forge-source config"
+      }
+    ],
+    "status": "clean",
+    "tree": "82e32ed191ab537cd881baa8c32d29ab463df2d5378c86bfc7b15acffe0b08e9"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T14:52:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:02:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:47:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T16:16:57+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "One worktree with settings the installed Forge rejects makes forge next refuse to show anything, for every item"
+}

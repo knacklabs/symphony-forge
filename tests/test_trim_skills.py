@@ -15,6 +15,9 @@ SOURCES = {
     ".claude/skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
     ".codex/skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
+    # FORGE-READLOOP-1 adds the Forge skill, so a package missing its reader steps fails here.
+    ".claude/skills/forge/SKILL.md": "src/forge/templates/skill.md",
+    ".codex/skills/forge/SKILL.md": "src/forge/templates/skill.md",
 }
 # SHA-256 of the four package copies before the trim, with LF endings as sync writes.
 # Current-source equality alone would miss a shared change across all three installs.
@@ -36,9 +39,9 @@ def test_2_sync_ships_one_source_copy_in_wheel_sdist_and_editable(repo, tmp_path
     assert all(not (ROOT / rel).exists() for rel in OLD_COPIES)
     # read_text normalizes CRLF checkouts, matching sync's read and LF byte write.
     originals = {source: (ROOT / source).read_text(encoding="utf-8").encode("utf-8")
-                 for source in PRE_TRIM_SHA256}
-    assert {source: hashlib.sha256(data).hexdigest()
-            for source, data in originals.items()} == PRE_TRIM_SHA256
+                 for source in set(SOURCES.values())}
+    assert {source: hashlib.sha256(originals[source]).hexdigest()
+            for source in PRE_TRIM_SHA256} == PRE_TRIM_SHA256
     expected = {target: originals[source] for target, source in SOURCES.items()}
     dist = tmp_path / "dist"
     subprocess.run(["uv", "build", "--wheel", "--sdist", "--out-dir", str(dist), str(ROOT)],

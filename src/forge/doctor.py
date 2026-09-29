@@ -1,8 +1,8 @@
 """forge doctor: tools, the pins (Forge's and the Autoreview helper's), the git hooks, the host
 hooks, adapter drift, CI and, for Codex workers, the Codex SDK and the project's trust; a row per
-problem. With Codex workers, or under Claude Code, whose cold read runs on Codex, it checks the SDK
-and --fix installs it. Whatever the workers, it stops the Codex processes a crashed forge work or
-read left, never a running one's."""
+problem. With Codex workers, or under Claude Code with Codex installed, whose cold read runs on
+Codex, it checks the SDK and --fix installs it. Whatever the workers, it stops the Codex processes
+a crashed forge work or read left, never a running one's."""
 from __future__ import annotations
 
 import argparse
@@ -37,7 +37,8 @@ INSTALL = {
     "impeccable": "npx skills add pbakaus/impeccable -g",
     "emil-design-eng": "install emil-design-eng where the worker reads skills",
     "autoreview": (f"install skills/autoreview from https://github.com/openclaw/agent-skills at "
-                   f"{review.AUTOREVIEW_PIN} into {review.HELPER.parents[1]}"),
+                   f"{review.AUTOREVIEW_PIN} into {review.HELPERS[0].parents[1]} or "
+                   f"{review.HELPERS[1].parents[1]}"),
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
@@ -76,8 +77,10 @@ def doctor(args: argparse.Namespace) -> None:
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     on_codex = cfg["workers"] == "codex"
-    # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too.
-    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE"))
+    # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too, unless
+    # Codex isn't installed: a Claude-only team.
+    needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE")
+                                 and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
     # Without uv there is nothing to install with; the uv row below says how to get it.
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         codex.install()
@@ -138,10 +141,29 @@ def doctor(args: argparse.Namespace) -> None:
     if not cfg["checks"]:
         rows.append(("forge.toml names no checks, so close has nothing to wait for.",
                      "ask your agent to set checks in forge.toml"))
+    protection = (repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/branches/"
+                           f"{repo.default_branch(top)}/protection", cwd=top)
+                  if shutil.which("gh") else None)
+    if protection and (protection.returncode == 0 or
+                       "Branch not protected" in protection.stdout + protection.stderr):
+        try:
+            required = json.loads(protection.stdout).get("required_status_checks") or {}
+            protected = {entry["context"] for entry in required.get("checks") or []
+                         if isinstance(entry, dict) and isinstance(entry.get("context"), str)}
+            protected.update(name for name in required.get("contexts") or []
+                             if isinstance(name, str))
+        except (ValueError, AttributeError):
+            protected = set()
+        if protected != set(cfg["checks"]):
+            rows.append(("forge.toml checks differ from branch protection's required checks: "
+                         f"Forge names {', '.join(sorted(cfg['checks'])) or 'none'}; protection "
+                         f"requires {', '.join(sorted(protected)) or 'none'}.",
+                         "ask your agent to reconcile checks in forge.toml with branch protection"))
     if not cfg["test"]:
         rows.append(("forge.toml has no test command.",
                      "ask your agent to set test in forge.toml, then run forge sync"))
-    elif f"run: {json.dumps(cfg['test'])}" not in sync.read(top / sync.WORKFLOW_PATH):
+    elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read(
+            top / sync.WORKFLOW_PATH):
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
                      "command.", "forge sync"))
 
@@ -162,11 +184,19 @@ def doctor(args: argparse.Namespace) -> None:
                          top / ".claude"],
               "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
                         top / ".agents"]}
-    for skill in ("impeccable", "emil-design-eng"):
-        if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                   for folder in skills[cfg["workers"]]):
-            rows.append((f"{skill} is required for UI work but isn't installed where the "
-                         f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
+    package = top / "package.json"
+    packages = json.loads(sync.read(package)) if package.is_file() else {}
+    dependencies = {**packages.get("dependencies", {}), **packages.get("devDependencies", {})}
+    has_frontend = (any((top / path / "package.json").is_file()
+                        for path in ("frontend", "web", "apps/web"))
+                    or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
+                                                             "@angular/core", "next", "vite")))
+    if has_frontend:
+        for skill in ("impeccable", "emil-design-eng"):
+            if not any((folder / "skills" / skill / "SKILL.md").is_file()
+                       for folder in skills[cfg["workers"]]):
+                rows.append((f"{skill} is required for UI work but isn't installed where the "
+                             f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")

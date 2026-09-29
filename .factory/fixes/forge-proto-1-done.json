@@ -1,0 +1,27 @@
+{
+  "base": "94ae94f6fbd3a854da603278153f5b7328fc1d55",
+  "branch": "fix/forge-proto-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "A client repo now waits for the customer's named person to sign off a working prototype, reviewed strictly on its answers, before any story is created, and the prototype deploys on our own platform from one Dockerfile",
+  "review": {
+    "commit": "770be9dd027f775deda45cc167538d0e953a9704",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e09d534da53dbc09549dd504aa303f3edfd808b2a619a39a50c5188216b24d7d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T17:23:34+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T01:23:36+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in is finished, and what it achieved."
+}

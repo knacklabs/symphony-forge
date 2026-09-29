@@ -1,9 +1,10 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-28
 stories: []
 supersedes: "0094-python-only-line-cap"
+superseded_by: 0099-python-cap-8000
 ---
 
 # Forge's Python cap is 7,500
