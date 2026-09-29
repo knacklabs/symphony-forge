@@ -2,22 +2,14 @@
   "branch": "task/FORGE-SHORTPLAN-1-BRIEF",
   "review": {
     "blocking_level": "P1",
-    "changed": "5921186c3c5d62cca96cb0dd5466d54847fb2534e12dd3a848131d219c8ef54e",
-    "commit": "35b79750b69ed6ef5415ebdbea530a5ab9506bc1",
+    "changed": "467028f329dd73c9beddfbefa40c46a70a113edd70b2de6bcc978f7b2a479569",
+    "commit": "2ba1dc39adaebe180c78dc20625940b031d69d6c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The latest non-bookkeeping commit\u2019s `Functional check:` paragraph reports only module imports and 10 passing tests. It does not say what the worker observed when using `forge work` and `forge close` for either covered item, or show the likely failure\u2019s next-step message. An earlier commit contains that walkthrough, but `review.functional_check` reads only the latest qualifying commit (`src/forge/review.py:279-290`), so the reviewer does not receive it. Put the observed command outcomes for items 3 and 4 in the final functional-check paragraph.",
-        "file": "tests/test_shortplan_briefs.py",
-        "line": 87,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      }
-    ],
-    "status": "blocked",
-    "tree": "b6a9521a1db8bd3bc46ecc41ed89828ed57db699d0413dd0d41f275c1fdc5ee0"
+    "findings": [],
+    "status": "clean",
+    "tree": "e6eb21674da57670deb8b8689579f4c058919c52e587233b6702d899197c0681"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T10:39:34+00:00",
@@ -29,6 +21,10 @@
     },
     {
       "at": "2026-09-29T11:33:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T11:38:20+00:00",
       "step": "review"
     }
   ]
