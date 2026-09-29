@@ -1,7 +1,7 @@
 {
   "branch": "task/FORGE-AHA-1-TEMPLATES",
   "review": {
-    "commit": "a426db0b9234441c877a48a047fd92e148e843aa",
+    "commit": "cb8259f2520a8eea43f2d5eb7288fd3a42f1fbe8",
     "dismissals": [
       {
         "because": "src/forge/templates/conventions/frontend.md:61 Done-when 3 asks that production never shows the toolbar; the run-time check never loads its chunk outside APP_ENV=demo, and one Dockerfile builds one image for both, so a separate production build adds a moving part the item doesn't need",
@@ -11,38 +11,45 @@
     ],
     "findings": [
       {
-        "body": "The convention explicitly permits Agentation's lazy chunk in the built assets. The scaffold Dockerfile builds the frontend once without `APP_ENV` (`src/forge/templates/skeleton/Dockerfile:6`), so the production build can contain the toolbar code even though the runtime check prevents it from loading. The Done-when item requires Agentation to be absent from production builds. Specify separate demo and production builds with the toolbar excluded from the latter.",
+        "body": "The example uses `__APP_ENV__` both as the window property name and as the value to replace. Following the backend instruction to replace `__APP_ENV__` in `index.html` changes the property name first; replacing every occurrence changes it too. The app then reads an unset `window.__APP_ENV__`, so the toolbar never appears in the demo. Use a replacement token that does not occur in the property name.",
         "file": "src/forge/templates/conventions/frontend.md",
-        "line": 61,
+        "line": 64,
         "priority": "P1",
         "title": "Not done: Anyone can point at the screen"
       },
       {
-        "body": "The example counts tables before opening the insertion transaction. During a rolling deployment, the previous instance can create the first real row after the counts but before the demo records are inserted (`src/forge/templates/conventions/deploy.md:5-6`). The loader would then mix demo and real data despite the stated refusal rule. The check and insertion need a database guard that makes a concurrent first write cause refusal or retry.",
+        "body": "The functional check claims the demo-data refusal gives a plain next step. For the likely case of tables that already contain rows, the sample only logs that fact. It does not tell the operator to use an empty demo database or what to do before retrying, so the claimed next-step check is unsupported.",
+        "file": "src/forge/templates/conventions/demo-data.md",
+        "line": 34,
+        "priority": "P1",
+        "title": "Not done: functional check"
+      },
+      {
+        "body": "The sample counts tables before opening the insertion transaction. A previous instance can write a real row after the counts and before the demo transaction, especially during the overlapping deployment described in `src/forge/templates/conventions/deploy.md:5-6`. The loader would then mix demo and real rows despite its refusal rule. Guard the check and insertion against a concurrent first write.",
         "file": "src/forge/templates/conventions/demo-data.md",
         "line": 31,
         "priority": "P2",
         "title": "Make the empty-table check atomic with demo insertion"
       },
       {
-        "body": "The stack convention tells builders to add the loader, but the unchanged Forge skill's prototype instructions at `src/forge/templates/skill.md:103-111` do not tell the agent to build it in the first version or use `Words they use` for screen labels. The story assigns the skill edit to SPEC, outside this part's scope.",
+        "body": "The stack convention tells builders to add a first-version loader, but the skill's prototype instructions at `src/forge/templates/skill.md:118-127` still do not tell the agent to build it or use the Words they use list for screen labels. The story assigns skill edits to SPEC, outside this task's scope.",
         "file": "src/forge/templates/conventions/stack.md",
         "line": 43,
         "priority": "P2",
         "title": "Later: SPEC must put first-version demo data and customer labels in the skill"
       },
       {
-        "body": "The frontend convention describes clicking an element and pasting feedback, but the unchanged Forge skill at `src/forge/templates/skill.md:103-111` gives salespeople no Agentation instructions. The story assigns that skill edit to DEMO, outside this part's scope.",
+        "body": "The frontend convention describes the click, write and paste flow, but the skill's prototype instructions at `src/forge/templates/skill.md:118-135` give salespeople no Agentation instructions. The story assigns that skill edit to DEMO, outside this task's scope.",
         "file": "src/forge/templates/conventions/frontend.md",
         "line": 54,
         "priority": "P2",
         "title": "Later: DEMO must put the pointing instructions in the skill"
       }
     ],
-    "status": "clean",
-    "tree": "db0396deaf0c22ead70f2ac3a62c57f91665e3104d66252f4d06163b6dfc0a82"
+    "status": "blocked",
+    "tree": "de6c7d41c46f613b3727277918ff0876d1232b53c6d26a3630e0b19ad1ea5df7"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T14:18:51+00:00",
@@ -54,6 +61,10 @@
     },
     {
       "at": "2026-09-28T15:20:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:17:08+00:00",
       "step": "review"
     }
   ]
