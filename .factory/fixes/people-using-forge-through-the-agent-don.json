@@ -5,27 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "4caf93fc2159880cc87a5c889fe101eb21954a5f360dff594414aa5fca08ebd1",
-    "commit": "c7a1d3fa8b51e2a43fe4dc9037a931acc591ed23",
+    "changed": "fa00fca6bbc274442e60b135044fde994a36b581f425682793e0964b827b3d7d",
+    "commit": "2ec5c5cc8326cd43fe6aeacecde6482d8b0a1923",
     "dismissals": [],
     "findings": [
       {
-        "body": "The cold-read sentence says what the agent will do, but gives the person no next step. The merge and prototype-demo sentences likewise describe what happened without saying what the person can do next (lines 83\u201384). An agent following these examples would miss the stated requirement for three of the seven moments. Give each example a concrete next action for the person.",
-        "file": "src/forge/templates/skill.md",
-        "line": 80,
-        "priority": "P1",
-        "title": "Not done: coaching examples give the person a next step at every moment"
-      },
-      {
-        "body": "The test runs both Forge commands, but its per-moment assertions check only that each label has a quoted example without backticks or the text `forge `. Replacing an example with `\"OK.\"` would still pass, although the named coaching behavior is broken. Assert that each delivered example tells the person what happened and what they can do next, and that it remains one plain sentence.",
+        "body": "The new assertions check sentence shape and word counts, but not whether the next step relates to the moment. Replacing every delivered example with \"A thing has happened today; you can eat lunch now.\" would pass through both forge sync and forge init, even though none of the seven moments teaches the person what to do next. This is new evidence beyond the previous review's \"OK.\" example, which the added assertions now reject. Assert a meaningful next action for each delivered moment.",
         "file": "tests/test_fix_people_using_forge_through_the_agent_don.py",
-        "line": 28,
+        "line": 35,
         "priority": "P1",
-        "title": "Not done: the sync/init test verifies each coaching sentence's next step"
+        "title": "Not done: the sync/init test verifies each coaching sentence's event-specific next step"
       }
     ],
     "status": "blocked",
-    "tree": "bc3849d6ed0ee3940abf0ead36dbce29a4a64f3b61583fe805da277bf6fe4e83"
+    "tree": "3ab55165e8b1937358b043b57a43fe1e87278c1d9788c63aabc4674f5b8c9542"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +28,10 @@
     },
     {
       "at": "2026-09-29T16:28:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T16:38:06+00:00",
       "step": "review"
     }
   ],
