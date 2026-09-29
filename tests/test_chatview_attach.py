@@ -53,8 +53,12 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     started = len(_stub(calls))
 
+    # A close that finds no pull request opens one, then links it in the recorded chat.
+    gh.respond("pr", "list", stdout="[]")
+    gh.respond("pr", "create", stdout=URL + "\n")
     closed = repo.forge("close", "BOARD/PAGE")
     assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert f"Opened the pull request: {URL}" in closed.stdout
     assert "Ready:" in closed.stdout
     assert ["pr", "view", "task/BOARD-PAGE", "--json", "number,url,headRefName"] in gh.calls()
     assert _sent(calls, "thread/attachment/add") == [{
@@ -68,6 +72,8 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     assert homes == {str(repo.path.parent / "codex-home")} and str(REAL_CODEX_HOME) not in homes
 
     # A repeat sends the same identity, which the app-server keeps as one attachment.
+    gh.respond("pr", "list", stdout=json.dumps(
+        [{"number": 12, "state": "OPEN", "body": "", "isDraft": False}]))
     again = repo.forge("close", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     sent = _sent(calls, "thread/attachment/add")
