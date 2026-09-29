@@ -8,7 +8,13 @@
     "blocking_level": "P1",
     "changed": "ead5fdb21fff67761a183c0c64e54636649ef7a349be7df6d31449879f2e25f1",
     "commit": "b367176701611317148541858c5aa6b43d1cf0d0",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "plans/FORGE-PROTO-1.md:43 that plan belongs to a finished story and is its historical record, like the decision records; the live instructions are the sign-off spec and the pin in src/forge/review.py, both now high",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The updated sign-off spec says GPT-6 Sol at high effort, but the committed plan still instructs Sol at xhigh in `plans/FORGE-PROTO-1.md:43`, its SIGNOFF task row at line 82, and its implementation note at line 106. Those are instructions for the same review, so the requirement that review documentation say high remains unmet. Update the plan to match the changed spec and pin.",
@@ -18,10 +24,10 @@
         "title": "Not done: review documentation still specifies xhigh effort"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "203e0a3997f26421bcb5b0b0cc88941046a26a0becd998df032f5aeed88f3387"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T14:13:58+00:00",
