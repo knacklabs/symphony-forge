@@ -29,22 +29,28 @@ Risks: none
 ### Done-when details
 
 1. `forge merge enable`, run on the default branch, starts a fix that sets `merge = "agent"` in
-   `forge.toml`, commits it, pushes it and opens its pull request, then prints that the owner
-   merges it to switch on agent merges. It refuses, changing nothing, when run from an agent (the
-   `CLAUDECODE` or `CODEX_THREAD_ID` variable is set), when not on the default branch, and when
-   agent merges are already on, each with a plain message. Tests run the command in a throwaway
-   repo with a fake `gh`: a normal run opening the fix, and each refusal with nothing created.
+   `forge.toml` (a top-level key placed before the first table, keeping the file's line endings),
+   commits it, and runs `forge close` on it, so the change is reviewed and its pull request opened;
+   it then prints that the owner merges that pull request to switch on agent merges. Run again
+   after an interruption, it finds its own fix and continues from where it stopped. It refuses,
+   changing nothing, when run from an agent (the `CLAUDECODE` or `CODEX_THREAD_ID` variable is
+   set), when not on the default branch, and when the default branch's `forge.toml` already says
+   `merge = "agent"`; a prototype that merges by agent only before sign-off doesn't count as on.
+   Tests run the command in a throwaway repo with fake `gh` and review: a normal run reaching
+   Ready, a CRLF `forge.toml` ending in a table, a rerun after a failed push, each refusal with
+   nothing created, and a prototype before sign-off.
 2. `forge merge`'s disabled message says to run `forge merge enable` in your own terminal. The
    skill says the `merge` setting is the owner's: the agent never changes it to `"agent"` and
    gives the owner that command instead; its "Ask, then in a fix" row excludes that setting. The
    command table lists the new command. Tests check the refusal text through `forge merge` and the
-   synced skill through `forge sync`.
+   synced skill through `forge sync`, and that `forge merge <item>` still works beside
+   `forge merge enable`.
 
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
+| SPEC | Merge switch | The owner-only `forge merge enable` command, its messages and the skill's rule | 1, 2 | `src/forge/merge.py`, `src/forge/cli.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/commands.md` | `tests/test_merge_enable.py` | none | yes |
 
 New moving parts: none
 
