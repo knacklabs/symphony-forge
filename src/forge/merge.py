@@ -76,11 +76,9 @@ def merge(args: argparse.Namespace) -> int:
                         "--subject", pr["title"], "--match-head-commit", head, cwd=top)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
-        if not merged and done.returncode:
-            reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
-            repo.refuse(REFUSALS["merge_failed"], item=item, reason=reason)
         if not merged:
-            repo.refuse(REFUSALS["pending"], item=item)
+            reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
+            repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
     main_checkout = repo.forge_dir(top).parent.parent
     pending = receipt.get("pending_archives")
     if pending is None:
@@ -102,16 +100,10 @@ def merge(args: argparse.Namespace) -> int:
         _save_ready(path, receipt)
     remote_ref = f"refs/heads/{branch}"
     remote = repo.run("git", "ls-remote", "--heads", "origin", remote_ref, cwd=top)
-    if remote.returncode:
-        repo.refuse(REFUSALS["remote_branch"], item=item)
     remote_head = remote.stdout.split()[0] if remote.stdout.strip() else None
-    if remote_head and remote_head != head:
+    if remote.returncode or remote_head and (remote_head != head or repo.run(
+            "git", "push", f"--force-with-lease={remote_ref}:{head}", "origin", "--delete", branch, cwd=top).returncode):
         repo.refuse(REFUSALS["remote_branch"], item=item)
-    if remote_head:
-        deleted = repo.run("git", "push", f"--force-with-lease={remote_ref}:{head}",
-                           "origin", "--delete", branch, cwd=top)
-        if deleted.returncode:
-            repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
     advanced = repo.git("rev-parse", branch, cwd=worktree) != head
@@ -153,12 +145,14 @@ def _enable(top: Path) -> int:
     diff = repo.git("diff", "-U0", repo.git("merge-base", "HEAD", ref, cwd=path), "--", ".", f":!{rel}", cwd=path)
     state = repo.read_state(ENABLE, path) or {}
     if (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
-            r"^[+-](?!\+\+ |-- |merge[ \t]*=)", diff, re.M):  # anything but the merge line
+            r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)", diff, re.M):  # anything but the merge line
         repo.refuse(REFUSALS["taken"])
-    toml = path / "forge.toml"  # bytes, so its line endings stay; the setting goes above any table
-    text = re.sub(r"^merge[ \t]*=[^\n]*\n?", "", toml.read_bytes().decode("utf-8"), flags=re.M)
-    ending = "\r\n" if "\r\n" in text else "\n"
-    toml.write_bytes(re.sub(r"^(?!#)", f'merge = "agent"{ending}', text, count=1, flags=re.M).encode("utf-8"))
+    text = re.sub(r"""\A(?:(.*?^[ \t]*(?:merge|"merge"|'merge')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*'|[^\s#]*)|((?:\#[^\n]*\n)*))""",
+                  lambda m: m[1] + '"agent"' if m[1] else m[2] + 'merge = "agent"' + ("\r\n" if "\r\n" in m.string else "\n"),
+                  (path / "forge.toml").read_bytes().decode("utf-8"), count=1, flags=re.S | re.M)  # bytes keep line endings
+    if repo._config_text(text)["merge"] != "agent":  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
+    (path / "forge.toml").write_bytes(text.encode("utf-8"))
     repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")

@@ -1,0 +1,39 @@
+{
+  "base": "a222a32590b89ad24b060ea426953f7dad8b0b7e",
+  "branch": "fix/forge-merge-enable-adds-a-second-merge-k",
+  "done_when": "forge merge enable changes an existing merge key wherever and however forge.toml writes it (indented, single- or double-quoted, with a comment) and adds one only when there is none, and the file still parses; a test covers each form",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "f00b8de27262bbbde092940bab349f59162c86994786e4ea55bdecad89993c2d",
+    "commit": "7e6fce5212a203ebd6b52660b4c6b0b01d6669a2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The regex selects the first line that looks like a merge assignment, even if it is content inside a multiline string. For example, a valid forge.toml can contain `test = \"\"\"\\nmerge = \"human\"\\n\"\"\"` before a real top-level `merge = \"human\"`. The substitution changes the test string, leaves the actual merge key unchanged, and then refuses the command. `test` is an accepted string setting in `src/forge/repo.py:132` and its validation at line 281 permits multiline strings. Locate the actual TOML key before editing it. This is a different case from the previously ruled table-looking line: the new matcher itself now selects the line inside the string.",
+        "file": "src/forge/merge.py",
+        "line": 150,
+        "priority": "P2",
+        "title": "Handle merge-looking lines inside multiline TOML strings"
+      }
+    ],
+    "status": "clean",
+    "tree": "a64003a47e0e1c44300819da60b547b4843f50dc6e20a4693c925792e532b46b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T15:21:36+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T15:45:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T16:28:11+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge merge enable adds a second merge key when forge.toml writes it indented or quoted, which breaks the file"
+}
