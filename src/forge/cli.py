@@ -1,7 +1,8 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
-import importlib
+import importlib.metadata
+import json
 import os
 import pkgutil
 import subprocess
@@ -67,13 +68,15 @@ def _parser() -> _Parser:
 
 
 def _run(argv: list[str] | None) -> int:
-    # In Forge's own repo an install from an older checkout would run old code: run this one's.
-    src = Path(repo.run("git", "rev-parse", "--show-toplevel").stdout.strip() or os.devnull) / "src"
-    if (os.environ.get("FORGE_FROM_CHECKOUT") != str(src) and Path(forge.__file__).resolve().parent != src / "forge"
-            and (src / "forge").is_dir() and (src.parent / "forge.toml").is_file() and repo.config(src.parent)["repo"] == "forge-source"):
-        print(f"Running this checkout's code in {src / 'forge'}, not the installed Forge.", file=sys.stderr)
+    # A forge installed from this very checkout runs its old code, so run the checkout's; never another repo's.
+    top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
+    url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url")
+    src = str(Path(top, "src"))
+    if (top and url == Path(top).as_uri() and os.environ.get("FORGE_FROM_CHECKOUT") != src
+            and Path(forge.__file__).resolve().parent != Path(src, "forge")):
+        print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
         return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
-                              env={**os.environ, "PYTHONPATH": str(src), "FORGE_FROM_CHECKOUT": str(src)}).returncode
+                              env={**os.environ, "PYTHONPATH": src, "FORGE_FROM_CHECKOUT": src}).returncode
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
         repo.refuse(REFUSALS["usage"],
