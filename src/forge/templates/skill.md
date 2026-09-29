@@ -76,13 +76,13 @@ The first time each of these happens for a person, add one plain sentence saying
 happened and what they can do next. Say it once, then never repeat it, and never name commands
 unless they ask. Note each one in the handoff so a new session doesn't repeat it.
 
-- A story plan shown for approval: "This is the plan in short; approve it as it is or tell me what to change."
-- A cold read finding: "A fresh reader found a gap in the plan; I'll fix it and have it read again."
+- A story plan shown for approval: "This is the plan in short; you can approve it as it is or tell me what to change."
+- A cold read finding: "A fresh reader found a gap in the plan, which I'm fixing; you can weigh in on the fix or wait for the next read."
 - A part starting: "A worker is building this part on its own copy; you can keep planning meanwhile."
 - A pull request ready: "This part passed its tests and review; you can look it over before it merges."
-- A merge: "This part is now in the main code, and the next part builds on it."
-- A prototype demo: "The customer has seen it working; what they did and said shapes the next round."
-- Sign-off: "The customer approved the prototype, so next we plan the real stories."
+- A merge: "This part is now in the main code; you can try it there or pick what comes next."
+- A prototype demo: "The customer has seen it working; you can tell me what they did and said to shape the next round."
+- Sign-off: "The customer approved the prototype; you can now choose the first real story to plan."
 
 ## New directions
 

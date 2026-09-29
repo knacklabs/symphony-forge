@@ -26,8 +26,13 @@ def _assert_coaches_each_moment(section):
                 for line in section.splitlines() if line.startswith("- ")}
     for moment in MOMENTS:
         example = examples[moment]
-        assert example.strip().startswith('"') and "`" not in example, moment
-        assert "forge " not in example.lower(), moment
+        assert "`" not in example and "forge " not in example.lower(), moment
+        # One plain sentence: what just happened; you can <next step>.
+        sentence = example.strip().removeprefix('"').removesuffix('"')
+        assert sentence.endswith(".") and not any(
+            mark in sentence[:-1] for mark in (". ", "?", "!")), moment
+        happened, _, next_step = sentence.partition("; you can ")
+        assert len(happened.split()) >= 4 and len(next_step.split()) >= 3, moment
 
 
 def test_1_synced_and_new_client_skill_coaches_each_moment_once(repo, gh, tmp_path):
