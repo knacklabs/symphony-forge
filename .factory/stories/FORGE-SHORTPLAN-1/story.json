@@ -8,7 +8,13 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-SHORTPLAN-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T16:11:59+00:00",
+  "merged": {
+    "BRIEF": "2026-09-29T11:47:49+00:00",
+    "SPEC": "2026-09-29T16:11:59+00:00"
+  },
+  "outcome": "The plan the owner approves now fits on one screen, with one plain sentence per result, while each result's details still reach the workers and reviewers",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-28T18:17:23+00:00",
@@ -21,6 +27,10 @@
     {
       "at": "2026-09-28T18:32:33+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T16:15:20+00:00",
+      "step": "done"
     }
   ],
   "title": "The plan the owner approves is long and full of test lists, tasks and notes that only agents use",

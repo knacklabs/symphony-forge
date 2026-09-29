@@ -1,0 +1,16 @@
+{
+  "base": "dfb2aa074193e4ec1524c6ef39ade90c816b39b1",
+  "branch": "fix/forge-shortplan-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "The plan the owner approves now fits on one screen, with one plain sentence per result, while each result's details still reach the workers and reviewers",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T16:15:20+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that The plan the owner approves is long and full of test lists, tasks and notes that only agents use is finished, and what it achieved."
+}
