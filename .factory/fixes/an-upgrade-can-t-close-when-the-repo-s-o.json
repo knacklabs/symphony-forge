@@ -3,11 +3,24 @@
   "branch": "fix/an-upgrade-can-t-close-when-the-repo-s-o",
   "done_when": "The upgrade's synced-files check compares only files git tracks in the fix, so hook files that are never committed (such as .husky/_) never block close, while a stale tracked file still does; a test runs forge close on an upgrade whose test command rewrites an untracked hook file and sees it reach Ready",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "7740a05eb1655424db7833ca2544ae34ca959d3c1df431535398c4f61be7232b",
+    "commit": "4adaad6006c8632c67aac7d9922526e94350e4d6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "73bd1a7f333fe77a165e1c0325f7aa832dd2b6b261b8f3bc73797d5111e5551d"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T18:28:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T19:08:49+00:00",
+      "step": "review"
     }
   ],
   "why": "An upgrade can't close when the repo's own test run rewrites git-hook files that are never committed, because the synced-files check compares them"
