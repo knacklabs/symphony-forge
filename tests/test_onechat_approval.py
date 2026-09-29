@@ -96,7 +96,9 @@ def test_3_one_chat_approves_other_repo_once(repo, tmp_path, claude_payload):
     assert other.git("rev-parse", "story/TWIN") == head
 
 
-def test_4_other_repo_version_refusal_precedes_config(repo, tmp_path, claude_payload):
+def test_4_other_repo_version_mismatch_warns_and_approves(repo, tmp_path, claude_payload):
+    # FORGE-UPGRADE-1 changed this contract: a version mismatch used to refuse the approval, and now
+    # it warns and approves, so a pending upgrade never blocks the approval step.
     setup(repo, keys=("LOCAL",))
     other = _other(repo, tmp_path)
     setup(other, keys=("SHOP",))
@@ -104,12 +106,12 @@ def test_4_other_repo_version_refusal_precedes_config(repo, tmp_path, claude_pay
     assert other.forge("next").returncode == 0
     head = other.git("rev-parse", "story/SHOP")
     version = repo.forge("--version").stdout.split()[-1]
-    # The config is deliberately invalid beyond its pin. The version refusal must win.
-    (shop / "forge.toml").write_text('version = "v0.0.1"\nrepo = "invalid"\n', encoding="utf-8")
-    refused = hook(repo, claude_plan(claude_payload, DOC))
-    assert refused.returncode == 1
-    assert refused.stderr == (
-        f"{other.path} pins Forge v0.0.1, but {version} is installed, so nothing was recorded.\n"
-        f"Next: ask your agent to upgrade {other.path} to {version}, then approve again\n")
-    assert other.git("rev-parse", "story/SHOP") == head
-    assert not _markers(other)
+    text = (shop / "forge.toml").read_text(encoding="utf-8")
+    (shop / "forge.toml").write_text(text.replace(version, "v0.0.1"), encoding="utf-8")
+    approved = hook(repo, claude_plan(claude_payload, DOC))
+    assert approved.returncode == 0, approved.stderr
+    assert approved.stderr == (
+        f"{other.path} pins Forge v0.0.1, but {version} is installed; the approval is recorded "
+        f"anyway. Ask your agent to upgrade {other.path} to {version}.\n")
+    assert other.git("rev-parse", "story/SHOP") != head
+    assert len(_markers(other)) == 1

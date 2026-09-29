@@ -143,6 +143,12 @@
       "title": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step",
       "status": "pending",
       "order": 64
+    },
+    {
+      "key": "FORGE-UPGRADE-1",
+      "title": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges",
+      "status": "pending",
+      "order": 65
     }
   ],
   "epics": [

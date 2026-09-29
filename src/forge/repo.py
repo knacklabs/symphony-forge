@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 import tomllib
 from datetime import datetime, timezone
@@ -32,6 +33,8 @@ REFUSALS = {
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
     ),
+    "pin_elsewhere": ("{item} is checked out in {folder}, which pins Forge {installed}; "
+                      "this folder pins {pinned}.", "cd {folder}, then forge {words} {item}"),
     "bad_roadmap": ("plans/roadmap.json is not usable: {problem}.", "git checkout -- plans/roadmap.json"),
     "bad_item": ("{item!r} is not a story key, a KEY/TASK task or a fix name.", "forge next"),
     "bad_state": ("{path} is not usable: {problem}.", "git checkout -- {path}"),
@@ -287,18 +290,55 @@ def _config_problem(data: dict[str, Any]) -> str:
     return ""
 
 
-def check_pin(cwd: str | os.PathLike[str] | None = None) -> None:
+def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: str = "") -> None:
     """Refuse when the installed Forge isn't the one forge.toml pins.
 
     A folder outside git, or a repo with no forge.toml yet (before init or migrate), has no pin.
+    On the default branch a newer Forge runs while an upgrade fix waits: the default branch as last
+    fetched still pins an older one, and a fix worktree pins the installed one.
     """
     done = run("git", "rev-parse", "--show-toplevel", cwd=cwd)
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
         return
     pinned = config(top)["version"].removeprefix("v")
-    if pinned != __version__:
-        refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
+    if pinned == __version__:
+        return
+    from forge import story
+
+    trees = story.worktrees(top)
+    here = {path: _pin((path / "forge.toml").read_text(encoding="utf-8"))
+            for path in trees.values() if (path / "forge.toml").is_file()}
+    landed = _pin(story.show(top, story.landed_ref(top), "forge.toml") or "")
+    if current_branch(top) == default_branch(top) and _older(pinned) and _older(landed):
+        upgrade = next((branch[4:] for branch, path in trees.items()
+                        if branch.startswith("fix/") and here.get(path) == __version__), "")
+        if upgrade:
+            print(f"Forge v{__version__} runs here while the upgrade in fix {upgrade} waits for its "
+                  "merge.", file=sys.stderr)
+            return
+    branches = (f"fix/{item}", f"forge/{item}", f"task/{item.replace('/', '-')}", f"story/{item}")
+    folder = next((trees[branch] for branch in branches if item and branch in trees), None)
+    if folder is not None and folder != top and here.get(folder) == __version__:
+        refuse(REFUSALS["pin_elsewhere"], item=item, folder=folder, installed=f"v{__version__}",
+               pinned=f"v{pinned}", words=words)
+    refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
+
+
+def _pin(text: str) -> str:
+    """The version a forge.toml's text pins, without the v, or "" when it can't be read."""
+    try:
+        version = tomllib.loads(text).get("version")
+    except tomllib.TOMLDecodeError:
+        return ""
+    return version.removeprefix("v") if isinstance(version, str) else ""
+
+
+def _older(version: str) -> bool:
+    """The version is a release older than the installed Forge."""
+    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, __version__))
+    return bool(release and installed and
+                tuple(map(int, release.groups())) < tuple(map(int, installed.groups())))
 
 
 def roadmap(top: Path | None = None) -> list[dict[str, Any]]:
