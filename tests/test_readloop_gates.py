@@ -153,8 +153,8 @@ def _gates_wait_for_a_pass(repo, claude_payload, monkeypatch, tmp_path,
         "Next: fix the story doc, then forge read <KEY>"]
     repo.git("checkout", "-q", "HEAD~1", "--", "plans/SHOP.md", cwd=task)
     task_notes = task / "plans" / "SHOP.read.md"
-    task_notes.write_text(task_notes.read_text("utf-8").replace("passed: yes", "passed: no"),
-                          encoding="utf-8")
+    task_notes.write_text(task_notes.read_text("utf-8").replace("passed: yes", "passed: no").replace(
+        "## Round 2\n\nNo findings.", "## Round 2\n\n3. A gap.\n   Disposition: cut"), encoding="utf-8")
     repo.git("commit", "-q", "-am", "Undo the rename", cwd=task)
     done = pr_check(repo, "task/SHOP-SAVE")
     assert done.stderr.splitlines()[-2] == ("Round 2 of the cold read of plans/SHOP.md hasn't "
@@ -164,6 +164,19 @@ def _gates_wait_for_a_pass(repo, claude_payload, monkeypatch, tmp_path,
     repo.git("commit", "-q", "-am", "Restore the notes", cwd=task)
     done = pr_check(repo, "task/SHOP-SAVE")
     assert done.stderr.splitlines()[-2] == "The committed review at the head of task/SHOP-SAVE is missing."
+    # The latest round's text decides, not its passed flag.
+    task_notes.write_text(task_notes.read_text("utf-8").replace(
+        "## Round 2\n\nNo findings.", "## Round 2\n\n3. A gap.\n   Disposition: cut"), encoding="utf-8")
+    assert "passed: yes" in task_notes.read_text("utf-8")
+    repo.git("commit", "-q", "-am", "Mark a finding passed", cwd=task)
+    assert pr_check(repo, "task/SHOP-SAVE").stderr.splitlines()[-2] == (
+        "Round 2 of the cold read of plans/SHOP.md hasn't passed, so it needs another round.")
+    # The approval names the round it passed on, so deleting the notes still needs a round.
+    state = json.loads(repo.git("show", "task/SHOP-SAVE:.factory/stories/SHOP/story.json"))
+    assert state["approval"]["round"] == 2
+    repo.git("rm", "-q", "plans/SHOP.read.md", cwd=task)
+    repo.git("commit", "-q", "-m", "Drop the notes", cwd=task)
+    assert pr_check(repo, "task/SHOP-SAVE").stderr.splitlines()[-2] == "plans/SHOP.md has no cold read."
 
 
 def _later_task_after_squash(repo, claude_payload, monkeypatch, tmp_path,
@@ -184,7 +197,8 @@ def _later_task_after_squash(repo, claude_payload, monkeypatch, tmp_path,
     repo.git("checkout", "-q", "-b", "task/SHOP-NOTES", "origin/main")
     repo.write(".factory/stories/SHOP/tasks/NOTES.json", '{"branch": "task/SHOP-NOTES"}\n')
     repo.write("plans/SHOP.read.md", (repo.path / "plans" / "SHOP.read.md").read_text("utf-8")
-               .replace("passed: yes", "passed: no"))
+               .replace("passed: yes", "passed: no")
+               .replace("## Round 1\n\nNo findings.", "## Round 1\n\n1. A gap.\n   Disposition: cut"))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Only the notes")
     repo.git("checkout", "-q", "main")
@@ -335,6 +349,24 @@ def _failed_merge_leaves_task(repo, claude_payload, monkeypatch, tmp_path,
     assert repo.git("rev-parse", "task/BASKET-SPEC") == head
     assert repo.git("status", "--porcelain", cwd=fix) == ""
     assert subprocess.run(["git", "rev-parse", "-q", "--verify", "MERGE_HEAD"], cwd=fix).returncode != 0
+
+    # The task's folder already has a merge in progress: Forge leaves it, resolutions and all.
+    repo.git("checkout", "-q", "-b", "side", "main")
+    repo.write("basket.py", "SAVED = False\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Another basket")
+    repo.git("checkout", "-q", "main")
+    assert subprocess.run(["git", "merge", "-q", "side"], cwd=fix, capture_output=True).returncode
+    (fix / "basket.py").write_text("SAVED = None\n", encoding="utf-8")
+    again = renewed.replace("any day", "any week")
+    (story / "plans" / "BASKET.md").write_text(again, encoding="utf-8")
+    read(repo, "BASKET")
+    said = approve(repo, claude_payload, again)
+    assert (f"BASKET/SPEC's folder has a merge in progress, so Forge left it untouched.\n"
+            f"Next: in {fix}, finish that merge, then git merge story/BASKET") in said
+    assert repo.git("rev-parse", "MERGE_HEAD", cwd=fix) == repo.git("rev-parse", "side")
+    assert (fix / "basket.py").read_text("utf-8") == "SAVED = None\n"
+    assert repo.git("rev-parse", "task/BASKET-SPEC") == head
 
 
 NO_ARCHIVE = CODEX.replace('        if method != "turn/start":', '''\

@@ -135,13 +135,15 @@ def start(args: argparse.Namespace) -> None:
     # story branch holds it, and tasks start from there. After that, a story read in rounds is
     # read from its story branch while it exists, and its doc, notes and state are carried over.
     base = main if show(main, doc_rel) is not None else story_branch
-    source = (story_branch if base == main and story.rounds(show(story_branch, notes_rel))
+    state_rel = repo.state_path(key)
+    source = (story_branch if base == main and story.rounds(show(story_branch, notes_rel),
+                                                             show(story_branch, state_rel))
               else base)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
     notes = show(source, notes_rel)
-    if story.rounds(notes):
+    if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
         if checkout:  # edits not committed yet count too
             story.check_read(key, checkout)

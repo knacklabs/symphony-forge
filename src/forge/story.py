@@ -407,15 +407,23 @@ def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
     number = undisposed(findings)
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=rel.removesuffix(".md") + ".read.md")
-    if record.get("passed") != "yes":
+    if not passed(findings):
         repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
     if doc_hash != record["read_hash"]:
         repo.refuse(REFUSALS["changed"], doc=rel, target=target)
 
 
-def rounds(notes: str | None) -> bool:
-    """Notes written with rounds. A story approved on older notes keeps the rules it had."""
-    return bool(_record(notes or "")[0].get("round"))
+def passed(findings: str) -> bool:
+    """The latest round's whole text, trimmed, is exactly "No findings."; never the passed flag."""
+    parts = re.split(r"^## Round \d+[ \t]*$", findings, flags=re.M)
+    return len(parts) > 1 and parts[-1].strip() == "No findings."
+
+
+def rounds(notes: str | None, state: str | None = None) -> bool:
+    """A story read in rounds: its notes have rounds, or its approval names the round it passed,
+    so notes deleted later still need a round. A story approved on older notes keeps its rules."""
+    return bool(_record(notes or "")[0].get("round")
+                or (json_of(state).get("approval") or {}).get("round"))
 
 
 def undisposed(findings: str) -> str:
@@ -449,7 +457,7 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
         approval = json_of(show(top, head, repo.state_path(match[1]))).get("approval") or {}
         if approval.get("hash") != approval_hash(text):
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
-        if rounds(notes):
+        if rounds(notes, show(top, head, repo.state_path(match[1]))):
             try:
                 gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top))
             except repo.Refused as refusal:
