@@ -8,7 +8,16 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-READLOOP-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T11:04:57+00:00",
+  "merged": {
+    "CUT": "2026-09-29T08:33:14+00:00",
+    "GATES": "2026-09-29T10:39:00+00:00",
+    "ROUNDS": "2026-09-29T03:20:11+00:00",
+    "SPEC": "2026-09-28T18:21:23+00:00",
+    "SPECS": "2026-09-29T11:04:57+00:00"
+  },
+  "outcome": "The cold read now continues the same reader, sending only what changed, until it finds nothing, hunts edge cases item by item against known traps, and every story and spec must pass it before approval and each task",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-28T15:42:18+00:00",
@@ -25,6 +34,10 @@
     {
       "at": "2026-09-28T17:37:40+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T11:05:45+00:00",
+      "step": "done"
     }
   ],
   "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
