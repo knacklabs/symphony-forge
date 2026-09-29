@@ -5,18 +5,24 @@ import json
 import os
 import re
 from pathlib import Path
-from forge import checks, close, codex, repo
+from forge import checks, close, codex, repo, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
     "help": "Merge a ready item when this repo allows it",
     "args": [(('item',), {})], "position": 160,
-    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |",
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |\n"
+               "| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |",
 }]
+ENABLE = "let-the-agent-merge"
 
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
-                 "ask the repo owner to set merge = \"agent\" on the default branch"),
+                 "the repo owner runs forge merge enable in their own terminal"),
+    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from their own terminal.", "the repo owner runs forge merge enable on {default} in their own terminal"),
+    "enabled": ("The default branch's forge.toml already lets the agent merge.", "forge next"),
+    "taken": ("The fix let-the-agent-merge holds other work, so Forge left it alone.", "finish or remove that fix, then forge merge enable"),
+    "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),
     "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
     "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
     "pr": ("Forge needs an open pull request for {item} targeting {default} from {branch}.",
@@ -30,9 +36,11 @@ REFUSALS = {
 }
 def merge(args: argparse.Namespace) -> int:
     top, item = repo.root(), args.item
+    if item == "enable":
+        return _enable(top)
     config = repo.default_config(top)
     if repo.merge_setting(top) != "agent":
-        repo.refuse(REFUSALS["disabled"])
+        repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
     path = repo.ready_path(item, top)
     try:
         receipt = json.loads(path.read_text(encoding="utf-8"))
@@ -42,6 +50,9 @@ def merge(args: argparse.Namespace) -> int:
     if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
             or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
         repo.refuse(REFUSALS["not_ready"], item=item)
+    shown = repo.run("git", "show", f"{head}:forge.toml", cwd=top)  # a change to the agent's own gate
+    if shown.returncode == 0 and repo._config_text(shown.stdout)["merge"] != config["merge"]:
+        repo.refuse(REFUSALS["owner_merges"], item=item)
     worktree = close._worktree(item)
     branch = repo.current_branch(worktree)
     default = repo.default_branch(top)
@@ -125,6 +136,32 @@ def merge(args: argparse.Namespace) -> int:
     if failed_archives:
         print(f"Forge could not archive these Codex conversations for {item}: "
               f"{', '.join(failed_archives)}. Codex can archive them later.")
+    return 0
+
+
+def _enable(top: Path) -> int:
+    """Open, or continue after an interruption, the fix that sets merge = "agent", and close it."""
+    default = repo.default_branch(top)
+    if any(os.environ.get(name) for name in story.COORDINATORS) or repo.current_branch(top) != default:
+        repo.refuse(REFUSALS["owner_only"], default=default)
+    if repo.default_config(top)["merge"] == "agent":
+        repo.refuse(REFUSALS["enabled"])
+    branch, ref, rel = f"fix/{ENABLE}", f"origin/{default}", repo.state_path(ENABLE)
+    path = story.worktrees(top).get(branch) or task._new_checkout(
+        ENABLE, branch, f"fix-{ENABLE}", ref, {"kind": "fix", "why": close.WHY, "done_when": close.DONE},
+        f"Start the fix: {close.WHY}")
+    diff = repo.git("diff", "-U0", repo.git("merge-base", "HEAD", ref, cwd=path), "--", ".", f":!{rel}", cwd=path)
+    state = repo.read_state(ENABLE, path) or {}
+    if (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
+            r"^[+-](?!\+\+ |-- |merge[ \t]*=)", diff, re.M):  # anything but the merge line
+        repo.refuse(REFUSALS["taken"])
+    toml = path / "forge.toml"  # bytes, so its line endings stay; the setting goes above any table
+    text = re.sub(r"^merge[ \t]*=[^\n]*\n?", "", toml.read_bytes().decode("utf-8"), flags=re.M)
+    ending = "\r\n" if "\r\n" in text else "\n"
+    toml.write_bytes(re.sub(r"^(?!#)", f'merge = "agent"{ending}', text, count=1, flags=re.M).encode("utf-8"))
+    repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+    close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
+    print("Next: merge its pull request to switch on agent merges.")
     return 0
 
 

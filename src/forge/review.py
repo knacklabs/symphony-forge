@@ -101,6 +101,8 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
     row = next((r for r in rows(doc.get("Tasks", "")) if r.get("id", "").strip("`") == name), None)
     if row is None:
         repo.refuse(REFUSALS["bad_doc"], key=key, task=name, item=item)
+    from forge import story  # story imports review indirectly
+    story._parsed(path, f"plans/{key}.md")  # pyright: ignore[reportPrivateUsage]
     return text, doc, row
 
 
@@ -142,24 +144,35 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     return digest.hexdigest()
 
 
+def whole_tree(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
+    """The v1.1.0 release's fingerprint, kept under the record's `tree` key so that release's
+    forge-pr-check passes an upgrade pull request this version reviewed: the whole product tree
+    at commit, what the change must do and the worker's functional check.
+    ponytail: one release only; delete it, and close's refresh of `tree`, after v1.2.0."""
+    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
+    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
+    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
+    key, _, name = item.partition("/")
+    if name:
+        text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
+        doc = sections(text)
+        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
+                 moving_parts(text)]
+    else:
+        parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
+    parts.append(functional_check(top, base, commit))
+    for part in parts:
+        digest.update(b"\0" + part.encode("utf-8"))
+    return digest.hexdigest()
+
+
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
-    cfg = repo.config(top)
     if ("/" in item or state.get("kind") != "fix" or
-            state.get("allow_large") != "Prototype before sign-off" or cfg["repo"] != "client"):
+            state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
-    for ref in (base, commit):
-        names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-        for name in names.splitlines():
-            wanted = name == cfg["signoff"] if cfg["signoff"] else name.endswith("client-signoff.md")
-            if not wanted:
-                continue
-            record = repo.git("show", f"{ref}:{name}", cwd=top)
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return "P1"
-    return "P0"
+    return "P0" if repo.is_prototype(top, refs=(base, commit)) else "P1"
 
 
 def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
@@ -184,19 +197,24 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              # read after close merged the default branch, which may change the command
+              "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
-        items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
-        items = {items[i]: " ".join(items[i + 1].split()) for i in range(1, len(items), 2)}
-        covers = set(re.findall(r"\d+", row.get("covers", "")))
+        from forge import story  # story imports review indirectly
+        parsed = story.parse(doc_text)
+        covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
+        existing_tests = set(repo.git("ls-tree", "-r", "--name-only", base,
+                                      cwd=top).splitlines())
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
-            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
-            covered=_bullets(f"{n}. {t}" for n, t in items.items() if n in covers),
-            context=_bullets(f"{n}. {t}" for n, t in items.items() if n not in covers),
+            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)
+                             and not (p in existing_tests and _test_file(p))),
+            covered=_bullets(story.item(parsed, n, True) for n in parsed["done"] if n in covers),
+            context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
             moving_parts=moving_parts(doc_text))
         chosen = ["task", "rules"]
@@ -211,6 +229,26 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
+def _test_run(top: Path, command: str) -> str:
+    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
+    exit status, every line that mentions a skip with the line before it (where Go's -v prints the
+    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs)."""
+    if not command:
+        return "forge.toml names no test command, so close ran none."
+    env = {**os.environ, "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+    done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                          encoding="utf-8", errors="replace")
+    out = [line.rstrip() for line in done.stdout.splitlines()]
+    picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
+                     for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+    lines = [out[i] for i in picked]
+    if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
+        lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+    return "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+                      "forge close.", *lines])
+
+
 def _previous(result: dict[str, Any]) -> str:
     findings = result.get("findings", [])
     dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
@@ -218,6 +256,24 @@ def _previous(result: dict[str, Any]) -> str:
         f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
         f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
         for n, finding in enumerate(findings, 1)) or "- none"
+
+
+def _rulings(top: Path, item: str, base: str) -> str:
+    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
+    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
+    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
+    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    path = repo.state_path(item)
+    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+                        cwd=top).split():
+        result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
+        for dismissal in result.get("dismissals", []):
+            finding = result["findings"][dismissal["finding"] - 1]
+            line = (f"{finding['title']} ({finding['file']}): dismissed because "
+                    f"{dismissal['because']}")
+            if line not in found:
+                found.append(line)
+    return _bullets(found)
 
 
 def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
@@ -242,6 +298,16 @@ def _bullets(items: Any) -> str:
 def _within(path: str, entry: str) -> bool:
     """A changed path is inside a Scope entry: the same file, under the folder, or a glob match."""
     return path == entry or path.startswith(entry.rstrip("/") + "/") or fnmatch(path, entry)
+
+
+def _test_file(path: str) -> bool:
+    """Test files named as tests or kept in a test folder, including colocated tests."""
+    parts = Path(path).parts
+    name = parts[-1]
+    return (any(fnmatch(name, pattern) for pattern in ("test_*.py", "*_test.py",
+                                                        "*.test.*", "*.spec.*"))
+            or (any(part.startswith("test") for part in parts[:-1])
+                and "fixtures" not in parts[:-1]))
 
 
 # --- the round -------------------------------------------------------------------------
@@ -315,8 +381,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "xhigh":
-                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at xhigh effort: "
+            if selected.get("model") != "gpt-6-sol" or selected.get("effort") != "high":
+                repo.refuse(("The sign-off review did not confirm GPT-6 Sol at high effort: "
                              "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
             serious = [f for f in findings if f["priority"] in SERIOUS]
@@ -331,8 +397,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    return {"commit": head, "tree": fingerprint(head, item, top, state, base,
-                                                  "P0" if light else "P1"), "findings": findings,
+    return {"commit": head, "changed": fingerprint(head, item, top, state, base,
+                                                     "P0" if light else "P1"),
+            "tree": whole_tree(head, item, top, state, base), "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
 
@@ -343,7 +410,7 @@ def signoff(top: Path, answers: str) -> str:
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
-    cfg = {"models": {"review": {"model": "gpt-6-sol", "effort": "xhigh"}}}
+    cfg = {"models": {"review": {"model": "gpt-6-sol", "effort": "high"}}}
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
 

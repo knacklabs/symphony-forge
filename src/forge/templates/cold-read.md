@@ -42,6 +42,24 @@ Check:
    - Flag any one-way step (deleting data, a destructive migration, a new vendor) that isn't
      listed under Risks.
    - Never propose dropping validation, security, data-loss protection or accessibility.
+3. Is every edge case pinned down and proven? For each "Done when" item, ask:
+   - which inputs and states it must handle: empty, missing, malformed, already done, half done;
+   - which platforms and shells it meets: Windows PowerShell and cmd, WSL, macOS, Linux CI;
+   - which failure and refusal paths it has, and what the user sees on each;
+   - which test, in which task's Tests cell, proves each case.
+   A case the doc says doesn't apply, with a reason, needs no test. Report each case with no test
+   that proves it as `Unproven: item <n>: <case>`.
+4. Does any item hit a known trap? Report each as `Trap: <trap>: item <n>`. Forge's general traps:
+   - Windows line endings and shells: CRLF text, PowerShell and cmd quoting, `\` paths;
+   - no network in CI;
+   - a new settings key the installed Forge rejects;
+   - documentation tasks skipping their required tests;
+   - tests that fail only under machine load;
+   - values a frontend build fixes at build time.
+
+   This repository's own known traps, from its AGENTS.md:
+
+$traps
 
 If the doc is a spec (it has no Tasks table), skip the checks about tasks and `New moving parts`.
 Instead, check that the Why or the success measure needs every behaviour line, variant, role,
@@ -51,14 +69,52 @@ Write only your findings, as a numbered list: each finding starts a line with it
 `2. `, ...), states the finding in one line, then explains it briefly on indented lines. Use no
 other numbered lines. If there is nothing to report, write `No findings.`
 
+<!-- forge:round -->
+Round $round of your cold read of `$path`: you are continuing your own earlier read.
+
+The agent gave your last round's findings a disposition and changed the doc. Do not change any
+file. This read is discarded if any file in the repository changes. Open `$path` and read the
+whole doc again yourself. Its diff since your last round:
+
+$diff
+
+Your last round's findings, and any older finding whose disposition changed since then, each
+with its disposition:
+
+$dispositions
+
+For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
+
+$spec_diff
+
+When that diff is not empty, check the plan still matches the changed spec. Re-read the
+`## Answers` section of `docs/product/BRIEF.md` from the checkout: it can change between rounds.
+
+Check:
+
+1. Is each of those findings closed? `cut` means the doc was edited to remove it, `defer` that it
+   moved to the spec's Out of scope, and `keep` that it stays for the stated reason. When a cut
+   or a defer didn't happen in the doc, raise the finding again.
+   - Raise a kept finding again only when you disagree with its stated reason, as
+     `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
+   - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
+2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks:
+   each "Done when" item's edge cases and the test that proves each, shared names no earlier task
+   pins, task size, and Forge's general traps and this repository's own known traps:
+
+$traps
+
+Write only your new findings, as a numbered list starting at $next, in your first round's format.
+If there is nothing to report, write exactly `No findings.` and nothing else.
+
 <!-- forge:notes -->
 # Cold read notes
 
-Written by `forge read`. Under every finding, write one disposition line, amend the doc once, then
-run `forge read <doc> --amended`:
+Written by `forge read`. Under every finding, write one disposition line, amend the doc, then run
+`forge read <doc>` again for the next round, until a round finds nothing:
 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;
 - `Disposition: keep <one-line reason>` otherwise.
 
-Only a genuine trade-off goes to the human, as a question with options. There is no second read.
+Only a genuine trade-off goes to the human, as a question with options.

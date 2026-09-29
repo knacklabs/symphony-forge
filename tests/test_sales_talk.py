@@ -24,6 +24,7 @@ def test_3_sync_teaches_demo_rounds_and_platform_handoff(repo):
 
 def test_4_next_reminds_of_platform_from_fetched_default_branch(env):
     repo = env.repo
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8") + 'stage = "prototype"\n')
     repo.write("Dockerfile", "FROM scratch\n")
     repo.write("docs/product/BRIEF.md", "# Brief\n\n## Answers\n\n## Demo\n")
     repo.git("add", "-A")

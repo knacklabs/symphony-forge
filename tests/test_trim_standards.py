@@ -28,7 +28,7 @@ def test_5_sync_places_standards_beside_both_forge_skills(repo):
 
 def test_6_forge_fits_decided_python_ceiling(repo):
     assert repo.forge("--help").returncode == 0
-    # Decision 0096 raises the Python cap from 7,000 to 7,500.
+    # Decision 0099 raises the Python cap from 7,500 to 8,000.
     ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
         "tool"]["forge"]["line_ceiling"]
-    assert ceiling == 7500
+    assert ceiling == 8000

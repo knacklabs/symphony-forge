@@ -1,0 +1,31 @@
+{
+  "branch": "task/FORGE-READLOOP-1-SPECS",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "1cd174ba90e12cf375d5a54249d09619eaf7426e094d14fb5458bb6384ad0c97",
+    "commit": "904027ff0729e99b407427f826bb565416d6689d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If a draft spec has a committed read round with findings, a later commit can delete its `.read.md` file. The deleted notes path is in `changed`, but `story.show` returns `None`, so this condition skips `story.gate`. After updating the review, the pull-request check can pass even though `spec confirm` refuses the same spec for having no cold read. The check needs to distinguish a draft that was never read from one whose read notes were removed.",
+        "file": "src/forge/prcheck.py",
+        "line": 200,
+        "priority": "P2",
+        "title": "Deleting failed read notes bypasses the spec PR gate"
+      }
+    ],
+    "status": "clean",
+    "tree": "f081391daa5707d787e36f8094a98f8e60a945c7e9b660989d2de246ecb4e801"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T10:39:32+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T10:55:13+00:00",
+      "step": "review"
+    }
+  ]
+}

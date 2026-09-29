@@ -10,7 +10,7 @@
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
 | `forge story done <KEY> "<outcome>"` | Records a finished story's outcome sentence and dates |
-| `forge read <KEY or spec>` | Runs the one cold read of a story doc or spec (`--amended` records the one amendment) |
+| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
@@ -18,6 +18,7 @@
 | `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
+| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |

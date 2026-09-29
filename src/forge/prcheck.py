@@ -27,7 +27,7 @@ REFUSALS = {
                 'forge fix allow-large "<reason>")'),
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
-    "story_doc": ("{problem}", "fix the story doc, then forge read <KEY> --amended if it changed after its read"),
+    "story_doc": ("{problem}", "fix the story doc, then forge read <KEY>"),
 }
 CODE_LIMIT = 5
 WORKFLOW_PATH = ".github/workflows/forge.yml"
@@ -69,16 +69,41 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
-      - run: <install>
       - env:
           PR: ${{ github.event.pull_request.number }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
-          forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+<choose>      - run: <install>
+      - env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+"""
+
+# A client's check runs the Forge release its default branch pins. A pull request that changes
+# that pin (an upgrade) is checked by the release it pins instead, installed from Forge's own
+# repo by its tag. The pin is read through git and parsed as TOML, and must look like a release
+# before it is used; nothing from the pull request runs.
+CHOOSE = r"""          pin() {
+            git show "$1:forge.toml" | python3 -c '
+          import sys, tomllib
+          try:
+              print(tomllib.load(sys.stdin.buffer).get("version", ""))
+          except tomllib.TOMLDecodeError as problem:
+              sys.exit(f"forge.toml in this pull request is not valid TOML: {problem}. Fix it, then push again.")'
+          }
+          release=$(pin "$HEAD_SHA")
+          if [ "$release" = "$(pin "$(git merge-base "$BASE_SHA" "$HEAD_SHA")")" ]; then
+            release="<version>"
+          elif [[ ! "$release" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "This pull request sets Forge's version in forge.toml to \"$release\", which isn't a Forge release such as v1.2.0. Set it to a Forge release, then push again." >&2
+            exit 1
+          fi
+          echo "FORGE_RELEASE=$release" >> "$GITHUB_ENV"
 """
 
 
@@ -97,9 +122,11 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = package.get("engines", {}).get("node")
             if isinstance(version, str) and version.strip():
                 node += f"        with:\n          node-version: {json.dumps(version)}\n"
-    workflow = (WORKFLOW.replace("<version>", cfg["version"])
-                .replace("<install>", "uv tool install ." if cfg.get("repo") == "forge-source"
-                         else sync.install_line(cfg["version"]))
+    source = cfg.get("repo") == "forge-source"
+    workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
+                .replace("<version>", cfg["version"])
+                .replace("<install>", "uv tool install ." if source
+                         else sync.install_line("${FORGE_RELEASE#v}"))
                 .replace("<tests-timeout>", "    timeout-minutes: 10\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
@@ -144,13 +171,14 @@ def pr_check(args: argparse.Namespace) -> int:
     doc_problem = story.check_pr_docs(top, head, changed) if story else None
     if doc_problem:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
+    _check_specs(top, head, changed)
     result = state.get("review")
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"
-    elif result.get("tree") != review.fingerprint(head, item, top, state, base):
+    elif result.get("changed") != review.fingerprint(head, item, top, state, base):
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
@@ -158,6 +186,19 @@ def pr_check(args: argparse.Namespace) -> int:
         print(f"forge-pr-check passed for {branch}.")
         return 0
     repo.refuse(REFUSALS["not_reviewed"], branch=branch, problem=problem, item=item)
+
+
+def _check_specs(top: Path, head: str, changed: list[str]) -> None:
+    """Refuse an unconfirmed spec at head whose latest round of cold read had findings or which
+    changed after it. A draft with no cold read yet, and a confirmed spec, keep today's rules."""
+    from forge import records, story
+
+    for path in dict.fromkeys(re.sub(r"\.read\.md$", ".md", path) for path in changed):
+        slug = re.fullmatch(r"docs/specs/([a-z0-9]+(?:-[a-z0-9]+)*)\.md", path)
+        text = story.show(top, head, path) if slug else None
+        notes = story.show(top, head, f"docs/specs/{slug[1]}.read.md") if text is not None else None
+        if notes is not None and records._front(text)[0].get("status") != "confirmed":
+            story.gate(slug[1], path, notes, repo.git("rev-parse", f"{head}:{path}", cwd=top))
 
 
 def promote_problem(changed: list[str], interfaces: list[str]) -> str:

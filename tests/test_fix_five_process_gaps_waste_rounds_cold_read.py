@@ -61,6 +61,7 @@ def test_3_fix_work_brief_states_limit_interfaces_and_allowance(repo):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
+               'stage = "prototype"\n'
                'interfaces = ["**/routes/**", "**/*.schema.*"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n')
     repo.git("add", "forge.toml")

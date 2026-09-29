@@ -1,0 +1,45 @@
+{
+  "approval": {
+    "at": "2026-09-28T17:37:40+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01T5HNp37L694RG8cS6x2TmZ",
+    "hash": "9e01daade7f7bbae004968d241d156df90316dd12af5c6944eb21dad781e7402",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-READLOOP-1.md",
+  "finished": "2026-09-29T11:04:57+00:00",
+  "merged": {
+    "CUT": "2026-09-29T08:33:14+00:00",
+    "GATES": "2026-09-29T10:39:00+00:00",
+    "ROUNDS": "2026-09-29T03:20:11+00:00",
+    "SPEC": "2026-09-28T18:21:23+00:00",
+    "SPECS": "2026-09-29T11:04:57+00:00"
+  },
+  "outcome": "The cold read now continues the same reader, sending only what changed, until it finds nothing, hunts edge cases item by item against known traps, and every story and spec must pass it before approval and each task",
+  "status": "done",
+  "steps": [
+    {
+      "at": "2026-09-28T15:42:18+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T15:50:20+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-28T17:23:08+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-09-28T17:37:40+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-09-29T11:05:45+00:00",
+      "step": "done"
+    }
+  ],
+  "title": "Gaps a plan never pins down come back as many review rounds, because the cold read runs once and nobody checks the amended plan",
+  "touches": 2
+}

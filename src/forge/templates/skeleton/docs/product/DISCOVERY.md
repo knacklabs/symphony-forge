@@ -18,6 +18,12 @@ Notes from talking with the client, before anything is built. They ship as fixes
 
 <!-- The client's people and their roles. Who signs off? -->
 
+## Words they use
+
+<!-- The client's own words, kept exactly as they say them, so screens and demo data are labelled
+     the way they talk about their work. One line each. -->
+- <their word>: <what it means>
+
 ## Customer call script
 
 <!-- Copy each "ask the client" topic from BRIEF.md here. Ask one at a time, explain why it
@@ -30,4 +36,11 @@ Notes from talking with the client, before anything is built. They ship as fixes
 
 ## Prototype notes
 
-<!-- What was shown, what the client said, and what changed. -->
+<!-- One dated block per demo. Did: what the client did themselves. Said: their words, in quotes.
+     Asked: one line per request, ending in (serves the problem) or (after sign-off). -->
+
+### <YYYY-MM-DD>
+- Did: <what the client did themselves>
+- Said: "<their words>"
+- Asked: <what they asked for> (serves the problem)
+- Asked: <what they asked for> (after sign-off)

@@ -1,0 +1,60 @@
+{
+  "approval": {
+    "at": "2026-09-29T09:23:38+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_018rPdhrnVm7fyG2BNjXmSfw",
+    "hash": "3b7f02a700872a99d1051b7f9449e7ef627f605331f1d6789affc81c83aff7fc",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-MERGESWITCH-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-29T07:50:35+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T07:57:01+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:01:45+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:06:54+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:11:51+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:16:37+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:25:56+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:29:03+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T08:31:08+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T09:20:42+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T09:23:38+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
+  "touches": 1
+}

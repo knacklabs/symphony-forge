@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, records, repo, review, story
+from forge import approval, board, close, records, repo, review, story
 
 COMMANDS = [
     {
@@ -147,8 +147,9 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     states: list[str] = []
     refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
-    merged_prs = _merged_prs(top) if trees else set()
-    prs = _open_prs(top) if trees else {}
+    merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
+    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,statusCheckRollup,isDraft")
+           if isinstance(pr.get("url"), str)} if trees else {}
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
@@ -170,7 +171,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
-        if cfg["repo"] == "client" and not approval.signed_off(top, cfg):
+        if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
                 notice = ["Open before sign-off in docs/product/BRIEF.md:",
@@ -193,17 +194,8 @@ def _needs_demo_address(top: Path) -> bool:
     ref = story.landed_ref(top)
     if story.show(top, ref, "Dockerfile") is None:
         return False
-    cfg = repo.default_config(top)
-    if cfg["repo"] != "client":
+    if not repo.is_prototype(top, repo.default_config(top), (ref,)):
         return False
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
-    pinned = cfg["signoff"]
-    for name in names.splitlines():
-        if (name == pinned if pinned else name.endswith("client-signoff.md")):
-            record = story.show(top, ref, name) or ""
-            if record.startswith("---") and re.search(
-                    r"^status:\s*[\"']?accepted\b", record.split("---")[1], re.M):
-                return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
     return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
@@ -283,6 +275,19 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            refusals: dict[Path, str]
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
+    notes, doc_hash, required = "", "", False
+    if path is None:  # like forge task start: the story branch's copy while it exists
+        for ref in (f"story/{key}", story.landed_ref(top)):
+            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+            required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+            if required:
+                text = story.show(top, ref, f"plans/{key}.md") or text
+                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
+                break
+    elif (path / "plans" / f"{key}.md").is_file():
+        notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
+        required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     try:
         doc = story.parse(text)
     except ValueError as exc:
@@ -313,6 +318,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
+    reread = _next_round(key, notes, doc_hash, title, required)
+    if reread:  # a doc changed after approval gets a round before its next task starts
+        return lines + reread, list(states.values())
     if ready:
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
@@ -324,12 +332,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str]) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
+    notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
+    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
+                         story.rounds(notes))
+    if reread:
+        return reread
     try:
         story.check_read(key, path)
     except repo.Refused as refusal:
         problem, _, step = str(refusal).partition("\nNext: ")
         return [f"Planning {title}: {problem}", f"Next: {step}"]
-    if not approval.signed_off(path, _report_config(path, refusals)):
+    if repo.is_prototype(path, _report_config(path, refusals)):
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     last = approval.last_refusal(top)
@@ -340,6 +353,28 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             f"Next: in Codex, ask request_user_input with id approve_plan_{digest}, question "
             '"Approve this plan?", header "Approve plan" and choices "Approve plan", '
             '"Request changes", "Stop"']
+
+
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) -> list[str]:
+    """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
+    changed: `text` is the notes, `doc_hash` the doc's git hash."""
+    notes = f"plans/{key}.read.md"
+    record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
+    done, number = int(record.get("round") or 1), story.undisposed(findings)
+    if not required:
+        return []
+    if not record.get("round"):
+        return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
+    if not story.passed(record, findings):
+        why = f"round {done} of its cold read had findings"
+    elif record.get("read_hash") != doc_hash:
+        why = f"plans/{key}.md changed after round {done} of its cold read"
+    else:
+        return []
+    nudge = " It isn't converging: ask the human whether to split the story instead of reading on."
+    return [f"Planning {title}: {why}, so round {done + 1} is next.{nudge if done + 1 >= 4 else ''}",
+            f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
+            f"forge read {key}"]
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],
@@ -381,11 +416,14 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 == receipt.get("commit")):
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
-    if (status == "ready" and state.get("kind") != "migrate"
+    switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
+    if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
+    if status == "started" and switch:
+        sentence, step = "{label} is started.", "the repo owner runs forge merge enable in their own terminal"
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already
         sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,
@@ -401,7 +439,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
-        if status == "waiting for checks" and repo.merge_setting(top) == "agent":
+        if status == "waiting for checks" and not switch and repo.merge_setting(top) == "agent":
             return [f"{label}'s checks passed; finish preparing its automatic merge.",
                     f"Next: forge close {item}"]
         next_step = (step.format(**values) if step == "forge merge {item}"
@@ -410,31 +448,17 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     return [sentence.format(**values), f"Next: {step.format(**values)}"]
 
 
-def _open_prs(top: Path) -> dict[str, dict[str, Any]]:
+def _prs(top: Path, state: str, fields: str) -> list[dict[str, Any]]:
+    """GitHub's pull requests in a state, when gh is available; git's landed state still works offline."""
     if not shutil.which("gh"):
-        return {}
-    done = repo.run("gh", "pr", "list", "--state", "open", "--limit", "1000",
-                    "--json", "headRefName,url,statusCheckRollup,isDraft", cwd=top)
+        return []
+    done = repo.run("gh", "pr", "list", "--state", state, "--limit", "1000", "--json", fields, cwd=top)
     try:
         prs = json.loads(done.stdout) if done.returncode == 0 else []
     except ValueError:
-        prs = []
-    return {pr["headRefName"]: pr for pr in prs if isinstance(pr, dict)
-            and isinstance(pr.get("headRefName"), str) and isinstance(pr.get("url"), str)}
-
-
-def _merged_prs(top: Path) -> set[str]:
-    """Merged GitHub branches, when gh is available; git's landed state still works offline."""
-    if not shutil.which("gh"):
-        return set()
-    done = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "1000",
-                    "--json", "headRefName", cwd=top)
-    try:
-        prs = json.loads(done.stdout) if done.returncode == 0 else []
-    except ValueError:
-        return set()
-    return {pr["headRefName"] for pr in prs if isinstance(pr, dict)
-            and isinstance(pr.get("headRefName"), str)} if isinstance(prs, list) else set()
+        return []
+    return [pr for pr in prs if isinstance(pr, dict) and isinstance(pr.get("headRefName"), str)
+            ] if isinstance(prs, list) else []
 
 
 def _touches(count: int) -> str:

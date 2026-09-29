@@ -40,6 +40,9 @@ HTTP 200 when ready. The Dockerfile runs `npx prisma migrate deploy` before the 
 The platform supplies Postgres through `DATABASE_URL` and sends traffic to port 3000. See
 [deploy.md](deploy.md) for the deployment steps and failure behavior.
 
+A prototype's first version also builds a demo-data loader, so the client sees their own work
+(see demo-data.md).
+
 ## Added later
 
 Each of these is a moving part the client pays for as long as the app runs, so none is set up in

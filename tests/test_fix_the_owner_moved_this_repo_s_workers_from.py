@@ -19,7 +19,7 @@ def test_1_this_repo_works_on_claude_opus_medium_and_reviews_on_codex(repo):
     assert config["workers"] == "claude"
     # No subagent keys: the whole table is exactly the model and its effort.
     assert config["models"]["build"] == config["models"]["fix"] == config["models"]["lite"] == OPUS
-    assert config["models"]["review"] == {"model": "gpt-6-sol", "effort": "xhigh"}
+    assert config["models"]["review"] == {"model": "gpt-6-sol", "effort": "high"}
 
     log = install_claude(repo)
     repo.write("forge.toml", text)

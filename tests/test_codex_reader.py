@@ -138,11 +138,9 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert str(shop.resolve()) not in written and str(shop) not in written and win not in written
     assert "see /plans/SHOP.md, /docs/a.md and /docs/c.md" in written
 
-    # Recording the amendment runs no model, so it needs no coordinator.
+    # The old contract recorded an amendment here with --amended; FORGE-READLOOP-1 removed it.
     monkeypatch.delenv("CLAUDECODE")
     before = len(_stub(stub))
-    assert repo.forge("read", "SHOP", "--amended").returncode == 0
-    assert len(_stub(stub)) == before and not claude.exists()
 
     # Under Codex the reader is Claude, read-only, on the grill kind's model and effort.
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-coordinator")
@@ -151,7 +149,10 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     (repo.bin / "claude-says.md").write_text(f"1. see {wish.resolve()}/docs/b.md\n", encoding="utf-8")
     assert repo.forge("read", "WISH").returncode == 0
     [call] = claude_calls(claude)
-    assert call["args"] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode", "plan"]
+    # The old contract ran claude with no session; FORGE-READLOOP-1 starts it with a known session
+    # id, so the next round can continue it.
+    assert call["args"][:-1] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode",
+                                 "plan", "--session-id"]
     assert Path(call["cwd"]).resolve() == wish.resolve()
     wished = (wish / "plans" / "WISH.read.md").read_text("utf-8")
     assert "reader: claude (opus)" in wished and "see /docs/b.md" in wished
@@ -160,7 +161,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one refuses. Review's old Astra default becomes Sol at xhigh effort.
+    # an old one refuses. Review's old Astra default becomes Sol at high effort.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -175,7 +176,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                   "claude": {"model": "opus", "effort": "high"}},
         "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
                    "codex": {"model": "gpt-6-sol", "effort": "high"}},
-        "review": {"model": "gpt-6-sol", "effort": "xhigh"}}
+        "review": {"model": "gpt-6-sol", "effort": "high"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml's model setting is now the [models] table.\n"

@@ -10,7 +10,7 @@ from pathlib import Path
 
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
-SOL_XHIGH = "model: gpt-6-sol\nthinking: xhigh\nautoreview done"
+SOL_HIGH = "model: gpt-6-sol\nthinking: high\nautoreview done"
 MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems",
         "Sign-in", "Personal data", "Production host")
 
@@ -70,7 +70,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
-    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {"review_status": "findings", "findings": [{
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P1", "title": "Prototype fails", "body": "Demo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     blocked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -79,7 +79,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {"review_status": "findings", "findings": [{
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P0", "title": "Prototype exposes data", "body": "Demo leaks records",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     critical = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -129,7 +129,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "forge next" in open_topic.stderr
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+    queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     changed = answers.replace("Demo workflow: agreed (client", "Demo workflow: revised (client")
     repo.git("rm", "--cached", "docs/product/BRIEF.md", cwd=fix)
@@ -151,7 +151,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "model and effort" in missing_selection.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH + "\n"
+    queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
                                    "codex model gpt-6-sol is unavailable for this account; "
                                    "retrying with gpt-6-astra",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
@@ -160,14 +160,14 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "model and effort" in fallback.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": "model: gpt-6-sol\nthinking: high",
+    queue.write_text(json.dumps([{"say": "model: gpt-6-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
-    lower_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-    assert lower_effort.returncode == 1
-    assert "model and effort" in lower_effort.stderr
+    other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert other_effort.returncode == 1
+    assert "model and effort" in other_effort.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": {
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
         "review_status": "incomplete", "findings": [], "scope_rejected_findings": [{
             "priority": "P2", "title": "Outside scope", "body": "Review did not finish",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
@@ -176,7 +176,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "incomplete" in incomplete.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH, "exit": 2, "report": {
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "exit": 2, "report": {
         "review_status": "scoped-clean", "findings": [], "scope_rejected_findings": [{
             "priority": "P2", "title": "Outside scope", "body": "Review stopped early",
             "code_location": {"file_path": "app.py", "line": 1}}]}}]))
@@ -185,7 +185,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "incomplete" in unfinished.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+    queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     repo.git("rm", "--cached", "app.py", cwd=fix)
     (fix / "app.py").write_text("print('unreviewed prototype')\n")
@@ -200,14 +200,14 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
         report = {"findings": []}
         if status:
             report["review_status"] = status
-        queue.write_text(json.dumps([{"say": SOL_XHIGH, "report": report}]))
+        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": report}]))
         unfinished_status = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert unfinished_status.returncode == 1
         assert "review did not finish" in unfinished_status.stderr
         assert "Next: check Autoreview" in unfinished_status.stderr
         assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+    queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
@@ -216,7 +216,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--model"] == "codex=gpt-6-sol"
-    assert options["--thinking"] == "codex=xhigh"
+    assert options["--thinking"] == "codex=high"
     assert "Sign-off person" in options["--prompt"]
     assert "docs/product/BRIEF.md" in options["--prompt"]
     assert "| Topic | Question | Options (default first) | Before sign-off |" in options["--prompt"]
@@ -273,7 +273,7 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
         assert not queue.with_suffix(".calls.jsonl").exists()
 
     page = _decision(fix, answers, via="call")
-    queue.write_text(json.dumps([{"say": SOL_XHIGH,
+    queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi Recorder", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
