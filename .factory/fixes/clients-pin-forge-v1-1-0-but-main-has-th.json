@@ -4,7 +4,7 @@
   "branch": "fix/clients-pin-forge-v1-1-0-but-main-has-th",
   "done_when": "Forge's version is 1.2.0 everywhere it is recorded (the package version, this repo's forge.toml pin, and the tests that track the current version), so the v1.2.0 tag installs as 1.2.0",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T17:13:59+00:00",
