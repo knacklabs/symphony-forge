@@ -3,7 +3,7 @@
   "branch": "fix/people-using-forge-through-the-agent-don",
   "done_when": "The synced Forge skill tells the agent, the first time each of these happens for a person, to add one plain sentence saying what just happened and what they can do next: a story plan shown for approval, a cold read finding, a part starting, a pull request ready, a merge, a prototype demo, sign-off; never repeating it, never naming commands unless asked; a test checks each moment through forge sync and forge init",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T16:15:22+00:00",
