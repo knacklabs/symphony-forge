@@ -2,29 +2,29 @@
   "branch": "task/FORGE-READLOOP-1-GATES",
   "review": {
     "blocking_level": "P1",
-    "changed": "afe1fdebd965bb6686825376821f6ee99c27229f2a2f0ac6f1e8021b9678118f",
-    "commit": "b890919c229cf68e4f73db48bdae7000c31154fd",
+    "changed": "2af69956b314932af008ff4e181b450afa7917b337b6e7c2ff25d845328457cd",
+    "commit": "bdc09a7e047fd7ce3e55c87a31fa4e04bcfc6a1e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The gate treats any `## Round <n>` heading in the notes as a round boundary. If a reader's latest response contains a finding followed by a heading such as `## Round 99` and `No findings.`, disposing of that finding makes `passed()` return true even though the actual round's whole text is not `No findings.`. Approval, task start, and the PR check can then accept it. Delimit the latest round using its recorded round number and require that round's entire text to match exactly.",
-        "file": "src/forge/story.py",
-        "line": 418,
-        "priority": "P1",
-        "title": "Not done: A story passes only on \"No findings\""
-      },
-      {
-        "body": "After a first task is squash-merged, a changed Done-when section can pass a new read on `story/<KEY>` while still awaiting renewed approval. If its worktree is then removed, this path selects the newer story-branch doc, but the approval check is skipped because `path` is `None` (line 295). `_next_round` finds a passing round and `forge next` recommends starting a task. `forge task start` reads the story branch's stale approval and refuses it. Check the selected branch's approval against its selected doc before recommending task start.",
+        "body": "After the first task merges, a changed Done-when section can receive a passing new read on the story branch while its approval still refers to the old text. If the story worktree is then removed, this path reads the new branch doc and finds a passing round, but skips the approval check because `path` is None (`nextstep.py:295`). It recommends starting a task; `task.py:154-158` then refuses that task for stale approval. Check the selected branch's approval before recommending task start.",
         "file": "src/forge/nextstep.py",
         "line": 320,
         "priority": "P2",
-        "title": "Check renewed approval without a story worktree in forge next"
+        "title": "Check renewed approval when forge next has no story worktree"
+      },
+      {
+        "body": "The search takes the first heading with the recorded round number. If round 1's reader text mentions `## Round 2`, then round 2's reply is exactly `No findings.`, `story.py:246-247` preserves both headings in the notes. This search starts at the heading inside round 1, includes the real round 2 heading in the text being checked, and refuses the valid passing round. The gate needs a boundary that distinguishes stored round headings from reader text.",
+        "file": "src/forge/story.py",
+        "line": 419,
+        "priority": "P2",
+        "title": "A prior reply can make an exact passing round fail"
       }
     ],
-    "status": "blocked",
-    "tree": "df4cdd329c77af1664ed7e1af5f5102761632f0b490625faccc8edf55e6d3490"
+    "status": "clean",
+    "tree": "2a942ef51b1369d6b7347b9a3925ea35569f4151f6a8a11bc98d6de2ade7c05a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T08:33:42+00:00",
@@ -40,6 +40,10 @@
     },
     {
       "at": "2026-09-29T09:59:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T10:30:02+00:00",
       "step": "review"
     }
   ]
