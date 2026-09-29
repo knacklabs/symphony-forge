@@ -1,42 +1,21 @@
 {
   "branch": "task/FORGE-AHA-1-DEMO",
   "review": {
-    "commit": "1d41a2496a70e429b445e644118bd41ae70993df",
+    "commit": "10d0025dcf9c77ae7bfeeaab814b4832efa71b86",
     "dismissals": [],
     "findings": [
       {
-        "body": "The skill drafts and sends the sign-off email before the strict review, so the customer is asked to approve a version that has not passed review. The required order is review, then email for the reviewed version, then reply. In unchanged `src/forge/records.py:267-289`, `forge decision accept` requires approval details before running the review, and line 300 accepts immediately afterward. The revised test at `tests/test_aha_demo.py:40-64` enforces the opposite order from Done-when 6.",
-        "file": "src/forge/templates/skill.md",
-        "line": 187,
-        "priority": "P1",
-        "title": "Not done: Sign-off is read back and drafted"
-      },
-      {
-        "body": "The supplied final `Functional check:` paragraph says it ran `forge sync` and read the skill, but its likely-failure sentence only predicts how `forge decision accept` refuses a non-Forge branch. It does not say that command was run or give an observed refusal with a plain next step. The required likely-failure exercise is therefore absent from the check for this revised sign-off flow.",
-        "file": "src/forge/templates/skill.md",
-        "line": 191,
-        "priority": "P1",
-        "title": "Not done: functional check"
-      },
-      {
-        "body": "All three new item 4\u20136 tests use `_synced(repo)` here. That helper calls only `forge sync` on an existing fix branch (`tests/test_aha_prepare.py:13-25`). The story's Notes at `plans/FORGE-AHA-1.md:96-98` require checking each instruction through both `forge sync` and `forge init`; no test reads this guidance from a freshly initialized client. Add an init-path assertion for the two host skills.",
-        "file": "tests/test_aha_demo.py",
-        "line": 11,
-        "priority": "P1",
-        "title": "Not done: forge init demo guidance test"
-      },
-      {
-        "body": "An answer sourced from `agent` or `our default` for one of the first seven topics is still open for sign-off, but `forge next` does not list it: unchanged `src/forge/nextstep.py:106-111` lists only missing, malformed, `ask the client`, or `later` entries. `forge decision accept` rejects those sources separately at `src/forge/records.py:277-285`. An agent relying on this instruction can send the sign-off email before settling such a topic in the read-back call.",
+        "body": "The instruction says `forge next` lists every open must-answer topic, but unchanged `src/forge/nextstep.py:106-111` does not list answers sourced from `agent` or `our default`. Unchanged `src/forge/records.py:278-285` rejects those sources before the strict review. Relying on the list can leave a topic unresolved during the single read-back call and cause the review command to refuse afterward.",
         "file": "src/forge/templates/skill.md",
         "line": 186,
         "priority": "P2",
         "title": "Correct the claim that forge next lists every open must-answer topic"
       }
     ],
-    "status": "blocked",
-    "tree": "cb183f6f3e3040958f8312769a6b7223715b2cbe5811e945f881e5c34a06ec41"
+    "status": "clean",
+    "tree": "4344e8bb10cf8b0230727c8da0905859ba41fa2c5d319dc8dd2a1f6629c39425"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T19:22:54+00:00",
@@ -48,6 +27,10 @@
     },
     {
       "at": "2026-09-28T20:15:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:11:10+00:00",
       "step": "review"
     }
   ]
