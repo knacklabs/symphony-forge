@@ -1,21 +1,42 @@
 {
   "branch": "task/FORGE-AHA-1-DEMO",
   "review": {
-    "commit": "10d0025dcf9c77ae7bfeeaab814b4832efa71b86",
+    "commit": "4f315445dfe0f2d17a56eee95164d74798398ef9",
     "dismissals": [],
     "findings": [
       {
-        "body": "The instruction says `forge next` lists every open must-answer topic, but unchanged `src/forge/nextstep.py:106-111` does not list answers sourced from `agent` or `our default`. Unchanged `src/forge/records.py:278-285` rejects those sources before the strict review. Relying on the list can leave a topic unresolved during the single read-back call and cause the review command to refuse afterward.",
+        "body": "The new GOLDEN table replaces the ROOT and SOURCES definitions, but test_3 still uses ROOT at line 71 and SOURCES at lines 80\u201382. GOLDEN is never used. The test raises NameError before it can check forge sync, breaking the repository test suite.",
+        "file": "tests/test_split_ships.py",
+        "line": 17,
+        "priority": "P1",
+        "title": "Restore the definitions used by the sync test"
+      },
+      {
+        "body": "The test checks that each step's text exists but never checks their order. It also checks only the opening phrase of the three-line what-changed instruction, so removing what each line must say would leave the test passing. Assert the step positions and all three note contents in the output from forge sync and forge init.",
+        "file": "tests/test_aha_demo.py",
+        "line": 50,
+        "priority": "P1",
+        "title": "Not done: test_4_every_demo_follows_the_script"
+      },
+      {
+        "body": "The required one dated block per demo is absent from this test's assertions. Removing `### <YYYY-MM-DD>` and the per-demo block instruction from the skill would leave the test passing, despite losing the specified Prototype notes format.",
+        "file": "tests/test_aha_demo.py",
+        "line": 60,
+        "priority": "P1",
+        "title": "Not done: test_5_reactions_are_kept_after_each_demo"
+      },
+      {
+        "body": "The skill says forge next lists every open must-answer topic, but `src/forge/nextstep.py:106-111` omits answers sourced from `agent` or `our default`. Those sources do not settle a must-answer topic: `src/forge/records.py:278-285` rejects them before the strict review. Relying on the list can leave a topic unresolved after the single read-back call.",
         "file": "src/forge/templates/skill.md",
         "line": 186,
         "priority": "P2",
         "title": "Correct the claim that forge next lists every open must-answer topic"
       }
     ],
-    "status": "clean",
-    "tree": "4344e8bb10cf8b0230727c8da0905859ba41fa2c5d319dc8dd2a1f6629c39425"
+    "status": "blocked",
+    "tree": "17e17c6aa52f40f1544735e7550668b5c33b02ece0ab2d56f5596eaf5f145254"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-28T19:22:54+00:00",
@@ -31,6 +52,10 @@
     },
     {
       "at": "2026-09-29T02:11:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:54:21+00:00",
       "step": "review"
     }
   ]
