@@ -1,0 +1,29 @@
+{
+  "base": "a222a32590b89ad24b060ea426953f7dad8b0b7e",
+  "branch": "fix/forge-mergeswitch-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "The owner now switches a repo to agent merges with one command in their own terminal, and the agent never makes that switch itself",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "35b466bd2119b0351248718fcc06a0a2300e122753d3a3a3c10dbafcf158ab82",
+    "commit": "c06504fc1d61f737d7b1e7fc94226080d3c58249",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "7d254d8b013669e320a016ed533e586ad025f9320692ba5e1959bcab0d19b7c7"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T15:21:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T15:23:43+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself is finished, and what it achieved."
+}

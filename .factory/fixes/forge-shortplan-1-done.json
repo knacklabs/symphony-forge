@@ -1,0 +1,29 @@
+{
+  "base": "dfb2aa074193e4ec1524c6ef39ade90c816b39b1",
+  "branch": "fix/forge-shortplan-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "The plan the owner approves now fits on one screen, with one plain sentence per result, while each result's details still reach the workers and reviewers",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "06f53bd4d24c2ccedc11d77bfba1bfd274378275580da9f98d6bb57e947ec13b",
+    "commit": "69b02b085bf958caee4bee7cc0c10c0494436e0c",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "36296819f1c2352bf5591aca52e3a0910702d1494539eaa6b89d4cd5d8581515"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T16:15:20+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T16:18:17+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that The plan the owner approves is long and full of test lists, tasks and notes that only agents use is finished, and what it achieved."
+}
