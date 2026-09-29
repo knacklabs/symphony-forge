@@ -4,11 +4,24 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "The owner now switches a repo to agent merges with one command in their own terminal, and the agent never makes that switch itself",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "35b466bd2119b0351248718fcc06a0a2300e122753d3a3a3c10dbafcf158ab82",
+    "commit": "c06504fc1d61f737d7b1e7fc94226080d3c58249",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "ceb116b4d021772b5f8b391e77d706eb5b2a2fc99d6bcfb62e1318254a37c501"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T15:21:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T15:23:43+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
