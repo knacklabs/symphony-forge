@@ -8,7 +8,12 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-MERGESWITCH-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T15:21:04+00:00",
+  "merged": {
+    "SPEC": "2026-09-29T15:21:04+00:00"
+  },
+  "outcome": "The owner now switches a repo to agent merges with one command in their own terminal, and the agent never makes that switch itself",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-29T07:50:35+00:00",
@@ -53,6 +58,10 @@
     {
       "at": "2026-09-29T09:23:38+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T15:21:33+00:00",
+      "step": "done"
     }
   ],
   "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
