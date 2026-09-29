@@ -3,7 +3,7 @@
   "branch": "fix/forge-next-says-a-worker-is-building-ite",
   "done_when": "forge next says an item's worker is building only while its recorded worker process is alive; otherwise it says the worker stopped and names the next command; a test records a worker whose process has ended and sees the stopped message",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T18:01:22+00:00",
