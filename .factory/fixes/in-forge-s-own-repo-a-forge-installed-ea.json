@@ -6,27 +6,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "1a1539bd8a489af319de332cfd1699f7304061b9e059cabcef2f9b87142158be",
-    "commit": "c3a5790a47c8119fa2998848bf20513a6bbcbb31",
+    "changed": "3d1605cce9ec7522ad3872b6510cd64c3c174cb2f2fc2c8329cc6e93d63d5793",
+    "commit": "bf44b9a9fc6d86d1aed3553b9044c80065b3c588",
     "dismissals": [],
     "findings": [
       {
-        "body": "The branch adds only this status record. The command entry point in src/forge/cli.py:98-104 still runs the imported installation, and its version answer comes from that installation at src/forge/cli.py:29. There is no checkout comparison, switch to src/forge, or one-time notice. An older installed Forge therefore still runs its old code inside a newer Forge checkout.",
-        "file": ".factory/fixes/in-forge-s-own-repo-a-forge-installed-ea.json",
-        "line": 4,
+        "body": "The redirect trusts a repository's own `forge.toml` value `repo = \"forge-source\"` and the presence of `src/forge`. An unrelated Git repository can supply both, causing even `forge --version` to launch Python with that repository's `src` on `PYTHONPATH` and import its code. The guard needs a way to identify Forge's own checkout before executing checkout code.",
+        "file": "src/forge/cli.py",
+        "line": 73,
         "priority": "P1",
-        "title": "Not done: Forge must run the checkout's code when its installed code differs"
+        "title": "Unrelated repositories can make forge execute their Python code"
       },
       {
-        "body": "The branch adds no test for the stated scenario. tests/test_version.py:9-12 checks a source string and packaging declaration; it does not run an older installed command in a newer checkout or assert the checkout's version answer. The reported passing suite cannot establish this missing behavior.",
-        "file": ".factory/fixes/in-forge-s-own-repo-a-forge-installed-ea.json",
-        "line": 4,
+        "body": "An installation made before this fix has the old `cli.py`, whose `_run` goes straight to argument parsing; it never executes this new redirect. Invoking that installed command inside a newer checkout therefore still runs the installed code and gives its installed version. This fails the requested older-install behavior, even though the branch's test passes.",
+        "file": "src/forge/cli.py",
+        "line": 70,
         "priority": "P1",
-        "title": "Not done: an end-to-end test runs an older Forge install in a newer checkout"
+        "title": "Not done: An older installed Forge must run the checkout's code and announce it"
+      },
+      {
+        "body": "`_forge_code(install, \"1.0.0\")` copies this branch's current `src/forge` into the simulated install and changes only its version string. Both copies therefore contain the new redirect. The test does not run code from an older installation and cannot catch the failure of a pre-fix installed command to switch to the checkout.",
+        "file": "tests/test_fix_in_forge_s_own_repo_a_forge_installed_ea.py",
+        "line": 24,
+        "priority": "P1",
+        "title": "Not done: Test with an actual older Forge installation"
+      },
+      {
+        "body": "The close run reports `test_5_forge_stays_small` failing: `src/forge` has 8,005 lines against the 8,000-line ceiling in `pyproject.toml`. The alias removal did not bring the branch below the ceiling. This added entry-point code leaves the repository's required test suite failing.",
+        "file": "src/forge/cli.py",
+        "line": 71,
+        "priority": "P1",
+        "title": "The added code breaks Forge's 8,000-line test"
       }
     ],
     "status": "blocked",
-    "tree": "18fb17fe4b223fac1241dded3d7feca1e44eea8514d842259fc2add0b442bf48"
+    "tree": "4319968f898aff962831383eefc2d426caf58c44782d71f5d98abfdcc74add27"
   },
   "status": "fixing",
   "steps": [
@@ -36,6 +50,10 @@
     },
     {
       "at": "2026-09-29T19:06:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T19:16:20+00:00",
       "step": "review"
     }
   ],
