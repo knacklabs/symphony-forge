@@ -11,33 +11,20 @@ import pytest
 
 STORY = "FORGE-SPLIT-1"
 
-# Captured from forge sync with these two client setups. Hashes use LF newlines.
-# The skill hash now includes the demo script, reactions, read-back and the review before sign-off;
-# all other output stays pinned.
-GOLDEN = {
-    "plain": {
-        ".gitattributes": "a843f971979438197905e041ead7a83c1ecb514a06ecdbb47126cd3f42c64c7a",
-        "AGENTS.md": "752518c2126659d959e562d3cab725e4d39bb42611afd963e743b8932e9387af",
-        ".claude/settings.json": "f0e550f035db6feb93de9aeea566253326500d5925bee3d2a41faf8b5f40df7d",
-        ".codex/hooks.json": "6359773ba4fb597c6f1e4e6fc504227b419afcaa2236abd459942f8fcf99dbd8",
-        ".claude/skills/forge/SKILL.md": "a1819fef775ced7b9a33f5a4b9e47e8293b3187d4d515d9739274538d7ebe365",
-        ".codex/skills/forge/SKILL.md": "a1819fef775ced7b9a33f5a4b9e47e8293b3187d4d515d9739274538d7ebe365",
-        ".claude/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
-        ".codex/skills/forge/standards.md": "774eb5b730e3b96ed43b7d47a5c02cb9e4f49676c58a1b10318cb69a2f4422d1",
-        ".claude/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
-        ".codex/skills/app-baseline/SKILL.md": "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42",
-        ".claude/skills/forge/fde.md": "b6d2644c32593e06aa40598f8e9018d983770ad2c34679052778718e48e02442",
-        ".codex/skills/forge/fde.md": "b6d2644c32593e06aa40598f8e9018d983770ad2c34679052778718e48e02442",
-        ".claude/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
-        ".claude/skills/test-audit/SKILL.md": "d0bd6a7f13510241a334a5991f2b860c80283933f963603c5d88abb1e4859126",
-        ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
-        ".codex/skills/test-audit/SKILL.md": "d0bd6a7f13510241a334a5991f2b860c80283933f963603c5d88abb1e4859126",
-        ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",
-        ".codex/config.toml": "d1054f20197f0e651f75e2c0641d6d6f08fb422e5754da8e93d9fefb3660bd58",
-        ".github/workflows/forge.yml": "08424f7bfe80b5ad33a75b59082556503cf976aabc2b2c24155029063f8f46e5",
-        "git-hook/pre-commit": "a1cec093f1d06900ee2dab2af6244ebe3060731276f0af5c9c055729ceed84ef",
-        "git-hook/pre-push": "773142aa23bd5ec4e962cc9fca64a698b6a42f1a1885bf10633c24b831fbf743",
-    },
+ROOT = Path(__file__).resolve().parents[1]
+# Each shipped file sync copies as it is, with the file it copies. Old contract: pinned sha256
+# hashes of the whole output, so every skill edit broke this test and two edits conflicted here.
+# New contract: sync writes these byte for byte from their source, whatever the source says.
+SOURCES = {
+    **{f"{host}/{rel}": source for host in (".claude", ".codex") for rel, source in {
+        "skills/forge/SKILL.md": "src/forge/templates/skill.md",
+        "skills/forge/standards.md": "src/forge/standards.md",
+        "skills/forge/fde.md": ".codex/skills/forge/fde.md",
+        "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
+        "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
+        "skills/test-audit/SKILL.md": ".codex/skills/test-audit/SKILL.md",
+    }.items()},
+    ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
