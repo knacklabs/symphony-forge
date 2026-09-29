@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import checks, codex, init, repo, review, sync
+from forge import __version__, checks, codex, init, repo, review, story, sync
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -38,6 +38,10 @@ REFUSALS = {
                 '"<file:line> <reason>"'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
+    "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
+                       "so it can't tell whether the {kind}'s files are what {pinned} writes.",
+                       "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
+                       "then forge close {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
 }
@@ -194,16 +198,21 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
 
 
 def _synced(top: Path, item: str, cfg: dict[str, Any]) -> None:
-    """An upgrade is ready only once its committed files are what the installed Forge's sync
-    writes: doctor's comparison, read from the commit close pushes."""
-    if cfg["version"].removeprefix("v") == repo.default_config(top)["version"].removeprefix("v"):
+    """An upgrade is ready only once its committed files are what its pinned Forge's sync writes:
+    doctor's comparison, read from the commit close pushes, run only by the Forge it pins."""
+    toml = story.show(top, "HEAD", "forge.toml") or ""
+    pinned = repo._pin(toml)  # pyright: ignore[reportPrivateUsage]
+    if pinned == repo.default_config(top)["version"].removeprefix("v"):
         return
+    kind = "task" if "/" in item else "fix"
+    if pinned != __version__:
+        repo.refuse(REFUSALS["unsynced_forge"], kind=kind, pinned=f"v{pinned}",
+                    installed=f"v{__version__}", item=item)
     stale = [rel for rel, text in sync.files(top, cfg).items()
              if repo.run("git", "show", f"HEAD:{rel}", cwd=top).stdout != text]
     if stale:
-        repo.refuse(REFUSALS["unsynced"], kind="task" if "/" in item else "fix",
-                    files=", ".join(stale), verb="aren't" if len(stale) > 1 else "isn't",
-                    path=top, item=item)
+        repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
+                    verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
 
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
