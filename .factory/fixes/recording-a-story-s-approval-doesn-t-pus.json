@@ -1,0 +1,14 @@
+{
+  "base": "3a7bcb40090c2bb9c82ee210fb33ef9cb8ce070a",
+  "branch": "fix/recording-a-story-s-approval-doesn-t-pus",
+  "done_when": "When the approval hook records an approval on a story branch that has a remote, it pushes that branch, and says so if the push fails; a test approves a story and sees the approval commit on the remote",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T18:00:54+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Recording a story's approval doesn't push the story branch, so tasks started from it copy an older approval and Forge's pull-request check fails"
+}
