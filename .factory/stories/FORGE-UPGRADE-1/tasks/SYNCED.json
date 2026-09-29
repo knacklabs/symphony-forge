@@ -1,7 +1,7 @@
 {
   "branch": "task/FORGE-UPGRADE-1-SYNCED",
   "review": {
-    "commit": "f4d65aaba9bec13d37e6fe097f23b719f31b0ffe",
+    "commit": "694d67a02b858c3d9e5b417d055cf3ca68a9facd",
     "dismissals": [
       {
         "because": "src/forge/close.py:220 a file git ignores is never committed, so it never reaches the pull request and can't leave the upgrade's committed files stale; the check compares what the pull request carries",
@@ -11,21 +11,21 @@
     ],
     "findings": [
       {
-        "body": "`git status --porcelain --untracked-files=all` omits ignored, untracked files. If a client ignores a generated path newly added by the pinned release, `forge sync` creates it in the temporary worktree, but it remains absent from the commit and `stale` is empty. Close can then report Ready with a missing synced file. `sync.write` writes generated paths at `src/forge/sync.py:264-275`; compare those paths explicitly with the commit so ignore rules cannot hide them.",
+        "body": "`git status --porcelain --untracked-files=all` omits ignored files. If the pinned release adds a generated path that the client ignores, `forge sync` writes it in the temporary worktree, but `stale` remains empty and close can report Ready without that file in the pull request. `src/forge/sync.py:264-275` writes generated paths whether Git ignores them. Compare the generated paths with the committed tree explicitly.",
         "file": "src/forge/close.py",
         "line": 220,
         "priority": "P1",
         "title": "Not done: An upgrade is not ready while synced files are out of date"
       },
       {
-        "body": "Running the full `forge sync` command also calls `install_shims` (`src/forge/sync.py:322`). Its hook paths are in the Git hooks directory shared by every worktree (`src/forge/githooks.py:46-50`), and `install_shims` can rewrite or rename those hooks (`src/forge/sync.py:278-307`). Thus checking a stale upgrade can change the real repository's hooks before close refuses it. Compare generated files in the scratch checkout without installing hooks.",
+        "body": "Running the full `forge sync` command also calls `install_shims` (`src/forge/sync.py:322`). Its hooks live in the Git hooks directory shared by all worktrees (`src/forge/githooks.py:46-50`), and installation can rewrite or rename them (`src/forge/sync.py:278-307`). A close that subsequently refuses a stale upgrade can therefore change the real repository's hooks. Compare generated files in the temporary checkout without installing hooks.",
         "file": "src/forge/close.py",
         "line": 216,
         "priority": "P2",
         "title": "Keep the close comparison from rewriting shared Git hooks"
       },
       {
-        "body": "`mkdtemp()` creates a parent directory, but the cleanup removes only its `sync` worktree and branch. Every upgrade close leaves an empty temporary directory behind. Clean up the parent after removing the worktree.",
+        "body": "`mkdtemp()` creates a parent directory, but the cleanup removes only its `sync` worktree and branch. Every upgrade close leaves the empty parent directory behind. Remove it after the worktree cleanup.",
         "file": "src/forge/close.py",
         "line": 213,
         "priority": "P3",
@@ -33,9 +33,9 @@
       }
     ],
     "status": "clean",
-    "tree": "dc92de7648160cbb2c99478e678e3be6849126249bdb652148bc5f79b9a01edc"
+    "tree": "c64aba279bbf839cca3932504d9aa4ebeee920c2ce9ac88c4896757ded664d3a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T05:53:37+00:00",
@@ -51,6 +51,10 @@
     },
     {
       "at": "2026-09-29T07:04:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T07:18:48+00:00",
       "step": "review"
     }
   ]
