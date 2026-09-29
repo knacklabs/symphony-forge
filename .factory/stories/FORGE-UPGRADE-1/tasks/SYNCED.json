@@ -1,10 +1,43 @@
 {
   "branch": "task/FORGE-UPGRADE-1-SYNCED",
-  "status": "working",
+  "review": {
+    "commit": "c0e76b3e464e16f0e65ed11371e960289d182b88",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This comparison uses the Forge release running `close`, but the pin check validates only the folder where the command was launched (`src/forge/cli.py:76-77`, `src/forge/repo.py:304-306`). Run `forge close <upgrade>` from a default checkout that pins the old installed release, and it can compare the upgrade fix against the old generator. A fix with a new version pin and files matching that old generator can then be marked Ready even though files changed by the new release are stale. Validate the target fix's committed pin against the running Forge before comparing generated files.",
+        "file": "src/forge/close.py",
+        "line": 201,
+        "priority": "P1",
+        "title": "Not done: An upgrade is not ready while synced files are out of date"
+      },
+      {
+        "body": "After the first refusal, `_sync` runs `git add` and `git commit` before the test calls `close` again (lines 12-16). The test would still pass if the guard compared working-tree files instead of `HEAD`, allowing Ready while the pull request's committed files remain stale. Call `close` after `forge sync` but before committing, assert it still refuses, then commit and assert Ready.",
+        "file": "tests/test_upgrade_synced.py",
+        "line": 42,
+        "priority": "P1",
+        "title": "Not done: test that an uncommitted sync stays unready"
+      },
+      {
+        "body": "`cfg` comes from the worktree's `forge.toml` (`src/forge/close.py:53`), while this guard compares and later pushes `HEAD`. If `HEAD` pins a new release with stale synced files but an uncommitted edit restores the default branch's version, this equality skips the check and the stale upgrade can be marked Ready. Decide whether `HEAD` changes the version using its committed `forge.toml`.",
+        "file": "src/forge/close.py",
+        "line": 199,
+        "priority": "P2",
+        "title": "Use the committed version pin to decide whether to check an upgrade"
+      }
+    ],
+    "status": "blocked",
+    "tree": "9033ec764124888110da532c69e03531b2aaa06b673f7f638715396e1a25aedd"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T05:53:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T06:10:57+00:00",
+      "step": "review"
     }
   ]
 }
