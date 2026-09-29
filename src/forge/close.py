@@ -219,7 +219,7 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
+        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=no",
                           cwd=check).stdout
         stale = [entry[3:] for entry in status.split("\0") if entry]
     finally:
