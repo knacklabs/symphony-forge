@@ -422,15 +422,13 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
         "Claude Code.\nNext: run forge read SHOP from Codex\n"))
     assert reader.text() == notes and not (repo.bin / "codex-app-server.jsonl").exists()
 
-    # The recorded reader's app is gone: the round starts fresh on the reader Forge picks now,
-    # says so, and records it.
-    reader.coordinate("codex")
+    # The recorded reader's app is gone: from that same app, the round is no longer refused but
+    # starts fresh on the reader Forge picks now, says so, and records it.
     _no_claude(repo, monkeypatch, tmp_path)
     moved = repo.forge("read", "SHOP")
     assert moved.returncode == 0, moved.stdout + moved.stderr
     assert FRESH["codex"].format("its reader, Claude Code, is no longer installed") in moved.stdout
-    assert ("reader: codex (gpt-6-sol), a separate Codex conversation because Claude Code isn't "
-            "installed\n") in reader.text()
+    assert "reader: codex (gpt-6-sol)\n" in reader.text()
     turn = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")[-1]["input"][0]["text"]
     assert "Round 2 of your cold read" in turn and "You are doing the one cold read" in turn
 

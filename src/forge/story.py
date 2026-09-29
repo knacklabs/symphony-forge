@@ -167,10 +167,10 @@ def read(args: Any) -> int:
     # The other app reads when it is installed, else a separate conversation of this one. A later
     # round stays with the recorded reader while its app is installed.
     recorded = record.get("reader", "").split(" ")[0]
-    if recorded == here and installed[other]:
+    gone = recorded in NAMES and not installed[recorded]
+    if recorded == here and installed[other] and not gone:
         repo.refuse(REFUSALS["wrong_app"], doc=rel, reader=NAMES[here], app=NAMES[other],
                     target=target)
-    gone = recorded in NAMES and not installed[recorded]
     reader = recorded if recorded in NAMES and not gone else other if installed[other] else here
     why = f"its reader, {NAMES[recorded]}, is no longer installed" if gone else ""
     config = repo.config(top)
