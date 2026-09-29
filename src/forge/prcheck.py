@@ -9,11 +9,13 @@ import argparse
 import importlib
 import json
 import re
+import sys
+import tomllib
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import repo, review
+from forge import __version__, repo, review
 
 REFUSALS = {
     "usage": ("forge hook pr-check needs the pull request's --base, --head and --branch.",
@@ -27,6 +29,9 @@ REFUSALS = {
                 'forge fix allow-large "<reason>")'),
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
+    "bad_version": ('The pull request on {branch} pins Forge "{version}", which isn\'t a Forge '
+                    "release such as v1.2.0.",
+                    "set forge.toml's version to a Forge release, then push {branch} again"),
     "story_doc": ("{problem}", "fix the story doc, then forge read <KEY> --amended if it changed after its read"),
 }
 CODE_LIMIT = 5
@@ -124,6 +129,18 @@ def pr_check(args: argparse.Namespace) -> int:
         return 0
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
+    pinned = _pinned(top, head)
+    if pinned.removeprefix("v") != cfg["version"].removeprefix("v"):
+        # An upgrade: the release it pins judges it, installed from Forge's own repo by its tag.
+        if not re.fullmatch(r"v\d+\.\d+\.\d+", pinned):
+            repo.refuse(REFUSALS["bad_version"], branch=branch, version=pinned)
+        if pinned != f"v{__version__}":
+            source = repo.REFUSALS["pin"][1].format(pinned=pinned).split()[-1]
+            done = repo.run("uv", "tool", "run", "--from", source, "forge", "hook", "pr-check",
+                            *args.args, cwd=top)
+            print(done.stdout, end="")
+            print(done.stderr, end="", file=sys.stderr)
+            return done.returncode
     item, state = _started(top, head, branch)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
     if "/" not in item:
@@ -150,7 +167,7 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"
-    elif result.get("tree") != review.fingerprint(head, item, top, state, base):
+    elif result.get("changed") != review.fingerprint(head, item, top, state, base):
         problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
@@ -172,6 +189,15 @@ def promote_problem(changed: list[str], interfaces: list[str]) -> str:
     if len(code) > CODE_LIMIT:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
     return ""
+
+
+def _pinned(top: Path, head: str) -> str:
+    """The Forge version the head's forge.toml pins, or "" when it has none that can be read."""
+    try:
+        data = tomllib.loads(repo.run("git", "show", f"{head}:forge.toml", cwd=top).stdout)
+    except tomllib.TOMLDecodeError:
+        return ""
+    return str(data.get("version", ""))
 
 
 def _on_branch(top: Path, commit: str, head: str) -> bool:

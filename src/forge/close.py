@@ -65,7 +65,7 @@ def close(args: argparse.Namespace) -> int:
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
-    fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
+    fresh = result.get("changed") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -102,6 +102,11 @@ def close(args: argparse.Namespace) -> int:
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
+        _save(top, item, state, f"Review of {item}: {result['status']}")
+    elif result.get("tree") != (tree := review.whole_tree("HEAD", item, top, state,
+                                                          f"origin/{default}")):
+        # The clean review still covers the change; keep the v1.1.0 check's fingerprint current.
+        result["tree"] = tree
         _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
