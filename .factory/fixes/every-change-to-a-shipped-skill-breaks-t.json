@@ -1,0 +1,33 @@
+{
+  "base": "247c8cfd5e77ccb14abd2884b2d4a6a098d5b848",
+  "branch": "fix/every-change-to-a-shipped-skill-breaks-t",
+  "done_when": "tests/test_split_ships.py checks that forge sync writes each shipped file exactly as its source says, without pinned hashes, so a skill edit needs no test change and two skill edits never conflict in that test",
+  "kind": "fix",
+  "review": {
+    "commit": "aaa88ef9354187e0be9fcb4fdcfcd4e8956f997f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "f436701675c9046d0975a20cd3616f47510251bc306f742428eff28e8bc095ef"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T18:45:19+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T18:58:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T19:05:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T02:30:39+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every change to a shipped skill breaks the pinned hashes in tests/test_split_ships.py and every merge of two such changes conflicts there"
+}

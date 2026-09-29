@@ -1,8 +1,8 @@
 """Shipped output stays compatible while new owners need no collector edit."""
 
-import hashlib
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -39,10 +39,23 @@ GOLDEN = {
         "git-hook/pre-push": "773142aa23bd5ec4e962cc9fca64a698b6a42f1a1885bf10633c24b831fbf743",
     },
 }
-GOLDEN["claude_node"] = {**GOLDEN["plain"],
-                         "CLAUDE.md": "850d862c89806458474555ee2dbd3349e99fd2048c54b64f204155a525f0ad6a",
-                         ".github/workflows/forge.yml":
-                             "b59a8391b9b7a58599dd2f601f73d805069573e6a70948622bd284770cf0260a"}
+# Built from code rather than copied: each must match what Forge's own ship functions make for
+# the same repo in the same run, so a generator change is checked but needs no test edit.
+GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
+                       ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
+                       "git-hook/pre-push"}}
+GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
+# Asks the checkout's forge, in its own process, what sync should write for this repo.
+EXPECTED = """
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from forge import githooks, repo, sync
+top = repo.root()
+cfg = repo.config(top)
+wanted = {**sync.files(top, cfg),
+          **{f"git-hook/{path.name}": text for path, text in githooks.shims(top, cfg).items()}}
+print(json.dumps(wanted))
+"""
 
 
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
@@ -54,6 +67,9 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
         repo.write("CLAUDE.md", "# Team notes\n")
         repo.write("package.json", json.dumps({"engines": {"node": "20"}}))
         repo.write(".nvmrc", "20\n")
+    expected = json.loads(subprocess.run(
+        [sys.executable, "-c", EXPECTED, str(ROOT / "src")], cwd=repo.path, check=True,
+        capture_output=True, text=True, encoding="utf-8").stdout)
     result = repo.forge("sync")
     assert result.returncode == 0, result.stderr
     paths = [line.removeprefix("Wrote ") for line in result.stdout.splitlines()
@@ -61,23 +77,26 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
     hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks"))
     files = {**{path: repo.path / path for path in paths},
              **{f"git-hook/{name}": hooks / name for name in ("pre-commit", "pre-push")}}
-    actual = {path: hashlib.sha256(file.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
-              for path, file in files.items()}
-    assert actual == GOLDEN[case]
+    assert set(files) == {"AGENTS.md", *SOURCES, *GENERATED[case]}
+    for path, source in SOURCES.items():
+        assert files[path].read_bytes() == (ROOT / source).read_bytes(), path
+    agents = (ROOT / "src/forge/templates/adapters/AGENTS.md").read_text(encoding="utf-8")
+    assert files["AGENTS.md"].read_text(encoding="utf-8") == (
+        f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n")
+    for path in GENERATED[case]:
+        assert files[path].read_text(encoding="utf-8") == expected[path], path
     if case != "plain":
         return
 
-    source = Path(__file__).resolve().parents[1] / "src" / "forge"
     package = tmp_path / "package" / "forge"
-    shutil.copytree(source, package)
-    root = source.parents[1]
+    shutil.copytree(ROOT / "src" / "forge", package)
     for rel in (".codex/skills/forge/fde.md", ".codex/skills/app-baseline/SKILL.md",
                 ".codex/skills/test-audit/SKILL.md",
                 ".codex/skills/test-audit/NOTICE.md",
                 ".claude/skills/remote-approval/SKILL.md"):
         target = tmp_path / rel
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(root / rel, target)
+        shutil.copyfile(ROOT / rel, target)
     launcher = repo.bin / "forge"
     launcher.write_text(conftest.FORGE_SHIM.format(python=sys.executable,
                                                   src=str(package.parent)), encoding="utf-8")
