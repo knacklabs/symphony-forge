@@ -1,0 +1,14 @@
+{
+  "base": "8e87833d0fcfa88453828f1ed549bc08d8a72d70",
+  "branch": "fix/claude-workers-start-the-test-suite-in-t",
+  "done_when": "The worker brief tells workers to run tests in the foreground, never end a turn while a command still runs in the background, and commit their work before the turn ends; forge work prints a plain warning naming the uncommitted files when a round ends with changes left uncommitted; a test runs forge work with a worker stub that leaves an uncommitted change and sees the warning",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T01:44:17+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Claude workers start the test suite in the background and end their turn before committing, so the review sees an empty branch"
+}
