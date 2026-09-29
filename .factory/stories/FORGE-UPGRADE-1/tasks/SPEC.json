@@ -1,8 +1,7 @@
 {
   "base": "8f037314f4064b84b4a5a05529ccb5995ee6f7ed",
-  "branch": "fix/upgrading-forge-in-a-client-repo-is-bloc",
+  "branch": "task/FORGE-UPGRADE-1-SPEC",
   "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
