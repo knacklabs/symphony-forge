@@ -8,7 +8,18 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-PROTO-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T15:50:14+00:00",
+  "merged": {
+    "DEPLOY": "2026-09-28T14:01:47+00:00",
+    "DOCS": "2026-09-28T12:44:07+00:00",
+    "GATE": "2026-09-28T11:42:27+00:00",
+    "NEXT": "2026-09-28T11:13:23+00:00",
+    "SIGNOFF": "2026-09-28T15:50:14+00:00",
+    "SPEC": "2026-09-28T10:40:57+00:00",
+    "TOPICS": "2026-09-28T11:33:20+00:00"
+  },
+  "outcome": "A client repo now waits for the customer's named person to sign off a working prototype, reviewed strictly on its answers, before any story is created, and the prototype deploys on our own platform from one Dockerfile",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-28T10:22:37+00:00",
@@ -25,6 +36,10 @@
     {
       "at": "2026-09-28T11:57:38+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T17:23:34+00:00",
+      "step": "done"
     }
   ],
   "title": "Forge lets a client repo create stories before the customer has seen and signed off a working prototype, and its discovery never asks about hosting, the client's existing systems or sign-in",

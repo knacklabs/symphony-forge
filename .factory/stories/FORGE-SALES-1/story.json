@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-SALES-1.md",
-  "status": "approved",
+  "finished": "2026-09-28T18:51:29+00:00",
+  "merged": {
+    "INSTALL": "2026-09-28T18:51:29+00:00",
+    "MERGE": "2026-09-28T13:48:33+00:00",
+    "SPEC": "2026-09-28T15:03:19+00:00",
+    "TALK": "2026-09-28T18:07:00+00:00"
+  },
+  "outcome": "A salesperson can set up a Mac or Windows laptop with one script, build and demo a prototype whose small changes merge themselves before sign-off, and hears the demo's words instead of Forge's",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-28T11:15:52+00:00",
@@ -29,6 +37,10 @@
     {
       "at": "2026-09-28T12:31:08+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-28T18:54:01+00:00",
+      "step": "done"
     }
   ],
   "title": "Salespeople can run the FDE route but trip on the engineering around it: they would have to merge pull requests, set up Node, Docker and test browsers by hand, see each small tweak wait for a full review, and hear Forge's words instead of the demo's",
