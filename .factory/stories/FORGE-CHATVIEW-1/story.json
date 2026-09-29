@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-CHATVIEW-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T02:29:35+00:00",
+  "merged": {
+    "ATTACH": "2026-09-29T02:29:35+00:00",
+    "FORGE-S-CODEX-CHATS-SHOW-AS-ONE-PROJECT": "2026-09-28T05:42:16+00:00",
+    "START": "2026-09-28T16:10:23+00:00",
+    "WORDS": "2026-09-28T01:48:42+00:00"
+  },
+  "outcome": "Forge's Codex chats now sit in one project per repo with short plain names and a summary preview, and each chat links to its pull request",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-27T16:59:22+00:00",
@@ -21,6 +29,10 @@
     {
       "at": "2026-09-27T17:03:21+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T02:30:06+00:00",
+      "step": "done"
     }
   ],
   "title": "Forge's Codex chats show as one project per worktree folder, with long names and the whole brief as their preview, so the owner can't follow them in the Codex app",
