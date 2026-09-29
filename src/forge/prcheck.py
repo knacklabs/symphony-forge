@@ -86,13 +86,20 @@ jobs:
 
 # A client's check runs the Forge release its default branch pins. A pull request that changes
 # that pin (an upgrade) is checked by the release it pins instead, installed from Forge's own
-# repo by its tag. The pin is read through git as text and must look like a release before it is
-# used; nothing from the pull request runs.
-CHOOSE = r"""          pin() { git show "$1:forge.toml" | sed -n 's/^version *= *"\(.*\)" *$/\1/p' | head -n 1; }
+# repo by its tag. The pin is read through git and parsed as TOML, and must look like a release
+# before it is used; nothing from the pull request runs.
+CHOOSE = r"""          pin() {
+            git show "$1:forge.toml" | python3 -c '
+          import sys, tomllib
+          try:
+              print(tomllib.load(sys.stdin.buffer).get("version", ""))
+          except tomllib.TOMLDecodeError as problem:
+              sys.exit(f"forge.toml in this pull request is not valid TOML: {problem}. Fix it, then push again.")'
+          }
           release=$(pin "$HEAD_SHA")
           if [ "$release" = "$(pin "$(git merge-base "$BASE_SHA" "$HEAD_SHA")")" ]; then
             release="<version>"
-          elif [[ ! "$release" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          elif [[ ! "$release" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "This pull request sets Forge's version in forge.toml to \"$release\", which isn't a Forge release such as v1.2.0. Set it to a Forge release, then push again." >&2
             exit 1
           fi

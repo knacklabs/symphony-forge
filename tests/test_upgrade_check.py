@@ -1,13 +1,15 @@
-"""An upgrade pull request passes Forge's check: the generated workflow installs the release the
-pull request pins, and a review this version records still passes the v1.1.0 release's check."""
+"""An upgrade pull request passes Forge's check: a client on v1.1.0 still runs that release's
+check on its upgrade, and the workflow this version generates installs the release an upgrade pull
+request pins, then runs its check."""
 from __future__ import annotations
 
-import hashlib
+import io
 import json
 import os
 import re
 import subprocess
 import sys
+import tarfile
 
 import conftest
 import pytest
@@ -16,18 +18,97 @@ from test_close import env  # noqa: F401 (the shared fixture)
 STORY = "FORGE-UPGRADE-1"
 
 SOURCE = "git+https://github.com/knacklabs/symphony-forge@"
-UPGRADE = "v9.9.9"
 
-# Stands in for uv at its edge: records what it would install, and installs nothing.
+# This checkout's Forge, installed as the release <version> names: no later release exists yet.
+RELEASE = """#!{python}
+import sys
+sys.path.insert(0, {src!r})
+import forge
+forge.__version__ = "<version>"
+from forge.cli import main
+sys.exit(main())
+"""
+
+# Stands in for uv at its edge: records the call, and installs the release its tag names.
 UV_STUB = """#!{python}
 import json, pathlib, sys
-with open(pathlib.Path(__file__).resolve().parent / "uv-calls.jsonl", "a", encoding="utf-8") as f:
+here = pathlib.Path(__file__).resolve().parent
+with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as f:
     f.write(json.dumps(sys.argv[1:]) + "\\n")
+(here / "forge").write_text({release!r}.replace("<version>", sys.argv[-1].rsplit("@v", 1)[1]),
+                            encoding="utf-8")
+(here / "forge").chmod(0o755)
 """
 
 
-def _version(env) -> str:
-    return env.repo.forge("--version").stdout.split()[-1]
+def _release_shim() -> str:
+    return RELEASE.format(python=sys.executable, src=str(conftest.ROOT / "src"))
+
+
+def _install_release(env, tag: str) -> None:
+    """The human installs a release, as the pin error tells them to."""
+    conftest._install(env.repo.bin, "forge", _release_shim().replace("<version>", tag[1:]))
+
+
+def _pin(env, where, value: str) -> None:
+    toml = (where / "forge.toml").read_text("utf-8")
+    pinned = re.sub(r"^version = .*$", f"version = {value}", toml, flags=re.M)
+    if pinned != toml:  # This checkout's own version may already be the one pinned.
+        env.commit(where, "forge.toml", pinned, f"Pin Forge {value}")
+
+
+def _released_checker(tag: str, dest) -> list[str]:
+    """The command that runs Forge's released source at tag, read from this checkout's git."""
+    if subprocess.run(["git", "rev-parse", "-q", "--verify", f"refs/tags/{tag}"],
+                      cwd=conftest.ROOT, capture_output=True).returncode:
+        # CI's checkout is shallow and has no tags.
+        subprocess.run(["git", "fetch", "-q", "--depth", "1", "--no-write-fetch-head", "origin",
+                        "tag", tag], cwd=conftest.ROOT, check=True)
+    archive = subprocess.run(["git", "archive", "--format=tar", tag, "src/forge"],
+                             cwd=conftest.ROOT, check=True, capture_output=True).stdout
+    tarfile.open(fileobj=io.BytesIO(archive)).extractall(dest)
+    shim = dest / "forge"
+    shim.write_text(conftest.FORGE_SHIM.format(python=sys.executable, src=str(dest / "src")),
+                    "utf-8")
+    return [sys.executable, str(shim)]
+
+
+def _close(env, item, where) -> None:
+    # Run in the fix's folder, which pins the release now installed.
+    done = env.repo.forge("close", item, cwd=where)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def _upgrade_from_v1_1_0_passes_that_release_check(env):
+    # A client on v1.1.0 upgrades: its default branch still runs v1.1.0's workflow and check.
+    _pin(env, env.repo.path, '"v1.1.0"')
+    env.repo.git("push", "-q", "origin", "main")
+    _install_release(env, "v1.2.0")
+    item, where = env.start_fix()
+    _pin(env, where, "'v1.2.0'")
+    _close(env, item, where)
+    checker = _released_checker("v1.1.0", env.tmp / "v1.1.0")
+
+    def check() -> subprocess.CompletedProcess[str]:
+        return subprocess.run([*checker, "hook", "pr-check", "--base",
+                               env.repo.git("rev-parse", "main"), "--head",
+                               env.repo.git("rev-parse", "HEAD", cwd=where), "--branch",
+                               "fix/tidy-readme"], cwd=env.repo.path, capture_output=True,
+                              text=True, encoding="utf-8", timeout=60)
+
+    done = check()
+    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
+        done.stderr
+
+    # The default branch moves on; close merges it in and keeps the clean review without
+    # rerunning it, and v1.1.0's check still passes.
+    env.commit(env.repo.path, "README.md", "# Shop\n", "Readme on main")
+    env.repo.git("push", "-q", "origin", "main")
+    _close(env, item, where)
+    done = check()
+    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
+        done.stderr
+    assert len(env.review_calls()) == 1
 
 
 def _pr_check_steps(env) -> list[str]:
@@ -47,18 +128,27 @@ def _pr_check_steps(env) -> list[str]:
     return steps
 
 
-def _run_pr_check_job(env, where) -> subprocess.CompletedProcess[str]:
-    """The job's steps until the check itself, run like the runner does on the base checkout: each
-    in bash -e, each seeing what earlier steps added to $GITHUB_ENV, stopping at the first failure."""
-    steps = _pr_check_steps(env)
+def _on_v1_2_0(env) -> list[str]:
+    """The default branch on v1.2.0, and the forge-pr-check job this version generates for it."""
+    _install_release(env, "v1.2.0")
+    _pin(env, env.repo.path, '"v1.2.0"')
+    env.repo.git("push", "-q", "origin", "main")
+    return _pr_check_steps(env)
+
+
+def _run_pr_check_job(env, where, steps) -> subprocess.CompletedProcess[str]:
+    """The whole job, run like the runner does on the base checkout, where no Forge is installed
+    until the job installs one: each step in bash -e, each seeing what earlier steps added to
+    $GITHUB_ENV, stopping at the first failure."""
+    (env.repo.bin / "forge").unlink()
     env.repo.git("push", "-q", "origin", "HEAD:refs/pull/1/head", cwd=where)
     github_env = env.tmp / "github-env"
     github_env.write_text("", "utf-8")
     variables = {**os.environ, "PR": "1", "GITHUB_ENV": str(github_env),
                  "BASE_SHA": env.repo.git("rev-parse", "main"),
-                 "HEAD_SHA": env.repo.git("rev-parse", "HEAD", cwd=where)}
-    install = next(n for n, step in enumerate(steps) if step.startswith("uv tool install"))
-    for step in steps[:install + 1]:
+                 "HEAD_SHA": env.repo.git("rev-parse", "HEAD", cwd=where),
+                 "HEAD_REF": "fix/tidy-readme"}
+    for step in steps:
         variables.update(line.split("=", 1) for line in github_env.read_text("utf-8").splitlines())
         done = subprocess.run(["bash", "-e", "-c", step], cwd=env.repo.path, env=variables,
                               capture_output=True, text=True, encoding="utf-8", timeout=60)
@@ -72,21 +162,27 @@ def _uv_calls(env) -> list[list[str]]:
     return [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
 
 
-def _upgrade_installs_the_release_it_pins(env):
-    toml = env.repo.path.joinpath("forge.toml").read_text("utf-8")
-    _, where = env.start_fix({"forge.toml": toml.replace(_version(env), UPGRADE)})
+def _upgrade_installs_and_passes_the_release_it_pins(env):
+    steps = _on_v1_2_0(env)
+    item, where = env.start_fix()
+    _pin(env, where, "'v1.3.0'  # the upgrade")
+    _install_release(env, "v1.3.0")
+    _close(env, item, where)
 
-    done = _run_pr_check_job(env, where)
+    done = _run_pr_check_job(env, where, steps)
 
-    assert done.returncode == 0, done.stderr
-    assert _uv_calls(env) == [["tool", "install", SOURCE + UPGRADE]]
+    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
+        done.stderr
+    assert _uv_calls(env) == [["tool", "install", SOURCE + "v1.3.0"]]
+    assert env.repo.forge("--version").stdout.split()[-1] == "v1.3.0"
 
 
 def _version_that_is_not_a_release_refused_plainly(env):
-    toml = env.repo.path.joinpath("forge.toml").read_text("utf-8")
-    _, where = env.start_fix({"forge.toml": toml.replace(_version(env), "main; curl evil")})
+    steps = _on_v1_2_0(env)
+    _, where = env.start_fix()
+    _pin(env, where, '"main; curl evil"')
 
-    done = _run_pr_check_job(env, where)
+    done = _run_pr_check_job(env, where, steps)
 
     assert done.returncode == 1
     assert done.stderr.splitlines()[-1] == (
@@ -95,74 +191,31 @@ def _version_that_is_not_a_release_refused_plainly(env):
     assert _uv_calls(env) == []
 
 
-def _ordinary_pull_request_installs_the_default_branch_release(env):
-    _, where = env.start_fix()
-
-    done = _run_pr_check_job(env, where)
-
-    assert done.returncode == 0, done.stderr
-    assert _uv_calls(env) == [["tool", "install", SOURCE + _version(env)]]
-
-
-def _v1_1_0_fingerprint(where, base: str, state: dict) -> str:
-    """v1.1.0's forge-pr-check fingerprint for a fix, copied from that release's review.py: the
-    whole product tree at the head, the fix's why and done-when, and its functional check."""
-    def git(*args: str) -> str:
-        return subprocess.run(["git", *args], cwd=where, check=True, capture_output=True,
-                              text=True, encoding="utf-8").stdout.strip()
-    bookkeeping = (".factory/", "plans/")
-    listing = git("ls-tree", "-r", "-z", "--full-tree", "HEAD").split("\0")
-    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(bookkeeping)]
-    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
-    check = ""
-    for sha in git("rev-list", "--no-merges", f"{base}..HEAD").split():
-        files = git("diff-tree", "--no-commit-id", "--name-only", "-r", sha).split()
-        if files and all(f.startswith(bookkeeping) for f in files):
-            continue
-        found = re.search(r"^Functional check:.*", git("show", "-s", "--format=%B", sha),
-                          re.M | re.S)
-        check = found[0].strip() if found else ""
-        break
-    for part in (str(state.get("why", "")), str(state.get("done_when", "")), check):
-        digest.update(b"\0" + part.encode("utf-8"))
-    return digest.hexdigest()
-
-
-def _review_record(env, where) -> dict:
-    return json.loads(env.repo.git("show", "HEAD:.factory/fixes/tidy-readme.json", cwd=where))
-
-
-def _upgrade_review_passes_the_v1_1_0_check(env):
-    # A client on v1.1.0 still runs v1.1.0's workflow for its upgrade pull request, so the review
-    # this version records must carry the fingerprint that release's check compares.
+def _ordinary_pull_request_installs_and_passes_the_default_branch_release(env):
+    steps = _on_v1_2_0(env)
     item, where = env.start_fix()
-    env.commit(where, "app.py", "print('hi')\n", "Say hi\n\nFunctional check: ran app.py.")
-    assert env.close(item).returncode == 0
-    state = _review_record(env, where)
-    assert state["review"]["tree"] == _v1_1_0_fingerprint(where, env.repo.git("rev-parse", "main"),
-                                                          state)
+    _close(env, item, where)
 
-    # The default branch moves on; close merges it in, keeps the clean review without rerunning
-    # it, and brings the fingerprint up to date with the new head.
-    env.commit(env.repo.path, "README.md", "# Shop\n", "Readme on main")
-    env.repo.git("push", "-q", "origin", "main")
-    assert env.close(item).returncode == 0
-    state = _review_record(env, where)
-    assert state["review"]["tree"] == _v1_1_0_fingerprint(where, env.repo.git("rev-parse", "main"),
-                                                          state)
-    assert len(env.review_calls()) == 1
+    done = _run_pr_check_job(env, where, steps)
+
+    assert (done.returncode, done.stdout) == (0, "forge-pr-check passed for fix/tidy-readme.\n"), \
+        done.stderr
+    assert _uv_calls(env) == [["tool", "install", SOURCE + "v1.2.0"]]
 
 
 BASH = pytest.mark.skipif(os.name == "nt", reason="the workflow's steps run in bash on ubuntu-latest")
 
 
-@pytest.mark.parametrize("case", [pytest.param(_upgrade_installs_the_release_it_pins, marks=BASH),
+@pytest.mark.parametrize("case", [_upgrade_from_v1_1_0_passes_that_release_check,
+                                  pytest.param(_upgrade_installs_and_passes_the_release_it_pins,
+                                               marks=BASH),
                                   pytest.param(_version_that_is_not_a_release_refused_plainly,
                                                marks=BASH),
-                                  pytest.param(_ordinary_pull_request_installs_the_default_branch_release,
-                                               marks=BASH),
-                                  _upgrade_review_passes_the_v1_1_0_check],
+                                  pytest.param(
+                                      _ordinary_pull_request_installs_and_passes_the_default_branch_release,
+                                      marks=BASH)],
                          ids=lambda case: case.__name__.strip("_"))
 def test_1_upgrade_pull_request_passes_forge_check(env, case):
-    conftest._install(env.repo.bin, "uv", UV_STUB.format(python=sys.executable))
+    conftest._install(env.repo.bin, "uv", UV_STUB.format(python=sys.executable,
+                                                         release=_release_shim()))
     case(env)
