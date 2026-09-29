@@ -1,0 +1,14 @@
+{
+  "base": "8f037314f4064b84b4a5a05529ccb5995ee6f7ed",
+  "branch": "fix/upgrading-forge-in-a-client-repo-is-bloc",
+  "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T03:39:51+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges"
+}
