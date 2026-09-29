@@ -36,7 +36,8 @@ def test_5_new_owners_join_the_page_and_shipped_files(repo, tmp_path):
     shutil.copytree(ROOT / "src/forge", package)
     (repo.bin / "forge").write_text(
         conftest.FORGE_SHIM.format(python=sys.executable, src=str(package.parent)), encoding="utf-8")
-    for rel in (".codex/skills/forge/fde.md", ".codex/skills/test-audit/SKILL.md",
+    for rel in (".codex/skills/forge/fde.md", ".codex/skills/app-baseline/SKILL.md",
+                ".codex/skills/test-audit/SKILL.md",
                 ".codex/skills/test-audit/NOTICE.md", ".claude/skills/remote-approval/SKILL.md"):
         target = tmp_path / rel
         target.parent.mkdir(parents=True, exist_ok=True)

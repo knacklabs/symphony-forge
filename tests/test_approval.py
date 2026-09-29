@@ -97,7 +97,7 @@ def test_32_client_signoff(repo, claude_payload):
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     shop = ready(repo, "SHOP")
     (shop / "forge.toml").write_text(
-        f'version = "{version}"\nrepo = "client"\n{GRILL}', encoding="utf-8")
+        f'version = "{version}"\nrepo = "client"\nstage = "prototype"\n{GRILL}', encoding="utf-8")
     head = repo.git("rev-parse", "story/SHOP")
     approval = claude_plan(claude_payload, DOC)
 
@@ -136,9 +136,9 @@ def test_32_client_signoff(repo, claude_payload):
     pinned = DOC.replace("save a basket", "pin a basket")
     pin_story = ready(repo, "PIN", pinned)
     (pin_story / "forge.toml").write_text(
-        f'version = "{version}"\nrepo = "client"\nsignoff = "{pin}"\n{GRILL}',
+        f'version = "{version}"\nrepo = "client"\nstage = "prototype"\nsignoff = "{pin}"\n{GRILL}',
         encoding="utf-8")
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nsignoff = "{pin}"\n{GRILL}')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nstage = "prototype"\nsignoff = "{pin}"\n{GRILL}')
     _decision(repo, pin, "proposed")
     approval = claude_plan(claude_payload, pinned)
     refused = hook(repo, approval)

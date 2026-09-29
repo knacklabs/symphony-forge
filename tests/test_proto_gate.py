@@ -13,7 +13,7 @@ REFUSAL = ("Stories wait for the customer's sign-off. Build and demo the prototy
 
 def _client(repo) -> None:
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\nstage = "prototype"\n')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up client")

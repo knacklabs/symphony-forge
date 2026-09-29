@@ -18,15 +18,18 @@ from test_close import PIN
 
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
-LISTED = {"AGENTS.md", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+# .gitattributes carries the roadmap's merge rule.
+LISTED = {"AGENTS.md", ".gitattributes", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
+          ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md"))}
-SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
+# The old first commit had only Forge docs and config; it now includes deploy files.
+SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
-NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "
+NO_IMPECCABLE = ("impeccable is required for UI work but isn't installed where the claude "
                  "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
 OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
 
@@ -173,7 +176,13 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    return client, repo.forge("init", cwd=client)
+    initialized = repo.forge("init", cwd=client)
+    if initialized.returncode == 0:
+        # Init has installed the required checks; later commands see that protection.
+        gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
+                   stdout=json.dumps({"required_status_checks": {
+                       "checks": [{"context": "tests"}, {"context": "forge-pr-check"}]}}))
+    return client, initialized
 
 
 @pytest.mark.parametrize("case, rows", [
@@ -222,16 +231,25 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_config))
     else:
         monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
-    # impeccable where the configured Claude worker reads skills, or only
-    # where Codex reads them, or only in the repo's .agents (Claude Code never reads that), or
-    # nowhere.
+    # The old contract checked only impeccable. Both skills now have to be where the configured
+    # Claude worker reads them; these cases vary impeccable's location.
     skills = {"no impeccable": None, "impeccable only for codex": codex_home,
               "impeccable only in the repo's .agents": client / ".agents",
               "impeccable in CLAUDE_CONFIG_DIR": claude_config}.get(case, home / ".claude")
     if skills:
-        skill = skills / "skills" / "impeccable" / "SKILL.md"
-        skill.parent.mkdir(parents=True)
-        skill.write_text("---\nname: impeccable\n---\n", encoding="utf-8")
+        for name in ("impeccable", "emil-design-eng"):
+            skill = skills / "skills" / name / "SKILL.md"
+            skill.parent.mkdir(parents=True, exist_ok=True)
+            skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
+    else:
+        emil = home / ".claude" / "skills" / "emil-design-eng" / "SKILL.md"
+        emil.parent.mkdir(parents=True)
+        emil.write_text("---\nname: emil-design-eng\n---\n", encoding="utf-8")
+    if case in ("no impeccable", "impeccable only for codex",
+                "impeccable only in the repo's .agents", "impeccable in CLAUDE_CONFIG_DIR"):
+        # These cases exercise UI skill placement, so the client must have a frontend.
+        (client / "web").mkdir()
+        (client / "web" / "package.json").write_text('{"name":"web"}\n', encoding="utf-8")
     if case != "codex doesn't trust the project":
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
@@ -280,7 +298,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert f'version = "{_version(repo)}"' in toml.read_text(encoding="utf-8")
         assert "Branch protection is on for main" in init.stdout
         # It reads the branch's protection first (a new repo has none), then sets Forge's rule.
-        read, call = [args for args in gh.calls() if args[0] == "api"]
+        read, call = [args for args in gh.calls() if args[0] == "api"][:2]
         assert read == ["api", "repos/{owner}/{repo}/branches/main/protection"]
         assert call[:4] == ["api", "--method", "PUT", "repos/{owner}/{repo}/branches/main/protection"]
         rule = json.loads(Path(call[call.index("--input") + 1]).read_text(encoding="utf-8"))
@@ -292,9 +310,10 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert done.stdout.startswith("Everything checks out"), done.stdout
         # Each host hook command ran, with a payload.
         calls = log.read_text(encoding="utf-8")
-        for hook in ("context", "deny", "approval"):
+        # Each host now probes the handoff hook as well as the three earlier hooks.
+        for hook in ("context", "handoff", "deny", "approval"):
             assert calls.count(f"hook {hook}\n") == 2, calls
-        assert calls.count('"hook_event_name"') == 6
+        assert calls.count('"hook_event_name"') == 8
     elif case == "codex doesn't trust the project":
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
@@ -334,7 +353,9 @@ def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 
     commands = _hook_commands(repo.path)
-    assert len(commands) == 6
+    # Both new PreCompact commands must fail closed when Forge cannot launch.
+    assert len(commands) == 8
+    assert sum(event == "PreCompact" for _, event, _ in commands) == 2
     for rel, event, command in commands:
         build = claude_payload if rel.startswith(".claude") else codex_payload
         tool, tool_input = tools.get(event, (None, None))

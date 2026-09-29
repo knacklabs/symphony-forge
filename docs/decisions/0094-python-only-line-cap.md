@@ -1,9 +1,10 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-28
 stories: []
 supersedes: ""
+superseded_by: 0096-python-cap-7500
 ---
 
 # Forge's line cap counts only its Python

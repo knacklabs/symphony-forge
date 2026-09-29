@@ -105,6 +105,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(cfg["test"])))
+    if "tests" not in cfg.get("checks", []):
+        start = workflow.index("  tests:\n")
+        end = workflow.index("  forge-pr-check:\n")
+        workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow}
 
 
@@ -114,6 +118,10 @@ def pr_check(args: argparse.Namespace) -> int:
     if len(args.args) != 6 or set(given) != {"--base", "--head", "--branch"}:
         repo.refuse(REFUSALS["usage"])
     base, head, branch = given["--base"], given["--head"], given["--branch"]
+    if not branch.startswith(("task/", "fix/", "story/", "forge/")):
+        print("Forge didn't start this branch, so it checks nothing here; the repo's own CI and "
+              "review apply.")
+        return 0
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)

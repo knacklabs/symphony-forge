@@ -16,9 +16,11 @@ LIMIT = 5  # code files a fix may change before it has to become a story
 
 # Each host's hook file: event -> (the tools it matches, or None for all; the forge hook it runs).
 HOSTS = {
-    ".claude/settings.json": {"SessionStart": (None, "context"), "PreToolUse": ("Bash", "deny"),
+    ".claude/settings.json": {"SessionStart": (None, "context"), "PreCompact": (None, "handoff"),
+                              "PreToolUse": ("Bash", "deny"),
                               "PostToolUse": ("ExitPlanMode|AskUserQuestion", "approval")},
-    ".codex/hooks.json": {"SessionStart": (None, "context"), "PreToolUse": ("Bash", "deny"),
+    ".codex/hooks.json": {"SessionStart": (None, "context"), "PreCompact": (None, "handoff"),
+                          "PreToolUse": ("Bash", "deny"),
                           "PostToolUse": ("request_user_input", "approval")},
 }
 

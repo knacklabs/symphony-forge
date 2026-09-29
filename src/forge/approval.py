@@ -92,27 +92,6 @@ def waiting_digest(key: str, top: Path) -> str | None:
     return None if (state.get("approval") or {}).get("hash") == digest else digest
 
 
-def signed_off(top: Path) -> bool:
-    """Forge's own repo needs no sign-off. A client repo needs its sign-off record accepted, in this
-    checkout or on the default branch: exactly the record forge.toml's signoff pins, or, with none
-    pinned, a decision whose slug ends in client-signoff."""
-    cfg = repo.config(top)
-    if cfg["repo"] == "forge-source":
-        return True
-    pinned = cfg["signoff"]
-
-    def wanted(name: str) -> bool:
-        return name == pinned if pinned else name.endswith("client-signoff.md")
-
-    texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*.md")
-             if wanted(path.relative_to(top).as_posix())]
-    ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-    texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
-    return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-               for text in texts if text.startswith("---"))
-
-
 def last_refusal(top: Path) -> Path:
     """Why the last approval recorded nothing, for `forge next`. Local, never committed."""
     return repo.forge_dir(top) / "approval-refused.txt"
@@ -159,7 +138,7 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
     story.check_read(key, path)
-    if not signed_off(path):
+    if repo.is_prototype(path):
         repo.refuse(REFUSALS["no_signoff"])
     state = repo.read_state(key, path) or {}
     approval = {"by": f"human-via-{runtime.capitalize()}", "at": repo.now(), "hash": digest,

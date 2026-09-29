@@ -209,9 +209,7 @@ def fix_start(args: argparse.Namespace) -> None:
         n += 1
         name = f"{slug}-{n}"
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", main)}
-    from forge import approval
-
-    if (repo.root() / "forge.toml").is_file() and not approval.signed_off(repo.root()):
+    if (repo.root() / "forge.toml").is_file() and repo.is_prototype(repo.root()):
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", main, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")

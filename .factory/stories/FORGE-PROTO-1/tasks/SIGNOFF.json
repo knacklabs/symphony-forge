@@ -1,0 +1,53 @@
+{
+  "branch": "task/FORGE-PROTO-1-SIGNOFF",
+  "review": {
+    "commit": "b56d0ba70522957e21c5fc9f1dda62ff6d95c4fd",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "A client can commit the sign-off decision using repository-local `user.name` and `user.email` without having a global Git identity. The review clone does not inherit that local configuration, so `git commit-tree` can fail before Autoreview runs, leaving `forge decision accept` unable to complete. The tests miss this because `tests/conftest.py:111-120` supplies a global identity. Set an identity for these synthetic commits. [Git's commit-tree documentation](https://git-scm.com/docs/git-commit-tree) describes its identity requirements.",
+        "file": "src/forge/review.py",
+        "line": 251,
+        "priority": "P2",
+        "title": "Set an identity for the synthetic review commits"
+      }
+    ],
+    "status": "clean",
+    "tree": "85efb179feb014ef9b9279b3034e2c33bb1884a82c522e76fc00ca93205c84a1"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T11:50:18+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T13:11:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:32:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T13:46:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:03:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:24:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T14:47:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-28T15:43:56+00:00",
+      "step": "review"
+    }
+  ]
+}

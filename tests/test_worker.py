@@ -32,7 +32,9 @@ def calls(log: Path) -> list[dict]:
 def test_17_worker(repo, gh, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\ntest = "pytest -q"\n'
+    # This tests the configured Claude route; client design routing has its own command test.
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
+                             'workers = "claude"\ntest = "pytest -q"\n'
                              'models.build = { model = "sonnet", effort = "medium" }\n'
                              'models.lite = { model = "sonnet", effort = "medium" }\n')
     # Tests already in the repo: one names a file in PAGE's Scope, the other doesn't, and one sits
@@ -105,10 +107,16 @@ def test_17_worker(repo, gh, monkeypatch):
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     brief = calls(log)[-1]["brief"]
     assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in brief
-    assert WALKS_ALL in brief  # the fix round's Functional check still covers every Done-when item
+    # The fix round continues the first round's Claude session, so it no longer repeats the whole
+    # brief: the Functional check that walks every Done-when item comes from the earlier brief.
+    assert WALKS_ALL not in brief
+    assert "The earlier brief in this conversation still applies." in brief
     assert "### tests" in brief and "FAILED tests/test_board.py::test_page" in brief
+    # The round's changes follow, as for a continued Codex conversation; this test's hand-written
+    # review sits in them, so only the findings and checks it lists must leave out the rest.
+    listed = brief.split("## Since your last turn")[0]
     for text in ("Simpler: drop the cache", "Dismissed finding", "forge-pr-check"):
-        assert text not in brief, text
+        assert text not in listed, text
     assert ["run", "view", "--job", "22", "--log-failed"] in gh.calls()
 
     # A fix's brief holds its why and done-when lines.
