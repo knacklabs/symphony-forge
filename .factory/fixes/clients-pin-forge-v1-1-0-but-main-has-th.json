@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked for the v1.2.0 release on 2026-09-29 once all stories were done; a version bump touches the version, the pin and their tests",
   "base": "eb5c132768bed861a67c11ae3469b811c71fe5f9",
   "branch": "fix/clients-pin-forge-v1-1-0-but-main-has-th",
   "done_when": "Forge's version is 1.2.0 everywhere it is recorded (the package version, this repo's forge.toml pin, and the tests that track the current version), so the v1.2.0 tag installs as 1.2.0",
