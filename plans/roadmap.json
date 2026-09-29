@@ -149,6 +149,12 @@
       "title": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges",
       "status": "pending",
       "order": 65
+    },
+    {
+      "key": "FORGE-MERGESWITCH-1",
+      "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
+      "status": "pending",
+      "order": 66
     }
   ],
   "epics": [

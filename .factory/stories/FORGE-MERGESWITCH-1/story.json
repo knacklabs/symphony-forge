@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MERGESWITCH-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-29T07:50:35+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
+  "touches": 0
+}
