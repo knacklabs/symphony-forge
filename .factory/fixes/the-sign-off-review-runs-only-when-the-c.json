@@ -1,0 +1,44 @@
+{
+  "base": "a8edc14d80d7c3b1a70856c3f7c374a03263d9c6",
+  "branch": "fix/the-sign-off-review-runs-only-when-the-c",
+  "done_when": "forge decision accept on a sign-off decision with no approval details yet runs the strict sign-off review and stops without accepting, saying the review passed and the sign-off email can go out (or naming the gaps); with the reply recorded, it accepts as today; tests run both through forge decision accept",
+  "kind": "fix",
+  "review": {
+    "commit": "6672418bff7f632028e25308806e8812f52d6bc2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new instructions say to run `forge decision accept` before and after the reply, but that command requires a slug and `--by` (src/forge/records.py:505-509). Following the guide literally stops at argument parsing, before either review or acceptance. Show the complete command for both steps.",
+        "file": "docs/guide.md",
+        "line": 53,
+        "priority": "P2",
+        "title": "Show a runnable sign-off command in the guide"
+      },
+      {
+        "body": "The new return skips the existing `supersedes` validation at src/forge/records.py:296-300. With blank approval fields and a nonexistent `supersedes` target, Forge reports that the review passed and the customer can be asked, but refuses the same decision after the reply is recorded. Check this decision-record gap before the review-only success message.",
+        "file": "src/forge/records.py",
+        "line": 291,
+        "priority": "P2",
+        "title": "Validate supersedes before advising the operator to request sign-off"
+      }
+    ],
+    "status": "clean",
+    "tree": "e1e9acf87c13dbdb2d24c20801f275d29fe0f1e5a7593c73a843823ea0bcc710"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-28T21:02:05+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-28T21:19:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T01:59:01+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The sign-off review runs only when the customer's reply is recorded, so the customer is asked to approve a version that hasn't passed review"
+}
