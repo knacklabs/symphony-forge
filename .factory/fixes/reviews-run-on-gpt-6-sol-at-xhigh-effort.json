@@ -6,34 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "47e47e0e5900e25b4e37ae8d2e20b685fb6142f3dcc57f2446d11aea44fbada0",
-    "commit": "f03e78a08af0651dd90954fd0f345ca0eb2ac0a6",
+    "changed": "ead5fdb21fff67761a183c0c64e54636649ef7a349be7df6d31449879f2e25f1",
+    "commit": "b367176701611317148541858c5aa6b43d1cf0d0",
     "dismissals": [],
     "findings": [
       {
-        "body": "The branch adds only this tracking record. This repo's `forge.toml:40` and the default written by `src/forge/init.py:95` still set review effort to `xhigh`. Prototype sign-off is also pinned to `xhigh` at `src/forge/review.py:413`, and lines 384\u2013385 reject a review reporting `high`. The requested cost fix therefore has no effect. The light prototype review remains at `medium` (`src/forge/review.py:368`).",
-        "file": ".factory/fixes/reviews-run-on-gpt-6-sol-at-xhigh-effort.json",
-        "line": 4,
+        "body": "The updated sign-off spec says GPT-6 Sol at high effort, but the committed plan still instructs Sol at xhigh in `plans/FORGE-PROTO-1.md:43`, its SIGNOFF task row at line 82, and its implementation note at line 106. Those are instructions for the same review, so the requirement that review documentation say high remains unmet. Update the plan to match the changed spec and pin.",
+        "file": "docs/specs/prototype-signoff.md",
+        "line": 88,
         "priority": "P1",
-        "title": "Not done: Every Forge review runs on GPT-6 Sol at high effort"
-      },
-      {
-        "body": "`tests/test_fix_autoreview_and_other_astra_passes_burn_t.py:9-13` exercises `forge init` but asserts that the generated review setting is `xhigh`. It would pass with the current, unwanted default. The branch needs this entry-point test to require GPT-6 Sol at `high`.",
-        "file": ".factory/fixes/reviews-run-on-gpt-6-sol-at-xhigh-effort.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: forge init default test requires high effort"
-      },
-      {
-        "body": "`tests/test_proto_signoff.py:218-219` asserts that the sign-off command passes `codex=xhigh`, while lines 163\u2013168 expect a review reporting `high` to be rejected. These entry-point checks enforce the opposite of the required pin and acceptance behavior, so they cannot catch this defect.",
-        "file": ".factory/fixes/reviews-run-on-gpt-6-sol-at-xhigh-effort.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: prototype sign-off pin test requires high effort"
+        "title": "Not done: review documentation still specifies xhigh effort"
       }
     ],
     "status": "blocked",
-    "tree": "9d86bdf7691991d892ab806d12de1188bb95b5453f37fbbc9aa2498f051fe9d0"
+    "tree": "203e0a3997f26421bcb5b0b0cc88941046a26a0becd998df032f5aeed88f3387"
   },
   "status": "fixing",
   "steps": [
@@ -43,6 +29,10 @@
     },
     {
       "at": "2026-09-29T14:26:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T14:31:33+00:00",
       "step": "review"
     }
   ],
