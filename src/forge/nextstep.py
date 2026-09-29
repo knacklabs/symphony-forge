@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, close, records, repo, review, story
+from forge import approval, board, close, codex, records, repo, review, story
 
 COMMANDS = [
     {
@@ -416,6 +416,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 == receipt.get("commit")):
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
+    # forge work holds the item's lock, recording its own process, until its round ends.
+    lock = codex._item_file(top, item, ".lock", "Build")
+    if status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False):
+        sentence, step = "{label}'s worker has stopped.", "forge close {item}"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
