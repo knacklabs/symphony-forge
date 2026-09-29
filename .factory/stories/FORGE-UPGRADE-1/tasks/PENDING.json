@@ -1,0 +1,43 @@
+{
+  "branch": "task/FORGE-UPGRADE-1-PENDING",
+  "review": {
+    "commit": "53ab2cc73abe7e315fbc0a547b4e80252b5119bf",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The hook says the approval was recorded before the remaining checks and commit run. With a mismatched pin and missing client sign-off, it prints that claim and then refuses the approval. If the repo pins a newer Forge than is installed, it also tells the user to change the repo to the older installed version. Report a recorded approval only after it succeeds, and give version advice that matches the mismatch.",
+        "file": "src/forge/approval.py",
+        "line": 40,
+        "priority": "P2",
+        "title": "Make the approval warning match the outcome and version direction"
+      },
+      {
+        "body": "The right-folder message interpolates the worktree path directly into `cd {folder}`. A common path such as `/Users/Someone/My Repo` makes the suggested command fail when copied. Quote the path for the shell or state the folder change without presenting a broken command.",
+        "file": "src/forge/repo.py",
+        "line": 37,
+        "priority": "P2",
+        "title": "Make the suggested folder change usable when the path contains spaces"
+      },
+      {
+        "body": "On every pin mismatch, this comprehension reads `forge.toml` from every worktree before deciding whether a pending upgrade qualifies. If an unrelated worktree's file has invalid UTF-8 or cannot be read, the exception escapes instead of allowing the healthy upgrade or giving the usual pin refusal. The current checkout's `repo.config` handles invalid encoding at `src/forge/repo.py:153-161`; candidate worktrees need equivalent handling.",
+        "file": "src/forge/repo.py",
+        "line": 310,
+        "priority": "P2",
+        "title": "Keep an unrelated unreadable worktree from breaking the version gate"
+      }
+    ],
+    "status": "clean",
+    "tree": "7f5c860f5303b844bc44a2f7c26c24c155c77b2966d94a94c34d34d719d2ba38"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T04:03:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T04:27:10+00:00",
+      "step": "review"
+    }
+  ]
+}
