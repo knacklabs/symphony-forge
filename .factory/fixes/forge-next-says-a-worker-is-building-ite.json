@@ -3,11 +3,32 @@
   "branch": "fix/forge-next-says-a-worker-is-building-ite",
   "done_when": "forge next says an item's worker is building only while its recorded worker process is alive; otherwise it says the worker stopped and names the next command; a test records a worker whose process has ended and sees the stopped message",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "b5936e94b95aef1ab0285ceb58832f94868506fe293070b34e92ba4239b63235",
+    "commit": "3a1baf534226215f67b4a9c8cd694b7725e24af4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If a working item's lock exists but contains empty or partial JSON, `codex._json(lock)` returns `{}` and `codex._alive({})` returns `None`. This condition checks only for `False`, so `forge next` still says a worker is building even though the lock records no live worker. This can persist if a later work round is interrupted while writing its lock, since the earlier `working` status remains. Handle an invalid process record and test that output.",
+        "file": "src/forge/nextstep.py",
+        "line": 421,
+        "priority": "P2",
+        "title": "Treat a lock without a valid process record as stopped"
+      }
+    ],
+    "status": "clean",
+    "tree": "03af9f96e2a554a3c6576a9798389a882f1bea5bbbed53d090b8a3a1f3d9f644"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T18:01:22+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T18:46:02+00:00",
+      "step": "review"
     }
   ],
   "why": "forge next says a worker is building items whose worker stopped long ago"
