@@ -136,3 +136,25 @@ def test_16_task_start(repo):
         assert started.returncode == 0, started.stderr
         assert repo.git("rev-parse", f"task/{item.replace('/', '-')}~1") == repo.git(
             "rev-parse", "origin/main")
+
+    # FORGE-READLOOP-1: a story read in rounds is read from its story branch, and its task waits
+    # for the latest round to pass on the doc there; the notes then come with the task.
+    def notes(passed, said="1. Too big.\n   Disposition: cut"):
+        blob = repo.git("rev-parse", "story/BOARD:plans/BOARD.md")
+        repo.git("checkout", "-q", "story/BOARD")
+        repo.write("plans/BOARD.read.md", f"---\nread_hash: {blob}\nround: 1\npassed: {passed}\n"
+                                          f"---\n## Round 1\n\n{said}\n")
+        repo.git("add", "-A")
+        repo.git("commit", "-q", "-m", "A round of cold read")
+        repo.git("checkout", "-q", "main")
+
+    # The latest round's text decides, never the passed flag: a finding marked passed is refused.
+    for flag in ("no", "yes"):
+        notes(flag)
+        refused("BOARD/HELP", "Round 1 of the cold read of plans/BOARD.md hasn't passed, so it "
+                              "needs another round.\nNext: forge read BOARD\n")
+    notes("yes", "No findings.")
+    started = repo.forge("task", "start", "BOARD/HELP")
+    assert started.returncode == 0, started.stderr
+    assert repo.git("rev-parse", "task/BOARD-HELP~2") == repo.git("rev-parse", "origin/main")
+    assert "passed: yes" in repo.git("show", "task/BOARD-HELP:plans/BOARD.read.md")

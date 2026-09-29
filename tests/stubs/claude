@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
-with STUB_CLAUDE_EXIT (0 by default). Like claude, it keeps each --session-id it starts, for its
+with STUB_CLAUDE_EXIT (0 by default). With STUB_CLAUDE_LEAVE set, it writes that file in its folder
+and leaves it uncommitted. Like claude, it keeps each --session-id it starts, for its
 folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there."""
 import io
 import json
@@ -25,5 +26,7 @@ if "--resume" in args:
 if "--session-id" in args:
     sessions[args[args.index("--session-id") + 1]] = os.getcwd()
     store.write_text(json.dumps(sessions), encoding="utf-8")
+if os.environ.get("STUB_CLAUDE_LEAVE"):
+    pathlib.Path(os.environ["STUB_CLAUDE_LEAVE"]).write_text("half done\n", encoding="utf-8")
 print("stub claude: built it")
 sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))

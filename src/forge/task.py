@@ -104,12 +104,16 @@ def _folder(name: str) -> Path:
 
 
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
-                  message: str) -> Path:
-    """Make the branch in its own worktree and commit the item's state there."""
+                  message: str, carry: tuple[str, list[str]] | None = None) -> Path:
+    """Make the branch in its own worktree and commit the item's state there, after a first
+    commit of the files `carry` names from its branch."""
     path = _folder(folder)
     git("worktree", "add", "-q", "--no-track", "-b", branch, str(path), base)
     rel = repo.write_state(item, repo.add_step({**state, "status": "started", "branch": branch},
                                                "start"), path)
+    if carry:  # after the state, so the git hooks know the branch
+        git("checkout", carry[0], "--", *carry[1], cwd=path)
+        repo.commit_state(f"Bring in the approved plan from {carry[0]}", *carry[1], top=path)
     repo.commit_state(message, rel, top=path)
     return path
 
@@ -123,18 +127,31 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
+    from forge import story
+
     main = main_ref()
-    doc_rel = f"plans/{key}.md"
+    doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the
-    # story branch holds it, and tasks start from there.
-    base = main if show(main, doc_rel) is not None else f"story/{key}"
-    text = show(base, doc_rel)
+    # story branch holds it, and tasks start from there. After that, a story read in rounds is
+    # read from its story branch while it exists, and its doc, notes and state are carried over.
+    base = main if show(main, doc_rel) is not None else story_branch
+    state_rel = repo.state_path(key)
+    source = (story_branch if base == main and story.rounds(show(story_branch, notes_rel),
+                                                             show(story_branch, state_rel))
+              else base)
+    text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
+    notes = show(source, notes_rel)
+    if story.rounds(notes, show(source, state_rel)):
+        checkout = story.stories_here(repo.root()).get(key)
+        if checkout:  # edits not committed yet count too
+            story.check_read(key, checkout)
+        story.gate(key, doc_rel, notes or "", git("rev-parse", f"{source}:{doc_rel}"))
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)
-    approved = (json.loads(show(base, repo.state_path(key)) or "{}").get("approval") or {}).get("hash")
+    approved = (json.loads(show(source, repo.state_path(key)) or "{}").get("approval") or {}).get("hash")
     if not approved:
         refuse(REFUSALS["not_approved"], key=key)
     if approved != approval_hash(text):
@@ -154,7 +171,8 @@ def start(args: argparse.Namespace) -> None:
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
-    path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}")
+    carry = (source, [doc_rel, notes_rel, repo.state_path(key)]) if source != base else None
+    path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}", carry)
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")
 

@@ -133,9 +133,7 @@ def test_1_what_changes_first(repo):
     if "not built yet" in repo.forge("hook", "pr-check").stderr:
         pytest.skip("forge hook pr-check comes with CLOSE; its story-doc half runs once it lands")
     (shop / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
-    assert repo.forge("read", "SHOP").returncode == 0
-    repo.git("add", "-A", cwd=shop)
-    repo.git("commit", "-q", "-m", "Plan the story", cwd=shop)
+    assert repo.forge("read", "SHOP").returncode == 0  # a passing round commits the doc and notes
     base = repo.git("rev-parse", "main")
     # ponytail: a task state stand-in so CLOSE's pr-check sees a branch Forge started.
     repo.git("checkout", "-q", "-B", "task-base", "story/SHOP")

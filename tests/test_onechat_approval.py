@@ -47,7 +47,9 @@ def test_3_one_chat_approves_other_repo_once(repo, tmp_path, claude_payload):
     assert (shop / "approval-hook-ran").read_text(encoding="utf-8").strip() == "story/SHOP"
     assert "Recorded the approval of Shoppers can save a basket." in approved.stdout
     assert other.git("rev-parse", "story/SHOP") != before
-    assert "plans/SHOP.md" in other.git("show", "--name-only", "--format=", "story/SHOP")
+    # FORGE-READLOOP-1: the passing round committed the doc; the approval commits the state.
+    assert ".factory/stories/SHOP/story.json" in other.git("show", "--name-only", "--format=",
+                                                           "story/SHOP")
     assert len(_markers(repo)) == len(_markers(other)) == 1
     assert hook(repo, payload).stderr.startswith("This approval was already recorded once")
     assert hook(other, {**payload, "cwd": str(shop)}).stderr.startswith(
