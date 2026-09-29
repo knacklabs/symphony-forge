@@ -28,8 +28,9 @@ SOURCES = {
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".claude/settings.json", ".codex/hooks.json", ".codex/config.toml",
-                       ".github/workflows/forge.yml", "git-hook/pre-commit", "git-hook/pre-push"}}
+GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
+                       ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
+                       "git-hook/pre-push"}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 # Asks the checkout's forge, in its own process, what sync should write for this repo.
 EXPECTED = """
