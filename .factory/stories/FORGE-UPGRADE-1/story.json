@@ -1,12 +1,28 @@
 {
+  "approval": {
+    "at": "2026-09-29T04:03:24+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_016WXvgZMKdZXjXSTxhkXRN1",
+    "hash": "38eb50e06b3e68299d0fa3ed99c43bf45cf880cd645367a307842ec5fa605fb8",
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-UPGRADE-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-29T03:39:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T03:44:19+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-29T04:03:24+00:00",
+      "step": "approved"
     }
   ],
   "title": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges",
-  "touches": 0
+  "touches": 1
 }
