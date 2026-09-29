@@ -5,20 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "fd3fa15cd42ccdb70541d8cfdad9492a28d3b0c7040ba74b094f0dd3e941f735",
-    "commit": "743171d281325b2cbff038933b4f86243675bb98",
+    "changed": "2171459e14891d2875bacd2225f2d01524487d988ed165e9c356196039f7d5eb",
+    "commit": "1c40686c9e9f704e35076a5bfc830156e2263055",
     "dismissals": [],
     "findings": [
       {
-        "body": "The Windows leak check treats a zero exit time from GetProcessTimes as proof that the process is running. Microsoft documents that the exit-time field is undefined until the process exits (https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes). If it is nonzero for a live launcher, `_running` returns false and `test_4_turn_log` passes despite the process being left behind. This weakens the test's process-leak assertion. Use a defined liveness check, such as WaitForSingleObject with a zero timeout, and verify that a live launcher makes the assertion fail.",
-        "file": "tests/test_codex_worker.py",
-        "line": 170,
+        "body": "The new negative test checks `_running(live.pid)` without a start-time cutoff, but `test_4_turn_log` calls `_left`, which always supplies one (`tests/test_codex_worker.py:182\u2013187`). On Windows, the test\u2019s only call with a cutoff uses `0` and expects `False`. If the cutoff path incorrectly returned `False` for every process, both this test and the 20 clean runs would still pass while a leaked launcher went undetected. Test a live launcher with a realistic cutoff and verify the leak assertion fails. This is new evidence relative to the prior review: the liveness API was fixed, but the added test does not exercise its use in the assertion.",
+        "file": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
+        "line": 30,
         "priority": "P1",
-        "title": "Not done: The root cause of test_4_turn_log's Windows failures is found and fixed so the test is deterministic, never skipped or loosened; a"
+        "title": "Not done: a live Codex launcher makes test_4_turn_log fail"
       }
     ],
     "status": "blocked",
-    "tree": "e7932e1f987d9c3fa8f923d1dc6610c82a6a0f49fa335e98ac73d3a5ec37e8d6"
+    "tree": "a95b050196d75f90a1802702be4bcd524fdcbc6e5223455b3333349442e56ae7"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +28,10 @@
     },
     {
       "at": "2026-09-29T19:39:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T20:13:28+00:00",
       "step": "review"
     }
   ],
