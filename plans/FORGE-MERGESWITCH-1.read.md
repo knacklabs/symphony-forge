@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6-sol)
-read_at: 2026-09-29T08:25:56+00:00
-read_hash: c256a00caad3af60f82620db0092bdb696f1b0f4
+read_at: 2026-09-29T08:29:03+00:00
+read_hash: 20be2892434148987b7d062d19dd3bf177b5d52a
 amended_hash:
-round: 6
+round: 7
 passed: no
-doc_seen: c256a00caad3af60f82620db0092bdb696f1b0f4
+doc_seen: 20be2892434148987b7d062d19dd3bf177b5d52a
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 73ed7fe4abee78d32d41baf00a85c59219fd5254
+notes_seen: 25ea24b2677d5fb5714ef38d188ddcc394c4f0c5
 ---
 # Cold read notes
 
@@ -87,4 +87,10 @@ Only a genuine trade-off goes to the human, as a question with options. There is
 14. Unproven: item 1: a same-name fix with matching `why` and `done_when` but other changes.
     Those fields can match while the worktree contains unrelated edits. The command would treat it as its own and continue closing it. Test that a retry accepts only an empty change or the intended merge-setting change, and leaves other edits alone.
    Disposition: cut: item 1 continues only when the fix's changes are none or exactly the merge line; other edits leave it alone; tested.
+
+## Round 7
+
+15. Unproven: item 1: cleanup after the owner merges the switch pull request.
+    Once that merge makes the default branch’s setting `agent`, `forge next` can tell the owner to run `forge merge <item>` to tidy the remaining worktree. The new guard refuses that command. Pin and test the post-merge next step and cleanup path.
+   Disposition: cut: item 1's guard only stops merging; after the owner's merge, forge merge cleans up as usual; tested with forge next.
 
