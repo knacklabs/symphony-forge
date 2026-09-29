@@ -7,7 +7,18 @@
     "blocking_level": "P1",
     "changed": "d789e0cb059f9a7e1203cae0b352cbd1d810bb884127799b9cb879ec27608d83",
     "commit": "9f82b65abe1e2e5e746a1db04b80d59e69516141",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/init.py:56 a repo's configured test command is the team's own setting (house rules beat Forge's defaults); close passes on whatever that command prints, and Forge doesn't rewrite a team's test command",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_reviewers_can_t_see_tests_that_only_run.py:101 same reason: existing repos keep their own test command, so there is no Forge behaviour to test there",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The new `-v` default applies only when Forge creates a new Go repo. Existing Forge repos retain the previous `go test ./...` value in forge.toml, and adoption copies the supplied `--test` command unchanged (`src/forge/init.py:283`). The close runner executes that stored command as-is (`src/forge/review.py:237`). As established by the earlier review, `go test ./...` reports only a passing package summary, so close still cannot tell the reviewer which tests skipped or why. This persisted-config path is new evidence beyond the ruling about the new init default.",
@@ -31,10 +42,10 @@
         "title": "Preserve skip reasons beyond the 80-line cap"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "102c93af64321c69d8552639210ba762d6b370de770644f7e15a4c16b27b829a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T08:04:17+00:00",
