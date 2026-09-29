@@ -41,27 +41,32 @@ def _prototype(skill: str) -> str:
 
 def test_4_every_demo_follows_the_script(skill):
     section = _prototype(skill)
-    for rule in (
+    steps = (
         "Every demo follows five steps, in order:",
         "1. their workaround today;", "2. the same job in the app;",
         "3. the time or money it saves, in their numbers;", "4. they take the controls;",
         '5. ask "what would stop you using this?"',
-        "Send the demo link only after the guided demo, never before it.",
-        'With each new version, draft a three-line "what changed" note for the salesperson to send',
-    ):
-        assert rule in section, rule
+    )
+    places = [section.find(step) for step in steps]
+    assert -1 not in places, [s for s, p in zip(steps, places) if p == -1]
+    assert places == sorted(places)
+    assert "Send the demo link only after the guided demo, never before it." in section
+    assert (
+        'With each new version, draft a three-line "what changed" note for the salesperson to '
+        "send: what they can do now, what changed since their last look, and what to try first, "
+        "all in their words."
+    ) in section
 
 
 def test_5_reactions_are_kept_after_each_demo(skill):
     section = _prototype(skill)
-    for rule in (
+    assert (
         "After each demo, ask the salesperson one question at a time: what the customer did "
-        "themselves, what they said word for word, and what they asked for.",
-        "under `## Prototype notes` in `docs/product/DISCOVERY.md`",
-        "`- Did:`", '`- Said: "<their words>"`', "`- Asked:`",
-        "`(serves the problem)` or `(after sign-off)`",
-    ):
-        assert rule in section, rule
+        "themselves, what they said word for word, and what they asked for. Write the answers "
+        "under `## Prototype notes` in `docs/product/DISCOVERY.md` as one `### <YYYY-MM-DD>` "
+        'block with `- Did:`, `- Said: "<their words>"` and one `- Asked:` line per request, '
+        "ending each request in `(serves the problem)` or `(after sign-off)`."
+    ) in section
 
 
 def test_6_signoff_is_read_back_and_reviewed_first(skill):
