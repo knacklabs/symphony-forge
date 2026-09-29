@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, records, repo, review, story
+from forge import approval, board, merge, records, repo, review, story
 
 COMMANDS = [
     {
@@ -381,13 +381,15 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 == receipt.get("commit")):
             status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
-    if (status == "ready" and state.get("kind") != "migrate"
+    switch = state.get("why") == merge.WHY  # only the repo owner merges forge merge enable's fix
+    if (status == "ready" and state.get("kind") != "migrate" and not switch
             and repo.merge_setting(top) == "agent"):
         sentence, step = "{label} is ready to merge.", "forge merge {item}"
     if status == "started" and state.get("kind") == "story-done":  # Forge made the change already
         sentence, step = "{label} records a finished story's outcome.", "forge close {item}"
-    if status == "started" and state.get("kind") == "merge-enable":  # forge merge enable made it already
-        sentence, step = "{label} lets the agent merge ready pull requests.", "forge close {item}"
+    if status == "started" and switch:
+        sentence, step = ("{label} is started; the repo owner finishes it.",
+                          "the repo owner runs forge merge enable in their own terminal")
     if status == "started" and state.get("kind") == "migrate":  # forge migrate made it already
         sentence, step = "{label} moves this repo to the new Forge.", "forge close {item}"
     values = {"item": item, "label": label, "status": status,
@@ -403,7 +405,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
     if ready and (url := pr.get("url")):
-        if status == "waiting for checks" and repo.merge_setting(top) == "agent":
+        if status == "waiting for checks" and not switch and repo.merge_setting(top) == "agent":
             return [f"{label}'s checks passed; finish preparing its automatic merge.",
                     f"Next: forge close {item}"]
         next_step = (step.format(**values) if step == "forge merge {item}"

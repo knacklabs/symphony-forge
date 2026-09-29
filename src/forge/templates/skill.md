@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Is my setup healthy?" | `forge doctor` |
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
-| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml`, `forge close <fix>` |
+| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
@@ -54,10 +54,10 @@ questions; write for the human's choice.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
-The merge setting is the one exception, because it loosens a gate on your own work: never change
-`merge` in `forge.toml` or run `forge merge enable`, even when the owner asks. When agent merges
-are off and the owner wants you to merge, tell them to run `forge merge enable` in their own
-terminal; it opens the change for them to merge.
+The `merge` setting is the owner's, because it is a gate on your own work: never change it to
+`"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
+When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
+in their own terminal; it opens the change for them to merge.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
