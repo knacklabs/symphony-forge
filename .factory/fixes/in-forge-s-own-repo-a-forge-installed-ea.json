@@ -3,7 +3,7 @@
   "branch": "fix/in-forge-s-own-repo-a-forge-installed-ea",
   "done_when": "In Forge's own repo, a forge command whose installed code differs from the checkout's src/forge runs the checkout's own code instead, and says so once; a test runs forge from an older install inside a newer checkout and sees the checkout's version answer",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-29T18:00:55+00:00",
