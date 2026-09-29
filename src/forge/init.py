@@ -52,7 +52,8 @@ REFUSALS = {
 INTERFACES = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*",
               "**/*.schema.*", "**/cli.*"]
 # ponytail: the stack is read from one marker file; add a row when a client brings another stack.
-STACKS = [("pyproject.toml", "uv run pytest"), ("go.mod", "go test ./...")]
+# Go needs -v to print a skipped test and its reason, which forge close shows the reviewer.
+STACKS = [("pyproject.toml", "uv run pytest"), ("go.mod", "go test -v ./...")]
 # Otherwise the smallest client stack (Node). Before the first story adds the app there is
 # nothing to test, and the tests check passes; after that it runs the app's tests.
 NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"

@@ -195,7 +195,9 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
-              "previous": _previous(previous), "rulings": _rulings(top, item, base)}
+              "previous": _previous(previous), "rulings": _rulings(top, item, base),
+              # read after close merged the default branch, which may change the command
+              "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         items = re.split(r"^(\d+)\.\s+", doc.get("Done when", ""), flags=re.M)
@@ -223,6 +225,26 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _test_run(top: Path, command: str) -> str:
+    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
+    exit status, every line that mentions a skip with the line before it (where Go's -v prints the
+    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs)."""
+    if not command:
+        return "forge.toml names no test command, so close ran none."
+    env = {**os.environ, "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+    done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                          encoding="utf-8", errors="replace")
+    out = [line.rstrip() for line in done.stdout.splitlines()]
+    picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
+                     for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+    lines = [out[i] for i in picked]
+    if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
+        lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+    return "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+                      "forge close.", *lines])
 
 
 def _previous(result: dict[str, Any]) -> str:

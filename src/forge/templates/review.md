@@ -63,6 +63,13 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 `Promote: <the interface>`: a change like that needs a story, not a fix.
 
 <!-- rules -->
+## Tests on the close run
+forge close ran the repo's test command before this review, outside your sandbox:
+$test_run
+
+A test skipped in your sandbox that the close run passed is not a missing test. For a pure
+deletion, a test showing the old input is now refused is enough.
+
 ## What blocks the merge
 Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
 
