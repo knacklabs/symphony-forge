@@ -171,6 +171,9 @@ def work(args: argparse.Namespace) -> None:
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
                                if design else repo.models(config, kind.lower()))
+            if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
+                print("Warning: the worker ended its round with changes left uncommitted, so the review "
+                      f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
         if result["status"] != "completed":
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
