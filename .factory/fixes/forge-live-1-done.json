@@ -4,11 +4,22 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "A live production app joins Forge through one pull request that brings its history and house rules, stays marked live with no prototype rules, and keeps its team's own branches and CI checks working",
-  "status": "started",
+  "review": {
+    "commit": "b935de58d66be084e84e73501a5c50a814c9a620",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "f126d55d7436111f9679d96165a5a6551e69c4388944919cbcd8142d1700e509"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-28T21:02:06+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T01:43:42+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
