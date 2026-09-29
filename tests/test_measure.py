@@ -68,10 +68,11 @@ def _confirm(repo, fix, slug: str) -> None:
     """Save, read (as `forge read` leaves its notes) and confirm a spec in the fix's worktree."""
     _ok(repo.forge("spec", "save", slug, cwd=fix))
     read_hash = repo.git("hash-object", f"docs/specs/{slug}.md", cwd=fix)
-    # Confirm needs a passing round since FORGE-READLOOP-1; notes without one used to confirm.
+    # Confirm needs a passing round since FORGE-READLOOP-1; notes without one used to confirm. The
+    # round passes on its text, "No findings.", not on the passed flag.
     (fix / f"docs/specs/{slug}.read.md").write_text(
         f"---\nreader: codex\nread_at: 2026-09-25T10:00:00+00:00\nread_hash: {read_hash}\n"
-        "round: 1\npassed: yes\n---\n", encoding="utf-8")
+        "round: 1\npassed: yes\n---\n\n## Round 1\n\nNo findings.\n", encoding="utf-8")
     _ok(repo.forge("spec", "confirm", slug, "--by", "Ravi", cwd=fix))
 
 

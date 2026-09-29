@@ -12,6 +12,7 @@ A spec's cold read, written by `forge read <slug>`, lives in the notes file besi
     read_hash: <git hash-object of the spec as read by the latest round>
     round, passed: <n>, and yes only when that round's whole text, trimmed, is "No findings."
     ---
+    ## Round <n>
     1. <finding>
        Disposition: cut | defer | keep <one-line reason>
 
@@ -157,7 +158,9 @@ def spec_confirm(args: argparse.Namespace) -> None:
         found = DISPOSITION.search(finding)
         if not found or (found[1].lower() == "keep" and not found[2]):
             repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
-    if record.get("passed") != "yes":  # notes written before rounds count as round 1
+    from forge import story
+
+    if not story.passed(record, findings):  # notes written before rounds count as round 1
         repo.refuse(REFUSALS["not_passed"], slug=args.slug, round=record.get("round") or 1)
     if repo.git("hash-object", "--", rel, cwd=top) != record["read_hash"]:
         repo.refuse(REFUSALS["changed"], slug=args.slug)

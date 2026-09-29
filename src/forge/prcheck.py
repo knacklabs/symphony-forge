@@ -171,6 +171,7 @@ def pr_check(args: argparse.Namespace) -> int:
     doc_problem = story.check_pr_docs(top, head, changed) if story else None
     if doc_problem:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
+    _check_specs(top, head, changed)
     result = state.get("review")
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
@@ -185,6 +186,19 @@ def pr_check(args: argparse.Namespace) -> int:
         print(f"forge-pr-check passed for {branch}.")
         return 0
     repo.refuse(REFUSALS["not_reviewed"], branch=branch, problem=problem, item=item)
+
+
+def _check_specs(top: Path, head: str, changed: list[str]) -> None:
+    """Refuse an unconfirmed spec at head whose latest round of cold read had findings or which
+    changed after it. A draft with no cold read yet, and a confirmed spec, keep today's rules."""
+    from forge import records, story
+
+    for path in dict.fromkeys(re.sub(r"\.read\.md$", ".md", path) for path in changed):
+        slug = re.fullmatch(r"docs/specs/([a-z0-9]+(?:-[a-z0-9]+)*)\.md", path)
+        text = story.show(top, head, path) if slug else None
+        notes = story.show(top, head, f"docs/specs/{slug[1]}.read.md") if text is not None else None
+        if notes is not None and records._front(text)[0].get("status") != "confirmed":
+            story.gate(slug[1], path, notes, repo.git("rev-parse", f"{head}:{path}", cwd=top))
 
 
 def promote_problem(changed: list[str], interfaces: list[str]) -> str:
