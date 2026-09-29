@@ -3,33 +3,33 @@
   "branch": "task/FORGE-UPGRADE-1-SPEC",
   "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
   "review": {
-    "commit": "4352d381505ce457350e1f19c8dd87937ca27d0e",
+    "commit": "41b01ae3bda3b6340ddfa773b6d354b665cc831a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The handoff runs only inside the newly installed checker. A client base pinned to v1.1.0 runs its existing workflow, which installs v1.1.0 (`v1.1.0:src/forge/sync.py:264-266`); that release's `pr_check` has no handoff (`v1.1.0:src/forge/prcheck.py:35-76`). Thus an upgrade PR is judged by the old release, not the release it pins, and the new release-tag validation is never reached. The compatible `tree` field may let the old check pass, including for a changed pin without `v`, but it does not deliver the required pinned-release check. Put the release selection in a path the base workflow actually executes.",
-        "file": "src/forge/prcheck.py",
-        "line": 141,
-        "priority": "P1",
-        "title": "Not done: An upgrade pull request passes Forge's check"
-      },
-      {
-        "body": "The upgrade case calls `_older_build`, which copies this checkout's Forge and changes only its version string. Its apparent v1.0.9 checker therefore contains the new handoff that a released older checker lacks; the `uv` stub then runs this checkout again. This test can pass while a real client workflow never installs or invokes the PR's pinned release. Exercise an actual released base checker and the generated workflow's install path, faking only the external installer.",
+        "body": "The workflow test stops at the install step (`steps[:install + 1]`), and its uv stub records a request without installing Forge. The compatibility case compares `tree` with a copied fingerprint algorithm but never runs v1.1.0's released `forge hook pr-check`; it does not change the pin either. The test can pass without any upgrade pull request passing a real checker. Run the generated job through the check command against an upgrade PR, using the released base checker for the v1.1.0 compatibility case.",
         "file": "tests/test_upgrade_check.py",
-        "line": 49,
+        "line": 61,
         "priority": "P1",
         "title": "Not done: tests/test_upgrade_check.py"
       },
       {
-        "body": "The reported six-case walkthrough claims an upgrade from a v1.0.9 base handed off to the pinned release. The supplied upgrade path uses the relabeled current-source build and an installer stub that launches the current-source Forge. It never walks an upgrade through a released base's workflow, so it skips the covered pinned-release install. Repeat that walkthrough with the released base and verify which Forge version actually runs.",
+        "body": "The reported walkthrough records what uv would install, then checks a copied v1.1.0 fingerprint for an ordinary fix. The fix created here does not change `forge.toml`, and the walkthrough never invokes either release's `forge hook pr-check` on an upgrade PR. It therefore skips the covered outcome: an upgrade pull request passing Forge's check.",
         "file": "tests/test_upgrade_check.py",
-        "line": 112,
+        "line": 138,
         "priority": "P1",
         "title": "Not done: functional check"
+      },
+      {
+        "body": "The `sed` expression recognizes only an unindented, double-quoted version with no trailing comment, although Forge parses `forge.toml` with `tomllib` (`src/forge/repo.py:205-218`). If a client uses valid single-quoted pins such as `version = 'v1.1.0'` on the base and `version = 'v1.2.0'` on the PR, both `pin` calls return empty. The workflow treats the upgrade as unchanged and installs v1.1.0, so the pinned release's check never runs. Read the version using TOML parsing before comparing it.",
+        "file": "src/forge/prcheck.py",
+        "line": 91,
+        "priority": "P2",
+        "title": "Read valid TOML versions when selecting the release"
       }
     ],
     "status": "blocked",
-    "tree": "595c7aca350ca6cb1af98feba9e33567d97b2847d3e89ece59590d6c79f66ff9"
+    "tree": "810ee4763339fc464a58226e992893c15165613a93d782ae671589f900c3104a"
   },
   "status": "fixing",
   "steps": [
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-09-29T05:01:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:22:35+00:00",
       "step": "review"
     }
   ],
