@@ -8,7 +8,15 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-AHA-1.md",
-  "status": "approved",
+  "finished": "2026-09-29T04:10:32+00:00",
+  "merged": {
+    "DEMO": "2026-09-29T04:10:32+00:00",
+    "REVIEW": "2026-09-28T17:22:42+00:00",
+    "SPEC": "2026-09-28T15:31:25+00:00",
+    "TEMPLATES": "2026-09-29T03:08:45+00:00"
+  },
+  "outcome": "A salesperson prepares with a brief, keeps the customer's words, demos a prototype filled with their own kind of data by a five-step script, records reactions, and asks for sign-off only after the strict review passes",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-28T12:14:36+00:00",
@@ -25,6 +33,10 @@
     {
       "at": "2026-09-29T01:31:04+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-09-29T04:12:31+00:00",
+      "step": "done"
     }
   ],
   "title": "Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step",

@@ -1,0 +1,31 @@
+{
+  "base": "ec123b5456c3eeb68e97291cf576682706e84ca3",
+  "branch": "fix/forge-aha-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "A salesperson prepares with a brief, keeps the customer's words, demos a prototype filled with their own kind of data by a five-step script, records reactions, and asks for sign-off only after the strict review passes",
+  "review": {
+    "commit": "28cd5f25242bb06e31b0741d8bbadb52faf6fa88",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "d8fe039c9abe5d2496628657152b4ec1d85c90e01f591854ef30e4483f685579"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T04:12:31+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T04:17:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T05:06:58+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Forge covers building and sign-off records, but almost nothing the customer sees: no pre-meeting brief, no recap in their words, no realistic demo data, no demo script, no record of their reactions, and new projects are sent to a removed /office-hours step is finished, and what it achieved."
+}
