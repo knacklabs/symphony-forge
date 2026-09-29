@@ -107,6 +107,9 @@ New moving parts: the Agentation feedback toolbar in prototype demo builds (Done
   Autoreview `--model codex=gpt-6-sol --thinking medium --max-priority P0`.
 - The recap is a draft the salesperson sends; there is no sign-off email draft, and Forge sends
   nothing. The strict review before sign-off comes from running `forge decision accept` on the
-  sign-off decision before the reply is recorded.
+  sign-off decision before the reply is recorded: the fix "The sign-off review runs only when the
+  customer's reply is recorded" makes that command run the review alone and stop when no reply is
+  recorded yet, with its own command tests; DEMO merges after that fix and its test checks the
+  skill tells the agent to run it before sign-off is asked for.
 - Each test file starts with `STORY = "FORGE-AHA-1"`, and its `test_<n>_` names cite the Done-when
   items its task covers.
