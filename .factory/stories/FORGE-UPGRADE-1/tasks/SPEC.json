@@ -2,11 +2,37 @@
   "base": "8f037314f4064b84b4a5a05529ccb5995ee6f7ed",
   "branch": "task/FORGE-UPGRADE-1-SPEC",
   "done_when": "A client repo upgrades Forge through one fix whose pull request passes Forge's check",
-  "status": "working",
+  "review": {
+    "commit": "258f023b38845f02a56ceec49ee7e184069d3f80",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This treats a pin mismatch as proof that the PR changes `forge.toml`. If an ordinary PR was opened while the base pinned v1.1.0 and the base later upgrades to v1.2.0, the PR still contains v1.1.0 without having changed that file. The check delegates to v1.1.0 instead of using the base branch's pinned Forge. The released v1.1.0 checker reads the older `tree` review field (`v1.1.0:src/forge/prcheck.py:69`), so an older review can pass without the current check's `changed` field. Detect a version edit in the PR's diff before delegating, and cover an ordinary PR that predates a base upgrade.",
+        "file": "src/forge/prcheck.py",
+        "line": 133,
+        "priority": "P1",
+        "title": "Keep ordinary PRs on the base branch's checker"
+      },
+      {
+        "body": "A PR can change `version = \"v1.1.0\"` to `version = \"1.1.0\"` and bypass the release-tag validation because both sides compare equal after `removeprefix`. `repo.check_pin` also accepts that value (`src/forge/repo.py:299`), so close can record a review and this check can pass. The changed pin lacks the required `v` prefix. Validate the head's changed version as a release tag even when its normalized number matches the base.",
+        "file": "src/forge/prcheck.py",
+        "line": 135,
+        "priority": "P1",
+        "title": "Validate a changed pin before removing its v prefix"
+      }
+    ],
+    "status": "blocked",
+    "tree": "8c598986e9541f3176f7df47252b572dc2f9b9fff22e72214e306a684ed14279"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-29T03:39:51+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T04:38:39+00:00",
+      "step": "review"
     }
   ],
   "why": "Upgrading Forge in a client repo is blocked: the upgrade pull request can never pass Forge's check, close calls it clean with stale synced files, and the default branch refuses every command until the upgrade merges"
