@@ -1,8 +1,7 @@
 {
   "base": "56844cc9c6aadd0cf3c8b57fa50f72839025c26e",
-  "branch": "fix/nothing-in-the-flow-can-switch-a-repo-to",
+  "branch": "task/FORGE-MERGESWITCH-1-SPEC",
   "done_when": "The owner switches a repo to agent merges with one command run in their own terminal",
-  "kind": "fix",
   "status": "started",
   "steps": [
     {
