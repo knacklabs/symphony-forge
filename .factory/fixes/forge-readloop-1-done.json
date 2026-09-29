@@ -4,11 +4,24 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "The cold read now continues the same reader, sending only what changed, until it finds nothing, hunts edge cases item by item against known traps, and every story and spec must pass it before approval and each task",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "404d91203d11dfc4f06d4df385699c1248db5edce850d992c17ef1a764c6edb2",
+    "commit": "d12006bdd903811367fce232f564d9bb62a8e796",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "3b378364af14ed98661b51ad202e204803d531af98f78ebbb1a2e49e1058e955"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T11:05:45+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-29T11:08:49+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
