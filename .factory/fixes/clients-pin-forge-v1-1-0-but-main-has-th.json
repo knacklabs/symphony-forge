@@ -1,0 +1,14 @@
+{
+  "base": "eb5c132768bed861a67c11ae3469b811c71fe5f9",
+  "branch": "fix/clients-pin-forge-v1-1-0-but-main-has-th",
+  "done_when": "Forge's version is 1.2.0 everywhere it is recorded (the package version, this repo's forge.toml pin, and the tests that track the current version), so the v1.2.0 tag installs as 1.2.0",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-29T17:13:59+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients pin Forge v1.1.0, but main has the prototype, salesperson, live-app, aha, cold-read loop, short plan, upgrade and merge-switch work since then"
+}
