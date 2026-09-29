@@ -1,19 +1,19 @@
 {
   "branch": "task/FORGE-CHATVIEW-1-ATTACH",
   "review": {
-    "commit": "d8352a030e5d00d26076f31d0791d5f9ce165034",
+    "commit": "a3ea0143d55dac28409f379122df15e21a632bc3",
     "dismissals": [],
     "findings": [
       {
-        "body": "A close that finds a merged pull request returns at src/forge/close.py:58-61, before this attachment block. If the item has a recorded chat, that close sends no thread/attachment/add request. Move the attachment attempt before the merged-PR return and cover that path in the command test.",
-        "file": "src/forge/close.py",
-        "line": 108,
+        "body": "The command test always supplies an existing OPEN pull request here, so it never exercises `forge close` when `_pull_request` returns none and `_publish` creates a pull request (src/forge/close.py:231-244) before the new attachment call at src/forge/close.py:109. A regression that skips attachment only for newly opened pull requests would pass this test. Add a `forge close` case that creates the PR and asserts the attachment request and its pinned fields.",
+        "file": "tests/test_chatview_attach.py",
+        "line": 35,
         "priority": "P1",
-        "title": "Not done: Each forge close that finds a pull request attaches it to the recorded chat"
+        "title": "Not done: newly opened pull request attachment test"
       }
     ],
     "status": "blocked",
-    "tree": "5e1a6a1d66db7e32996bcaa1d6b783ff28bcb5d9f092ccf8e2acc74b4aa40b33"
+    "tree": "4f5e88868cc8a44eb4410fcee298dc151cd32d7f04368483cb2ed5e46b7e689c"
   },
   "status": "fixing",
   "steps": [
@@ -23,6 +23,10 @@
     },
     {
       "at": "2026-09-28T21:16:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T01:34:38+00:00",
       "step": "review"
     }
   ]
