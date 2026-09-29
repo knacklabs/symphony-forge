@@ -21,7 +21,7 @@ def test_1_installed_sync_ships_app_baseline_to_both_agents(repo, tmp_path):
                    check=True, capture_output=True, text=True)
 
     repo.git("checkout", "-q", "-b", "fix/app-baseline")
-    repo.write("forge.toml", 'version = "v1.1.0"\ntest = "true"\n')
+    repo.write("forge.toml", 'version = "v1.2.0"\ntest = "true"\n')
     packages = (next(dist.glob("*.whl")), next(dist.glob("*.tar.gz")), ROOT)
     for kind, package in zip(("wheel", "sdist", "editable"), packages):
         env = tmp_path / kind

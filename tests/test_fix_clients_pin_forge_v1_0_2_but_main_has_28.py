@@ -8,6 +8,6 @@ STORY = "FIX-CLIENTS-PIN-FORGE-V1-0-2-BUT-MAIN-HAS-28"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_release_command_and_repo_pin_are_v1_1_0(repo):
-    assert repo.forge("--version").stdout.split()[-1] == "v1.1.0"
-    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.1.0"
+def test_1_release_command_and_repo_pin_are_v1_2_0(repo):
+    assert repo.forge("--version").stdout.split()[-1] == "v1.2.0"
+    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.0"
