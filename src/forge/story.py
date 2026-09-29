@@ -407,16 +407,17 @@ def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
     number = undisposed(findings)
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=rel.removesuffix(".md") + ".read.md")
-    if not passed(findings):
+    if not passed(record, findings):
         repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
     if doc_hash != record["read_hash"]:
         repo.refuse(REFUSALS["changed"], doc=rel, target=target)
 
 
-def passed(findings: str) -> bool:
-    """The latest round's whole text, trimmed, is exactly "No findings."; never the passed flag."""
-    parts = re.split(r"^## Round \d+[ \t]*$", findings, flags=re.M)
-    return len(parts) > 1 and parts[-1].strip() == "No findings."
+def passed(record: dict[str, str], findings: str) -> bool:
+    """The latest round's whole text, trimmed, is exactly "No findings."; never the passed flag.
+    That text runs from the recorded round's heading to the end, so a heading in a reply is text."""
+    heading = re.search(rf"^## Round {re.escape(record.get('round') or '')}[ \t]*$", findings, re.M)
+    return bool(record.get("round") and heading) and findings[heading.end():].strip() == "No findings."
 
 
 def rounds(notes: str | None, state: str | None = None) -> bool:

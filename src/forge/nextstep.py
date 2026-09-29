@@ -364,7 +364,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) 
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    if not story.passed(findings):
+    if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif record.get("read_hash") != doc_hash:
         why = f"plans/{key}.md changed after round {done} of its cold read"

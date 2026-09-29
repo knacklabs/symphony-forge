@@ -66,19 +66,29 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     # Near misses are rounds with findings, each numbered after the earlier rounds'.
     for number, near in enumerate(["No findings", "no findings.", "**No findings.**",
                                    "No findings.\n1. The saved time has no time zone.",
-                                   "No findings. The page is fine."], start=1):
+                                   "No findings. The page is fine.",
+                                   "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
         say(repo, near + "\n")
         assert "Next: give every finding a disposition" in read(repo)
         text = notes.read_text("utf-8")
         assert f"round: {number}\n" in text and "passed: no\n" in text
         assert f"## Round {number}\n\n" in text and re.search(rf"^{number}\. ", text, re.M), text
         dispose_all(notes)
+    # A heading inside the reply is text: round 6 is everything after its own heading.
+    assert "## Round 6\n\n6. A gap.\n   Disposition: cut\n\n## Round 99\n\nNo findings." in (
+        notes.read_text("utf-8"))
+    refused = hook(repo, claude_plan(claude_payload, DOC))
+    assert (refused.returncode, refused.stderr) == (1, (
+        "Round 6 of the cold read of plans/SHOP.md hasn't passed, so it needs another round.\n"
+        "Next: forge read SHOP\n"))
+    assert repo.forge("next").stdout.splitlines()[-2].startswith(
+        "Planning Shoppers can save a basket: round 6 of its cold read had findings")
     tip = repo.git("rev-parse", "story/SHOP")
     # A round with findings commits nothing.
     assert repo.git("status", "--porcelain", "--", "plans", cwd=shop) != ""
     # Exactly "No findings.", trimmed, passes, and the doc and notes are committed on its branch.
     say(repo, "\n  No findings.  \n\n")
-    assert read(repo).startswith("Round 6 of the cold read of plans/SHOP.md found nothing.")
+    assert read(repo).startswith("Round 7 of the cold read of plans/SHOP.md found nothing.")
     assert "passed: yes\n" in notes.read_text("utf-8")
     assert repo.git("rev-parse", "story/SHOP~1") == tip
     assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= last_files(repo, "story/SHOP")
