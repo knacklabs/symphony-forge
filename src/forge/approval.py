@@ -12,7 +12,6 @@ import hashlib
 import json
 import re
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -37,10 +36,9 @@ REFUSALS = {
     "no_signoff": ("This client's sign-off isn't recorded yet, so the approval was not recorded.",
                    'forge decision new client-signoff, then forge decision accept client-signoff '
                    '--by "<client name>"'),
-    "other_version": ("{repo} pins Forge {pinned}, but {installed} is installed, so nothing was "
-                      "recorded.",
-                      "ask your agent to upgrade {repo} to {installed}, then approve again"),
 }
+OTHER_VERSION = ("{repo} pins Forge {pinned}, but {installed} is installed; the approval is recorded "
+                 "anyway. Ask your agent to upgrade {repo} to {installed}.")
 
 TOOLS = {"claude": "ExitPlanMode", "codex": "request_user_input"}
 QUESTIONS = ("AskUserQuestion", "request_user_input")
@@ -120,20 +118,11 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     if len(matches) > 1:
         repo.refuse(REFUSALS["several"], count=len(matches))
     key, path = matches[0]
-    story_repo = machine.main_checkout(path)
-    # Read the pin alone before full config validation or any write in the story repo.
-    config_text = (path / "forge.toml").read_text(encoding="utf-8")
-    version_line = re.search(r'^version\s*=\s*[^\n]+', config_text, re.M)
-    if version_line:
-        try:
-            pinned = tomllib.loads(version_line[0])["version"]
-        except tomllib.TOMLDecodeError:
-            repo.check_pin(path)
-            return
-        if isinstance(pinned, str) and pinned.removeprefix("v") != __version__:
-            repo.refuse(REFUSALS["other_version"], repo=story_repo,
-                        pinned=pinned, installed=f"v{__version__}")
-    repo.check_pin(path)
+    # A version mismatch warns but never blocks the approval.
+    pinned = repo.config(path)["version"]
+    if pinned.removeprefix("v") != __version__:
+        print(OTHER_VERSION.format(repo=machine.main_checkout(path), pinned=pinned,
+                                   installed=f"v{__version__}"), file=sys.stderr)
     story_used = repo.forge_dir(path) / "approvals" / marker
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
