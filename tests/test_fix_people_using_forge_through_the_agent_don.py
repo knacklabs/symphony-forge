@@ -30,7 +30,7 @@ def _assert_coaches_each_moment(section):
         assert "forge " not in example.lower(), moment
 
 
-def test_1_synced_skill_coaches_each_moment_once(repo):
+def test_1_synced_and_new_client_skill_coaches_each_moment_once(repo, gh, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/skill-guidance")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\ntest = "true"\n')
@@ -38,8 +38,6 @@ def test_1_synced_skill_coaches_each_moment_once(repo):
     assert synced.returncode == 0, synced.stderr
     _assert_coaches_each_moment(_coaching(repo.path))
 
-
-def test_1_new_client_skill_coaches_each_moment_once(repo, gh, tmp_path):
     client, remote = tmp_path / "client", tmp_path / "client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
