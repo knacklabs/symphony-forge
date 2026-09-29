@@ -148,6 +148,43 @@ def _ordinary_pull_request_checked_by_the_default_branch_forge(env):
     assert _uv_calls(env) == []
 
 
+def _pull_request_older_than_a_base_upgrade_checked_by_the_base(env):
+    # The pull request never touched forge.toml; the default branch upgraded after it started, so
+    # its older pin is no upgrade and the default branch's own Forge still checks it.
+    _pin_on_main(env, "v1.0.9")
+    item, where = env.start_fix()
+    older = _older_build(env, "v1.0.9")
+    closed = subprocess.run([sys.executable, str(older), "close", item], cwd=where,
+                            capture_output=True, text=True, encoding="utf-8", timeout=120)
+    assert closed.returncode == 0, closed.stderr
+    toml = env.repo.path.joinpath("forge.toml").read_text("utf-8")
+    env.repo.write("forge.toml", toml.replace('version = "v1.0.9"', f'version = "{_version(env)}"'))
+    env.repo.git("commit", "-qam", "Upgrade Forge")
+    env.repo.git("push", "-q", "origin", "main")
+
+    done = _check(env, where)
+
+    assert done.returncode == 0, done.stderr
+    assert done.stdout == PASSED
+    assert _uv_calls(env) == []
+
+
+def _changed_pin_without_its_v_refused_plainly(env):
+    toml = env.repo.path.joinpath("forge.toml").read_text("utf-8")
+    bare = _version(env)[1:]
+    _, where = env.start_fix({"forge.toml": toml.replace(f'version = "{_version(env)}"',
+                                                         f'version = "{bare}"')})
+
+    done = _check(env, where)
+
+    assert done.returncode == 1
+    assert done.stderr.splitlines()[-2:] == [
+        f'The pull request on fix/tidy-readme pins Forge "{bare}", which isn\'t a Forge '
+        "release such as v1.2.0.",
+        "Next: set forge.toml's version to a Forge release, then push fix/tidy-readme again"]
+    assert _uv_calls(env) == []
+
+
 def _one_review_passes_the_previous_release_check_and_this_one(env):
     previous = _previous_release(env)
     item, where = env.start_fix()
@@ -171,6 +208,8 @@ def _one_review_passes_the_previous_release_check_and_this_one(env):
 @pytest.mark.parametrize("case", [_upgrade_checked_by_the_release_it_pins,
                                   _version_that_is_not_a_release_refused_plainly,
                                   _ordinary_pull_request_checked_by_the_default_branch_forge,
+                                  _pull_request_older_than_a_base_upgrade_checked_by_the_base,
+                                  _changed_pin_without_its_v_refused_plainly,
                                   _one_review_passes_the_previous_release_check_and_this_one],
                          ids=lambda case: case.__name__.strip("_"))
 def test_1_upgrade_pull_request_passes_forge_check(env, case):

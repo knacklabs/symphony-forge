@@ -130,8 +130,10 @@ def pr_check(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     pinned = _pinned(top, head)
-    if pinned.removeprefix("v") != cfg["version"].removeprefix("v"):
-        # An upgrade: the release it pins judges it, installed from Forge's own repo by its tag.
+    if pinned != _pinned(top, repo.git("merge-base", base, head, cwd=top)):
+        # An upgrade: the pull request changes the pin, so the release it pins judges it,
+        # installed from Forge's own repo by its tag. Any other pull request, even one that
+        # predates an upgrade of the default branch, stays with the default branch's Forge.
         if not re.fullmatch(r"v\d+\.\d+\.\d+", pinned):
             repo.refuse(REFUSALS["bad_version"], branch=branch, version=pinned)
         if pinned != f"v{__version__}":
