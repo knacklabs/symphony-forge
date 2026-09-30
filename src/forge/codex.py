@@ -554,11 +554,11 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     record."""
     saved = _json(record)
     stopped, unknown = False, None
-    for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
+    # By id and start time only: under load ps can read a just-started app-server's program name
+    # alone, so the command on record needn't name Codex.
+    for key, group in (("driver", True), ("app_server", False)):
         recorded = saved.get(key) or {}
         if not recorded:
-            continue
-        if os.name != "nt" and runs not in str(recorded.get("command")):
             continue
         alive = _alive(recorded)
         if alive:
