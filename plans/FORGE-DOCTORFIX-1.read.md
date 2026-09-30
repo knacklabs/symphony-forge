@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T21:25:57+00:00
-read_hash: 4faad0215522f4669740ead8edbdead6c4177e86
-round: 7
+read_at: 2026-09-30T21:29:11+00:00
+read_hash: f0c59e18598c7444ef97989ffedf815df54da1bf
+round: 8
 passed: no
-doc_seen: 4faad0215522f4669740ead8edbdead6c4177e86
+doc_seen: f0c59e18598c7444ef97989ffedf815df54da1bf
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69f0cf7a9f995e3627365d4251a4ec2180cce94
+notes_seen: 3fca85f83d4c91762b77d87890f943ac0d506e10
 ---
 # Cold read notes
 
@@ -144,3 +144,8 @@ Only a genuine trade-off goes to the human, as a question with options.
 28. Item 5 prevents refreshing doctor’s own unmerged repair after following item 4’s recovery step.
     Doctor commits a repaired workflow; the default branch later changes its test command. After merging the default branch into that fix, both reuse guards pass, but the workflow’s last-changing commit is doctor’s unmerged commit. Item 5 therefore labels it a hand edit and refuses the update. Specify how doctor recognizes its own pending output, and test this merge-and-rerun case in FILES while preserving hand-edit protection.
     Disposition: cut
+
+## Round 8
+
+29. Item 5’s new exception mistakes an amended doctor commit for untouched generated output.
+    A person can edit a skill and run `git commit --amend --no-edit` in doctor’s fix. The subject remains exactly the fix’s `why`, and every changed path still belongs to sync’s list, so doctor overwrites that hand edit. Require evidence beyond the subject and path list, and add this amended-commit case to FILES’ tests.
