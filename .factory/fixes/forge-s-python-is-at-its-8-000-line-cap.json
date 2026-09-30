@@ -3,11 +3,24 @@
   "branch": "fix/forge-s-python-is-at-its-8-000-line-cap",
   "done_when": "pyproject.toml's line ceiling is 8,500 and the ceiling test expects it, and an accepted decision records the owner's choice on 2026-09-30, superseding the 8,000 decision",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "5f8578589882bcd95cc4c953506dcfd056b1b7e0839dbc24f96ac613b9ff6fc2",
+    "commit": "de9e52b0f667b766d14a55b4eb06e00be24c29c9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e8bc8615c6416be55dc11887dc717b4716f78b245f22a72491fa9b10d662eb51"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T00:13:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T00:21:42+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's Python is at its 8,000-line cap while the current-code fix, forge land and the reader ranking still need room"
