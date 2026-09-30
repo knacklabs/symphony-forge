@@ -34,7 +34,7 @@ jobs:
       # The SDK's own Codex program, logged in with the key.
       - if: env.OPENAI_API_KEY != ''
         run: |
-          python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.156.1/bin/python"
+          python="$HOME/.local/share/forge/codex-sdk/openai-codex-0.159.2/bin/python"
           printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
       - if: env.OPENAI_API_KEY != ''
         run: uv run --python 3.11 pytest tests/test_fix_codex_test_home.py -v -s

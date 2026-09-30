@@ -25,7 +25,7 @@ def test_2_forge_init_writes_design_models(repo, gh, tmp_path: Path) -> None:
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]
     assert models["design"] == {
         "claude": {"model": "claude-opus-5-5", "effort": "high"},
-        "codex": {"model": "gpt-6-sol", "effort": "high"},
+        "codex": {"model": "gpt-6.1-sol", "effort": "high"},
     }
     own = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))
     assert own["models"]["design"] == models["design"]

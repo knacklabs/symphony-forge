@@ -17,7 +17,7 @@ from test_close import STORY_DOC, approve_story
 from test_setup import _autoreview, _fresh_client, _stub_forge
 
 STORY = "FORGE-WARM-1"
-PIN = "0.156.1"
+PIN = "0.159.2"
 UNTRUSTED = "- Codex doesn't trust this project"
 APPROVE = "- Note: when Codex asks you to approve Forge's hooks, approve them"
 
