@@ -3,11 +3,24 @@
   "branch": "fix/pull-requests-keep-failing-ci-on-the-sam",
   "done_when": "tests/test_codex_record.py test_6_nothing_left_running and the Windows subprocess calls that time out in tests/test_migrate.py test_30 and tests/test_codex_setup.py test_11 pass reliably on CI: find each failure's root cause from its CI log and fix it in the test or the code (a longer subprocess time limit on Windows is fine where the command is just slow there), never by skipping or weakening what the test checks.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "e0e240afeabe832375eed21ae76d18d35e992df3f930afa1ae859128d8d4958c",
+    "commit": "d1d069b4884a5e3402b6edde1eb6741f043886ed",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "dd6f3a6dc32d4b2d1c7e5ac5cdf6d7798cf651d670afbadea6b92518f1878000"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T17:05:22+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T18:15:37+00:00",
+      "step": "review"
     }
   ],
   "why": "Pull requests keep failing CI on the same flaky tests: Windows jobs time out running forge in subprocesses (test_migrate test_30, test_codex_setup test_11) and test_codex_record test_6 fails on macOS under load, so changes that don't touch them need re-runs"
