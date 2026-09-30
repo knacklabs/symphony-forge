@@ -5,28 +5,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "d4b39ffa82d5542a677bcbf2bce7dc0290d28fbe9a6b72790d6f3b52dbdbaed2",
-    "commit": "db571853343aeddb52d591d64cd28dedabc3a3ab",
-    "dismissals": [
-      {
-        "because": "src/forge/review.py:375 The light prototype review is P0-only by the owner's decision: before sign-off a prototype is blocked only by P0s, so ordinary standards breaks there are deliberately not blocking; every other review path reports them at P1.",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "changed": "7ed45628ad1433b0fb2eaf3f2ed4d83287564b157191b372ac601fb83e19ca19",
+    "commit": "5360d63005e12d2997062a038f6013fc47050ae0",
+    "dismissals": [],
     "findings": [
       {
-        "body": "Prototype fixes before sign-off use the light review path (`src/forge/close.py:80`), which passes `--max-priority P0` here. The new standards prompt requires a broken rule to be reported as a P1 `Standard:` finding (`src/forge/templates/review.md:154`). That P1 cannot pass the light review\u2019s priority limit, so an API, data, or frontend standards violation in such a fix can still go unreported. The new command tests exercise only the default review path; `tests/test_aha_review.py:28-56` confirms the light path uses the P0 limit.",
+        "body": "A reviewed branch can contain a tracked `forge-standards.md` symlink. Checkout recreates that link, and `write_text` follows it, so `forge close` can overwrite any file writable by Forge outside the temporary review tree before Autoreview starts. That breaks the rule that \u201cno command changes a client repo outside a branch and PR.\u201d Create the prompt file without following a branch-controlled path.",
         "file": "src/forge/review.py",
-        "line": 361,
+        "line": 401,
         "priority": "P1",
-        "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the"
+        "title": "Standard: Reversible by default"
       }
     ],
-    "status": "clean",
-    "tree": "284829d377aa0f4c6f2f1bef1c939b566a70ccca0df4ac5843c78b2c5b88e2b7"
+    "status": "blocked",
+    "tree": "8554b82712aa8027b4483cc360d4ca6d71bb188cc30134e25e4564f06582239e"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
@@ -38,6 +32,10 @@
     },
     {
       "at": "2026-09-30T10:45:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T18:06:57+00:00",
       "step": "review"
     }
   ],
