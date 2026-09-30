@@ -8,8 +8,10 @@ import stat
 
 from test_close import env, run  # noqa: F401 (env is a fixture)
 
+STORY = "FIX-CLOSE-PUSHES-ITS-REVIEW-COMMIT-WHILE-THE"
 
-def test_close_never_counts_a_check_result_from_an_earlier_head(env):
+
+def test_1_close_never_counts_a_check_result_from_an_earlier_head(env):
     item, where = env.start_fix()
     earlier = env.repo.git("rev-parse", "HEAD", cwd=where)
     # GitHub still answers with the previous head's runs: a red forge-pr-check among them.
@@ -27,7 +29,7 @@ def test_close_never_counts_a_check_result_from_an_earlier_head(env):
     assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
 
 
-def test_close_retries_a_failed_push_before_giving_up(env):
+def test_2_close_retries_a_failed_push_before_giving_up(env):
     item, where = env.start_fix()
     # The remote refuses the first two pushes, as a flaky connection would.
     tries = env.tmp / "push-tries"
