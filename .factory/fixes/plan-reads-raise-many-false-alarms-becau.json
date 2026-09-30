@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "0d84902986bf3b28e11afa5adc8cb91a3a28b09c82534103081287ac0e4e7b18",
-    "commit": "481d2821c61aea8890730b22f2ec0bebc41137d9",
+    "changed": "e9883fa15bad6d26eecc82e74439670ad8a8fec0ed6a0569b05ebc834f7d9d25",
+    "commit": "f3ad8aafd39f57e5e50a24f7d3d1118abf0bee2c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The new rule says a story with no linked spec is not a finding, but the same prompt still requires every Done-when item to map to the spec\u2019s behaviour or success measure and says anything that maps to nothing gets `Cut or defer: <item>` (cold-read.md:37-39). Forge explicitly sends `No linked confirmed spec was found` for such stories (src/forge/story.py:183-184). A valid standalone story therefore has no spec to map its items to and can still receive the false findings this change aims to prevent. Make that mapping check conditional on a linked spec and cover the no-spec prompt through `forge read`.",
-        "file": "src/forge/templates/cold-read.md",
-        "line": 25,
-        "priority": "P1",
-        "title": "Not done: Stories without a linked spec can still get Cut or defer findings"
-      }
-    ],
-    "status": "blocked",
-    "tree": "9890c5f9fab075426a301cc3b4d4f107146867bad3396e6d7b7ffbffa5f3a7f1"
+    "findings": [],
+    "status": "clean",
+    "tree": "38ec428599e50f7db8d55f7f12f09c2588b3f322886122c2a295d5d1fb7c2806"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T09:44:00+00:00",
@@ -28,6 +20,10 @@
     },
     {
       "at": "2026-09-30T10:18:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T10:51:57+00:00",
       "step": "review"
     }
   ],
