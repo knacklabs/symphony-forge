@@ -14,22 +14,27 @@ from test_codex_record import _up
 STORY = "forge-s-own-test-suite-leaves-stopped-co"
 TESTS = Path(__file__).resolve().parent
 
-# Two tests that stop a process they started and leave it: one passes, one fails after.
+# Three tests that leave a process they started: two stop it first (one passes, one fails after),
+# and one leaves it running.
 LEAKY = """import os, signal, subprocess, sys
 
-def _stopped(name):
+def _left(name, stop=True):
     proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(300)"],
                             start_new_session=True)
-    os.kill(proc.pid, signal.SIGSTOP)
+    if stop:
+        os.kill(proc.pid, signal.SIGSTOP)
     with open({pids!r}, "a") as pids:
         pids.write(f"{{name}} {{proc.pid}}\\n")
 
 def test_leaves_a_stopped_process():
-    _stopped("passes")
+    _left("passes")
 
 def test_fails_with_a_stopped_process():
-    _stopped("fails")
+    _left("fails")
     assert False, "the test's own failure"
+
+def test_leaves_a_running_process():
+    _left("runs", stop=False)
 """
 
 
@@ -49,5 +54,7 @@ def test_1_a_test_that_leaves_a_process_fails_the_run_by_name(tmp_path):
     assert "ERROR at teardown of test_leaves_a_stopped_process" in run.stdout, run.stdout
     assert f"test_leaves_a_stopped_process left processes running: {started['passes']} " in run.stdout
     assert f"test_fails_with_a_stopped_process left processes running: {started['fails']} " in run.stdout
+    assert "ERROR at teardown of test_leaves_a_running_process" in run.stdout, run.stdout
+    assert f"test_leaves_a_running_process left processes running: {started['runs']} " in run.stdout
     assert "the test's own failure" in run.stdout
     assert not any(_up(int(pid)) for pid in started.values())
