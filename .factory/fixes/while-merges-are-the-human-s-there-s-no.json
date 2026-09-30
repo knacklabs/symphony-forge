@@ -3,7 +3,7 @@
   "branch": "fix/while-merges-are-the-human-s-there-s-no",
   "done_when": "forge next shows the pull request link beside each item that is Ready and waiting for the human to merge.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T03:31:04+00:00",
