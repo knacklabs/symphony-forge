@@ -3,7 +3,7 @@
   "branch": "fix/a-codex-turn-that-fails-because-the-mode",
   "done_when": "When a Codex turn fails with a capacity or overloaded error, Forge waits and retries the same turn a few times with backoff before reporting the failure.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T07:13:33+00:00",
