@@ -69,7 +69,10 @@ def _family(model: str) -> str:
 def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
     """(model, effort) for a role on this host; "" leaves it out so the session's own applies."""
     models = cfg.get("models", {})
-    entry = repo.design_models({"models": models}, family) if kind == "design" else models.get(kind, {})
+    # A kind with no entry for this family gets none: the role inherits the session's settings.
+    entry = models.get(kind, {})
+    if kind == "design":
+        entry = entry.get(family, {})
     model, effort = entry.get("model", ""), entry.get("effort", "")
     if family == "claude" and effort == "ultra":
         effort = "max"
