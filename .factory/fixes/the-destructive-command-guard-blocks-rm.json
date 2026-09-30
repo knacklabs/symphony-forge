@@ -3,7 +3,7 @@
   "branch": "fix/the-destructive-command-guard-blocks-rm",
   "done_when": "The guard allows rm -rf when every target, resolved, is inside the system temp folder (TMPDIR, /tmp or /private/tmp), and allows reading git config values (git config --get, or git config with a key and no value); everything it blocks today otherwise stays blocked.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T03:30:33+00:00",
