@@ -3,11 +3,32 @@
   "branch": "fix/workers-build-client-apps-with-forge-s-s",
   "done_when": "Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the reviewer checks the change against, and the review reports a change that breaks one of its rules as a finding that names the rule. A test runs a review through Forge's command and shows the page's text reaches the reviewer.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "b98ce0dcba99a96812f8548fd9ab4fe90fb5db76e659d77a097fb3706d8ce4c6",
+    "commit": "5d3bcd194b5c9c280cd615041086ee6aa0676f50",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new tests inspect the text that the Autoreview stub reads from `--prompt-file`; they do not show that the reviewer receives it. The stub logs the file before launching Codex (`tests/stubs/autoreview:23-29`), while the Codex stub records only its folder and commit (`tests/test_close.py:24-31`). A helper that drops the prompt file would still pass these tests. The tests also supply a fixed clean report, so they never show a standards-breaking change producing a finding that names the rule. The required command-level test needs to observe the reviewer\u2019s prompt and its finding for a violating change.",
+        "file": "tests/test_fix_workers_build_client_apps_with_forge_s_s.py",
+        "line": 15,
+        "priority": "P1",
+        "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the r\u2026"
+      }
+    ],
+    "status": "blocked",
+    "tree": "599ae0680b64ca6339ad6e5d126a6d03a466c8ad11c26309f742a4c58886e093"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T08:35:22+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers build client apps with Forge's standards page in their brief, but the review never sees it, so a change that breaks one of its rules (API shapes, errors, data, frontend, tests, secrets, infrastructure) passes review"
