@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T20:40:51+00:00
-read_hash: f3662a1403f50cfb4ba193c5c34e1eeddbc33d65
-round: 2
+read_at: 2026-09-30T20:52:00+00:00
+read_hash: 6400e00ba6663e46fba0a474efdf19a34f3321cf
+round: 3
 passed: no
-doc_seen: f3662a1403f50cfb4ba193c5c34e1eeddbc33d65
+doc_seen: 6400e00ba6663e46fba0a474efdf19a34f3321cf
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 096dd157aa3dde18a53b00ca66bed63ede27c77c
+notes_seen: 1f5cdccc5370eaebfc531d335ad7beefda4cfcff
 ---
 # Cold read notes
 
@@ -101,4 +101,18 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 20. Unproven: item 4: detached HEAD remains uncovered from finding 11.
     The refusal is now specified, but no listed FILES case proves that doctor leaves files and the index untouched and retains the drift rows on detached HEAD.
+    Disposition: cut
+
+## Round 3
+
+21. Finding 14 remains open: `close._synced` does not protect hand edits before close runs.
+    Doctor also repairs branches in place. A local commit can change the pin and a skill by hand, then run doctor before close; the proposed rule overwrites that skill. [`close._synced`](/src/forge/close.py:206) is a later gate, not evidence that this commit contains generated text. Protect this state and prove it in FILES.
+    Disposition: cut
+
+22. Unproven: item 4: rollback removes newly created files when failure occurs before staging.
+    A missing generated file can be created before a later write fails. It then exists in neither HEAD nor the index, so the specified restore command cannot recover the original absence using its [tracked-file restoration semantics](https://git-scm.com/docs/git-restore). Pin cleanup of paths created by this run and test this failure in FILES.
+    Disposition: cut
+
+23. Item 3’s safety check can omit untracked files because of Git settings.
+    [`status.showUntrackedFiles=no`](https://git-scm.com/docs/git-status) suppresses untracked entries unless the command explicitly overrides it. The specified command could therefore qualify a worktree containing user files for forced deletion. Require explicit untracked reporting compatible with the cache rule, and test that setting in REPAIRS.
     Disposition: cut
