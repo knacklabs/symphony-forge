@@ -1,0 +1,69 @@
+{
+  "allow_large": "The owner picked this fix on 2026-09-29 (Forge's repo runs current code); its only home is the command entry in src/forge/cli.py, which the hook treats as an interface file",
+  "base": "3a7bcb40090c2bb9c82ee210fb33ef9cb8ce070a",
+  "branch": "fix/in-forge-s-own-repo-a-forge-installed-ea",
+  "done_when": "In Forge's own repo, a forge command whose installed code differs from the checkout's src/forge runs the checkout's own code instead, and says so once; a test runs forge from an older install inside a newer checkout and sees the checkout's version answer",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "150acf676ecb3314f029d4e6539f0502577da635fbb679e777bd4eb740d89b49",
+    "commit": "0d8f2531956816e6e0c5dd7326c0d74ec666f2dd",
+    "dismissals": [
+      {
+        "because": "src/forge/cli.py:71 no change can alter code already installed; an install made before this fix redirects after one reinstall, and every install from then on runs the checkout's current code",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_in_forge_s_own_repo_a_forge_installed_ea.py:26 the behaviour under test is this fix's redirect, which only exists from this version on; an older install without it can't be made to redirect, so the test simulates an older version number with the redirect present",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "The installed command must execute this new branch of `_run` to redirect. The selected base's `src/forge/cli.py` goes directly from `_run` to argument parsing, and `pyproject.toml:16` points the installed `forge` command at that module. An installation made before this fix therefore still runs its old code and prints its installed version inside the newer checkout; changing the checkout cannot make that installed entry point reach this code.",
+        "file": "src/forge/cli.py",
+        "line": 71,
+        "priority": "P1",
+        "title": "Not done: In Forge's own repo, a forge command whose installed code differs from the checkout's src/forge runs the checkout's own code\bin\u0000"
+      },
+      {
+        "body": "`_install` calls `_forge_code`, which copies this branch's current `src/forge` into the simulated install and changes only its version string. The alleged older install therefore already contains the new redirect. This test passes even though an actual pre-fix installation never reaches that redirect, so the required older-install scenario has no effective end-to-end test.",
+        "file": "tests/test_fix_in_forge_s_own_repo_a_forge_installed_ea.py",
+        "line": 26,
+        "priority": "P1",
+        "title": "Not done: Test with an actual older Forge installation"
+      },
+      {
+        "body": "Every invocation now calls `repo.run(\"git\", ...)` before parsing arguments. `repo.run` refuses when an executable is absent from `PATH` (`src/forge/repo.py:65-73`), so even `forge --version` and `forge --help` fail without Git. Both options previously ran through argument parsing without launching Git. Restrict checkout detection to commands and environments where Git is available, or let these informational options bypass it.",
+        "file": "src/forge/cli.py",
+        "line": 73,
+        "priority": "P2",
+        "title": "Keep version and help usable when Git is unavailable"
+      }
+    ],
+    "status": "clean",
+    "tree": "2e367088073846546886cabd585b3ae7047a9b615453e74981cb0b7a1faf0153"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T18:00:55+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T19:06:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T19:16:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T00:44:10+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "In Forge's own repo a forge installed earlier from the checkout keeps running old code after changes merge, so it can write reviews in an old format that CI rejects"
+}
