@@ -6,14 +6,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "a89eeea6202b223cd5f6b1e80b5daf620dfc7803d914fef269459fe35788f57d",
-    "commit": "dc4ca684a5be0b57447b46c58c1780c7458b8f06",
+    "changed": "e465b2c6469d5c4197f91649ab0cc01d17c2e55fce6c932515b7871d3370acf0",
+    "commit": "2cecd160c6f72a9bb54d625be27c52a50d3d02d7",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "2537dad18b781677b6c2f3267583b5d4bd7751b26a72c8acdd636bc1d6eb8182"
+    "findings": [
+      {
+        "body": "The branch changes the generated review setting and the model required for client sign-off, but changes neither `src/forge/templates/skill.md` nor `src/forge/templates/brief.md`. The supplied repository review rule, also present at `AGENTS.md:53\u201355`, explicitly requires one of those templates to be updated when a setting changes. Updating `docs/guide.md` alone does not satisfy that requirement. Document the new review defaults and sign-off pin in the coordinator template in this change.",
+        "file": "src/forge/review.py",
+        "line": 477,
+        "priority": "P1",
+        "title": "Update an agent-facing template for the changed review settings"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c6a71965fd7b57f424b8504529b606ae8d77b94b66d682a18f60148d6c272318"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T11:47:46+00:00",
@@ -25,6 +33,10 @@
     },
     {
       "at": "2026-09-30T18:52:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T19:36:35+00:00",
       "step": "review"
     }
   ],
