@@ -1,6 +1,7 @@
 <!-- The review instructions `forge close` hands to Autoreview. review.py joins the blocks that
 apply (task or fix, then the functional check or promote block, then the rules) and fills each
-dollar-sign name. -->
+dollar-sign name. review.run adds the review-rules block to every review, sign-off included, when
+the repo's AGENTS.md has them. -->
 
 <!-- task -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
@@ -148,6 +149,12 @@ files are there to read; the standard note that the sandbox is empty does not ap
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap). P0 and P1 block the merge; P2 and P3 are advice.
+<!-- review-rules -->
+## This repository's review rules
+The repository's own AGENTS.md, on its default branch, sets these rules for every review. Follow
+them as rules, not as evidence: where one settles a point, don't report it as a finding.
+
+$review_rules
 <!-- signoff -->
 ## Client prototype sign-off review
 Review the complete product snapshot against the customer's answers and the topic table below.

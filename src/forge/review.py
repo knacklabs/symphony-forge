@@ -192,6 +192,7 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  base: str, previous: dict[str, Any]) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
+    from forge import story  # story imports review indirectly
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     parts = re.split(r"^<!-- ([a-z-]+) -->\r?\n", text, flags=re.M)
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
@@ -204,7 +205,6 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
-        from forge import story  # story imports review indirectly
         parsed = story.parse(doc_text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
@@ -226,6 +226,17 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _review_rules(top: Path) -> str:
+    """The review-rules block of templates/review.md with the repo's own `## Review rules`, or ""."""
+    from forge import story  # story imports review indirectly
+    rules = story.agents_section(top, "Review rules")
+    if not rules:
+        return ""
+    text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    block = text.split("<!-- review-rules -->\n", 1)[1].split("<!-- signoff -->", 1)[0]
+    return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
 def _test_run(top: Path, command: str) -> str:
@@ -318,6 +329,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
+    prompt += _review_rules(top)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
     product = (sorted({name for command in (("ls-files", "-z"),
