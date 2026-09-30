@@ -76,7 +76,8 @@ def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
     model, effort = entry.get("model", ""), entry.get("effort", "")
     if family == "claude" and effort == "ultra":
         effort = "max"
-    return (model if model and _family(model) == family else ""), effort
+    # A design entry is already the host's own; other kinds name one model for both hosts.
+    return (model if model and (kind == "design" or _family(model) == family) else ""), effort
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
@@ -91,7 +92,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         model, effort = _chosen(cfg, kind, "claude")
         wanted[f".claude/agents/{name}.md"] = "".join([
             f"---\n# {MARK}\n", f"name: {name}\n", f"description: {json.dumps(description)}\n",
-            f"model: {model}\n" * bool(model), f"effort: {effort}\n" * bool(effort),
+            # Quoted, so no value from forge.toml can add a line such as tools to the frontmatter.
+            f"model: {json.dumps(model)}\n" * bool(model),
+            f"effort: {json.dumps(effort)}\n" * bool(effort),
             f"---\n\n{instructions}\n"])
     return wanted
 

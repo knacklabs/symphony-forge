@@ -77,6 +77,16 @@ def test_1_sync_writes_eleven_roles_for_both_hosts_from_forge_toml(repo):
         assert set(claude) <= {"name", "description", "model", "effort"}
         for old in ("constitution", "write scope", "Luna/max"):
             assert old not in instructions
+        # Today's rules: building roles test first, commit and never push or merge; the rest
+        # change nothing.
+        rules = (("Write the end-to-end test first and watch it fail",
+                  "A file outside the task's Scope that the change needs you may change; name it "
+                  "and why in your handoff.",
+                  "commit your own work with a short plain-English message",
+                  "never commit to the default branch, skip the git hooks, push or merge")
+                 if ROLES[name] == "build" else ("Change no files",))
+        for rule in rules:
+            assert rule in instructions, (name, rule)
     # Every role's (model, effort) on each host, from its kind; None means left out, so the
     # session's own applies. A model of the other family is left out while its effort stays, and
     # Codex's ultra becomes max on Claude. Review sets no effort, so none is written.
@@ -140,3 +150,20 @@ def test_4_a_kind_missing_from_forge_toml_leaves_model_and_effort_out(repo):
     for name in ("planner", "architect"):
         assert _settings(repo.path, name) == ((None, None), (None, None)), name
     assert _settings(repo.path, "worker") == ((None, "medium"), ("claude-opus-5-5", "medium"))
+
+
+def test_5_a_value_from_forge_toml_stays_one_setting_and_design_keeps_its_own_model(repo):
+    # An escaped newline in a valid TOML string must not add a tools line to a Claude role, and
+    # a design entry's model is used as given, whatever its name looks like.
+    models = MODELS.replace('model = "opus"', 'model = "custom-opus"').replace(
+        'effort = "medium"', 'effort = "medium\\ntools: Bash"', 1)
+
+    assert _synced(repo, models).returncode == 0
+
+    for name in ROLES:
+        text = (repo.path / f".claude/agents/{name}.md").read_text(encoding="utf-8")
+        front = text.split("---\n")[1]
+        assert not re.search(r"^tools:", front, re.M) and "permissionMode" not in front, name
+    assert _claude(repo.path, "worker")[0]["effort"] == "medium\\ntools: Bash"
+    for name in ("planner", "architect"):
+        assert _settings(repo.path, name)[1] == ("custom-opus", "high"), name
