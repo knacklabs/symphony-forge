@@ -15,17 +15,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests.
+        # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests,
+        # and twice the time limit.
         include:
-          - {os: ubuntu-latest, group: 1, groups: 1}
-          - {os: macos-latest, group: 1, groups: 2}
-          - {os: macos-latest, group: 2, groups: 2}
-          - {os: windows-latest, group: 1, groups: 3}
-          - {os: windows-latest, group: 2, groups: 3}
-          - {os: windows-latest, group: 3, groups: 3}
+          - {os: ubuntu-latest, group: 1, groups: 1, timeout: 10}
+          - {os: macos-latest, group: 1, groups: 2, timeout: 10}
+          - {os: macos-latest, group: 2, groups: 2, timeout: 10}
+          - {os: windows-latest, group: 1, groups: 3, timeout: 20}
+          - {os: windows-latest, group: 2, groups: 3, timeout: 20}
+          - {os: windows-latest, group: 3, groups: 3, timeout: 20}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: 10
+    timeout-minutes: ${{ matrix.timeout }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
