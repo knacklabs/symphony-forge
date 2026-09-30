@@ -1,0 +1,14 @@
+{
+  "base": "16501ab76486f78092556a86a3db014758318b71",
+  "branch": "fix/plan-reads-raise-many-false-alarms-becau",
+  "done_when": "The cold-read instructions (src/forge/templates/cold-read.md) say a finding must name a concrete gap a builder would hit or a bug that would ship, with the file or Done-when item that shows it. Edge cases, platforms and traps are reported only where this story's own change meets them, never as a general checklist. Behaviour the story doesn't change is not a finding, and a story with no linked spec is not a finding. The rules against dropping validation, security, data-loss protection or accessibility, and the one-way-step and moving-parts checks, stay as they are.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T09:44:00+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Plan reads raise many false alarms because the read instructions ask for every possible edge case, platform and trap with a test for each: most of Sol 6.1's false alarms in today's benchmark were test wishlists, generic Windows or network traps, existing behaviour the story doesn't change, and a story having no linked spec"
+}
