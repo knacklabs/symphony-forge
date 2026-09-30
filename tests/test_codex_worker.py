@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import uuid
 from pathlib import Path
 
@@ -147,9 +148,9 @@ def _lines(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text("utf-8").splitlines()]
 
 
-def _running(pid: int, before: int | None = None) -> bool:
-    """Whether the process runs. On Windows, where a gone process's id soon passes to another, only
-    a process that started no later than `before`, a Windows start time, counts."""
+def _started(pid: int) -> int | None:
+    """When the process with this id started, while it runs: a Windows start time there, the second
+    elsewhere, as the stub app-server logs its own. None once no process has the id."""
     if os.name == "nt":
         import ctypes
         from ctypes import wintypes
@@ -162,26 +163,34 @@ def _running(pid: int, before: int | None = None) -> bool:
         # PROCESS_QUERY_LIMITED_INFORMATION and SYNCHRONIZE, to read its start time and wait on it
         handle = kernel32.OpenProcess(0x1000 | 0x100000, False, pid)
         if not handle:  # no process has the id, or one of another user's
-            return False
+            return None
         try:
-            running = kernel32.WaitForSingleObject(handle, 0) == 0x102  # WAIT_TIMEOUT: not ended
+            if kernel32.WaitForSingleObject(handle, 0) != 0x102:  # WAIT_TIMEOUT: not ended
+                return None
             created = wintypes.FILETIME()
             kernel32.GetProcessTimes(handle, ctypes.byref(created),
                                      *(ctypes.byref(wintypes.FILETIME()) for _ in range(3)))
         finally:
             kernel32.CloseHandle(handle)
-        started = created.dwHighDateTime << 32 | created.dwLowDateTime
-        return running and (before is None or started <= before)
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+        return created.dwHighDateTime << 32 | created.dwLowDateTime
+    said = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True,
+                          env={**os.environ, "LC_ALL": "C"}).stdout
+    if not said.strip():
+        return None
+    return int(time.mktime(time.strptime(" ".join(said.split()), "%a %b %d %H:%M:%S %Y")))
+
+
+def _running(pid: int, before: int | None = None) -> bool:
+    """Whether the process runs. A process id soon passes to another process once its own has
+    gone, on Windows above all, so with `before` only a process that started no later counts."""
+    started = _started(pid)
+    return started is not None and (before is None or started <= before)
 
 
 def _left(work_log: Path, calls: Path) -> bool:
-    """Whether the app-server the latest forge work reported in its log still runs. On Windows it
-    is the stub's launcher, which started before the stub: a later process with its id is another."""
+    """Whether the app-server the latest forge work reported in its log still runs. It started no
+    later than the stub (on Windows it is the stub's launcher): a later process with its id is
+    another."""
     pid = [line for line in work_log.read_text("utf-8").splitlines()
            if line.startswith("Codex app-server: process ")][-1].rpartition(" ")[2]
     return _running(int(pid), [call for call in _stub(calls) if "pid" in call][-1]["started"])

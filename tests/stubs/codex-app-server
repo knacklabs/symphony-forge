@@ -72,10 +72,16 @@ def finish_turn(config, status):
 
 
 def started():
-    """When this process started, as Windows counts it; None elsewhere. Windows soon hands a gone
-    process's id to another one, so a test tells its launcher from a later process by this."""
+    """When this process started: a Windows start time there, the second elsewhere. A process id
+    soon passes to another process once its own has gone, so a test tells its launcher from a
+    later process by this."""
     if os.name != "nt":
-        return None
+        import subprocess
+        import time
+
+        said = subprocess.run(["ps", "-o", "lstart=", "-p", str(os.getpid())], capture_output=True,
+                              text=True, env={**os.environ, "LC_ALL": "C"}).stdout
+        return int(time.mktime(time.strptime(" ".join(said.split()), "%a %b %d %H:%M:%S %Y")))
     import ctypes
     from ctypes import wintypes
 
