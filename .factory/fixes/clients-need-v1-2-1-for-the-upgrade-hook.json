@@ -1,0 +1,14 @@
+{
+  "base": "f269e9eca29a10c761c4f94eefe91a169a33bec8",
+  "branch": "fix/clients-need-v1-2-1-for-the-upgrade-hook",
+  "done_when": "Forge's version is 1.2.1 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that track the current version), so the v1.2.1 tag installs as 1.2.1",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T02:54:08+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.1 for the upgrade hook-file fix, Codex workers without approval blocks, and the new model defaults"
+}
