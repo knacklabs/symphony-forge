@@ -3,11 +3,46 @@
   "branch": "fix/close-reruns-the-full-test-command-even",
   "done_when": "Close skips the test command, and says so, when the committed tree is identical to one whose test run already passed on this machine, and only one close on a machine runs the test command at a time while the others wait and say so.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "c41e809a298899ff5b78a509ff4c9b20b0b3c8c7c6381da3e5dd55b10cd0c5c1",
+    "commit": "1cc05cdd90ff3bc3a45190d2625aa147e670ce8f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The skip message is printed only inside `_test_run`. After a successful review, a repeat `forge close` can reuse that review: `close.py:79-87` sets `fresh` and does not call `review.run`, so `_test_run` is never reached. The test command is skipped, but close does not say so. Emit the skip message on this normal repeat-close path too.",
+        "file": "src/forge/review.py",
+        "line": 252,
+        "priority": "P1",
+        "title": "Not done: Close skips the test command, and says so, when the committed tree is identical to one whose test run already passed on this mac\u2026"
+      },
+      {
+        "body": "The skip test makes the first review fail twice, forcing the second close through `_test_run` again. It never covers a first close with a completed review followed by an unchanged close. That normal path bypasses `_test_run` and currently omits the required message. Add an end-to-end `forge close` assertion for that path.",
+        "file": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+        "line": 48,
+        "priority": "P1",
+        "title": "Not done: a repeat close with a retained green review reports the test skip"
+      },
+      {
+        "body": "The cleanliness check explicitly ignores untracked files. For example, after a cached `pytest tests` pass, adding an untracked `tests/test_new_case.py` leaves both `HEAD^{tree}` and this check unchanged, so close reports a prior pass without running the newly discovered test. This is separate from the ruling about the committed-tree cache key: the untracked file is excluded from both that key and this cleanliness check.",
+        "file": "src/forge/review.py",
+        "line": 249,
+        "priority": "P2",
+        "title": "Untracked tests can be skipped by a cached pass"
+      }
+    ],
+    "status": "blocked",
+    "tree": "58c02a04f0941f99ef20e5d76e4456fc3c0b9a0a5782c76342430eecc4fb7d2b"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T07:12:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T09:36:35+00:00",
+      "step": "review"
     }
   ],
   "why": "Close reruns the full test command even when nothing changed since the last green run, and parallel closes run the suite all at once, loading the machine into false hook timeouts"
