@@ -3,7 +3,7 @@
   "branch": "fix/close-reruns-the-full-test-command-even",
   "done_when": "Close skips the test command, and says so, when the committed tree is identical to one whose test run already passed on this machine, and only one close on a machine runs the test command at a time while the others wait and say so.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T07:12:37+00:00",
