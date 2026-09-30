@@ -3,11 +3,24 @@
   "branch": "fix/forge-init-and-a-migration-s-close-stop",
   "done_when": "When GitHub answers that the repo's plan doesn't offer branch protection (for example 'Upgrade to GitHub Pro or make this repository public'), forge init and a migration's close print one plain line saying protection was skipped because the plan doesn't offer it and that Forge's own close and merge still wait for the checks, then carry on; forge doctor says the same instead of comparing checks. Every other protection failure still refuses as today. Command-level tests with a fake gh cover the plan answer on init, on a migration's close and in doctor, and that another error still refuses.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "0e895869bbe1a993e68b00d3ac2961d050c593cbadd598583ba2c6ac941137f5",
+    "commit": "0c9f117b684880b3596facbef5a6daa2cd434e3d",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "29e56002e9f43f64b5397510127f8e6c517772d8ed3ad36042835c86bb225174"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T12:26:30+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T15:47:38+00:00",
+      "step": "review"
     }
   ],
   "why": "forge init and a migration's close stop with an error when GitHub doesn't offer branch protection for the repo, as on free plans with private repositories, so setup can't finish there"
