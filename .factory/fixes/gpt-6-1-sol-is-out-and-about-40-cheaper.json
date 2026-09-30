@@ -1,0 +1,14 @@
+{
+  "base": "ca1d108ed6080f1641c87b9e474f985be90e62f1",
+  "branch": "fix/gpt-6-1-sol-is-out-and-about-40-cheaper",
+  "done_when": "Workers, fixes, design and the cold reader default to gpt-6.1-sol at their current efforts (this repo's forge.toml and forge init's defaults), while reviews, the light prototype review and the sign-off review stay on gpt-6-sol; Luna stays gpt-6-luna; the Codex SDK pin is 0.159.2, matching the Codex CLI; forge doctor passes and tests check the defaults, the review pins and the SDK pin",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T01:10:28+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "GPT-6.1 Sol is out and about 40% cheaper at the same speed, but in side-by-side reviews it missed or under-rated known blocking problems that GPT-6 Sol caught"
+}
