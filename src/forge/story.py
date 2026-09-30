@@ -237,7 +237,7 @@ def read(args: Any) -> int:
         numbers = itertools.count(max(blocks, default=0) + 1)
         said = FINDING.sub(lambda match: f"{next(numbers)}.{match[0][-1]}",
                            said if FINDING.search(said) else f"1. {said}")
-    model = repo.models(config, "grill", reader)["model"]
+    model = repo.models(config, "grill", reader).get("model", "its own default model")
     record = {"reader": f"{reader} ({model})" + (
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
                   if reader == here else ""),

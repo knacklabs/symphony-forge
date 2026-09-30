@@ -101,8 +101,11 @@ The same file holds a `[models]` table: `[models.build]` for the first task buil
 `[models.fix]` for later fix rounds, `[models.lite]` for quick fixes,
 `[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
 Autoreview. Build, fix, lite and grill set a model and reasoning effort; review sets its model.
-Building and fixing can also set the subagents' model and effort. Ask your agent to change these
-settings in a fix.
+Building and fixing can also set the subagents' model and effort. Build, fix, lite and review may
+instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
+single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
+kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
+uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
 
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
 uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at

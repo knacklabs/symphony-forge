@@ -353,9 +353,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
                 "--json-output", str(out)]
         # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
-        # on Codex, or its Claude cold-read model when only Claude is installed.
-        chosen = (repo.models(cfg, "grill", "claude") if engine == "claude" else
-                  {"model": "gpt-6-sol", "effort": "medium"} if light else cfg["models"].get("review"))
+        # for the engine's family, and on Claude with no Claude review entry, its Claude cold-read model.
+        chosen = ({"model": "gpt-6-sol", "effort": "medium"} if light and engine == "codex" else
+                  repo.models(cfg, "review", engine)
+                  or (repo.models(cfg, "grill", "claude") if engine == "claude" else {}))
         if chosen:
             argv += ["--model", f"{engine}={chosen['model']}"]
             argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []

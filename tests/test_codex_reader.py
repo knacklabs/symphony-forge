@@ -61,15 +61,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert repo.forge("read", "SHOP").stderr == COORDINATOR
     assert unchanged() and not stub.exists() and not claude.exists()
 
-    # Under Claude Code the reader is Codex, and the grill kind needs Codex's own entry; the grill
-    # kind has one entry per family.
+    # Under Claude Code the reader is Codex; the grill kind has one entry per family.
     monkeypatch.delenv("CODEX_THREAD_ID")
-    for models, problem in (
-            ({"grill.claude": GRILL["grill.claude"]}, "it has no [models.grill.codex], which this work uses"),
-            ({"grill": GRILL["grill.claude"]},
-             "models.grill has one entry per family, codex and claude, so it can't set model")):
-        toml.write_text(_toml(version, "claude", models), encoding="utf-8")
-        assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(problem)
+    toml.write_text(_toml(version, "claude", {"grill": GRILL["grill.claude"]}), encoding="utf-8")
+    assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(
+        "models.grill has one entry per family, codex and claude, so it can't set model")
     toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
