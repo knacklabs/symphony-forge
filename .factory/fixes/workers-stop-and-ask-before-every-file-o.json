@@ -5,27 +5,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f80ee68df1979a65351a9679bca04f4570f4384179ae635b47edc6adf5ed6aa6",
-    "commit": "fd91c6d35d85c2b93288ada9bc6997c660d010c1",
+    "changed": "6eb524d944701f0981645e2248d6965332969d02569a867a56362b475479d204",
+    "commit": "b95d5630c256d0f47e5bf4b46096860acec44d63",
     "dismissals": [],
     "findings": [
       {
-        "body": "The changed conditional rule is followed by unconditional instructions in this same file: line 32 requires an HTTP test for an item with no UI, and line 50 requires a Playwright test for every user-facing item. The worker brief points workers to this testing convention at src/forge/templates/brief.md:174-175. A settings or documentation item can therefore still be assigned an end-to-end test instead of its named check. These two instructions are new evidence beyond the unconditional lines addressed in the previous review.",
-        "file": "src/forge/templates/conventions/testing.md",
-        "line": 25,
+        "body": "The brief still says at lines 101\u2013103 to write a test at the user boundary for every Done-when item, then run it and watch it fail. That applies even when a settings, docs, deletion, or test-only item names a different check. The new runtime-only rule at lines 112\u2013115 therefore does not remove the extra test requirement that this fix is meant to remove.",
+        "file": "src/forge/templates/brief.md",
+        "line": 102,
         "priority": "P1",
-        "title": "Not done: Nonruntime items still trigger end-to-end test rules"
+        "title": "Not done: Nonruntime items still require a new boundary test"
       },
       {
-        "body": "This test checks that the conditional sentence appears in the generated brief, but it passes while src/forge/templates/conventions/testing.md:32 and :50 still impose unconditional HTTP and Playwright tests. The test named for asking end-to-end tests only for runtime behaviour therefore misses a real contradiction in the guidance workers are directed to read. Extend the command-level check to cover that guidance.",
+        "body": "This command-level test checks for the new conditional sentence but passes while the generated brief still unconditionally requires a new boundary test for each item at src/forge/templates/brief.md:101\u2013103. It does not catch the remaining contradiction in the behavior it names.",
         "file": "tests/test_outside_scope_and_runtime_tests.py",
-        "line": 59,
+        "line": 74,
         "priority": "P1",
-        "title": "Not done: Test the complete nonruntime testing guidance"
+        "title": "Not done: Test the complete nonruntime brief guidance"
       }
     ],
     "status": "blocked",
-    "tree": "365b25ad3df3b5903a1bc0eacc2712abeeedde4d986abfeaa5644b45a2b67e9d"
+    "tree": "1af598797d16898211a622ca375c2163400bdd6379f636c8429096b39daceaf0"
   },
   "status": "fixing",
   "steps": [
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-09-30T05:35:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T06:23:59+00:00",
       "step": "review"
     }
   ],
