@@ -22,9 +22,10 @@ test = "npm ci && npx playwright install --with-deps chromium && docker compose 
 
 ## End-to-end tests
 
-Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-for client apps, the running API with a real database and user flows in a browser through
-Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+Every Done-when item needs an end-to-end test through the real entry point when it changes runtime
+behaviour: Forge's own command; for client apps, the running API with a real database and user
+flows in a browser through Playwright. Settings, docs, deletions and test-only items are proven by
+the check the item names. Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Review reports an item proven only by unit tests as a P1
 `Not done` and never asks for unit tests of helpers.
 

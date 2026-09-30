@@ -39,9 +39,17 @@ def test_1_worker_changes_needed_outside_scope_files_and_names_them(repo):
 
 
 def test_2_review_reports_only_outside_scope_files_the_work_does_not_need(env):
-    item, _ = env.start_task()
+    env.repo.write("tests/test_old.py", "def test_old():\n    assert True\n")
+    env.repo.git("add", "tests")
+    env.repo.git("commit", "-q", "-m", "Add an existing test")
+    env.repo.git("push", "-q", "origin", "main")
+    item, _ = env.start_task(changes={"app.py": "print('saved')\n",
+                                      "tests/test_old.py": "def test_old():\n    assert False\n"})
     assert env.close(item).returncode == 0
     scope = flat(env.prompt().split("## Scope", 1)[1].split("\n## ", 1)[0])
+    # Every changed file outside Scope and Tests is listed, a changed existing test included, so
+    # the reviewer judges whether the work needed it.
+    assert "- tests/test_old.py" in scope
     assert "Report only the files outside Scope that the work doesn't need" in scope
     assert "Check the worker's handoff names each such file and why" in scope
 

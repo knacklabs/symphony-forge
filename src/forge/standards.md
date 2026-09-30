@@ -233,8 +233,8 @@ default-stack conventions, which apply only to a repo on the default stack.
   and user flows in a browser through Playwright. Settings, docs, deletions and test-only items
   are proven by the check the item names. Each bug fix adds a test that fails without the fix. Fake only third-party services
   at their edge.
-- Each user-facing Done-when item gets one Playwright browser test; an item with no UI gets an HTTP
-  test against the running app and a real database.
+- Each user-facing Done-when item gets one Playwright browser test when it changes runtime
+  behaviour; such an item with no UI gets an HTTP test against the running app and a real database.
 - Unit tests are only for pure logic with many cases, never an item's only proof. Review reports
   an item proven only by unit tests as a P1 `Not done` and never asks for unit tests of helpers.
 - Tests build their own data with factories, own that data, don't depend on order, and never sleep.

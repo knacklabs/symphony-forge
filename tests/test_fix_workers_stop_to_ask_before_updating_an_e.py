@@ -78,11 +78,12 @@ def test_2_close_excludes_existing_tests_and_flags_weakened_tests(env):
     prompt = env.prompt()
     outside = prompt.split("Files the branch changes outside that scope", 1)[1].split(
         "## Done when", 1)[0]
+    # Changed existing tests were once left off this list; now every changed file outside Scope
+    # is listed, and the review's rule reports only those the work doesn't need.
     for path in ("tests/test_old.py", "web/test_board.py", "src/component.test.ts",
                  "src/component.spec.ts", "web/board_test.py", "web/tests/board.py",
-                 "tests/check_api.mjs", "tests/check_api.cjs", "tests/test_api.sh"):
-        assert path not in outside
-    for path in ("tests/test_new.py", "web/test_new.py", "tests/fixtures/data.txt",
+                 "tests/check_api.mjs", "tests/check_api.cjs", "tests/test_api.sh",
+                 "tests/test_new.py", "web/test_new.py", "tests/fixtures/data.txt",
                  "other.py"):
         assert f"- {path}" in outside
     assert "Report a test weakened to hide a real defect as a P1 finding." in prompt
