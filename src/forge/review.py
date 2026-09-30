@@ -228,10 +228,18 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
-    values["review_rules"] = story.agents_section(top, "Review rules")
-    if values["review_rules"]:
-        chosen.append("review-rules")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
+
+
+def _review_rules(top: Path) -> str:
+    """The review-rules block of templates/review.md with the repo's own `## Review rules`, or ""."""
+    from forge import story  # story imports review indirectly
+    rules = story.agents_section(top, "Review rules")
+    if not rules:
+        return ""
+    text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    block = text.split("<!-- review-rules -->\n", 1)[1].split("<!-- signoff -->", 1)[0]
+    return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
 def _test_run(top: Path, command: str) -> str:
@@ -334,6 +342,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
+    prompt += _review_rules(top)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
     product = (sorted({name for command in (("ls-files", "-z"),

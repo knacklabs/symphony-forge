@@ -1,6 +1,7 @@
 <!-- The review instructions `forge close` hands to Autoreview. review.py joins the blocks that
-apply (task or fix, then the functional check or promote block, then the rules, then the repo's
-review rules when its AGENTS.md has them) and fills each dollar-sign name. -->
+apply (task or fix, then the functional check or promote block, then the rules) and fills each
+dollar-sign name. review.run adds the review-rules block to every review, sign-off included, when
+the repo's AGENTS.md has them. -->
 
 <!-- task -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:

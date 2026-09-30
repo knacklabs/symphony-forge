@@ -1,7 +1,10 @@
 """Every review gets the repo's own `## Review rules` from AGENTS.md on the default branch."""
 from __future__ import annotations
 
+import json
+
 from test_close import env  # noqa: F401 (pytest fixture)
+from test_proto_signoff import SOL_HIGH, _client, _decision
 
 STORY = "FIX-A-REPO-S-OWN-REVIEW-RULES-SUCH-AS-WHICH"
 
@@ -57,3 +60,23 @@ def test_3_the_skill_and_agents_template_tell_clients_the_section_exists(env):
         skill = flat((env.repo.path / host / "skills/forge/SKILL.md").read_text("utf-8"))
         assert ("A rule every review must follow, such as which tests a kind of change needs, goes "
                 "under `## Review rules` in AGENTS.md, outside Forge's block") in skill
+
+
+def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_path, monkeypatch):
+    fix, answers, queue = _client(repo, tmp_path, monkeypatch)
+    repo.write("AGENTS.md", AGENTS)
+    repo.git("add", "AGENTS.md")
+    repo.git("commit", "-q", "-m", "Write the review rules")
+    repo.git("push", "-q", "origin", "main")
+    _decision(fix, answers, via="", on="")
+    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "scoped-clean",
+                                                              "findings": []}}]))
+    reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert reviewed.returncode == 0, reviewed.stderr
+    [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    prompt = call["args"][call["args"].index("--prompt") + 1]
+    assert "## Client prototype sign-off review" in prompt
+    rules = _rules_in(prompt)
+    assert "- A copy change needs no new test." in rules
+    for leaked in ("Forge's own line.", "Be kind."):
+        assert leaked not in rules, leaked
