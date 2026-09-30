@@ -13,12 +13,12 @@ nothing more.
   only what is committed.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
-  only for a one-way step, a security question, a path outside your Scope (except an existing test
-  your intended change breaks), a new moving part, or
-  Done-when items that contradict each other; then say plainly what is wrong and what you need.
-- When finishing needs a path outside Scope other than an existing test your intended change
-  breaks, or a choice this item does not settle, end your final message with a paragraph starting
-  `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
+  only for a one-way step, a security question, a new moving part, or Done-when items that
+  contradict each other; then say plainly what is wrong and what you need.
+- You may change a file outside your Scope that the change needs, such as a caller, a type or an
+  existing test it breaks; name each such file and why in your handoff.
+- When finishing needs a choice this item does not settle, end your final message with a
+  paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
 
 <!-- if coordinator -->
 ## From the coordinator
@@ -54,10 +54,10 @@ $done
 
 $row
 
-It covers Done-when items $covers. Change only the paths in its Scope ($scope), and add or change
-the tests it names ($tests). You may also update an existing test your intended change breaks,
-even outside Scope; name each such test and why it changed in your handoff, and never weaken a
-test to hide a defect. The other Done-when items are context, not your job.
+It covers Done-when items $covers. Change the paths in its Scope ($scope), and add or change the
+tests it names ($tests). A file outside Scope that the change needs, an existing test it breaks
+included, you may change too; name each and why in your handoff, and never weaken a test to hide
+a defect. The other Done-when items are context, not your job.
 
 Existing tests that name a file or folder in your Scope, which must still pass: $existing_tests.
 
@@ -99,7 +99,8 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
 
 For each Done-when item you cover, write one test at the boundary the user touches, named for the
-item. Run it and watch it fail, then build until it passes. Never edit or delete a test to make it
+item. Name a new test file after the behaviour it proves, never after the fix's slug. Run it and
+watch it fail, then build until it passes. Never edit or delete a test to make it
 pass; if a test is wrong, say so. A test whose result a stub or fake decides proves nothing. Use
 the test-audit skill whenever you write or change a test. Run the repo's test command before you
 stop.
@@ -108,9 +109,10 @@ You may update tests when Done-when deliberately changes behaviour: explain the 
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
 unrelated only with a matching failure on the default branch; otherwise treat it as unresolved.
 
-Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-for client apps, the running API with a real database and user flows in a browser through
-Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+Every Done-when item needs an end-to-end test through the real entry point when it changes runtime
+behaviour: Forge's own command; for client apps, the running API with a real database and user
+flows in a browser through Playwright. Settings, docs, deletions and test-only items are proven by
+the check the item names. Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Review reports an item proven only by unit tests as a P1
 `Not done` and never asks for unit tests of helpers.
 When changing a user-facing flow, add or update its Playwright test, including an old flow a story

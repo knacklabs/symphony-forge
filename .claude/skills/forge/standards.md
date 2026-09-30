@@ -67,7 +67,8 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 - **Think before you code.** State your assumptions, and never pick silently. If the brief can be
   read two ways and both readings can be undone, pick the one closer to Done-when and write
   `Ruling: <what> - <why>` in the commit body, so the reviewer sees it. Stop and say so only for a
-  one-way step, a security question, a path outside your Scope or a new moving part.
+  one-way step, a security question or a new moving part. A file outside your Scope that the
+  change needs you may change; name it and why in your handoff.
 - **Touch only what the task needs.** Match the existing style, don't tidy neighbouring code, and
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.
@@ -227,9 +228,10 @@ default-stack conventions, which apply only to a repo on the default stack.
 ## Tests
 
 - Documentation-only changes need no new behaviour test; check claims, commands and links.
-- Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-  for client apps, the running API with a real database and user flows in a browser through
-  Playwright. Each bug fix adds a test that fails without the fix. Fake only third-party services
+- Every Done-when item needs an end-to-end test through the real entry point when it changes
+  runtime behaviour: Forge's own command; for client apps, the running API with a real database
+  and user flows in a browser through Playwright. Settings, docs, deletions and test-only items
+  are proven by the check the item names. Each bug fix adds a test that fails without the fix. Fake only third-party services
   at their edge.
 - Each user-facing Done-when item gets one Playwright browser test; an item with no UI gets an HTTP
   test against the running app and a real database.

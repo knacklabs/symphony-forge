@@ -40,9 +40,12 @@ def test_3_non_user_items_use_their_named_test(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
     prompt = env.prompt()
-    assert "CI, config, packaging and test-only items" in prompt
-    assert "test the item names" in prompt
-    assert "user-facing behaviour" in prompt
+    # The end-to-end rule once named user-facing behaviour; it now names runtime behaviour, and
+    # settings, docs, deletions, test-only, CI and packaging items use the check they name.
+    assert "Settings, docs, deletions and test-only items" in prompt
+    assert "CI and packaging items" in prompt
+    assert "check the item names" in prompt
+    assert "runtime behaviour" in prompt
 
 
 def test_4_edge_case_advice_is_next_to_blocking_rules(env):
