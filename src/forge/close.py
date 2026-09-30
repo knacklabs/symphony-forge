@@ -219,9 +219,11 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=no",
+        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
                           cwd=check).stdout
-        stale = [entry[3:] for entry in status.split("\0") if entry]
+        # sync's hook shims are never committed, even when the hooks folder is in the checkout (husky).
+        hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=check)
+        stale = [entry[3:] for entry in status.split("\0") if entry and not entry[3:].startswith(hooks)]
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
         repo.git("branch", "-D", branch, cwd=top)
