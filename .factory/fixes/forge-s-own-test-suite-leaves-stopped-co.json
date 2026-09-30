@@ -3,11 +3,32 @@
   "branch": "fix/forge-s-own-test-suite-leaves-stopped-co",
   "done_when": "After a full run of Forge's test suite, no process started by a test (Codex SDK stubs, app-server stubs, drivers) is left running or stopped: tests that stop a process always resume and end it in their cleanup, including when the test fails. A check at the end of the suite fails when a test left one behind and names the test.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "662ae577713aaf12ef631fe9041ddb1c7304d802f0aa9069b086f73217a63d91",
+    "commit": "9cee3f2b31c281c8ce3fc2a5bb09faa2f682db1a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The regression test stops both leaked children before their tests finish. It never leaves a child running. If the cleanup check regressed to detect only stopped processes, this test would still pass while running children could remain after the suite. Add a nested pytest case that leaves a running child and verifies that the run fails naming its test and that the child is ended.",
+        "file": "tests/test_fix_tests_leave_no_process_behind.py",
+        "line": 23,
+        "priority": "P1",
+        "title": "Not done: a running process leak fails the suite and is ended"
+      }
+    ],
+    "status": "blocked",
+    "tree": "37bcf78156e17f304d34feca8054c51268d3ea653c67e82c6c03018029655183"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T19:14:11+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T19:49:52+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's own test suite leaves stopped Codex SDK stub processes behind (63 found, up to four days old, parented to init), which pile up on developer machines"
