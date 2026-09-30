@@ -3,7 +3,7 @@
   "branch": "fix/a-repo-s-own-review-rules-such-as-which",
   "done_when": "Every review gets the '## Review rules' section of the repo's AGENTS.md, read from the default branch and placed outside the Forge-managed block, as rules the reviewer follows, the same way '## Known traps' reaches cold reads (reuse that reader). A repo without that section gets no extra text. The skill and the AGENTS.md template tell clients the section exists.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T05:46:27+00:00",
