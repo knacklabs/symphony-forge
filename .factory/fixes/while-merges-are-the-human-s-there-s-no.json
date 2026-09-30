@@ -1,0 +1,14 @@
+{
+  "base": "4325772f015533584ea753bcfc91b8c4cc1d65a5",
+  "branch": "fix/while-merges-are-the-human-s-there-s-no",
+  "done_when": "forge next shows the pull request link beside each item that is Ready and waiting for the human to merge.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T03:31:04+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "While merges are the human's, there's no single place that lists the pull requests ready for them to merge"
+}
