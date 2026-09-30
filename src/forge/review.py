@@ -190,6 +190,7 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  base: str, previous: dict[str, Any]) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
+    from forge import story  # story imports review indirectly
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     parts = re.split(r"^<!-- ([a-z-]+) -->\r?\n", text, flags=re.M)
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
@@ -202,7 +203,6 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "test_run": _test_run(top, repo.config(top)["test"])}
     if "/" in item:
         doc_text, doc, row = task(top, item)
-        from forge import story  # story imports review indirectly
         parsed = story.parse(doc_text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
@@ -226,6 +226,9 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
+    values["review_rules"] = story.agents_section(top, "Review rules")
+    if values["review_rules"]:
+        chosen.append("review-rules")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
