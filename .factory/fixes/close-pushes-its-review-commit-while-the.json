@@ -5,29 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "0a3295c3591f8528090247a71e3d41e2795912db2aa034e35aad8211cff55c9a",
-    "commit": "f30c88767821a9d1fc3e1424d7adbc4d41111eba",
+    "changed": "e7dbbd61f007fc4c6160cf9f648b8ecfdf96dff1183513d787456202c80195da",
+    "commit": "eebed77693d2562f5d458fe1ff00b414425dfd76",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This test sets FORGE_PUSH_WAIT to 0.5, so it never checks the delay used by a normal `forge close`. If the default in `src/forge/close.py:238` changed to zero, this test would still pass, and test 2 checks only the number of attempts. Add a Close run without the override that verifies increasing delays.",
-        "file": "tests/test_fix_close_pushes_its_review_commit_while_the.py",
-        "line": 54,
-        "priority": "P1",
-        "title": "Not done: the default push backoff test"
-      },
-      {
-        "body": "The new environment variable exists to shorten the timing test, as the adjacent comment states. Close needs a fixed backoff, and testing its normal 1, 2 and 4 second waits through the command would remove this extra runtime setting.",
-        "file": "src/forge/close.py",
-        "line": 238,
-        "priority": "P2",
-        "title": "Simpler: remove FORGE_PUSH_WAIT \u2192 test the fixed retry schedule"
-      }
-    ],
-    "status": "blocked",
-    "tree": "0645322cce6ee5ee46abfd78209339e31cbb2c389125ff535a81843a3b3e84c2"
+    "findings": [],
+    "status": "clean",
+    "tree": "87a7355974e23849e224da571af810f7ba297559d0e19fa92bb26e8211be579b"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T07:12:04+00:00",
@@ -39,6 +24,10 @@
     },
     {
       "at": "2026-09-30T11:24:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T17:07:03+00:00",
       "step": "review"
     }
   ],
