@@ -4,11 +4,24 @@
   "branch": "fix/the-owner-chose-gpt-6-1-sol-at-high-effo",
   "done_when": "Forge's review default for new repos, the light prototype review (effort stays medium), the client sign-off review's pinned model (effort stays high) and this repo's forge.toml [models.review] all use gpt-6.1-sol, and docs/guide.md names the current defaults (it still says design uses gpt-6-sol). Existing client repos' forge.toml files are not rewritten. Tests that pin the old model name are updated to the new contract.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "f0ec98b61e202325b7b7cad6e37a354a2eba79970efa9829d6ca69ee2e40cb57",
+    "commit": "d58f19d7169ed17bb8becf51c2acbbede8504052",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e2df13ff8981da992afb8192a0d8efa1cbdad86dd284919dfec2d5a8c56040cd"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T11:47:46+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T15:34:15+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner chose gpt-6.1-sol at high effort for reviews too, so every Forge default now uses it, but the review default, the light review, the sign-off pin and Forge's own forge.toml still name gpt-6-sol"
