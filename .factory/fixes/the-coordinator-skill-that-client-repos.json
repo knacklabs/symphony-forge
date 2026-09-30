@@ -1,0 +1,14 @@
+{
+  "base": "e8792e10682106b7133c91a821689fa6c5538799",
+  "branch": "fix/the-coordinator-skill-that-client-repos",
+  "done_when": "The skill (src/forge/templates/skill.md and its synced copies) says: workers change files outside Scope that the change needs and name them, so the coordinator answers a Scope question only when the change isn't needed; the intent table has rows for naming a fix (--slug) and changing a fix's Done-when (forge fix amend); mark generated files such as migration snapshots linguist-generated in .gitattributes so reviews show them only as counts; and a story's Tests column names one end-to-end case per Done-when item that changes runtime behaviour, with none for settings, docs, deletions or test-only items.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T10:49:17+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The coordinator skill that client repos get lags the last two days of Forge changes, so agents in client repos don't use them: it still says to settle every outside-Scope question before answering a worker, and never mentions naming or amending fixes, marking generated files, or the new test balance"
+}
