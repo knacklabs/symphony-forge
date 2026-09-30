@@ -3,7 +3,7 @@
   "branch": "fix/claude-code-sessions-in-client-repos-ask",
   "done_when": "forge sync merges permissions.allow entries for Bash, Edit, Write, WebFetch and WebSearch into .claude/settings.json, keeping every entry and setting the client already has, and a second sync changes nothing. The destructive-command deny hook stays and still blocks first. A command-level test syncs a settings file with the client's own allow and deny entries and checks the result.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T11:12:33+00:00",
