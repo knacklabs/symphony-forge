@@ -139,14 +139,17 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert agents.startswith("# Our agents\n\nOur own rules.\n")
     assert agents.count("<!-- forge:begin -->") == agents.count("<!-- forge:end -->") == 1
     settings = json.loads((repo.path / ".claude/settings.json").read_text(encoding="utf-8"))
-    assert settings["permissions"] == {"allow": ["Bash(ls)"]}
+    # The repo's own allow entry stays; Forge adds the tools its full access means.
+    assert settings["permissions"] == {"allow": ["Bash(ls)", "Bash", "Edit", "Write", "WebFetch",
+                                                 "WebSearch"]}
     commands = [hook["command"] for groups in settings["hooks"].values() for group in groups
                 for hook in group["hooks"]]
     assert "our-guard" in commands
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
-    # The repo's own Codex settings stay; only Codex's project hooks are switched on.
+    # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
-    assert config == {"model": "o3", "features": {"web_search": True, "hooks": True}}
+    assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
+                      "features": {"web_search": True, "hooks": True}}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
