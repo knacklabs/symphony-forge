@@ -64,6 +64,9 @@ CODEX_CONFIG = """\
 [features]
 hooks = true
 """
+# Forge gives Codex full access; forge.toml's models and the host choose the model, so an old pin goes.
+FULL_ACCESS = {"sandbox_mode": "danger-full-access", "approval_policy": "never"}
+PINS = ("model", "model_reasoning_effort")
 FEATURES = re.compile(r"^[ \t]*\[[ \t]*features[ \t]*\][ \t]*(#.*)?$", re.M)
 TABLE = re.compile(r"^[ \t]*\[", re.M)
 
@@ -148,23 +151,42 @@ def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> st
 
 
 def _codex_config(top: Path) -> str:
-    """.codex/config.toml with Codex's project hooks on; every other setting stays as it is."""
+    """.codex/config.toml with full access, no model pin and Codex's project hooks on; every other
+    setting stays as it is."""
     rel = ".codex/config.toml"
     text = read(top / rel)
-    if not text.strip():
-        return CODEX_CONFIG
     try:
         data = tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
         repo.refuse(REFUSALS["cant_merge"], path=rel, problem=exc)
     features = data.get("features")
-    if isinstance(features, dict) and features.get("hooks") is True:
+    wanted = {**{key: value for key, value in data.items() if key not in PINS}, **FULL_ACCESS,
+              "features": {**(features if isinstance(features, dict) else {}), "hooks": True}}
+    # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
+    exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
+    if exact(data):
         return text
-    # ponytail: stdlib has no TOML writer, so edit one line as text, then require the result to
-    # parse to the same settings plus hooks = true. Anything else (features as dotted keys or an
-    # inline table, a quoted or multi-line hooks value) refuses instead of guessing.
+    # ponytail: stdlib has no TOML writer, so edit lines as text, then require the result to parse
+    # to exactly the wanted settings. Anything else (features as dotted keys or an inline table, a
+    # setting's line inside a multi-line value) refuses instead of guessing.
+    first = TABLE.search(text)
+    top, rest = (text[:first.start()], text[first.start():]) if first else (text, "")
+    for key in PINS:
+        top = re.sub(rf"^[ \t]*{key}[ \t]*=.*\n?", "", top, count=1, flags=re.M)
+    missing = ""
+    for key, value in FULL_ACCESS.items():
+        line = re.search(rf"^[ \t]*{key}[ \t]*=.*$", top, re.M)
+        if line:
+            top = top[:line.start()] + f'{key} = "{value}"' + top[line.end():]
+        else:
+            missing += f'{key} = "{value}"\n'
+    if missing:
+        top = (f"{top.rstrip()}\n" if top.strip() else "") + missing + ("\n" if rest else "")
+    text = top + rest
     merged, header = "", FEATURES.search(text)
-    if features is None:
+    if isinstance(features, dict) and features.get("hooks") is True:
+        merged = text
+    elif features is None:
         merged = f"{text.rstrip()}\n\n{CODEX_CONFIG}"
     elif isinstance(features, dict) and header:
         after = TABLE.search(text, header.end())
@@ -175,13 +197,12 @@ def _codex_config(top: Path) -> str:
                  else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
     try:
-        safe = bool(merged) and tomllib.loads(merged) == {
-            **data, "features": {**(features or {}), "hooks": True}}
+        safe = bool(merged) and exact(tomllib.loads(merged))
     except tomllib.TOMLDecodeError:
         safe = False
     if not safe:
         repo.refuse(REFUSALS["cant_merge"], path=rel,
-                    problem="Forge can't safely set hooks = true in its [features] table")
+                    problem="Forge can't safely set Codex's full access and hooks in it")
     return merged
 
 
