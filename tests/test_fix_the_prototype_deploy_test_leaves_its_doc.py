@@ -18,7 +18,7 @@ def _exists(kind, name):
     return _docker(kind, "inspect", name).returncode == 0
 
 
-def test_old_labelled_leftover_is_removed_and_a_fresh_one_is_kept():
+def test_1_old_labelled_leftover_is_removed_and_a_fresh_one_is_kept():
     if not shutil.which("docker") or _docker("info").returncode:
         pytest.skip("Docker daemon is required to prove leftover cleanup")
     tag = "forge-proto-leftover-" + uuid.uuid4().hex[:12]
