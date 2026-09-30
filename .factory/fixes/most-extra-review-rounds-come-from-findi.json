@@ -3,11 +3,24 @@
   "branch": "fix/most-extra-review-rounds-come-from-findi",
   "done_when": "The review instructions block (P0/P1) only on a defect that would ship, a security, data-loss or accessibility gap, an unmet Done-when item, or a missing test for a Done-when item's own behaviour; extra edge-case tests, platform or hardening suggestions beyond what the item promises are P2 and never block or start a round. Close's output lists those non-blocking findings under a separate plain heading. The rules against dropping validation, security, data-loss protection or accessibility stay.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d093381c4e74129a455f733f773010da538d5e11a73f17522e811f6a5194d2b1",
+    "commit": "f14e83a5f4a53bbe2d768c598377a36d8ec973eb",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "2158b896ffee0a730badd36c61d26b7d770539babcc116deabd3f857ff100229"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T11:16:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T14:53:04+00:00",
+      "step": "review"
     }
   ],
   "why": "Most extra review rounds come from findings that ask for more edge-case tests or generic hardening beyond what the item promises, reported as blocking, so every change pays several rounds for wishlists"
