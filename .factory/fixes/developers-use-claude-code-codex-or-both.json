@@ -6,27 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "a3e422f06fffd7cf599d48c36d03cd0e2c95d6e39c17f2a087b38371482cf4d5",
-    "commit": "51f8e6b0ede42abffee367794777ed8ce7e9cb32",
+    "changed": "496a071a7db27726efa576f7a809c85194734459ba3b8dc2d8c19c7be9f62ea1",
+    "commit": "630f5ec060a56f41545e3624ee7ac597785c721c",
     "dismissals": [],
     "findings": [
       {
-        "body": "After the Claude run, the task status is `working`. The next `forge work` call therefore selects `fix` (see `src/forge/worker.py:70-74`), while this test supplies only `[models.build]`. Its empty Codex config would pass even if Codex incorrectly used the Claude-only build entry. Run the Codex case as a first build so the assertion tests the behavior it names.",
-        "file": "tests/test_models_per_family.py",
-        "line": 69,
+        "body": "This change lets coordinators configure per-family worker, review, and ask models, but neither `src/forge/templates/skill.md` nor `src/forge/templates/brief.md` is updated. In particular, `src/forge/templates/skill.md:351-354` still says `forge ask` uses `[models.lite]` without explaining that it selects only the Codex entry. The repository's review rule requires a same-change update to one of those templates when a command or setting changes. Update the shipped guidance to explain the new per-family settings.",
+        "file": "docs/guide.md",
+        "line": 104,
         "priority": "P1",
-        "title": "Not done: the Codex half of the other-family build test"
-      },
-      {
-        "body": "The new family selection also reaches `forge ask` through `codex.settings` (`src/forge/codex.py:137-138`), but no command test asks with `[models.lite.codex]` and `[models.lite.claude]`, or with a Claude-only lite entry. The existing ask model test uses a single GPT entry, so it cannot catch a broken nested-table lookup on this command path.",
-        "file": "src/forge/repo.py",
-        "line": 232,
-        "priority": "P1",
-        "title": "Not done: forge ask selects the Codex entry from a per-family lite table"
+        "title": "Not done: update Forge's shipped guidance for per-family model settings"
       }
     ],
     "status": "blocked",
-    "tree": "77f81188b7eec1ba891fcc4acf0524c66a00e5272ad545373a9cfddc550e8c0d"
+    "tree": "6343f13b36b1499deb25a46e2d4895217f0ed78909b524ce295185cf68d86406"
   },
   "status": "fixing",
   "steps": [
@@ -36,6 +29,10 @@
     },
     {
       "at": "2026-09-30T18:41:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T20:25:19+00:00",
       "step": "review"
     }
   ],
