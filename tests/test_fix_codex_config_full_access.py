@@ -72,6 +72,9 @@ def test_2_a_second_sync_changes_nothing(repo):
     'notes = """\nsandbox_mode = "x"\n"""\n' + OLD,
     # Features as an inline table, which sync refused before this fix too.
     'model = "o3"\nfeatures = { multi_agent = true }\n',
+    # A multi-line value in [features] whose line reads hooks = true, before the real hooks = 1.
+    'sandbox_mode = "danger-full-access"\napproval_policy = "never"\n\n'
+    '[features]\nnotes = """\nhooks = true\n"""\nhooks = 1\n',
 ])
 def test_3_a_config_sync_cant_edit_safely_is_refused(repo, unsafe):
     _client(repo)

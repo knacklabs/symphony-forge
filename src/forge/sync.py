@@ -163,7 +163,8 @@ def _codex_config(top: Path) -> str:
     wanted = {**{key: value for key, value in data.items() if key not in PINS}, **FULL_ACCESS,
               "features": {**(features if isinstance(features, dict) else {}), "hooks": True}}
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
-    if data == wanted and features["hooks"] is True:
+    exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
+    if exact(data):
         return text
     # ponytail: stdlib has no TOML writer, so edit lines as text, then require the result to parse
     # to exactly the wanted settings. Anything else (features as dotted keys or an inline table, a
@@ -196,7 +197,7 @@ def _codex_config(top: Path) -> str:
                  else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
     try:
-        safe = bool(merged) and tomllib.loads(merged) == wanted
+        safe = bool(merged) and exact(tomllib.loads(merged))
     except tomllib.TOMLDecodeError:
         safe = False
     if not safe:
