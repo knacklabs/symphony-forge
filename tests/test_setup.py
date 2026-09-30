@@ -16,6 +16,11 @@ import pytest
 
 from test_close import PIN
 
+# Forge's subagent roles, which sync writes for both hosts.
+ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
+    "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
+    "debugger", "security", "performance")
+    for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 # .gitattributes carries the roadmap's merge rule.
@@ -25,7 +30,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".claude/settings.json", ".claude/skill
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
-            for name in ("SKILL.md", "NOTICE.md"))}
+            for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}

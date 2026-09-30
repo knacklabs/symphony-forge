@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import forge
-from forge import githooks, prcheck, repo
+from forge import githooks, prcheck, repo, roles
 
 COMMANDS = [{
     "words": "sync", "run": "sync", "changes_state": True,
@@ -267,6 +267,7 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     changed = [rel for rel, text in wanted.items() if read(top / rel) != text]
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
+        roles.refuse_foreign(top, changed)
     for rel in changed:
         if wanted[rel]:
             write_file(top, rel, wanted[rel])
