@@ -27,9 +27,11 @@ change meets it, never as a general checklist.
 
 Check:
 
-1. Can every part be built without asking? Name each gap and contradiction. Name every function,
-   field, file format or command that two tasks both use and that no earlier task pins: the first
-   task that needs it must pin it.
+1. Can every part be built without asking? Name each gap and contradiction. Name every decision a
+   builder would otherwise have to guess: a name, format, rule, order or boundary that two parts
+   rely on, or that a Done-when item leaves open. Name every function, field, file format or
+   command that two tasks both use and that no earlier task pins: the first task that needs it
+   must pin it.
    Flag every After link or shared Scope entry that exists only because of a shared line (a
    command-table row, a guide list, a registry), and name the split: the shared line to one task
    or a small last wiring task.
@@ -49,7 +51,8 @@ Check:
      listed under Risks.
    - Never propose dropping validation, security, data-loss protection or accessibility.
 3. Is every edge case this story's change meets pinned down and proven? For each "Done when"
-   item, ask of its own change only:
+   item, name the cases this story's own change must handle and which test, in which task's Tests
+   cell, proves each. Ask of its own change only:
    - which inputs and states it must handle: empty, missing, malformed, already done, half done;
    - which platform or shell its change itself behaves differently on, if any;
    - which failure and refusal paths it has, and what the user sees on each;
@@ -107,8 +110,8 @@ Check:
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks:
-   each "Done when" item's edge cases and the test that proves each, shared names no earlier task
-   pins, task size, and Forge's general traps and this repository's own known traps:
+   every decision a builder would otherwise have to guess, each "Done when" item's own cases and
+   the test that proves each, shared names no earlier task pins, task size, and Forge's general traps and this repository's own known traps:
 
 $traps
 
