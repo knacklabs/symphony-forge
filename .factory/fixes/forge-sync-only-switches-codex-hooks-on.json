@@ -1,0 +1,35 @@
+{
+  "base": "e8792e10682106b7133c91a821689fa6c5538799",
+  "branch": "fix/forge-sync-only-switches-codex-hooks-on",
+  "done_when": "forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml, and removes top-level model and model_reasoning_effort pins so forge.toml's models and the host's choice govern; every other setting the client has stays as it is, and a file sync can't edit safely refuses as today. A command-level test syncs an old-style config (workspace-write, a model pin, other client settings) and checks the result, and another checks a second sync changes nothing.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "87de1ab48a519d15eaee980e0d961d6dad94dbc2ef6c7140d3610ff19fdfd8f4",
+    "commit": "0b5ad4711d028dceeb6675720b26305db1dd47f6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "488bc1a1fd678ad05cfc946626b3a549b8ef650aef893caeddb6afeee7e6d20d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T10:56:59+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T12:29:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T13:08:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T19:06:40+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge sync only switches Codex hooks on in a client's .codex/config.toml, so Codex sessions in client repos still run sandboxed with approval prompts and can keep a stale model pin from the old Forge, although Forge gives Codex full access"
+}
