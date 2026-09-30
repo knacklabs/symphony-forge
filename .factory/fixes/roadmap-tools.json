@@ -3,11 +3,24 @@
   "branch": "fix/roadmap-tools",
   "done_when": "plans/roadmap.json has a pending entry FORGE-TOOLS-1 after the current last item",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "062a0a58f2c9c99b1fabfd3ac55e8ab1ffd465adf8401f9e632d443f5090fe67",
+    "commit": "abbc2dc8b9885b8393cd0e14b7f61ce3a112d6ea",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c75365196344934e5ebe87f9a16251f4320e381256d4af1aa4a780fb6d824a97"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T17:43:22+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T18:26:46+00:00",
+      "step": "review"
     }
   ],
   "why": "Running Forge all in Claude, all in Codex or both needs a roadmap entry for its story"
