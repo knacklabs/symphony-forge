@@ -161,6 +161,24 @@
       "title": "Nothing in the flow can switch a repo to agent merges: Forge tells the owner to ask the agent, and the agent's own permission checks rightly refuse to loosen a gate on itself",
       "status": "pending",
       "order": 67
+    },
+    {
+      "key": "FORGE-LAND-1",
+      "title": "Landing a change takes a hand-run loop of build, close, another round, close again, re-run a flaky check and merge",
+      "status": "pending",
+      "order": 68
+    },
+    {
+      "key": "FORGE-UPGRADECMD-1",
+      "title": "Upgrading Forge in a repo takes six manual steps, and a stale install or cached build breaks them",
+      "status": "pending",
+      "order": 69
+    },
+    {
+      "key": "FORGE-DOCTORFIX-1",
+      "title": "forge doctor only reports setup problems, so developers run each repair by hand",
+      "status": "pending",
+      "order": 70
     }
   ],
   "epics": [
