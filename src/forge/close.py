@@ -234,9 +234,7 @@ def _synced(top: Path, item: str) -> None:
 
 def _push(top: Path, branch: str) -> None:
     """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
-    # ponytail: an env override scales the waits (tests shorten them).
-    base = float(os.environ.get("FORGE_PUSH_WAIT", "1"))
-    for wait in (base, 2 * base, 4 * base, None):
+    for wait in (1, 2, 4, None):
         try:
             repo.git("push", "-q", "-u", "origin", branch, cwd=top)
             return

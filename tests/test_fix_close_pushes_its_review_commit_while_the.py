@@ -49,9 +49,8 @@ def test_2_close_retries_a_failed_push_before_giving_up(env):
             == env.repo.git("rev-parse", "HEAD", cwd=where))
 
 
-def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env, monkeypatch):
+def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env):
     item, _ = env.start_fix()
-    monkeypatch.setenv("FORGE_PUSH_WAIT", "0.5")  # waits of 0.5, 1 and 2 seconds
     # The remote refuses every push and records when each one arrived.
     tries = env.tmp / "push-times"
     hook = env.tmp / "remote.git" / "hooks" / "pre-receive"
@@ -67,5 +66,6 @@ def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env
     times = [float(line) for line in tries.read_text("utf-8").splitlines()]
     assert len(times) == 4
     gaps = [later - earlier for earlier, later in zip(times, times[1:])]
-    assert gaps[0] >= 0.5 and gaps[0] < gaps[1] < gaps[2], gaps
+    # A normal close waits 1, 2 and 4 seconds between its four attempts.
+    assert gaps[0] >= 1 and gaps[1] >= 2 and gaps[2] >= 4 and gaps[0] < gaps[1] < gaps[2], gaps
     assert not env.gh_calls("pr", "create")  # nothing was published after the failed push
