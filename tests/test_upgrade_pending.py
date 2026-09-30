@@ -32,7 +32,9 @@ def _refused_as_today(result, version):
         f"Next: uv tool install git+https://github.com/knacklabs/symphony-forge@{OLD}\n")
 
 
-def test_3_default_branch_keeps_working_while_upgrade_waits(repo, tmp_path, claude_payload):
+def test_3_default_branch_keeps_working_while_upgrade_waits(repo, tmp_path, claude_payload, monkeypatch):
+    # A mismatch runs the pinned release through uv; inside that run, a mismatch still refuses.
+    monkeypatch.setenv("FORGE_PINNED_RUN", OLD)
     # Without an upgrade fix, the default branch refuses the newer Forge as before.
     version = _pin_old(repo)
     _refused_as_today(repo.forge("fix", "start", "Tidy the readme", "--done", "It reads well"), version)
