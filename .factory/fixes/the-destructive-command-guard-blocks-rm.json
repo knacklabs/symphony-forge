@@ -5,34 +5,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "6b368eb26c95c55dfaab527041ca4d44dd739a790f59b975df840cb823d91e8c",
-    "commit": "25d7eddd0f92332b6145af317daf32da743b3536",
+    "changed": "50020e9d7925bac287e661c31992460d165b74d0b5bfe656684ff6e460b05c96",
+    "commit": "b1a7235fd881ec2c845c9bc751eddef7f98fd17f",
     "dismissals": [],
     "findings": [
       {
-        "body": "With a hook payload cwd inside temp, `cd /etc && rm -rf config` is allowed. The guard passes the original cwd to every parsed command, so it resolves `config` inside temp even though the shell runs `rm` from `/etc`. This violates the requirement that every target resolve inside temp. Track directory changes or keep such relative targets blocked.",
+        "body": "An inherited variable can turn one apparent temp target into multiple shell targets. With FOO='safe /etc', `rm -rf /tmp/$FOO` passes: expandvars produces the single string `/tmp/safe /etc`, which realpath considers inside `/tmp`. The shell splits the unquoted expansion into `/tmp/safe` and `/etc`, so the guard permits a removal it previously blocked. Check the shell's resulting targets or reject expansions whose value can split.",
+        "file": "src/forge/deny.py",
+        "line": 124,
+        "priority": "P1",
+        "title": "Not done: The guard allows rm -rf when every target, resolved, is inside the system temp folder (TMPDIR, /tmp or /private/tmp), and allows a"
+      },
+      {
+        "body": "The end-to-end blocked cases test an unset variable and variable reassignment, but none tests an inherited variable containing whitespace. Add a `forge hook deny` case with FOO='safe /etc' and `rm -rf /tmp/$FOO`; it must be refused. The current test passes while that command is allowed.",
+        "file": "tests/test_fix_the_destructive_command_guard_blocks_rm.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: Test inherited-variable splitting at the deny hook"
+      },
+      {
+        "body": "`rm -rf /tmp/clone=v2` has one literal target inside the temp folder, but the global `=` breaker makes `alone` false and the guard refuses it. An equals sign in an argument cannot assign a shell variable before `rm` runs. Restrict the assignment safeguard to command prefixes so this valid temp target is allowed.",
         "file": "src/forge/deny.py",
         "line": 49,
-        "priority": "P1",
-        "title": "Not done: Resolve rm targets from the shell's directory at execution"
+        "priority": "P2",
+        "title": "Allow equals signs in temp target names"
       },
       {
-        "body": "With the hook process's `TMPDIR` inside temp, `TMPDIR=/etc; rm -rf \"$TMPDIR/config\"` passes: `os.path.expandvars` uses the hook's original environment, while the shell uses its newly assigned value and targets `/etc/config`. This is distinct from the ruling on leftover `$VAR`: the token leaves no `$` after expansion, but the expansion is stale. A single-quoted `$TMPDIR` is also expanded here even though the shell leaves it literal.",
+        "body": "`rm -rf /tmp/parent/../clone` resolves to `/tmp/clone`, but the unconditional `..` check refuses it. The existing realpath and root containment check can determine whether such a target remains inside temp; retain the refusal when it resolves outside.",
         "file": "src/forge/deny.py",
-        "line": 120,
-        "priority": "P1",
-        "title": "Block rm targets whose variable value changes before execution"
-      },
-      {
-        "body": "The end-to-end blocked cases exercise fixed payload directories and inherited variables. Add `forge hook deny` cases for `cd` before a relative `rm -rf` and for reassignment of `TMPDIR` before removal. The current test passes while both commands above bypass the guard.",
-        "file": "tests/test_fix_the_destructive_command_guard_blocks_rm.py",
-        "line": 35,
-        "priority": "P1",
-        "title": "Not done: Test rejection after shell directory and variable changes"
+        "line": 126,
+        "priority": "P2",
+        "title": "Allow resolved temp paths with internal parent components"
       }
     ],
     "status": "blocked",
-    "tree": "3672fd0fed39055edcaa3fe177ae3582e7d123a2de319ad182daeb121ead719d"
+    "tree": "3fba3e2e2a5d0695a10ea8a18640655f8b096d76387b1361d043a58cddae9a00"
   },
   "status": "fixing",
   "steps": [
@@ -42,6 +49,10 @@
     },
     {
       "at": "2026-09-30T04:31:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T05:36:38+00:00",
       "step": "review"
     }
   ],
