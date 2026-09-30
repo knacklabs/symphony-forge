@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shlex
 import sys
 from collections.abc import Iterator
@@ -27,6 +28,9 @@ REFUSALS = {
 
 OPERATORS = set(";&|()<>")
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "eval"}
+ALONE_BREAKERS = OPERATORS | set("`'\\\n{}=")
+CONFIG_GETS ={"--get", "--get-all", "--get-regexp"}
+CONFIG_SCOPES = {"--global", "--local", "--system", "--worktree"}
 
 
 def hook(args: argparse.Namespace) -> None:
@@ -40,9 +44,12 @@ def hook(args: argparse.Namespace) -> None:
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if isinstance(command, list):  # ponytail: an argv-shaped command, should a host send one
         command = shlex.join(map(str, command))
-    for words in _commands(str(command or "")):
+    command = str(command or "")
+    # A command that is only rm: nothing before it can change the folder or a variable it uses.
+    alone = not set(command) & ALONE_BREAKERS
+    for words in _commands(command):
         for i, word in enumerate(words):  # a program may follow sudo, env, xargs or find -exec
-            rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:])
+            rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:], alone and i == 0)
             if rule:
                 refuse(REFUSALS[rule], code=2, found=" ".join(words))
 
@@ -76,19 +83,21 @@ def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
             return
 
 
-def _rule(program: str, args: list[str]) -> str | None:
-    """The rule a program and its arguments break, if any."""
+def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
+    """The rule a program and its arguments break, if any. `alone`: this is the whole command."""
     if "--no-verify" in args:
         return "no_verify"
     short = _short(args)
     if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and (
-            "f" in short or "--force" in args):
+            "f" in short or "--force" in args) and not (alone and _in_temp(args)):
         return "destructive"
     if program == "git":
-        # -c core.hooksPath=... (or --config-env) turns every git hook off, like --no-verify.
-        if any("hookspath" in a.lower() for a in args):
-            return "no_verify"
         sub, rest = _subcommand(args)
+        # -c core.hooksPath=... (or --config-env) turns every git hook off, like --no-verify.
+        # Reading the value changes nothing, so only the options before `config` count then.
+        checked = args[:len(args) - len(rest)] if sub == "config" and _config_read(rest) else args
+        if any("hookspath" in a.lower() for a in checked):
+            return "no_verify"
         short = _short(rest)
         if sub == "commit" and "n" in short:  # -n is commit's short --no-verify
             return "no_verify"
@@ -103,6 +112,38 @@ def _rule(program: str, args: list[str]) -> str | None:
     if program == "gh" and any(args[i:i + 2] == ["pr", "merge"] for i in range(len(args))):
         return "merge"
     return None
+
+
+def _in_temp(args: list[str]) -> bool:
+    """Whether rm names targets and each one, a literal absolute path with no .. in it, resolves
+    inside the system temp folder."""
+    end = args.index("--") if "--" in args else len(args)
+    targets = [a for a in args[:end] if not a.startswith("-")] + args[end + 1:]
+    roots = [os.path.realpath(r) for r in (os.environ.get("TMPDIR"), "/tmp", "/private/tmp") if r]
+    for target in targets:
+        if (not os.path.isabs(target) or set(target) & set("$`*?[]{}")
+                or ".." in target.replace("\\", "/").split("/")):
+            return False  # left for the shell to expand, or climbing out: Forge can't tell where
+        path = os.path.realpath(target)
+        if not any(path != root and _under(path, root) for root in roots):
+            return False
+    return bool(targets)  # no targets: xargs or find supplies them
+
+
+def _under(path: str, root: str) -> bool:
+    try:
+        return os.path.commonpath([path, root]) == root
+    except ValueError:  # on Windows, a path on another drive
+        return False
+
+
+def _config_read(args: list[str]) -> bool:
+    """Whether git config only reads a value: --get, or a key with no value."""
+    options = {a for a in args if a.startswith("-")}
+    keys = [a for a in args if not a.startswith("-")]
+    if options & CONFIG_GETS:
+        return options <= CONFIG_GETS | CONFIG_SCOPES and 1 <= len(keys) <= 2
+    return options <= CONFIG_SCOPES and len(keys) == 1
 
 
 def _short(args: list[str]) -> set[str]:
