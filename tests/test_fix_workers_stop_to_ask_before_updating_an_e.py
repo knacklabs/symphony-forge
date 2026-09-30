@@ -36,9 +36,11 @@ def test_1_worker_brief_allows_existing_broken_tests_and_requires_handoff(repo):
     assert built.returncode == 0, built.stderr
     task_brief = calls(log)[-1]["brief"]
     task = " ".join(task_brief.split("## Your task", 1)[1].split("Existing tests", 1)[0].split())
-    assert ("You may also update an existing test your intended change breaks, even outside "
-            "Scope; name each such test and why it changed in your handoff, and never weaken a "
-            "test to hide a defect.") in task
+    # The task once allowed only broken existing tests outside Scope; it now allows any file the
+    # change needs, broken existing tests included, each named in the handoff.
+    assert ("A file outside Scope that the change needs, an existing test it breaks included, you "
+            "may change too; name each and why in your handoff, and never weaken a test to hide "
+            "a defect.") in task
 
 
 def test_2_close_excludes_existing_tests_and_flags_weakened_tests(env):
