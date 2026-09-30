@@ -3,11 +3,32 @@
   "branch": "fix/a-codex-turn-that-fails-because-the-mode",
   "done_when": "When a Codex turn fails with a capacity or overloaded error, Forge waits and retries the same turn a few times with backoff before reporting the failure.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d1d74604b8b29d3a680d13ea5341f5f103b3d8b801b5857daa223b5ea3d5336a",
+    "commit": "980db5c1f5f1a4aeb4e539242ae921e607293608",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The test checks the delays printed to stdout, but never checks when the next turn starts. Removing `time.sleep(wait)` from `src/forge/codex_turn.py:233` would leave these assertions passing while Forge retried immediately. Record the stub's turn-start times and assert increasing minimum gaps so the test proves the required waiting behavior.",
+        "file": "tests/test_fix_a_codex_turn_that_fails_because_the_mode.py",
+        "line": 30,
+        "priority": "P1",
+        "title": "Not done: end-to-end test that verifies elapsed backoff between capacity retries"
+      }
+    ],
+    "status": "blocked",
+    "tree": "16e3bacfa4a0534747322b2433b4940d347f07dd7664923c24399bab77a649f4"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T07:13:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T09:16:49+00:00",
+      "step": "review"
     }
   ],
   "why": "A Codex turn that fails because the model is at capacity ends the worker's turn with half-done, uncommitted edits"
