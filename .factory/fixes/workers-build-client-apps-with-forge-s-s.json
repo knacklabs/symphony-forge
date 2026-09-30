@@ -5,28 +5,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "b98ce0dcba99a96812f8548fd9ab4fe90fb5db76e659d77a097fb3706d8ce4c6",
-    "commit": "5d3bcd194b5c9c280cd615041086ee6aa0676f50",
-    "dismissals": [
-      {
-        "because": "src/forge/review.py:375 Autoreview is the third-party edge: Forge passes the page with Autoreview's own --prompt-file option (autoreview:7060, 'Additional review instruction file'), and the tests check exactly what crosses that edge. Whether a model then names a rule can't be proven by a deterministic test.",
-        "finding": 1,
-        "from_base": false
-      }
-    ],
+    "changed": "d4b39ffa82d5542a677bcbf2bce7dc0290d28fbe9a6b72790d6f3b52dbdbaed2",
+    "commit": "db571853343aeddb52d591d64cd28dedabc3a3ab",
+    "dismissals": [],
     "findings": [
       {
-        "body": "The new tests inspect the text that the Autoreview stub reads from `--prompt-file`; they do not show that the reviewer receives it. The stub logs the file before launching Codex (`tests/stubs/autoreview:23-29`), while the Codex stub records only its folder and commit (`tests/test_close.py:24-31`). A helper that drops the prompt file would still pass these tests. The tests also supply a fixed clean report, so they never show a standards-breaking change producing a finding that names the rule. The required command-level test needs to observe the reviewer\u2019s prompt and its finding for a violating change.",
-        "file": "tests/test_fix_workers_build_client_apps_with_forge_s_s.py",
-        "line": 15,
+        "body": "Prototype fixes before sign-off use the light review path (`src/forge/close.py:80`), which passes `--max-priority P0` here. The new standards prompt requires a broken rule to be reported as a P1 `Standard:` finding (`src/forge/templates/review.md:154`). That P1 cannot pass the light review\u2019s priority limit, so an API, data, or frontend standards violation in such a fix can still go unreported. The new command tests exercise only the default review path; `tests/test_aha_review.py:28-56` confirms the light path uses the P0 limit.",
+        "file": "src/forge/review.py",
+        "line": 361,
         "priority": "P1",
-        "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the r\u2026"
+        "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the"
       }
     ],
-    "status": "clean",
-    "tree": "118289adcf17a18affe1327d479fe4a0105046af9711b5e2d3acfba5422af7d2"
+    "status": "blocked",
+    "tree": "8fef7f7613375030d3244297bb7c20a8f3d32ba0e94463183ce40a446ba2fd75"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
@@ -34,6 +28,10 @@
     },
     {
       "at": "2026-09-30T08:35:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T10:45:32+00:00",
       "step": "review"
     }
   ],
