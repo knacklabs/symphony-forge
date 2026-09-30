@@ -139,7 +139,9 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert agents.startswith("# Our agents\n\nOur own rules.\n")
     assert agents.count("<!-- forge:begin -->") == agents.count("<!-- forge:end -->") == 1
     settings = json.loads((repo.path / ".claude/settings.json").read_text(encoding="utf-8"))
-    assert settings["permissions"] == {"allow": ["Bash(ls)"]}
+    # The repo's own allow entry stays; Forge adds the tools its full access means.
+    assert settings["permissions"] == {"allow": ["Bash(ls)", "Bash", "Edit", "Write", "WebFetch",
+                                                 "WebSearch"]}
     commands = [hook["command"] for groups in settings["hooks"].values() for group in groups
                 for hook in group["hooks"]]
     assert "our-guard" in commands
