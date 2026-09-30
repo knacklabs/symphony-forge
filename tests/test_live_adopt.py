@@ -61,7 +61,9 @@ def _adopts(repo, gh, tmp_path, monkeypatch) -> None:
             "- Never touch: billing/\n") in team
     assert "Working here with Forge" in forge_block
     settings = json.loads(repo.git("show", f"{BRANCH}:.claude/settings.json"))
-    assert settings["permissions"] == {"allow": ["Bash(npm test)"]} and "hooks" in settings
+    # The repo's own allow entry stays; Forge adds the tools its full access means.
+    assert settings["permissions"] == {"allow": ["Bash(npm test)", "Bash", "Edit", "Write",
+                                                 "WebFetch", "WebSearch"]} and "hooks" in settings
     assert repo.git("show", f"{BRANCH}:.claude/skills/forge/SKILL.md")
     assert "forge hook pre-commit" in (Path(repo.git(
         "rev-parse", "--path-format=absolute", "--git-path", "hooks")) / "pre-commit").read_text()
