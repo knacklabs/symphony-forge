@@ -5,20 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "662ae577713aaf12ef631fe9041ddb1c7304d802f0aa9069b086f73217a63d91",
-    "commit": "9cee3f2b31c281c8ce3fc2a5bb09faa2f682db1a",
+    "changed": "b5cc0007ee1ff16c93833491e96c6e687c8da4a45fc02084b571e5f5334e9cbe",
+    "commit": "a6bc8df022bcf3e7579626551b29f7f662d1a59b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The regression test stops both leaked children before their tests finish. It never leaves a child running. If the cleanup check regressed to detect only stopped processes, this test would still pass while running children could remain after the suite. Add a nested pytest case that leaves a running child and verifies that the run fails naming its test and that the child is ended.",
+        "body": "The regression test has no independent cleanup for the children it starts. If the guard misses the running child, the assertion at line 57 fails while that child continues sleeping. The outer fixture searches for the outer test's temp path, but the child inherits the nested test's XDG_CONFIG_HOME (tests/conftest.py:105\u2013106) and its command contains no outer path, so that fixture cannot end it. Track the child PIDs and terminate and wait for them in a finally block, including when an assertion fails or the nested pytest run times out.",
         "file": "tests/test_fix_tests_leave_no_process_behind.py",
-        "line": 23,
+        "line": 47,
         "priority": "P1",
-        "title": "Not done: a running process leak fails the suite and is ended"
+        "title": "Not done: After a full run of Forge's test suite, no process started by a test (Codex SDK stubs, app-server stubs, drivers) is left running "
       }
     ],
     "status": "blocked",
-    "tree": "37bcf78156e17f304d34feca8054c51268d3ea653c67e82c6c03018029655183"
+    "tree": "cb8dc27e55e07f3dc08106ad0f000e6a93265daff6091778cd60dc6745a6cca0"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +28,10 @@
     },
     {
       "at": "2026-09-30T19:49:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T20:02:46+00:00",
       "step": "review"
     }
   ],
