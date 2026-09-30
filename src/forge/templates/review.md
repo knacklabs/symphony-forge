@@ -1,6 +1,6 @@
 <!-- The review instructions `forge close` hands to Autoreview. review.py joins the blocks that
 apply (task or fix, then the functional check or promote block, then the rules) and fills each
-dollar-sign name. -->
+dollar-sign name. The standards block rides as a separate prompt file on every review. -->
 
 <!-- task -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
@@ -147,6 +147,15 @@ files are there to read; the standard note that the sandbox is empty does not ap
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap). P0 and P1 block the merge; P2 and P3 are advice.
+<!-- standards -->
+## Standards
+Forge's standards page follows: the same page every worker's brief carries. Check the change
+against each of its rules that applies to a concern the change has. Report every rule the change
+breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
+rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
+repo's own AGENTS.md rules differ from the page, they win.
+
+$standards
 <!-- signoff -->
 ## Client prototype sign-off review
 Review the complete product snapshot against the customer's answers and the topic table below.

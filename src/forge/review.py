@@ -27,6 +27,8 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
            for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
+# Untracked in the review tree, which branch mode leaves out of the diff.
+STANDARDS = "forge-standards.md"
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -355,12 +357,19 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = repo.git("rev-parse", base, cwd=tree)
+        # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
+        block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+        rules = block.split("<!-- standards -->\n", 1)[1].split("<!-- signoff -->", 1)[0]
+        (tree / STANDARDS).write_text(string.Template(rules).substitute(standards=(
+            Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()),
+            encoding="utf-8")
         engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
+                "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
         # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
         # on Codex, or its Claude cold-read model when only Claude is installed.
