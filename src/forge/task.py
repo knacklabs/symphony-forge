@@ -29,6 +29,10 @@ REFUSALS = {
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
                 'cd <the fix folder> && forge fix allow-large "<reason>"'),
     "no_reason": ("The permission needs a one-line reason.", 'forge fix allow-large "<reason>"'),
+    "bad_slug": ("{slug!r} is not a fix name; a fix name is lowercase words joined by hyphens.",
+                 'forge fix start "<why>" --done "<done when>" --slug <name>'),
+    "amend_lines": ("A new done-when needs one line of text and a one-line reason.",
+                    'forge fix amend {fix} --done "<done when>" --because "<why>"'),
 }
 
 
@@ -221,8 +225,10 @@ def fix_start(args: argparse.Namespace) -> None:
     if not (_one_line(args.why) and _one_line(args.done)):
         refuse(REFUSALS["fix_lines"])
     why, done = args.why.strip(), args.done.strip()
+    if args.slug is not None and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", args.slug):
+        refuse(REFUSALS["bad_slug"], slug=args.slug)
     main = main_ref()
-    slug = re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
+    slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
     taken = {ref.split("/fix/", 1)[1] for ref in git(
         "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/").splitlines()}
     name, n = slug, 1
@@ -252,6 +258,25 @@ def allow_large(args: argparse.Namespace) -> None:
     print(f"Fix {name} may now go over the fix limit.")
 
 
+def amend(args: argparse.Namespace) -> None:
+    if not (_one_line(args.done) and _one_line(args.because)):
+        refuse(REFUSALS["amend_lines"], fix=args.item)
+    from forge import close  # close imports story, which imports this module
+    top = close._worktree(args.item)
+    state = repo.read_state(args.item, top) or {}
+    # The old text and the reason stay in the record; the next review reads only done_when.
+    state.setdefault("amendments", []).append(
+        {"done_when": state.get("done_when", ""), "because": args.because.strip(), "at": repo.now()})
+    state["done_when"] = args.done.strip()
+    # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
+    ruling = (f'Ruling: Done-when changed from "{state["amendments"][-1]["done_when"]}" to '
+              f'"{state["done_when"]}" because {args.because.strip()}; judge the new text.')
+    repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
+                      repo.write_state(args.item, state, top), top=top)
+    print(f"Fix {args.item} is now done when: {state['done_when']}")
+    print(f"Next: forge close {args.item}")
+
+
 COMMANDS = [
     {"words": "task start", "run": "start", "changes_state": True,
      "help": "Start a task in its own branch and worktree",
@@ -259,16 +284,22 @@ COMMANDS = [
      "listing": "| `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |"},
     {"words": "fix start", "run": "fix_start", "changes_state": True,
      "help": "Start a fix in its own branch and worktree, with a one-line why and done-when",
-     "args": [(('why',), {}), (('--done',), {"required": True, "metavar": "DONE_WHEN"})],
+     "args": [(('why',), {}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+              (('--slug',), {"metavar": "NAME", "help": "the fix's name, instead of one cut from the why"})],
      "position": 110,
-     "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |'},
+     "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |'},
     {"words": "fix allow-large", "run": "allow_large", "changes_state": True,
      "help": "Record the human's permission for this fix to go over the fix limit",
      "args": [(('reason',), {})], "position": 120,
      "listing": '| `forge fix allow-large "<reason>"` | Records the human\'s permission for a fix to go over the fix limit |'},
+    {"words": "fix amend", "run": "amend", "changes_state": True,
+     "help": "Replace a fix's done-when, keeping the old text and the reason in its record",
+     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+              (('--because',), {"required": True, "metavar": "WHY"})], "position": 125,
+     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix\'s done-when; the old text and the reason stay in its record, and the next review judges the new text |'},
 ]
 
 GROUP_HELP = {
     "task": "Start a task",
-    "fix": "Start a fix, or let it go over the fix limit",
+    "fix": "Start a fix, let it go over the fix limit, or change its done-when",
 }

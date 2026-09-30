@@ -287,7 +287,7 @@ changing a result or "What changes for you" does.
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
   code names, file paths or test names. "Code exists" is not a result.
-- Each item's evidence, edge cases and proving tests go under the same number in
+- Each item's evidence, edge cases and the test or check that proves it go under the same number in
   `### Done-when details`, the first section under `## For the builders`. Workers and reviewers
   get the entries of the items their task covers. An item with nothing to add has no entry.
 - Done-when or Notes names supported inputs and exclusions. A dismissal that narrows those
