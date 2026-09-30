@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-TOOLS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-30T20:35:42+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Run Forge all in Claude, all in Codex, or both",
+  "touches": 0
+}
