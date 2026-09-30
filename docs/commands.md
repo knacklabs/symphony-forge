@@ -12,8 +12,9 @@
 | `forge story done <KEY> "<outcome>"` | Records a finished story's outcome sentence and dates |
 | `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
-| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree |
+| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
+| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix's done-when; the old text and the reason stay in its record, and the next review judges the new text |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
 | `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |
 | `forge close <item>` | Closes a task or fix by the close rule |
