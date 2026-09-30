@@ -3,11 +3,32 @@
   "branch": "fix/close-pushes-its-review-commit-while-the",
   "done_when": "Close judges the pull request checks only on the head it pushed and never counts a result from an earlier head (it says it is waiting instead), and a failed push is retried a few times with backoff before close gives up.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9a1ac24f951a78416ad3afa5b2afe6ec616d2c34adedea9865f1f30bbbf5a832",
+    "commit": "7621d08042e864aadf382cc35d69b383de5c583d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This end-to-end test makes the third push succeed and checks only that three attempts occurred. It would still pass if retries had no backoff or if Close retried forever when every push failed. Add an always-failing push case that verifies Close stops after the bounded attempts, returns a failure, and uses increasing delays.",
+        "file": "tests/test_fix_close_pushes_its_review_commit_while_the.py",
+        "line": 43,
+        "priority": "P1",
+        "title": "Not done: the push retry exhaustion and backoff test"
+      }
+    ],
+    "status": "blocked",
+    "tree": "5279f76cb08f6330376d8d646641f38a37b1a8ae1931c08ac7d257634ac8fd1f"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T07:12:04+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T09:34:57+00:00",
+      "step": "review"
     }
   ],
   "why": "Close pushes its review commit while the pull request check still shows the previous head's result, so close reports failed checks and every close needs a second run; a push that fails once with a passing git error also stops close"
