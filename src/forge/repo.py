@@ -147,7 +147,7 @@ KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
-                   "codex": {"model": "gpt-6-sol", "effort": "high"}}
+                   "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
