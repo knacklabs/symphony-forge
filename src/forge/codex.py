@@ -243,8 +243,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     request instead of a turn.
 
     `kind` is Build, Lite, Fix or Grill; its models come from the checkout's forge.toml, read now.
-    `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never",
-    and every request Codex sends is declined. Events go to the terminal and the item's work log.
+    `sandbox` is the SDK's name for it: "full-access" or "read-only". Approvals are always "never";
+    a request Codex still sends is accepted with full access and declined when read-only.
+    Events go to the terminal and the item's work log.
     The item's record gets the driver's identity as soon as it starts, before Codex does, then the
     app-server's, the conversation with its checkout and approval and the turn about to start
     (pending until its "started" line is logged), the commit the turn starts from, and HEAD when
@@ -372,6 +373,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = ""
                 elif "declined" in said:
                     text = f"Declined Codex's request {said['declined']}"
+                elif "accepted" in said:
+                    text = f"Accepted Codex's request {said['accepted']}"
                 elif "status" in said:
                     usage = said.get("usage") or {}
                     result.update(status=said["status"], text=said.get("text"), usage={
