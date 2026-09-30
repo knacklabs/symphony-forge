@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "2171459e14891d2875bacd2225f2d01524487d988ed165e9c356196039f7d5eb",
-    "commit": "1c40686c9e9f704e35076a5bfc830156e2263055",
+    "changed": "f84346f1f5055c302b890460d9c42d1c37522e67a2a9c4cf3f2b3cf1f7dc36d7",
+    "commit": "66598227a1995e7a8baab7a066760075efde64f8",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The new negative test checks `_running(live.pid)` without a start-time cutoff, but `test_4_turn_log` calls `_left`, which always supplies one (`tests/test_codex_worker.py:182\u2013187`). On Windows, the test\u2019s only call with a cutoff uses `0` and expects `False`. If the cutoff path incorrectly returned `False` for every process, both this test and the 20 clean runs would still pass while a leaked launcher went undetected. Test a live launcher with a realistic cutoff and verify the leak assertion fails. This is new evidence relative to the prior review: the liveness API was fixed, but the added test does not exercise its use in the assertion.",
-        "file": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: a live Codex launcher makes test_4_turn_log fail"
-      }
-    ],
-    "status": "blocked",
-    "tree": "a95b050196d75f90a1802702be4bcd524fdcbc6e5223455b3333349442e56ae7"
+    "findings": [],
+    "status": "clean",
+    "tree": "83c7808ccb8d3b0a02dc3b078d9a3923952142d916e1fa5e722fbdc3307712e5"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T18:01:21+00:00",
@@ -32,6 +24,10 @@
     },
     {
       "at": "2026-09-29T20:13:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T00:42:00+00:00",
       "step": "review"
     }
   ],
