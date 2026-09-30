@@ -210,13 +210,10 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         parsed = story.parse(doc_text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
-        existing_tests = set(repo.git("ls-tree", "-r", "--name-only", base,
-                                      cwd=top).splitlines())
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
-            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)
-                             and not (p in existing_tests and _test_file(p))),
+            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
             covered=_bullets(story.item(parsed, n, True) for n in parsed["done"] if n in covers),
             context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
@@ -302,16 +299,6 @@ def _bullets(items: Any) -> str:
 def _within(path: str, entry: str) -> bool:
     """A changed path is inside a Scope entry: the same file, under the folder, or a glob match."""
     return path == entry or path.startswith(entry.rstrip("/") + "/") or fnmatch(path, entry)
-
-
-def _test_file(path: str) -> bool:
-    """Test files named as tests or kept in a test folder, including colocated tests."""
-    parts = Path(path).parts
-    name = parts[-1]
-    return (any(fnmatch(name, pattern) for pattern in ("test_*.py", "*_test.py",
-                                                        "*.test.*", "*.spec.*"))
-            or (any(part.startswith("test") for part in parts[:-1])
-                and "fixtures" not in parts[:-1]))
 
 
 # --- the round -------------------------------------------------------------------------

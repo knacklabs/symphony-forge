@@ -22,14 +22,17 @@ test = "npm ci && npx playwright install --with-deps chromium && docker compose 
 
 ## End-to-end tests
 
-Every Done-when item needs an end-to-end test through the real entry point: Forge's own command;
-for client apps, the running API with a real database and user flows in a browser through
-Playwright. Fake only third-party services at their edge. Unit tests are only for pure logic with
+Every Done-when item needs an end-to-end test through the real entry point when it changes runtime
+behaviour: Forge's own command; for client apps, the running API with a real database and user
+flows in a browser through Playwright. Settings, docs, deletions and test-only items are proven by
+the check the item names. Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Review reports an item proven only by unit tests as a P1
 `Not done` and never asks for unit tests of helpers.
 
-An item with no UI gets a Supertest test through HTTP, against the running API at `baseUrl` and a
-real database (see database.md). Create its data through the running app's API:
+An item with no UI gets a Supertest test through HTTP when it changes runtime behaviour, against
+the running API at `baseUrl` and a real database (see database.md): one per Done-when item, not one
+per function. Settings, docs, deletions and test-only items get none; they are proven by the check
+the item names. Create its data through the running app's API:
 
 ```ts
 it('cancels an order that has not shipped', async () => {
@@ -46,8 +49,8 @@ existence doesn't leak (see security.md), and bad input gets 400.
 
 ## Browser tests
 
-Every user-facing Done-when item gets one Playwright test that walks the flow in a browser against
-the running app and API. Find elements by role and label:
+Every user-facing Done-when item gets one Playwright test when it changes runtime behaviour, walking
+the flow in a browser against the running app and API. Find elements by role and label:
 
 ```tsx
 await page.getByRole('button', { name: 'Cancel order' }).click();

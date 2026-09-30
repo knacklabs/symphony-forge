@@ -10,11 +10,12 @@ $delivers
 This part may change only these paths:
 $scope
 
-Files the branch changes outside that scope (report any that the work doesn't need):
+Files the branch changes outside that scope:
 $outside
 
-An existing test changed because the intended work broke it is allowed outside Scope. Check the
-worker's handoff names each such test and why it changed.
+A file outside Scope that the work needs, such as a caller, a type or an existing test the change
+broke, is allowed. Report only the files outside Scope that the work doesn't need. Check the
+worker's handoff names each such file and why.
 
 ## Done when
 This part covers the items below. Report every one the branch does not meet as a P1 finding
@@ -92,10 +93,10 @@ checklist.
 Documentation-only changes still need every test named in the task's Tests column; check claims,
 commands and links.
 
-Every Done-when item needs an end-to-end test through the real entry point when it covers
-user-facing behaviour: Forge's own command; for client apps, the running API with a real database
-and user flows in a browser through Playwright. CI, config, packaging and test-only items are proven
-by the test the item names.
+Every Done-when item needs an end-to-end test through the real entry point when it changes runtime
+behaviour: Forge's own command; for client apps, the running API with a real database and user
+flows in a browser through Playwright. Settings, docs, deletions and test-only items are proven by
+the check the item names. So are CI and packaging items.
 Fake only third-party services at their edge. Unit tests are only for pure logic with
 many cases, never an item's only proof. Report an item proven only by unit tests as a P1 finding
 titled `Not done: <the item>`. Never ask for unit tests of helpers.
