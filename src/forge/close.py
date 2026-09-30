@@ -101,6 +101,9 @@ def close(args: argparse.Namespace) -> int:
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
+    elif (command := repo.config(top)["test"]) and (
+            (passed := review.passed_record(top, command)) and passed.exists()):
+        print(review.SKIPPED.format(command=command), flush=True)
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
