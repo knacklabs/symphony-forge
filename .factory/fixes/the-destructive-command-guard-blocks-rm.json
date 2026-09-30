@@ -1,0 +1,14 @@
+{
+  "base": "4325772f015533584ea753bcfc91b8c4cc1d65a5",
+  "branch": "fix/the-destructive-command-guard-blocks-rm",
+  "done_when": "The guard allows rm -rf when every target, resolved, is inside the system temp folder (TMPDIR, /tmp or /private/tmp), and allows reading git config values (git config --get, or git config with a key and no value); everything it blocks today otherwise stays blocked.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T03:30:33+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The destructive-command guard blocks rm -rf even inside the system temp folder where coordinators keep scratch clones, and blocks reading a git config value, so scratch clones pile up and coordinators work around the guard"
+}
