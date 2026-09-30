@@ -386,7 +386,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         context = hooked("context", build("SessionStart"))
         assert context.returncode == 0 and context.stdout.startswith(
             repo.forge("next").stdout.strip()), context.stdout
-        for command, code in (("rm -rf /srv/build", 2), ("ls", 0)):
+        for command, code in (("rm -rf build", 2), ("ls", 0)):
             denied = hooked("deny", build("PreToolUse", "Bash", {"command": command, **EXTRA}))
             assert denied.returncode == code, (command, denied.stderr)
         if tool == "claude":
@@ -434,7 +434,7 @@ def test_7_same_result_on_both_hosts(repo, claude_payload, codex_payload, monkey
     context = through(".claude", "SessionStart", claude_payload("SessionStart"))
     assert context == through(".codex", "SessionStart", codex_payload("SessionStart"))
     assert context[0] == 0 and "waiting for approval" in context[1]
-    for command, code in (("rm -rf /srv/build", 2), ("git commit --no-verify -m x", 2),
+    for command, code in (("rm -rf build", 2), ("git commit --no-verify -m x", 2),
                           ("gh pr merge 7", 2), ("ls -la", 0)):
         denied = through(".claude", "PreToolUse", claude_payload("PreToolUse", "Bash",
                                                                  {"command": command}))

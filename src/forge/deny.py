@@ -28,7 +28,8 @@ REFUSALS = {
 
 OPERATORS = set(";&|()<>")
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "eval"}
-CONFIG_GETS = {"--get", "--get-all", "--get-regexp"}
+ALONE_BREAKERS = OPERATORS | set("`'\\\n{}=")
+CONFIG_GETS ={"--get", "--get-all", "--get-regexp"}
 CONFIG_SCOPES = {"--global", "--local", "--system", "--worktree"}
 
 
@@ -43,10 +44,12 @@ def hook(args: argparse.Namespace) -> None:
     command = tool_input.get("command") if isinstance(tool_input, dict) else None
     if isinstance(command, list):  # ponytail: an argv-shaped command, should a host send one
         command = shlex.join(map(str, command))
-    cwd = str(payload.get("cwd") or os.getcwd())
-    for words in _commands(str(command or "")):
+    command = str(command or "")
+    # A command that is only rm: nothing before it can change the folder or a variable it uses.
+    alone = not set(command) & ALONE_BREAKERS
+    for words in _commands(command):
         for i, word in enumerate(words):  # a program may follow sudo, env, xargs or find -exec
-            rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:], cwd)
+            rule = _rule(word.rsplit("/", 1)[-1], words[i + 1:], alone and i == 0)
             if rule:
                 refuse(REFUSALS[rule], code=2, found=" ".join(words))
 
@@ -80,13 +83,13 @@ def _run_by(command: list[str], depth: int) -> Iterator[list[str]]:
             return
 
 
-def _rule(program: str, args: list[str], cwd: str) -> str | None:
-    """The rule a program and its arguments break, if any."""
+def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
+    """The rule a program and its arguments break, if any. `alone`: this is the whole command."""
     if "--no-verify" in args:
         return "no_verify"
     short = _short(args)
     if program == "rm" and ({"r", "R"} & short or "--recursive" in args) and (
-            "f" in short or "--force" in args) and not _in_temp(args, cwd):
+            "f" in short or "--force" in args) and not (alone and _in_temp(args)):
         return "destructive"
     if program == "git":
         sub, rest = _subcommand(args)
@@ -111,19 +114,28 @@ def _rule(program: str, args: list[str], cwd: str) -> str | None:
     return None
 
 
-def _in_temp(args: list[str], cwd: str) -> bool:
-    """Whether rm names targets and each one, resolved, lies inside the system temp folder."""
+def _in_temp(args: list[str]) -> bool:
+    """Whether rm names targets and each one, an absolute path or one under the inherited
+    $TMPDIR with no .. in it, resolves inside the system temp folder."""
     end = args.index("--") if "--" in args else len(args)
     targets = [a for a in args[:end] if not a.startswith("-")] + args[end + 1:]
     roots = [os.path.realpath(r) for r in (os.environ.get("TMPDIR"), "/tmp", "/private/tmp") if r]
     for target in targets:
         path = os.path.expandvars(target)
-        if set(path) & set("$`*?[{~"):  # left for the shell to expand, so Forge can't tell where
-            return False
-        path = os.path.realpath(os.path.join(cwd, path))
-        if not any(path.startswith(root.rstrip("/") + "/") for root in roots):
+        if (not target.startswith(("/", "$TMPDIR/")) or set(target) & set("*?[~") or "$" in path
+                or ".." in target.split("/")):
+            return False  # left for the shell to expand, or climbing out: Forge can't tell where
+        path = os.path.realpath(path)
+        if not any(path != root and _under(path, root) for root in roots):
             return False
     return bool(targets)  # no targets: xargs or find supplies them
+
+
+def _under(path: str, root: str) -> bool:
+    try:
+        return os.path.commonpath([path, root]) == root
+    except ValueError:  # on Windows, a path on another drive
+        return False
 
 
 def _config_read(args: list[str]) -> bool:

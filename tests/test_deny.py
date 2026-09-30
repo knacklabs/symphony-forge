@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 DESTROY = '" because it can destroy work that cannot be recovered.'
 HOOKS = '" because the git hooks must run on every commit and push.'
@@ -45,19 +44,16 @@ ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
 
 
 def test_23_deny_hook(repo, claude_payload, codex_payload):
-    # The test repo sits in the temp folder, where rm -rf is allowed; run from the checkout instead.
-    outside = Path(__file__).resolve().parent
     for build in (claude_payload, codex_payload):
         for command, reason in BLOCKED.items():
-            payload = build("PreToolUse", "Bash", {"command": command}, cwd=outside)
+            payload = build("PreToolUse", "Bash", {"command": command})
             blocked = repo.forge("hook", "deny", input=json.dumps(payload))
             assert blocked.returncode == 2, command
             assert blocked.stderr.startswith('Forge blocks "') and reason in blocked.stderr, command
             assert "\nNext: " in blocked.stderr
         for command in ALLOWED:
             allowed = repo.forge("hook", "deny", input=json.dumps(build("PreToolUse", "Bash",
-                                                                        {"command": command},
-                                                                        cwd=outside)))
+                                                                        {"command": command})))
             assert (allowed.returncode, allowed.stdout, allowed.stderr) == (0, "", ""), command
 
     unreadable = repo.forge("hook", "deny", input="not json")
