@@ -3,11 +3,24 @@
   "branch": "fix/the-coordinator-skill-that-client-repos",
   "done_when": "The skill (src/forge/templates/skill.md and its synced copies) says: workers change files outside Scope that the change needs and name them, so the coordinator answers a Scope question only when the change isn't needed; the intent table has rows for naming a fix (--slug) and changing a fix's Done-when (forge fix amend); mark generated files such as migration snapshots linguist-generated in .gitattributes so reviews show them only as counts; and a story's Tests column names one end-to-end case per Done-when item that changes runtime behaviour, with none for settings, docs, deletions or test-only items.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "7f598f4b92584abbb9c535804884b5f2fff77f8e0ed90a9eb9ecce10ee370f7e",
+    "commit": "4044c745d628a321c2e61af1e1062d12a49ff4b7",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "6afae8e3c1ae90a71fe80f0fe5b182a0d3c3413d8aafb9ef1677b684145ecad4"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T10:49:17+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T13:34:08+00:00",
+      "step": "review"
     }
   ],
   "why": "The coordinator skill that client repos get lags the last two days of Forge changes, so agents in client repos don't use them: it still says to settle every outside-Scope question before answering a worker, and never mentions naming or amending fixes, marking generated files, or the new test balance"
