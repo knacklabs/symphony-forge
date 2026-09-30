@@ -47,10 +47,14 @@ Risks: none
    switch's own fix (`merge.ENABLE`) with `merge.REFUSALS["owner_merges"]`, changing nothing.
    Before anything else it reads the item's pull request with `close._pull_request`: when it is
    already merged, land runs `close.close` once (which says so and names `forge story done` after
-   a story's last task) and exits 0, with no worker round and no merge. It builds (one
-   `worker.work` call with no note) only when the item's recorded status is `started` and its
-   kind is not `story-done`, `migrate` or `adopt` (Forge made those changes already); any other
-   status goes straight to close. When close refuses with `checks.REFUSALS["not_green"]` (a check
+   a story's last task) with no worker round; then, only when `close.merger(top, state)` is
+   `"agent"` and the item's ready record is clean (read as `nextstep._item` reads it), it prints
+   `Merging <item>.` and calls `merge.merge`, which makes no `gh pr merge` call for a merged pull
+   request and finishes Forge's tidy-up; otherwise it exits 0. It builds (one `worker.work` call
+   with no note) only when the item's kind is not `story-done`, `migrate` or `adopt` (Forge made
+   those changes already) and its recorded status is `started`, or `working` with no `review`
+   recorded yet (a first build that failed or was stopped runs again; one stopped after it
+   finished runs one more round); any other status goes straight to close. When close refuses with `checks.REFUSALS["not_green"]` (a check
    still running or not reported on the pushed head, or GitHub not answering), land runs close
    again, at most three close runs in a row for that reason, then stops with close's last
    refusal. Any refusal land doesn't handle (a merge conflict, a worker question, an unsynced
@@ -66,7 +70,11 @@ Risks: none
    unbuilt fix built once then closed and merged, with the step lines in that order; a built fix
    with no worker call; a `story-done` fix and a `migrate` fix at `started` with no worker call;
    checks pending on every look giving three close runs, two waiting lines, then the not-green
-   refusal and a non-zero exit; an already merged pull request with no worker call, no
+   refusal and a non-zero exit; checks pending on the first look and green on the second giving
+   one waiting line, then the merge; a first build whose worker fails stopping land with the stop
+   line, the worker's refusal, its next step and its exit code, and a second land run building
+   again before closing; no checks named, and an unsynced upgrade, each stopping land with the
+   stop line, close's refusal, its next step and its exit code; an already merged pull request with no worker call, no
    `gh pr merge` and exit 0; a story key and a malformed item refused with nothing committed; the
    merge switch's fix refused; a merge conflict stopping land with close's conflict refusal and no
    worker call.
@@ -78,12 +86,20 @@ Risks: none
    `Stopped after 3 fix rounds: <item> still has <what>.` and stops with close's refusal, whose
    next step names `forge work` and `--dismiss`. Land never passes `--dismiss` or `--because` and
    never edits a review's dismissals; dismissals the coordinator recorded earlier still count
-   because close keeps them. A worker question stops land through close's `question` refusal.
+   because close keeps them. A red refusal leads to a fix round only when `worker._failing(branch)`
+   (the checks the worker's brief shows, bucket `fail`) is not empty; a red refusal from only a
+   cancelled check or a named skipped check stops land with close's red refusal. A Codex worker's
+   question stops land through close's `question` refusal (Claude rounds record no question
+   today; see Out of scope).
    Tests: a review blocked once then clean gives one fix round whose brief names the finding; a
    review blocked four times gives three fix rounds, the stop line, close's blocked refusal and a
    non-zero exit, with no dismissal in the item's record; a red check with `land._rerun` False
-   gives a fix round whose brief names the failing check; a Codex worker ending its round with a
-   question stops land with the question refusal and runs no further round.
+   gives a fix round whose brief names the failing check; a cancelled check, and a named skipped
+   check, each stop land with close's red refusal, no worker call and no `gh run rerun`; a blocked
+   review, then a red check, then a blocked review, then a red check give three fix rounds and the
+   stop line; a finding dismissed before land ran stays dismissed in the record and blocks
+   nothing; a Codex worker ending its round with a question stops land with the question refusal
+   and runs no further round.
 3. After close returns Ready, land decides with `close.merger(top, state)`, the one place close
    also uses for its Ready line: `"human"` for a `migrate` or `adopt` item and for the merge
    switch's fix, else `repo.merge_setting(top)` (agent for a client prototype before sign-off).
@@ -94,29 +110,43 @@ Risks: none
    Land itself never calls `gh pr merge`. Tests: `merge = "agent"` gives exactly one `gh pr merge`
    call with `--match-head-commit` equal to the pushed head, and exit 0; `merge = "human"` gives no
    `gh pr merge` call, the hand-off line with the stub's URL, and exit 0; a client prototype before
-   sign-off merges; a head moved after Ready stops land with `forge merge`'s `changed` refusal.
+   sign-off merges; a `migrate` fix and an `adopt` fix under `merge = "agent"` each give the
+   hand-off line and no `gh pr merge` call; a head moved after Ready stops land with
+   `forge merge`'s `changed` refusal; `forge merge` failing to delete the remote branch after
+   GitHub merged stops land with its `remote_branch` refusal, and a second land run, with the
+   deletion working, makes no `gh pr merge` call, removes the worktree and exits 0.
 4. `land._rerun(top, item, branch) -> bool` re-runs only when every failing check on the pull
    request (`gh pr checks <branch> --json name,bucket,link`, as `worker._failing` reads it) meets
-   all of: its link names a run and a job (`/runs/<run>/job/<job>`); that run's
-   `gh run view <run> --json attempt` is 1, so each pushed head gets one re-run at most, even across
-   land runs; its whole failed log (`gh run view --job <job> --log-failed`) names none of the
-   item's changed files (`git diff --name-only origin/<default>...HEAD` in the item's checkout),
-   each looked for with `/` and with `\`; and `review.passed_record(top, <test command>)` exists,
-   meaning this machine's tests passed on the pushed head's committed files. Then it prints the
-   re-run line per check, runs `gh run rerun --job <job>` for each, waits (up to
-   `FORGE_CHECKS_WAIT`) until each run reports an attempt above 1, and returns True; land then
-   closes again without counting a fix round. A run that never shows its new attempt stops land
+   all of: its bucket is `fail` (at least one such check exists); its link names a run and a job
+   (`/runs/<run>/job/<job>`); that run's `gh run view <run> --json attempt` reads and is 1; its
+   whole failed log (`gh run view --job <job> --log-failed`) reads and names none of the item's
+   changed files (`git diff --name-only -z --no-renames origin/<default>...HEAD` in the item's
+   checkout, so paths come unquoted and a rename lists its old and new paths), each looked for
+   with `/` and with `\`; and `review.passed_record(top, <test command>)` exists, meaning this
+   machine's tests passed on the pushed head's committed files. A failed `gh` call counts as not
+   met. No re-run was requested for this pushed head from this repo before: `land._rerun` writes
+   `.git/forge/reruns/<head>` (in the shared Git directory, as `repo.forge_dir` gives it) before
+   its first request and returns False whenever that file exists, so each pushed head gets one
+   re-run at most, even across interrupted land runs. Then it prints the re-run line per check,
+   runs `gh run rerun <run> --failed` once per run, waits (up to `FORGE_CHECKS_WAIT`) until each
+   run reports an attempt above 1, and returns True; land then closes again without counting a
+   fix round. A run that never shows its new attempt stops land
    with `land.REFUSALS["rerun"]`: `GitHub has not started the re-run of <check>.` / Next:
    `forge land <item>`. Anything else returns False, which leads to a fix round. Tests
    (`tests/test_land_checks.py`): an unrelated failure with a passed record is re-run once, then
    green, merged, no worker call; a log naming a changed file with `/`, and one naming it with
    `\`, gives a fix round and no `gh run rerun`; no test command, and no passed record, give a fix
    round; a run already at attempt 2 gives a fix round; two failing checks where one names a
-   changed file give no re-run; a failing commit status with no job link gives no re-run; a
-   re-run that fails again gives a fix round, not a second re-run; a re-run whose attempt never
-   rises stops with the re-run refusal.
+   changed file give no re-run; two eligible failing jobs in one run give one
+   `gh run rerun <run> --failed` call; a failing commit status with no job link, an attempt that
+   won't read, and a failed log that won't read each give no re-run; a log naming a changed file
+   whose name has a non-ASCII character, and one naming a renamed file's old path, give no
+   re-run; a re-run that fails again gives a fix round, not a second re-run; a re-run whose
+   attempt never rises stops with the re-run refusal, and a second land run on the same head
+   makes no second `gh run rerun` call.
 5. Nothing in land reads which host runs it (`CLAUDECODE`, `CODEX_THREAD_ID`) or branches on
-   `workers`: the family is chosen inside `worker.work`, exactly as for `forge work`. Tests run
+   `workers`: the family is chosen inside `worker.work`, exactly as for `forge work`, so what a
+   worker round or close does per family (such as recording a question) is theirs. Tests run
    `forge land` as a subprocess, the command's real path, four times: with `CLAUDECODE=1` and with
    `CODEX_THREAD_ID` set (the other unset), each with `workers = "claude"` (the stub claude) and
    `workers = "codex"` (the stub Codex app-server, set up and trusted as
@@ -155,9 +185,10 @@ New moving parts: none
   Codex turn at capacity is retried. If `review.passed_record` lands under another name, CHECKS
   uses that name.
 - Out of scope: `forge next` still names `forge work`, `forge close` and `forge merge`, and the
-  AGENTS.md block keeps its flow; land does not tidy up after a pull request a human merged
-  (`forge next` already says `forge merge <item>` for that); the round limit is a constant, not a
-  setting.
+  AGENTS.md block keeps its flow; after a merged pull request land tidies up only when
+  `forge next` would say `forge merge <item>`; Claude workers' `Question:` paragraphs are not
+  recorded by `forge work` today (only Codex rounds record one), and land adds no question
+  handling of its own; the round limit is a constant, not a setting.
 - No client repo is named anywhere in this story.
 - Claude workers build both tasks; Opus writes the skill text.
 - Each new test file starts with `STORY = "FORGE-LAND-1"`, and its `test_<n>_` names cite the
