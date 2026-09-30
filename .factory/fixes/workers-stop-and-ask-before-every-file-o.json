@@ -5,29 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "6eb524d944701f0981645e2248d6965332969d02569a867a56362b475479d204",
-    "commit": "b95d5630c256d0f47e5bf4b46096860acec44d63",
+    "changed": "8a8d9be680c9947a0089fa397f72896f063844950211e97b4e3570992a301224",
+    "commit": "fde24c07d1688b15f6c1f72bf118d7dde0744b15",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The brief still says at lines 101\u2013103 to write a test at the user boundary for every Done-when item, then run it and watch it fail. That applies even when a settings, docs, deletion, or test-only item names a different check. The new runtime-only rule at lines 112\u2013115 therefore does not remove the extra test requirement that this fix is meant to remove.",
-        "file": "src/forge/templates/brief.md",
-        "line": 102,
-        "priority": "P1",
-        "title": "Not done: Nonruntime items still require a new boundary test"
-      },
-      {
-        "body": "This command-level test checks for the new conditional sentence but passes while the generated brief still unconditionally requires a new boundary test for each item at src/forge/templates/brief.md:101\u2013103. It does not catch the remaining contradiction in the behavior it names.",
-        "file": "tests/test_outside_scope_and_runtime_tests.py",
-        "line": 74,
-        "priority": "P1",
-        "title": "Not done: Test the complete nonruntime brief guidance"
-      }
-    ],
-    "status": "blocked",
-    "tree": "1af598797d16898211a622ca375c2163400bdd6379f636c8429096b39daceaf0"
+    "findings": [],
+    "status": "clean",
+    "tree": "68135ead493fc759e55237523deedf9afba60b1eb4d96665a09319ea62055404"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T03:29:03+00:00",
@@ -43,6 +28,10 @@
     },
     {
       "at": "2026-09-30T06:23:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T08:51:30+00:00",
       "step": "review"
     }
   ],
