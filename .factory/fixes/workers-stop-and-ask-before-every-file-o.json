@@ -1,0 +1,39 @@
+{
+  "base": "4325772f015533584ea753bcfc91b8c4cc1d65a5",
+  "branch": "fix/workers-stop-and-ask-before-every-file-o",
+  "done_when": "The worker brief lets a worker change a file outside its Scope that the change needs, naming each such file and why in its handoff, and the review reports only outside-Scope files the work doesn't need; workers still stop for a one-way step, a security question, a new moving part or contradicting Done-when items. The brief and the review ask for an end-to-end test only for items that change runtime behaviour; settings, docs, deletions and test-only items are proven by the check the item names. The brief tells workers to name new test files after the behaviour they prove, never after the fix's slug.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "8a8d9be680c9947a0089fa397f72896f063844950211e97b4e3570992a301224",
+    "commit": "fde24c07d1688b15f6c1f72bf118d7dde0744b15",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "cfe94cba4df2bbcc11d9e559c54af1eb52cc48d8eb3efa5a7849565547d4a974"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T03:29:03+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T04:43:43+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T05:35:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T06:23:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T08:51:30+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers stop and ask before every file outside their Scope, even a caller or type file the change plainly needs, and the brief demands an end-to-end test for every item even for docs, settings, deletions and test-only changes, so workers and reviews waste rounds"
+}
