@@ -65,10 +65,12 @@ class Repo:
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
               ) -> subprocess.CompletedProcess[str]:
-        """Run the real forge command; stdin is empty unless given."""
+        """Run the real forge command; stdin is empty unless given. Windows gets two minutes: its
+        heaviest commands (init, migrate, close) start hundreds of git processes, and starting a
+        process there under a parallel run's load took one past a minute."""
         return subprocess.run([sys.executable, str(self.bin / "forge"), *args],
                               cwd=cwd or self.path, input=input, capture_output=True, text=True,
-                              encoding="utf-8", timeout=60)
+                              encoding="utf-8", timeout=120 if os.name == "nt" else 60)
 
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel

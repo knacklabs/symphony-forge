@@ -355,10 +355,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     # ending HEAD, which a rewritten history may no longer hold.
                     begun = repo.git("rev-parse", "HEAD", cwd=checkout)
                     ended = {} if said["continued"] else {"head": None}
+                    pending = {"kind": kind, "start": begun, **continued,
+                               **({"note": note} if note is not None else {})}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending={"kind": kind, "start": begun, **continued,
-                                                        **({"note": note} if note is not None else {})},
-                            **ended)
+                            approval=approval, pending=pending, **ended)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":
@@ -371,6 +371,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     _append(turns, started)
                     _record(record, start=begun, pending=None, **continued)
                     text = ""
+                elif "retry" in said:  # Codex was at capacity: the driver sends the turn again
+                    _record(record, pending=pending)
+                    recorded()
+                    text = (f"Codex is at capacity, so Forge tries the turn again in "
+                            f"{said['retry']:g} seconds (attempt {said['attempt']} of {said['of']}).")
                 elif "declined" in said:
                     text = f"Declined Codex's request {said['declined']}"
                 elif "accepted" in said:
@@ -549,11 +554,11 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     record."""
     saved = _json(record)
     stopped, unknown = False, None
-    for key, runs, group in (("driver", "codex_turn", True), ("app_server", "app-server", False)):
+    # By id and start time only: under load ps can read a just-started app-server's program name
+    # alone, so the command on record needn't name Codex.
+    for key, group in (("driver", True), ("app_server", False)):
         recorded = saved.get(key) or {}
         if not recorded:
-            continue
-        if os.name != "nt" and runs not in str(recorded.get("command")):
             continue
         alive = _alive(recorded)
         if alive:
@@ -624,20 +629,31 @@ def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] 
 
 
 @contextlib.contextmanager
-def _one_at_a_time(lock: Path) -> Iterator[None]:
+def _one_at_a_time(lock: Path, waiting: str = "") -> Iterator[None]:
     """Hold the lock's guard file while a call checks, clears or takes the lock, so two calls that
     find one stale lock never both clear it, and one clears another's new lock. The system lets
-    go of the guard when its holder ends, however it ends, so it is never stale itself."""
+    go of the guard when its holder ends, however it ends, so it is never stale itself. Prints
+    `waiting`, if given, when another holder makes this call wait."""
     with lock.with_suffix(".guard").open("ab") as guard:
         if os.name != "nt":
-            fcntl.flock(guard, fcntl.LOCK_EX)
+            try:
+                fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                if waiting:
+                    print(waiting, flush=True)
+                fcntl.flock(guard, fcntl.LOCK_EX)
             yield
             return
         guard.seek(0)
+        mode = msvcrt.LK_NBLCK
         while True:  # LK_LOCK gives up after ten seconds
-            with contextlib.suppress(OSError):
-                msvcrt.locking(guard.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                msvcrt.locking(guard.fileno(), mode, 1)
                 break
+            except OSError:
+                if waiting and mode == msvcrt.LK_NBLCK:
+                    print(waiting, flush=True)
+                mode = msvcrt.LK_LOCK
         try:
             yield
         finally:
