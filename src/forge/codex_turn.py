@@ -4,12 +4,15 @@ Forge sends one JSON request after recording this driver's process id. The drive
 app-server and thread ids with Forge before it acts, emits progress as JSON lines, and stops the
 app-server if Forge closes stdin. A read, archive or attachment request runs no turn. A worker or
 cold-read turn may assign its chat to the main checkout's Codex project after start or resume.
+A turn Codex ends as failed because the model is at capacity is sent again, up to three times,
+waiting twice as long each time, once Forge has the next turn on record as pending.
 """
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -29,12 +32,21 @@ START = 120  # the seconds Codex gets to start: Codex() waits on initialize with
 STARTING = threading.Lock()  # end() never falls between the app-server starting and SERVER
 SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
 RECORDED = threading.Semaphore(0)  # a release per line Forge sends once it has recorded an id
+RETRIES = 3  # the times a turn Codex ends as at capacity is sent again, each wait twice the last
+# ponytail: the tests' seam, like FORGE_CHECKS_WAIT
+RETRY_WAIT = float(os.environ.get("FORGE_CODEX_RETRY_WAIT", "30"))
 
 
 def emit(**line: Any) -> None:
     # The handler runs on the SDK's reader thread, so lines take turns.
     with LOCK:
         print(json.dumps(line), flush=True)
+
+
+def overloaded(error: dict[str, Any]) -> bool:
+    """Whether a failed turn's error says the model is at capacity, so the turn is worth another go."""
+    return (error.get("codexErrorInfo") == "serverOverloaded" or
+            re.search(r"at capacity|overloaded", error.get("message", ""), re.I) is not None)
 
 
 def decline(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
@@ -191,25 +203,34 @@ def main() -> int:
             thread.set_name(request["name"])
         prompt = (request["prompt"] if resumed is not None else
                   request.get("fresh_prompt", request["prompt"]))
-        turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
-        emit(turn=turn.id)
-        usage, items = None, []
-        for event in turn.stream():
-            payload = event.payload
-            # warnings=False: the SDK's own models warn about their own union and enum fields.
-            params = (payload.params if isinstance(payload, UnknownNotification) else
-                      payload.model_dump(mode="json", by_alias=True, exclude_none=True,
-                                         warnings=False))
-            emit(event=event.method, params=params)
-            if isinstance(payload, ItemCompletedNotification):
-                items.append(payload.item)
-            elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
-                usage = params["tokenUsage"]["last"]
-            elif isinstance(payload, TurnCompletedNotification):
-                error = payload.turn.error
-                # The same final text as the SDK's TurnResult.final_response.
-                emit(status=payload.turn.status.value, error=error and error.message,
-                     text=_final_assistant_response_from_items(items), usage=usage)
+        for attempt in range(RETRIES + 1):
+            turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
+            emit(turn=turn.id)
+            usage, items, busy = None, [], False
+            for event in turn.stream():
+                payload = event.payload
+                # warnings=False: the SDK's own models warn about their own union and enum fields.
+                params = (payload.params if isinstance(payload, UnknownNotification) else
+                          payload.model_dump(mode="json", by_alias=True, exclude_none=True,
+                                             warnings=False))
+                emit(event=event.method, params=params)
+                if isinstance(payload, ItemCompletedNotification):
+                    items.append(payload.item)
+                elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
+                    usage = params["tokenUsage"]["last"]
+                elif isinstance(payload, TurnCompletedNotification):
+                    error = payload.turn.error
+                    busy = payload.turn.status.value == "failed" and overloaded(
+                        params["turn"].get("error") or {})
+                    # The same final text as the SDK's TurnResult.final_response.
+                    emit(status=payload.turn.status.value, error=error and error.message,
+                         text=_final_assistant_response_from_items(items), usage=usage)
+            if not busy or attempt == RETRIES:
+                break
+            wait = RETRY_WAIT * 2 ** attempt
+            emit(retry=wait, attempt=attempt + 2, of=RETRIES + 1)
+            RECORDED.acquire()  # the next turn is on record as pending before it starts
+            time.sleep(wait)
         return 0
     finally:
         codex.close()
