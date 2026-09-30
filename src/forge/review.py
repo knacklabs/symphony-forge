@@ -398,9 +398,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
-        (tree / STANDARDS).write_text(string.Template(rules).substitute(standards=(
-            Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()),
-            encoding="utf-8")
+        # The branch may track this path, even as a link out of the tree: drop it unfollowed,
+        # then create the file afresh ("x" refuses anything still there).
+        repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
+        with (tree / STANDARDS).open("x", encoding="utf-8") as page:
+            page.write(string.Template(rules).substitute(standards=(
+                Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
         engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
