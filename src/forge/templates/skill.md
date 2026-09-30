@@ -250,6 +250,9 @@ Adopting changes no app code.
    and what must never be touched.
 7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
    block. The repo's own rules win where they differ from Forge's default-stack conventions.
+   A rule every review must follow, such as which tests a kind of change needs, goes under
+   `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
+   default branch and follows it.
 
 On a live app, every story and fix also follows these:
 
