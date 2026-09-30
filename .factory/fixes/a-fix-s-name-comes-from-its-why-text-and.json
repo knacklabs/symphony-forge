@@ -1,0 +1,42 @@
+{
+  "base": "3cb47a41f9902414dc4abf82f85203a7d537c7f5",
+  "branch": "fix/a-fix-s-name-comes-from-its-why-text-and",
+  "done_when": "forge fix start takes --slug to name the fix. forge fix amend <fix> --done \"<text>\" --because \"<why>\" replaces the fix's Done-when, keeps the old text and the reason in the fix's record, and the next review judges the new text.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "ae1195482d490ce6431a3fbd2e8fcc0b97582aa6c982b6120135cac04092ec28",
+    "commit": "34b40e3b64b9115d36e84af7ec13b79ffa16de3d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When a fix already has a pull request, this changes the recorded Done-when and the next review prompt, but the pull request still displays the old text. `src/forge/close.py:281` writes the original `Done when:` line, while `src/forge/close.py:291-296` updates only the marked review block on later closes. A reviewer reading the pull request therefore sees a requirement the fix no longer has. Refresh that line when publishing the amended review.",
+        "file": "src/forge/task.py",
+        "line": 270,
+        "priority": "P2",
+        "title": "Update an existing pull request\u2019s Done-when after amendment"
+      },
+      {
+        "body": "`close._worktree` also resolves task worktrees (`src/forge/close.py:158-166`), so `forge fix amend SHOP/T1 ...` succeeds and writes a Done-when into a task record. The next task review instead takes its criteria from the story document (`src/forge/review.py:205-222`), making the command\u2019s success message false for that item. Check that the resolved state is a fix before changing it.",
+        "file": "src/forge/task.py",
+        "line": 265,
+        "priority": "P2",
+        "title": "Reject non-fix items in fix amend"
+      }
+    ],
+    "status": "clean",
+    "tree": "6e07f3729a90f990d1494fe0d3c321e3c1fbd974c4b8ac2740797478f3508a41"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T07:13:02+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T09:57:31+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A fix's name comes from its why-text and is often long and cut mid-word, and a fix's Done-when can't be changed when part of the fix moves elsewhere, so reviews keep flagging the original text"
+}
