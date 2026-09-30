@@ -19,7 +19,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import repo
+from forge import machine, repo
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -238,25 +238,19 @@ def _test_run(top: Path, command: str) -> str:
     Skipped when it already passed here on the same committed files; one run per machine at a time."""
     if not command:
         return "forge.toml names no test command, so close ran none."
-    from forge import codex, machine  # codex imports review indirectly
+    from forge import codex  # codex imports review indirectly
 
-    # One record per committed tree and command that passed here. An edit git doesn't hold yet
-    # could change the result, so a run over one is never recorded.
     folder = machine._repos_file().parent
-    key = hashlib.sha256(f"{repo.git('rev-parse', 'HEAD^{tree}', cwd=top)}\0{command}"
-                         .encode("utf-8")).hexdigest()
-    passed = folder / "passed-tests" / key
-    clean = not repo.git("status", "--porcelain", "--untracked-files=no", cwd=top)
-    skipped = (f"`{command}` already passed on this machine on these same committed files, "
-               "so close did not run it again.")
-    if clean and passed.exists():
+    passed = passed_record(top, command)
+    skipped = SKIPPED.format(command=command)
+    if passed and passed.exists():
         print(skipped, flush=True)
         return skipped
     folder.mkdir(parents=True, exist_ok=True)
     # ponytail: one test run per machine, whatever the repo; a per-repo lock if that proves slow.
     with codex._one_at_a_time(folder / "test-run", "Another forge close on this machine is "
                               "running its tests; this one waits for it."):
-        if clean and passed.exists():  # the close this one waited for passed the same files
+        if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
             return skipped
         env = {**os.environ,
@@ -264,7 +258,7 @@ def _test_run(top: Path, command: str) -> str:
         done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                               encoding="utf-8", errors="replace")
-        if done.returncode == 0 and clean:
+        if done.returncode == 0 and passed:
             passed.parent.mkdir(exist_ok=True)
             passed.touch()
     out = [line.rstrip() for line in done.stdout.splitlines()]
@@ -275,6 +269,22 @@ def _test_run(top: Path, command: str) -> str:
         lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
     return "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
                       "forge close.", *lines])
+
+
+SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
+           "not run it again.")
+
+
+def passed_record(top: Path, command: str) -> Path | None:
+    """Where this machine records that `command` passed on HEAD's committed files, Forge's own
+    records aside (a review commit changes nothing the tests read). None when an uncommitted edit or
+    untracked file could change the result, so such a run is never recorded or skipped."""
+    if repo.git("status", "--porcelain", cwd=top):
+        return None
+    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", "HEAD", cwd=top).split("\0")
+    files = [entry for entry in listing if not entry.partition("\t")[2].startswith(".factory/")]
+    key = hashlib.sha256("\0".join([command, *files]).encode("utf-8")).hexdigest()
+    return machine._repos_file().parent / "passed-tests" / key
 
 
 def _previous(result: dict[str, Any]) -> str:

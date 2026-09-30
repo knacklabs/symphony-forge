@@ -98,3 +98,26 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
     assert one.returncode == 0 and two.returncode == 0, (out_one, out_two)
     assert _runs(log) == ["start fix-tidy-readme", "end", "start fix-other-fix", "end"]
     assert "waits for it" not in out_one[0]
+
+
+def test_4_a_repeat_close_that_keeps_its_green_review_says_the_tests_already_passed(env):
+    log = _with_test_command(env)
+    item, _ = env.start_fix()
+    assert env.close(item).returncode == 0
+    closed = env.close(item)  # nothing changed, so close keeps the review and its test run
+    assert closed.returncode == 0, closed.stderr
+    assert len(env.review_calls()) == 1
+    assert _runs(log) == ["start fix-tidy-readme", "end"]
+    assert "already passed on this machine" in closed.stdout
+
+
+def test_5_close_runs_the_test_command_when_the_worktree_has_an_untracked_file(env):
+    log = _with_test_command(env)
+    item, where = env.start_fix()
+    env.reviews(FAILED, FAILED, CLEAN)
+    assert env.close(item).returncode != 0
+    (where / "test_new_case.py").write_text("def test_new():\n    assert True\n", "utf-8")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stderr
+    assert _runs(log) == ["start fix-tidy-readme", "end"] * 2
+    assert "already passed" not in closed.stdout
