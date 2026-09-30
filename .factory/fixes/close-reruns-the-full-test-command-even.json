@@ -1,0 +1,14 @@
+{
+  "base": "3cb47a41f9902414dc4abf82f85203a7d537c7f5",
+  "branch": "fix/close-reruns-the-full-test-command-even",
+  "done_when": "Close skips the test command, and says so, when the committed tree is identical to one whose test run already passed on this machine, and only one close on a machine runs the test command at a time while the others wait and say so.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T07:12:37+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close reruns the full test command even when nothing changed since the last green run, and parallel closes run the suite all at once, loading the machine into false hook timeouts"
+}
