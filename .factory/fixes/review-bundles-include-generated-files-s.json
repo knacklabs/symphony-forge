@@ -3,7 +3,7 @@
   "branch": "fix/review-bundles-include-generated-files-s",
   "done_when": "Files the repo marks as generated in .gitattributes (linguist-generated) appear in the review bundle only as their name and changed-line counts. A change to a file a fix's Done-when names counts as a change the review must see, even under plans/.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T03:30:04+00:00",
