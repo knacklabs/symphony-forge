@@ -21,8 +21,10 @@ that one question, record the answer in the finding's disposition and the story'
 page. Do not call a deferred topic open when no Done-when item needs it.
 
 A finding names a concrete gap a builder would hit or a bug that would ship, and cites the file or
-Done-when item that shows it. Behaviour the story doesn't change is not a finding. A story with no
-linked spec is not a finding. Report an edge case, platform or trap only where this story's own
+Done-when item that shows it. Behaviour the story doesn't change is not a finding, but a clash
+between the change and existing code is: a name or command it collides with, a file it must
+change that no task's Scope lists, code that runs before it and blocks it, or old wording it
+leaves behind in shipped files. A story with no linked spec is not a finding. Report an edge case, platform or trap only where this story's own
 change meets it, never as a general checklist.
 
 Check:
