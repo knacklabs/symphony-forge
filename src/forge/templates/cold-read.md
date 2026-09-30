@@ -20,20 +20,13 @@ that one question, record the answer in the finding's disposition and the story'
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
 page. Do not call a deferred topic open when no Done-when item needs it.
 
-A finding names a concrete gap a builder would hit or a bug that would ship, and cites the file or
-Done-when item that shows it. Behaviour the story doesn't change is not a finding, but a clash
-between the change and existing code is: a name or command it collides with, a file it must
-change that no task's Scope lists, code that runs before it and blocks it, or old wording it
-leaves behind in shipped files. A story with no linked spec is not a finding. Report an edge case, platform or trap only where this story's own
-change meets it, never as a general checklist.
+A story with no linked confirmed spec is not a finding.
 
 Check:
 
-1. Can every part be built without asking? Name each gap and contradiction. Name every decision a
-   builder would otherwise have to guess: a name, format, rule, order or boundary that two parts
-   rely on, or that a Done-when item leaves open. Name every function, field, file format or
-   command that two tasks both use and that no earlier task pins: the first task that needs it
-   must pin it.
+1. Can every part be built without asking? Name each gap and contradiction. Name every function,
+   field, file format or command that two tasks both use and that no earlier task pins: the first
+   task that needs it must pin it.
    Flag every After link or shared Scope entry that exists only because of a shared line (a
    command-table row, a guide list, a registry), and name the split: the shared line to one task
    or a small last wiring task.
@@ -52,17 +45,14 @@ Check:
    - Flag any one-way step (deleting data, a destructive migration, a new vendor) that isn't
      listed under Risks.
    - Never propose dropping validation, security, data-loss protection or accessibility.
-3. Is every edge case this story's change meets pinned down and proven? For each "Done when"
-   item, name the cases this story's own change must handle and which test, in which task's Tests
-   cell, proves each. Ask of its own change only:
+3. Is every edge case pinned down and proven? For each "Done when" item, ask:
    - which inputs and states it must handle: empty, missing, malformed, already done, half done;
-   - which platform or shell its change itself behaves differently on, if any;
+   - which platforms and shells it meets: Windows PowerShell and cmd, WSL, macOS, Linux CI;
    - which failure and refusal paths it has, and what the user sees on each;
    - which test, in which task's Tests cell, proves each case.
    A case the doc says doesn't apply, with a reason, needs no test. Report each case with no test
    that proves it as `Unproven: item <n>: <case>`.
-4. Does any item's own change hit a known trap? Report each as `Trap: <trap>: item <n>`, naming
-   what in the change meets it. Forge's general traps:
+4. Does any item hit a known trap? Report each as `Trap: <trap>: item <n>`. Forge's general traps:
    - Windows line endings and shells: CRLF text, PowerShell and cmd quoting, `\` paths;
    - no network in CI;
    - a new settings key the installed Forge rejects;
@@ -112,13 +102,10 @@ Check:
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks:
-   every decision a builder would otherwise have to guess, each "Done when" item's own cases and
-   the test that proves each, shared names no earlier task pins, task size, and Forge's general traps and this repository's own known traps:
+   each "Done when" item's edge cases and the test that proves each, shared names no earlier task
+   pins, task size, and Forge's general traps and this repository's own known traps:
 
 $traps
-
-As in your first round, report only a concrete gap with the file or Done-when item that shows it,
-and an edge case, platform or trap only where this story's own change meets it.
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
 If there is nothing to report, write exactly `No findings.` and nothing else.
