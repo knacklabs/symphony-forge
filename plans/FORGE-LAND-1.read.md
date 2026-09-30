@@ -65,6 +65,8 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 11. Gap: item 1’s revised build rule conflicts with its “built fix with no worker call” test.
     A successful `forge work` also leaves status `working` with no review: [worker.py:116](/src/forge/worker.py:116) sets that status, and successful completion never replaces it. Land would rebuild an ordinary completed first build, not only an interrupted one. Pin whether that completed work is reused, and make LAND’s test exercise the actual post-work state.
+    Disposition: cut land rebuilds a `working` item only when the branch's last commit is still Forge's `is working` state commit (worker.py:116-117), so a completed build goes to close; LAND's no-worker test uses a fix at `working` with a worker commit after it.
 
 12. Unproven: item 3: the pull request merges between land’s initial lookup and close.
     [close.py:67](/src/forge/close.py:67) returns 0 for an already merged pull request without creating a Ready record. The initial merged shortcut does not cover this transition; land could then report `not_ready` or hand off a merged pull request. Pin routing back through the merged path and test this transition in LAND.
+    Disposition: cut land reads the pull request again after every close that returns 0 and takes the merged path when it is merged; LAND tests a pull request merged between land's first look and close's.

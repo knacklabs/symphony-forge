@@ -52,9 +52,12 @@ Risks: none
    `Merging <item>.` and calls `merge.merge`, which makes no `gh pr merge` call for a merged pull
    request and finishes Forge's tidy-up; otherwise it exits 0. It builds (one `worker.work` call
    with no note) only when the item's kind is not `story-done`, `migrate` or `adopt` (Forge made
-   those changes already) and its recorded status is `started`, or `working` with no `review`
-   recorded yet (a first build that failed or was stopped runs again; one stopped after it
-   finished runs one more round); any other status goes straight to close. When close refuses with `checks.REFUSALS["not_green"]` (a check
+   those changes already) and its recorded status is `started`, or `working` with the branch's
+   last commit still Forge's own `<item> is working` state commit (`worker.work` commits that
+   before the worker starts, so a round that failed or was stopped before committing anything
+   runs again); any other status, or any commit after that one, goes straight to close. Every
+   time `close.close` returns 0, land reads the pull request again with `close._pull_request`:
+   when it is merged, land takes the already-merged path above instead of the Ready path. When close refuses with `checks.REFUSALS["not_green"]` (a check
    still running or not reported on the pushed head, or GitHub not answering), land runs close
    again, at most three close runs in a row for that reason, then stops with close's last
    refusal. Any refusal land doesn't handle (a merge conflict, a worker question, an unsynced
@@ -67,13 +70,15 @@ Risks: none
    `the failing checks`), `Re-running <check> once: its failure names none of this change's files and the tests passed here.`,
    `Merging <item>.`, and `<item> is ready; a human merges its pull request: <url>`. Tests
    (`tests/test_land.py`, with the stub gh, autoreview and claude and `FORGE_CHECKS_WAIT=0`): an
-   unbuilt fix built once then closed and merged, with the step lines in that order; a built fix
-   with no worker call; a `story-done` fix and a `migrate` fix at `started` with no worker call;
+   unbuilt fix built once then closed and merged, with the step lines in that order; a fix at
+   `working` with a worker commit after Forge's `is working` commit, as a completed `forge work`
+   leaves it, closed with no worker call; a `story-done` fix and a `migrate` fix at `started` with no worker call;
    checks pending on every look giving three close runs, two waiting lines, then the not-green
    refusal and a non-zero exit; checks pending on the first look and green on the second giving
    one waiting line, then the merge; a first build whose worker fails stopping land with the stop
    line, the worker's refusal, its next step and its exit code, and a second land run building
-   again before closing; no checks named, and an unsynced upgrade, each stopping land with the
+   again before closing; a pull request open on land's first look and merged when close looks
+   giving close's merged line, no `gh pr merge` call, no hand-off line and exit 0; no checks named, and an unsynced upgrade, each stopping land with the
    stop line, close's refusal, its next step and its exit code; an already merged pull request with no worker call, no
    `gh pr merge` and exit 0; a story key and a malformed item refused with nothing committed; the
    merge switch's fix refused; a merge conflict stopping land with close's conflict refusal and no
