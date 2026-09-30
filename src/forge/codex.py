@@ -355,10 +355,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     # ending HEAD, which a rewritten history may no longer hold.
                     begun = repo.git("rev-parse", "HEAD", cwd=checkout)
                     ended = {} if said["continued"] else {"head": None}
+                    pending = {"kind": kind, "start": begun, **continued,
+                               **({"note": note} if note is not None else {})}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending={"kind": kind, "start": begun, **continued,
-                                                        **({"note": note} if note is not None else {})},
-                            **ended)
+                            approval=approval, pending=pending, **ended)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":
@@ -371,6 +371,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     _append(turns, started)
                     _record(record, start=begun, pending=None, **continued)
                     text = ""
+                elif "retry" in said:  # Codex was at capacity: the driver sends the turn again
+                    _record(record, pending=pending)
+                    recorded()
+                    text = (f"Codex is at capacity, so Forge tries the turn again in "
+                            f"{said['retry']:g} seconds (attempt {said['attempt']} of {said['of']}).")
                 elif "declined" in said:
                     text = f"Declined Codex's request {said['declined']}"
                 elif "accepted" in said:

@@ -9,7 +9,8 @@ the answer is a decline. Its message echoes the config overrides the thread star
 STUB_CODEX_STATUS sets the turn's final status (completed by default; "vanish" exits before the
 turn ends; "hold" never answers thread/start, and "stall" never answers initialize, each ignoring
 stdin for two minutes, as a stuck server would), and STUB_CODEX_NO_USAGE leaves out the token
-counts. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
+counts. STUB_CODEX_OVERLOADED=<n> fails the first n turns as Codex does when the model is at
+capacity. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
 for a reader that changes a file. `--version` prints the version.
 """
 import json
@@ -42,7 +43,7 @@ def notify(method, **params):
     send(method=method, params=dict(params, stubUnknownField=True))
 
 
-def finish_turn(config, status):
+def finish_turn(config, status, overloaded=False):
     item = {"type": "agentMessage", "id": "msg-1", "text": "stub codex: built it with "
             + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")}
     notify("item/completed", threadId=THREAD, turnId=TURN, completedAtMs=2, item=item)
@@ -66,7 +67,11 @@ def finish_turn(config, status):
         notify("thread/tokenUsage/updated", threadId=THREAD, turnId=TURN,
                tokenUsage={"last": last, "total": last})
     turn = {"id": TURN, "items": [], "status": status, "startedAt": 1, "completedAt": 4}
-    if status == "failed":
+    if overloaded:
+        turn.update(status="failed", error={
+            "message": "Selected model is at capacity. Please try a different model.",
+            "codexErrorInfo": "serverOverloaded"})
+    elif status == "failed":
         turn["error"] = {"message": "stub codex: the model gave up"}
     notify("turn/completed", threadId=THREAD, turn=turn)
 
@@ -99,7 +104,7 @@ def main():
         return
     log(pid=os.getpid(), started=started(), args=sys.argv[1:])
     status = os.environ.get("STUB_CODEX_STATUS", "completed")
-    cwd, config, asked = ".", None, {}
+    cwd, config, asked, turns = ".", None, {}, 0
     for line in sys.stdin:
         message = json.loads(line)
         if "method" not in message:  # the answer to one of this stub's own requests
@@ -115,7 +120,8 @@ def main():
                         "changed by the reader\n", encoding="utf-8")
                 if status == "vanish":
                     return
-                finish_turn(config, status)
+                finish_turn(config, status,
+                            turns <= int(os.environ.get("STUB_CODEX_OVERLOADED", "0")))
             continue
         method, params = message["method"], message.get("params") or {}
         log(method=method, params=params)
@@ -144,6 +150,7 @@ def main():
         elif method == "thread/name/set":
             reply(message, {})
         elif method == "turn/start":
+            turns += 1
             reply(message, {"turn": {"id": TURN, "items": [], "status": "inProgress"}})
             notify("turn/started", threadId=THREAD, turn={"id": TURN, "items": [],
                                                           "status": "inProgress"})
