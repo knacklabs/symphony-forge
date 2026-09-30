@@ -128,8 +128,10 @@ def _claude(top: Path) -> str:
     return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
 
 
-def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> str:
-    """The host's hook file with Forge's entries replaced (old Forge's too); the rest stays."""
+def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
+           allow: list[str]) -> str:
+    """The host's hook file with Forge's entries replaced (old Forge's too) and the tools in allow
+    added to its allow list; the rest stays."""
     text = read(top / rel)
     try:
         data = json.loads(text) if text.strip() else {}
@@ -145,6 +147,9 @@ def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]]) -> st
         for event, (matcher, hook) in events.items():
             group: dict[str, Any] = {"hooks": [{"type": "command", "command": command(hook)}]}
             hooks.setdefault(event, []).append({"matcher": matcher, **group} if matcher else group)
+        if allow:
+            allowed = data.setdefault("permissions", {}).setdefault("allow", [])
+            allowed += [tool for tool in allow if tool not in allowed]
     except (ValueError, AttributeError, TypeError) as exc:
         repo.refuse(REFUSALS["cant_merge"], path=rel, problem=exc)
     return json.dumps(data, indent=2) + "\n"
