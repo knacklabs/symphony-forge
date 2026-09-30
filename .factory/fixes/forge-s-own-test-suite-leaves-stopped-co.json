@@ -1,0 +1,14 @@
+{
+  "base": "de3c6b60a9761b969cc352f67e30ab560eaf0be2",
+  "branch": "fix/forge-s-own-test-suite-leaves-stopped-co",
+  "done_when": "After a full run of Forge's test suite, no process started by a test (Codex SDK stubs, app-server stubs, drivers) is left running or stopped: tests that stop a process always resume and end it in their cleanup, including when the test fails. A check at the end of the suite fails when a test left one behind and names the test.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T19:14:11+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's own test suite leaves stopped Codex SDK stub processes behind (63 found, up to four days old, parented to init), which pile up on developer machines"
+}
