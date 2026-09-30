@@ -91,3 +91,43 @@ def test_5_brief_names_new_test_files_after_their_behaviour(repo):
     tests_first = flat(brief_of(repo).split("## Tests first\n", 1)[1].split("\n## ", 1)[0])
     assert ("Name a new test file after the behaviour it proves, never after the fix's slug."
             ) in tests_first
+
+
+# A sentence that asks for a test for each or every item, with no runtime-behaviour condition and
+# no named check as the alternative.
+PER_ITEM = re.compile(r"\b(each|every)\b[^.]*\bitems?\b|\bitems?\b[^.]*\bbecomes? a test\b", re.I)
+TEST = re.compile(r"\b(tests?|Playwright|Supertest)\b(?! names)")
+NAMED_CHECK = re.compile(r"check (the item|it) names|test or check")
+
+
+def per_item_test_demands(name: str, text: str) -> list[str]:
+    sentences = re.split(r"(?<=[.;:])\s+", flat(text))
+    return [f"{name}: {s}" for s in sentences if PER_ITEM.search(s) and TEST.search(s)
+            and "runtime behaviour" not in s and not NAMED_CHECK.search(s)]
+
+
+def test_6_no_worker_guidance_demands_a_test_for_every_item_regardless_of_runtime_behaviour(repo):
+    brief = brief_of(repo)
+    folder = Path(re.search(r"default client stack is in `([^`]+)`", brief)[1])
+    repo.git("checkout", "-q", "-b", "fix/sync-skill")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stderr
+    texts = {"brief": brief,
+             **{f"conventions/{p.name}": p.read_text(encoding="utf-8")
+                for p in sorted(folder.glob("*.md"))},
+             **{f"{host}/{name}": (repo.path / host / "skills/forge" / name).read_text("utf-8")
+                for host in (".claude", ".codex") for name in ("SKILL.md", "standards.md")}}
+    assert "## Standards" in brief and len(texts) > 10
+    found = [line for name, text in texts.items() for line in per_item_test_demands(name, text)]
+    assert found == [], "\n".join(found)
+
+
+def test_7_no_review_demands_a_test_for_every_item_regardless_of_runtime_behaviour(env):
+    fix, _ = env.start_fix()
+    assert env.close(fix).returncode == 0
+    texts = {"fix review": env.prompt()}
+    task, _ = env.start_task()
+    assert env.close(task).returncode == 0
+    texts["task review"] = env.prompt()
+    found = [line for name, text in texts.items() for line in per_item_test_demands(name, text)]
+    assert found == [], "\n".join(found)

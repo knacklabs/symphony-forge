@@ -98,12 +98,13 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 
 A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
 
-For each Done-when item you cover, write one test at the boundary the user touches, named for the
-item. Name a new test file after the behaviour it proves, never after the fix's slug. Run it and
-watch it fail, then build until it passes. Never edit or delete a test to make it
-pass; if a test is wrong, say so. A test whose result a stub or fake decides proves nothing. Use
-the test-audit skill whenever you write or change a test. Run the repo's test command before you
-stop.
+For each Done-when item you cover that changes runtime behaviour, write one end-to-end test at the
+boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
+proven by the check the item names. Name a new test file after the behaviour it proves, never
+after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
+delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
+decides proves nothing. Use the test-audit skill whenever you write or change a test. Run the
+repo's test command before you stop.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
@@ -178,8 +179,9 @@ conventions apply only to a repo on the default stack.
 
 ## When you finish
 
-Say in plain English what each Done-when item you cover now does and which test proves it, and
-name anything you left out on purpose. Report the work done only when every item you cover is.
+Say in plain English what each Done-when item you cover now does and which test or check proves
+it, and name anything you left out on purpose. Report the work done only when every item you cover
+is.
 
 <!-- if standards -->
 ## Standards

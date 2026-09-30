@@ -73,8 +73,10 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.
 - Joining lines or removing blank lines never counts as a reduction.
-- **Turn the task into checks first.** A Done-when item becomes a test at the boundary the user
-  touches; a bug becomes a test that fails before the fix. Then make them pass.
+- **Turn the task into checks first.** A Done-when item that changes runtime behaviour becomes one
+  end-to-end test at the boundary the user touches, and a settings, docs, deletion or test-only item
+  is proven by the check the item names; a bug becomes a test that fails before the fix. Then make
+  them pass.
 - **Compatibility is a requirement, not a reflex.** Unless the story names live users, API
   consumers or production data, a replacement deletes the old path: no shims, aliases, fallbacks
   or versioned migrations for data nobody has. When consumers are live, the story says so.
