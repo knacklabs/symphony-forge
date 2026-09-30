@@ -3,7 +3,7 @@
   "branch": "fix/close-pushes-its-review-commit-while-the",
   "done_when": "Close judges the pull request checks only on the head it pushed and never counts a result from an earlier head (it says it is waiting instead), and a failed push is retried a few times with backoff before close gives up.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T07:12:04+00:00",
