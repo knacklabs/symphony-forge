@@ -20,7 +20,8 @@ git = lambda *a: subprocess.run(["git", *a], capture_output=True, text=True, che
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
-os.execv(sys.executable, [sys.executable, {stub!r}, *args])
+# Not os.execv: on Windows it joins the arguments unquoted, so the prompt splits into words.
+sys.exit(subprocess.run([sys.executable, {stub!r}, *args]).returncode)
 '''
 
 
