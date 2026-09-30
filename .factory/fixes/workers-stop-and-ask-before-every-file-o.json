@@ -5,27 +5,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "fe72f48768b78a8fdd741f33b119cc81f0822819a271790a8b9f9bcac8d1c192",
-    "commit": "c5d11a58d43b3fb4cb6ebccbfd3ed7a329ce8010",
+    "changed": "f80ee68df1979a65351a9679bca04f4570f4384179ae635b47edc6adf5ed6aa6",
+    "commit": "fd91c6d35d85c2b93288ada9bc6997c660d010c1",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new instruction asks the reviewer to report outside-Scope files the work does not need, but the list supplied to the reviewer still omits every changed existing test outside Scope. In `src/forge/review.py:214-215`, the `p in existing_tests and _test_file(p)` filter excludes those files without checking whether the work needed them. The existing test at `tests/test_fix_workers_stop_to_ask_before_updating_an_e.py:81-84` explicitly preserves that exclusion. An unrelated change to an existing test can therefore be absent from the review\u2019s outside-Scope list. Include those files so the reviewer can assess necessity and the handoff reason.",
-        "file": "src/forge/templates/review.md",
-        "line": 13,
+        "body": "The changed conditional rule is followed by unconditional instructions in this same file: line 32 requires an HTTP test for an item with no UI, and line 50 requires a Playwright test for every user-facing item. The worker brief points workers to this testing convention at src/forge/templates/brief.md:174-175. A settings or documentation item can therefore still be assigned an end-to-end test instead of its named check. These two instructions are new evidence beyond the unconditional lines addressed in the previous review.",
+        "file": "src/forge/templates/conventions/testing.md",
+        "line": 25,
         "priority": "P1",
-        "title": "Not done: Review must assess all files outside Scope"
+        "title": "Not done: Nonruntime items still trigger end-to-end test rules"
       },
       {
-        "body": "The worker brief embeds `src/forge/standards.md` through `src/forge/worker.py:364-372`. Immediately after the changed conditional rule, `src/forge/standards.md:236-237` still says every user-facing item gets a Playwright test and every item without UI gets an HTTP test. The brief also points workers to `src/forge/templates/conventions/testing.md:25-27`, which still requires an end-to-end test for every Done-when item. These unconditional rules conflict with the new instruction that settings, docs, deletions and test-only items use their named check, so the brief can still send workers to build unnecessary end-to-end tests.",
-        "file": "src/forge/standards.md",
-        "line": 231,
+        "body": "This test checks that the conditional sentence appears in the generated brief, but it passes while src/forge/templates/conventions/testing.md:32 and :50 still impose unconditional HTTP and Playwright tests. The test named for asking end-to-end tests only for runtime behaviour therefore misses a real contradiction in the guidance workers are directed to read. Extend the command-level check to cover that guidance.",
+        "file": "tests/test_outside_scope_and_runtime_tests.py",
+        "line": 59,
         "priority": "P1",
-        "title": "Not done: Limit all worker end-to-end test rules to runtime changes"
+        "title": "Not done: Test the complete nonruntime testing guidance"
       }
     ],
     "status": "blocked",
-    "tree": "d6f69b788ac321a2ab1853e7312e962edc9d24df0feb78abf9f46a2bffca62d2"
+    "tree": "365b25ad3df3b5903a1bc0eacc2712abeeedde4d986abfeaa5644b45a2b67e9d"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-09-30T04:43:43+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T05:35:36+00:00",
       "step": "review"
     }
   ],
