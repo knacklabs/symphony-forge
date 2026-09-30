@@ -5,20 +5,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "9a1ac24f951a78416ad3afa5b2afe6ec616d2c34adedea9865f1f30bbbf5a832",
-    "commit": "7621d08042e864aadf382cc35d69b383de5c583d",
+    "changed": "0a3295c3591f8528090247a71e3d41e2795912db2aa034e35aad8211cff55c9a",
+    "commit": "f30c88767821a9d1fc3e1424d7adbc4d41111eba",
     "dismissals": [],
     "findings": [
       {
-        "body": "This end-to-end test makes the third push succeed and checks only that three attempts occurred. It would still pass if retries had no backoff or if Close retried forever when every push failed. Add an always-failing push case that verifies Close stops after the bounded attempts, returns a failure, and uses increasing delays.",
+        "body": "This test sets FORGE_PUSH_WAIT to 0.5, so it never checks the delay used by a normal `forge close`. If the default in `src/forge/close.py:238` changed to zero, this test would still pass, and test 2 checks only the number of attempts. Add a Close run without the override that verifies increasing delays.",
         "file": "tests/test_fix_close_pushes_its_review_commit_while_the.py",
-        "line": 43,
+        "line": 54,
         "priority": "P1",
-        "title": "Not done: the push retry exhaustion and backoff test"
+        "title": "Not done: the default push backoff test"
+      },
+      {
+        "body": "The new environment variable exists to shorten the timing test, as the adjacent comment states. Close needs a fixed backoff, and testing its normal 1, 2 and 4 second waits through the command would remove this extra runtime setting.",
+        "file": "src/forge/close.py",
+        "line": 238,
+        "priority": "P2",
+        "title": "Simpler: remove FORGE_PUSH_WAIT \u2192 test the fixed retry schedule"
       }
     ],
     "status": "blocked",
-    "tree": "5279f76cb08f6330376d8d646641f38a37b1a8ae1931c08ac7d257634ac8fd1f"
+    "tree": "0645322cce6ee5ee46abfd78209339e31cbb2c389125ff535a81843a3b3e84c2"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +35,10 @@
     },
     {
       "at": "2026-09-30T09:34:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T11:24:21+00:00",
       "step": "review"
     }
   ],
