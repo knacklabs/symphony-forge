@@ -3,11 +3,24 @@
   "branch": "fix/while-merges-are-the-human-s-there-s-no",
   "done_when": "forge next shows the pull request link beside each item that is Ready and waiting for the human to merge.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "bf4fb6527c450c0614f60b0e052927a1a555d8a3345ce6045052efbbe453cedd",
+    "commit": "05a6300ffc5f4b8508c16ee9f215273a4cdb3124",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "f5418029a9e45834e1948f5b09774c9034beaa32b8a69de2a8dcf3486a9ac6e4"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T03:31:04+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T04:43:53+00:00",
+      "step": "review"
     }
   ],
   "why": "While merges are the human's, there's no single place that lists the pull requests ready for them to merge"
