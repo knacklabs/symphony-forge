@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T21:09:39+00:00
-read_hash: 5b01319484a43bf0d196c4df2e0c12edc3c48f19
-round: 5
+read_at: 2026-09-30T21:21:40+00:00
+read_hash: d9c805a75995a342ad8df8db794673a8501f99f8
+round: 6
 passed: no
-doc_seen: 5b01319484a43bf0d196c4df2e0c12edc3c48f19
+doc_seen: d9c805a75995a342ad8df8db794673a8501f99f8
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: b5c3769d4abea048cb558faecc8a4032eb2b2657
+notes_seen: bfa6075912f11398c8b95b2ef35d9c1c3e123610
 ---
 # Cold read notes
 
@@ -131,4 +131,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 26. Unproven: item 4: reusing a fix after sync’s inputs change without a Forge pin change.
     The default branch can change its test command while doctor’s pending fix still has the old configuration. The pin check passes, but recomputing `sync.files` in that folder produces the old workflow: [`prcheck.ships`](/src/forge/prcheck.py:134) uses the configured test command. Specify how doctor refreshes or refuses that stale fix, and prove this case in FILES.
+    Disposition: cut
+
+## Round 6
+
+27. Unproven: item 4: a reused fix contains the latest default commit but locally pins another Forge version.
+    The new ancestry guard passes when a local commit or uncommitted edit changes only that fix’s pin. Removing the pin comparison permits repairs with the default checkout’s Forge in a destination that pins something else. Retain the destination-pin guard alongside ancestry, and test this state in FILES.
     Disposition: cut

@@ -177,6 +177,10 @@ teams on Claude Code, Codex or both.
      files follow it. A row says `Doctor's fix <name> is behind <default branch>.`, with the Fix
      `bring <default branch> into that fix (git merge origin/<default branch> in <path>), then
      forge doctor --fix`.
+   - When the fix folder's `forge.toml` differs from the default branch's, committed or not
+     (`git diff --quiet origin/<default> -- forge.toml` fails there), doctor writes nothing there
+     either. A row says `Doctor's fix <name> changes forge.toml, so doctor won't write there.`,
+     with the Fix `undo that change to forge.toml in <path>, then forge doctor --fix`.
    - When there is no such fix, doctor starts one through `forge fix start`'s own checkout step
      (`task._new_checkout`), which gives the same record, branch and folder. It uses the slug
      `forge-files` and the fix start rule's suffix when that name is taken. The done-when is
@@ -224,6 +228,8 @@ teams on Claude Code, Codex or both.
    - a file sync wants empty: removed in place, and removed in the fix's commit;
    - doctor's fix behind a default branch that has since changed the pin, or the test command:
      nothing written there, and its row;
+   - doctor's fix up to date with the default branch but pinning another version, in a local
+     commit or an uncommitted edit: nothing written there, and its row;
    - a fix holding one repaired file and one held back: the fix's row and the held-back row;
    - a commit a git hook refuses: its row, the fix folder as it was, and the next run commits;
    - a removal of a file sync wants empty, then a refused commit: the file is back, and the next
