@@ -3,11 +3,46 @@
   "branch": "fix/the-destructive-command-guard-blocks-rm",
   "done_when": "The guard allows rm -rf when every target, resolved, is inside the system temp folder (TMPDIR, /tmp or /private/tmp), and allows reading git config values (git config --get, or git config with a key and no value); everything it blocks today otherwise stays blocked.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6b368eb26c95c55dfaab527041ca4d44dd739a790f59b975df840cb823d91e8c",
+    "commit": "25d7eddd0f92332b6145af317daf32da743b3536",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With a hook payload cwd inside temp, `cd /etc && rm -rf config` is allowed. The guard passes the original cwd to every parsed command, so it resolves `config` inside temp even though the shell runs `rm` from `/etc`. This violates the requirement that every target resolve inside temp. Track directory changes or keep such relative targets blocked.",
+        "file": "src/forge/deny.py",
+        "line": 49,
+        "priority": "P1",
+        "title": "Not done: Resolve rm targets from the shell's directory at execution"
+      },
+      {
+        "body": "With the hook process's `TMPDIR` inside temp, `TMPDIR=/etc; rm -rf \"$TMPDIR/config\"` passes: `os.path.expandvars` uses the hook's original environment, while the shell uses its newly assigned value and targets `/etc/config`. This is distinct from the ruling on leftover `$VAR`: the token leaves no `$` after expansion, but the expansion is stale. A single-quoted `$TMPDIR` is also expanded here even though the shell leaves it literal.",
+        "file": "src/forge/deny.py",
+        "line": 120,
+        "priority": "P1",
+        "title": "Block rm targets whose variable value changes before execution"
+      },
+      {
+        "body": "The end-to-end blocked cases exercise fixed payload directories and inherited variables. Add `forge hook deny` cases for `cd` before a relative `rm -rf` and for reassignment of `TMPDIR` before removal. The current test passes while both commands above bypass the guard.",
+        "file": "tests/test_fix_the_destructive_command_guard_blocks_rm.py",
+        "line": 35,
+        "priority": "P1",
+        "title": "Not done: Test rejection after shell directory and variable changes"
+      }
+    ],
+    "status": "blocked",
+    "tree": "3672fd0fed39055edcaa3fe177ae3582e7d123a2de319ad182daeb121ead719d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T03:30:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T04:31:32+00:00",
+      "step": "review"
     }
   ],
   "why": "The destructive-command guard blocks rm -rf even inside the system temp folder where coordinators keep scratch clones, and blocks reading a git config value, so scratch clones pile up and coordinators work around the guard"
