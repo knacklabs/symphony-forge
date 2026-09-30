@@ -179,7 +179,7 @@ def read(args: Any) -> int:
     spec = _find_spec(top, target) if is_story else None
     spec_text, blocks = spec[2] if spec else "", _findings(findings)
     fill: dict[str, Any] = {
-        "path": rel, "doc": text.decode("utf-8"), "target": target, "traps": _known_traps(top),
+        "path": rel, "doc": text.decode("utf-8"), "target": target, "traps": agents_section(top, "Known traps"),
         "spec": (f"\nConfirmed spec at `{spec[0]}` on `{spec[1]}`:\n\n{spec[2]}\n" if spec else
                  "\nNo linked confirmed spec was found in the local branches.\n") if is_story else ""}
     prompt = fresh_prompt = Template(first).safe_substitute(fill)
@@ -641,11 +641,11 @@ def _findings(text: str) -> dict[int, str]:
             for n, body in zip(parts[1::2], parts[2::2])}
 
 
-def _known_traps(top: Path) -> str:
-    """The `## Known traps` section of AGENTS.md on the default branch, outside Forge's block."""
+def agents_section(top: Path, heading: str) -> str:
+    """A `## <heading>` section of AGENTS.md on the default branch, outside Forge's block."""
     text = show(top, landed_ref(top), "AGENTS.md") or ""
     text = re.sub(r"<!-- forge:begin -->.*?<!-- forge:end -->", "", text, flags=re.S)
-    return sections(text).get("Known traps", "").strip()
+    return sections(text).get(heading, "").strip()
 
 
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:
