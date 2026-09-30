@@ -3,7 +3,7 @@
   "branch": "fix/a-codex-or-claude-session-opened-directl",
   "done_when": "forge sync writes Forge's eleven subagent roles for both hosts: .codex/agents/<role>.toml (name, description, developer_instructions, model, model_reasoning_effort) and .claude/agents/<role>.md (name, description, model, effort; no tools or permission mode, so roles inherit the session's). Each role takes its model and effort from forge.toml: worker, coder, frontend, tester and refactorer from build; explorer from lite; planner and architect from design (each host from its own family entry); debugger, security and performance from review. A kind whose model belongs to the other family leaves the model out on that host, so the role inherits the session model; Codex's ultra effort becomes max on Claude. Role instructions state today's Forge rules (no old constitution or write-scope wording). Sync refuses, changing nothing, when a client already has its own role file of the same name that Forge didn't write. Forge's own repo gets the same generated roles. Command-level tests check both hosts' files from a forge.toml, the family and effort mapping, the refusal, and that a second sync changes nothing.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T11:13:03+00:00",
