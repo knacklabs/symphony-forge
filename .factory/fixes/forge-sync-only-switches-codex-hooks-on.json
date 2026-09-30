@@ -5,20 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "09db2d1deb48a33db706370f4c90935fc5c9d1b8c8becfc63a32f799dc824bfa",
-    "commit": "41dea74fa331306f1769c967bcc8f13a16e3a5bf",
+    "changed": "ecc6d90df03545e1160c6e0e2ab96f2da9e65b296366f302ab509183460dd3a5",
+    "commit": "7fa4253f87217bc9799bbe8aebf8158766f567ba",
     "dismissals": [],
     "findings": [
       {
-        "body": "If a config already has the required sandbox and approval values but contains `[features] hooks = 1`, `data == wanted` is true because Python compares `1 == True` as true. Sync returns without rewriting or refusing the file, leaving `hooks` as a number instead of `true`. The equality check needs a type-sensitive check for `hooks` before returning unchanged.",
+        "body": "New evidence beyond the coordinator\u2019s multiline-value ruling: if `[features]` contains a multiline value with a line `hooks = true` before the actual `hooks = 1` setting, the line matcher rewrites the text inside the value to the same bytes and leaves the setting at `1`. This check then accepts the result because Python compares `1 == True` as true. `forge sync` succeeds without setting hooks to a boolean or refusing the file. The parsed-result check must verify the type of `hooks` as well.",
         "file": "src/forge/sync.py",
-        "line": 165,
+        "line": 199,
         "priority": "P1",
         "title": "Not done: forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml,"
       }
     ],
     "status": "blocked",
-    "tree": "c23173ba91e1d8ecdb7775c70a11eb1bd380ce2be8d2b5a845e345e27784d0b9"
+    "tree": "e5cb1231ed97cca8c4fc40bc767a896fd7f881c0af02fe0c6cdd8615565bf6d7"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +28,10 @@
     },
     {
       "at": "2026-09-30T12:29:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T13:08:06+00:00",
       "step": "review"
     }
   ],
