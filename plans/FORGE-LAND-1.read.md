@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T20:35:49+00:00
-read_hash: 503dd97d59dd60a3919dda4336c5198eb89cdb17
-round: 2
-passed: no
-doc_seen: 503dd97d59dd60a3919dda4336c5198eb89cdb17
+read_at: 2026-09-30T20:47:35+00:00
+read_hash: a7db9b7050bd36ddc8189ba86bc99680b4631ec4
+round: 3
+passed: yes
+doc_seen: a7db9b7050bd36ddc8189ba86bc99680b4631ec4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 87e236921ef07b7f28a58d36f348cc4ee44eed90
+notes_seen: e0fc56b04dea28ecae6458c9d130c612ab6e7dfa
 ---
 # Cold read notes
 
@@ -70,3 +70,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 12. Unproven: item 3: the pull request merges between land’s initial lookup and close.
     [close.py:67](/src/forge/close.py:67) returns 0 for an already merged pull request without creating a Ready record. The initial merged shortcut does not cover this transition; land could then report `not_ready` or hand off a merged pull request. Pin routing back through the merged path and test this transition in LAND.
     Disposition: cut land reads the pull request again after every close that returns 0 and takes the merged path when it is merged; LAND tests a pull request merged between land's first look and close's.
+
+## Round 3
+
+No findings.
