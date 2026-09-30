@@ -272,5 +272,5 @@ New moving parts: none
   Doctor picks them up through sync's file list and doesn't duplicate them.
 - No client repo is named anywhere in this story's code, tests, texts or commits.
 - Claude workers build both parts. Opus writes the skill row.
-- Each new test file starts with `STORY = "FORGE-DOCTOR-1"`, and its `test_<n>_` names cite the
+- Each new test file starts with `STORY = "FORGE-DOCTORFIX-1"`, and its `test_<n>_` names cite the
   Done-when items its task covers.
