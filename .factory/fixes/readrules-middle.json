@@ -1,0 +1,14 @@
+{
+  "base": "16386bfe648852c8550629536a580c6b0f271c6a",
+  "branch": "fix/readrules-middle",
+  "done_when": "The cold-read instructions again ask the reader to name every decision a builder would otherwise have to guess (a name, format, rule, order or boundary two parts rely on, or that a Done-when item leaves open) and, for each Done-when item, the cases this story's own change must handle and which test proves each; they keep excluding generic platform or network traps the change doesn't meet, behaviour the story doesn't change, and a story having no linked spec. The command-level test checks both kinds of wording reach the prompt.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T15:08:07+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The tightened plan-read instructions cut false alarms but missed 40% of real gaps in today's re-test, mostly decisions a builder would have to guess and missing proof for the story's own cases"
+}
