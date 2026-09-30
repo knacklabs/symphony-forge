@@ -629,20 +629,31 @@ def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] 
 
 
 @contextlib.contextmanager
-def _one_at_a_time(lock: Path) -> Iterator[None]:
+def _one_at_a_time(lock: Path, waiting: str = "") -> Iterator[None]:
     """Hold the lock's guard file while a call checks, clears or takes the lock, so two calls that
     find one stale lock never both clear it, and one clears another's new lock. The system lets
-    go of the guard when its holder ends, however it ends, so it is never stale itself."""
+    go of the guard when its holder ends, however it ends, so it is never stale itself. Prints
+    `waiting`, if given, when another holder makes this call wait."""
     with lock.with_suffix(".guard").open("ab") as guard:
         if os.name != "nt":
-            fcntl.flock(guard, fcntl.LOCK_EX)
+            try:
+                fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                if waiting:
+                    print(waiting, flush=True)
+                fcntl.flock(guard, fcntl.LOCK_EX)
             yield
             return
         guard.seek(0)
+        mode = msvcrt.LK_NBLCK
         while True:  # LK_LOCK gives up after ten seconds
-            with contextlib.suppress(OSError):
-                msvcrt.locking(guard.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                msvcrt.locking(guard.fileno(), mode, 1)
                 break
+            except OSError:
+                if waiting and mode == msvcrt.LK_NBLCK:
+                    print(waiting, flush=True)
+                mode = msvcrt.LK_LOCK
         try:
             yield
         finally:
