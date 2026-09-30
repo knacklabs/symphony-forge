@@ -3,7 +3,7 @@
   "branch": "fix/pull-requests-keep-failing-ci-on-the-sam",
   "done_when": "tests/test_codex_record.py test_6_nothing_left_running and the Windows subprocess calls that time out in tests/test_migrate.py test_30 and tests/test_codex_setup.py test_11 pass reliably on CI: find each failure's root cause from its CI log and fix it in the test or the code (a longer subprocess time limit on Windows is fine where the command is just slow there), never by skipping or weakening what the test checks.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T17:05:22+00:00",
