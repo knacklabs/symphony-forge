@@ -25,7 +25,7 @@ STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
 ROOT = Path(__file__).resolve().parents[1]
 NOW = "2026-09-26T10:00:00+00:00"
-DECLINE = {"decision": "decline"}
+ACCEPT = {"decision": "accept"}
 KNOWN, UNKNOWN = "item/commandExecution/requestApproval", "item/stubFuture/requestSomething"
 SOL = {"model": "gpt-6-sol", "effort": "medium", "subagents": "gpt-6-luna", "subagent_effort": "max"}
 MODELS = {"build": SOL, "fix": SOL, "lite": {"model": "gpt-6-sol", "effort": "low"}}
@@ -243,7 +243,9 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "stub test line 5\n" not in log and "stub delta chunk" not in log
     state = json.loads((folder / ".factory/stories/BOARD/tasks/PAGE.json").read_text("utf-8"))
     assert state["status"] == "working"
-    assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == ""
+    # Forge leaves nothing behind; the files are what the stub's accepted requests wrote.
+    assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == (
+        "?? ran-stub-ask-1\n?? ran-stub-ask-2")
 
     # A fix gets a Lite conversation named after the fix and its why.
     fixed = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
@@ -255,21 +257,21 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "Why: Fix the login typo" in _sent(calls, "turn/start")[-1]["input"][0]["text"]
 
 
-def test_2_every_request_is_declined(repo, monkeypatch, sdk_data, tmp_path):
+def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
 
-    # The stub asked to run a command and sent a method no SDK knows: both got a decline, and
-    # neither ran. Each decline is logged.
+    # The stub asked to run a command and sent a method no SDK knows: a full-access worker turn
+    # accepts both, with no human to ask, and both ran. Each is logged. (Before, both were
+    # declined; a read-only turn still declines, in test_fix_codex_worker_turns_decline_every_approva.)
     answers = [(call["answered"], call["result"], call["ran"]) for call in _stub(calls)
                if "answered" in call]
-    assert answers == [(KNOWN, DECLINE, False), (UNKNOWN, DECLINE, False)]
-    assert not list(folder.glob("ran-*"))
+    assert answers == [(KNOWN, ACCEPT, True), (UNKNOWN, ACCEPT, True)]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text(encoding="utf-8")
     for method in (KNOWN, UNKNOWN):
-        assert f"Declined Codex's request {method}" in built.stdout
-        assert f"Declined Codex's request {method}" in log
+        assert f"Accepted Codex's request {method}" in built.stdout
+        assert f"Accepted Codex's request {method}" in log
 
     # An SDK whose handler moved: forge work refuses before it records any status, and before
     # it starts Codex at all.
