@@ -12,7 +12,7 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from forge import __version__, codex, repo, review, sync
+from forge import __version__, codex, init, repo, review, sync
 
 COMMANDS = [{
     "words": "doctor", "run": "doctor", "changes_state": False,
@@ -151,6 +151,8 @@ def doctor(args: argparse.Namespace) -> None:
     protection = (repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/branches/"
                            f"{repo.default_branch(top)}/protection", cwd=top)
                   if shutil.which("gh") else None)
+    plan_note = (init.skipped(repo.default_branch(top), cfg["checks"])
+                 if protection and init.no_protection_plan(protection) else "")
     if protection and (protection.returncode == 0 or
                        "Branch not protected" in protection.stdout + protection.stderr):
         try:
@@ -209,6 +211,8 @@ def doctor(args: argparse.Namespace) -> None:
         print(f"- {line}")
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
+    if plan_note:
+        print(f"- Note: {plan_note}")
     if on_codex:
         # Codex also asks the user to approve each project hook, and no outside program sees that.
         print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see "
