@@ -3,11 +3,24 @@
   "branch": "fix/the-prototype-deploy-test-leaves-its-doc",
   "done_when": "tests/test_proto_deploy.py labels every container and network it creates, and before it starts it removes labelled ones older than an hour, so a killed run's leftovers never pile up; its existing cleanup on a normal finish stays. A test proves an old labelled leftover is removed and a fresh one (another run still going) is kept.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6ff61400d263a6f7cf24b9e880fde193f8650795a70e25d20c6506d06d9809ff",
+    "commit": "9d8ed3d41af91d9025fc654cfa99f4cc4bcae4a6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "935546c634da07f94b7022de38eee6419ed95486e0ffa448c715550123e47eea"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T06:23:44+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T07:46:44+00:00",
+      "step": "review"
     }
   ],
   "why": "The prototype deploy test leaves its Docker containers and networks behind whenever its run is killed (a timeout or a stopped worker), and on a busy machine they fill Docker's address pool, so later test runs fail creating a network"
