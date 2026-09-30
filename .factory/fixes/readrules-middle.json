@@ -10,11 +10,24 @@
   "branch": "fix/readrules-middle",
   "done_when": "src/forge/templates/cold-read.md is back to its wording before the tightening (as at commit 67368bf4's parent), with one change kept: a story with no linked confirmed spec is not a finding, so the check that each Done-when item maps to the spec's behaviour or success measure applies only when a confirmed spec is included. Tests that pinned the tightened wording are updated to the restored contract, and a command-level test checks a story without a spec gets the conditional mapping wording.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "58a3bca169a3c04c079cbd0014b4a479d138774e9b655ce1318b1b1bccd50662",
+    "commit": "43afb9ddd7c7c10ea42f672dc1da24b5cc7ea6ad",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "444725cda2c38ed49819ff7807a602194c1032de9e539732f5e983ea30668ec7"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T15:08:07+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T17:46:11+00:00",
+      "step": "review"
     }
   ],
   "why": "The tightened plan-read instructions cut false alarms but missed 40% of real gaps in today's re-test, mostly decisions a builder would have to guess and missing proof for the story's own cases"
