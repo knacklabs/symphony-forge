@@ -7,7 +7,13 @@
     "blocking_level": "P1",
     "changed": "d4b39ffa82d5542a677bcbf2bce7dc0290d28fbe9a6b72790d6f3b52dbdbaed2",
     "commit": "db571853343aeddb52d591d64cd28dedabc3a3ab",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:375 The light prototype review is P0-only by the owner's decision: before sign-off a prototype is blocked only by P0s, so ordinary standards breaks there are deliberately not blocking; every other review path reports them at P1.",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "Prototype fixes before sign-off use the light review path (`src/forge/close.py:80`), which passes `--max-priority P0` here. The new standards prompt requires a broken rule to be reported as a P1 `Standard:` finding (`src/forge/templates/review.md:154`). That P1 cannot pass the light review\u2019s priority limit, so an API, data, or frontend standards violation in such a fix can still go unreported. The new command tests exercise only the default review path; `tests/test_aha_review.py:28-56` confirms the light path uses the P0 limit.",
@@ -17,10 +23,10 @@
         "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "8fef7f7613375030d3244297bb7c20a8f3d32ba0e94463183ce40a446ba2fd75"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
