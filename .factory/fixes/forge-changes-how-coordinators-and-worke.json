@@ -3,7 +3,7 @@
   "branch": "fix/forge-changes-how-coordinators-and-worke",
   "done_when": "Forge's AGENTS.md has a '## Review rules' section, outside the Forge-managed block, with one rule: a change to what a coordinator or worker should do or can use (a command, an option, a setting, a step in the flow) updates src/forge/templates/skill.md or the worker brief in the same change, and the review reports a missing update as P1.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T15:09:52+00:00",
