@@ -8,9 +8,9 @@ STORY = "FIX-FORGE-CLOSE-S-BASE-COMMIT-EVIDENCE-FOR-D"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_release_command_reports_v1_2_0(repo):
-    assert repo.forge("--version").stdout.split()[-1] == "v1.2.0"
+def test_1_release_command_reports_v1_2_1(repo):
+    assert repo.forge("--version").stdout.split()[-1] == "v1.2.1"
 
 
-def test_2_repo_pins_v1_2_0():
-    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.0"
+def test_2_repo_pins_v1_2_1():
+    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.1"
