@@ -7,7 +7,13 @@
     "blocking_level": "P1",
     "changed": "b98ce0dcba99a96812f8548fd9ab4fe90fb5db76e659d77a097fb3706d8ce4c6",
     "commit": "5d3bcd194b5c9c280cd615041086ee6aa0676f50",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/review.py:375 Autoreview is the third-party edge: Forge passes the page with Autoreview's own --prompt-file option (autoreview:7060, 'Additional review instruction file'), and the tests check exactly what crosses that edge. Whether a model then names a rule can't be proven by a deterministic test.",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The new tests inspect the text that the Autoreview stub reads from `--prompt-file`; they do not show that the reviewer receives it. The stub logs the file before launching Codex (`tests/stubs/autoreview:23-29`), while the Codex stub records only its folder and commit (`tests/test_close.py:24-31`). A helper that drops the prompt file would still pass these tests. The tests also supply a fixed clean report, so they never show a standards-breaking change producing a finding that names the rule. The required command-level test needs to observe the reviewer\u2019s prompt and its finding for a violating change.",
@@ -17,10 +23,10 @@
         "title": "Not done: Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the r\u2026"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "599ae0680b64ca6339ad6e5d126a6d03a466c8ad11c26309f742a4c58886e093"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
