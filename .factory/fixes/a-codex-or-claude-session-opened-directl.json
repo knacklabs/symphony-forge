@@ -6,20 +6,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "6032bd3d46dc176a07539334e70fbd31646fd44c741ed145f2d5a17f7a8d264c",
-    "commit": "1bb25f553ca64cf37342ba09abf3271fb0266a04",
+    "changed": "d7d3d9eac525aee66f13dcc6e9852aa68cd3fa044c4a5f5bd3e5af90a1979c64",
+    "commit": "57ea728c40625771cabaa85a58763617ed9b5849",
     "dismissals": [],
     "findings": [
       {
-        "body": "Forge's checked-in `.codex/agents/worker.toml:1-10` still specifies the old Luna model, sandbox setting, and constitution/write-scope instructions; the other checked-in Codex roles also lack the new ownership marker. When `forge sync` tries to replace these files, this check treats them as client-owned and refuses before writing any role. Regenerate and commit Forge's Codex roles so its own repo has the required files and can sync.",
+        "body": "The Claude role writer inserts `model` and `effort` directly into YAML frontmatter. `src/forge/repo.py:261-265` accepts any string for these settings, so a valid TOML value containing an escaped newline, such as an effort followed by `tools: Bash`, produces an additional frontmatter field. This violates the requirement that roles inherit the session's tools and permission mode. Quote or validate these values as YAML scalars and cover the case through `forge sync`.",
         "file": "src/forge/roles.py",
-        "line": 103,
+        "line": 94,
         "priority": "P1",
-        "title": "Not done: forge sync writes Forge's eleven subagent roles in Forge's own repo"
+        "title": "Not done: keep tools and permission mode out of Claude roles"
+      },
+      {
+        "body": "For design roles, the host is already identified by `[models.design.claude]` or `[models.design.codex]`, but `_chosen` applies a name-based family guess afterward. `src/forge/repo.py:238-240` uses the family entry directly, and `tests/test_design_route.py` shows `custom-opus` is accepted and used for Claude work. With that valid setting, sync omits `model` from Claude's planner and architect roles because `custom-opus` does not start with a recognized prefix. Those roles then run on the session model instead of the configured design model.",
+        "file": "src/forge/roles.py",
+        "line": 79,
+        "priority": "P1",
+        "title": "Not done: use each host's configured design model"
+      },
+      {
+        "body": "This change makes eleven named roles available to a coordinator in a client repo, but `src/forge/templates/skill.md` has no guidance for using them; its existing workflow still directs work only through Forge commands. The repository's review rule requires a change to what a coordinator or worker can use to update that template or the worker brief in the same change. The changed checked-in skill files add review-rule text, while the source template and brief remain unchanged.",
+        "file": "src/forge/roles.py",
+        "line": 82,
+        "priority": "P1",
+        "title": "Not done: update the shipped Forge guidance for the new roles"
+      },
+      {
+        "body": "The command-level test checks only that instructions are nonempty, match between hosts, and omit three old phrases. It still passes if a role loses its test-first, commit, or no-push instructions and retains any unrelated sentence. The Done-when requirement that role instructions state today's Forge rules therefore lacks a test that fails when those rules disappear. Assert representative required instructions in the files produced by the real `forge sync` command.",
+        "file": "tests/test_subagent_roles.py",
+        "line": 73,
+        "priority": "P1",
+        "title": "Not done: test that generated roles state current Forge rules"
       }
     ],
     "status": "blocked",
-    "tree": "380b4152d24621bf34af4598d57e9cd05ca46554baabd8ce83467341fac6b331"
+    "tree": "d4d18cf243cf4766e15ca16192edb336e3d0930fe5dc2e135b5ac079b1699307"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +54,10 @@
     },
     {
       "at": "2026-09-30T16:40:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T19:17:11+00:00",
       "step": "review"
     }
   ],
