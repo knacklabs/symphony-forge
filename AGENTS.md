@@ -47,3 +47,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 - Put the rules every review of this repo must follow under `## Review rules`, outside the
   forge:begin and forge:end lines. Forge's review reads them from the default branch.
 <!-- forge:end -->
+
+## Review rules
+
+- A change to what a coordinator or worker should do or can use (a command, an option, a setting,
+  a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
+  (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
