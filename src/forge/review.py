@@ -117,7 +117,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     ancestor = repo.git("merge-base", base, commit, cwd=top)
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
-    changed = {path for path in changed if path and not path.startswith(BOOKKEEPING)}
+    named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
+    changed = {path for path in changed
+               if path and (not path.startswith(BOOKKEEPING) or path in named)}
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
@@ -355,6 +357,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.git("fetch", "-q", str(top),
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = repo.git("rev-parse", base, cwd=tree)
+            prompt += _hide_generated(tree, repo.git("merge-base", review_base, head, cwd=tree), head)
         engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
@@ -401,6 +404,32 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                                                      "P0" if light else "P1"),
             "tree": whole_tree(head, item, top, state, base), "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
+
+
+def _hide_generated(tree: Path, start: str, head: str) -> str:
+    """Check out, in the review tree, head with each changed file .gitattributes marks
+    linguist-generated put back as it was at start, so its contents stay out of the reviewed diff.
+    Returns the lines naming those files with their changed-line counts, or "" when there are none."""
+    counts = {}
+    for record in repo.git("diff", "--numstat", "-z", "--no-renames", start, head,
+                           cwd=tree).split("\0"):
+        added, _, rest = record.partition("\t")
+        removed, _, path = rest.partition("\t")
+        if path:
+            counts[path] = (added, removed)
+    attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
+                     input="\0".join(counts)).stdout.split("\0")
+    generated = [path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")]
+    if not generated:
+        return ""
+    repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
+    snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", head,
+                        "-m", "Branch head without generated files' contents", cwd=tree)
+    repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
+    return ("\n\n## Generated files\n\nThese files are marked linguist-generated in .gitattributes, "
+            "so their contents are left out of the diff:\n"
+            + _bullets(f"{path}: {counts[path][0]} added, {counts[path][1]} removed"
+                       for path in generated))
 
 
 def signoff(top: Path, answers: str) -> str:
