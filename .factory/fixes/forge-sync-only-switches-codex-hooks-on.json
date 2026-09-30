@@ -3,7 +3,7 @@
   "branch": "fix/forge-sync-only-switches-codex-hooks-on",
   "done_when": "forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml, and removes top-level model and model_reasoning_effort pins so forge.toml's models and the host's choice govern; every other setting the client has stays as it is, and a file sync can't edit safely refuses as today. A command-level test syncs an old-style config (workspace-write, a model pin, other client settings) and checks the result, and another checks a second sync changes nothing.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T10:56:59+00:00",
