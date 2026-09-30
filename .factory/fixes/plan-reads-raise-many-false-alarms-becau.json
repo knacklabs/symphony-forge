@@ -3,11 +3,32 @@
   "branch": "fix/plan-reads-raise-many-false-alarms-becau",
   "done_when": "The cold-read instructions (src/forge/templates/cold-read.md) say a finding must name a concrete gap a builder would hit or a bug that would ship, with the file or Done-when item that shows it. Edge cases, platforms and traps are reported only where this story's own change meets them, never as a general checklist. Behaviour the story doesn't change is not a finding, and a story with no linked spec is not a finding. The rules against dropping validation, security, data-loss protection or accessibility, and the one-way-step and moving-parts checks, stay as they are.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "0d84902986bf3b28e11afa5adc8cb91a3a28b09c82534103081287ac0e4e7b18",
+    "commit": "481d2821c61aea8890730b22f2ec0bebc41137d9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new rule says a story with no linked spec is not a finding, but the same prompt still requires every Done-when item to map to the spec\u2019s behaviour or success measure and says anything that maps to nothing gets `Cut or defer: <item>` (cold-read.md:37-39). Forge explicitly sends `No linked confirmed spec was found` for such stories (src/forge/story.py:183-184). A valid standalone story therefore has no spec to map its items to and can still receive the false findings this change aims to prevent. Make that mapping check conditional on a linked spec and cover the no-spec prompt through `forge read`.",
+        "file": "src/forge/templates/cold-read.md",
+        "line": 25,
+        "priority": "P1",
+        "title": "Not done: Stories without a linked spec can still get Cut or defer findings"
+      }
+    ],
+    "status": "blocked",
+    "tree": "9890c5f9fab075426a301cc3b4d4f107146867bad3396e6d7b7ffbffa5f3a7f1"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T09:44:00+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T10:18:38+00:00",
+      "step": "review"
     }
   ],
   "why": "Plan reads raise many false alarms because the read instructions ask for every possible edge case, platform and trap with a test for each: most of Sol 6.1's false alarms in today's benchmark were test wishlists, generic Windows or network traps, existing behaviour the story doesn't change, and a story having no linked spec"
