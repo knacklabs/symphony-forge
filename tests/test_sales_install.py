@@ -51,7 +51,7 @@ def _mac_check_and_install(tmp_path):
     _stub(installed, "uv", f'echo "uv $*" >> "{log}"\n'
           f'case "$*" in "tool dir --bin") echo "{bin_dir}";; '
           f'*"tool install"*) /bin/cp "{installed / "forge"}" "{bin_dir / "forge"}";; esac')
-    _stub(installed, "forge", 'echo "forge v1.2.0"')
+    _stub(installed, "forge", 'echo "forge v1.2.1"')
     _stub(bin_dir, "brew", f'echo "brew $*" >> "{log}"\n'
           f'case "$2" in git|node|uv) /bin/cp "{installed}/$2" "{bin_dir}/$2";; esac')
     _stub(bin_dir, "npm", f'echo "npm $*" >> "{log}"')
@@ -63,11 +63,11 @@ def _mac_check_and_install(tmp_path):
     calls = log.read_text().splitlines()
     assert calls == ["brew install git", "brew install gh", "brew install node",
                      "brew install --cask docker", "brew install uv",
-                     "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.0", "uv tool update-shell",
+                     "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.1", "uv tool update-shell",
                      "uv tool dir --bin", "npm install -g @anthropic-ai/claude-code",
                      "npm install -g @openai/codex",
                      "npx --yes playwright install chromium firefox webkit"]
-    assert "forge v1.2.0" in full.stdout
+    assert "forge v1.2.1" in full.stdout
     assert "sign in" in full.stdout.lower()
     assert "new terminal" in full.stdout.lower()
 
@@ -104,7 +104,7 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     _stub(bin_dir, "uv", "exit 0")
     _stub(bin_dir, "claude", "exit 0")
     _stub(bin_dir, "codex", "exit 0")
-    _stub(bin_dir, "forge", 'echo "forge v1.2.0"')
+    _stub(bin_dir, "forge", 'echo "forge v1.2.1"')
     for kind in ("chromium", "firefox", "webkit"):
         (tmp_path / "Library/Caches/ms-playwright" / f"{kind}-1").mkdir(parents=True)
     check = subprocess.run(["/bin/bash", str(script), "--check"], env=env,
@@ -115,7 +115,7 @@ def _mac_homebrew_authorization_and_ready_tools(tmp_path):
     assert full.returncode == 0, full.stderr
     assert log.read_text().splitlines() == ["sudo -v",
                                            "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"]
-    assert "forge v1.2.0" in full.stdout
+    assert "forge v1.2.1" in full.stdout
 
 
 def _windows_check_and_install(tmp_path):
@@ -151,7 +151,7 @@ def _windows_check_and_install(tmp_path):
         f'if "%1 %2 %3"=="tool dir --bin" echo {tool_bin}\n'
         f'if "%1 %2"=="tool install" copy /Y "{installed / "forge.cmd"}" "{tool_bin / "forge.cmd"}" >nul\n',
         encoding="utf-8")
-    (installed / "forge.cmd").write_text("@echo forge v1.2.0\n", encoding="utf-8")
+    (installed / "forge.cmd").write_text("@echo forge v1.2.1\n", encoding="utf-8")
     for name in ("git", "node"):
         (installed / f"{name}.cmd").write_text("@echo off\n", encoding="utf-8")
     for name in ("claude", "codex"):
@@ -195,11 +195,11 @@ def _windows_check_and_install(tmp_path):
         "winget install --id OpenJS.NodeJS.LTS --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id astral-sh.uv --exact --source winget --accept-package-agreements --accept-source-agreements",
         "winget install --id Docker.DockerDesktop --exact --source winget --accept-package-agreements --accept-source-agreements",
-        "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.0",
+        "uv tool install --force git+https://github.com/knacklabs/symphony-forge@v1.2.1",
         "uv tool update-shell", "uv tool dir --bin",
         "npm install -g @anthropic-ai/claude-code", "npm install -g @openai/codex",
         "npx --yes playwright install chromium firefox webkit"]
-    assert "forge v1.2.0" in full.stdout
+    assert "forge v1.2.1" in full.stdout
     assert "sign in" in full.stdout.lower()
     assert "claude.cmd" in full.stdout and "codex.cmd" in full.stdout
     assert "new powershell window" in full.stdout.lower()
@@ -222,7 +222,7 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
     for name in ("winget", "npm", "npx"):
         (bin_dir / f"{name}.cmd").write_text(
             f'@echo off\necho {name} %* >> "{log}"\n', encoding="utf-8")
-    (bin_dir / "forge.cmd").write_text("@echo forge v1.2.0\n", encoding="utf-8")
+    (bin_dir / "forge.cmd").write_text("@echo forge v1.2.1\n", encoding="utf-8")
     for kind in ("chromium", "firefox", "webkit"):
         (tmp_path / "ms-playwright" / f"{kind}-1").mkdir(parents=True)
     (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
@@ -233,7 +233,7 @@ def _windows_wsl2_restart_and_all_present(tmp_path):
     assert check.returncode == 0 and check.stdout.strip() == ""
     full = subprocess.run([powershell, "-NoProfile", "-File", str(script)],
                           env=env, capture_output=True, text=True)
-    assert full.returncode == 0 and "forge v1.2.0" in full.stdout
+    assert full.returncode == 0 and "forge v1.2.1" in full.stdout
     assert not log.exists()
     # wsl.exe exists on a fresh laptop but fails on --status with its message on stderr.
     (bin_dir / "wsl.cmd").write_text(
