@@ -171,10 +171,12 @@ teams on Claude Code, Codex or both.
    - Doctor first looks for its own fix. That is a local fix worktree whose record's `why` is
      exactly `Bring the files Forge writes for Claude Code and Codex up to date` and whose item
      isn't merged.
-   - When that fix's `forge.toml` pins another version than the installed Forge, doctor writes
-     nothing there. A row says `Doctor's fix <name> was started for Forge <its pin>, not
-     <pinned>.`, with the Fix `bring <default branch> into that fix (git merge origin/<default
-     branch> in <path>), then forge doctor --fix`.
+   - When that fix doesn't hold the default branch's latest commit
+     (`git merge-base --is-ancestor origin/<default> HEAD` fails there), doctor writes nothing
+     there: its `forge.toml`, such as the pin or the test command, may be out of date, and sync's
+     files follow it. A row says `Doctor's fix <name> is behind <default branch>.`, with the Fix
+     `bring <default branch> into that fix (git merge origin/<default branch> in <path>), then
+     forge doctor --fix`.
    - When there is no such fix, doctor starts one through `forge fix start`'s own checkout step
      (`task._new_checkout`), which gives the same record, branch and folder. It uses the slug
      `forge-files` and the fix start rule's suffix when that name is taken. The done-when is
@@ -220,7 +222,8 @@ teams on Claude Code, Codex or both.
    - another fix already using the slug with a different `why`: a new fix with a suffixed name;
    - the new fix's record carries `allow_large`;
    - a file sync wants empty: removed in place, and removed in the fix's commit;
-   - doctor's fix pinning an older version: nothing written there, and its row;
+   - doctor's fix behind a default branch that has since changed the pin, or the test command:
+     nothing written there, and its row;
    - a fix holding one repaired file and one held back: the fix's row and the held-back row;
    - a commit a git hook refuses: its row, the fix folder as it was, and the next run commits;
    - a removal of a file sync wants empty, then a refused commit: the file is back, and the next

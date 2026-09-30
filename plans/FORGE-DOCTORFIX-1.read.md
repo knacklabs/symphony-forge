@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T21:04:45+00:00
-read_hash: 0cb350604f8069cb76a211902f322905a0a64405
-round: 4
+read_at: 2026-09-30T21:09:39+00:00
+read_hash: 5b01319484a43bf0d196c4df2e0c12edc3c48f19
+round: 5
 passed: no
-doc_seen: 0cb350604f8069cb76a211902f322905a0a64405
+doc_seen: 5b01319484a43bf0d196c4df2e0c12edc3c48f19
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e34598217674f85e16a5f05b6f8808def2db30c5
+notes_seen: b5c3769d4abea048cb558faecc8a4032eb2b2657
 ---
 # Cold read notes
 
@@ -125,4 +125,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 25. Unproven: item 3: user content inside submodules survives forced cleanup.
     Git settings can [hide submodule changes](https://git-scm.com/docs/git-status), while [`worktree remove --force`](https://git-scm.com/docs/git-worktree) permits removing worktrees containing submodules. The prescribed status command can therefore qualify a folder containing user changes. Pin a conservative submodule policy and test preservation in REPAIRS.
+    Disposition: cut
+
+## Round 5
+
+26. Unproven: item 4: reusing a fix after sync’s inputs change without a Forge pin change.
+    The default branch can change its test command while doctor’s pending fix still has the old configuration. The pin check passes, but recomputing `sync.files` in that folder produces the old workflow: [`prcheck.ships`](/src/forge/prcheck.py:134) uses the configured test command. Specify how doctor refreshes or refuses that stale fix, and prove this case in FILES.
     Disposition: cut
