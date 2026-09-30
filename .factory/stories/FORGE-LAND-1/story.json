@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-LAND-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:39+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One command lands a change",
+  "touches": 0
+}
