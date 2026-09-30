@@ -234,13 +234,39 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
 def _test_run(top: Path, command: str) -> str:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
     exit status, every line that mentions a skip with the line before it (where Go's -v prints the
-    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs)."""
+    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs).
+    Skipped when it already passed here on the same committed files; one run per machine at a time."""
     if not command:
         return "forge.toml names no test command, so close ran none."
-    env = {**os.environ, "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-    done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                          encoding="utf-8", errors="replace")
+    from forge import codex, machine  # codex imports review indirectly
+
+    # One record per committed tree and command that passed here. An edit git doesn't hold yet
+    # could change the result, so a run over one is never recorded.
+    folder = machine._repos_file().parent
+    key = hashlib.sha256(f"{repo.git('rev-parse', 'HEAD^{tree}', cwd=top)}\0{command}"
+                         .encode("utf-8")).hexdigest()
+    passed = folder / "passed-tests" / key
+    clean = not repo.git("status", "--porcelain", "--untracked-files=no", cwd=top)
+    skipped = (f"`{command}` already passed on this machine on these same committed files, "
+               "so close did not run it again.")
+    if clean and passed.exists():
+        print(skipped, flush=True)
+        return skipped
+    folder.mkdir(parents=True, exist_ok=True)
+    # ponytail: one test run per machine, whatever the repo; a per-repo lock if that proves slow.
+    with codex._one_at_a_time(folder / "test-run", "Another forge close on this machine is "
+                              "running its tests; this one waits for it."):
+        if clean and passed.exists():  # the close this one waited for passed the same files
+            print(skipped, flush=True)
+            return skipped
+        env = {**os.environ,
+               "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+        done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                              encoding="utf-8", errors="replace")
+        if done.returncode == 0 and clean:
+            passed.parent.mkdir(exist_ok=True)
+            passed.touch()
     out = [line.rstrip() for line in done.stdout.splitlines()]
     picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                      for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
