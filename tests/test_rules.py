@@ -74,8 +74,10 @@ def test_5_forge_stays_small(repo):
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
 
-def test_10_version_pin(repo, tmp_path):
+def test_10_version_pin(repo, tmp_path, monkeypatch):
     version = repo.forge("--version").stdout.split()[-1]
+    # A mismatch runs the pinned release through uv; inside that run, a mismatch still refuses.
+    monkeypatch.setenv("FORGE_PINNED_RUN", "v0.0.1")
     assert re.fullmatch(r"v\d+\.\d+\.\d+\S*", version), version
 
     repo.write("forge.toml", 'version = "v0.0.1"\n')
