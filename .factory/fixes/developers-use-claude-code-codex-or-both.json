@@ -3,7 +3,7 @@
   "branch": "fix/developers-use-claude-code-codex-or-both",
   "done_when": "Every kind in forge.toml's [models] table may have a codex and a claude entry, as grill and design already do; a single entry still works and counts for the family its model belongs to (gpt models Codex, Claude models Claude). repo.models takes the family and returns that family's entry, or nothing when the kind has no entry for that family; each caller passes its family: workers the workers setting's family, the review its engine's family, forge ask Codex. Forge's own forge.toml and new repos' template keep working unchanged. Command-level tests cover a per-family table, a single entry used by its own family, and a single entry asked for by the other family.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T11:21:21+00:00",
