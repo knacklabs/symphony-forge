@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "7ed45628ad1433b0fb2eaf3f2ed4d83287564b157191b372ac601fb83e19ca19",
-    "commit": "5360d63005e12d2997062a038f6013fc47050ae0",
+    "changed": "17f3ce3b922df54618ba5645f1de4489e41b7d61ba4157b10c0a0c5bacf313e4",
+    "commit": "7d9e011e0559e3df2f5a342b1af20462c316d04a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "A reviewed branch can contain a tracked `forge-standards.md` symlink. Checkout recreates that link, and `write_text` follows it, so `forge close` can overwrite any file writable by Forge outside the temporary review tree before Autoreview starts. That breaks the rule that \u201cno command changes a client repo outside a branch and PR.\u201d Create the prompt file without following a branch-controlled path.",
-        "file": "src/forge/review.py",
-        "line": 401,
-        "priority": "P1",
-        "title": "Standard: Reversible by default"
-      }
-    ],
-    "status": "blocked",
-    "tree": "8554b82712aa8027b4483cc360d4ca6d71bb188cc30134e25e4564f06582239e"
+    "findings": [],
+    "status": "clean",
+    "tree": "6883703f86f50ca05f925e4c48b5ed4d378bae8edcb5d493143a804d74c2cbff"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
@@ -36,6 +28,10 @@
     },
     {
       "at": "2026-09-30T18:06:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T21:29:40+00:00",
       "step": "review"
     }
   ],
