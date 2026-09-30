@@ -21,18 +21,23 @@ def test_1_rm_rf_inside_the_system_temp_folder(repo, claude_payload, codex_paylo
     (scratch / "clone").mkdir(parents=True)
     (scratch / "home-link").symlink_to(Path.home())
     monkeypatch.setenv("TMPDIR", str(scratch))
+    monkeypatch.setenv("FORGE_SPLITS", "safe /etc")  # an inherited value the shell splits in two
     outside = Path(__file__).resolve().parent  # the checkout, never inside a temp folder
     builders = (claude_payload, codex_payload)
+    tmpdir = scratch.as_posix()
     allowed = {
         "rm -rf /tmp/forge-scratch-clone": outside,
         "rm -rf /private/tmp/forge-scratch-clone": outside,
-        'rm -rf "$TMPDIR/clone"': outside,
-        "rm -fr $TMPDIR/clone /tmp/other-clone": outside,
-        'rm -r -f -- "$TMPDIR/clone"': outside,
+        f'rm -rf "{tmpdir}/clone"': outside,
+        f"rm -fr {tmpdir}/clone /tmp/other-clone": outside,
+        f"rm -r -f -- {tmpdir}/clone": outside,
     }
-    # Only a command that is rm alone, on absolute or $TMPDIR paths, is allowed: anything before
-    # the rm could change the folder or the variable it relies on.
+    # Only a command that is rm alone, on literal absolute paths, is allowed: anything before the
+    # rm could change the folder, and a variable's value could add a target Forge never sees.
     blocked = {
+        "rm -rf /tmp/$FORGE_SPLITS": outside,
+        'rm -rf "$TMPDIR/clone"': outside,
+        f"rm -rf {tmpdir}/home-link/Documents": outside,
         "cd /etc && rm -rf config": scratch,
         'TMPDIR=/etc; rm -rf "$TMPDIR/config"': outside,
         'TMPDIR=/etc rm -rf "$TMPDIR/config"': outside,
@@ -50,7 +55,6 @@ def test_1_rm_rf_inside_the_system_temp_folder(repo, claude_payload, codex_paylo
         "rm -rf /tmp/clone build": outside,
         "rm -rf build": outside,
         "rm -rf ../..": scratch,
-        "rm -rf $TMPDIR/home-link/Documents": outside,
         "rm -rf /tmp/$UNSET_FORGE_VAR": outside,
         "rm -rf /tmp/*": outside,
         "rm -rf ~/clone": outside,

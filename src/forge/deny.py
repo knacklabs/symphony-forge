@@ -115,17 +115,16 @@ def _rule(program: str, args: list[str], alone: bool = False) -> str | None:
 
 
 def _in_temp(args: list[str]) -> bool:
-    """Whether rm names targets and each one, an absolute path or one under the inherited
-    $TMPDIR with no .. in it, resolves inside the system temp folder."""
+    """Whether rm names targets and each one, a literal absolute path with no .. in it, resolves
+    inside the system temp folder."""
     end = args.index("--") if "--" in args else len(args)
     targets = [a for a in args[:end] if not a.startswith("-")] + args[end + 1:]
     roots = [os.path.realpath(r) for r in (os.environ.get("TMPDIR"), "/tmp", "/private/tmp") if r]
     for target in targets:
-        path = os.path.expandvars(target)
-        if (not target.startswith(("/", "$TMPDIR/")) or set(target) & set("*?[~") or "$" in path
-                or ".." in target.split("/")):
+        if (not os.path.isabs(target) or set(target) & set("$`*?[]{}")
+                or ".." in target.replace("\\", "/").split("/")):
             return False  # left for the shell to expand, or climbing out: Forge can't tell where
-        path = os.path.realpath(path)
+        path = os.path.realpath(target)
         if not any(path != root and _under(path, root) for root in roots):
             return False
     return bool(targets)  # no targets: xargs or find supplies them
