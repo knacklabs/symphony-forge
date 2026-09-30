@@ -8,7 +8,18 @@
     "blocking_level": "P1",
     "changed": "6538ba258df860d386a8cfa479e5a542695ae1f26d763c3ba10e334d0ed72aa6",
     "commit": "b2f4ee65675ceb6e93400aa33ca8a19e6022be63",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py:21 this fix only changes default values; that forge work runs whatever model forge.toml names is already proven through the command in tests/test_codex_worker.py, and the new test checks the defaults where forge init writes them",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py:23 same reason for the reader: tests/test_codex_reader.py proves forge read uses the configured grill model, and the new test checks the default init writes",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "This test checks the TOML written by `forge init`, but never runs `forge work` with that configuration. The command-level worker tests use a separate GPT-6 Sol fixture (`tests/test_codex_worker.py:30-34`), so they would still pass if Forge selected the old model for an initialized repo's build or fix round. Add a command-level test that checks the model and effort sent to the Codex app-server for these rounds.",
@@ -32,10 +43,10 @@
         "title": "Update the guide's Codex design fallback default"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "c21b0c0bb400ebb414835938f407f0f74dcfc58f6f34149d3efdaac6d9942b5c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T01:10:28+00:00",
