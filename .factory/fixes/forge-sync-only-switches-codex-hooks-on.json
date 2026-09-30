@@ -3,11 +3,32 @@
   "branch": "fix/forge-sync-only-switches-codex-hooks-on",
   "done_when": "forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml, and removes top-level model and model_reasoning_effort pins so forge.toml's models and the host's choice govern; every other setting the client has stays as it is, and a file sync can't edit safely refuses as today. A command-level test syncs an old-style config (workspace-write, a model pin, other client settings) and checks the result, and another checks a second sync changes nothing.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "09db2d1deb48a33db706370f4c90935fc5c9d1b8c8becfc63a32f799dc824bfa",
+    "commit": "41dea74fa331306f1769c967bcc8f13a16e3a5bf",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If a config already has the required sandbox and approval values but contains `[features] hooks = 1`, `data == wanted` is true because Python compares `1 == True` as true. Sync returns without rewriting or refusing the file, leaving `hooks` as a number instead of `true`. The equality check needs a type-sensitive check for `hooks` before returning unchanged.",
+        "file": "src/forge/sync.py",
+        "line": 165,
+        "priority": "P1",
+        "title": "Not done: forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml,"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c23173ba91e1d8ecdb7775c70a11eb1bd380ce2be8d2b5a845e345e27784d0b9"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T10:56:59+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T12:29:07+00:00",
+      "step": "review"
     }
   ],
   "why": "forge sync only switches Codex hooks on in a client's .codex/config.toml, so Codex sessions in client repos still run sandboxed with approval prompts and can keep a stale model pin from the old Forge, although Forge gives Codex full access"
