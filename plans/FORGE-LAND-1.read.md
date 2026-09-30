@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T20:16:31+00:00
-read_hash: 15e06f0d5fa27737704888b39f86c7e4cb8c7fdc
-round: 1
+read_at: 2026-09-30T20:35:49+00:00
+read_hash: 503dd97d59dd60a3919dda4336c5198eb89cdb17
+round: 2
 passed: no
-doc_seen: 15e06f0d5fa27737704888b39f86c7e4cb8c7fdc
+doc_seen: 503dd97d59dd60a3919dda4336c5198eb89cdb17
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 87e236921ef07b7f28a58d36f348cc4ee44eed90
 ---
 # Cold read notes
 
@@ -60,3 +60,11 @@ Only a genuine trade-off goes to the human, as a question with options.
 10. Unproven: item 4’s all-eligible multi-check path and failed eligibility lookups.
     The two-check case proves only the veto path. CHECKS needs successful eligible jobs sharing a run, plus unreadable attempt data and failed log retrieval, proving unavailable evidence cannot authorize a re-run.
     Disposition: cut re-runs go per run with `gh run rerun <run> --failed`; CHECKS adds two eligible jobs in one run, an unreadable attempt and an unreadable failed log.
+
+## Round 2
+
+11. Gap: item 1’s revised build rule conflicts with its “built fix with no worker call” test.
+    A successful `forge work` also leaves status `working` with no review: [worker.py:116](/src/forge/worker.py:116) sets that status, and successful completion never replaces it. Land would rebuild an ordinary completed first build, not only an interrupted one. Pin whether that completed work is reused, and make LAND’s test exercise the actual post-work state.
+
+12. Unproven: item 3: the pull request merges between land’s initial lookup and close.
+    [close.py:67](/src/forge/close.py:67) returns 0 for an already merged pull request without creating a Ready record. The initial merged shortcut does not cover this transition; land could then report `not_ready` or hand off a merged pull request. Pin routing back through the merged path and test this transition in LAND.
