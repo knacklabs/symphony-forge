@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-UPGRADECMD-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:43+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One command upgrades Forge in a repo",
+  "touches": 0
+}
