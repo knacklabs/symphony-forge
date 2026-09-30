@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T21:21:40+00:00
-read_hash: d9c805a75995a342ad8df8db794673a8501f99f8
-round: 6
+read_at: 2026-09-30T21:25:57+00:00
+read_hash: 4faad0215522f4669740ead8edbdead6c4177e86
+round: 7
 passed: no
-doc_seen: d9c805a75995a342ad8df8db794673a8501f99f8
+doc_seen: 4faad0215522f4669740ead8edbdead6c4177e86
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: bfa6075912f11398c8b95b2ef35d9c1c3e123610
+notes_seen: e69f0cf7a9f995e3627365d4251a4ec2180cce94
 ---
 # Cold read notes
 
@@ -137,4 +137,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 27. Unproven: item 4: a reused fix contains the latest default commit but locally pins another Forge version.
     The new ancestry guard passes when a local commit or uncommitted edit changes only that fix’s pin. Removing the pin comparison permits repairs with the default checkout’s Forge in a destination that pins something else. Retain the destination-pin guard alongside ancestry, and test this state in FILES.
+    Disposition: cut
+
+## Round 7
+
+28. Item 5 prevents refreshing doctor’s own unmerged repair after following item 4’s recovery step.
+    Doctor commits a repaired workflow; the default branch later changes its test command. After merging the default branch into that fix, both reuse guards pass, but the workflow’s last-changing commit is doctor’s unmerged commit. Item 5 therefore labels it a hand edit and refuses the update. Specify how doctor recognizes its own pending output, and test this merge-and-rerun case in FILES while preserving hand-edit protection.
     Disposition: cut

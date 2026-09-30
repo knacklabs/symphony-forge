@@ -253,7 +253,10 @@ teams on Claude Code, Codex or both.
      changes the version while any of them isn't what `forge sync` writes (`close._synced`, lines
      206-235), and doctor's own fix holds only what sync writes. A commit not yet on the default
      branch, such as a local one that changes the pin and a skill together, has passed no such
-     check, so it holds the file back.
+     check, so it holds the file back. The one exception is doctor's own commit in its fix
+     folder: a commit on that fix's branch whose subject is exactly doctor's fix `why` and whose
+     changed paths are all in sync's list is Forge's, so a later run can refresh what doctor
+     wrote there. A person's commit there with any other subject still holds the file back.
 
    A file whose text already matches sync doesn't differ, so it is never held back. A file with no
    commit yet belongs to Forge. In Forge's own repo (`repo = "forge-source"`) the templates sit in
@@ -303,6 +306,9 @@ teams on Claude Code, Codex or both.
    - an uncommitted edit in the checkout doctor runs in: held back;
    - a staged, an unstaged and an untracked edit in doctor's fix folder: each held back;
    - a staged hand edit whose working copy matches sync: held back, and the index unchanged;
+   - doctor's fix after the default branch changes its test command and is merged into the fix:
+     the next run rewrites the workflow doctor committed there;
+   - a person's commit in doctor's fix folder changing a skill: held back;
    - Forge's own repo: history doesn't hold a file back;
    - `workers = "claude"` with `codex` on PATH and the skill missing from the Codex folders: a
      row;
