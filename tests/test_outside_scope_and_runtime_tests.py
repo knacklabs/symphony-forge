@@ -1,6 +1,9 @@
 """Workers change the outside-Scope files a change needs and name them; only runtime behaviour
 needs an end-to-end test; new test files are named for the behaviour they prove."""
 
+import re
+from pathlib import Path
+
 from test_close import env  # noqa: F401
 from test_worker import calls, install_claude
 
@@ -55,7 +58,19 @@ def test_2_review_reports_only_outside_scope_files_the_work_does_not_need(env):
 
 
 def test_3_brief_asks_end_to_end_only_for_runtime_behaviour(repo):
-    tests_first = flat(brief_of(repo).split("## Tests first\n", 1)[1].split("\n## ", 1)[0])
+    brief = brief_of(repo)
+    tests_first = flat(brief.split("## Tests first\n", 1)[1].split("\n## ", 1)[0])
+    # The testing how-to the brief points to follows the same rule.
+    folder = re.search(r"default client stack is in `([^`]+)`", brief)[1]
+    testing = flat((Path(folder) / "testing.md").read_text(encoding="utf-8"))
+    for rule in ("Every Done-when item needs an end-to-end test through the real entry point when "
+                 "it changes runtime behaviour",
+                 "An item with no UI gets a Supertest test through HTTP",
+                 "Every user-facing Done-when item gets one Playwright test"):
+        start = testing.index(rule)
+        assert "when it changes runtime behaviour" in testing[start:testing.index(".", start + len(rule))], rule
+    assert "one per Done-when item, not one per function" in testing
+    assert testing.count("proven by the check the item names") >= 2
     assert ("Every Done-when item needs an end-to-end test through the real entry point when it "
             "changes runtime behaviour") in tests_first
     assert ("Settings, docs, deletions and test-only items are proven by the check the item names."
