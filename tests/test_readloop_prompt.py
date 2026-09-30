@@ -99,7 +99,8 @@ def test_4_the_reader_hunts_edge_cases(repo, gh, monkeypatch, sdk_data, tmp_path
     first, _round = _parts()
     prompt = _flat(_first_round_prompt(repo, monkeypatch, sdk_data, tmp_path))
     for question in ("which inputs and states it must handle",
-                     "Windows PowerShell and cmd, WSL, macOS, Linux CI",
+                     # Platforms are asked of the item's own change, no longer a fixed checklist.
+                     "which platform or shell its change itself behaves differently on",
                      "which failure and refusal paths it has",
                      "which test, in which task's Tests cell, proves each case",
                      "`Unproven: item <n>: <case>`", "`Trap: <trap>: item <n>`"):
