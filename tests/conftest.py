@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Callable
@@ -100,6 +102,36 @@ def isolated_forge_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     # Every Forge subprocess must write its per-machine repo list inside this test's temp folder.
     monkeypatch.setenv("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
                        str(tmp_path / "config"))
+
+
+def _left(tmp_path: Path) -> list[str]:
+    """This test's processes still running or stopped: every process a test starts names its temp
+    folder in its command or its environment, which holds the XDG_CONFIG_HOME set above."""
+    listed = subprocess.run(["ps", "axeww", "-o", "pid=,stat=,command="], capture_output=True,
+                            text=True, env={"PATH": "/bin:/usr/bin"}).stdout  # ps's own env is clean
+    mark = f"{tmp_path}{os.sep}"
+    return [" ".join(line.split()[:1] + line.split()[2:])[:200] for line in listed.splitlines()
+            if mark in line and not line.split()[1].startswith("Z")
+            and int(line.split()[0]) != os.getpid()]
+
+
+@pytest.fixture(autouse=True)
+def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
+    # Autouse, so it runs its check after the test's own fixtures have cleaned up.
+    yield
+    if os.name == "nt":  # ponytail: no ps on Windows; add a process-tree walk if leaks show there
+        return
+    for _ in range(20):  # a process the test just ended may take a moment to go
+        left = _left(tmp_path)
+        if not left:
+            return
+        time.sleep(0.5)
+    for line in left:
+        try:
+            os.kill(int(line.split()[0]), signal.SIGKILL)  # SIGKILL ends a stopped process too
+        except ProcessLookupError:
+            pass
+    pytest.fail(f"{request.node.name} left processes running: " + "; ".join(left), pytrace=False)
 
 
 @pytest.fixture
