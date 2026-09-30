@@ -3,7 +3,7 @@
   "branch": "fix/codex-worker-turns-decline-every-approva",
   "done_when": "Full-access worker turns (build, fix, lite) run with no approval gate: every approval request Codex sends is accepted and Codex's automatic approval review isn't used, so any command the worker runs goes ahead; read-only turns (cold read, ask, review) keep declining everything; tests run a full-access turn whose command triggers an approval request and see it accepted, and a read-only turn see it declined",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T02:52:37+00:00",
