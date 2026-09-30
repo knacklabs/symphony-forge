@@ -1,0 +1,14 @@
+{
+  "base": "4325772f015533584ea753bcfc91b8c4cc1d65a5",
+  "branch": "fix/review-bundles-include-generated-files-s",
+  "done_when": "Files the repo marks as generated in .gitattributes (linguist-generated) appear in the review bundle only as their name and changed-line counts. A change to a file a fix's Done-when names counts as a change the review must see, even under plans/.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T03:30:04+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review bundles include generated files such as migration snapshots, which split one review into many passes, and a change to a plans/ file that a fix's Done-when names doesn't trigger a new review, so stale findings stay"
+}
