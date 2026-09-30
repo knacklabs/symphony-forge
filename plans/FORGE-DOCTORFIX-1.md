@@ -115,6 +115,8 @@ teams on Claude Code, Codex or both.
    - GitHub has a merged or closed pull request from that branch whose head commit equals the
      local branch's head;
    - no open pull request comes from that branch;
+   - the folder has no `.gitmodules` file. A folder with submodules is always kept, since their
+     changes can hide from `git status`;
    - `git status --porcelain --ignored --untracked-files=normal` there (the option overrides a
      repo's `status.showUntrackedFiles = no`) prints nothing but the root `uv.lock`, staged or
      not, and ignored cache folders whose own name is one of `.venv`, `node_modules`,
@@ -147,6 +149,7 @@ teams on Claude Code, Codex or both.
    - the `gh` call failing, or printing something that isn't a list: nothing removed;
    - the `gh` call returning 100 entries: kept;
    - an untracked file with `status.showUntrackedFiles = no` set: kept;
+   - a folder with a `.gitmodules` file: kept;
    - a local commit past the pull request's head: kept;
    - an open pull request from the same branch: kept;
    - doctor run inside that folder: kept;
@@ -233,8 +236,9 @@ teams on Claude Code, Codex or both.
      in doctor's fix folder, where it writes;
    - the last commit that changed it (`git log -1` on the branch doctor writes on) is not
      Forge's. A commit is Forge's only when it is already on the default branch
-     (`git merge-base --is-ancestor <commit> origin/<default>`) and either changes the `version`
-     line of `forge.toml` or has a subject that starts with doctor's fix `why` above (a squashed
+     (`git merge-base --is-ancestor <commit> origin/<default>`) and either changes the pinned
+     version (the value `repo._pin` reads from `forge.toml` differs from the one in the commit's
+     parent; an edit to that line that keeps the value doesn't count) or has a subject that starts with doctor's fix `why` above (a squashed
      merge keeps it, perhaps followed by ` (#<n>)`). Such a commit can't carry a hand edit to these
      files: adoption writes them itself (`init.py` line 317), close refuses a fix or task that
      changes the version while any of them isn't what `forge sync` writes (`close._synced`, lines
@@ -282,6 +286,8 @@ teams on Claude Code, Codex or both.
    - the same file changed together with `forge.toml`'s `version` line, on the default branch:
      repaired;
    - the same, in a local commit on a fix branch that isn't on the default branch: held back;
+   - the same file changed on the default branch together with a `version` line edit that keeps
+     the pinned value: held back;
    - the same file changed together with another `forge.toml` line: held back;
    - the same file last changed by a commit whose subject is doctor's fix `why` with ` (#12)`:
      repaired;

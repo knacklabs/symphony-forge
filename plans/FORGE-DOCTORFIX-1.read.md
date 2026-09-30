@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T20:52:00+00:00
-read_hash: 6400e00ba6663e46fba0a474efdf19a34f3321cf
-round: 3
+read_at: 2026-09-30T21:04:45+00:00
+read_hash: 0cb350604f8069cb76a211902f322905a0a64405
+round: 4
 passed: no
-doc_seen: 6400e00ba6663e46fba0a474efdf19a34f3321cf
+doc_seen: 0cb350604f8069cb76a211902f322905a0a64405
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 1f5cdccc5370eaebfc531d335ad7beefda4cfcff
+notes_seen: e34598217674f85e16a5f05b6f8808def2db30c5
 ---
 # Cold read notes
 
@@ -115,4 +115,14 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 23. Item 3’s safety check can omit untracked files because of Git settings.
     [`status.showUntrackedFiles=no`](https://git-scm.com/docs/git-status) suppresses untracked entries unless the command explicitly overrides it. The specified command could therefore qualify a worktree containing user files for forced deletion. Require explicit untracked reporting compatible with the cache rule, and test that setting in REPAIRS.
+    Disposition: cut
+
+## Round 4
+
+24. Item 5 treats a version-line edit as proof that close checked the generated files.
+    A fix can change a comment on that line and edit a skill by hand without changing the parsed pin. [`close._synced`](/src/forge/close.py:206) then skips validation. After merge, doctor’s ancestry and version-line conditions both pass. Distinguish an actual pin change and test this merged case in FILES.
+    Disposition: cut
+
+25. Unproven: item 3: user content inside submodules survives forced cleanup.
+    Git settings can [hide submodule changes](https://git-scm.com/docs/git-status), while [`worktree remove --force`](https://git-scm.com/docs/git-worktree) permits removing worktrees containing submodules. The prescribed status command can therefore qualify a folder containing user changes. Pin a conservative submodule policy and test preservation in REPAIRS.
     Disposition: cut
