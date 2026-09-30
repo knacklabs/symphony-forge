@@ -34,8 +34,9 @@ Check:
    command-table row, a guide list, a registry), and name the split: the shared line to one task
    or a small last wiring task.
 2. Is this simple enough?
-   - Each task must map to the "Done when" items it covers, and each "Done when" item to the
-     spec's behaviour or success measure. Anything that maps to nothing gets
+   - Each task must map to the "Done when" items it covers. When a confirmed spec is included
+     above, each "Done when" item must also map to the spec's behaviour or success measure; with
+     no confirmed spec, skip that mapping. Anything that maps to nothing gets
      `Cut or defer: <item>`.
    - Each entry in `New moving parts` needs its "Done when" item and a reason the lower rungs
      won't do: reuse, the standard library, the platform, an installed dependency. If it has

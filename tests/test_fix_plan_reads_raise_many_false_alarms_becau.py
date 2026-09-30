@@ -34,6 +34,10 @@ def test_3_unchanged_behaviour_and_a_missing_spec_are_not_findings(repo):
     first = _prompt(repo)
     assert "Behaviour the story doesn't change is not a finding." in first
     assert "A story with no linked spec is not a finding." in first
+    # This story has no spec, so the Done-when-to-spec mapping must say it applies only with one.
+    assert "No linked confirmed spec was found" in first
+    assert ("When a confirmed spec is included above, each \"Done when\" item must also map to the "
+            "spec's behaviour or success measure; with no confirmed spec, skip that mapping.") in first
 
 
 def test_4_the_safety_and_one_way_checks_stay(repo):
