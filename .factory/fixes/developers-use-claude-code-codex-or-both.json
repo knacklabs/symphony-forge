@@ -4,11 +4,39 @@
   "branch": "fix/developers-use-claude-code-codex-or-both",
   "done_when": "Every kind in forge.toml's [models] table may have a codex and a claude entry, as grill and design already do; a single entry still works and counts for the family its model belongs to (gpt models Codex, Claude models Claude). repo.models takes the family and returns that family's entry, or nothing when the kind has no entry for that family; each caller passes its family: workers the workers setting's family, the review its engine's family, forge ask Codex. Forge's own forge.toml and new repos' template keep working unchanged. Command-level tests cover a per-family table, a single entry used by its own family, and a single entry asked for by the other family.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "a3e422f06fffd7cf599d48c36d03cd0e2c95d6e39c17f2a087b38371482cf4d5",
+    "commit": "51f8e6b0ede42abffee367794777ed8ce7e9cb32",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After the Claude run, the task status is `working`. The next `forge work` call therefore selects `fix` (see `src/forge/worker.py:70-74`), while this test supplies only `[models.build]`. Its empty Codex config would pass even if Codex incorrectly used the Claude-only build entry. Run the Codex case as a first build so the assertion tests the behavior it names.",
+        "file": "tests/test_models_per_family.py",
+        "line": 69,
+        "priority": "P1",
+        "title": "Not done: the Codex half of the other-family build test"
+      },
+      {
+        "body": "The new family selection also reaches `forge ask` through `codex.settings` (`src/forge/codex.py:137-138`), but no command test asks with `[models.lite.codex]` and `[models.lite.claude]`, or with a Claude-only lite entry. The existing ask model test uses a single GPT entry, so it cannot catch a broken nested-table lookup on this command path.",
+        "file": "src/forge/repo.py",
+        "line": 232,
+        "priority": "P1",
+        "title": "Not done: forge ask selects the Codex entry from a per-family lite table"
+      }
+    ],
+    "status": "blocked",
+    "tree": "77f81188b7eec1ba891fcc4acf0524c66a00e5272ad545373a9cfddc550e8c0d"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-09-30T11:21:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T18:41:50+00:00",
+      "step": "review"
     }
   ],
   "why": "Developers use Claude Code, Codex or both, but forge.toml's build, fix, lite and review kinds hold one model each, so the other tool gets no Forge model for that kind of work"
