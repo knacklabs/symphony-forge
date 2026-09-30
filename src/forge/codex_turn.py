@@ -38,9 +38,15 @@ def emit(**line: Any) -> None:
 
 
 def decline(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
-    """Forge's answer to every request Codex sends, known or unknown."""
+    """Forge's answer to every request Codex sends in a read-only turn, known or unknown."""
     emit(declined=method)
     return {"decision": "decline"}
+
+
+def accept(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
+    """Forge's answer to every request Codex sends in a full-access turn: no human is there to ask."""
+    emit(accepted=method)
+    return {"decision": "accept"}
 
 
 class Client(CodexClient):
@@ -107,7 +113,7 @@ def main() -> int:
         if not hasattr(client, "_approval_handler"):
             emit(refused="handler")
             return 3
-        client._approval_handler = decline
+        client._approval_handler = accept if sandbox is Sandbox.full_access else decline
         if request.get("archive"):
             codex.thread_archive(request["thread"])
             emit(archived=True)
@@ -134,6 +140,8 @@ def main() -> int:
                 turns = []
             emit(read=[[turn.id, turn.status.value] for turn in turns])
             return 0
+        # deny_all is the SDK's approval policy "never" with no reviewer: Codex never asks and its
+        # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
         settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
                     "cwd": request["cwd"], "config": request["config"] or None}
         resumed = None

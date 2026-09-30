@@ -442,6 +442,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
               if pr and status == "waiting for checks" else [])
     ready = status == "ready" or (status == "waiting for checks" and checks
                                   and board._green_at(pr, checks) and not pr.get("isDraft"))
+    if status == "ready" and not pr.get("url") and state.get("branch") and shutil.which("gh"):
+        # The bulk list missed it (GitHub can time out on it); ask for this branch's link alone.
+        view = repo.run("gh", "pr", "view", state["branch"], "--json", "url", "--jq", ".url", cwd=top)
+        pr = {"url": view.stdout.strip()} if view.returncode == 0 and view.stdout.strip() else pr
     if ready and (url := pr.get("url")):
         if status == "waiting for checks" and not switch and repo.merge_setting(top) == "agent":
             return [f"{label}'s checks passed; finish preparing its automatic merge.",

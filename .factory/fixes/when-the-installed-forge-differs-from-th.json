@@ -1,0 +1,27 @@
+{
+  "base": "4325772f015533584ea753bcfc91b8c4cc1d65a5",
+  "branch": "fix/when-the-installed-forge-differs-from-th",
+  "done_when": "When the installed Forge isn't the version forge.toml pins, a Forge command runs the pinned release through uv instead of refusing and says so in one line. It still refuses when uv is missing or when it is already running as the pinned release (no loop), and the cases that have their own handling today keep it (Forge's own repo runs the checkout's code, an upgrade fix waiting to merge, an item checked out in another folder).",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "48d9f3f188eba49901b5a44af818705beefca2d2550018c5c628b35cea5d7511",
+    "commit": "a3536e4bc8647d6aef157618fe5fa18d8bae4de4",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "eefff580abfd980f4ad1ecf2c36eecc271ac3f0a05cce0335180a8f4c160d62b"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T03:29:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T04:20:55+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When the installed Forge differs from the version a repo pins, every Forge command refuses, so coordinators wrap each call in a uvx script"
+}
