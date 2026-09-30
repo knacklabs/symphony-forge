@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 
-from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
+from test_codex_worker import _codex_repo, _sent, _stub, sdk_data  # noqa: F401
 
 STORY = "a-codex-turn-that-fails-because-the-mode"
 
@@ -15,9 +15,15 @@ def _waits(stdout: str) -> list[float]:
     return [float(wait) for wait in re.findall(r"tries the turn again in ([\d.]+) seconds", stdout)]
 
 
+def _gaps(calls, before: int) -> list[float]:
+    """The seconds between each turn's start and the next's, as the stub Codex saw them."""
+    starts = [call["turn_started"] for call in _stub(calls) if "turn_started" in call][before:]
+    return [later - earlier for earlier, later in zip(starts, starts[1:])]
+
+
 def test_1_capacity_failure_is_retried_with_backoff_before_reporting(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0.1")
+    monkeypatch.setenv("FORGE_CODEX_RETRY_WAIT", "0.5")
 
     # Codex is at capacity for two turns, then has room: Forge waits longer each time, sends the
     # same turn again on the same conversation, and the round completes.
@@ -27,7 +33,9 @@ def test_1_capacity_failure_is_retried_with_backoff_before_reporting(repo, monke
     turns = _sent(calls, "turn/start")
     assert len(turns) == 3 and len({repr(turn["input"]) for turn in turns}) == 1
     assert len(_sent(calls, "thread/start")) == 1
-    assert _waits(built.stdout) == [0.1, 0.2]
+    assert _waits(built.stdout) == [0.5, 1.0]
+    first, second = _gaps(calls, 0)
+    assert first >= 0.5 and second >= 1.0
     assert "Codex ended the turn: completed" in built.stdout
 
     # Still at capacity after every retry: Forge reports the failure as before.
@@ -37,7 +45,8 @@ def test_1_capacity_failure_is_retried_with_backoff_before_reporting(repo, monke
     assert failed.returncode != 0
     assert "Codex reported it failed" in failed.stderr
     assert len(_sent(calls, "turn/start")) - before == 4
-    assert _waits(failed.stdout) == [0.1, 0.2, 0.4]
+    assert _waits(failed.stdout) == [0.5, 1.0, 2.0]
+    assert [gap >= wait for gap, wait in zip(_gaps(calls, before), [0.5, 1.0, 2.0])] == [True] * 3
 
     # Any other failure is reported at once, with no retry.
     monkeypatch.setenv("STUB_CODEX_OVERLOADED", "0")
