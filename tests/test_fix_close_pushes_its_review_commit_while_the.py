@@ -5,6 +5,8 @@ Each test is named for the fix's Done-when item it proves.
 from __future__ import annotations
 
 import stat
+import sys
+from pathlib import Path
 
 from test_close import env, run  # noqa: F401 (env is a fixture)
 
@@ -45,3 +47,25 @@ def test_2_close_retries_a_failed_push_before_giving_up(env):
     assert len(tries.read_text("utf-8").splitlines()) == 3
     assert (env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
             == env.repo.git("rev-parse", "HEAD", cwd=where))
+
+
+def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env, monkeypatch):
+    item, _ = env.start_fix()
+    monkeypatch.setenv("FORGE_PUSH_WAIT", "0.5")  # waits of 0.5, 1 and 2 seconds
+    # The remote refuses every push and records when each one arrived.
+    tries = env.tmp / "push-times"
+    hook = env.tmp / "remote.git" / "hooks" / "pre-receive"
+    hook.write_text(f'#!/bin/sh\n"{Path(sys.executable).as_posix()}" -c '
+                    f'"import time; print(time.time())" >> "{tries.as_posix()}"\n'
+                    'echo "the remote is down" >&2\nexit 1\n', "utf-8")
+    hook.chmod(hook.stat().st_mode | stat.S_IEXEC)
+
+    done = env.close(item)
+
+    assert done.returncode == 1
+    assert "git push failed" in done.stderr and "the remote is down" in done.stderr
+    times = [float(line) for line in tries.read_text("utf-8").splitlines()]
+    assert len(times) == 4
+    gaps = [later - earlier for earlier, later in zip(times, times[1:])]
+    assert gaps[0] >= 0.5 and gaps[0] < gaps[1] < gaps[2], gaps
+    assert not env.gh_calls("pr", "create")  # nothing was published after the failed push
