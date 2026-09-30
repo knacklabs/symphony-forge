@@ -162,7 +162,8 @@ def _codex_config(top: Path) -> str:
     features = data.get("features")
     wanted = {**{key: value for key, value in data.items() if key not in PINS}, **FULL_ACCESS,
               "features": {**(features if isinstance(features, dict) else {}), "hooks": True}}
-    if data == wanted:
+    # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
+    if data == wanted and features["hooks"] is True:
         return text
     # ponytail: stdlib has no TOML writer, so edit lines as text, then require the result to parse
     # to exactly the wanted settings. Anything else (features as dotted keys or an inline table, a

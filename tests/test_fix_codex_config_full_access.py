@@ -48,6 +48,14 @@ def test_1_sync_gives_codex_full_access_and_drops_model_pins(repo):
     # The client's comments stay too.
     assert text.startswith("#:schema ") and "# the client's own choice" in text
 
+    # Full access already, but hooks = 1, which Python compares equal to true: sync still sets true.
+    repo.write(".codex/config.toml", 'sandbox_mode = "danger-full-access"\n'
+                                     'approval_policy = "never"\n\n[features]\nhooks = 1\n')
+    done = repo.forge("sync")
+    assert done.returncode == 0, done.stderr
+    config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    assert config["features"]["hooks"] is True
+
 
 def test_2_a_second_sync_changes_nothing(repo):
     _client(repo)
