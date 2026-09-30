@@ -3,11 +3,24 @@
   "branch": "fix/forge-changes-how-coordinators-and-worke",
   "done_when": "Forge's AGENTS.md has a '## Review rules' section, outside the Forge-managed block, with one rule: a change to what a coordinator or worker should do or can use (a command, an option, a setting, a step in the flow) updates src/forge/templates/skill.md or the worker brief in the same change, and the review reports a missing update as P1.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9f7b046c112c0e6b48703ff1a54146602345b269ef8e3c4e40e7b7212957fa04",
+    "commit": "16676fd439a035c1cca9d71e2895257427873065",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "28c0acd34a48657953cf689dac66c6a269c5bc1ef39f3c61aaf4c5b8c1173282"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T15:09:52+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T17:16:25+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge changes how coordinators and workers should act without updating the skill that client repos get, so agents there don't use new features; Forge's own repo has no review rule that catches it"
