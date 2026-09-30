@@ -3,11 +3,24 @@
   "branch": "fix/windows-test-jobs-are-cancelled-at-their",
   "done_when": "Each Windows test job in .github/workflows/forge-next.yml allows 20 minutes, macOS and Ubuntu keep their limits, and pytest's per-test timeout still names a hung test before the job limit",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "0137294e93888362ea670bf720c2b906805087df7ca7e1a7c3f628c05b7da1de",
+    "commit": "7d06d2071ebbf42a263d1ed0d67b1aa09ba8ab32",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "d36230ad7cfa4c56647619f141ca8f2ac0985b94d41895c9028f41f33a82d0c5"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T01:51:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T02:09:26+00:00",
+      "step": "review"
     }
   ],
   "why": "Windows test jobs are cancelled at their time limit now that the suite has grown, even when every test passes"
