@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-DOCTORFIX-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:47+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "forge doctor fixes what it finds",
+  "touches": 0
+}
