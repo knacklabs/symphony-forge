@@ -1,0 +1,61 @@
+{
+  "allow_large": "The owner chose on 2026-09-30 to move workers, fixes, design and the cold reader to GPT-6.1 Sol while reviews stay on GPT-6 Sol; model names and the SDK pin appear in several source files and the tests that pin them",
+  "base": "ca1d108ed6080f1641c87b9e474f985be90e62f1",
+  "branch": "fix/gpt-6-1-sol-is-out-and-about-40-cheaper",
+  "done_when": "Workers, fixes, design and the cold reader default to gpt-6.1-sol at their current efforts (this repo's forge.toml and forge init's defaults), while reviews, the light prototype review and the sign-off review stay on gpt-6-sol; Luna stays gpt-6-luna; the Codex SDK pin is 0.159.2, matching the Codex CLI; forge doctor passes and tests check the defaults, the review pins and the SDK pin",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6538ba258df860d386a8cfa479e5a542695ae1f26d763c3ba10e334d0ed72aa6",
+    "commit": "b2f4ee65675ceb6e93400aa33ca8a19e6022be63",
+    "dismissals": [
+      {
+        "because": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py:21 this fix only changes default values; that forge work runs whatever model forge.toml names is already proven through the command in tests/test_codex_worker.py, and the new test checks the defaults where forge init writes them",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py:23 same reason for the reader: tests/test_codex_reader.py proves forge read uses the configured grill model, and the new test checks the default init writes",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "This test checks the TOML written by `forge init`, but never runs `forge work` with that configuration. The command-level worker tests use a separate GPT-6 Sol fixture (`tests/test_codex_worker.py:30-34`), so they would still pass if Forge selected the old model for an initialized repo's build or fix round. Add a command-level test that checks the model and effort sent to the Codex app-server for these rounds.",
+        "file": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py",
+        "line": 21,
+        "priority": "P1",
+        "title": "Not done: an initialized repo's forge work sends GPT-6.1 Sol for build, fix and lite rounds"
+      },
+      {
+        "body": "The new test checks the generated grill entry, but does not run `forge read` with it. The command-level reader test supplies its own GPT-6 Sol configuration and asserts that old model (`tests/test_codex_reader.py:24,109`). A regression in the default cold-reader route would therefore pass the suite. Exercise `forge read` using an initialized repo and assert the app-server receives GPT-6.1 Sol at high effort.",
+        "file": "tests/test_fix_gpt_6_1_sol_is_out_and_about_40_cheaper.py",
+        "line": 23,
+        "priority": "P1",
+        "title": "Not done: an initialized repo's forge read sends GPT-6.1 Sol for the Codex cold reader"
+      },
+      {
+        "body": "The fallback default is now GPT-6.1 Sol, but the user guide still says `gpt-6-sol` at high effort (`docs/guide.md:107-110`). A user following the guide will expect a different model from the one Forge selects when Claude is unavailable. Update that statement to match the changed default.",
+        "file": "src/forge/repo.py",
+        "line": 150,
+        "priority": "P2",
+        "title": "Update the guide's Codex design fallback default"
+      }
+    ],
+    "status": "clean",
+    "tree": "f9d3e1f80954b7d2ef63a112a09d120d6af34f96f37989eabc9cfe5e7740b019"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T01:10:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T01:34:47+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "GPT-6.1 Sol is out and about 40% cheaper at the same speed, but in side-by-side reviews it missed or under-rated known blocking problems that GPT-6 Sol caught"
+}

@@ -1,10 +1,13 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
-import importlib
+import importlib.metadata
+import json
+import os
 import pkgutil
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -40,15 +43,14 @@ def _parser() -> _Parser:
                  if isinstance(target, ast.Name)}
         if not names.intersection({"COMMANDS", "GROUP_HELP"}):
             continue
-        module_name = info.name
-        module = importlib.import_module(f"forge.{module_name}")
+        module = importlib.import_module(f"forge.{info.name}")
         for group, help_text in getattr(module, "GROUP_HELP", {}).items():
             if group in group_help:
                 raise ValueError(f"group help declared twice: {group}")
             group_help[group] = help_text
         for command in getattr(module, "COMMANDS", []):
             declarations.append((command["position"], command["words"],
-                                 f"{module_name}:{command['run']}", command["changes_state"],
+                                 f"{info.name}:{command['run']}", command["changes_state"],
                                  command["help"], command["args"]))
     for _, words, target, changes, text, arguments in sorted(declarations):
         name, _, sub = words.partition(" ")
@@ -67,6 +69,19 @@ def _parser() -> _Parser:
 
 
 def _run(argv: list[str] | None) -> int:
+    # A forge installed from this repo runs its old code, so run this checkout's; never another repo's.
+    top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
+    url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url") or ""
+    made = urllib.request.url2pathname(urllib.parse.urlparse(url).path) if url.startswith("file:") else ""
+    # Without git's variables: inside a hook GIT_DIR would answer for every folder.
+    common = [Path(subprocess.run(["git", "-C", path or os.devnull, "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True,
+                                  env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}).stdout.strip() or os.devnull).resolve() for path in (top, made)]
+    src = str(Path(top, "src"))
+    if (top and common[0] == common[1] and os.environ.get("FORGE_FROM_CHECKOUT") != src
+            and Path(forge.__file__).resolve().parent != Path(src, "forge")):
+        print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
+        return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
+                              env={**os.environ, "PYTHONPATH": src, "FORGE_FROM_CHECKOUT": src}).returncode
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
         repo.refuse(REFUSALS["usage"],

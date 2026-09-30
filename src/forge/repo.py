@@ -147,7 +147,7 @@ KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
-                   "codex": {"model": "gpt-6-sol", "effort": "high"}}
+                   "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -291,7 +291,7 @@ def _config_problem(data: dict[str, Any]) -> str:
 
 
 def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: str = "") -> None:
-    """Refuse when the installed Forge isn't the one forge.toml pins.
+    """Run the release forge.toml pins through uv when the installed Forge isn't it, else refuse.
 
     A folder outside git, or a repo with no forge.toml yet (before init or migrate), has no pin.
     On the default branch a newer Forge runs while an upgrade fix waits: the default branch as last
@@ -322,6 +322,15 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     if folder is not None and folder != top and here.get(folder) == __version__:
         refuse(REFUSALS["pin_elsewhere"], item=item, folder=folder, installed=f"v{__version__}",
                pinned=f"v{pinned}", words=words)
+    # Run the pinned release through uv instead, unless this already is that run (no loop).
+    uv = shutil.which("uv")
+    if uv and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
+        print(f"Forge v{__version__} is installed, but this repo pins v{pinned}, so v{pinned} runs "
+              "through uv.", file=sys.stderr)
+        sys.exit(subprocess.run(
+            [uv, "tool", "run", "--from", f"git+https://github.com/knacklabs/symphony-forge@v{pinned}",
+             "forge", *sys.argv[1:]], cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": f"v{pinned}"},
+        ).returncode)
     refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
 
 

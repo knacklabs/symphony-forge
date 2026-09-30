@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import uuid
 from pathlib import Path
 
@@ -21,10 +22,10 @@ from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
 STORY = "FORGE-WARM-1"
-PIN = "0.156.1"
+PIN = "0.159.2"
 ROOT = Path(__file__).resolve().parents[1]
 NOW = "2026-09-26T10:00:00+00:00"
-DECLINE = {"decision": "decline"}
+ACCEPT = {"decision": "accept"}
 KNOWN, UNKNOWN = "item/commandExecution/requestApproval", "item/stubFuture/requestSomething"
 SOL = {"model": "gpt-6-sol", "effort": "medium", "subagents": "gpt-6-luna", "subagent_effort": "max"}
 MODELS = {"build": SOL, "fix": SOL, "lite": {"model": "gpt-6-sol", "effort": "low"}}
@@ -147,16 +148,52 @@ def _lines(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text("utf-8").splitlines()]
 
 
-def _running(pid: int) -> bool:
+def _started(pid: int) -> int | None:
+    """When the process with this id started, while it runs: a Windows start time there, the second
+    elsewhere, as the stub app-server logs its own. None once no process has the id."""
     if os.name == "nt":
-        listed = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True,
-                                text=True).stdout
-        return str(pid) in listed.split()
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32")
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.GetProcessTimes.argtypes = (wintypes.HANDLE, *([ctypes.POINTER(wintypes.FILETIME)] * 4))
+        kernel32.WaitForSingleObject.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        # PROCESS_QUERY_LIMITED_INFORMATION and SYNCHRONIZE, to read its start time and wait on it
+        handle = kernel32.OpenProcess(0x1000 | 0x100000, False, pid)
+        if not handle:  # no process has the id, or one of another user's
+            return None
+        try:
+            if kernel32.WaitForSingleObject(handle, 0) != 0x102:  # WAIT_TIMEOUT: not ended
+                return None
+            created = wintypes.FILETIME()
+            kernel32.GetProcessTimes(handle, ctypes.byref(created),
+                                     *(ctypes.byref(wintypes.FILETIME()) for _ in range(3)))
+        finally:
+            kernel32.CloseHandle(handle)
+        return created.dwHighDateTime << 32 | created.dwLowDateTime
+    said = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True,
+                          env={**os.environ, "LC_ALL": "C"}).stdout
+    if not said.strip():
+        return None
+    return int(time.mktime(time.strptime(" ".join(said.split()), "%a %b %d %H:%M:%S %Y")))
+
+
+def _running(pid: int, before: int | None = None) -> bool:
+    """Whether the process runs. A process id soon passes to another process once its own has
+    gone, on Windows above all, so with `before` only a process that started no later counts."""
+    started = _started(pid)
+    return started is not None and (before is None or started <= before)
+
+
+def _left(work_log: Path, calls: Path) -> bool:
+    """Whether the app-server the latest forge work reported in its log still runs. It started no
+    later than the stub (on Windows it is the stub's launcher): a later process with its id is
+    another."""
+    pid = [line for line in work_log.read_text("utf-8").splitlines()
+           if line.startswith("Codex app-server: process ")][-1].rpartition(" ")[2]
+    return _running(int(pid), [call for call in _stub(calls) if "pid" in call][-1]["started"])
 
 
 def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp_path):
@@ -206,7 +243,9 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "stub test line 5\n" not in log and "stub delta chunk" not in log
     state = json.loads((folder / ".factory/stories/BOARD/tasks/PAGE.json").read_text("utf-8"))
     assert state["status"] == "working"
-    assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == ""
+    # Forge leaves nothing behind; the files are what the stub's accepted requests wrote.
+    assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == (
+        "?? ran-stub-ask-1\n?? ran-stub-ask-2")
 
     # A fix gets a Lite conversation named after the fix and its why.
     fixed = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
@@ -218,21 +257,21 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert "Why: Fix the login typo" in _sent(calls, "turn/start")[-1]["input"][0]["text"]
 
 
-def test_2_every_request_is_declined(repo, monkeypatch, sdk_data, tmp_path):
+def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
 
-    # The stub asked to run a command and sent a method no SDK knows: both got a decline, and
-    # neither ran. Each decline is logged.
+    # The stub asked to run a command and sent a method no SDK knows: a full-access worker turn
+    # accepts both, with no human to ask, and both ran. Each is logged. (Before, both were
+    # declined; a read-only turn still declines, in test_fix_codex_worker_turns_decline_every_approva.)
     answers = [(call["answered"], call["result"], call["ran"]) for call in _stub(calls)
                if "answered" in call]
-    assert answers == [(KNOWN, DECLINE, False), (UNKNOWN, DECLINE, False)]
-    assert not list(folder.glob("ran-*"))
+    assert answers == [(KNOWN, ACCEPT, True), (UNKNOWN, ACCEPT, True)]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text(encoding="utf-8")
     for method in (KNOWN, UNKNOWN):
-        assert f"Declined Codex's request {method}" in built.stdout
-        assert f"Declined Codex's request {method}" in log
+        assert f"Accepted Codex's request {method}" in built.stdout
+        assert f"Accepted Codex's request {method}" in log
 
     # An SDK whose handler moved: forge work refuses before it records any status, and before
     # it starts Codex at all.
@@ -327,17 +366,18 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert _lines(turns) == [started, ended]
     pid = int(re.fullmatch(r"Codex app-server: process (\d+)",
                            work_log.read_text("utf-8").splitlines()[1])[1])
-    stub = [call["pid"] for call in _stub(calls) if "pid" in call][-1]
+    stub = [call for call in _stub(calls) if "pid" in call][-1]
     # On Windows the stub runs through its .cmd shim, so the process the client started, and the
     # driver reports, is the shim's cmd.exe rather than the stub; the real Codex is its own .exe.
-    assert pid == stub if os.name != "nt" else pid not in (stub, os.getpid())
-    assert not _running(pid)
+    assert pid == stub["pid"] if os.name != "nt" else pid not in (stub["pid"], os.getpid())
+    assert not _left(work_log, calls)
 
     # A fix's turn log sits in its own folder.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
     assert repo.forge("work", "fix-the-login-typo").returncode == 0
     fix = repo.path / ".git" / "forge" / "threads" / "fix" / "fix-the-login-typo.log"
     assert [line["kind"] for line in _lines(fix)] == ["Lite", "Lite"]
+    assert not _left(repo.path / ".git" / "forge" / "work-fix-the-login-typo.log", calls)
 
     # A failed turn is logged as Codex reported it, with blank tokens when it reports none, and
     # forge work stops with the log's path. It is a fix round, and this stub can't resume the
@@ -348,6 +388,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert failed.stderr == (f"The Codex turn didn't complete: Codex reported it failed; its log is "
                              f"{work_log}.\nNext: forge work BOARD/PAGE\n")
     assert "Codex ended the turn: failed (stub codex: the model gave up)" in failed.stdout
+    assert not _left(work_log, calls)
     started, ended = {**started, "kind": "Fix"}, {
         **ended, "kind": "Fix",
         "fresh_start": "Codex couldn't resume its conversation: stub: no thread/resume"}
@@ -361,7 +402,8 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert vanished.stderr == (f"The Codex turn didn't complete: Codex never reported its end; its "
                                f"log is {work_log}.\nNext: forge work BOARD/PAGE\n")
     assert _lines(turns)[4:] == [started]
+    assert not _left(work_log, calls)
     reported = [int(line.rpartition(" ")[2]) for log in work_log.parent.glob("work-*.log")
                 for line in log.read_text("utf-8").splitlines()
                 if line.startswith("Codex app-server: process ")]
-    assert len(reported) == 4 and not any(_running(pid) for pid in reported)
+    assert len(reported) == 4

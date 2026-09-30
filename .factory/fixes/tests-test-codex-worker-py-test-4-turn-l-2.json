@@ -1,0 +1,35 @@
+{
+  "base": "3a7bcb40090c2bb9c82ee210fb33ef9cb8ce070a",
+  "branch": "fix/tests-test-codex-worker-py-test-4-turn-l-2",
+  "done_when": "The root cause of test_4_turn_log's Windows failures is found and fixed so the test is deterministic, never skipped or loosened; the fix names the cause in its commit and the test passes 20 times in a row on the Windows runner (a CI loop or repeated parametrization)",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "f84346f1f5055c302b890460d9c42d1c37522e67a2a9c4cf3f2b3cf1f7dc36d7",
+    "commit": "66598227a1995e7a8baab7a066760075efde64f8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "9c2a2dbd7e3d1b17f84ea819b61abd4633f117df8c589d6de0a9d84d19a39c7d"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-29T18:01:21+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-29T19:39:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-29T20:13:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T00:42:00+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "tests/test_codex_worker.py::test_4_turn_log fails now and then on Windows CI on branches that don't touch it"
+}

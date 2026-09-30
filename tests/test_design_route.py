@@ -116,7 +116,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     assert missing.returncode == 0, missing.stdout + missing.stderr
     assert "fell back to Codex" in missing.stdout and "missing" in missing.stdout
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
-        "model": "gpt-6-sol", "model_reasoning_effort": "high"}
+        "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
     assert len(calls(claude_log)) == 1
     assert len(_sent(codex_log, "thread/resume")) == 1

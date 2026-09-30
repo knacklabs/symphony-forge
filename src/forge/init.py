@@ -61,21 +61,21 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
 MODELS = """
 [models.build]
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 effort = "medium"
 
 [models.fix]
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 effort = "medium"
 
 [models.lite]
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
 [models.grill.codex]
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 effort = "high"
 
 [models.grill.claude]
@@ -87,7 +87,7 @@ model = "claude-opus-5-5"
 effort = "high"
 
 [models.design.codex]
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 effort = "high"
 
 [models.review]

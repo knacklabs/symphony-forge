@@ -61,14 +61,14 @@ def send(**message):
 
 def thread(id, saved):
     turns = [{"id": turn, "items": [], "status": status} for turn, status in saved["turns"].items()]
-    return {"id": id, "cliVersion": "0.156.1", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
+    return {"id": id, "cliVersion": "0.159.2", "createdAt": 0, "updatedAt": 0, "cwd": saved["cwd"],
             "ephemeral": False, "modelProvider": "openai", "preview": "", "sessionId": "stub",
             "source": "appServer", "status": {"type": "idle"}, "turns": turns}
 
 
 def main():
     if sys.argv[1:] == ["--version"]:
-        print("codex-cli 0.156.1")
+        print("codex-cli 0.159.2")
         return
     log(pid=os.getpid(), args=sys.argv[1:])
     for line in sys.stdin:
@@ -78,8 +78,8 @@ def main():
         if method is None or "id" not in message:
             continue
         if method == "initialize":
-            send(id=message["id"], result={"userAgent": "codex_app_server/0.156.1",
-                                           "serverInfo": {"name": "codex", "version": "0.156.1"}})
+            send(id=message["id"], result={"userAgent": "codex_app_server/0.159.2",
+                                           "serverInfo": {"name": "codex", "version": "0.159.2"}})
             continue
         threads = json.loads(STORE.read_text("utf-8")) if STORE.exists() else {}
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"

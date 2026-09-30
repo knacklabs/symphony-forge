@@ -56,5 +56,6 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
     assert context.returncode == 0, context.stderr
     assert "Shoppers can save a basket (approved): 3 human touches so far." in context.stdout
     assert "The fix tidy-up (started): 1 human touch so far." in context.stdout
-    assert "A worker is building SHOP/SAVE." in context.stdout
+    # SHOP/SAVE reads working, but no worker process is recorded for it, so none is building it.
+    assert "SHOP/SAVE's worker has stopped." in context.stdout
     assert context.stdout.startswith(repo.forge("next").stdout.strip())

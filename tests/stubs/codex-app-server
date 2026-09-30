@@ -18,7 +18,7 @@ import pathlib
 import sys
 import time
 
-VERSION = "0.156.1"
+VERSION = "0.159.2"
 THREAD, TURN = "thr-stub-1", "turn-stub-1"
 DECLINE = {"decision": "decline"}
 LOG = pathlib.Path(__file__).resolve().parent / "codex-app-server.jsonl"
@@ -71,11 +71,33 @@ def finish_turn(config, status):
     notify("turn/completed", threadId=THREAD, turn=turn)
 
 
+def started():
+    """When this process started: a Windows start time there, the second elsewhere. A process id
+    soon passes to another process once its own has gone, so a test tells its launcher from a
+    later process by this."""
+    if os.name != "nt":
+        import subprocess
+        import time
+
+        said = subprocess.run(["ps", "-o", "lstart=", "-p", str(os.getpid())], capture_output=True,
+                              text=True, env={**os.environ, "LC_ALL": "C"}).stdout
+        return int(time.mktime(time.strptime(" ".join(said.split()), "%a %b %d %H:%M:%S %Y")))
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32")
+    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    kernel32.GetProcessTimes.argtypes = (wintypes.HANDLE, *([ctypes.POINTER(wintypes.FILETIME)] * 4))
+    times = [wintypes.FILETIME() for _ in range(4)]
+    kernel32.GetProcessTimes(kernel32.GetCurrentProcess(), *map(ctypes.byref, times))
+    return times[0].dwHighDateTime << 32 | times[0].dwLowDateTime
+
+
 def main():
     if sys.argv[1:] == ["--version"]:
         print("codex-cli " + VERSION)
         return
-    log(pid=os.getpid(), args=sys.argv[1:])
+    log(pid=os.getpid(), started=started(), args=sys.argv[1:])
     status = os.environ.get("STUB_CODEX_STATUS", "completed")
     cwd, config, asked = ".", None, {}
     for line in sys.stdin:

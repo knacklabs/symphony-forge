@@ -1,9 +1,10 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-29
 stories: []
 supersedes: "0096-python-cap-7500"
+superseded_by: 0100-python-cap-8500
 ---
 
 # Forge's Python cap is 8,000
