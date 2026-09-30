@@ -3,7 +3,7 @@
   "branch": "fix/workers-build-client-apps-with-forge-s-s",
   "done_when": "Every review prompt carries the standards page (src/forge/standards.md), the same text the worker brief carries, as rules the reviewer checks the change against, and the review reports a change that breaks one of its rules as a finding that names the rule. A test runs a review through Forge's command and shows the page's text reaches the reviewer.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T06:07:52+00:00",
