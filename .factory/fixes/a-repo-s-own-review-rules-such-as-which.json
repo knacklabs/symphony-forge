@@ -1,0 +1,14 @@
+{
+  "base": "8304158c5cb78bd7c3641bb1448837f065e1126a",
+  "branch": "fix/a-repo-s-own-review-rules-such-as-which",
+  "done_when": "Every review gets the '## Review rules' section of the repo's AGENTS.md, read from the default branch and placed outside the Forge-managed block, as rules the reviewer follows, the same way '## Known traps' reaches cold reads (reuse that reader). A repo without that section gets no extra text. The skill and the AGENTS.md template tell clients the section exists.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T05:46:27+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A repo's own review rules, such as which tests a change needs, never reach Forge's review, because the reviewer treats repo files as evidence, not instructions; clients have to dismiss findings their own rules already settle"
+}
