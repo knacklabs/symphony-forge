@@ -35,8 +35,8 @@ teams on Claude Code, Codex or both.
 
 - Doctor deletes the folders and local branches of finished work. It deletes one only when all of
   its commits are already in a merged or closed pull request on GitHub and nothing is uncommitted
-  except the lockfile and folders git ignores, such as caches, which the tools make again. A
-  single file git ignores, such as `.env`, keeps the folder.
+  except the lockfile and the cache folders the tools make again, such as `.venv` or
+  `node_modules`. Any other file or folder, even one git ignores such as `.env`, keeps it.
 
 ## For the builders
 
@@ -106,17 +106,19 @@ teams on Claude Code, Codex or both.
    expects `Fix: forge doctor --fix`; `tests/test_contracts.py`'s SDK install failure now expects
    the row and the problems refusal; `tests/test_split_commands.py` holds the new `--fix` help.
 3. Doctor looks at every worktree in `story.worktrees` whose branch starts with `story/`, `task/`,
-   `fix/` or `forge/`. It skips the main checkout and the folder doctor runs in. Doctor asks
-   GitHub once: `gh pr list --state all --limit 1000 --json headRefName,headRefOid,state`. When
-   `gh` is missing, or that call fails or doesn't return a list, nothing is listed or removed.
-   (`nextstep._prs` isn't used here: it returns an empty list for a failure too.) A worktree
-   counts as finished when all of these hold:
+   `fix/` or `forge/`. It skips the main checkout and the folder doctor runs in. For each branch
+   doctor asks GitHub
+   `gh pr list --head <branch> --state all --limit 100 --json headRefOid,state`. When `gh` is
+   missing, or that call fails, doesn't return a list, or returns 100 entries, the folder is kept
+   and not listed. (`nextstep._prs` isn't used here: it returns an empty list for a failure too.)
+   A worktree counts as finished when all of these hold:
    - GitHub has a merged or closed pull request from that branch whose head commit equals the
      local branch's head;
    - no open pull request comes from that branch;
    - `git status --porcelain --ignored` there prints nothing but the root `uv.lock`, staged or
-     not, and ignored folders (lines ending in `/`, such as `.venv/` or `node_modules/`). Any
-     untracked, changed or ignored file keeps the worktree.
+     not, and ignored cache folders whose own name is one of `.venv`, `node_modules`,
+     `__pycache__`, `.pytest_cache`, `.ruff_cache` or `.mypy_cache`. Any other untracked, changed
+     or ignored entry, file or folder (such as `.env` or `data/`), keeps the worktree.
 
    Without `--fix`, one row lists them: `<n> folders hold finished work: <paths>.`, with the Fix
    `forge doctor --fix`.
@@ -140,7 +142,9 @@ teams on Claude Code, Codex or both.
    - an untracked file: kept;
    - an ignored `.env` file: kept;
    - an ignored `.venv/` folder: removed;
+   - an ignored `data/` folder: kept;
    - the `gh` call failing, or printing something that isn't a list: nothing removed;
+   - the `gh` call returning 100 entries: kept;
    - a local commit past the pull request's head: kept;
    - an open pull request from the same branch: kept;
    - doctor run inside that folder: kept;
@@ -177,21 +181,24 @@ teams on Claude Code, Codex or both.
    - In that folder doctor works out again what sync writes there. It writes or removes the
      differing files that item 5 doesn't hold back, and commits exactly those paths with the
      fix's `why` as the subject. It prints `- Fixed: wrote <n> of Forge's files in fix <name>.`
-   - A file there that already matches sync but isn't committed yet, left by a run that was cut
-     short, is committed with them.
    - When there is nothing to commit, doctor makes no commit and prints no line.
    - Nothing is written or committed on the default branch.
    - While the fix isn't merged, one row says `Doctor's fix <name> holds Forge's files and isn't
      merged yet.`, with the Fix `forge close <name>`. A file held back keeps its own row.
    - When writing or committing fails (sync refusing a link that leads outside the repo, a file
      the system won't write, or a commit a git hook refuses), a row gives the reason, with the Fix
-     `forge doctor --fix`. Files already written stay. They match sync, so the next run commits
-     them instead of holding them back.
+     `forge doctor --fix`. Doctor then puts back every path it wrote or removed in this run
+     (`git restore --source=HEAD --staged --worktree -- <paths>`). Those paths had no uncommitted
+     change before, since item 5 holds such files back, so the folder is as it was and the next
+     run starts over.
 
    **On any other branch:** doctor writes or removes the files in place and doesn't commit them,
    as `forge sync` does. It prints `- Fixed: wrote <path>.` or `- Fixed: removed <path>.` for each
-   file. When sync refuses (a detached HEAD, a link that leads outside the repo), the refusal
-   becomes a row with its own Next as the Fix, and the drift rows stay.
+   file. It checks the branch before writing anything: on a detached HEAD it writes nothing, a row
+   gives sync's refusal with its own Next as the Fix, and the drift rows stay. When a write fails
+   part way (a link that leads outside the repo, a file the system won't write), the files already
+   written stay, as `forge sync` leaves them, the failure becomes a row with the Fix
+   `forge doctor --fix`, and the files not yet written keep their rows.
 
    Once doctor has written the files in place, their rows are gone. So is the row saying the tests
    check doesn't run the test command (lines 172-175): the workflow is one of sync's files.
@@ -209,31 +216,35 @@ teams on Claude Code, Codex or both.
    - a file sync wants empty: removed in place, and removed in the fix's commit;
    - doctor's fix pinning an older version: nothing written there, and its row;
    - a fix holding one repaired file and one held back: the fix's row and the held-back row;
-   - a commit a git hook refuses: its row, and the next run commits the written files;
-   - a link that leads outside the repo: its row, and nothing written.
+   - a commit a git hook refuses: its row, the fix folder as it was, and the next run commits;
+   - a removal of a file sync wants empty, then a refused commit: the file is back, and the next
+     run removes and commits it;
+   - a file the system won't write after another was written, in the fix folder: its row and the
+     folder as it was; in place: its row, the written file stays, and the next run finishes;
+   - a link that leads outside the repo: its row;
+   - a detached HEAD: its row, the drift rows, and no file or the index changed.
 
    `tests/test_upgrade_doctor.py`'s drift row now expects `Fix: forge doctor --fix`.
 5. **Hand edits.** Doctor holds back a differing file in either of these cases:
    - it has uncommitted changes, staged, unstaged or untracked, in the checkout doctor runs in or
      in doctor's fix folder, where it writes;
    - the last commit that changed it (`git log -1` on the branch doctor writes on) is not
-     Forge's. A commit is Forge's when it changes the `version` line of `forge.toml` (an adoption
-     or an upgrade, which rewrite these files with the new pin), or when its subject starts with
-     doctor's fix `why` above (a squashed merge keeps it, perhaps followed by ` (#<n>)`).
+     Forge's. A commit is Forge's when it changes the `version` line of `forge.toml`, or when its
+     subject starts with doctor's fix `why` above (a squashed merge keeps it, perhaps followed by
+     ` (#<n>)`). Such a commit can't carry a hand edit to these files: adoption writes them itself
+     (`init.py` line 317), and close refuses a fix or task that changes the version while any of
+     them isn't what `forge sync` writes (`close._synced`, lines 206-235). Doctor's own fix holds
+     only what sync writes, since item 4 commits nothing else.
 
    A file whose text already matches sync doesn't differ, so it is never held back. A file with no
    commit yet belongs to Forge. In Forge's own repo (`repo = "forge-source"`) the templates sit in
    the same repo, so no file there is held back because of its history. Uncommitted changes still
-   hold a file back.
+   hold a file back. Staged changes count even when the working copy matches sync.
 
    A file held back keeps its row, with the reason `was changed by hand (<that commit's subject>),
    so doctor won't overwrite it`, or `has changes not committed yet, so doctor won't overwrite
    it`, and the Fix `move your change out of this file, since forge sync rewrites it, then forge
    doctor --fix`.
-
-   A hand edit made in the same commit as a pin change counts as Forge's. Nothing is lost even
-   then: doctor replaces only committed text, which stays in git history, and on the default
-   branch the replacement arrives as a pull request the owner reads before merging.
 
    **Rows that stay a plain step.** These keep today's text and Fix:
    - missing tools;
@@ -268,6 +279,7 @@ teams on Claude Code, Codex or both.
      repaired;
    - an uncommitted edit in the checkout doctor runs in: held back;
    - a staged, an unstaged and an untracked edit in doctor's fix folder: each held back;
+   - a staged hand edit whose working copy matches sync: held back, and the index unchanged;
    - Forge's own repo: history doesn't hold a file back;
    - `workers = "claude"` with `codex` on PATH and the skill missing from the Codex folders: a
      row;
