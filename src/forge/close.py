@@ -124,10 +124,17 @@ def close(args: argparse.Namespace) -> int:
     _publish(top, item, state, branch, default, pr, result)
     _attach(top, item, branch)
 
-    if serious:
-        for number, finding in serious:
+    for number, finding in serious:
+        print(f"{number}. {finding['priority']} {finding['title']} "
+              f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    advice = [(n, f) for n, f in enumerate(result["findings"], 1) if f["priority"] not in
+              (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)]
+    if advice:
+        print("Advice that does not block the merge:")
+        for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    if serious:
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
