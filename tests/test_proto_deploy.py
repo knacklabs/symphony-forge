@@ -5,6 +5,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -33,6 +34,21 @@ def _docker(*args, check=True):
     return result
 
 
+# Every container and network this test makes carries LABEL=<run start time>, so a run killed
+# before its finally block can be swept by a later run.
+LABEL = "forge-proto-test"
+
+
+def _remove_stale_leftovers(max_age=3600):
+    cutoff = time.time() - max_age
+    fmt = "{{.ID}} {{.Label \"" + LABEL + "\"}}"
+    for listing, remove in ((["container", "ls", "-a"], ["rm", "-f"]), (["network", "ls"], ["network", "rm"])):
+        for line in _docker(*listing, "--filter", "label=" + LABEL, "--format", fmt).stdout.splitlines():
+            ident, started = line.split()
+            if float(started) < cutoff:
+                _docker(*remove, ident, check=False)
+
+
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
     if sys.platform == "win32":
         pytest.skip("The generated Docker image and startup script are Linux-only")
@@ -47,6 +63,8 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     monkeypatch.setenv("DOCKER_HOST", host)
     if _docker("info", check=False).returncode:
         pytest.skip("Docker daemon is required for the deployment lifecycle test")
+    _remove_stale_leftovers()
+    label = f"{LABEL}={time.time():.0f}"
     client = _client(repo, gh, tmp_path)
     assert (client / "Dockerfile").is_file()
     assert (client / ".dockerignore").is_file()
@@ -94,8 +112,8 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     failure = tag + "-fail"
     holder = None
     try:
-        _docker("network", "create", network)
-        _docker("run", "-d", "--name", database, "--network", network,
+        _docker("network", "create", "--label", label, network)
+        _docker("run", "-d", "--label", label, "--name", database, "--network", network,
                 "-e", "POSTGRES_PASSWORD=test", "-e", "POSTGRES_DB=prototype", "postgres:16-alpine")
         for _ in range(120):
             if _docker("exec", database, "pg_isready", "-U", "postgres", check=False).returncode == 0:
@@ -103,7 +121,7 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         else:
             pytest.fail("Postgres did not become ready")
         _docker("build", "-t", tag, str(client))
-        _docker("run", "--rm", "--entrypoint", "sh", tag, "-c",
+        _docker("run", "--rm", "--label", label, "--entrypoint", "sh", tag, "-c",
                 "test ! -e /app/.env && test ! -e /app/.npmrc && "
                 "test ! -e /app/backend/private.pem && "
                 "test ! -e /app/secrets/token.txt && test ! -e /app/.git")
@@ -114,7 +132,7 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         holder.stdin.flush()
         assert holder.stdout.readline().strip() == "held"
         url = "postgresql://postgres:test@" + database + ":5432/prototype"
-        _docker("run", "-d", "--name", success, "--network", network,
+        _docker("run", "-d", "--label", label, "--name", success, "--network", network,
                 "-p", "127.0.0.1::3000", "-e", "DATABASE_URL=" + url, tag)
         for _ in range(120):
             published = _docker("port", success, "3000/tcp", check=False)
@@ -168,7 +186,7 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         assert browser.returncode == 0, browser.stdout + browser.stderr
         assert "Ready" in _docker("exec", database, "psql", "-U", "postgres", "-d", "prototype",
                                   "-Atc", "SELECT to_regclass('public.\"Ready\"')").stdout
-        _docker("run", "-d", "--name", failure, "--network", network,
+        _docker("run", "-d", "--label", label, "--name", failure, "--network", network,
                 "-e", "DATABASE_URL=postgresql://postgres:wrong@" + database + ":5432/prototype", tag)
         result = _docker("wait", failure)
         assert result.stdout.strip() != "0"
