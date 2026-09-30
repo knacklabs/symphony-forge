@@ -8,7 +8,18 @@
     "blocking_level": "P1",
     "changed": "150acf676ecb3314f029d4e6539f0502577da635fbb679e777bd4eb740d89b49",
     "commit": "0d8f2531956816e6e0c5dd7326c0d74ec666f2dd",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/cli.py:71 no change can alter code already installed; an install made before this fix redirects after one reinstall, and every install from then on runs the checkout's current code",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_in_forge_s_own_repo_a_forge_installed_ea.py:26 the behaviour under test is this fix's redirect, which only exists from this version on; an older install without it can't be made to redirect, so the test simulates an older version number with the redirect present",
+        "finding": 2,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The installed command must execute this new branch of `_run` to redirect. The selected base's `src/forge/cli.py` goes directly from `_run` to argument parsing, and `pyproject.toml:16` points the installed `forge` command at that module. An installation made before this fix therefore still runs its old code and prints its installed version inside the newer checkout; changing the checkout cannot make that installed entry point reach this code.",
@@ -32,10 +43,10 @@
         "title": "Keep version and help usable when Git is unavailable"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "757c7d811bf501f3094cd4e3b6524aae741185b5688a670d7fd5cd66cc7d29d1"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-29T18:00:55+00:00",
