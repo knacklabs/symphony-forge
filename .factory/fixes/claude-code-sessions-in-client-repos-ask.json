@@ -3,11 +3,24 @@
   "branch": "fix/claude-code-sessions-in-client-repos-ask",
   "done_when": "forge sync merges permissions.allow entries for Bash, Edit, Write, WebFetch and WebSearch into .claude/settings.json, keeping every entry and setting the client already has, and a second sync changes nothing. The destructive-command deny hook stays and still blocks first. A command-level test syncs a settings file with the client's own allow and deny entries and checks the result.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "059d102ea9a12fba51a192f5b211e651fb4a6042a2507d714442fcb92989b368",
+    "commit": "39b9e351f6ecdd1e09ab58f847bd8fae2be791ae",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "b86ef24ffcbfd83e4f49642a4cb823470d61735370cdfdde09ef34bc519c9c19"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T11:12:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T11:51:54+00:00",
+      "step": "review"
     }
   ],
   "why": "Claude Code sessions in client repos ask permission for every command because forge sync writes only hooks into .claude/settings.json, while Forge gives agents full access; Claude ignores a repo-level bypass mode, so the repo has to pre-allow the tools"
