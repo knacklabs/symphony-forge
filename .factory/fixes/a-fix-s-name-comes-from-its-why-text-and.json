@@ -3,7 +3,7 @@
   "branch": "fix/a-fix-s-name-comes-from-its-why-text-and",
   "done_when": "forge fix start takes --slug to name the fix. forge fix amend <fix> --done \"<text>\" --because \"<why>\" replaces the fix's Done-when, keeps the old text and the reason in the fix's record, and the next review judges the new text.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-09-30T07:13:02+00:00",
