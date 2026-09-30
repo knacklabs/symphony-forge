@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "ecc6d90df03545e1160c6e0e2ab96f2da9e65b296366f302ab509183460dd3a5",
-    "commit": "7fa4253f87217bc9799bbe8aebf8158766f567ba",
+    "changed": "87de1ab48a519d15eaee980e0d961d6dad94dbc2ef6c7140d3610ff19fdfd8f4",
+    "commit": "0b5ad4711d028dceeb6675720b26305db1dd47f6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "New evidence beyond the coordinator\u2019s multiline-value ruling: if `[features]` contains a multiline value with a line `hooks = true` before the actual `hooks = 1` setting, the line matcher rewrites the text inside the value to the same bytes and leaves the setting at `1`. This check then accepts the result because Python compares `1 == True` as true. `forge sync` succeeds without setting hooks to a boolean or refusing the file. The parsed-result check must verify the type of `hooks` as well.",
-        "file": "src/forge/sync.py",
-        "line": 199,
-        "priority": "P1",
-        "title": "Not done: forge sync keeps sandbox_mode = \"danger-full-access\", approval_policy = \"never\" and [features] hooks = true in .codex/config.toml,"
-      }
-    ],
-    "status": "blocked",
-    "tree": "84a3a586a5221b9f5fa98a8bb6c11f6bb65189475a6889c71a2bbc24aedf127a"
+    "findings": [],
+    "status": "clean",
+    "tree": "1a3c4b36a6893f09c9d327d5e3599ee622d9135a98399b3e3ce72eab4015f34c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T10:56:59+00:00",
@@ -32,6 +24,10 @@
     },
     {
       "at": "2026-09-30T13:08:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T19:06:40+00:00",
       "step": "review"
     }
   ],
