@@ -5,34 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "c9b78cb003a52fdbb4ff73b3a8e1999edd746e381b85dc13a8f86aa6b48e331c",
-    "commit": "4461a40fdee657f70c94be449bd2892ac40b145b",
+    "changed": "6032bd3d46dc176a07539334e70fbd31646fd44c741ed145f2d5a17f7a8d264c",
+    "commit": "1bb25f553ca64cf37342ba09abf3271fb0266a04",
     "dismissals": [],
     "findings": [
       {
-        "body": "Forge's tracked `.codex/agents/worker.toml` still has the old Luna model, sandbox setting, and constitution/write-scope instructions (`.codex/agents/worker.toml:1-10`); the other tracked Codex roles are also old. None has the new ownership marker. Running `forge sync` in Forge's own repo therefore reaches this check, treats the first changed Codex role as foreign, and refuses before writing anything. Regenerate and commit Forge's Codex roles so its repo has the required files and can sync again.",
+        "body": "Forge's checked-in `.codex/agents/worker.toml:1-10` still specifies the old Luna model, sandbox setting, and constitution/write-scope instructions; the other checked-in Codex roles also lack the new ownership marker. When `forge sync` tries to replace these files, this check treats them as client-owned and refuses before writing any role. Regenerate and commit Forge's Codex roles so its own repo has the required files and can sync.",
         "file": "src/forge/roles.py",
-        "line": 100,
+        "line": 103,
         "priority": "P1",
         "title": "Not done: forge sync writes Forge's eleven subagent roles in Forge's own repo"
-      },
-      {
-        "body": "When forge.toml has no `[models.design]`, this call uses `repo.design_models`, which returns `DESIGN_DEFAULTS` (`src/forge/repo.py:238`), so planner and architect receive explicit model and effort settings. The stated ruling requires a missing kind to leave both settings out so the role inherits the session's. Use an empty entry when design is absent.",
-        "file": "src/forge/roles.py",
-        "line": 72,
-        "priority": "P1",
-        "title": "Not done: roles inherit session settings when the design kind is absent"
-      },
-      {
-        "body": "The command test reads all eleven files, but checks model and effort only for coder, explorer, the two design roles, and the three review roles. Changing worker, frontend, tester, or refactorer to use another kind would still pass. Its fixture also always supplies design, so it cannot catch the absent-design defect. Add command-level assertions for all role-to-kind mappings and a sync case with design omitted.",
-        "file": "tests/test_subagent_roles.py",
-        "line": 73,
-        "priority": "P1",
-        "title": "Not done: command-level tests verify every role's kind and absent-kind behavior"
       }
     ],
     "status": "blocked",
-    "tree": "8e21fbded80291b84dc014fb5828de4d8bbfaa4fd9a6fb18edf087a2e59d809f"
+    "tree": "380b4152d24621bf34af4598d57e9cd05ca46554baabd8ce83467341fac6b331"
   },
   "status": "fixing",
   "steps": [
@@ -42,6 +28,10 @@
     },
     {
       "at": "2026-09-30T14:39:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T16:40:11+00:00",
       "step": "review"
     }
   ],
