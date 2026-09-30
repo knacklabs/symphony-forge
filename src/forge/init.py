@@ -138,6 +138,9 @@ def protect(top: Path, branch: str, checks: list[str]) -> None:
         f"repos/{{owner}}/{{repo}}/branches/{branch}/protection")
     read = ["gh", "api", endpoint]
     done = repo.run(*read, cwd=top)
+    if no_protection_plan(done):
+        print(skipped(branch, checks))
+        return
     try:
         current = json.loads(done.stdout) if done.returncode == 0 else {}
     except ValueError:
@@ -157,6 +160,18 @@ def protect(top: Path, branch: str, checks: list[str]) -> None:
     print(f"Branch protection is on for {branch}: changes arrive only through a pull request whose "
           f"{' and '.join(checks)} checks pass, and nobody can push to it directly."
           + (" Its other rules stay as they were." if current else ""))
+
+
+def no_protection_plan(done: subprocess.CompletedProcess[str]) -> bool:
+    """GitHub's answer when the repo's plan has no branch protection, as for a private repo on a
+    free plan: 'Upgrade to GitHub Pro (or Team) or make this repository public'."""
+    return done.returncode != 0 and "Upgrade to GitHub" in done.stdout + done.stderr
+
+
+def skipped(branch: str, checks: list[str]) -> str:
+    return (f"Branch protection on {branch} was skipped: this repository's GitHub plan doesn't "
+            f"offer it. Forge's own close and merge still wait for the {' and '.join(checks)} "
+            "checks.")
 
 
 def _protect_failed(done: subprocess.CompletedProcess[str], branch: str, args: list[str]) -> NoReturn:
