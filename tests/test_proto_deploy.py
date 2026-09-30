@@ -49,9 +49,12 @@ def _remove_stale_leftovers(max_age=3600):
                 _docker(*remove, ident, check=False)
 
 
+# Windows runners' Docker runs Windows containers; the image, script and networks here are Linux.
+LINUX_CONTAINERS = pytest.mark.skipif(sys.platform == "win32", reason="Needs Docker's Linux containers")
+
+
+@LINUX_CONTAINERS
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
-    if sys.platform == "win32":
-        pytest.skip("The generated Docker image and startup script are Linux-only")
     if not shutil.which("docker"):
         pytest.skip("Docker daemon is required for the deployment lifecycle test")
     host = subprocess.run(["docker", "context", "inspect", "--format",
