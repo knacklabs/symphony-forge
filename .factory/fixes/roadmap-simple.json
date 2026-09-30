@@ -1,0 +1,14 @@
+{
+  "base": "e8792e10682106b7133c91a821689fa6c5538799",
+  "branch": "fix/roadmap-simple",
+  "done_when": "plans/roadmap.json has pending entries FORGE-LAND-1, FORGE-UPGRADECMD-1 and FORGE-DOCTORFIX-1 after the current last item",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-09-30T11:31:22+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Three stories the owner chose to make Forge simple for developers need roadmap entries: one command lands a change, one command upgrades Forge, and doctor fixes what it finds"
+}
