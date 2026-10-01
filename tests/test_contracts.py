@@ -585,7 +585,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
+                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         repo.forge(*args)
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"
