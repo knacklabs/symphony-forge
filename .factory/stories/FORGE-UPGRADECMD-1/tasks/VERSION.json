@@ -2,22 +2,14 @@
   "branch": "task/FORGE-UPGRADECMD-1-VERSION",
   "review": {
     "blocking_level": "P1",
-    "changed": "e17c25889efface3e1ba64be9436fb28ef0d8e9614577d5d0eb38955389d2b9d",
-    "commit": "93749bd96f3b5ac3ea435ca155564dc3ca505ec2",
+    "changed": "de7d567ed9cd642500b7610bb65986463fb719a4c5588d285df6af7edc8d48af",
+    "commit": "09200818f487b9bd767c73cb07beb6a6f8b38a56",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Parsed equality still permits changes outside the top-level version. New evidence beyond the earlier literal-string fixture is a multiline basic string containing a Unicode escape: `test = \"\"\"\\nversion = \"v1.\\u0033.0\"\\n\"\"\"\\nversion = \"v1.3.0\"\\n`. Calling `set_version(text, \"v1.3.0\")` replaces the version-looking string inside `test` first. Both documents parse identically because the escape decodes to `3`, so this comparison succeeds and returns text with another setting's bytes changed. [TOML's string contract](https://toml.io/en/v1.0.0#string) permits these escapes in multiline basic strings. This violates item 3's byte-preservation guarantee on a same-release rerun; the new literal-string regression does not detect it. Locate the actual top-level assignment before editing and extend the preservation check to this case.",
-        "file": "src/forge/repo.py",
-        "line": 359,
-        "priority": "P1",
-        "title": "Not done: Your model choices and every other setting in Forge's settings file stay exactly as they were."
-      }
-    ],
-    "status": "blocked",
-    "tree": "6b7343f931c1e7043d0c6e80628164127006060f8a4947ec9065847723cc1073"
+    "findings": [],
+    "status": "clean",
+    "tree": "ff026a6597c677ea88257d7d6b3497c66748ce76f7508240e6e71383cae77aac"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T10:02:51+00:00",
@@ -29,6 +21,10 @@
     },
     {
       "at": "2026-10-01T17:12:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T22:15:45+00:00",
       "step": "review"
     }
   ]
