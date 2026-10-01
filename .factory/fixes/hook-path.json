@@ -15,11 +15,46 @@
   "branch": "fix/hook-path",
   "done_when": "The host hook commands forge sync writes for Codex and Claude Code never leave a machine blocked just because forge isn't on the hook's PATH. In order they: run forge from PATH after putting UV_TOOL_BIN_DIR, XDG_BIN_HOME, HOME/.local/bin, /opt/homebrew/bin and /usr/local/bin (those that exist) in front; else, in Forge's own repo (repo = forge-source), run the checkout's code through uv; else, when uv is available, run the repo's pinned release through uvx (git+https://github.com/knacklabs/symphony-forge@<pinned version>); else block (exit 2) with one plain line naming the install command for the pinned release and forge doctor, never a bare 'command not found'. forge doctor runs each synced hook command with PATH=/usr/bin:/bin and reports any that can't run. Command-level tests: forge under HOME/.local/bin and under UV_TOOL_BIN_DIR with PATH=/usr/bin:/bin; no forge but uv present (runs the pinned release; uvx stubbed at its edge); Forge's own repo with no forge installed; nothing available (blocks with the plain line); doctor reporting a hook that can't run. Forge's own repo's hook files are regenerated.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "fda8d309f664a6423f412c7b84aad26819a315c14e7591bac1d8bbc7d6c39cec",
+    "commit": "2d7d589fdd6ce6222e9dcd84081bb7864099aaa2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The launcher implements only the original requirement: prepend XDG_BIN_HOME or HOME/.local/bin, then invoke forge. With PATH=/usr/bin:/bin, it ignores UV_TOOL_BIN_DIR, /opt/homebrew/bin and /usr/local/bin; setting XDG_BIN_HOME also excludes HOME/.local/bin. If forge remains unavailable, it immediately exits 2 with the shell's command-not-found message, even when uv could run the forge-source checkout or uvx could run the repository's pinned release. This preserves the fresh-machine lockout described in the latest amendment. Implement the specified directory search and ordered uv fallbacks, then emit the single-line pinned install command and forge doctor guidance only when nothing is available. Regenerate both hosts' hook files with that launcher.",
+        "file": "src/forge/sync.py",
+        "line": 58,
+        "priority": "P1",
+        "title": "Not done: The host hook commands forge sync writes for Codex and Claude Code still block when forge isn't on PATH"
+      },
+      {
+        "body": "The required restricted-PATH doctor check is absent. src/forge/doctor.py:140 invokes each generated hook through repo.run without an environment override, and src/forge/repo.py:73-74 inherits the caller's environment. Consequently, forge available only on the interactive shell's PATH makes these probes succeed while the same hooks fail inside Codex. Update the hook probes to use PATH=/usr/bin:/bin while retaining the install-location environment variables, and report commands that cannot run under that environment.",
+        "file": "src/forge/sync.py",
+        "line": 58,
+        "priority": "P1",
+        "title": "Not done: forge doctor must probe synced hooks with PATH=/usr/bin:/bin"
+      },
+      {
+        "body": "The added tests exercise only HOME/.local/bin discovery and an exit-2 result with nothing installed. Missing are the required UV_TOOL_BIN_DIR case, pinned-release uvx fallback with the third-party edge stubbed, forge-source checkout fallback through uv, and doctor detecting hooks that cannot run with the restricted PATH. The nothing-available test also accepts the existing bare command-not-found error because it asserts only the exit code; it must verify the single plain line naming the pinned install command and forge doctor. The existing doctor case in tests/test_setup.py:273 deliberately makes a forge stub reject 'hook deny', so it does not prove detection of launch failures caused by the hook environment. Add these checks through forge sync, the generated commands for both hosts, and the real forge doctor entry point.",
+        "file": "tests/test_fix_hooks_find_forge_in_uv_tool_folder.py",
+        "line": 61,
+        "priority": "P1",
+        "title": "Not done: Command-level tests for custom tool folders, uv fallbacks, actionable denial and doctor"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c3bd08a2e17e37282254a3aa3e064d739b4bf52ac6cb9a020c59b66beeae0d0a"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T09:49:40+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T12:07:04+00:00",
+      "step": "review"
     }
   ],
   "why": "Codex runs its hooks with a PATH that lacks the folder uv installs forge into, so every hook command fails with 'forge: command not found' and the fail-closed deny hook blocks every shell command, even pwd, for a Codex orchestrator"
