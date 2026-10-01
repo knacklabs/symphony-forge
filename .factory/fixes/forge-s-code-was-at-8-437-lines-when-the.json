@@ -1,0 +1,14 @@
+{
+  "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
+  "branch": "fix/forge-s-code-was-at-8-437-lines-when-the",
+  "done_when": "At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls) and folding duplicated helpers into one, with no behaviour change: the full test suite passes unchanged except tests of deleted dead code, and the handoff lists each removal with why it was dead or duplicated.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T07:53:25+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's code was at 8,437 lines when the owner raised the cap to 10,000 on the condition of one trim pass alongside, to give room back by removing dead or duplicated code"
+}
