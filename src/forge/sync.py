@@ -120,13 +120,16 @@ def _block(top: Path, rel: str, template: str) -> str:
 def _claude(top: Path) -> str:
     """CLAUDE.md without the Forge block an older Forge wrote; "" means delete it.
 
-    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md. A CLAUDE.md with content of
-    the repo's own stays, and keeps an @AGENTS.md line, since Claude Code reads it instead.
+    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md, so a CLAUDE.md whose every
+    line is already in AGENTS.md goes. One with a line of its own stays, and keeps an @AGENTS.md
+    line, since Claude Code reads it instead.
     """
     text = read(top / "CLAUDE.md")
     start, end = _span(text, "CLAUDE.md")
     rest = (text if start == -1 else text[:start] + text[end:]).strip()
-    if rest in ("", "@AGENTS.md"):
+    agents = {line.strip() for line in read(top / "AGENTS.md").splitlines()}
+    if all(line in agents for line in map(str.strip, rest.splitlines())
+           if line and line != "@AGENTS.md"):
         return ""
     return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
 
