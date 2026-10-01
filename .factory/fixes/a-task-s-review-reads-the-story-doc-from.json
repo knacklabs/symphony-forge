@@ -1,0 +1,14 @@
+{
+  "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
+  "branch": "fix/a-task-s-review-reads-the-story-doc-from",
+  "done_when": "A task's review reads the story doc (its row, Done-when items and details) from the same place forge task start does: the story branch's copy while the story branch exists, else the default branch's. A command-level test edits a task's row on the story branch after approval and shows the review prompt carries the edited row.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T15:43:20+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A task's review reads the story doc from the default branch while forge next and forge task start read it from the story branch, so a plan edit made in the story worktree after approval never reaches the reviewer and the review raises findings for work the plan moved to another task"
+}
