@@ -1,0 +1,14 @@
+{
+  "base": "ac0dc39aa20b28ee5e87ed1219d8bed5120768df",
+  "branch": "fix/windows-four",
+  "done_when": ".github/workflows/forge-next.yml splits the Windows tests into four groups (each with the 20-minute limit), and the tests that pin the workflow's matrix match",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T16:25:28+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Windows test group 1 now hits its 20-minute CI limit and is cancelled on unrelated pull requests, because the suite grew while Windows still splits it into three groups"
+}
