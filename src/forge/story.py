@@ -62,6 +62,8 @@ REFUSALS = {
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
+    "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
+                  "forge next"),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -104,8 +106,7 @@ def new(args: Any) -> int:
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
     if (top / "forge.toml").is_file() and repo.is_prototype(top):
-        repo.refuse(("Stories wait for the customer's sign-off. Build and demo the prototype first.",
-                     "forge next"))
+        repo.refuse(REFUSALS["prototype"])
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
     done = "Something anyone can observe once this is done."
     if fix:
@@ -129,7 +130,9 @@ def new(args: Any) -> int:
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
     _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
-    changed = [doc, *(_add_to_roadmap(path, key, title) if fix else [])]
+    changed = [doc]
+    if fix and key not in {item["key"] for item in repo.roadmap(path)}:
+        changed += add_to_roadmap(path, [{"key": key, "title": title}])
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))
     repo.commit_state(f"Start the story: {title}", *changed, top=path)
@@ -152,7 +155,7 @@ def read(args: Any) -> int:
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
     if is_story:
-        _parsed(doc, rel)
+        _parsed(_text(doc), rel)
     apps = [app for variable, app in COORDINATORS.items() if os.environ.get(variable)]
     if len(apps) != 1:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
@@ -279,10 +282,7 @@ def done(args: Any) -> int:
     text = show(top, ref, doc)
     if text is None:
         repo.refuse(REFUSALS["not_finished"], key=key, problem="its story doc isn't on the default branch yet")
-    try:
-        tasks = parse(text)["tasks"]
-    except ValueError as exc:
-        repo.refuse(REFUSALS["bad_doc"], doc=doc, problem=exc)
+    tasks = _parsed(text, doc)["tasks"]
     dates = {task["id"]: merged_at(top, ref, repo.state_path(f"{key}/{task['id']}")) for task in tasks}
     waiting = [task for task, date in dates.items() if not date]
     if not tasks or waiting:
@@ -316,7 +316,7 @@ def sections(text: str) -> dict[str, str]:
 
 
 def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[str, Any]:
-    """A story doc's title, sections, Done-when items, task rows and `New moving parts:` line.
+    """A story doc's Done-when items, their details and its task rows, once its shape is sound.
     With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
     first at the commit `ref` when given.
 
@@ -361,9 +361,7 @@ def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[st
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "tests": _cell_paths(row["Tests"]),
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"]),
-                       "user_facing": row["User-facing"].lower() in ("yes", "true")}
+                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
     for task in tasks.values():
         unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
@@ -373,9 +371,7 @@ def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[st
             if name not in _task_ids(_plan(top, key, ref)):
                 raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
-    title = re.search(r"^# (.+)$", text, re.M)
-    return {"title": title[1].strip() if title else "", "sections": found, "done": done,
-            "details": notes, "tasks": list(tasks.values()), "moving_parts": moving[0]}
+    return {"done": done, "details": notes, "tasks": list(tasks.values())}
 
 
 def _plan(top: Path, key: str, ref: str | None = None) -> str:
@@ -447,9 +443,9 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    gate(target, rel, _text(notes), _hash(top, doc))
+    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top))
     if is_story:
-        _parsed(doc, rel)
+        _parsed(_text(doc), rel)
 
 
 def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
@@ -617,12 +613,7 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
             if not re.fullmatch(r"docs/specs/[a-z0-9]+(?:-[a-z0-9]+)*\.md", path):
                 continue
             spec = show(top, ref, path) or ""
-            match = FRONTMATTER.match(spec)
-            if not match:
-                continue
-            fields = dict(line.partition(":")[::2] for line in match[1].splitlines() if ":" in line)
-            fields = {name.strip(): value.strip().strip('"\'') for name, value in fields.items()}
-            body = spec[match.end():]
+            fields, body = _record(spec)
             if (fields.get("status") == "confirmed"
                     and fields.get("confirmed_hash") == hashlib.sha256(body.encode("utf-8")).hexdigest()
                     and (path == linked or re.search(rf"^- {re.escape(key)}: ", body, re.M))):
@@ -671,9 +662,9 @@ def agents_section(top: Path, heading: str) -> str:
     return sections(text).get(heading, "").strip()
 
 
-def _parsed(doc: Path, rel: str) -> dict[str, Any]:
+def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(_text(doc), doc.parent.parent)
+        return parse(text, repo.root())  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
@@ -715,19 +706,14 @@ def _snapshot(top: Path) -> str:
     return done.stdout + repo.run("git", "rev-parse", "-q", "--verify", "HEAD", cwd=top).stdout
 
 
-def _hash(top: Path, doc: Path) -> str:
-    return repo.git("hash-object", "--", str(doc), cwd=top)
-
-
-def _add_to_roadmap(top: Path, key: str, title: str) -> list[str]:
+def add_to_roadmap(top: Path, entries: list[dict[str, str]]) -> list[str]:
+    """Append pending roadmap items after the last one; the file's other top-level keys stay."""
     items = repo.roadmap(top)  # refuses a roadmap it can't read
-    if key in {item["key"] for item in items}:
-        return []
-    path = top / "plans" / "roadmap.json"
-    data = json_of(_text(path)) if path.is_file() else {}
+    data = json_of(_text(top / "plans" / "roadmap.json"))
     last = max((item["order"] for item in items if isinstance(item.get("order"), int)), default=0)
-    data["items"] = items + [{"key": key, "title": title, "status": "pending", "order": last + 1}]
-    _write(path, json.dumps(data, indent=2) + "\n")
+    data["items"] = items + [{**entry, "status": "pending", "order": last + n}
+                             for n, entry in enumerate(entries, 1)]
+    _write(top / "plans" / "roadmap.json", json.dumps(data, indent=2) + "\n")
     return ["plans/roadmap.json"]
 
 
