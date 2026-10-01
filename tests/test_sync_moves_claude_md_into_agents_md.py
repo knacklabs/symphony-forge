@@ -39,3 +39,10 @@ def test_2_sync_deletes_a_claude_md_whose_lines_are_already_in_agents_md(repo):
     agents = (repo.path / "AGENTS.md").read_text(encoding="utf-8")
     assert agents.startswith(TEAM) and agents.endswith("<!-- forge:end -->\n")
     assert repo.forge("sync").stdout.startswith("Nothing to change")
+
+
+def test_3_sync_deletes_an_empty_claude_md(repo):
+    _adopted(repo, "")
+    assert repo.forge("sync").returncode == 0
+    assert not (repo.path / "CLAUDE.md").exists()
+    assert repo.forge("sync").stdout.startswith("Nothing to change")

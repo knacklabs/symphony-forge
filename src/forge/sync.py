@@ -332,7 +332,9 @@ def command_page() -> str:
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     """Write the files that differ from what sync makes; returns them. Never on the default branch."""
     wanted = files(top, cfg)
-    changed = [rel for rel, text in wanted.items() if read(top / rel) != text]
+    # "" means delete, so an empty file that is there still counts as a change.
+    changed = [rel for rel, text in wanted.items()
+               if read(top / rel) != text or not text and (top / rel).exists()]
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)
