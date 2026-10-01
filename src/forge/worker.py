@@ -172,7 +172,8 @@ def work(args: argparse.Namespace) -> None:
         finally:
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
-                               if design else repo.models(config, kind.lower()))
+                               if design else repo.models(config, kind.lower(),
+                                                          "codex" if on_codex else "claude"))
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
@@ -198,7 +199,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         if "subagents" in chosen:
             refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
                                                      f"[models.{kind.lower()}] can't set subagents")
-        return ["--model", chosen["model"], "--effort", chosen["effort"]]
+        return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
