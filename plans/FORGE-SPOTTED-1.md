@@ -1,6 +1,6 @@
 # Forge learns where code keeps breaking
 
-3 parts · Risks: none · New moving parts: one shared list file in the repo
+3 parts · Risks: repairing a hand-broken list can lose some noted problems · New moving parts: one shared list file in the repo
 
 ## What changes for you
 
@@ -39,7 +39,8 @@ simplify the file that is causing it.
 
 ## Risks
 
-Risks: none
+Risks: if someone edits the shared list by hand and breaks it, Forge repairs it by going back to
+its last readable copy, so problems noted after that copy can be lost.
 
 ## For the builders
 
@@ -93,10 +94,9 @@ Risks: none
    {problem}.` / Next: `{repair}, commit it, then forge close {item}`, running no review and
    committing nothing. `{repair}` is `git -C {path} checkout {commit} -- plans/spotted.json`, where
    `{commit}` is the newest commit in the branch's own history whose copy reads (`git log
-   --format=%H HEAD -- plans/spotted.json`, newest first). That history holds the branch's earlier
-   review commits and every default-branch commit merged into it, so only the broken edit itself is
-   lost. Only when no commit there has a readable copy is it `git -C {path} rm -q
-   plans/spotted.json`, and then there was nothing to keep.
+   --format=%H HEAD -- plans/spotted.json`, newest first). This is a blunt rollback: entries added
+   after that copy, on this branch or merged in from the default branch, can be lost (see Risks).
+   When no commit there has a readable copy it is `git -C {path} rm -q plans/spotted.json`.
    Merging: `forge sync` adds `plans/spotted.json merge=forge-roadmap` (`sync.SPOTTED_RULE`) to
    `.gitattributes` beside `sync.ROADMAP_RULE`, each line added only when missing, and reuses
    `sync.merge_roadmap` and its registered driver unchanged: entries are matched by `key`, every

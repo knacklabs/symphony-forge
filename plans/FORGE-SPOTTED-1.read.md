@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T03:43:09+00:00
-read_hash: c5f7c1330353728a5fef00b6a5b8592f3e26fd22
-round: 4
+read_at: 2026-10-01T04:17:25+00:00
+read_hash: 4876ffe76e74af1ed67328db12f23aab5fe3d4de
+round: 5
 passed: no
-doc_seen: c5f7c1330353728a5fef00b6a5b8592f3e26fd22
+doc_seen: 4876ffe76e74af1ed67328db12f23aab5fe3d4de
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 30f501113a1d33e4ee86d7320e87c3c808e61250
+notes_seen: abd115d1ac5e8814e6c668effadf9027fcdcea18
 ---
 # Cold read notes
 
@@ -118,3 +118,9 @@ Only a genuine trade-off goes to the human, as a question with options.
 23. Trap: Windows line endings and shells: item 1’s repair command splits worktree paths containing spaces.
     Both repair variants print `git -C {path}` without quoting the checkout path; the recorded-file restriction does not protect that absolute path. Pin supported-shell quoting and test the printed repair from a checkout whose path contains spaces.
     Disposition: keep the repair prints `git -C {path}` the way close's existing conflict refusal does (src/forge/close.py:26); quoting worktree paths is a Forge-wide matter, not this story's.
+
+## Round 5
+
+24. Disputed keep 21: the accepted repair can lose valid observations, but item 1 still promises that only the broken edit is lost.
+    The merge driver rejects invalid JSON but accepts an entry missing `item`, so divergent readable histories can still produce the described loss. Keep the blunt rollback, but remove the preservation guarantee and disclose possible observation loss under Risks.
+    Disposition: cut item 1 no longer promises that only the broken edit is lost; it calls the repair a blunt rollback that can lose entries, and Risks now says so.
