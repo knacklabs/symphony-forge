@@ -4,11 +4,32 @@
   "branch": "fix/roadmap-items-a-new-spec-replaces-can-on",
   "done_when": "forge roadmap retire <key> --by <spec> marks a pending roadmap item superseded and records the spec that replaces it, in a fix like other roadmap changes; it refuses with a plain message for an unknown key, an item already started or done, or a spec that doesn't exist; forge next and the board stop listing superseded items, and the roadmap merge rule keeps the superseded status. The skill's intent table has a row for it. Command-level tests cover retiring a pending item, each refusal, and next no longer listing it.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "605e7a4bf9fada95a35b3f05a9ac4fe9639aaa7b15c8064681e578a01362f2af",
+    "commit": "e63fab2bf64ce32af04b3e7f93b4b0acd9313bde",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "A concurrent story start can undo the listing suppression: retire a pending item in a fix, then start its story from main before the retirement lands. `story.new` checks only roadmap membership (src/forge/story.py:124\u2013129), so this succeeds. Once the retirement lands, this filter removes the key from `titles`, but the fallback at src/forge/board.py:112 adds it back from `found` and displays the story. `forge next` likewise processes the surviving story state without checking superseded status (src/forge/nextstep.py:153\u2013160). Exclude superseded keys from these state-derived listings too. This concerns the concurrent-start edge case; it does not dispute the coordinator's merge-ranking ruling.",
+        "file": "src/forge/board.py",
+        "line": 110,
+        "priority": "P2",
+        "title": "Exclude superseded keys from state-derived listings"
+      }
+    ],
+    "status": "clean",
+    "tree": "39663bcc9aba47d0f2cd6c6f64daba42ca306757214c80c3c398bceb53a907dc"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T17:11:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T21:23:11+00:00",
+      "step": "review"
     }
   ],
   "why": "Roadmap items a new spec replaces can only be deleted by hand from plans/roadmap.json, because Forge has no command for it and no status for a replaced item"
