@@ -12,20 +12,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "907bbf4cd0de4c5dd7f8ac1457d34cd7f298ffbb699f4911845dd04d9673ba5a",
-    "commit": "e773c0bddffe7549482e78a59f3b379e2fdbdea6",
+    "changed": "5a2533f6e0b2bf3263e0e3fb921548d81aff2a03666284ac9e67dd2f4c4146d8",
+    "commit": "ad8a538b8a904ac65ff7f64e0d4f1f2e37ed62ae",
     "dismissals": [],
     "findings": [
       {
-        "body": "The selected change only adds this task record; it removes zero Python lines under src/forge and provides no handoff listing removals and their justification. The supplied close run also failed: 587 tests passed, but a worker crashed during test_10_new_client_deploys_only_after_migration. Implement the required trim and helper consolidation, document each removal, and obtain a passing full-suite run. The crash alone does not establish a regression caused by this branch.",
+        "body": "The trim and consolidation are now present, but the required passing full-suite check remains unmet. New evidence since the previous review is the supplied close run: the unchanged test command exited 1 with 616 passed, two failed and one skipped. One failure is the process-recovery assertion at tests/test_codex_record.py:412; the other is a worker crash during test_readloop_rounds.py::test_1_the_same_reader_reads_again[_starts_fresh-codex]. Resolve or establish the causes and obtain a passing full-suite run without weakening retained tests. These failures alone do not establish a regression caused by this branch.",
         "file": ".factory/fixes/forge-s-code-was-at-8-437-lines-when-the.json",
-        "line": 4,
+        "line": 11,
         "priority": "P1",
-        "title": "Not done: At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls)"
+        "title": "Not done: At least 80 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls)"
       }
     ],
     "status": "blocked",
-    "tree": "c8f77e0448d89e0284cf02740a36fc4a4658437a6af825c054b359763f5d0659"
+    "tree": "d37c13d2aee69c89cce609bfc421bf54d6f5ffecfae87cb21f4be637226429de"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-10-01T09:21:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T13:06:27+00:00",
       "step": "review"
     }
   ],
