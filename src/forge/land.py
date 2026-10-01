@@ -6,13 +6,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
+import time
 from functools import partial
 from pathlib import Path
 
-from forge import checks, close, merge, repo, worker
+from forge import checks, close, merge, repo, review, worker
 
 ROUNDS = 3
-REFUSALS: dict[str, tuple[str, str]] = {}
+REFUSALS = {
+    "rerun": ("GitHub has not started the re-run of {check}.", "forge land {item}"),
+}
 say = partial(print, flush=True)
 
 
@@ -80,8 +85,64 @@ def land(args: argparse.Namespace) -> int:
 
 
 def _rerun(top: Path, item: str, branch: str) -> bool:
-    """Re-run a failed check whose failure isn't this change's; CHECKS builds it."""
-    return False
+    """Re-run the pull request's failed checks once per pushed head, when every failure is a job
+    whose first attempt's log names none of the change's files and this machine's tests passed on
+    these committed files. Any gh call that fails means no re-run."""
+    command = repo.config(top)["test"]
+    passed = review.passed_record(top, command) if command else None
+    marker = repo.forge_dir(top) / "reruns" / repo.git("rev-parse", "HEAD", cwd=top)
+    if not (passed and passed.exists()) or marker.exists():
+        return False
+    try:  # gh exits non-zero when a check fails, so read what it printed either way
+        listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
+                                     cwd=top).stdout)
+    except ValueError:
+        return False
+    failing = [check for check in listed if check.get("bucket") not in ("pass", "skipping")]
+    default = repo.default_branch(top)
+    changed = [path for path in repo.git("diff", "--name-only", "-z", "--no-renames",
+                                         f"origin/{default}...HEAD", cwd=top).split("\0") if path]
+    runs: dict[str, list[str]] = {}
+    for check in failing:
+        job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
+        if check.get("bucket") != "fail" or not job:
+            return False
+        if job[1] not in runs and _attempt(top, job[1]) != 1:
+            return False
+        log = repo.run("gh", "run", "view", "--job", job[2], "--log-failed", cwd=top)
+        if log.returncode or any(path in log.stdout or path.replace("/", "\\") in log.stdout
+                                 for path in changed):
+            return False
+        runs.setdefault(job[1], []).append(check.get("name", "a check"))
+    if not runs:
+        return False
+    marker.parent.mkdir(exist_ok=True)
+    marker.touch()
+    for names in runs.values():
+        for name in names:
+            say(f"Re-running {name} once: its failure names none of this change's files and the "
+                "tests passed here.")
+    for run in runs:
+        repo.run("gh", "run", "rerun", run, "--failed", cwd=top)
+    # ponytail: FORGE_CHECKS_WAIT is the wait seam, as in checks.wait (tests set 0 to look once).
+    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+    for run, names in runs.items():
+        while (_attempt(top, run) or 0) <= 1:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                repo.refuse(REFUSALS["rerun"], check=", ".join(names), item=item)
+            time.sleep(min(15, left))
+    return True
+
+
+def _attempt(top: Path, run: str) -> int | None:
+    """The run's latest attempt number, or None when gh can't say."""
+    done = repo.run("gh", "run", "view", run, "--json", "attempt", cwd=top)
+    try:
+        attempt = json.loads(done.stdout).get("attempt") if not done.returncode else None
+    except (ValueError, AttributeError):
+        return None
+    return attempt if isinstance(attempt, int) else None
 
 
 def _merged(top: Path, branch: str) -> bool:
