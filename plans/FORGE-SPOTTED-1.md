@@ -14,9 +14,9 @@
   ready work, without asking you.
 - When that fix is merged, the file's noted problems count as resolved and the file leaves the
   list.
-- When one change keeps failing review in the same file, Forge stops sending it back to the worker
-  after the third review, has that file simplified first, and picks the change up again once the
-  simpler file is merged.
+- When one change keeps failing review in the same file, Forge stops the change once after the
+  third review and gives the fix to simplify that file first; the agent carries on with the change
+  after that fix merges.
 - It works the same whether the workers and reviewers are Claude or Codex.
 
 ## Why
@@ -34,7 +34,7 @@ simplify the file that is causing it.
 2. **Workers note what they spot instead of fixing it, so a change never grows because of it, except a bug that stops that change from working.**
 3. **The next-step list names each file where problems keep piling up, with a ready command that starts a fix to simplify it.**
 4. **Once that fix is merged, the file's noted problems count as resolved and the file leaves the next-step list.**
-5. **When a change's third review still finds serious problems in a file an earlier review of the same change flagged, Forge stops sending it back to the worker, gives the fix to start first, and lets the change carry on once that fix is merged.**
+5. **When a change's third review still finds serious problems in a file an earlier review of the same change flagged, Forge stops the change once and gives the fix to simplify that file first; the agent carries on after that fix merges.**
 6. **The Forge guide tells the agent to start those fixes without asking, and the lessons step after a story uses how often each file broke.**
 
 ## Risks
@@ -192,48 +192,34 @@ Risks: none
    order. The stop's fix never carries the review's findings, which may describe the stopped change
    itself; it asks only to simplify `F` as it is on the default branch: why `Simplify <F> before
    <item> carries on` and done-when `<F> is simpler and behaves as it did before`. Close sets
-   `state["stop"] = {"file": F, "blob": <F's blob on origin/<default>>, "why": <why>, "done":
-   <done>, "waiting": true}` and the status `hotspot`, in the review commit (message `Review of <item>: blocked; <F> keeps breaking`), pushes
-   and updates the draft pull request as for any blocked review, then refuses with
-   `close.REFUSALS["hotspot"]` (`<r>` is the item's number of `review` steps): `Review round <r> of
-   <item> still finds serious problems in <F>, which an earlier round flagged too, so Forge stops
-   sending the worker back.` / Next: `forge fix start "<why>" --done "<done>", then forge close
-   <item> once that fix merges`.
-   One blunt rule decides when the item carries on: `F` on the default branch is no longer what it
-   was at the stop. A later `forge close` while `waiting` is true, after merging the default branch
-   (whose conflicts refuse as today, src/forge/close.py:192), compares `F`'s blob on
-   `origin/<default>` with `blob`. Unchanged, it refuses with `close.REFUSALS["hotspot_wait"]`:
-   `<item> waits for the fix that simplifies <F> to merge.` / Next: `forge next`, running no review
-   and committing nothing, `--dismiss` included. Changed or gone, whichever change did it (the
-   printed fix, the same fix promoted to a story, or any other merged change to `F`), it sets
-   `waiting` to false and the status `fixing`, prints `<F> has changed on <default>, so <item>
-   carries on.`, and runs a new review even when the last one still covers the change, so the state
-   lands in that review's commit as any review's does. The check reads only `F`'s content, never
-   fix records or why texts, so it needs no rule for fixes merged earlier or promoted. An item
-   stops at most once: with `state["stop"]` set, a blocked review refuses with `blocked` as today.
-   `nextstep._item` shows status `hotspot` as
-   `Close stopped <label>: <F> keeps breaking, so a fix that simplifies it goes first.` with
-   `Next: forge fix start "<why>" --done "<done>"`, or `Next: forge close <item> once the fix for
-   <F> merges` when a fix worktree's state has that `why`. The skill's `## Hotspots` section adds:
-   when close stops an item this way, start the fix it prints without asking the owner and run no
-   more `forge work` on that item; once the fix merges, `forge close <item>` carries it on.
-   Tests (`tests/test_hotspot_stop.py`, driving `forge close`, `forge fix start` and `forge next`
-   with the stub gh and Autoreview): three closes whose reviews block in `F`, a file on the default
-   branch, in rounds 1 and 3 give, on the third, the `hotspot` refusal with the exact fix command, a
-   non-zero exit, the review commit with status `hotspot` and `state["stop"]`, a draft pull request,
-   and `forge next`'s stop lines; the printed done-when holds none of the findings' titles; round 3
-   blocking only in a file no earlier round flagged, round 2 blocking in the file round 1 flagged,
-   round 3 blocking in a flagged file that exists only on the item's branch, and round 3 blocking in
-   a flagged default-branch file named `src/$cache.py`, each give the `blocked` refusal; a round-3
-   finding in `F` carried over as dismissed gives no stop; a close while waiting, with and without
-   `--dismiss`, gives `hotspot_wait`, no Autoreview call and no commit, also after a change to
-   another file lands on the default branch; once the printed fix is started, closed and merged
-   into the default branch, close prints the carry-on line, calls Autoreview, and its review commit
-   has `waiting` false; a commit deleting `F` on the default branch gives close's `conflict`
-   refusal (the item changed `F`), and once that merge is resolved and committed the next close
-   carries on the same way; a round-4 block in `F` after carrying on gives `blocked`, not a second
-   stop; with a fix worktree holding the stop's `why`, `forge next` gives the wait line; the skill template and both
-   synced copies hold the stop sentence.
+   `state["stop"] = {"file": F, "why": <why>, "done": <done>}` and the status `hotspot`, in the
+   review commit (message `Review of <item>: blocked; <F> keeps breaking`), pushes and updates the
+   draft pull request as for any blocked review, then refuses with `close.REFUSALS["hotspot"]`
+   (`<r>` is the item's number of `review` steps): `Review round <r> of <item> still finds serious
+   problems in <F>, which an earlier round flagged too, so Forge stops sending the worker back.` /
+   Next: `forge fix start "<why>" --done "<done>", then forge close <item> once that fix merges`.
+   The stop is a one-time pause (see the Decided line on resuming): Forge doesn't check that the
+   fix merged. The next `forge close` of an item whose status is `hotspot` prints `<item> carries on
+   after the stop for <F>.` and runs a new review even when the last one still covers the change,
+   whose commit sets the status from its result as any review's does.
+   An item stops at most once: with `state["stop"]` set, a blocked review refuses with `blocked` as
+   today. `nextstep._item` shows status `hotspot` as `Close stopped <label>: <F> keeps breaking, so
+   a fix that simplifies it goes first.` with the same Next line close printed. The skill's
+   `## Hotspots` section adds: when close stops an item this way, start the fix it prints without
+   asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
+   after that fix merges.
+   Tests (`tests/test_hotspot_stop.py`, driving `forge close` and `forge next` with the stub gh and
+   Autoreview): three closes whose reviews block in `F`, a file on the default branch, in rounds 1
+   and 3 give, on the third, the `hotspot` refusal with the exact fix command, a non-zero exit, the
+   review commit with status `hotspot` and `state["stop"]`, a draft pull request, and `forge next`'s
+   stop lines; the printed done-when holds none of the findings' titles; round 3 blocking only in a
+   file no earlier round flagged, round 2 blocking in the file round 1 flagged, round 3 blocking in a
+   flagged file that exists only on the item's branch, and round 3 blocking in a flagged
+   default-branch file named `src/$cache.py`, each give the `blocked` refusal; a round-3 finding in
+   `F` carried over as dismissed gives no stop; the close after the stop, with no new commit, prints
+   the carry-on line, calls Autoreview, and its review commit has status `fixing` (or `waiting for
+   checks` when clean); a round-4 block in `F` after that gives `blocked`, not a second stop; the
+   skill template and both synced copies hold the stop sentence.
 6. `src/forge/templates/skill.md` gains a `## Hotspots` section after `## Closing`, saying: a
    worker or review notes problems outside its change as spotted items, which Forge keeps in
    `plans/spotted.json` and nobody edits by hand; a spotted item never widens the change in hand,
@@ -254,7 +240,7 @@ Risks: none
 |---|---|---|---|---|---|---|---|
 | SPOT | The spotted list | The list file, its format and merge rule, close recording workers' and reviews' spotted items, and the worker brief asking for them | 1, 2 | `src/forge/spotted.py`, `src/forge/close.py`, `src/forge/review.py`, `src/forge/sync.py`, `src/forge/templates/brief.md`, `.gitattributes` | `tests/test_spotted.py` | none | no |
 | HOT | Hotspots | Hotspot counting, the next-step lines and ready fix command, a merged fix closing its file's items, and the skill's Hotspots section and Learn the traps step | 3, 4, 6 | `src/forge/spotted.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_hotspots.py` | SPOT | yes |
-| STOP | Review loop stop | Close stopping an item whose third review still blocks in a file flagged before, waiting for the fix, carrying on after it, its next-step lines and the skill's stop sentence | 5 | `src/forge/close.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_hotspot_stop.py` | HOT | yes |
+| STOP | Review loop stop | Close stopping an item once when its third review still blocks in a file flagged before, the next close carrying on, its next-step lines and the skill's stop sentence | 5 | `src/forge/close.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_hotspot_stop.py` | HOT | yes |
 
 New moving parts: one tracked list, `plans/spotted.json` (item 1): no record that exists today reaches the default branch for every change (an item's state keeps only its last review), and it reuses the roadmap's merge rule and driver, so it adds no service, datastore, job or driver.
 
@@ -275,10 +261,11 @@ New moving parts: one tracked list, `plans/spotted.json` (item 1): no record tha
 - GitHub doesn't run Git's merge rules, so two open pull requests that both add to the list at the
   same place can conflict there, as the roadmap can today; the next `forge close` merges the
   default branch with Forge's rule and settles it (item 6 tells the agent).
+- Decided: resume after a stop: one-time pause; the agent closes again after the fix merges (owner, 2026-10-01).
 - Out of scope: a hotspot fix promoted to a story closes no entries, since a task never closes
   entries (item 4); the file stays listed until a later fix names it.
-- Out of scope: `forge work` doesn't refuse a stopped item (its next close still waits for the
-  fix); a fix whose review is still current when entries land after it stay open for the next fix;
+- Out of scope: `forge work` doesn't refuse a stopped item, and close doesn't check that the
+  stop's fix merged (the skill tells the agent to wait for it); a fix whose review is still current when entries land after it stay open for the next fix;
   rounds reviewed before this story ships flag no files, so they never count towards a stop; the
   thresholds (three items, two items, round three, five texts) are constants, not settings.
 - No client repo is named anywhere in this story.

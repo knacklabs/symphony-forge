@@ -69,7 +69,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 12. Item 5 now resumes before the required simplifying fix has merged.
     Any merged change to `F`, including unrelated formatting, releases the stop permanently. Done when 5 and the guide still require the simplifying fix to merge first. Align the resumption condition with that promise and test an unrelated change arriving while the fix remains open.
-    Disposition: keep (revised in round 3) the item carries on once F's content on the default branch differs from the stop's; the printed fix does that, and one content check also survives promotion to a story and repeated why texts (findings 17 and 19), where any fix-identity rule needs more cases; the wait still holds against changes to other files, tested (plans/FORGE-SPOTTED-1.md item 5).
+    Disposition: keep Decided: resume after a stop: one-time pause; the agent closes again after the fix merges (owner, 2026-10-01); close no longer checks F or the fix, and Done-when 5 now says the agent carries on after the fix merges.
 
 13. Risks omits the new deletion of recorded observations during repair.
     When the default copy is unreadable, item 1 recommends deleting the entire list, including otherwise valid entries surrounding one malformed entry. Prefer restoring a readable version where available, name any remaining reset loss under Risks, and test preservation of existing observations.
@@ -81,7 +81,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 15. Unproven: item 5: `F` disappears from the default branch.
     The new rule explicitly resumes when `F` is gone, but the tests cover only changed contents. Add the deletion case, including the expected refusal when merging it conflicts with the stopped branch’s edits, and verify resumption after resolution.
-    Disposition: cut (revised in round 3) F deleted on the default branch resumes like a change; the merge first hits close's existing conflict refusal (src/forge/close.py:192), and once resolved the next close carries on; tested.
+    Disposition: cut close no longer looks at F after a stop (one-time pause, per the Decided line on resuming), so F's deletion is no special case.
 
 ## Round 3
 
@@ -91,7 +91,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 17. Unproven: item 5: promoting the required fix to a story leaves the original item waiting forever.
     [story.py:711](src/forge/story.py:711) deletes the fix state and transfers it to a task. After that task merges, no matching state exists under `.factory/fixes/`. Pin resumption through the supported promotion flow and prove it in `tests/test_hotspot_stop.py`.
-    Disposition: cut resumption now reads only F's content on the default branch, so a fix promoted to a story (src/forge/story.py:711) resumes the item when its task merges.
+    Disposition: cut close no longer checks for the stop's fix (one-time pause, per the Decided line on resuming), so a promoted fix changes nothing.
 
 18. Item 1’s repair cannot reconstruct observations from earlier branch reviews.
     A finding recorded in round 1 may disappear from round 2’s clean result. Restoring only the default branch’s list loses that branch-only entry, and recording the latest result cannot recreate it. Preserve the branch’s readable history too, and test this sequence in `tests/test_spotted.py`.
@@ -99,12 +99,13 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 19. Item 5’s assertion that no earlier fix can have the same why is unsupported.
     [task.py:224](src/forge/task.py:224) accepts arbitrary, repeated why text; only fix names are made unique. A previously merged fix with the generated why would immediately release a new stop. Pin exclusion of fixes already merged when the stop was recorded and test that case in `tests/test_hotspot_stop.py`.
-    Disposition: cut resumption no longer matches why texts or fix records, only F's content changing since the stop, so an earlier fix with the same why can't release it.
+    Disposition: cut close no longer matches the fix's why (one-time pause, per the Decided line on resuming).
 
 ## Round 4
 
 20. Disputed keep 12: changing a file’s content does not prove the simplifying fix merged.
     Unrelated formatting in `F` releases the stop permanently while the fix remains open, contradicting Done when 5 and the guide. Align that promise with the chosen rule, and test an unrelated change to `F` in `tests/test_hotspot_stop.py`.
+    Disposition: keep Decided: resume after a stop: one-time pause; the agent closes again after the fix merges (owner, 2026-10-01); Done-when 5 and its bullet now promise exactly that.
 
 21. Item 1’s single-snapshot repair still loses observations after a divergent merge.
     The branch can contain readable entry A, while the default branch independently gains B. If a malformed A survives the keyed merge, neither earlier readable snapshot contains both entries; restoring one drops A or B. Preserve both histories’ readable observations and prove this case in `tests/test_spotted.py`.
