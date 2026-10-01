@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T21:29:11+00:00
-read_hash: f0c59e18598c7444ef97989ffedf815df54da1bf
-round: 8
+read_at: 2026-10-01T01:22:08+00:00
+read_hash: 1a01ac29d7ca8934b497a851e98590d9619f98a7
+round: 9
 passed: no
-doc_seen: f0c59e18598c7444ef97989ffedf815df54da1bf
+doc_seen: 1a01ac29d7ca8934b497a851e98590d9619f98a7
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 3fca85f83d4c91762b77d87890f943ac0d506e10
+notes_seen: 9ba6449b0d904011f5ef78e5011289d683da075e
 ---
 # Cold read notes
 
@@ -150,3 +150,9 @@ Only a genuine trade-off goes to the human, as a question with options.
 29. Item 5’s new exception mistakes an amended doctor commit for untouched generated output.
     A person can edit a skill and run `git commit --amend --no-edit` in doctor’s fix. The subject remains exactly the fix’s `why`, and every changed path still belongs to sync’s list, so doctor overwrites that hand edit. Require evidence beyond the subject and path list, and add this amended-commit case to FILES’ tests.
     Disposition: keep the exception it attacks is removed; Decided: stale doctor fix: never refreshed; doctor starts a fresh fix (owner, 2026-10-01)
+
+## Round 9
+
+30. Unproven: item 4: cleanup fails after a write or commit failure.
+    A locked worktree or a file in use can prevent removal of the new fix. Its ancestry and unchanged `forge.toml` still satisfy the “current” rule, so the next run skips repair and tells the user to close an incomplete fix. Specify the cleanup-failure diagnostic and recovery path, and test that retry in FILES. Item 3’s tests cover cleanup of finished PRs, not this new fix.
+    Disposition: cut

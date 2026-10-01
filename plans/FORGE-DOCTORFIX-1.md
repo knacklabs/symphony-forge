@@ -172,12 +172,13 @@ teams on Claude Code, Codex or both.
      `Bring the files Forge writes for Claude Code and Codex up to date` and whose item isn't
      merged. Doctor never writes in one of them again.
    - One is current when it holds the default branch's latest commit
-     (`git merge-base --is-ancestor origin/<default> HEAD` there) and its `forge.toml`, committed
+     (`git merge-base --is-ancestor origin/<default> HEAD` there), its `forge.toml`, committed
      and in the folder, is the default branch's (`git diff --quiet origin/<default> -- forge.toml`
-     there). Then doctor starts nothing. One row says `Doctor's fix <name> holds Forge's files and
+     there), and its branch has doctor's files commit (a commit whose subject is the fix's `why`).
+     Then doctor starts nothing. One row says `Doctor's fix <name> holds Forge's files and
      isn't merged yet.`, with the Fix `forge close <name>`.
    - Any other is stale: its `forge.toml`, such as the pin or the test command, may be out of
-     date, and sync's files follow it. Doctor leaves it alone, and a row says
+     date, and sync's files follow it, or a failed run left it without its files commit. Doctor leaves it alone, and a row says
      `Doctor's fix <name> is behind <default branch>, so doctor started a new one.`, with the Fix
      `close its pull request if it has one, then git worktree remove --force <path> and git branch
      -D <branch>`.
@@ -199,7 +200,9 @@ teams on Claude Code, Codex or both.
    - When writing or committing fails (sync refusing a link that leads outside the repo, a file
      the system won't write, or a commit a git hook refuses), doctor removes the new fix's folder
      and branch (`git worktree remove --force`, then `git branch -D`), and a row gives the reason,
-     with the Fix `forge doctor --fix`. The next run starts over.
+     with the Fix `forge doctor --fix`. The next run starts over. When that removal fails too (a
+     locked folder, a file in use), the row also names the folder, and the next run finds it stale
+     and starts a new fix.
    - Nothing is written or committed on the default branch. A file held back keeps its own row.
 
    **On any other branch:** doctor writes or removes the files in place and doesn't commit them,
@@ -231,6 +234,8 @@ teams on Claude Code, Codex or both.
    - a fix holding one repaired file and one held back: the fix's row and the held-back row;
    - a commit a git hook refuses: its row, the new fix's folder and branch gone, and the next run
      makes the fix;
+   - the same with the new fix's folder locked so it can't be removed: its row naming the folder,
+     and the next run reports it stale and makes a new fix with the files;
    - a file the system won't write after another was written: in a new fix, its row and the fix
      gone; in place, its row, the written file stays, and the next run finishes;
    - a link that leads outside the repo: its row;
