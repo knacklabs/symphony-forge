@@ -179,6 +179,18 @@
       "title": "forge doctor only reports setup problems, so developers run each repair by hand",
       "status": "pending",
       "order": 70
+    },
+    {
+      "key": "FORGE-TOOLS-1",
+      "title": "A repo can't run Forge all in Claude or all in Codex: reviews use Codex whenever it's installed and plan reads always use the other tool",
+      "status": "pending",
+      "order": 71
+    },
+    {
+      "key": "FORGE-SPOTTED-1",
+      "title": "What agents notice while working is lost, and reviews keep fixing the same area round after round instead of simplifying it",
+      "status": "pending",
+      "order": 72
     }
   ],
   "epics": [

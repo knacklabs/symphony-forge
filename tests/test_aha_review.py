@@ -45,7 +45,7 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert (options["--model"], options["--thinking"], options["--max-priority"]) == (
-        ("codex=gpt-6-sol", "codex=medium", "P0") if not signed_off and
+        ("codex=gpt-6.1-sol", "codex=medium", "P0") if not signed_off and
         allowance == "Prototype before sign-off" else
         ("codex=gpt-6-astra", "codex=high", "P3"))
     if problem:
