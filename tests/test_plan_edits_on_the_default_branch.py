@@ -47,8 +47,10 @@ def _said(repo, line):
 
 def test_1_next_says_the_story_branch_lacks_plan_edits(repo, claude_payload):
     shop = _saved_then_fixed(repo, claude_payload)
-    # Before: SHOW was listed as startable from the story branch's old rows.
-    assert _said(repo, LACKS) == "Next: forge task start SHOP/FIX"
+    # Before: SHOW was listed as startable from the story branch's old rows; now the default
+    # branch's rows decide, and FIX is the part to start.
+    assert LACKS in repo.forge("next").stdout.splitlines()
+    assert _said(repo, "1 part of Shoppers can save a basket can start now.") == "Next: forge task start SHOP/FIX"
 
     # forge task start merges in the story's folder, then reads the merged rows.
     started = repo.forge("task", "start", "SHOP/FIX")
@@ -97,3 +99,17 @@ def test_3_a_conflicting_merge_refuses_and_changes_nothing(repo, claude_payload)
     assert repo.git("rev-parse", "story/SHOP") == before
     assert repo.git("status", "--porcelain", cwd=shop) == ""
     assert "task/SHOP-SHOW" not in repo.git("branch", "--list", "task/*")
+
+
+def test_3_uncommitted_edits_the_merge_would_overwrite_refuse_and_change_nothing(repo, claude_payload):
+    shop = _saved_then_fixed(repo, claude_payload)
+    edited = DOC.replace("come back to it later", "come back to it any day")
+    (shop / "plans" / "SHOP.md").write_text(edited, encoding="utf-8")
+    before = repo.git("rev-parse", "story/SHOP")
+
+    refused = repo.forge("task", "start", "SHOP/FIX")
+    assert (refused.returncode, refused.stdout, refused.stderr) == (1, "", (
+        f"Merging origin/main into story/SHOP would overwrite uncommitted edits in {shop}, so Forge "
+        "changed nothing.\nNext: commit them, then forge task start SHOP/FIX\n"))
+    assert repo.git("rev-parse", "story/SHOP") == before
+    assert (shop / "plans" / "SHOP.md").read_text("utf-8") == edited
