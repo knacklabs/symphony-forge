@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-09-30T20:12:46+00:00
-read_hash: 40ab1c4530804c1db1ebca40330639c0cc2664ce
-round: 1
+read_at: 2026-09-30T20:20:50+00:00
+read_hash: 4d2c3647b0183888b53fca82e8d081f9e805cd2d
+round: 2
 passed: no
-doc_seen: 40ab1c4530804c1db1ebca40330639c0cc2664ce
+doc_seen: 4d2c3647b0183888b53fca82e8d081f9e805cd2d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 341456cfba8af1702f7ed5e037c2193f7e5adcab
 ---
 # Cold read notes
 
@@ -43,7 +43,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 6. Rerun does not define how it protects other work in the upgrade checkout.
    The dirty-file refusal checks the main checkout, while resumption trusts an existing fix’s why. Uncommitted edits to its generated skill or host settings can then be overwritten or included when sync’s files are committed. Pin which existing changes are resumable and refuse other work without modifying it; add that refusal case to UPGRADE’s tests.
-   Disposition: keep the fix's folder is created by and for the upgrade (item 1 step 1), sync owns the files it rewrites (`src/forge/sync.py:264-275`), and close's review sees the whole commit; item 1 step 6 now says so.
+   Disposition: keep per `Decided: leftover upgrade folder: reuse only when clean, else refuse naming it (owner, 2026-10-01)` in Notes; item 1's Rerun and Tests now say so.
 
 7. Unproven: item 1: release sync failure and nonzero close propagation.
    The proposed cases cover install failure and successful close, but do not explicitly prove that sync failure prevents commit/close, or that close’s output and exit code survive the shared release runner. Add those cases to `tests/test_upgrade_command.py`, including retry after partial sync.
@@ -57,3 +57,12 @@ Only a genuine trade-off goes to the human, as a question with options.
    The CRLF test proves a successful edit. It does not prove that an unsupported version-line edit leaves bytes unchanged, or that release settings validation refuses without rewriting models or proceeding to commit/close. Assign both negative cases to `tests/test_upgrade_command.py`.
    Disposition: cut: item 3's Tests add the uneditable version line (refused before anything is created, bytes unchanged) and the release's settings refusal (no commit, no close, models untouched).
 
+## Round 2
+
+10. Disputed keep 6: the new state-less recovery can adopt work whose upgrade ownership is unproven.
+    At `plans/FORGE-UPGRADECMD-1.md:94–96`, no state and no new commits do not exclude uncommitted files in an unrelated same-name worktree. Sync can overwrite those bytes before close’s review sees them. Require a pristine checkout for this recovery path, and add a dirty-orphan refusal test to `tests/test_upgrade_command.py`.
+    Disposition: keep per `Decided: leftover upgrade folder: reuse only when clean, else refuse naming it (owner, 2026-10-01)` in Notes; item 1's Rerun refuses an unclean leftover folder and UPGRADE's Tests cover it.
+
+11. Split: UPGRADE → VERSION and UPGRADE; it now covers four Done-when items.
+    The revised Tasks row exceeds the three-item limit. VERSION can own the byte-preserving version edit and shared release runner in `repo.py` (items 1 and 3), pinning their callable contracts first. UPGRADE then owns the command, both-host refresh and required skill update (items 1, 2 and 4), after VERSION.
+    Disposition: cut: VERSION (`repo.set_version`, `repo.run_release`; covers 1, 3) now comes before UPGRADE (covers 1, 2, 4) in the Tasks table.

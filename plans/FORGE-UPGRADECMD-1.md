@@ -1,6 +1,6 @@
 # One command upgrades Forge in a repo
 
-2 parts · Risks: none · New moving parts: none
+3 parts · Risks: none · New moving parts: none
 
 ## What changes for you
 
@@ -66,21 +66,23 @@ Risks: none
         fetched, using the same checkout helper `forge fix start` and `forge merge enable` use.
         The fix records why "Upgrade Forge to <release>." and done-when "This repo pins and
         runs Forge <release>."
-     2. It sets `version` in the fix's `forge.toml` (see item 3).
+     2. It sets `version` in the fix's `forge.toml` with `repo.set_version` (item 3).
      3. It installs the release with exactly
         `uv tool install --force --reinstall --no-cache --python 3.11 git+https://github.com/knacklabs/symphony-forge@<release>`,
         unless `forge --version` on PATH already reports the release.
      4. It checks that `forge --version` on PATH now reports the release. Otherwise it refuses
         and names the stale `forge` it found and where it lives.
-     5. It runs the release's `forge sync` in the fix's folder the way `check_pin` runs a
-        pinned release through uv. That uv call becomes one helper in `repo.py` that
-        `check_pin` and the upgrade share, and the existing pinned-run tests pass unchanged.
+     5. It runs the release's `forge sync` in the fix's folder with
+        `repo.run_release(release, args, cwd) -> int`. VERSION makes that helper out of the uv
+        call `check_pin` already makes (`uv tool run --from …@<release> forge <args>` with
+        `FORGE_PINNED_RUN` set, output streamed, the exit code returned). `check_pin` uses it
+        too, and the existing pinned-run tests pass unchanged.
      6. It commits `forge.toml` and everything that sync changed, deletions included, as
         "Upgrade Forge to <release>". New git hook shims are left out using the filter close's
         synced check applies (`close._synced`), also when the hooks folder is inside the
         checkout. The fix's folder is the upgrade's own, so the commit takes everything in it,
         and close's review sees all of it.
-     7. It runs the release's `forge close <fix>` the same way, with its output streamed.
+     7. It runs the release's `forge close <fix>` with the same helper.
      8. It exits with close's exit code, also when close refuses. Close's last line already says who merges: the human,
         or `forge merge <fix>` when the repo's merge setting allows it.
    - **Failure at a step.** A failed install refuses with uv's last line and a `Next:` line
@@ -92,8 +94,10 @@ Risks: none
    - **Rerun.** Running the command again with the same release continues the fix when its
      folder exists and the state in that folder, committed or not, records the upgrade's why.
      A folder with no state and no commit of its own, left by an interruption right after
-     `task._new_checkout` made it, is taken up: the command writes and commits the fix's state
-     there, as fix start does, and goes on. Each step can safely run twice: the
+     `task._new_checkout` made it, is taken up only when it has no uncommitted changes and no
+     untracked files: the command writes and commits the fix's state there, as fix start
+     does, and goes on. Otherwise it refuses, names the fix, and its `Next:` line says how to
+     remove the folder and its branch; nothing changes. Each step can safely run twice: the
      pin that's already set, the install skipped because PATH reports the release, the sync,
      the commit (skipped when there's nothing to commit), then close. A fix with that name and
      another why, or its branch without its folder, refuses and names the fix, and nothing
@@ -102,15 +106,20 @@ Risks: none
      call. On `tool install` it puts a launcher on PATH. On `tool run` it runs a copy of this
      checkout's code whose `__version__` reads as the release and whose skill template carries
      a marker. The tests cover:
-     - a named release reaching Ready, with the uv calls and printed lines checked in order;
+     - a named release reaching Ready, with the uv calls and printed lines checked in order,
+       and the committed `forge.toml` differing from the original only in the version string;
      - no release named, taking gh's newest;
      - each refusal, with nothing created afterwards;
      - newest changing between two runs: the second run refuses and names the open fix;
      - a failed install, then a rerun reaching Ready without a second fix;
      - an interruption right after the folder was made (folder and branch, no state), then a
        rerun reaching Ready without a second fix;
-     - a failed release sync: nothing committed and close never runs; then a rerun after
-       the sync is fixed reaching Ready;
+     - the same leftover folder holding an uncommitted file: the rerun refuses, names the fix,
+       and the file's bytes are unchanged;
+     - a failed release sync, caused by the marked release's settings check rejecting a key
+       the test adds to `forge.toml`: the release's refusal is shown, nothing is committed,
+       close never runs, and the fix's `forge.toml` differs from the original only in the
+       version string; then, with the key removed, a rerun reaching Ready;
      - a rerun after the commit;
      - close refusing: its output is shown and the command exits with its code;
      - a release whose sync deletes a file: the deletion is in the commit;
@@ -139,15 +148,14 @@ Risks: none
    leaving the file alone, if that parse doesn't give the release. Nothing adds, removes or
    rewrites `[models]` or any other key. New model defaults are never pushed into an existing
    repo. If the release's own settings check rejects the repo's `forge.toml`, the release's
-   sync refuses with its own message and the upgrade stops there. Tests:
-   - The upgrade runs on a CRLF `forge.toml` that has comments, custom `[models.*]` tables and
-     a `merge` setting. The committed `forge.toml` must be byte-for-byte the original with
-     only the version string changed.
-   - A `forge.toml` whose version is a multi-line string refuses before anything is created,
-     and the file's bytes are unchanged.
-   - When the marked release's settings check rejects a key the test adds, the command shows
-     the release's refusal, commits nothing, never runs close, and `forge.toml` in the fix's
-     folder differs from the original only in the version string.
+   sync refuses with its own message and the upgrade stops there (item 1's failed-sync test).
+   The edit is `repo.set_version(text: str, release: str) -> str`: it returns the new text, or
+   refuses with the existing bad-settings refusal when the parse doesn't give the release.
+   VERSION's tests:
+   - On a CRLF `forge.toml` that has comments, custom `[models.*]` tables and a `merge`
+     setting, the result is byte-for-byte the original with only the version string changed.
+   - A `forge.toml` whose version is a multi-line string refuses. UPGRADE's refusal test
+     checks that the command then creates nothing and the file's bytes are unchanged.
 4. The skill's "Upgrade Forge" section drops the six manual steps. In their place: ask which
    release, recommending the newest, then run `forge upgrade <release>`; when it refuses,
    follow its `Next:` line; close's last line says who merges. The skill's command table
@@ -162,7 +170,8 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| UPGRADE | Upgrade command | The `forge upgrade` command, the shared release-run helper, the regenerated command page, and the skill's upgrade text and command row | 1, 2, 3, 4 | `src/forge/upgrade.py`, `src/forge/repo.py`, `docs/commands.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_upgrade_command.py`, `tests/test_split_commands.py` | none | yes |
+| VERSION | Version edit and release runner | `repo.set_version` and `repo.run_release`, with `check_pin` using the runner | 1, 3 | `src/forge/repo.py` | `tests/test_upgrade_version.py` | none | no |
+| UPGRADE | Upgrade command | The `forge upgrade` command, the regenerated command page, and the skill's upgrade text and command row | 1, 2, 4 | `src/forge/upgrade.py`, `docs/commands.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_upgrade_command.py`, `tests/test_split_commands.py` | VERSION | yes |
 | GUIDE | Upgrade guide | The README's and guide's upgrade text naming the one command | 4 | `README.md`, `docs/guide.md` | `tests/test_upgrade_guide.py` | none | yes |
 
 New moving parts: none
@@ -187,6 +196,7 @@ New moving parts: none
   skill's text for it in the same change. GUIDE has no After: its README and guide text names
   the command but doesn't need its code.
 - No client repo is named anywhere in this story's code, tests, texts or commits.
+- Decided: leftover upgrade folder: reuse only when clean, else refuse naming it (owner, 2026-10-01)
 - Claude workers build every part. Opus writes GUIDE's text.
 - Each new test file starts with `STORY = "FORGE-UPGRADECMD-1"`, and its `test_<n>_` names cite
   the Done-when items its task covers.
