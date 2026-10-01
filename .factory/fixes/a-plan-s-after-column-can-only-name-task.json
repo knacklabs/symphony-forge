@@ -3,11 +3,46 @@
   "branch": "fix/a-plan-s-after-column-can-only-name-task",
   "done_when": "An After entry may name another story's task as KEY/TASK (for example TURN-1/T4): forge next lists the task as ready, and forge task start starts it, only once that other task's pull request has merged, and both say plainly which task it waits for. A story doc whose After names a task that doesn't exist in that story's plan is refused as malformed, the same way an unknown same-story task is. The skill's plan-writing guidance mentions the form. Command-level tests cover waiting, starting after the other task merges, and an unknown task.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9017e04f1de39b048190c48a30b0ee074e4b40dc2f56f61515ccf967f33ed0e3",
+    "commit": "be951ed63a1ea0309af8f3bdea6c806daa958260",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When a story's first task depends on TURN-1/T4, merging T4 clears this check, but the new task can still lack T4's code. In task.py:140, a story whose plan has not landed selects its original story branch as the base; lines 181\u2013182 then create the task from that base without incorporating the fetched default branch. If the story was planned before T4 merged, the worker starts in a checkout without its required dependency. Start from the updated default branch and carry the approved planning files, or incorporate that branch before creating the task.",
+        "file": "src/forge/task.py",
+        "line": 172,
+        "priority": "P1",
+        "title": "Start dependent tasks with the other story's merged code"
+      },
+      {
+        "body": "Qualified dependencies are validated only when callers supply top. The existing PR document gate still calls parse(text) without it (story.py:501), so TURN-1/T9 passes its malformed-document check even when TURN-1 has no T9; an unknown same-story task is rejected there. This leaves the requested malformed-document behavior inconsistent across existing gates. Validate qualified references in the PR check using its commit context, and cover that refusal through forge hook pr-check.",
+        "file": "src/forge/story.py",
+        "line": 370,
+        "priority": "P1",
+        "title": "Not done: Reject unknown cross-story tasks at the PR document gate"
+      },
+      {
+        "body": "The test never starts TURN-1/T4. It checks waiting while that task has no state, then manufactures its merged-state file directly on main. This supplies the lifecycle receipt the real task flow should produce and does not prove that a started, unmerged dependency remains blocking. Approve and start T4 through Forge, assert both commands still wait, then merge its actual task branch and assert readiness and successful start. This also allows the test to check that the dependent checkout contains the merged dependency's code.",
+        "file": "tests/test_after_another_story_task.py",
+        "line": 46,
+        "priority": "P1",
+        "title": "Not done: Test waiting for a started cross-story task and starting after its merge"
+      }
+    ],
+    "status": "blocked",
+    "tree": "a2125fc4803a716815ee3b19394c3bc077b5423224163085916f0606e7a2719e"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T08:22:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T10:18:32+00:00",
+      "step": "review"
     }
   ],
   "why": "A plan's After column can only name tasks in the same story, so a task that must wait for another story's task shows as ready in forge next and the agent has to hold it by hand"
