@@ -3,7 +3,7 @@
   "branch": "fix/adopting-a-repo-with-its-own-claude-md-c",
   "done_when": "forge sync deletes CLAUDE.md when every non-empty line of it, apart from an @AGENTS.md import and Forge's old block, is already in AGENTS.md, so a CLAUDE.md whose lines moved to AGENTS.md doesn't duplicate them; a CLAUDE.md with any line of its own stays, keeping an @AGENTS.md line as today. Command-level tests cover an adopted repo whose CLAUDE.md lines all moved (CLAUDE.md removed) and one with an extra line (kept with the import).",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T11:09:21+00:00",
