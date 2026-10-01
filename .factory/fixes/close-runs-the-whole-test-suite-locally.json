@@ -3,11 +3,24 @@
   "branch": "fix/close-runs-the-whole-test-suite-locally",
   "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files (for example a vitest --changed run) plus fast checks; when fast_test is unset close runs test as today, and the pull request's CI keeps running the full test command. forge doctor and the skill explain the setting, and new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in) and unset (test runs).",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "4302532987549d0b479672be1f3ec815addea639ca27a0632fe632086c2d6f97",
+    "commit": "efa55aa5f83e35675810032981ae8f443bc4804a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "07e0d3d4a103cc49a5916f9de4b74f3b7debafc6b5a596af65984f426de0b146"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T17:02:47+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T21:32:54+00:00",
+      "step": "review"
     }
   ],
   "why": "Close runs the whole test suite locally (15-30 minutes under load) and then the pull request's CI runs it again, so each review round costs twice the suite time"
