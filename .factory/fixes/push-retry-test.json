@@ -1,0 +1,27 @@
+{
+  "base": "4822b1e75a63e11ded402136ff36abe328498400",
+  "branch": "fix/push-retry-test",
+  "done_when": "tests/test_fix_close_pushes_its_review_commit_while_the.py test_3 proves the waits by checking each gap is at least the planned wait for that attempt (1, 2 and 4 seconds) and that close gives up after the bounded attempts, instead of comparing measured gaps with each other; it still fails if the waits are removed.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "38585d2ff1c99e58842f8bd1c3e21d3b55703151c1c81361b8947fb1bf9e3fa5",
+    "commit": "5346b2abee9962ffd799a395f65b1d30ecbf9166",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "ab29f525566250b98c062315734bd5b282791b4434d431e12a8b6f9e258b3740"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T03:31:38+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T04:24:46+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The push-retry test fails on loaded CI runners: it asserts that the measured gaps between push attempts grow, but each gap includes the git command's own time, which under load swamps the 1, 2 and 4 second waits (seen as 11.0, 10.8 and 5.1 seconds)"
+}
