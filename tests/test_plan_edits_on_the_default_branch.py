@@ -97,3 +97,6 @@ def test_3_a_newer_story_branch_edit_is_not_flagged(repo, claude_payload, monkey
     lines = repo.forge("next").stdout.splitlines()
     assert not any(line.startswith(LACKS) for line in lines)
     assert "Next: forge task start SHOP/SHOW" in lines
+    started = repo.forge("task", "start", "SHOP/SHOW")
+    assert started.returncode == 0, started.stderr
+    assert not started.stderr.startswith(LACKS)
