@@ -1,6 +1,15 @@
 {
+  "approval": {
+    "at": "2026-10-01T07:51:00+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01WdV6yB8JvmJkgg48872Mjv",
+    "hash": "3d83f0ad73e4fdfb0c32d99f1cf98dee029d2560924d4b017336c0acf1fc3a6f",
+    "round": 6,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-SPOTTED-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-01T02:26:33+00:00",
@@ -29,8 +38,12 @@
     {
       "at": "2026-10-01T04:21:26+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-01T07:51:00+00:00",
+      "step": "approved"
     }
   ],
   "title": "Forge learns where code keeps breaking",
-  "touches": 0
+  "touches": 1
 }
