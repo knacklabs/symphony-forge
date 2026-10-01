@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -58,7 +57,7 @@ def work(args: argparse.Namespace) -> None:
     state = repo.read_state(item, top) or {}
     if match["task"]:
         doc = f"plans/{match['key']}.md"
-        story._parsed(top / doc, doc)  # pyright: ignore[reportPrivateUsage]
+        story._parsed(story._text(top / doc), doc)  # pyright: ignore[reportPrivateUsage]
         sections = task.sections((top / doc).read_text(encoding="utf-8"))
         row = task.rows(sections).get(match["task"], {})
         design = config["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
@@ -120,14 +119,14 @@ def work(args: argparse.Namespace) -> None:
         outcome = "failed"
         try:
             if design:
-                before = _checkout_snapshot(top)
+                before = story._snapshot(top)  # pyright: ignore[reportPrivateUsage]
                 claude_model = repo.design_models(config, "claude")
                 try:
                     _claude(item, top, brief, fresh_brief, ["--model", claude_model["model"],
                                                             "--effort", claude_model["effort"]],
                             session, thread, None if fresh == "first turn" else fresh)
                 except (repo.Refused, OSError) as error:
-                    if _checkout_snapshot(top) != before:
+                    if story._snapshot(top) != before:  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else
                               str(error).split("\n", 1)[0].removeprefix("The worker "))
@@ -203,9 +202,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
-    if design:
-        repo.design_models(config, "codex")
-    else:
+    if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
     if kind == "Grill":  # a read-only turn with approvals "never" can't write, so it needs no trust
         return []
@@ -233,12 +230,9 @@ def _approval(key: str, item: str, top: Path) -> str:
         refuse(task.REFUSALS["changed"], key=key)
     # The story's own worktree holds the doc its next approval reads, uncommitted edits included.
     planning = story.stories_here(top).get(key)
-    if planning and approved != task.approval_hash(
-            (planning / doc).read_text(encoding="utf-8") if (planning / doc).is_file() else ""):
+    if planning and approved != task.approval_hash(story._text(planning / doc)):  # pyright: ignore[reportPrivateUsage]
         refuse(task.REFUSALS["changed"], key=key)
-    brief = top / doc
-    if approved != task.approval_hash(
-            brief.read_text(encoding="utf-8") if brief.is_file() else ""):
+    if approved != task.approval_hash(story._text(top / doc)):  # pyright: ignore[reportPrivateUsage]
         refuse(REFUSALS["brief"], item=item, key=key, top=top, base=base, doc=doc)
     return approved
 
@@ -268,10 +262,10 @@ def _changes(top: Path, start: str) -> str:
 
 def _checkout(item: str, branches: list[str]) -> Path:
     """The worktree where the item's branch is checked out."""
-    for block in git("worktree", "list", "--porcelain").split("\n\n"):
-        fields = dict(line.partition(" ")[::2] for line in block.splitlines())
-        if fields.get("branch", "").removeprefix("refs/heads/") in branches:
-            return Path(fields["worktree"])
+    found = story.worktrees(Path.cwd())
+    for branch in branches:
+        if branch in found:
+            return found[branch]
     refuse(REFUSALS["no_checkout"], item=item)
 
 
@@ -362,10 +356,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             brief += (f"\n## Fix round\n\n### Open serious findings\n\n{values['findings']}\n"
                       f"\n### Failing checks\n\n{values['checks']}\n")
         return brief, subject
-    standards = HERE / "standards.md"
-    if standards.is_file():  # ponytail: DOCS-STANDARDS ships the standards page
-        on.add("standards")
-        values["standards"] = standards.read_text(encoding="utf-8").strip()
+    on.add("standards")
+    values["standards"] = (HERE / "standards.md").read_text(encoding="utf-8").strip()
     values["conventions"] = str(CONVENTIONS)
     text = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
@@ -443,24 +435,6 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             out.write(line)
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-
-
-def _checkout_snapshot(top: Path) -> str:
-    """Fingerprint HEAD, index, tracked edits and untracked contents before a fallback."""
-    digest = hashlib.sha256()
-    for command in (("rev-parse", "HEAD"), ("diff", "--binary"),
-                    ("diff", "--cached", "--binary"),
-                    ("ls-files", "--others", "--exclude-standard", "-z")):
-        output = subprocess.run(["git", *command], cwd=top, capture_output=True, check=True).stdout
-        digest.update(output)
-        if command[0] == "ls-files":
-            for name in output.split(b"\0"):
-                if name:
-                    path = top / os.fsdecode(name)
-                    digest.update(os.readlink(path).encode() if path.is_symlink() else path.read_bytes())
-    index = Path(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top))
-    digest.update(index.read_bytes())
-    return digest.hexdigest()
 
 
 COMMANDS = [{
