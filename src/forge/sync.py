@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import forge
-from forge import githooks, prcheck, repo
+from forge import githooks, prcheck, repo, roles
 
 COMMANDS = [{
     "words": "sync", "run": "sync", "changes_state": True,
@@ -67,6 +67,9 @@ hooks = true
 # Forge gives Codex full access; forge.toml's models and the host choose the model, so an old pin goes.
 FULL_ACCESS = {"sandbox_mode": "danger-full-access", "approval_policy": "never"}
 PINS = ("model", "model_reasoning_effort")
+# A role that leaves its model out runs on these before the session's, so they go too.
+AGENT_PINS = ("default_subagent_model", "default_subagent_reasoning_effort")
+AGENTS = re.compile(r"^[ \t]*\[[ \t]*agents[ \t]*\][ \t]*(#.*)?$", re.M)
 FEATURES = re.compile(r"^[ \t]*\[[ \t]*features[ \t]*\][ \t]*(#.*)?$", re.M)
 TABLE = re.compile(r"^[ \t]*\[", re.M)
 
@@ -156,8 +159,8 @@ def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
 
 
 def _codex_config(top: Path) -> str:
-    """.codex/config.toml with full access, no model pin and Codex's project hooks on; every other
-    setting stays as it is."""
+    """.codex/config.toml with full access, no model pin (subagent defaults included) and Codex's
+    project hooks on; every other setting stays as it is."""
     rel = ".codex/config.toml"
     text = read(top / rel)
     try:
@@ -167,6 +170,9 @@ def _codex_config(top: Path) -> str:
     features = data.get("features")
     wanted = {**{key: value for key, value in data.items() if key not in PINS}, **FULL_ACCESS,
               "features": {**(features if isinstance(features, dict) else {}), "hooks": True}}
+    if isinstance(data.get("agents"), dict):
+        wanted["agents"] = {key: value for key, value in data["agents"].items()
+                            if key not in AGENT_PINS}
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
     exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
     if exact(data):
@@ -188,6 +194,14 @@ def _codex_config(top: Path) -> str:
     if missing:
         top = (f"{top.rstrip()}\n" if top.strip() else "") + missing + ("\n" if rest else "")
     text = top + rest
+    header = AGENTS.search(text)
+    if header:
+        after = TABLE.search(text, header.end())
+        end = after.start() if after else len(text)
+        table = text[header.end():end]
+        for key in AGENT_PINS:
+            table = re.sub(rf"^[ \t]*{key}[ \t]*=.*\n?", "", table, count=1, flags=re.M)
+        text = text[:header.end()] + table + text[end:]
     merged, header = "", FEATURES.search(text)
     if isinstance(features, dict) and features.get("hooks") is True:
         merged = text
@@ -293,6 +307,7 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     changed = [rel for rel, text in wanted.items() if read(top / rel) != text]
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
+        roles.refuse_foreign(top, changed)
     for rel in changed:
         if wanted[rel]:
             write_file(top, rel, wanted[rel])
