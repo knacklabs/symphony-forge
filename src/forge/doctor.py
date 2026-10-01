@@ -1,27 +1,33 @@
 """forge doctor: tools, the pins (Forge's and the Autoreview helper's), the git hooks, the host
 hooks, adapter drift, CI and, for Codex workers, the Codex SDK and the project's trust; a row per
 problem. With Codex workers, or under Claude Code with Codex installed, whose cold read runs on
-Codex, it checks the SDK and --fix installs it. Whatever the workers, it stops the Codex processes
-a crashed forge work or read left, never a running one's."""
+Codex, it checks the SDK. Whatever the workers, it stops the Codex processes a crashed forge work
+or read left, never a running one's. It also finds the folders of finished work.
+
+--fix repairs what it safely can, in this order: it installs a newer pinned Forge and runs doctor
+again with it, then installs the Codex SDK, puts back the git hooks and removes the folders of
+finished work. Each repair prints a "- Fixed:" line."""
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import tomllib
 from pathlib import Path
 
-from forge import __version__, codex, init, repo, review, sync
+from forge import __version__, codex, init, repo, review, story, sync
 
 COMMANDS = [{
     "words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks",
     "args": [(('--fix',), {"action": "store_true", "help":
-              "with Codex workers, install the pinned Codex SDK if it is missing or wrong"})],
+              "repair what doctor safely can: the pinned Forge, the Codex SDK, the git hooks "
+              "and the folders of finished work"})],
     "position": 30,
-    "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix |",
+    "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |",
 }]
 
 REFUSALS = {
@@ -41,6 +47,10 @@ INSTALL = {
                    f"{review.AUTOREVIEW_PIN} into {review.HELPERS[0].parents[1]} or "
                    f"{review.HELPERS[1].parents[1]}"),
 }
+
+# Folders the tools make again, which a finished worktree may hold besides uv.lock.
+CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
+REPAIR = "forge doctor --fix"
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
 SAMPLES = {
@@ -74,19 +84,92 @@ def _codex_trusts(top: Path, config: Path) -> bool:
         return False
 
 
-def doctor(args: argparse.Namespace) -> None:
+def _newer(version: str) -> bool:
+    """The version is a release newer than the installed Forge, by its three numbers."""
+    release, installed = (re.match(r"v?(\d+)\.(\d+)\.(\d+)", v) for v in (version, __version__))
+    return bool(release and installed and
+                tuple(map(int, release.groups())) > tuple(map(int, installed.groups())))
+
+
+def _last(done: subprocess.CompletedProcess[str]) -> str:
+    said = (done.stderr.strip() or done.stdout.strip() or f"exit code {done.returncode}")
+    return said.splitlines()[-1]
+
+
+def _kept(line: str) -> bool:
+    """A git status line a finished worktree may hold: the root uv.lock, or an ignored cache."""
+    code, entry = line[:2], line[3:]
+    return entry == "uv.lock" or (code == "!!" and entry.endswith("/")
+                                  and Path(entry).name in CACHES)
+
+
+def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
+    """(folder, branch, "merged" or "closed") for each worktree whose work is finished: GitHub
+    has a merged or closed pull request at its branch's head and none open, and the folder holds
+    nothing else."""
+    if not shutil.which("gh"):
+        return []
+    found = []
+    for branch, path in story.worktrees(top).items():
+        if (not branch.startswith(("story/", "task/", "fix/", "forge/"))
+                or path.resolve() in (main, top.resolve()) or (path / ".gitmodules").exists()):
+            continue
+        done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", "--limit", "100",
+                        "--json", "headRefOid,state", cwd=top)
+        try:
+            prs = json.loads(done.stdout) if done.returncode == 0 else None
+        except ValueError:
+            prs = None
+        # 100 entries may be a cut-off list, which could hide an open one.
+        if not isinstance(prs, list) or len(prs) >= 100 or not all(isinstance(pr, dict)
+                                                                   for pr in prs):
+            continue
+        head = repo.git("rev-parse", f"refs/heads/{branch}", cwd=top)
+        states = {pr.get("state") for pr in prs if pr.get("headRefOid") == head}
+        state = "merged" if "MERGED" in states else "closed" if "CLOSED" in states else ""
+        if not state or any(pr.get("state") == "OPEN" for pr in prs):
+            continue
+        status = repo.run("git", "status", "--porcelain", "--ignored", "--untracked-files=normal",
+                          cwd=path)
+        if status.returncode == 0 and all(map(_kept, status.stdout.splitlines())):
+            found.append((path, branch, state))
+    return found
+
+
+def doctor(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
+    pinned = "v" + cfg["version"].removeprefix("v")
+    if pinned != f"v{__version__}":
+        problem = repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned)
+        # Only a newer pin, once: the second run already names it. An older one runs through uv.
+        repairs = _newer(pinned) and os.environ.get("FORGE_PINNED_RUN") != pinned
+        if repairs and args.fix and shutil.which("uv"):
+            done = repo.run(*install.split())
+            forge = shutil.which("forge")
+            if done.returncode == 0 and forge:
+                print(f"- Fixed: installed Forge {pinned}, the version this repo pins.", flush=True)
+                # The rest of the repairs need the pinned Forge's own code and templates.
+                return subprocess.run([forge, "doctor", "--fix"],
+                                      env={**os.environ, "FORGE_PINNED_RUN": pinned}).returncode
+            said = _last(done) if done.returncode else "no forge is on PATH after uv installed it"
+            rows.append((f"{problem} Installing it failed: {said}", install))
+        else:
+            rows.append((problem, REPAIR if repairs and not args.fix else install))
     on_codex = cfg["workers"] == "codex"
     # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too, unless
     # Codex isn't installed: a Claude-only team.
     needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE")
                                  and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
     # Without uv there is nothing to install with; the uv row below says how to get it.
+    sdk_failed = ""
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
-        codex.install()
+        try:
+            codex.install()
+        except repo.Refused as refused:
+            sdk_failed = str(refused).partition("\nNext: ")[0]
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
     for tool in ("git", "gh", "uv") if on_codex else ("git", "gh", "uv", "claude"):
@@ -94,12 +177,8 @@ def doctor(args: argparse.Namespace) -> None:
             rows.append((f"{tool} is not installed or not on PATH.", INSTALL[tool]))
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode:
         rows.append(("gh is not signed in to GitHub.", "gh auth login"))
-    pinned = "v" + cfg["version"].removeprefix("v")
-    if pinned != f"v{__version__}":
-        rows.append((repo.REFUSALS["pin"][0].format(installed=f"v{__version__}", pinned=pinned),
-                     install))
-    if needs_sdk and (problem := codex.sdk_problem()):
-        rows.append((problem, "forge doctor --fix"))
+    if needs_sdk and (problem := sdk_failed or codex.sdk_problem()):
+        rows.append((problem, REPAIR))
     try:  # the reviewer close runs, at the version Forge pins
         review.helper()
     except repo.Refused as refused:
@@ -125,7 +204,34 @@ def doctor(args: argparse.Namespace) -> None:
     checks_hooks = (cfg["repo"] != "forge-source" or
                     repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
     if checks_hooks and any(sync.read(path) != text for path, text in sync.shims(top, cfg).items()):
-        rows.append(("The git hooks that check each commit and push aren't installed.", "forge sync"))
+        if not args.fix:
+            rows.append(("The git hooks that check each commit and push aren't installed.", REPAIR))
+        else:
+            try:  # never committed, so this repair runs on the default branch too
+                sync.install_shims(top, cfg)
+                print("- Fixed: installed the git hooks that check each commit and push.")
+            except repo.Refused as refused:
+                problem, _, fix = str(refused).partition("\nNext: ")
+                rows.append((problem, fix))
+
+    main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
+                         cwd=top)).resolve().parent
+    finished = _finished(top, main)
+    if finished and not args.fix:
+        rows.append((f"{len(finished)} folders hold finished work: "
+                     f"{', '.join(str(path) for path, _, _ in finished)}.", REPAIR))
+    for path, branch, state in finished if args.fix else []:
+        removed = repo.run("git", "worktree", "remove", "--force", str(path), cwd=main)
+        if removed.returncode:
+            rows.append((f"Forge couldn't remove {path}: {_last(removed)}",
+                         f"unlock it or close programs using it, then {REPAIR}"))
+            continue
+        deleted = repo.run("git", "branch", "-D", branch, cwd=main)
+        if deleted.returncode:
+            rows.append((f"Removed {path}, but its branch {branch} is still here: "
+                         f"{_last(deleted).rstrip('.')}.", f"git branch -D {branch}"))
+        else:
+            print(f"- Fixed: removed {path}, whose pull request is {state}.")
 
     if not shutil.which("sh"):
         rows.append(("sh isn't on PATH, so no host hook can run.",
@@ -239,3 +345,4 @@ def doctor(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["problems"], count=len(rows))
     print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
     print(compared)
+    return 0
