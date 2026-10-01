@@ -5,8 +5,10 @@ Codex, it checks the SDK. Whatever the workers, it stops the Codex processes a c
 or read left, never a running one's. It also finds the folders of finished work.
 
 --fix repairs what it safely can, in this order: it installs a newer pinned Forge and runs doctor
-again with it, then installs the Codex SDK, puts back the git hooks and removes the folders of
-finished work. Each repair prints a "- Fixed:" line."""
+again with it, then installs the Codex SDK, puts back the git hooks, removes the folders of
+finished work and brings the files forge sync writes up to date: in doctor's own fix on the
+default branch, in place elsewhere, never over a change made by hand. Each repair prints a
+"- Fixed:" line."""
 from __future__ import annotations
 
 import argparse
@@ -17,15 +19,16 @@ import shutil
 import subprocess
 import tomllib
 from pathlib import Path
+from typing import Any
 
-from forge import __version__, codex, init, repo, review, story, sync
+from forge import __version__, codex, init, repo, review, roles, story, sync, task
 
 COMMANDS = [{
     "words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks",
     "args": [(('--fix',), {"action": "store_true", "help":
-              "repair what doctor safely can: the pinned Forge, the Codex SDK, the git hooks "
-              "and the folders of finished work"})],
+              "repair what doctor safely can: the pinned Forge, the Codex SDK, the git hooks, "
+              "the folders of finished work and the files forge sync writes"})],
     "position": 30,
     "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |",
 }]
@@ -51,6 +54,10 @@ INSTALL = {
 # Folders the tools make again, which a finished worktree may hold besides uv.lock.
 CACHES = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
 REPAIR = "forge doctor --fix"
+# Doctor's own fix, which brings the files forge sync writes up to date on the default branch.
+WHY = "Bring the files Forge writes for Claude Code and Codex up to date"
+DONE = "The files match what forge sync writes for the pinned Forge"
+HAND = "move your change out of this file, since forge sync rewrites it, then forge doctor --fix"
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
 SAMPLES = {
@@ -136,6 +143,157 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
     return found
 
 
+def _said(failed: Exception) -> str:
+    """A failure in one line: a refusal's problem, git's last line, or the system's error."""
+    if isinstance(failed, subprocess.CalledProcessError):
+        return ((failed.stderr or "").strip() or (failed.stdout or "").strip()
+                or f"exit code {failed.returncode}").splitlines()[-1]
+    return str(failed).partition("\nNext: ")[0]
+
+
+def _held(top: Path, cfg: dict[str, Any], rel: str, ref: str) -> str:
+    """Why doctor won't overwrite a file, or "": changes not committed yet in the checkout doctor
+    runs in, or a last commit on ref that isn't Forge's. Forge's is on the default branch and
+    changes the pin or is doctor's own fix; neither can carry a hand edit to these files."""
+    if repo.git("status", "--porcelain", "--untracked-files=all", "--", rel, cwd=top):
+        return "has changes not committed yet, so doctor won't overwrite it"
+    last = repo.git("log", "-1", "--format=%H %s", ref, "--", rel, cwd=top)
+    if not last or cfg["repo"] == "forge-source":  # Forge's own repo keeps its templates here
+        return ""
+    commit, _, subject = last.partition(" ")
+    pin = lambda at: repo._pin(story.show(top, at, "forge.toml") or "")  # noqa: E731  # pyright: ignore[reportPrivateUsage]
+    landed = repo.run("git", "merge-base", "--is-ancestor", commit, story.landed_ref(top),
+                      cwd=top).returncode == 0
+    if landed and (subject.startswith(WHY) or pin(commit) != pin(f"{commit}^")):
+        return ""
+    return f"was changed by hand ({subject}), so doctor won't overwrite it"
+
+
+def _drift(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
+           ref: str) -> tuple[list[str], list[tuple[str, str]]]:
+    """The files in folder that differ from what sync writes and doctor may write, and a row for
+    each one it holds back."""
+    free, rows = [], []
+    for rel in (rel for rel, text in wanted.items() if sync.read(folder / rel) != text):
+        if reason := _held(top, cfg, rel, ref):
+            rows.append((f"{rel} {reason}.", HAND))
+        else:
+            free.append(rel)
+    return free, rows
+
+
+def _write(top: Path, rel: str, text: str) -> None:
+    """Write one file as sync does: a file sync wants empty is removed."""
+    if text:
+        sync.write_file(top, rel, text)
+    else:
+        (top / rel).unlink()
+
+
+def _drop(top: Path, path: Path, branch: str) -> bool:
+    """Remove a fix doctor started: its folder, then its branch."""
+    return (repo.run("git", "worktree", "remove", "--force", str(path), cwd=top).returncode == 0
+            and repo.run("git", "branch", "-D", branch, cwd=top).returncode == 0)
+
+
+def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tuple[str, str]]:
+    """On the default branch: Forge's files go into doctor's own fix, never onto the branch."""
+    repo.run("git", "fetch", "-q", "origin", cwd=top)  # the default branch's latest commit
+    ref, default = story.landed_ref(top), repo.default_branch(top)
+    rows = []
+    for branch, path in story.worktrees(top).items():
+        name = branch.removeprefix("fix/")
+        if not branch.startswith("fix/") or not repo.ITEM.fullmatch(name):
+            continue
+        try:
+            state = repo.read_state(name, path) or {}
+        except repo.Refused:
+            continue
+        if state.get("why") != WHY or story.show(top, ref, repo.state_path(name)) is not None:
+            continue
+        there = lambda *args: repo.run("git", *args, cwd=path)  # noqa: E731
+        if (there("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0
+                and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
+                and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
+                and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
+            # Files held back here keep their rows; the rest are in the fix.
+            return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
+                     f"forge close {name}"), *_drift(top, top, cfg, wanted, ref)[1]]
+        # Its forge.toml, and so sync's files, may be out of date, or it lacks its files commit.
+        rows.append((f"Doctor's fix {name} is behind {default}, so doctor started a new one.",
+                     f"close its pull request if it has one, then git worktree remove --force "
+                     f"{path} and git branch -D {branch}"))
+    # A clean checkout at the default branch's latest commit would make the same fix: none.
+    heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
+    free, held = _drift(top, top, cfg, wanted, ref)
+    if (len(set(heads)) == 1 and not free
+            and not repo.git("status", "--porcelain", "--untracked-files=all", "--", *wanted, cwd=top)):
+        return [*rows, *held]
+    # forge fix start's naming rule, with doctor's slug.
+    taken = {ref_name.split("/fix/", 1)[1] for ref_name in repo.git(
+        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
+        cwd=top).splitlines()}
+    name, n = "forge-files", 1
+    while name in taken or story.show(top, ref, repo.state_path(name)) is not None:
+        n += 1
+        name = f"forge-files-{n}"
+    who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=top).split("<")[0].strip()
+    state = {"kind": "fix", "why": WHY, "done_when": DONE, "base": repo.git("rev-parse", ref, cwd=top),
+             "allow_large": "Doctor brings every file forge sync writes up to date in one change; "
+                            f"{who} allowed it by running forge doctor --fix."}
+    branch, path = f"fix/{name}", task._folder(f"fix-{name}")  # pyright: ignore[reportPrivateUsage]
+    try:
+        task._new_checkout(name, branch, f"fix-{name}", ref, state, f"Start the fix: {WHY}")  # pyright: ignore[reportPrivateUsage]
+        fixed = sync.files(path, repo.config(path))
+        free, held = _drift(top, path, cfg, fixed, ref)
+        if free:
+            roles.refuse_foreign(path, free)
+            for rel in free:
+                _write(path, rel, fixed[rel])
+            repo.git("add", "-A", "-f", "--", *free, cwd=path)
+            repo.git("commit", "-q", "-m", WHY, "--", *free, cwd=path)
+    except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
+        # Only a branch this run made is removed; the next run starts over.
+        kept = branch in story.worktrees(top) and not _drop(top, path, branch)
+        return [*rows, (f"Doctor couldn't bring Forge's files up to date in fix {name}: "
+                        f"{_said(failed)}" + (f" Its folder {path} is still there." if kept else ""),
+                        REPAIR), *held]
+    if not free:
+        _drop(top, path, branch)
+        return [*rows, *held]
+    print(f"- Fixed: wrote {len(free)} of Forge's files in fix {name}.")
+    return [*rows, (f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
+                    f"forge close {name}"), *held]
+
+
+def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
+           fix: bool) -> list[tuple[str, str]]:
+    """A row per file that differs from what sync writes. With fix, they are written in doctor's
+    own fix on the default branch, or in place, not committed, as forge sync does, elsewhere."""
+    on_default = repo.current_branch(top) == repo.default_branch(top)
+    if fix and on_default:
+        return _in_fix(top, cfg, wanted)
+    free, rows = _drift(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD")
+    drift = [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
+              REPAIR) for rel in free]
+    if not fix or not free:
+        return drift + rows
+    try:  # before anything is written: a detached HEAD, or a role file Forge didn't write
+        repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
+        roles.refuse_foreign(top, free)
+    except repo.Refused as refused:
+        problem, _, next_step = str(refused).partition("\nNext: ")
+        return [(problem, next_step), *drift, *rows]
+    for done, rel in enumerate(free):
+        try:
+            _write(top, rel, wanted[rel])
+        except (repo.Refused, OSError) as failed:  # what is written stays, as forge sync leaves it
+            return [(f"doctor couldn't write {rel}: {_said(failed)}", REPAIR),
+                    *drift[done + 1:], *rows]
+        print(f"- Fixed: {'wrote' if wanted[rel] else 'removed'} {rel}.")
+    return rows
+
+
 def doctor(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)
@@ -196,9 +354,6 @@ def doctor(args: argparse.Namespace) -> int:
         rows.append((f"doctor couldn't compare the synced files with what forge sync writes: "
                      f"{problem}", fix))
         wanted, compared = {}, ""
-    # The installed Forge's templates make these files, whatever version the repo pins.
-    rows += [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
-              "forge sync") for rel, text in wanted.items() if sync.read(top / rel) != text]
     # Forge's own repo runs without the default hooks until the switch: every worktree shares
     # that folder. An explicitly configured hooks folder must still be checked.
     checks_hooks = (cfg["repo"] != "forge-source" or
@@ -232,6 +387,8 @@ def doctor(args: argparse.Namespace) -> int:
                          f"{_last(deleted).rstrip('.')}.", f"git branch -D {branch}"))
         else:
             print(f"- Fixed: removed {path}, whose pull request is {state}.")
+    # The installed Forge's templates make these files; doctor writes them only with the pinned one.
+    rows += _files(top, cfg, wanted, args.fix and pinned == f"v{__version__}")
 
     if not shutil.which("sh"):
         rows.append(("sh isn't on PATH, so no host hook can run.",
@@ -239,7 +396,7 @@ def doctor(args: argparse.Namespace) -> int:
     elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
         # Every hook sources the launcher, so doctor runs none of them until it is sync's own.
         rows.append((f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what "
-                     "forge sync writes.", "forge sync"))
+                     "forge sync writes.", REPAIR))
     else:
         # With a bare PATH, as Codex may run them: each hook must find forge on its own.
         env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
@@ -292,7 +449,7 @@ def doctor(args: argparse.Namespace) -> int:
     elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read(
             top / sync.WORKFLOW_PATH):
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
-                     "command.", "forge sync"))
+                     "command.", REPAIR))
 
     # Codex skips the project hooks (the deny hook included) and the project's Codex settings
     # until the user trusts the project in their own Codex config. That fails Codex workers; with
@@ -305,8 +462,9 @@ def doctor(args: argparse.Namespace) -> int:
         rows.append(("Codex doesn't trust this project, so it would skip Forge's hooks and the "
                      "project's Codex settings.", trust))
 
-    # Both UI skills must be where the configured worker reads skills: its own config folder
-    # (Claude's is $CLAUDE_CONFIG_DIR when set), or the repo's.
+    # Both UI skills must be where each host reads skills: the configured worker's, and any whose
+    # program is installed. A host's own config folder (Claude's is $CLAUDE_CONFIG_DIR when set),
+    # or the repo's.
     skills = {"claude": [Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude"),
                          top / ".claude"],
               "codex": [codex_config.parent, Path.home() / ".agents", top / ".codex",
@@ -319,11 +477,12 @@ def doctor(args: argparse.Namespace) -> int:
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
-        for skill in ("impeccable", "emil-design-eng"):
-            if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                       for folder in skills[cfg["workers"]]):
-                rows.append((f"{skill} is required for UI work but isn't installed where the "
-                             f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
+        for host in (host for host in skills if host == cfg["workers"] or shutil.which(host)):
+            for skill in ("impeccable", "emil-design-eng"):
+                if not any((folder / "skills" / skill / "SKILL.md").is_file()
+                           for folder in skills[host]):
+                    rows.append((f"{skill} is required for UI work but isn't installed where the "
+                                 f"{host} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")

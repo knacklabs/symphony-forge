@@ -202,10 +202,15 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("forge's own repo without git hooks", ()),
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
-    ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
+    # Old contract: an edit not committed yet was a drift row with the fix forge sync. New: doctor
+    # holds it back, since forge doctor --fix never overwrites a change made by hand.
+    ("adapter drift", (".codex/config.toml has changes not committed yet, so doctor won't "
+                       "overwrite it.",)),
     ("remote-approval skill drift",
-     (".claude/skills/remote-approval/SKILL.md differs from what forge sync writes",)),
-    ("tampered hook command", (".claude/settings.json differs from what forge sync writes",)),
+     (".claude/skills/remote-approval/SKILL.md has changes not committed yet, so doctor won't "
+      "overwrite it.",)),
+    ("tampered hook command", (".claude/settings.json has changes not committed yet, so doctor "
+                               "won't overwrite it.",)),
     ("no checks or test", (
         "forge.toml names no checks, so close has nothing to wait for.\n"
         "  Fix: ask your agent to set checks in forge.toml\n",
@@ -246,10 +251,12 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
               "impeccable only in the repo's .agents": client / ".agents",
               "impeccable in CLAUDE_CONFIG_DIR": claude_config}.get(case, home / ".claude")
     if skills:
-        for name in ("impeccable", "emil-design-eng"):
-            skill = skills / "skills" / name / "SKILL.md"
-            skill.parent.mkdir(parents=True, exist_ok=True)
-            skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
+        # Doctor also checks the Codex folders when codex is installed on this machine.
+        for folder in {skills, *([codex_home] if case == "impeccable in CLAUDE_CONFIG_DIR" else [])}:
+            for name in ("impeccable", "emil-design-eng"):
+                skill = folder / "skills" / name / "SKILL.md"
+                skill.parent.mkdir(parents=True, exist_ok=True)
+                skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
     else:
         emil = home / ".claude" / "skills" / "emil-design-eng" / "SKILL.md"
         emil.parent.mkdir(parents=True)
