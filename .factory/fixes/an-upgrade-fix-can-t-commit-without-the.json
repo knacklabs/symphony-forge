@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-01T17:34:52+00:00",
+      "because": "The owner decided on 2026-10-01 that tests don't count toward the five-file fix limit, after most allowances that day were for tests changing with the code",
+      "done_when": "The fix-size limit (the commit hook and close) doesn't count files whose content is exactly what forge sync writes for this repo; any other change to them, and every other file, still counts. A command-level test commits an upgrade fix whose only code changes are forge sync's output (accepted without an allowance) and one that also edits a synced file by hand beyond sync's output (counted)."
+    }
+  ],
   "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
   "branch": "fix/an-upgrade-fix-can-t-commit-without-the",
-  "done_when": "The fix-size limit (the commit hook and close) doesn't count files whose content is exactly what forge sync writes for this repo; any other change to them, and every other file, still counts. A command-level test commits an upgrade fix whose only code changes are forge sync's output (accepted without an allowance) and one that also edits a synced file by hand beyond sync's output (counted).",
+  "done_when": "The fix-size limit (the commit hook and close) counts only non-test code files: it doesn't count test files (the repo's test paths Forge already recognises) or files whose content is exactly what forge sync writes for this repo; any other change to a synced file, and every other code file, still counts, and the interface rule is unchanged. Command-level tests: an upgrade fix whose only code changes are forge sync's output closes without an allowance; one that also hand-edits a synced file is counted; a fix with four source files and three test files commits without an allowance.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
