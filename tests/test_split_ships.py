@@ -49,7 +49,7 @@ print(json.dumps(wanted))
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
-    repo.write("forge.toml", 'version = "v1.2.1"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.2"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")
