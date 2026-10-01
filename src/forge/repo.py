@@ -341,17 +341,23 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
 
 def set_version(text: str, release: str) -> str:
     """forge.toml's text with only its top-level version string set to the release, every other
-    byte kept; refuses when the edited text doesn't parse to that release."""
-    new = re.sub(r"""\A(.*?^[ \t]*(?:version|"version"|'version')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*')""",
-                 lambda m: f'{m[1]}"{release}"', text, count=1, flags=re.S | re.M)
+    byte kept; refuses when no version line's edit parses to the same settings with that release."""
     try:
-        parsed = tomllib.loads(new).get("version")
+        wanted = {**tomllib.loads(text), "version": release}
     except tomllib.TOMLDecodeError:
-        parsed = None
-    if parsed != release:
-        refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
-               "so it left it alone")
-    return new
+        wanted = None
+    # A version line inside a multi-line string or a table changes another setting, so its edit
+    # parses to something else and the next line is tried.
+    for found in re.finditer(r"""^[ \t]*(?:version|"version"|'version')[ \t]*=[ \t]*("[^"\n]*"|'[^'\n]*')""",
+                             text, re.M):
+        new = f'{text[:found.start(1)]}"{release}"{text[found.end(1):]}'
+        try:
+            if tomllib.loads(new) == wanted:
+                return new
+        except tomllib.TOMLDecodeError:
+            pass
+    refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
+           "so it left it alone")
 
 
 def _pin(text: str) -> str:

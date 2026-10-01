@@ -44,6 +44,12 @@ def test_3_the_version_edit_keeps_every_other_byte_or_refuses():
     assert edited.returncode == 0, edited.stderr
     assert edited.stdout == TOML.replace(b'"v1.2.1"', b'"v1.3.0"')
 
+    # A version line inside a multi-line setting is that setting's text, not the pin.
+    inside = b"test = '''\nversion = \"fixture\"\n'''\nversion = \"v1.3.0\"\n"
+    kept = _edit(inside, "v1.3.0")
+    assert kept.returncode == 0, kept.stderr
+    assert kept.stdout == inside
+
     refused = _edit(b'version = """v1.2.1"""\nrepo = "client"\n', "v1.3.0")
     assert refused.returncode == 1
     assert refused.stdout == b""
