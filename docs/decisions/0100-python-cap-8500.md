@@ -4,6 +4,7 @@ confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-30
 stories: []
 supersedes: "0099-python-cap-8000"
+superseded_by: 0101-python-cap-10000
 ---
 
 # Forge's Python cap is 8,500
