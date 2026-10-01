@@ -12,22 +12,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "fdb4859578d79d1ff6c3747affdd8092cfe945099f45e4c059e21b9f526d2869",
-    "commit": "ca8cb0ee4c40c80eb882779df0aa9d73e3e401df",
+    "changed": "3c32a8503ab489ad611d3bcd1378ef701e489cb6acf5c82460395885f855f8ae",
+    "commit": "45f06b48324ea2f7bf02eda4b946c6ef1ab09c64",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The required newer-story-branch case only invokes `forge next`; it never verifies that `forge task start` allows the task without the stale-plan refusal. The compatibility test at tests/test_readloop_gates.py:285\u2013293 starts a task after making the copies identical, so it does not cover differing copies with a newer story edit. A task-start guard that incorrectly rejects every differing plan would escape these tests. Extend this case to run `forge task start SHOP/SHOW` and assert successful startup.",
-        "file": "tests/test_plan_edits_on_the_default_branch.py",
-        "line": 99,
-        "priority": "P1",
-        "title": "Not done: forge task start accepts a newer story-branch plan edit"
-      }
-    ],
-    "status": "blocked",
-    "tree": "3433346bf26bec3378b29a92dbeee44ef047ebd59c1d9a991713f9e6c9030017"
+    "findings": [],
+    "status": "clean",
+    "tree": "dd71a619ec28a0e509b31eeed3050b92050715f071e2d5e9ca5b570cb2434a59"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T08:07:30+00:00",
@@ -51,6 +43,10 @@
     },
     {
       "at": "2026-10-01T23:10:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T23:54:17+00:00",
       "step": "review"
     }
   ],
