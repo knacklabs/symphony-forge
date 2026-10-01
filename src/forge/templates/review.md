@@ -140,6 +140,10 @@ Motion that follows these rules is not a `Simpler:` finding.
 
 ## How to report
 Report every blocking gap you see in this round, together, even when one finding already blocks.
+When you find a kind of defect, look for every other place in the change with the same defect and
+report them all in one finding that names each place, not one place per round.
+Forge's own records (everything under `.factory/`, `plans/roadmap.json` and the story's read
+notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
 The previous review's findings and dismissals are below; recheck them against this branch and
 report any still-open gap alongside new ones:
 $previous
