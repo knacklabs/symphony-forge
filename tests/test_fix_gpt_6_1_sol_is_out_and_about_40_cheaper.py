@@ -1,4 +1,5 @@
-"""Workers, fixes, design and the cold reader move to GPT-6.1 Sol; every review stays on GPT-6 Sol.
+"""Workers, fixes, design and the cold reader move to GPT-6.1 Sol. Reviews first stayed on GPT-6 Sol;
+the owner later moved them to GPT-6.1 Sol at high effort too.
 
 The sign-off pin, the light prototype review and the SDK install are proven by their own tests:
 test_fix_reviews_run_on_gpt_6_sol_at_xhigh_effort.py, test_aha_review.py and test_codex_setup.py.
@@ -10,7 +11,7 @@ from test_setup import _fresh_client
 
 STORY = "FIX-GPT-6-1-SOL-IS-OUT-AND-ABOUT-40-CHEAPER"
 NEW = "gpt-6.1-sol"
-REVIEW = {"model": "gpt-6-sol", "effort": "high"}
+REVIEW = {"model": NEW, "effort": "high"}
 HELPERS = {"subagents": "gpt-6-luna", "subagent_effort": "max"}
 
 

@@ -123,7 +123,7 @@ def close(args: argparse.Namespace) -> int:
         result["tree"] = tree
         _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+    _push(top, branch)
     _publish(top, item, state, branch, default, pr, result)
     _attach(top, item, branch)
 
@@ -233,6 +233,18 @@ def _synced(top: Path, item: str) -> None:
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def _push(top: Path, branch: str) -> None:
+    """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    for wait in (1, 2, 4, None):
+        try:
+            repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+            return
+        except subprocess.CalledProcessError:
+            if wait is None:
+                raise
+            time.sleep(wait)
 
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
