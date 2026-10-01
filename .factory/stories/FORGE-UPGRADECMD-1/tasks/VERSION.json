@@ -2,20 +2,20 @@
   "branch": "task/FORGE-UPGRADECMD-1-VERSION",
   "review": {
     "blocking_level": "P1",
-    "changed": "6ea8e4fbf6f8aaaceeb459213d8a18201c132e1f1f440caa436acd2788b9a244",
-    "commit": "5f7ab7b60a7ea12bc815751b94098fb4867ca38b",
+    "changed": "e17c25889efface3e1ba64be9436fb28ef0d8e9614577d5d0eb38955389d2b9d",
+    "commit": "93749bd96f3b5ac3ea435ca155564dc3ca505ec2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The regex matches version-looking lines inside multiline settings, rather than identifying the actual top-level assignment. For example, valid TOML `test = '''\\nversion = \"fixture\"\\n'''\\nversion = \"v1.3.0\"\\n` passed to `set_version(text, \"v1.3.0\")` changes the contents of `test`. The parsed top-level version already equals the release, so validation accepts the altered setting. This affects the required same-release rerun and violates item 3's preservation guarantee. Locate the actual top-level version value without matching string contents, and verify that this case preserves every other byte.",
+        "body": "Parsed equality still permits changes outside the top-level version. New evidence beyond the earlier literal-string fixture is a multiline basic string containing a Unicode escape: `test = \"\"\"\\nversion = \"v1.\\u0033.0\"\\n\"\"\"\\nversion = \"v1.3.0\"\\n`. Calling `set_version(text, \"v1.3.0\")` replaces the version-looking string inside `test` first. Both documents parse identically because the escape decodes to `3`, so this comparison succeeds and returns text with another setting's bytes changed. [TOML's string contract](https://toml.io/en/v1.0.0#string) permits these escapes in multiline basic strings. This violates item 3's byte-preservation guarantee on a same-release rerun; the new literal-string regression does not detect it. Locate the actual top-level assignment before editing and extend the preservation check to this case.",
         "file": "src/forge/repo.py",
-        "line": 345,
+        "line": 359,
         "priority": "P1",
         "title": "Not done: Your model choices and every other setting in Forge's settings file stay exactly as they were."
       }
     ],
     "status": "blocked",
-    "tree": "ab9b9dd374c3747a13b1ad7d08f256c434a125a47a42f838e9e9c782d715ad62"
+    "tree": "6b7343f931c1e7043d0c6e80628164127006060f8a4947ec9065847723cc1073"
   },
   "status": "fixing",
   "steps": [
@@ -25,6 +25,10 @@
     },
     {
       "at": "2026-10-01T11:38:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T17:12:42+00:00",
       "step": "review"
     }
   ]
