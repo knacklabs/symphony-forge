@@ -174,7 +174,8 @@ teams on Claude Code, Codex or both.
    - One is current when it holds the default branch's latest commit
      (`git merge-base --is-ancestor origin/<default> HEAD` there), its `forge.toml`, committed
      and in the folder, is the default branch's (`git diff --quiet origin/<default> -- forge.toml`
-     there), and its branch has doctor's files commit (a commit whose subject is the fix's `why`).
+     there), and one of the fix's own commits (`git log origin/<default>..HEAD` there, so never an
+     earlier repair already merged) has the fix's `why` as its subject.
      Then doctor starts nothing. One row says `Doctor's fix <name> holds Forge's files and
      isn't merged yet.`, with the Fix `forge close <name>`.
    - Any other is stale: its `forge.toml`, such as the pin or the test command, may be out of
@@ -235,7 +236,8 @@ teams on Claude Code, Codex or both.
    - a commit a git hook refuses: its row, the new fix's folder and branch gone, and the next run
      makes the fix;
    - the same with the new fix's folder locked so it can't be removed: its row naming the folder,
-     and the next run reports it stale and makes a new fix with the files;
+     and the next run reports it stale and makes a new fix with the files, also when an earlier
+     doctor repair is already on the default branch;
    - a file the system won't write after another was written: in a new fix, its row and the fix
      gone; in place, its row, the written file stays, and the next run finishes;
    - a link that leads outside the repo: its row;

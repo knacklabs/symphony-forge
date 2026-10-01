@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T01:22:08+00:00
-read_hash: 1a01ac29d7ca8934b497a851e98590d9619f98a7
-round: 9
+read_at: 2026-10-01T01:26:23+00:00
+read_hash: 71d2e494194c5932b25e4aab233393cf16df40ba
+round: 10
 passed: no
-doc_seen: 1a01ac29d7ca8934b497a851e98590d9619f98a7
+doc_seen: 71d2e494194c5932b25e4aab233393cf16df40ba
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9ba6449b0d904011f5ef78e5011289d683da075e
+notes_seen: 2e21252d0771f00fdc582402c0f01c3961e05fbb
 ---
 # Cold read notes
 
@@ -155,4 +155,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 30. Unproven: item 4: cleanup fails after a write or commit failure.
     A locked worktree or a file in use can prevent removal of the new fix. Its ancestry and unchanged `forge.toml` still satisfy the “current” rule, so the next run skips repair and tells the user to close an incomplete fix. Specify the cleanup-failure diagnostic and recovery path, and test that retry in FILES. Item 3’s tests cover cleanup of finished PRs, not this new fix.
+    Disposition: cut
+
+## Round 10
+
+31. Finding 30 remains open when the default branch contains an earlier doctor repair.
+    Every doctor fix uses the same commit subject. A newly failed fix inherits an older merged repair with that subject, satisfying the new “has doctor’s files commit” check despite having no repair of its own. Restrict the lookup to commits introduced by this fix, using its recorded base, and test cleanup failure with an earlier doctor repair already on the default branch in FILES.
     Disposition: cut
