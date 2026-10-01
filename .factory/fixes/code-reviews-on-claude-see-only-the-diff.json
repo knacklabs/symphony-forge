@@ -5,20 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f1b4d42723e6c5203dc1638c116aba14684c8442ec9004c0fef561fa78836b18",
-    "commit": "c75ef2b8eb64fd081b9d5e764c9b4705a1b2cdfb",
+    "changed": "3e812362a345962d3511c9d9a6de35220a5bc9e8cd3a6fe593ca9ed5ad4184df",
+    "commit": "b5adfc8e5ae29cd7ae720b0bc6d8f595e61c7382",
     "dismissals": [],
     "findings": [
       {
-        "body": "The pinned Autoreview helper accepts Claude Code >=2.1.169 and probes only its existing isolation flags (`ensure_claude_isolation_supported`, lines 4903\u20134937 of the [pinned helper](https://github.com/openclaw/agent-skills/blob/ce14dcca09b3affb922ddcca11465619e67f5114/skills/autoreview/scripts/autoreview)). However, [Claude's CLI reference](https://code.claude.com/docs/en/cli-reference) requires >=2.1.248 for `--restricted`. On versions 2.1.169\u20132.1.247, preflight therefore passes but this added argument makes the actual review fail with an unknown option. Forge retries and refuses close; `forge doctor` only checks Claude's presence at `src/forge/doctor.py:89\u201391`. Check the new minimum and provide an actionable upgrade message before launching the review.",
+        "body": "The previous version-compatibility gap remains open. The [pinned Autoreview helper](https://github.com/openclaw/agent-skills/blob/ce14dcca09b3affb922ddcca11465619e67f5114/skills/autoreview/scripts/autoreview) accepts Claude Code >=2.1.169 and does not probe `--restricted`, whereas [Claude's CLI reference](https://code.claude.com/docs/en/cli-reference) requires >=2.1.248 for this flag. Consequently, versions 2.1.169\u20132.1.247 pass preflight but fail when the launcher adds this argument, preventing `forge close` from completing. `src/forge/doctor.py:89\u201391` checks only whether Claude is installed. Validate the new minimum before launching and provide an actionable upgrade message.",
         "file": "src/forge/review.py",
-        "line": 75,
+        "line": 77,
         "priority": "P2",
-        "title": "P2: Check the Claude version required by --restricted"
+        "title": "Check the Claude version required by --restricted"
       }
     ],
     "status": "clean",
-    "tree": "b2b01807d58dbb9ed46120d0e71fa75170304d0c2e2c481e6555e45c9bc16d5e"
+    "tree": "3d88c15a1aceafd7ae6c6847fa5f63e530e3fe7ec74fd59a9c5adbb515962ae6"
   },
   "status": "waiting for checks",
   "steps": [
@@ -28,6 +28,10 @@
     },
     {
       "at": "2026-10-01T03:41:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T04:19:43+00:00",
       "step": "review"
     }
   ],
