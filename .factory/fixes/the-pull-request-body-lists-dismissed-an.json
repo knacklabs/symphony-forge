@@ -6,29 +6,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "cf07077b0c0ce8c31b6cf17cce456d9cbb79ecbd794a78acaf8c6bba59a62d67",
-    "commit": "24b2803bf00b45edb27468bb4cb5c3cf9f0c5e77",
+    "changed": "514a10acb72775b39703cdb49a5a3d6b8c40f4f035fd5e070253549b5d80e84c",
+    "commit": "4d80c1558a0656bcb193cffb72c7338e25753ccd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The collapsed section includes advisory titles and locations followed only by `advisory`; it never includes their reasons from `finding['body']`. For example, the command-test fixture supplies `Evidence for: Simpler: drop the cache` in tests/test_close.py:62, but that explanation disappears from the PR body. This leaves the explicit requirement to include advisory findings with their reasons unmet. Include those explanations inside the details section and assert their presence in the command-level test.",
-        "file": "src/forge/close.py",
-        "line": 341,
-        "priority": "P1",
-        "title": "Not done: When nothing blocks, the pull request's review block opens with one plain line, 'Review: clean' followed by how many findings were"
-      },
-      {
-        "body": "Separating blockers from other findings creates gaps in each Markdown ordered list. With findings 1=P1, 2=P2 and 3=P1, the visible blockers render as 1 and 2 rather than 1 and 3: [GitHub's Markdown contract](https://github.github.com/gfm/#lists) disregards subsequent list-marker numbers. Dismissals still use original indices (src/forge/close.py:107\u2013114), so copying a displayed number can dismiss the wrong finding. This is new rendering evidence relevant to the ruling that original numbers must remain intact. Use literal number labels that Markdown cannot renumber.",
-        "file": "src/forge/close.py",
-        "line": 340,
-        "priority": "P2",
-        "title": "Preserve finding numbers after GitHub renders the split lists"
-      }
-    ],
-    "status": "blocked",
-    "tree": "c60876ed1b2dd940bc55a87a770c62b7210dc4227da27e8462969bf89a511654"
+    "findings": [],
+    "status": "clean",
+    "tree": "47be15b07859ae2586eb5390716292a1aa5408ad14df1737ca0f16ab8dd42aff"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T15:44:00+00:00",
@@ -36,6 +21,10 @@
     },
     {
       "at": "2026-10-01T19:41:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T22:54:15+00:00",
       "step": "review"
     }
   ],
