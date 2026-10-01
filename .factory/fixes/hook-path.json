@@ -23,22 +23,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "368897bf6888c13a4a9abc17bc8222df2af6028495cb3f9fc382917a6595be59",
-    "commit": "02870e64054db9fc1d78da164c943d6831e182c4",
+    "changed": "247f0f1a1e77f9698f0c8c27b3d2b35e340fc57ee30fe31dac1b7b8fa0dca048",
+    "commit": "e908c4a99b0141c6e5590f1996ce6c920e5ec0be",
     "dismissals": [],
     "findings": [
       {
-        "body": "New evidence beyond the prior launcher-drift finding: `src/forge/repo.py:275\u2013290` accepts any string as `version`, and this replacement inserts it verbatim into shell source. A TOML version containing a newline followed by a shell command puts that command outside the launcher's opening comment. A repository can include the corresponding generated launcher, pass doctor's equality check, and execute the injected command when doctor sources it. Doctor reports a pin mismatch at `src/forge/doctor.py:98\u2013100` but continues to the probes at lines 133\u2013152. Reject invalid release pins before generating or validating the launcher; equality with generated text does not make unchecked configuration safe to execute.",
+        "body": "Claude's [hook contract](https://code.claude.com/docs/en/hooks#reference-scripts-by-path) documents that handlers run in the current directory, which follows `cd`. After Claude changes to a folder outside Git, `git rev-parse` fails and this command attempts to source `/.forge/hooks.sh`; the deny hook then exits 2 for every subsequent Bash command, including one to return to the project. Changing to another repository without the launcher has the same effect. Previously, the deny handler could check these commands without a repository root (`src/forge/deny.py:36\u201354`). Resolve the launcher from the host's stable project root instead of relying exclusively on the current directory. This directory-following behavior is new evidence not addressed by the shared-launcher ruling.",
         "file": "src/forge/sync.py",
-        "line": 83,
-        "priority": "P1",
-        "title": "Validate the version before embedding it in executable shell"
+        "line": 60,
+        "priority": "P2",
+        "title": "Keep the launcher reachable after Claude changes directories"
       }
     ],
-    "status": "blocked",
-    "tree": "54357ad3dc33a47ac3dc3d75356113ecfa94d05e3eae3dc3b5dcf068eedf5c23"
+    "status": "clean",
+    "tree": "8f756a20c01adaa0883112c1a6acebe17126d3987180ea4b0c30d88638d4baf3"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T09:49:40+00:00",
@@ -54,6 +54,10 @@
     },
     {
       "at": "2026-10-01T13:36:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T14:04:12+00:00",
       "step": "review"
     }
   ],
