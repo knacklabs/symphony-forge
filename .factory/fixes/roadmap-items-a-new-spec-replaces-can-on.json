@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed it on 2026-10-01: a new roadmap command, so the command table and existing command tests change with it",
   "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
   "branch": "fix/roadmap-items-a-new-spec-replaces-can-on",
   "done_when": "forge roadmap retire <key> --by <spec> marks a pending roadmap item superseded and records the spec that replaces it, in a fix like other roadmap changes; it refuses with a plain message for an unknown key, an item already started or done, or a spec that doesn't exist; forge next and the board stop listing superseded items, and the roadmap merge rule keeps the superseded status. The skill's intent table has a row for it. Command-level tests cover retiring a pending item, each refusal, and next no longer listing it.",
