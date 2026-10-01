@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T01:26:33+00:00
-read_hash: 912f4f273c4dbbd027998232348b8d102d8c4d18
-round: 2
-passed: no
-doc_seen: 912f4f273c4dbbd027998232348b8d102d8c4d18
+read_at: 2026-10-01T01:35:23+00:00
+read_hash: 4259d98b3c0d41bc0ffc18fc717daf71610486cc
+round: 3
+passed: yes
+doc_seen: 4259d98b3c0d41bc0ffc18fc717daf71610486cc
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: f9169c7b4339b2e8ba0edffd9eef65470683726d
+notes_seen: 39a918c6ffb5cd508ad56a26534f685e501cff50
 ---
 # Cold read notes
 
@@ -82,3 +82,7 @@ Disposition: cut
     `tests/test_codex_reader.py:170` compares the entire initialized models table with today’s single-entry shape; that assertion also remains in the prerequisite branch. Item 4 necessarily changes it. Add this file to DEFAULTS’s Scope and Tests, and narrow item 1’s promise that existing cold-read tests pass unchanged.
 
 Disposition: cut
+
+## Round 3
+
+No findings.
