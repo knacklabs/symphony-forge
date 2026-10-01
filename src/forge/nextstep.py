@@ -303,7 +303,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    if states and len(merged) == len(states):
+    behind = _behind(top, key, trees, merged_prs)
+    if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
@@ -315,6 +316,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
+    if behind:  # the rows here are old, so nothing below is said from them
+        return lines + behind, list(states.values())
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
@@ -327,6 +330,23 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                   *(f"Next: forge task start {key}/{task}" for task in ready)]
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
+
+
+def _behind(top: Path, key: str, trees: dict[str, Path], merged_prs: set[str]) -> list[str]:
+    """When the default branch has plan edits story/<KEY> lacks: say so, and start a part the
+    default branch's plan makes ready, since forge task start merges them in first."""
+    ref = story.landed_ref(top)
+    if story.plan_behind(top, key, ref) is None:
+        return []
+    try:
+        tasks = story.parse(story.show(top, ref, f"plans/{key}.md") or "")["tasks"]
+    except ValueError:
+        tasks = []
+    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs) for task in tasks}
+    merged = {task for task, state in states.items() if state.get("status") == "merged"}
+    ready = [task["id"] for task in tasks if not states[task["id"]] and set(task["after"]) <= merged]
+    return [f"The default branch has changes to plans/{key}.md that story/{key} lacks; forge task "
+            "start merges them in first.", *(f"Next: forge task start {key}/{task}" for task in ready[:1])]
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
