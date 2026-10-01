@@ -324,15 +324,34 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
         refuse(REFUSALS["pin_elsewhere"], item=item, folder=folder, installed=f"v{__version__}",
                pinned=f"v{pinned}", words=words)
     # Run the pinned release through uv instead, unless this already is that run (no loop).
-    uv = shutil.which("uv")
-    if uv and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
+    if shutil.which("uv") and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
         print(f"Forge v{__version__} is installed, but this repo pins v{pinned}, so v{pinned} runs "
               "through uv.", file=sys.stderr)
-        sys.exit(subprocess.run(
-            [uv, "tool", "run", "--from", f"git+https://github.com/knacklabs/symphony-forge@v{pinned}",
-             "forge", *sys.argv[1:]], cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": f"v{pinned}"},
-        ).returncode)
+        sys.exit(run_release(f"v{pinned}", sys.argv[1:], cwd))
     refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
+
+
+def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
+    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
+    return subprocess.run(
+        [shutil.which("uv") or "uv", "tool", "run", "--from",
+         f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
+        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+
+
+def set_version(text: str, release: str) -> str:
+    """forge.toml's text with only its top-level version string set to the release, every other
+    byte kept; refuses when the edited text doesn't parse to that release."""
+    new = re.sub(r"""\A(.*?^[ \t]*(?:version|"version"|'version')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*')""",
+                 lambda m: f'{m[1]}"{release}"', text, count=1, flags=re.S | re.M)
+    try:
+        parsed = tomllib.loads(new).get("version")
+    except tomllib.TOMLDecodeError:
+        parsed = None
+    if parsed != release:
+        refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
+               "so it left it alone")
+    return new
 
 
 def _pin(text: str) -> str:
