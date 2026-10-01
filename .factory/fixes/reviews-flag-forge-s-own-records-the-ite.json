@@ -3,7 +3,7 @@
   "branch": "fix/reviews-flag-forge-s-own-records-the-ite",
   "done_when": "The review's list of files outside Scope leaves out Forge's own records (everything under .factory/, plans/roadmap.json and the story's read notes), and the review instructions say to report every instance of a kind of defect it finds in the change together in one finding, naming each place, rather than one per round. Command-level tests show a task's own state file isn't listed outside Scope and the instruction reaches the review prompt.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T15:43:41+00:00",
