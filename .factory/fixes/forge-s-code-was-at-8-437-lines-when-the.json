@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-01T09:37:12+00:00",
+      "because": "The owner chose on 2026-10-01 to cut only the safe dead and duplicated code the worker found (about 85 lines) rather than make a story or remove features",
+      "done_when": "At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls) and folding duplicated helpers into one, with no behaviour change: the full test suite passes unchanged except tests of deleted dead code, and the handoff lists each removal with why it was dead or duplicated."
+    }
+  ],
   "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
   "branch": "fix/forge-s-code-was-at-8-437-lines-when-the",
-  "done_when": "At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls) and folding duplicated helpers into one, with no behaviour change: the full test suite passes unchanged except tests of deleted dead code, and the handoff lists each removal with why it was dead or duplicated.",
+  "done_when": "At least 80 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls) and folding duplicated helpers into one, with no behaviour change: the full test suite passes unchanged except tests of deleted dead code, and the handoff lists each removal with why it was dead or duplicated.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
