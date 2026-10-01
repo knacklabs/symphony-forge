@@ -52,9 +52,10 @@ def command(hook: str) -> str:
     """A host hook command that fails closed (decision 0038, ported).
 
     If forge can't launch, the inner guard turns that into exit 2; if sh itself can't, the outer
-    one does. Exit 2 is the code both hosts treat as blocking.
+    one does. Exit 2 is the code both hosts treat as blocking. Codex runs hooks with a PATH that
+    may lack uv's tool folder, so uv's default one goes first.
     """
-    return f"sh -c 'forge hook {hook} || exit 2' || exit 2"
+    return f"sh -c 'PATH=\"${{XDG_BIN_HOME:-$HOME/.local/bin}}:$PATH\"; forge hook {hook} || exit 2' || exit 2"
 
 
 HOSTS = githooks.HOSTS
