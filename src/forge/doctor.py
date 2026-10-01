@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -47,6 +48,8 @@ SAMPLES = {
     "PreToolUse": {"tool_name": "Bash", "tool_input": {"command": "git status"}},
     "PostToolUse": {"tool_name": "forge-doctor", "tool_input": {}, "tool_response": {}},
 }
+
+BARE_PATH = "/usr/bin:/bin"
 
 
 def _forge_hooks(text: str) -> list[tuple[str, str]]:
@@ -128,6 +131,9 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append(("sh isn't on PATH, so no host hook can run.",
                      "install Git, which brings sh, and put it on PATH"))
     else:
+        # With a bare PATH, as Codex may run them: each hook must find forge on its own.
+        env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
+        bare = f" when run with PATH={BARE_PATH}" if env else ""
         for rel in sync.HOSTS:
             # Only a command exactly as forge sync writes it ever runs. Any other one makes the
             # file differ from sync's, so it is already a drift row above, and it never runs.
@@ -137,13 +143,15 @@ def doctor(args: argparse.Namespace) -> None:
                     continue
                 payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event,
                            **SAMPLES.get(event, {})}
-                done = repo.run("sh", "-c", command, cwd=top, input=json.dumps(payload))
+                done = subprocess.run([shutil.which("sh") or "sh", "-c", command], cwd=top,
+                                      input=json.dumps(payload), capture_output=True, text=True,
+                                      encoding="utf-8", errors="replace", env=env)
                 if done.returncode:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     # Forge's own Next line when forge ran and refused; else it couldn't launch.
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     rows.append((f"The {event} hook in {rel} fails with exit code "
-                                 f"{done.returncode}: {said[0]}", fix))
+                                 f"{done.returncode}{bare}: {said[0]}", fix))
 
     if not cfg["checks"]:
         rows.append(("forge.toml names no checks, so close has nothing to wait for.",

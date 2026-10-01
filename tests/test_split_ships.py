@@ -29,7 +29,7 @@ SOURCES = {
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
                        "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
