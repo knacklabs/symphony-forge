@@ -344,24 +344,26 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
 
 
 def set_version(text: str, release: str) -> str:
-    """forge.toml's text with only its top-level version string set to the release, every other
-    byte kept; refuses when no version line's edit parses to the same settings with that release."""
-    try:
-        wanted = {**tomllib.loads(text), "version": release}
-    except tomllib.TOMLDecodeError:
-        wanted = None
-    # A version line inside a multi-line string or a table changes another setting, so its edit
-    # parses to something else and the next line is tried.
-    for found in re.finditer(r"""^[ \t]*(?:version|"version"|'version')[ \t]*=[ \t]*("[^"\n]*"|'[^'\n]*')""",
-                             text, re.M):
-        new = f'{text[:found.start(1)]}"{release}"{text[found.end(1):]}'
+    """forge.toml's text with its version string set to the release, every other byte kept.
+
+    One blunt rule, failing closed: exactly one line in the whole file starts `version =` (lines
+    inside strings count), it is a plain `version = "..."` before the first table, and the edit
+    parses to the same settings with only the version changed. Otherwise it refuses.
+    """
+    lines = re.findall(r"^[ \t]*version[ \t]*=", text, re.M)
+    plain = re.search(r'^(version[ \t]*=[ \t]*)"[^"\\\r\n]*"([ \t]*(?:#[^\r\n]*)?\r?)$', text, re.M)
+    new = ""
+    if len(lines) == 1 and plain and not re.search(r"^[ \t]*\[", text[:plain.start()], re.M):
+        new = f'{text[:plain.start()]}{plain[1]}"{release}"{plain[2]}{text[plain.end():]}'
         try:
-            if tomllib.loads(new) == wanted:
-                return new
+            if tomllib.loads(new) != {**tomllib.loads(text), "version": release}:
+                new = ""
         except tomllib.TOMLDecodeError:
-            pass
-    refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
-           "so it left it alone")
+            new = ""
+    if not new:
+        refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
+               "so it left it alone")
+    return new
 
 
 def _pin(text: str) -> str:

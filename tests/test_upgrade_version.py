@@ -44,15 +44,18 @@ def test_3_the_version_edit_keeps_every_other_byte_or_refuses():
     assert edited.returncode == 0, edited.stderr
     assert edited.stdout == TOML.replace(b'"v1.2.1"', b'"v1.3.0"')
 
-    # A version line inside a multi-line setting is that setting's text, not the pin.
-    inside = b"test = '''\nversion = \"fixture\"\n'''\nversion = \"v1.3.0\"\n"
-    kept = _edit(inside, "v1.3.0")
-    assert kept.returncode == 0, kept.stderr
-    assert kept.stdout == inside
-
-    refused = _edit(b'version = """v1.2.1"""\nrepo = "client"\n', "v1.3.0")
-    assert refused.returncode == 1
-    assert refused.stdout == b""
-    assert refused.stderr.decode().splitlines() == [
-        'forge.toml is not usable: Forge could not set version = "v1.3.0" in it, so it left it alone.',
-        "Next: forge doctor"]
+    refusals = [
+        # A second version-looking line anywhere, here inside a multi-line setting.
+        b"test = '''\nversion = \"fixture\"\n'''\nversion = \"v1.2.1\"\n",
+        # The same with an escape that reads as the release once parsed.
+        b'test = """\nversion = "v1.\\u0033.0"\n"""\nversion = "v1.3.0"\n',
+        # A version that isn't a plain one-line string.
+        b'version = """v1.2.1"""\nrepo = "client"\n',
+    ]
+    for text in refusals:
+        refused = _edit(text, "v1.3.0")
+        assert refused.returncode == 1, text
+        assert refused.stdout == b""
+        assert refused.stderr.decode().splitlines() == [
+            'forge.toml is not usable: Forge could not set version = "v1.3.0" in it, so it left it '
+            "alone.", "Next: forge doctor"]
