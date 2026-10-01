@@ -518,17 +518,26 @@ def test_8_plain_english(env):
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
     # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
     if os.name != "nt":
-        slow, started = env.tmp / "slow", env.tmp / "gh-started"
+        slow, started, gh_pid = env.tmp / "slow", env.tmp / "gh-started", env.tmp / "gh-pid"
         slow.mkdir()
-        _executable(slow / "gh", f'#!/bin/sh\ntouch "{started}"\nsleep 30\n')
+        _executable(slow / "gh", f'#!/bin/sh\necho $$ > "{gh_pid}"\ntouch "{started}"\nexec sleep 30\n')
         doctor = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "doctor"], cwd=repo.path,
                                env={**os.environ, "PATH": f"{slow}{os.pathsep}{os.environ['PATH']}"},
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        while not started.exists() and doctor.poll() is None:
-            time.sleep(0.05)
-        doctor.send_signal(signal.SIGINT)
-        out, err = doctor.communicate(timeout=30)
-        assert (doctor.returncode, err) == (130, ""), (out, err)
+        try:
+            while not started.exists() and doctor.poll() is None:
+                time.sleep(0.05)
+            doctor.send_signal(signal.SIGINT)
+            out, err = doctor.communicate(timeout=30)
+            assert (doctor.returncode, err) == (130, ""), (out, err)
+        finally:  # the SIGINT reached forge alone, so the waiting gh is still running
+            doctor.kill()
+            doctor.communicate()
+            if gh_pid.exists():
+                try:
+                    os.kill(int(gh_pid.read_text("utf-8")), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
 
 # --- criterion 9: nothing changes outside a pull request --------------------------------------
