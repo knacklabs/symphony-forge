@@ -3,11 +3,32 @@
   "branch": "fix/a-new-security-advisory-in-a-transitive",
   "done_when": "When the default branch's lockfiles (any of package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lockb, bun.lock, uv.lock, poetry.lock, Cargo.lock, go.sum) and Dockerfile base images were last changed more than seven days ago by git history, forge next lists a ready fix to refresh dependencies and base images with a filled-in forge fix start command, and the agent starts it like any ready item; nothing is listed when there are no lockfiles. No new record is kept: the age comes from git log. The skill says how to run that fix (update within the allowed ranges, rebuild, run the test command). Command-level tests cover an old lockfile (listed), a fresh one (not listed) and a repo with no lockfile.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "bf00ac622459681fd15af47a262a04be20c3f3be7d6f5a75a55b602aa2ea3a49",
+    "commit": "74acb9df1b3a2eaf8abc24ec0406a35c616cd87c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new evidence beyond the slug ruling is `src/forge/task.py:238\u2013240`: `forge fix start` appends a number whenever that name already exists or has merged. `_merged` checks the retained state file on the default branch (`src/forge/task.py:190\u2013192`), so the next weekly refresh becomes `fix/refresh-dependencies-2`, even after normal merge cleanup. This guard recognizes only `fix/refresh-dependencies`; consequently, every subsequent `forge next` continues offering another refresh while the numbered refresh is already running. Since the skill instructs the agent to start ready items, this creates duplicate workers changing the same dependencies. Recognize numbered refresh worktrees too, and extend the command-level test to cover a refresh after a previous one has merged.",
+        "file": "src/forge/nextstep.py",
+        "line": 245,
+        "priority": "P1",
+        "title": "Not done: suppress duplicate refresh offers after the first refresh merges"
+      }
+    ],
+    "status": "blocked",
+    "tree": "f0a6621bbb2212a16775e71963d219009f85b69952af1e73bd4df1fc0f8efce5"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T17:03:07+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T22:36:27+00:00",
+      "step": "review"
     }
   ],
   "why": "A new security advisory in a transitive dependency or the base image fails every pull request's image scan on the same day, because nothing refreshes dependencies on a schedule"
