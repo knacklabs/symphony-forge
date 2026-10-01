@@ -216,7 +216,8 @@ def _due(top: Path) -> list[str]:
     keys: dict[str, list[str]] = {}
     for item in items if isinstance(items, list) else []:
         if (isinstance(item, dict) and isinstance(item.get("spec"), str)
-                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))):
+                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))
+                and item.get("status") != "superseded"):  # a replaced story never finishes
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
@@ -238,7 +239,8 @@ def _idle(top: Path) -> list[str]:
     """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
-    if isinstance(items, list) and items:
+    if isinstance(items, list) and any(
+            not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
         return ["No story or fix is in progress.",
                 'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                 'Next: forge fix start "<why>" --done "<done when>"']

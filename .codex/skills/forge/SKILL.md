@@ -36,6 +36,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
+| "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init` |
@@ -406,6 +407,10 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
+A failed check whose log names none of the change's files, after this machine's tests passed, is
+re-run once per pushed head instead of costing a fix round. When GitHub has not started that
+re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
+round if the check is still red.
 
 ## Check-back
 
