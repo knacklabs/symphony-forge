@@ -17,6 +17,8 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
+| "Name this fix" | `forge fix start "<why>" --done "<done when>" --slug <name>` |
+| "Change this fix's Done-when" | `forge fix amend <fix> --done "<done when>" --because "<why>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
@@ -305,6 +307,8 @@ changing a result or "What changes for you" does.
   sections come first and everything for the agents sits below.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
+- The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
+  and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
@@ -351,15 +355,21 @@ If a worker ends with a `Question:` paragraph, answer with
 `forge work <item> --note "<answer>"`. The worker waits for that answer: another work round
 without a note and `forge close <item>` both refuse until the answering round completes. The
 answer returns to the same conversation when it can resume; a fresh brief carries both the
-question and answer. If the answer needs work outside Scope or a choice the item does not settle,
-resolve that boundary before sending the note.
+question and answer. Workers change files outside Scope that the change needs and name them in
+the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
+choice the item does not settle, get that choice made before sending the note.
 
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
-`--effort <effort>` to choose for this question; without them it uses `[models.lite]` in
-`forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+`--effort <effort>` to choose for this question; without them it uses the Codex entry of
+`[models.lite]` in `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
+
+Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
+`[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
+tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
+review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
@@ -382,6 +392,9 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
 recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
 recorded before editing.
+
+Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
+reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,

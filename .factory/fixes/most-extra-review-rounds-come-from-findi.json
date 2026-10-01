@@ -1,0 +1,39 @@
+{
+  "base": "e8792e10682106b7133c91a821689fa6c5538799",
+  "branch": "fix/most-extra-review-rounds-come-from-findi",
+  "done_when": "The review instructions block (P0/P1) only on a defect that would ship, a security, data-loss or accessibility gap, an unmet Done-when item, or a missing test for a Done-when item's own behaviour; extra edge-case tests, platform or hardening suggestions beyond what the item promises are P2 and never block or start a round. Close's output lists those non-blocking findings under a separate plain heading. The rules against dropping validation, security, data-loss protection or accessibility stay.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "96a7632895d89dddd10b6bda691b7f3397cfa63171f043e1db5e5f3bc593119a",
+    "commit": "21c3920c98c167793df950387526508c5c802819",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "844da348f609236c6c87c288c8e07e546fc438ffa1826980a6c2deca9d4edaeb"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T11:16:01+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T14:53:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T16:07:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T03:52:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T04:31:07+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Most extra review rounds come from findings that ask for more edge-case tests or generic hardening beyond what the item promises, reported as blocking, so every change pays several rounds for wishlists"
+}

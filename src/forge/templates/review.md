@@ -74,7 +74,11 @@ A test skipped in your sandbox that the close run passed is not a missing test. 
 deletion, a test showing the old input is now refused is enough.
 
 ## What blocks the merge
-Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+A finding is P0 or P1 only for a defect that would ship, a security, data-loss or accessibility
+gap, an unmet Done-when item, or a missing test for a Done-when item's own behaviour.
+Extra edge-case tests, platform or hardening suggestions beyond what the item promises are P2:
+they never block the merge or start another round. So an edge case the Done-when doesn't ask for,
+where the item's purpose is already met, is a P2.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
