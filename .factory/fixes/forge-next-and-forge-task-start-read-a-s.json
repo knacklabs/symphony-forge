@@ -5,27 +5,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "4845ad4cfce393dd03dab3fd2261d2c1d56451928573431d3b975a76ad01b17a",
-    "commit": "14b3093f0fd40e41f28372b9c8c00341fe3e6253",
+    "changed": "929a3d41a89a52402862ed9e72210b8b28ba995132eff2be28728e1b8daeac9d",
+    "commit": "5c8cf10782419fced0d8a3bb6d356896f03f4053",
     "dismissals": [],
     "findings": [
       {
-        "body": "The standard requires that \u201cthe suite maps one test to one rule.\u201d This function and the conflict test at line 88 both cite criterion 3 for the same STORY. `tests/test_rules.py:45\u201350` explicitly rejects that duplication, and the supplied close run confirms this exact failure. Consolidate both refusal scenarios into the criterion-3 test so the required suite passes without weakening its rule check.",
-        "file": "tests/test_plan_edits_on_the_default_branch.py",
-        "line": 104,
+        "body": "If the story worktree already has a merge in progress, the attempted merge fails before starting another one. This unconditional `merge --abort` then aborts the user's existing merge, discarding staged conflict resolutions while reporting that Forge changed nothing. [Git's implementation](https://github.com/git/git/blob/v2.39.0/builtin/merge.c#L1259-L1319) confirms both behaviors. The repository already protects this case in `src/forge/approval.py:163\u2013166`. Check for an existing `MERGE_HEAD` before merging, and abort only a merge started by this invocation.",
+        "file": "src/forge/story.py",
+        "line": 568,
         "priority": "P1",
-        "title": "Standard: No rule without a test; no test without a rule"
+        "title": "Preserve an existing manual merge and its conflict resolutions"
       },
       {
-        "body": "After a squash merge, the first iteration passes `-X ours`, which [Git 2.39's merge-tree implementation](https://github.com/git/git/blob/v2.39.0/builtin/merge-tree.c#L466-L488) does not support. Even a clean plan update then receives a false \u201cconflicts in\u201d refusal with no filenames because every nonzero exit is treated as a conflict. `docs/guide.md:11` requires Git without a minimum version, and `src/forge/doctor.py:89\u201391` checks only its presence. Support the required operation or detect the unsupported version and give an accurate upgrade instruction.",
+        "body": "The required automatic merge fails in the intended scenario. `tests/test_plan_edits_on_the_default_branch.py:21\u201334` creates the plan on the story branch, squash-merges SAVE, then edits the default branch's plan. Because [squashing does not record merge ancestry](https://git-scm.com/docs/git-merge#Documentation/git-merge.txt---squash), the common ancestor still lacks the plan. This direct merge treats DOC and FIXED as conflicting additions, so the command refuses instead of importing the plan and reaching the assertions at lines 58\u201360. New evidence against the squash-reconciliation ruling is that this implementation performs only this direct merge; it contains no step recording the last squashed task. Restore that reconciliation while preserving genuine conflicts.",
         "file": "src/forge/story.py",
-        "line": 574,
+        "line": 566,
+        "priority": "P1",
+        "title": "Not done: When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line."
+      },
+      {
+        "body": "The standard says to \u201crefuse only on real problems.\u201d This checks commit reachability rather than whether the story lacks the default branch's plan version. New evidence relative to the missing-version ruling is `tests/test_readloop_gates.py:201\u2013225`: the original approved plan is squash-merged, then only the story plan is revised, read and reapproved. The default plan version already exists in story history, but [rev-list](https://git-scm.com/docs/git-rev-list) still returns the squash commit. Consequently, `forge next` suppresses ready tasks and `task start` attempts an unnecessary merge of the older plan. The supplied close run confirms the false conflict refusal at line 226. Detect an unseen plan version instead of merely an unreachable commit.",
+        "file": "src/forge/story.py",
+        "line": 551,
+        "priority": "P1",
+        "title": "Standard: Gates check outcomes, never rituals"
+      },
+      {
+        "body": "When the story branch exists without a worktree, this creates and registers one before attempting the merge. If the merge conflicts, the refusal leaves that folder and worktree registration behind: aborting the merge does not undo `worktree add`. The claim that Forge changed nothing is therefore false for this supported case. Check the merge before creating the worktree, or remove only the worktree created by this invocation when refusing.",
+        "file": "src/forge/story.py",
+        "line": 565,
         "priority": "P2",
-        "title": "Handle Git versions without merge-tree strategy options"
+        "title": "Remove a newly created story worktree after a conflicting merge"
       }
     ],
     "status": "blocked",
-    "tree": "de49f750f1e1fcfdee1c1f605cd26d135eb7d33ab657af6c807c01c5907287a1"
+    "tree": "11f3911c2a033aba9f39b73fbf77b88561636eaee93b423df922f145a5f10f61"
   },
   "status": "fixing",
   "steps": [
@@ -35,6 +49,10 @@
     },
     {
       "at": "2026-10-01T09:00:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T09:36:10+00:00",
       "step": "review"
     }
   ],
