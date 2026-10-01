@@ -1,6 +1,15 @@
 {
+  "approval": {
+    "at": "2026-10-01T01:44:38+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_0154Dfp3MhfmbrSv8DhnYAP5",
+    "hash": "83fdb7d36b0a63f51cd60d6d12013b396afef84114079cab0589cd91c64dad5c",
+    "round": 3,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-TOOLS-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-09-30T20:35:42+00:00",
@@ -17,8 +26,12 @@
     {
       "at": "2026-10-01T01:35:25+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:44:38+00:00",
+      "step": "approved"
     }
   ],
   "title": "Run Forge all in Claude, all in Codex, or both",
-  "touches": 0
+  "touches": 1
 }
