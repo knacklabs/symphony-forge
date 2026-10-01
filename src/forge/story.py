@@ -315,8 +315,10 @@ def sections(text: str) -> dict[str, str]:
     return found
 
 
-def parse(text: str) -> dict[str, Any]:
+def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[str, Any]:
     """A story doc's Done-when items, their details and its task rows, once its shape is sound.
+    With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
+    first at the commit `ref` when given.
 
     Raises ValueError naming what is malformed, and the task row when a row is wrong.
     """
@@ -359,13 +361,34 @@ def parse(text: str) -> dict[str, Any]:
         if not scope:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*", row["After"])}
+                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"])}
     for task in tasks.values():
-        unknown = [after for after in task["after"] if after not in tasks]
+        unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
             raise ValueError(f"Tasks row {task['id']}: After {unknown[0]} is not a task in this table")
+        for other in (after for after in task["after"] if "/" in after and top):
+            key, _, name = other.partition("/")
+            if name not in _task_ids(_plan(top, key, ref)):
+                raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
     return {"done": done, "details": notes, "tasks": list(tasks.values())}
+
+
+def _plan(top: Path, key: str, ref: str | None = None) -> str:
+    """Story KEY's plan: at `ref` when given, else its worktree's copy; else its story branch's,
+    local or fetched, else the default branch's."""
+    rel, tree = f"plans/{key}.md", stories_here(top).get(key)
+    if not ref and tree and (tree / rel).is_file():
+        return _text(tree / rel)
+    refs = ([ref] if ref else []) + [f"story/{key}", f"origin/story/{key}", landed_ref(top)]
+    return next((text for one in refs if (text := show(top, one, rel)) is not None), "")
+
+
+def _task_ids(text: str) -> set[str]:
+    try:
+        return {task["id"] for task in parse(text)["tasks"]}
+    except ValueError:
+        return set()
 
 
 def details(text: str) -> dict[int, str]:
@@ -474,7 +497,7 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
         if text is None:
             continue
         try:
-            parse(text)
+            parse(text, top, head)
         except ValueError as exc:
             return f"The story doc {path} is malformed: {exc}."
         notes = show(top, head, f"plans/{match[1]}.read.md")
@@ -641,7 +664,7 @@ def agents_section(top: Path, heading: str) -> str:
 
 def _parsed(text: str, rel: str) -> dict[str, Any]:
     try:
-        return parse(text)
+        return parse(text, repo.root())  # checks After entries that name another story's task
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
@@ -716,7 +739,9 @@ def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
             raise ValueError(f"Tasks row {task}: its After list makes a cycle ({loop})")
         if task not in checked:
             for after in tasks[task]["after"]:
-                visit(after, path + [task])
+                # ponytail: a cycle across stories isn't caught; its tasks just wait in forge next
+                if "/" not in after:
+                    visit(after, path + [task])
             checked.add(task)
 
     for task in tasks:
