@@ -316,6 +316,8 @@ changing a result or "What changes for you" does.
 - Aim for parallel work: split tasks so each owns its files. A line several tasks would edit (a
   command-table row, a guide list or a registry) goes to one task, or to a small last wiring
   task. Use After only when a task needs another task's code.
+- After names this story's tasks by ID; name another story's task as KEY/TASK (for example
+  TURN-1/T4). `forge next` and `forge task start` hold the task until that task's pull request merges.
 - End the Tasks section with its one `New moving parts:` line (see Build simple).
 - Risks names every one-way step: deleting data, a destructive migration, a new vendor.
 - Use the stack already in the repo. Ask the human only when options differ in cost, lock-in or
@@ -403,6 +405,10 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
+A failed check whose log names none of the change's files, after this machine's tests passed, is
+re-run once per pushed head instead of costing a fix round. When GitHub has not started that
+re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
+round if the check is still red.
 
 ## Check-back
 
