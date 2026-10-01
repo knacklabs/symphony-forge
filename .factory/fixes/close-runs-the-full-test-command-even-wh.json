@@ -3,7 +3,7 @@
   "branch": "fix/close-runs-the-full-test-command-even-wh",
   "done_when": "When every file a change touches is under docs/ or plans/, a Markdown file, or under .factory/, forge close skips forge.toml's test command and says so in one line, and still runs the review and every check forge.toml names; any other changed file runs the test command as today. Command-level tests cover a docs-and-plans-only fix (skipped) and one that also changes a code file (run).",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T17:02:27+00:00",
