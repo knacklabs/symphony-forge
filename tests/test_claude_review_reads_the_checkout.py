@@ -32,7 +32,7 @@ with open(log, "a", encoding="utf-8") as calls:
 '''
 
 
-def test_a_claude_review_starts_with_read_access_to_the_checkout_and_nothing_more(
+def test_1_a_claude_review_starts_with_read_access_to_the_checkout_and_nothing_more(
         env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
