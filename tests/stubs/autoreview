@@ -2,8 +2,9 @@
 """Stub Autoreview: answers each run from the queue in $AUTOREVIEW_STUB and records the call.
 
 An answer is {"exit": <code>, "report": <the JSON it writes, or null>, "say": <its last line>};
-the last answer repeats. With --codex-bin it starts that Codex the way the real helper does
-(`exec -C <an empty folder>`), so a test can see which tree the reviewer reads.
+the last answer repeats. Each --prompt-file's text is recorded with the call. With --codex-bin it
+starts that Codex the way the real helper does (`exec -C <an empty folder>`), so a test can see
+which tree the reviewer reads.
 """
 import json
 import os
@@ -19,7 +20,9 @@ answer = queue.pop(0) if len(queue) > 1 else queue[0]
 queue_file.write_text(json.dumps(queue), "utf-8")
 head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
 with open(queue_file.with_suffix(".calls.jsonl"), "a", encoding="utf-8") as calls:
-    calls.write(json.dumps({"args": args, "head": head}) + "\n")
+    files = {path: Path(path).read_text("utf-8")
+             for flag, path in zip(args, args[1:]) if flag == "--prompt-file"}
+    calls.write(json.dumps({"args": args, "head": head, "prompt_files": files}) + "\n")
 if "--codex-bin" in args:
     subprocess.run([args[args.index("--codex-bin") + 1], "exec", "-C", tempfile.mkdtemp(), "-"],
                    check=True)
