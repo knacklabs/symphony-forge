@@ -216,12 +216,17 @@ our default or the agent, so record each as the client, salesperson or developer
 run the strict sign-off review before anyone asks for sign-off: write `forge decision new
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded; it runs the strict review alone and stops. Fix what it finds and run
-it again. Once it passes, tell the salesperson to ask the customer's named person for sign-off
-their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
+before any reply is recorded; it runs the strict review alone and stops. That review always runs
+on `gpt-6.1-sol` at high effort, whatever `forge.toml` says, and refuses a run on any other model
+or effort. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
+
+On Codex, every other review runs on `[models.review]` in `forge.toml`, which `forge init` sets
+to `gpt-6.1-sol` at high effort; a prototype fix before sign-off gets a light review on
+`gpt-6.1-sol` at medium effort that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
@@ -355,6 +360,13 @@ Codex read-only in this checkout and prints the answer. Use `--model <model>` an
 `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
+
+For a side job inside your own session, hand it to one of Forge's subagent roles, which
+`forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
+`planner` and `architect` for planning and design choices; `debugger`, `security` and
+`performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
+The diagnosing and planning roles change no files. Building an item still goes through
+`forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
 
 ## Build simple
 

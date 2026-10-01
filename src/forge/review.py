@@ -27,6 +27,8 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
            for host in (".codex", ".claude")]
 PRIORITIES = ("P0", "P1", "P2", "P3")
+# Untracked in the review tree, which branch mode leaves out of the diff.
+STANDARDS = "forge-standards.md"
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -51,17 +53,31 @@ REFUSALS = {
                 "fix that row in plans/{key}.md, then forge close {item}"),
 }
 
-# Ported from the old tree's review launcher: the helper starts Codex in an empty folder, where
-# the reviewer can't open the code a finding depends on. This `codex` swaps that one folder for
-# the reviewed checkout; the read-only sandbox the helper asks for stays as it is.
-LAUNCHER = '''\
+# Ported from the old tree's review launcher: the helper starts the reviewer in an empty folder,
+# where it can't open the code a finding depends on. Each launcher starts the real one in the
+# reviewed checkout instead. The `codex` one swaps that one folder; the read-only sandbox the
+# helper asks for stays as it is. The helper gives Claude only web search and refuses Read as a
+# tool option, so the `claude` one adds the read-only file tools; --restricted keeps them inside
+# the checkout and leaves out every tool that runs commands.
+LAUNCHER = {
+    "codex": '''\
 import subprocess, sys
 argv = sys.argv[1:]
 for i in range(len(argv) - 1):
     if argv[i] in ("-C", "--cd"):
         argv[i + 1] = {tree!r}
 sys.exit(subprocess.call([{real!r}, *argv]))
-'''
+''',
+    "claude": '''\
+import subprocess, sys
+argv = sys.argv[1:]
+if "--tools" in argv:
+    i = argv.index("--tools") + 1
+    argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
+    argv.append("--restricted")
+sys.exit(subprocess.call([{real!r}, *argv], cwd={tree!r}))
+''',
+}
 
 
 # --- the story doc ---------------------------------------------------------------------
@@ -235,7 +251,7 @@ def _review_rules(top: Path) -> str:
     if not rules:
         return ""
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
-    block = text.split("<!-- review-rules -->\n", 1)[1].split("<!-- signoff -->", 1)[0]
+    block = text.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
@@ -393,12 +409,22 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                      f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
             review_base = repo.git("rev-parse", base, cwd=tree)
             prompt += _hide_generated(tree, repo.git("merge-base", review_base, head, cwd=tree), head)
+        # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
+        block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+        rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
+        # The branch may track this path, even as a link out of the tree: drop it unfollowed,
+        # then create the file afresh ("x" refuses anything still there).
+        repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
+        with (tree / STANDARDS).open("x", encoding="utf-8") as page:
+            page.write(string.Template(rules).substitute(standards=(
+                Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
         engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
         # ponytail: the instructions ride in argv; move them to --prompt-file inside the review
         # tree if a story's text ever nears Windows' 32K command line.
         argv = [sys.executable, str(path), "--mode", "branch", "--base", review_base,
                 "--engine", engine,
                 "--max-priority", "P0" if light else "P3", "--prompt", prompt,
+                "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
         # The light prototype review runs Sol at medium on Codex; otherwise forge.toml's review kind
         # on Codex, or its Claude cold-read model when only Claude is installed.
@@ -407,9 +433,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if chosen:
             argv += ["--model", f"{engine}={chosen['model']}"]
             argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []
-        launcher = _launcher(tmp / "bin", tree)
+        launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
-            argv += ["--codex-bin", str(launcher)]
+            argv += [f"--{engine}-bin", str(launcher)]
         for attempt in ((1,) if signoff_prompt else (1, 2)):
             findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
             if not reason:
@@ -532,21 +558,21 @@ def _finding(raw: Any) -> dict[str, Any] | None:
             "line": where.get("line", 0)}
 
 
-def _launcher(folder: Path, tree: Path) -> Path | None:
-    """A `codex` for the helper that runs the real one inside the reviewed checkout."""
-    real = shutil.which(os.environ.get("CODEX_BIN") or "codex")
+def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
+    """A `codex` or `claude` for the helper that runs the real one inside the reviewed checkout."""
+    real = shutil.which(os.environ.get(f"{engine.upper()}_BIN") or engine)
     if not real:
-        return None  # the helper then finds no Codex itself and says so
+        return None  # the helper then finds no such engine itself and says so
     # ponytail: the old launcher also carried the Windows elevated-sandbox setting through the
     # helper's --ignore-user-config; port it when a Windows review can't run its read-only shell.
     folder.mkdir()
-    script = folder / "codex_in_tree.py"
-    script.write_text(LAUNCHER.format(tree=str(tree), real=real), encoding="utf-8")
+    script = folder / f"{engine}_in_tree.py"
+    script.write_text(LAUNCHER[engine].format(tree=str(tree), real=real), encoding="utf-8")
     if os.name == "nt":
-        launcher = folder / "codex.cmd"
+        launcher = folder / f"{engine}.cmd"
         launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
     else:
-        launcher = folder / "codex"
+        launcher = folder / engine
         launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n',
                             encoding="utf-8")
         launcher.chmod(0o755)

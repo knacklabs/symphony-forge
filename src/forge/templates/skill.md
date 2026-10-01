@@ -361,6 +361,13 @@ Codex read-only in this checkout and prints the answer. Use `--model <model>` an
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
 
+For a side job inside your own session, hand it to one of Forge's subagent roles, which
+`forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
+`planner` and `architect` for planning and design choices; `debugger`, `security` and
+`performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
+The diagnosing and planning roles change no files. Building an item still goes through
+`forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
+
 ## Build simple
 
 Read [standards.md](standards.md) beside this skill for Forge's principles, the client's app
