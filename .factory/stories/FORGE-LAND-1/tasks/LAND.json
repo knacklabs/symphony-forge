@@ -2,22 +2,14 @@
   "branch": "task/FORGE-LAND-1-LAND",
   "review": {
     "blocking_level": "P1",
-    "changed": "0ed43f5f71c3fb7ece4d65958a383b53ea51927db9eba03d8c4e3ddef0a2bea1",
-    "commit": "abf2a570ff3025ed095f550fee2d8c985322a78a",
+    "changed": "2f8fbd1c76a1ddebadb7cca4fb4cb178901f8a5ac42f0e12d0f0fd6aac8013bc",
+    "commit": "69780ed44247599b15ad98cc4a9de704b2cd7907",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The standard requires \u201cForge shrinks over time\u201d and a \u201crefactor ratchet in CI.\u201d This finding remains open: the current src/forge/*.py files total 8,542 lines, exceeding the unchanged 8,500-line ceiling at pyproject.toml:40. tests/test_rules.py:67 enforces that ceiling, and the supplied close run confirms the failure. Reduce actual code or process enough to pass the existing check; joining lines or removing blank lines does not satisfy the standard.",
-        "file": "src/forge/land.py",
-        "line": 21,
-        "priority": "P1",
-        "title": "Standard: Forge shrinks over time"
-      }
-    ],
-    "status": "blocked",
-    "tree": "869b29c861e16564905276d588b6539570b43cb65a7e558ff05696168f45a432"
+    "findings": [],
+    "status": "clean",
+    "tree": "9fc50d1a25ad1445d8acb162aa9a8e0dd69fe21e53574d2174a10f0ddb6c05fb"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T01:18:06+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-01T08:31:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T09:49:43+00:00",
       "step": "review"
     }
   ]
