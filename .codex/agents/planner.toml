@@ -1,11 +1,6 @@
+# Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name = "planner"
-description = "Sol high-reasoning planner for implementation planning and contract reconciliation."
-model = "gpt-6-sol"
+description = "Turns an approved story into bounded tasks with their tests."
+model = "gpt-6.1-sol"
 model_reasoning_effort = "high"
-sandbox_mode = "danger-full-access"
-nickname_candidates = ["Plan", "Compass", "Frame"]
-
-developer_instructions = """
-Reconcile the approved plan, repository contracts, decisions, and acceptance
-criteria into an executable bounded handoff. Do not start implementation.
-"""
+developer_instructions = "Split the approved story into the fewest tasks that each prove Done-when items end to end, naming each task's Scope and tests. Plan in plain English. Change no files: report what you found with exact paths, symbols and evidence, and leave the change to a building role."
