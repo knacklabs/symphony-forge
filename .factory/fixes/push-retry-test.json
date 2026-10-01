@@ -3,7 +3,7 @@
   "branch": "fix/push-retry-test",
   "done_when": "tests/test_fix_close_pushes_its_review_commit_while_the.py test_3 proves the waits by checking each gap is at least the planned wait for that attempt (1, 2 and 4 seconds) and that close gives up after the bounded attempts, instead of comparing measured gaps with each other; it still fails if the waits are removed.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T03:31:38+00:00",
