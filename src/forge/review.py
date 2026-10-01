@@ -213,7 +213,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
               # read after close merged the default branch, which may change the command
-              "test_run": _test_run(top, repo.config(top)["test"])}
+              "test_run": _test_run(top, repo.config(top)["test"], base)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -250,13 +250,20 @@ def _review_rules(top: Path) -> str:
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
-def _test_run(top: Path, command: str) -> str:
+def _test_run(top: Path, command: str, base: str) -> str:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
     exit status, every line that mentions a skip with the line before it (where Go's -v prints the
     reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs).
-    Skipped when it already passed here on the same committed files; one run per machine at a time."""
+    Skipped when it already passed here on the same committed files, or when the change touches
+    only docs, plans, Markdown or Forge's records; one run per machine at a time."""
     if not command:
         return "forge.toml names no test command, so close ran none."
+    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                       cwd=top).split("\0")
+    if all(path.startswith(DOCS) or path.endswith(".md") for path in changed if path):
+        said = DOCS_ONLY.format(command=command)
+        print(said, flush=True)
+        return said
     from forge import codex  # codex imports review indirectly
 
     folder = machine._repos_file().parent
@@ -290,6 +297,9 @@ def _test_run(top: Path, command: str) -> str:
                       "forge close.", *lines])
 
 
+DOCS = ("docs/", "plans/", ".factory/")
+DOCS_ONLY = ("This change touches only docs, plans, Markdown or Forge's records, so close did not run "
+             "`{command}`.")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
 
