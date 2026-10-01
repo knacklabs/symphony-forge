@@ -497,8 +497,8 @@ def test_18_close(env, kind):
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
     assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
-    assert "1. P1 Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
-    assert "2. P2 Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
+    assert "- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
+    assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): advisory" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
         "rev-parse", "HEAD", cwd=where)
@@ -514,7 +514,7 @@ def test_18_close(env, kind):
     second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
     assert second.returncode == 0, second.stderr
     assert len(env.review_calls()) == 1
-    assert ("1. P1 Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
+    assert ("- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
             "the basket is saved here") in body(env.gh_calls("pr", "edit")[-1])
     assert second.stdout.splitlines()[-1] == (
         f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
