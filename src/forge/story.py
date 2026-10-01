@@ -64,8 +64,6 @@ REFUSALS = {
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
     "plan_conflict": ("Merging {ref} into story/{key} conflicts in {files}, so Forge changed nothing.",
                       "merge {ref} into story/{key} by hand, then forge task start {item}"),
-    "plan_uncommitted": ("Merging {ref} into story/{key} would overwrite uncommitted edits in {folder}, "
-                         "so Forge changed nothing.", "commit them, then forge task start {item}"),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -546,45 +544,31 @@ def landed_ref(top: Path) -> str:
     return default if found else fetched
 
 
-def plan_behind(top: Path, key: str, ref: str) -> str | None:
-    """None unless ref's plans/<KEY>.md is a version story/<KEY> never had, as when a fix edits the
-    plan; then the newest commit on ref whose version it had ("" for none): where a squashed task
-    last carried the plan over."""
-    branch, doc = f"story/{key}", f"plans/{key}.md"
-    if repo.run("git", "rev-parse", "-q", "--verify", f"refs/heads/{branch}", cwd=top).returncode:
-        return None
-    had = set(repo.git("log", "--full-history", "--raw", "--no-abbrev", "--format=", branch, "--", doc,
-                       cwd=top).split())
-    commits = repo.git("log", "--format=%H", ref, "--", doc, cwd=top).splitlines()
-    for n, commit in enumerate(commits):
-        if repo.run("git", "rev-parse", f"{commit}:{doc}", cwd=top).stdout.strip() in had:
-            return commit if n else None
-    return "" if commits else None
+def plan_behind(top: Path, key: str, ref: str) -> bool:
+    """ref has commits to plans/<KEY>.md that story/<KEY> lacks, as when a fix edits the plan."""
+    branch = f"refs/heads/story/{key}"
+    return (repo.run("git", "rev-parse", "-q", "--verify", branch, cwd=top).returncode == 0
+            and bool(repo.git("rev-list", "-1", f"{branch}..{ref}", "--", f"plans/{key}.md", cwd=top)))
 
 
-def merge_default(top: Path, key: str, ref: str, since: str, item: str) -> None:
-    """Merge ref into story/<KEY>, or refuse and change nothing. Tasks land squashed, so the branch
-    first takes `since` keeping its own side, as the squash only carried the branch's planning; the
-    real merge then sees only what changed on ref after it."""
-    branch, folder = f"story/{key}", stories_here(top).get(key)
-    tip = head = repo.git("rev-parse", branch, cwd=top)
-    for theirs, options in ((since, ("-X", "ours")), (ref, ())):
-        if not theirs or repo.run("git", "merge-base", "--is-ancestor", theirs, head, cwd=top).returncode == 0:
-            continue
-        done = repo.run("git", "merge-tree", "--write-tree", "--name-only", "--no-messages", *options,
-                        head, theirs, cwd=top)
-        tree, *files = done.stdout.splitlines() or [""]
-        if done.returncode:
-            repo.refuse(REFUSALS["plan_conflict"], ref=ref, key=key, files=", ".join(dict.fromkeys(files)),
-                        item=item)
-        head = repo.git("commit-tree", tree, "-p", head, "-p", theirs, "-m",
-                        f"Bring in {ref}'s changes to the plan", cwd=top)
-    if folder:  # its checkout moves too; git refuses when that would overwrite uncommitted edits
-        if repo.run("git", "merge", "-q", "--ff-only", head, cwd=folder).returncode:
-            repo.refuse(REFUSALS["plan_uncommitted"], ref=ref, key=key, folder=folder, item=item)
-    else:
-        repo.git("update-ref", f"refs/heads/{branch}", head, tip, cwd=top)
-    print(f"Merged the default branch into {branch}.")
+def story_folder(top: Path, key: str) -> tuple[Path, bool]:
+    """The story's worktree, or where forge story new would put it; and whether it exists."""
+    main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+    found = stories_here(top).get(key)
+    return found or main.parent / f"{main.name}-story-{key}", found is not None
+
+
+def merge_default(top: Path, key: str, ref: str, item: str) -> None:
+    """Merge ref into story/<KEY> in its worktree, or abort the merge and refuse."""
+    folder, exists = story_folder(top, key)
+    if not exists:
+        repo.git("worktree", "add", "-q", str(folder), f"story/{key}", cwd=top)
+    if repo.run("git", "merge", "-q", "--no-edit", ref, cwd=folder).returncode:
+        files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=folder).splitlines()
+        repo.run("git", "merge", "--abort", cwd=folder)
+        repo.refuse(REFUSALS["plan_conflict"], ref=ref, key=key, item=item,
+                    files=", ".join(files) or "its uncommitted edits")
+    print(f"Merged {ref} into story/{key}.")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:

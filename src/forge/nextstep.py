@@ -288,9 +288,6 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
-    behind = story.plan_behind(top, key, story.landed_ref(top)) is not None
-    if behind:  # the default branch's rows, which forge task start merges in first
-        text = story.show(top, story.landed_ref(top), f"plans/{key}.md") or text
     try:
         doc = story.parse(text)
     except ValueError as exc:
@@ -302,13 +299,12 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
-    lacks = [f"The default branch has changes to plans/{key}.md that story/{key} lacks; forge task "
-             "start merges them in first."] if behind else []
-    cleanup = lacks + [line for task in doc["tasks"]
+    cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    if states and len(merged) == len(states):
+    behind = story.plan_behind(top, key, ref := story.landed_ref(top))  # the rows here are old
+    if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
@@ -320,6 +316,11 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
+    if behind:
+        folder, exists = story.story_folder(top, key)
+        add = "" if exists else f"git worktree add {shlex.quote(str(folder))} story/{key}, then "
+        return lines + [f"The default branch has changes to plans/{key}.md that story/{key} lacks.",
+                        f"Next: {add}git -C {shlex.quote(str(folder))} merge {ref}"], list(states.values())
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]

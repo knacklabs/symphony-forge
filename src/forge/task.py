@@ -133,9 +133,8 @@ def start(args: argparse.Namespace) -> None:
     key, task = match["key"], match["task"]
     from forge import story  # story imports this module's helpers
     main = main_ref()
-    since = story.plan_behind(repo.root(), key, main)
-    if since is not None:  # a plan edit that reached the default branch another way, as a fix
-        story.merge_default(repo.root(), key, main, since, item)
+    if story.plan_behind(repo.root(), key, main):  # a plan edit that reached it another way, as a fix
+        story.merge_default(repo.root(), key, main, item)
     doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the
     # story branch holds it, and tasks start from there. After that, a story read in rounds is
