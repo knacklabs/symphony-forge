@@ -146,7 +146,7 @@ def start(args: argparse.Namespace) -> None:
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
     try:
-        story.parse(text)
+        story.parse(text, repo.root())
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
     notes = show(source, notes_rel)
@@ -168,10 +168,10 @@ def start(args: argparse.Namespace) -> None:
     started = _started(main)
     if item in started or _merged(main, item):
         refuse(REFUSALS["started"], item=item, branch=branch)
-    waiting = [dep for dep in cell_list(tasks[task].get("After", ""))
-               if not _merged(main, f"{key}/{dep}")]
+    waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
+    waiting = [dep for dep in waiting if not _merged(main, dep)]
     if waiting:
-        refuse(REFUSALS["waiting"], item=item, deps=", ".join(f"{key}/{dep}" for dep in waiting))
+        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     scope = cell_list(tasks[task].get("Scope", ""))
     for other, theirs in started.items():
         shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]

@@ -315,8 +315,9 @@ def sections(text: str) -> dict[str, str]:
     return found
 
 
-def parse(text: str) -> dict[str, Any]:
+def parse(text: str, top: Path | None = None) -> dict[str, Any]:
     """A story doc's title, sections, Done-when items, task rows and `New moving parts:` line.
+    With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan.
 
     Raises ValueError naming what is malformed, and the task row when a row is wrong.
     """
@@ -360,16 +361,35 @@ def parse(text: str) -> dict[str, Any]:
             raise ValueError(f"Tasks row {task}: Scope is empty")
         tasks[task] = {**row, "id": task, "covers": covers, "scope": scope,
                        "tests": _cell_paths(row["Tests"]),
-                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*", row["After"]),
+                       "after": re.findall(r"[A-Z0-9][A-Z0-9-]*(?:/[A-Z0-9][A-Z0-9-]*)?", row["After"]),
                        "user_facing": row["User-facing"].lower() in ("yes", "true")}
     for task in tasks.values():
-        unknown = [after for after in task["after"] if after not in tasks]
+        unknown = [after for after in task["after"] if "/" not in after and after not in tasks]
         if unknown:
             raise ValueError(f"Tasks row {task['id']}: After {unknown[0]} is not a task in this table")
+        for other in (after for after in task["after"] if "/" in after and top):
+            key, _, name = other.partition("/")
+            if name not in _task_ids(_plan(top, key)):
+                raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
     title = re.search(r"^# (.+)$", text, re.M)
     return {"title": title[1].strip() if title else "", "sections": found, "done": done,
             "details": notes, "tasks": list(tasks.values()), "moving_parts": moving[0]}
+
+
+def _plan(top: Path, key: str) -> str:
+    """Story KEY's plan: its worktree's copy, else its story branch's, else the default branch's."""
+    rel, tree = f"plans/{key}.md", stories_here(top).get(key)
+    if tree and (tree / rel).is_file():
+        return _text(tree / rel)
+    return show(top, f"story/{key}", rel) or show(top, landed_ref(top), rel) or ""
+
+
+def _task_ids(text: str) -> set[str]:
+    try:
+        return {task["id"] for task in parse(text)["tasks"]}
+    except ValueError:
+        return set()
 
 
 def details(text: str) -> dict[int, str]:
@@ -650,7 +670,7 @@ def agents_section(top: Path, heading: str) -> str:
 
 def _parsed(doc: Path, rel: str) -> dict[str, Any]:
     try:
-        return parse(_text(doc))
+        return parse(_text(doc), doc.parent.parent)
     except ValueError as exc:
         repo.refuse(REFUSALS["bad_doc"], doc=rel, problem=exc)
 
@@ -730,7 +750,9 @@ def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
             raise ValueError(f"Tasks row {task}: its After list makes a cycle ({loop})")
         if task not in checked:
             for after in tasks[task]["after"]:
-                visit(after, path + [task])
+                # ponytail: a cycle across stories isn't caught; its tasks just wait in forge next
+                if "/" not in after:
+                    visit(after, path + [task])
             checked.add(task)
 
     for task in tasks:
