@@ -275,6 +275,8 @@ New moving parts: one tracked list, `plans/spotted.json` (item 1): no record tha
 - GitHub doesn't run Git's merge rules, so two open pull requests that both add to the list at the
   same place can conflict there, as the roadmap can today; the next `forge close` merges the
   default branch with Forge's rule and settles it (item 6 tells the agent).
+- Out of scope: a hotspot fix promoted to a story closes no entries, since a task never closes
+  entries (item 4); the file stays listed until a later fix names it.
 - Out of scope: `forge work` doesn't refuse a stopped item (its next close still waits for the
   fix); a fix whose review is still current when entries land after it stay open for the next fix;
   rounds reviewed before this story ships flag no files, so they never count towards a stop; the

@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T03:28:47+00:00
-read_hash: 115f4015e8a6f8faebe876c7cfedfabd54b0f4fd
-round: 3
+read_at: 2026-10-01T03:43:09+00:00
+read_hash: c5f7c1330353728a5fef00b6a5b8592f3e26fd22
+round: 4
 passed: no
-doc_seen: 115f4015e8a6f8faebe876c7cfedfabd54b0f4fd
+doc_seen: c5f7c1330353728a5fef00b6a5b8592f3e26fd22
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 7e9df5f55c6bd3019dc0d2e30c11f563c4c06fc7
+notes_seen: 30f501113a1d33e4ee86d7320e87c3c808e61250
 ---
 # Cold read notes
 
@@ -100,3 +100,20 @@ Only a genuine trade-off goes to the human, as a question with options.
 19. Item 5’s assertion that no earlier fix can have the same why is unsupported.
     [task.py:224](src/forge/task.py:224) accepts arbitrary, repeated why text; only fix names are made unique. A previously merged fix with the generated why would immediately release a new stop. Pin exclusion of fixes already merged when the stop was recorded and test that case in `tests/test_hotspot_stop.py`.
     Disposition: cut resumption no longer matches why texts or fix records, only F's content changing since the stop, so an earlier fix with the same why can't release it.
+
+## Round 4
+
+20. Disputed keep 12: changing a file’s content does not prove the simplifying fix merged.
+    Unrelated formatting in `F` releases the stop permanently while the fix remains open, contradicting Done when 5 and the guide. Align that promise with the chosen rule, and test an unrelated change to `F` in `tests/test_hotspot_stop.py`.
+
+21. Item 1’s single-snapshot repair still loses observations after a divergent merge.
+    The branch can contain readable entry A, while the default branch independently gains B. If a malformed A survives the keyed merge, neither earlier readable snapshot contains both entries; restoring one drops A or B. Preserve both histories’ readable observations and prove this case in `tests/test_spotted.py`.
+    Disposition: keep only a hand edit can break the list (Forge alone writes it and its merge driver refuses bad JSON, src/forge/sync.py:225); restoring the newest readable copy is the blunt repair, and rebuilding entries across both histories is the edge-case machinery this story avoids.
+
+22. Unproven: item 4: promoting a hotspot fix to a story leaves its observations open.
+    Promotion turns the fix into a task, but item 4 explicitly prevents tasks from closing entries. After the simplification merges, `forge next` therefore offers the same hotspot again. Pin resolution through promotion and test it in `tests/test_hotspots.py`.
+    Disposition: defer moved to Out of scope: a promoted hotspot fix closes no entries, and the file stays listed until a later fix names it.
+
+23. Trap: Windows line endings and shells: item 1’s repair command splits worktree paths containing spaces.
+    Both repair variants print `git -C {path}` without quoting the checkout path; the recorded-file restriction does not protect that absolute path. Pin supported-shell quoting and test the printed repair from a checkout whose path contains spaces.
+    Disposition: keep the repair prints `git -C {path}` the way close's existing conflict refusal does (src/forge/close.py:26); quoting worktree paths is a Forge-wide matter, not this story's.
