@@ -48,15 +48,16 @@ REFUSALS = {
 class Refused(Exception):
     """A refusal: the problem in one sentence, then the next command."""
 
-    def __init__(self, problem: str, next_step: str, code: int = 1):
+    def __init__(self, problem: str, next_step: str, code: int = 1,
+                 entry: tuple[str, str] | None = None):  # the REFUSALS entry refuse() raised
         super().__init__(f"{problem}\nNext: {next_step}")
-        self.code = code
+        self.code, self.entry = code, entry
 
 
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code)
+    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------

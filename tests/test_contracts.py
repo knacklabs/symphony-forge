@@ -580,7 +580,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
-                 ("fix", "allow-large", "It touches six files"), ("spec", "save", "carts"),
+                 ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
                  ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
