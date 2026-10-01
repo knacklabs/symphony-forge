@@ -1,10 +1,38 @@
 {
   "branch": "task/FORGE-LAND-1-CHECKS",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9b58761136651a6594167de1f3dad90f8fd02be8e3aa9f337eea62df8b7aa6e1",
+    "commit": "4499ede01a4ba677303adaf7bad2492cbb37eb6f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The re-run request's exit status is ignored. `repo.run` returns a CompletedProcess without raising on failure (src/forge/repo.py:66\u201374), so a rejected `gh run rerun` request enters the attempt-wait loop, waits up to 600 seconds, and stops with the re-run refusal instead of returning False and starting a fix round. Item 4 explicitly requires failed gh calls to count as unmet eligibility. Check each request's returncode and add a command-level test for a rejected re-run request.",
+        "file": "src/forge/land.py",
+        "line": 126,
+        "priority": "P1",
+        "title": "Not done: A failed check is re-run once only when its failure names none of the change's files and the tests already passed on this machine."
+      },
+      {
+        "body": "This adds an automatic re-run step and a new refusal directing the coordinator to retry `forge land`, but neither coordinator template changes. AGENTS.md:53\u201355 requires a change to \u201ca step in the flow\u201d to update `src/forge/templates/skill.md` or `src/forge/templates/brief.md` in the same change. The existing land guidance at src/forge/templates/skill.md:404\u2013405 covers judging findings and running workers, but does not explain this new stop and retry path. Update the template to cover the automatic re-run and its refusal.",
+        "file": "src/forge/land.py",
+        "line": 19,
+        "priority": "P1",
+        "title": "Update coordinator guidance for the new re-run step"
+      }
+    ],
+    "status": "blocked",
+    "tree": "d91b03c77dd89c99f90dfad40bf5465ea0e5efdb630b351412d3230caf2e7a6a"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T10:02:53+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T12:29:29+00:00",
+      "step": "review"
     }
   ]
 }
