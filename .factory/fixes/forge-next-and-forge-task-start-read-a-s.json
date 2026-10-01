@@ -3,11 +3,39 @@
   "branch": "fix/forge-next-and-forge-task-start-read-a-s",
   "done_when": "When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start merges the default branch into the story branch first (refusing with a plain message, changing nothing, when that merge conflicts) before reading the task rows. Command-level tests cover a plan edited on the default branch after approval, the merge in task start, and a conflicting merge.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "4845ad4cfce393dd03dab3fd2261d2c1d56451928573431d3b975a76ad01b17a",
+    "commit": "14b3093f0fd40e41f28372b9c8c00341fe3e6253",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The standard requires that \u201cthe suite maps one test to one rule.\u201d This function and the conflict test at line 88 both cite criterion 3 for the same STORY. `tests/test_rules.py:45\u201350` explicitly rejects that duplication, and the supplied close run confirms this exact failure. Consolidate both refusal scenarios into the criterion-3 test so the required suite passes without weakening its rule check.",
+        "file": "tests/test_plan_edits_on_the_default_branch.py",
+        "line": 104,
+        "priority": "P1",
+        "title": "Standard: No rule without a test; no test without a rule"
+      },
+      {
+        "body": "After a squash merge, the first iteration passes `-X ours`, which [Git 2.39's merge-tree implementation](https://github.com/git/git/blob/v2.39.0/builtin/merge-tree.c#L466-L488) does not support. Even a clean plan update then receives a false \u201cconflicts in\u201d refusal with no filenames because every nonzero exit is treated as a conflict. `docs/guide.md:11` requires Git without a minimum version, and `src/forge/doctor.py:89\u201391` checks only its presence. Support the required operation or detect the unsupported version and give an accurate upgrade instruction.",
+        "file": "src/forge/story.py",
+        "line": 574,
+        "priority": "P2",
+        "title": "Handle Git versions without merge-tree strategy options"
+      }
+    ],
+    "status": "blocked",
+    "tree": "de49f750f1e1fcfdee1c1f605cd26d135eb7d33ab657af6c807c01c5907287a1"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T08:07:30+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T09:00:45+00:00",
+      "step": "review"
     }
   ],
   "why": "forge next and forge task start read a story's task rows from its story branch, so a plan edit that reached the default branch another way (a fix) is silently ignored: a client saw a task listed as startable although the merged plan made it wait for a new task"
