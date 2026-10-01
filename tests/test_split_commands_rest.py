@@ -17,7 +17,7 @@ OWNERS = {
     "payback": {"spec payback"},
     "prcheck": {"hook pr-check"},
     "records": {"spec save", "spec confirm", "spec measure", "decision new",
-                "decision accept", "roadmap add"},
+                "decision accept", "roadmap add", "roadmap retire"},
     "story": {"story new", "story done", "read"},
     "task": {"task start", "fix start", "fix allow-large", "fix amend"},
     "worker": {"work"},
