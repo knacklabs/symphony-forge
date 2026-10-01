@@ -1,0 +1,14 @@
+{
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/the-owner-wants-no-claude-md-at-all-in-r",
+  "done_when": "forge sync (and so init, adopt, migrate and upgrade) leaves no CLAUDE.md at the repo root: lines of CLAUDE.md that AGENTS.md doesn't already have are moved into AGENTS.md outside Forge's block, in their order, then CLAUDE.md is deleted; an @AGENTS.md import line and Forge's old block are dropped, never moved. Claude Code reads AGENTS.md itself when there is no CLAUDE.md. The skill and the guide say a repo keeps its rules in AGENTS.md only. Command-level tests: a CLAUDE.md with its own lines (moved, then deleted), one whose lines are already in AGENTS.md (deleted), and a second sync changes nothing.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T16:48:31+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants no CLAUDE.md at all in repos Forge runs, only AGENTS.md, but forge sync keeps a CLAUDE.md that has lines of its own and adds an @AGENTS.md import to it"
+}
