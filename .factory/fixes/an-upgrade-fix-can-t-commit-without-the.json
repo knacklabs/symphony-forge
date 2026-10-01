@@ -1,0 +1,14 @@
+{
+  "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
+  "branch": "fix/an-upgrade-fix-can-t-commit-without-the",
+  "done_when": "The fix-size limit (the commit hook and close) doesn't count files whose content is exactly what forge sync writes for this repo; any other change to them, and every other file, still counts. A command-level test commits an upgrade fix whose only code changes are forge sync's output (accepted without an allowance) and one that also edits a synced file by hand beyond sync's output (counted).",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T15:37:52+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "An upgrade fix can't commit without the owner's allowance because forge sync's own output (host hooks, skills and eleven subagent roles per tool) counts toward the five-code-file fix limit"
+}
