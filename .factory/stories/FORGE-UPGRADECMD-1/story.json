@@ -1,10 +1,22 @@
 {
   "doc": "plans/FORGE-UPGRADECMD-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-09-30T13:44:43+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-09-30T20:12:46+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:20:50+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:10:09+00:00",
+      "step": "read"
     }
   ],
   "title": "One command upgrades Forge in a repo",
