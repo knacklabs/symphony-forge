@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-SPOTTED-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-01T02:26:33+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T02:36:42+00:00",
+      "step": "read"
     }
   ],
   "title": "Forge learns where code keeps breaking",
