@@ -1,0 +1,14 @@
+{
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/a-new-security-advisory-in-a-transitive",
+  "done_when": "When the default branch's lockfiles (any of package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lockb, bun.lock, uv.lock, poetry.lock, Cargo.lock, go.sum) and Dockerfile base images were last changed more than seven days ago by git history, forge next lists a ready fix to refresh dependencies and base images with a filled-in forge fix start command, and the agent starts it like any ready item; nothing is listed when there are no lockfiles. No new record is kept: the age comes from git log. The skill says how to run that fix (update within the allowed ranges, rebuild, run the test command). Command-level tests cover an old lockfile (listed), a fresh one (not listed) and a repo with no lockfile.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T17:03:07+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A new security advisory in a transitive dependency or the base image fails every pull request's image scan on the same day, because nothing refreshes dependencies on a schedule"
+}
