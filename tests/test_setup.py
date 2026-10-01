@@ -23,8 +23,8 @@ ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
     for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
-# .gitattributes carries the roadmap's merge rule.
-LISTED = {"AGENTS.md", ".gitattributes", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+# .gitattributes carries the roadmap's merge rule; .forge/hooks.sh finds forge for the host hooks.
+LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
@@ -86,6 +86,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     _executable(folder / "forge", f'#!/bin/sh\n{{ echo "$*"; cat; echo; }} >> "{log.as_posix()}"\n'
                                   f'[ "$*" != "{failing}" ]\n')
     monkeypatch.setenv("PATH", f"{folder}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("XDG_BIN_HOME", str(folder))  # host hooks put uv's tool folder first
     return log
 
 
@@ -356,7 +357,8 @@ def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path
     _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
     path = [folder for folder in os.environ["PATH"].split(os.pathsep)
             if not (Path(folder) / "forge").is_file()]
-    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path])}
+    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path]),
+           "XDG_BIN_HOME": str(broken)}  # host hooks put uv's tool folder first on PATH
     tools = {"PreToolUse": ("Bash", {"command": "ls"}),
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 
