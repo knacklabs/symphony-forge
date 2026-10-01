@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "ee40504d463ba8b760e77a25f3552043f7450dfba7d9be65d8c9f163e569e832",
-    "commit": "f145b2cc373cd2f444b34b320961f87afc299842",
+    "changed": "d935bb4006327ff984a7faeb194a8ea1294a91e25625ad56cebe6c5661f3c4a4",
+    "commit": "56869ae5501800dfa9321165fb4b718b683f7910",
     "dismissals": [],
     "findings": [
       {
-        "body": "The generated Codex worker role omits `model` because Forge's build model is Claude. However, Forge's own `.codex/config.toml:22` sets `default_subagent_model = \"gpt-6-luna\"`. [Codex's custom-agent documentation](https://developers.openai.com/codex/subagents) says an omitted role model resolves from `[agents]` defaults before the parent session. The worker therefore runs on Luna rather than the session model, contrary to Done-when. This host precedence is new evidence beyond the prior ruling about leaving cross-family models out. `src/forge/sync.py:192-193` preserves the existing config, and the command-level tests inspect the files without checking this effective model.",
-        "file": ".codex/agents/worker.toml",
+        "body": "Forge's `forge.toml:39` selects `gpt-6.1-sol` for review, but the committed Codex debugger, security and performance roles all specify `gpt-6-sol` at line 4. Sessions opened directly in Forge's repo therefore use a different model from its configured review model, and these files differ from what `forge sync` generates. The supplied close run confirms this with the failing `test_3_forge_s_own_repo_has_the_roles_sync_writes_from_its_forge_toml`. Regenerate and commit all three roles to satisfy Done-when.",
+        "file": ".codex/agents/debugger.toml",
         "line": 4,
         "priority": "P1",
-        "title": "Not done: omitted Codex models do not always inherit the session model"
+        "title": "Not done: Forge's own repo gets the same generated roles"
       }
     ],
     "status": "blocked",
-    "tree": "43b96fde0d0958ba9e1f0545f3f0856d236b8752547d4cdf390db76ca6c3538f"
+    "tree": "31ec0a3f591fce14475cefcf7c22d16bf4c329af13a82ed4b90617d82e7c0273"
   },
   "status": "fixing",
   "steps": [
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-09-30T21:18:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T01:45:30+00:00",
       "step": "review"
     }
   ],
