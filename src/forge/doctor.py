@@ -331,6 +331,10 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"- {problem}\n  Fix: {fix}")
     if plan_note:
         print(f"- Note: {plan_note}")
+    if cfg["fast_test"]:
+        print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
+              "the merge base with the default branch; the pull request's tests check still runs "
+              "the full test command.")
     if on_codex:
         # Codex also asks the user to approve each project hook, and no outside program sees that.
         print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see "

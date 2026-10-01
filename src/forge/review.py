@@ -213,7 +213,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
               # read after close merged the default branch, which may change the command
-              "test_run": _test_run(top, repo.config(top)["test"])}
+              "test_run": _test_run(top, close_test(top, base))}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -248,6 +248,15 @@ def _review_rules(top: Path) -> str:
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     block = text.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
+
+
+def close_test(top: Path, base: str) -> str:
+    """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
+    else its test. The pull request's tests check always runs test."""
+    cfg = repo.config(top)
+    if not cfg["fast_test"]:
+        return cfg["test"]
+    return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
 
 
 def _test_run(top: Path, command: str) -> str:

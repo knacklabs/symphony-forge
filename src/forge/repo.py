@@ -130,10 +130,12 @@ def record_timing(top: Path, item: str, step: str, start: str, clock: float,
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "signoff": str,
+KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "fast_test": str,
+        "signoff": str,
         "merge": str, "checks": list, "interfaces": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
-DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "signoff": "",
+DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "fast_test": "",
+            "signoff": "",
             "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex"), "merge": ("agent", "human")}
