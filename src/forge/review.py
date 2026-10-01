@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import machine, repo
+from forge.task import sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -84,12 +85,6 @@ sys.exit(subprocess.call([{real!r}, *argv], cwd={tree!r}))
 # ponytail: STORY's story.py owns full doc parsing; these read only what review and close need.
 
 
-def sections(text: str) -> dict[str, str]:
-    """A story doc's `## ` sections, by heading."""
-    parts = re.split(r"^## +(.+?) *$", text, flags=re.M)
-    return {parts[i].strip(): parts[i + 1].strip() for i in range(1, len(parts), 2)}
-
-
 def rows(tasks: str) -> list[dict[str, str]]:
     """The Tasks table's rows, keyed by lower-case header."""
     table = [[cell.strip() for cell in line.strip().strip("|").split("|")]
@@ -118,7 +113,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
     if row is None:
         repo.refuse(REFUSALS["bad_doc"], key=key, task=name, item=item)
     from forge import story  # story imports review indirectly
-    story._parsed(path, f"plans/{key}.md")  # pyright: ignore[reportPrivateUsage]
+    story._parsed(text, f"plans/{key}.md")  # pyright: ignore[reportPrivateUsage]
     return text, doc, row
 
 
