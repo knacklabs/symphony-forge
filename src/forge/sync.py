@@ -70,22 +70,17 @@ for folder in /usr/local/bin /opt/homebrew/bin "$HOME/.local/bin" "$XDG_BIN_HOME
 done
 export PATH
 if command -v forge >/dev/null 2>&1; then :
-<source>elif command -v uvx >/dev/null 2>&1; then
+elif command -v uvx >/dev/null 2>&1; then
   forge() { uvx -q --from git+https://github.com/knacklabs/symphony-forge@v<version> forge "$@"; }
 else
   forge() { echo "Forge isn't installed, so this hook can't run; install it with <install>, then run forge doctor." >&2; return 2; }
 fi
 """
-# Forge's own repo runs its checkout's code.
-SOURCE_RUN = """elif command -v uv >/dev/null 2>&1; then
-  forge() { uv run -q --project "$(git rev-parse --show-toplevel)" forge "$@"; }
-"""
 
 
 def launcher(cfg: dict[str, Any]) -> str:
     version = cfg["version"].removeprefix("v")
-    return (LAUNCHER_TEXT.replace("<source>", SOURCE_RUN if cfg.get("repo") == "forge-source" else "")
-            .replace("<install>", install_line(version)).replace("<version>", version))
+    return LAUNCHER_TEXT.replace("<install>", install_line(version)).replace("<version>", version)
 
 
 HOSTS = githooks.HOSTS

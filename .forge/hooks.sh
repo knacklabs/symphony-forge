@@ -4,8 +4,6 @@ for folder in /usr/local/bin /opt/homebrew/bin "$HOME/.local/bin" "$XDG_BIN_HOME
 done
 export PATH
 if command -v forge >/dev/null 2>&1; then :
-elif command -v uv >/dev/null 2>&1; then
-  forge() { uv run -q --project "$(git rev-parse --show-toplevel)" forge "$@"; }
 elif command -v uvx >/dev/null 2>&1; then
   forge() { uvx -q --from git+https://github.com/knacklabs/symphony-forge@v1.2.1 forge "$@"; }
 else

@@ -130,6 +130,10 @@ def doctor(args: argparse.Namespace) -> None:
     if not shutil.which("sh"):
         rows.append(("sh isn't on PATH, so no host hook can run.",
                      "install Git, which brings sh, and put it on PATH"))
+    elif wanted and sync.read(top / sync.LAUNCHER) != wanted.get(sync.LAUNCHER):
+        # Every hook sources the launcher, so doctor runs none of them until it is sync's own.
+        rows.append((f"doctor didn't run the host hooks, because {sync.LAUNCHER} differs from what "
+                     "forge sync writes.", "forge sync"))
     else:
         # With a bare PATH, as Codex may run them: each hook must find forge on its own.
         env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
