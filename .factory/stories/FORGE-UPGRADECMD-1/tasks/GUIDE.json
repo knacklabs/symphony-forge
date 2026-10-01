@@ -1,10 +1,23 @@
 {
   "branch": "task/FORGE-UPGRADECMD-1-GUIDE",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9c4469334d7cd2b37625c8cc1e408ee1cff22fe595897546203b81f9fd6e59c0",
+    "commit": "d7dbf1f979585f731a6e288b76e85aff5517cae3",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "b3bc1cade8fe0b50de89295bd2222d6920ed0bc458682d369367042b409895fd"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T01:21:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T03:03:52+00:00",
+      "step": "review"
     }
   ]
 }
