@@ -316,6 +316,8 @@ changing a result or "What changes for you" does.
 - Aim for parallel work: split tasks so each owns its files. A line several tasks would edit (a
   command-table row, a guide list or a registry) goes to one task, or to a small last wiring
   task. Use After only when a task needs another task's code.
+- After names this story's tasks by ID; name another story's task as KEY/TASK (for example
+  TURN-1/T4). `forge next` and `forge task start` hold the task until that task's pull request merges.
 - End the Tasks section with its one `New moving parts:` line (see Build simple).
 - Risks names every one-way step: deleting data, a destructive migration, a new vendor.
 - Use the stack already in the repo. Ask the human only when options differ in cost, lock-in or
