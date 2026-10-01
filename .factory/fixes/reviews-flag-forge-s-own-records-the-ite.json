@@ -1,0 +1,14 @@
+{
+  "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
+  "branch": "fix/reviews-flag-forge-s-own-records-the-ite",
+  "done_when": "The review's list of files outside Scope leaves out Forge's own records (everything under .factory/, plans/roadmap.json and the story's read notes), and the review instructions say to report every instance of a kind of defect it finds in the change together in one finding, naming each place, rather than one per round. Command-level tests show a task's own state file isn't listed outside Scope and the instruction reaches the review prompt.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T15:43:41+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviews flag Forge's own records (the item's state file under .factory/) as unrelated files outside Scope, and keep finding one more instance of the same kind of defect each round instead of all of them at once"
+}
