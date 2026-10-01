@@ -46,3 +46,17 @@ def test_3_sync_deletes_an_empty_claude_md(repo):
     assert repo.forge("sync").returncode == 0
     assert not (repo.path / "CLAUDE.md").exists()
     assert repo.forge("sync").stdout.startswith("Nothing to change")
+
+
+def test_4_sync_turns_an_agents_md_link_to_claude_md_into_a_regular_file_with_every_line(repo):
+    _on_a_branch_with_forge_toml(repo)
+    repo.write("CLAUDE.md", f"{TEAM}- Keep answers short.\n")
+    (repo.path / "AGENTS.md").symlink_to("CLAUDE.md")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "AGENTS.md links to CLAUDE.md")
+    assert repo.forge("sync").returncode == 0
+    assert not (repo.path / "CLAUDE.md").exists() and not (repo.path / "CLAUDE.md").is_symlink()
+    agents = repo.path / "AGENTS.md"
+    assert not agents.is_symlink()
+    assert agents.read_text(encoding="utf-8").startswith(f"{TEAM}- Keep answers short.\n")
+    assert repo.forge("sync").stdout.startswith("Nothing to change")

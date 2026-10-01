@@ -339,6 +339,9 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)
     for rel in changed:
+        path = top / rel
+        if rel == "AGENTS.md" and path.is_symlink() and path.resolve().is_relative_to(top.resolve()):
+            path.unlink()  # a link to CLAUDE.md would lose every line when CLAUDE.md goes
         if wanted[rel]:
             write_file(top, rel, wanted[rel])
         else:
