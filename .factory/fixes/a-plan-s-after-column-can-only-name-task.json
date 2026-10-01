@@ -3,7 +3,7 @@
   "branch": "fix/a-plan-s-after-column-can-only-name-task",
   "done_when": "An After entry may name another story's task as KEY/TASK (for example TURN-1/T4): forge next lists the task as ready, and forge task start starts it, only once that other task's pull request has merged, and both say plainly which task it waits for. A story doc whose After names a task that doesn't exist in that story's plan is refused as malformed, the same way an unknown same-story task is. The skill's plan-writing guidance mentions the form. Command-level tests cover waiting, starting after the other task merges, and an unknown task.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T08:22:18+00:00",
