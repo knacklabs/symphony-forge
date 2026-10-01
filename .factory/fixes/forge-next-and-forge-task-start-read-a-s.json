@@ -12,43 +12,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "54c1fa92568c1cb7a1bdbcddaa9dff577012389e8094ca0f85de628ad7eb41cb",
-    "commit": "cc708f08ea6de02aff988d967dafd5e830e92d2d",
+    "changed": "bdf58d63900aef570dd6d6ce40baf390f44ebaf187e2eb3a85d3084b8b861b7f",
+    "commit": "dd5929c59aa93fdbf3fbca5cacea6669f47d3e05",
     "dismissals": [],
     "findings": [
       {
-        "body": "The Done-when requires one plain line containing both the explanation and merge command. This return emits two lines. Task start likewise emits two because src/forge/repo.py:53 inserts a newline before `Next:`. The new test at tests/test_plan_edits_on_the_default_branch.py:56\u201360 explicitly expects that two-line output instead of checking the required single-line notice. Render and test the same single-line notice in both commands.",
-        "file": "src/forge/nextstep.py",
-        "line": 320,
-        "priority": "P1",
-        "title": "Not done: Both commands must emit the same single-line notice containing the merge command"
-      },
-      {
-        "body": "The standard requires: \u201cReplacing behaviour deletes the old path, its tests and its docs in the same change.\u201d The retained compatibility test at tests/test_readloop_gates.py:275\u2013283 edits the default-branch plan but still expects next to recommend starting SHOW and task start to succeed. Those assertions contradict the new refusal behavior. The supplied close run confirms failure at line 280 and a nonzero suite exit. Update the obsolete expectations while preserving the test's older-notes compatibility coverage; do not bypass the new gate to satisfy them.",
-        "file": "src/forge/nextstep.py",
-        "line": 320,
-        "priority": "P1",
-        "title": "Standard: Replacing behaviour deletes the old path, its tests and its docs in the same change"
-      },
-      {
-        "body": "This test changes \u201cWhat changes for you\u201d without renewing approval. src/forge/approval.py:84\u201390 therefore returns a waiting digest, and src/forge/nextstep.py:296\u2013298 returns the approval guidance before reaching plan_behind at line 306. Consequently, this assertion passes without exercising next's newer-story exemption. The task-start assertion exercises the helper, but does not establish the required behavior through next. Change a section outside the approval hash, or read and reapprove the revised plan before checking next.",
-        "file": "tests/test_plan_edits_on_the_default_branch.py",
-        "line": 91,
-        "priority": "P1",
-        "title": "Not done: Test that forge next does not flag a newer story-branch edit"
-      },
-      {
-        "body": "The folder is interpolated without shell quoting in both command variants. For a checkout under a path containing spaces, `git -C /path/My Project/... merge origin/main` treats `/path/My` as the directory and fails, leaving the user unable to follow the suggested recovery command as printed. Quote the folder wherever it appears in these commands.",
-        "file": "src/forge/story.py",
-        "line": 553,
+        "body": "The newly added assertion assumes the default-branch edit is strictly newer than the story edit, but both commits use the real clock. If the commits at lines 269 and 278 occur within the same second, src/forge/story.py:571\u2013572 correctly treats their timestamps as equal and emits no notice, causing this test to fail. Set distinct GIT_COMMITTER_DATE values for those commits, as the new regression tests already do, so the suite does not depend on execution speed.",
+        "file": "tests/test_readloop_gates.py",
+        "line": 280,
         "priority": "P2",
-        "title": "Quote worktree paths in the suggested merge commands"
+        "title": "Give the compatibility test deterministic commit times"
       }
     ],
-    "status": "blocked",
-    "tree": "8e97e5dab6fa50446518e00264085b38302ae5a010c0327fea53c277e1d2d2b9"
+    "status": "clean",
+    "tree": "d49fc37fc50cc99406c4e36a7bc90d82d3b4bc0205939dc80594abb98070232a"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T08:07:30+00:00",
@@ -64,6 +43,10 @@
     },
     {
       "at": "2026-10-01T17:45:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T19:10:47+00:00",
       "step": "review"
     }
   ],
