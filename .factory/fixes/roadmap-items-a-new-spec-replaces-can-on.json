@@ -3,7 +3,7 @@
   "branch": "fix/roadmap-items-a-new-spec-replaces-can-on",
   "done_when": "forge roadmap retire <key> --by <spec> marks a pending roadmap item superseded and records the spec that replaces it, in a fix like other roadmap changes; it refuses with a plain message for an unknown key, an item already started or done, or a spec that doesn't exist; forge next and the board stop listing superseded items, and the roadmap merge rule keeps the superseded status. The skill's intent table has a row for it. Command-level tests cover retiring a pending item, each refusal, and next no longer listing it.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T17:11:37+00:00",
