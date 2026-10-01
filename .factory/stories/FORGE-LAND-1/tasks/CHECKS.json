@@ -2,29 +2,14 @@
   "branch": "task/FORGE-LAND-1-CHECKS",
   "review": {
     "blocking_level": "P1",
-    "changed": "9b58761136651a6594167de1f3dad90f8fd02be8e3aa9f337eea62df8b7aa6e1",
-    "commit": "4499ede01a4ba677303adaf7bad2492cbb37eb6f",
+    "changed": "7cc224a0ed84e7f5a0910fdd28ed3140f672c04be45a5301ab56f4b7f7ad2589",
+    "commit": "08e2f089898af1c9445dbbaf5131c7ce6ed65acc",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The re-run request's exit status is ignored. `repo.run` returns a CompletedProcess without raising on failure (src/forge/repo.py:66\u201374), so a rejected `gh run rerun` request enters the attempt-wait loop, waits up to 600 seconds, and stops with the re-run refusal instead of returning False and starting a fix round. Item 4 explicitly requires failed gh calls to count as unmet eligibility. Check each request's returncode and add a command-level test for a rejected re-run request.",
-        "file": "src/forge/land.py",
-        "line": 126,
-        "priority": "P1",
-        "title": "Not done: A failed check is re-run once only when its failure names none of the change's files and the tests already passed on this machine."
-      },
-      {
-        "body": "This adds an automatic re-run step and a new refusal directing the coordinator to retry `forge land`, but neither coordinator template changes. AGENTS.md:53\u201355 requires a change to \u201ca step in the flow\u201d to update `src/forge/templates/skill.md` or `src/forge/templates/brief.md` in the same change. The existing land guidance at src/forge/templates/skill.md:404\u2013405 covers judging findings and running workers, but does not explain this new stop and retry path. Update the template to cover the automatic re-run and its refusal.",
-        "file": "src/forge/land.py",
-        "line": 19,
-        "priority": "P1",
-        "title": "Update coordinator guidance for the new re-run step"
-      }
-    ],
-    "status": "blocked",
-    "tree": "d91b03c77dd89c99f90dfad40bf5465ea0e5efdb630b351412d3230caf2e7a6a"
+    "findings": [],
+    "status": "clean",
+    "tree": "b19e8a292d1b5d8edbe7e55fd6745a9f4b3f03ee5ed951e70e7214f3c9cabf84"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T10:02:53+00:00",
@@ -32,6 +17,10 @@
     },
     {
       "at": "2026-10-01T12:29:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T16:09:17+00:00",
       "step": "review"
     }
   ]
