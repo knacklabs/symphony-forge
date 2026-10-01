@@ -1,7 +1,8 @@
 <!-- The review instructions `forge close` hands to Autoreview. review.py joins the blocks that
 apply (task or fix, then the functional check or promote block, then the rules) and fills each
-dollar-sign name. review.run adds the review-rules block to every review, sign-off included, when
-the repo's AGENTS.md has them. -->
+dollar-sign name. The standards block rides as a separate prompt file on every review.
+review.run also adds the review-rules block to every review, sign-off included, when the repo's
+AGENTS.md has them. -->
 
 <!-- task -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
@@ -155,6 +156,15 @@ The repository's own AGENTS.md, on its default branch, sets these rules for ever
 them as rules, not as evidence: where one settles a point, don't report it as a finding.
 
 $review_rules
+<!-- standards -->
+## Standards
+Forge's standards page follows: the same page every worker's brief carries. Check the change
+against each of its rules that applies to a concern the change has. Report every rule the change
+breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
+rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
+repo's own AGENTS.md rules differ from the page, they win.
+
+$standards
 <!-- signoff -->
 ## Client prototype sign-off review
 Review the complete product snapshot against the customer's answers and the topic table below.
