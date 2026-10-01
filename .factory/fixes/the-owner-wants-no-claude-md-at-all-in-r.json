@@ -4,11 +4,32 @@
   "branch": "fix/the-owner-wants-no-claude-md-at-all-in-r",
   "done_when": "forge sync (and so init, adopt, migrate and upgrade) leaves no CLAUDE.md at the repo root: lines of CLAUDE.md that AGENTS.md doesn't already have are moved into AGENTS.md outside Forge's block, in their order, then CLAUDE.md is deleted; an @AGENTS.md import line and Forge's old block are dropped, never moved. Claude Code reads AGENTS.md itself when there is no CLAUDE.md. The skill and the guide say a repo keeps its rules in AGENTS.md only. Command-level tests: a CLAUDE.md with its own lines (moved, then deleted), one whose lines are already in AGENTS.md (deleted), and a second sync changes nothing.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "016188ee2e9b4ed4533bf69a466ebc3ff5dad2e780c79d3b59e4b49c1c0e2c96",
+    "commit": "9decba1239b63aaeff44ee415584cd97bd556721",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "An existing zero-byte CLAUDE.md survives sync. This entry requests deletion using an empty string, but src/forge/sync.py:335 selects changes only when the current contents differ from that string. An empty CLAUDE.md therefore never reaches unlink at line 343, and subsequent syncs report nothing to change. This also defeats the purpose of the migration: [Claude's loading contract](https://code.claude.com/docs/en/memory#agentsmd) selects CLAUDE.md instead of AGENTS.md when CLAUDE.md exists. Select deletion by file presence, including empty files, and cover this case through the command.",
+        "file": "src/forge/githooks.py",
+        "line": 74,
+        "priority": "P1",
+        "title": "Not done: forge sync (and so init, adopt, migrate and upgrade) leaves no CLAUDE.md at the repo root: lines of CLAUDE.md that AGENTS.md doesn"
+      }
+    ],
+    "status": "blocked",
+    "tree": "03adc855624f042d8777a180da929558146d3c90e56f9e39f08b22489857b930"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T16:48:31+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T18:43:32+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner wants no CLAUDE.md at all in repos Forge runs, only AGENTS.md, but forge sync keeps a CLAUDE.md that has lines of its own and adds an @AGENTS.md import to it"
