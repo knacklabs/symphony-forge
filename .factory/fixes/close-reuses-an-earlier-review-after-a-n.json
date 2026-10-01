@@ -3,7 +3,7 @@
   "branch": "fix/close-reuses-an-earlier-review-after-a-n",
   "done_when": "The review fingerprint also covers every file a finding of the earlier review cites, so a commit that changes such a file (even under plans/) makes the next close review the new head instead of reusing the old result. A command-level test closes a fix whose review cites plans/roadmap.json, changes that file, closes again, and shows a fresh review ran.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T17:39:48+00:00",
