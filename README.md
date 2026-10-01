@@ -138,10 +138,11 @@ prints the exact install line if yours doesn't match.
 
 ### Upgrade a project
 
-Tell your agent "upgrade Forge to v1.2.1" (or whichever version). It does it as a small fix:
-changes the version in `forge.toml`, installs that release, runs `forge sync` to refresh Forge's
-own files (your own text stays), checks with `forge doctor`, and opens the pull request. Always
-name a released version, not "main".
+Tell your agent "upgrade Forge". It asks which release, recommending the newest, then runs
+`forge upgrade <release>` from the main branch with nothing uncommitted. That one command
+installs the release, has it refresh Forge's files for Claude Code and Codex (your own text and
+settings stay), and opens the upgrade's pull request, which merges like any other change. If it
+stops, its `Next:` line says what to do; running it again picks up where it stopped.
 
 ### Start working
 
