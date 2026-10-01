@@ -303,7 +303,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, ref := story.landed_ref(top))  # the rows here are old
+    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -317,10 +317,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
     if behind:
-        folder, exists = story.story_folder(top, key)
-        add = "" if exists else f"git worktree add {shlex.quote(str(folder))} story/{key}, then "
-        return lines + [f"The default branch has changes to plans/{key}.md that story/{key} lacks.",
-                        f"Next: {add}git -C {shlex.quote(str(folder))} merge {ref}"], list(states.values())
+        return lines + [story.REFUSALS["plan_behind"][0].format(key=key), f"Next: {behind}"], list(states.values())
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]

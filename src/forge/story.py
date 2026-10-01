@@ -62,8 +62,7 @@ REFUSALS = {
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
-    "plan_conflict": ("Merging {ref} into story/{key} conflicts in {files}, so Forge changed nothing.",
-                      "merge {ref} into story/{key} by hand, then forge task start {item}"),
+    "plan_behind": ("The default branch has changes to plans/{key}.md that story/{key} lacks.", "{command}"),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -544,31 +543,21 @@ def landed_ref(top: Path) -> str:
     return default if found else fetched
 
 
-def plan_behind(top: Path, key: str, ref: str) -> bool:
-    """ref has commits to plans/<KEY>.md that story/<KEY> lacks, as when a fix edits the plan."""
-    branch = f"refs/heads/story/{key}"
-    return (repo.run("git", "rev-parse", "-q", "--verify", branch, cwd=top).returncode == 0
-            and bool(repo.git("rev-list", "-1", f"{branch}..{ref}", "--", f"plans/{key}.md", cwd=top)))
-
-
-def story_folder(top: Path, key: str) -> tuple[Path, bool]:
-    """The story's worktree, or where forge story new would put it; and whether it exists."""
+def plan_behind(top: Path, key: str, ref: str) -> str:
+    """The command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs from the story
+    branch's and ref changed it last, as when a fix edits the plan; else ""."""
+    branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
+    if show(top, branch, doc) in (None, show(top, ref, doc)):
+        return ""
+    ours, theirs = (repo.git("log", "-1", "--format=%ct", tip, "--", doc, cwd=top) for tip in (branch, ref))
+    if not theirs or int(theirs) <= int(ours or 0):
+        return ""
+    folder = stories_here(top).get(key)
+    if folder:
+        return f"git -C {folder} merge {ref}"
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
-    found = stories_here(top).get(key)
-    return found or main.parent / f"{main.name}-story-{key}", found is not None
-
-
-def merge_default(top: Path, key: str, ref: str, item: str) -> None:
-    """Merge ref into story/<KEY> in its worktree, or abort the merge and refuse."""
-    folder, exists = story_folder(top, key)
-    if not exists:
-        repo.git("worktree", "add", "-q", str(folder), f"story/{key}", cwd=top)
-    if repo.run("git", "merge", "-q", "--no-edit", ref, cwd=folder).returncode:
-        files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=folder).splitlines()
-        repo.run("git", "merge", "--abort", cwd=folder)
-        repo.refuse(REFUSALS["plan_conflict"], ref=ref, key=key, item=item,
-                    files=", ".join(files) or "its uncommitted edits")
-    print(f"Merged {ref} into story/{key}.")
+    folder = main.parent / f"{main.name}-story-{key}"
+    return f"git worktree add {folder} story/{key}, then git -C {folder} merge {ref}"
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
