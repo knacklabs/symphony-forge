@@ -1,0 +1,40 @@
+{
+  "allow_large": "The owner asked on 2026-09-30 to move reviews to gpt-6.1-sol; the change is a model-name swap in the review defaults and the tests that pin the old name (41 lines)",
+  "base": "e8792e10682106b7133c91a821689fa6c5538799",
+  "branch": "fix/the-owner-chose-gpt-6-1-sol-at-high-effo",
+  "done_when": "Forge's review default for new repos, the light prototype review (effort stays medium), the client sign-off review's pinned model (effort stays high) and this repo's forge.toml [models.review] all use gpt-6.1-sol, and docs/guide.md names the current defaults (it still says design uses gpt-6-sol). Existing client repos' forge.toml files are not rewritten. Tests that pin the old model name are updated to the new contract.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "f44eaad5bc42cebdefd423de14c763c58b3dfc3616f19b9a56a2aef668158815",
+    "commit": "33a65b240ab7831dcf95749af89f8e0c5be5b8e9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "62e412f4f0f4ea3944456448095a5bd6c47907e7947ce5a61c981fefe844bc56"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-09-30T11:47:46+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T15:34:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T18:52:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T19:36:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-09-30T21:03:05+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner chose gpt-6.1-sol at high effort for reviews too, so every Forge default now uses it, but the review default, the light review, the sign-off pin and Forge's own forge.toml still name gpt-6-sol"
+}

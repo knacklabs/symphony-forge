@@ -110,7 +110,7 @@ uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
 uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
 high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
-Forge uses `[models.design.codex]` instead: `gpt-6-sol` at high effort by default. Forge prints
+Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
 failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its
 usual worker and model settings. Set either design table's `model` and `effort` in `forge.toml`
