@@ -188,13 +188,17 @@ merging is off, a human merges the ready pull request.
 
 You never edit `forge.toml` by hand. Ask your coding agent to upgrade Forge, or to change any
 other setting such as the workers or the test command; it asks you first, with options, then
-makes the change in a fix like any other:
+makes the change in a fix like any other.
 
-1. `forge fix start "Upgrade Forge to vX.Y.Z" --done "forge doctor passes on vX.Y.Z"`.
-2. It changes `version` in `forge.toml` to `vX.Y.Z`.
-3. It installs that release with the `uv tool install` line above, using `@vX.Y.Z`.
-4. `forge sync` rewrites the generated files for the new version.
-5. `forge close <fix>`, then it is merged as described in Merging a ready item.
+To upgrade, the agent asks which release you want, recommending the newest, then runs
+`forge upgrade <release>` (or `forge upgrade` for the newest) from the default branch with
+nothing uncommitted. The command starts a fix, changes only `version` in `forge.toml`, installs
+that release, has it rewrite Forge's generated files for Claude Code and Codex, and closes the
+fix. Close's last line says who merges, as described in Merging a ready item. When the command
+refuses, follow its `Next:` line; running it again picks up where it stopped.
+
+A repo pinned to a release older than the command upgrades once with
+`uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge upgrade vX.Y.Z`.
 
 ## Releasing Forge
 
