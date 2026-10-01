@@ -1,0 +1,27 @@
+{
+  "base": "6b39c8cf9633aa4a33b06fe52fc6a66fd296343e",
+  "branch": "fix/roadmap-spotted",
+  "done_when": "plans/roadmap.json has a pending entry FORGE-SPOTTED-1 after the current last item",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "e1043cf4918626f30ae586498559e227a025069bfe521bd7a4ac7a604557b247",
+    "commit": "b4c529cc9decc9b88931357533950e6b275f4831",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c25a2dbac89945d3c1c3b4f69e059a9e5cb756ad9f619c999d8a8514985484ad"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T01:50:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T02:14:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge learning where code keeps breaking needs a roadmap entry for its story"
+}
