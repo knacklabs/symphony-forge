@@ -13,7 +13,9 @@ import json
 import pkgutil
 import re
 import shlex
+import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -306,6 +308,22 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 raise ValueError(f"shipped twice: {rel}")
             wanted[rel] = text
     return wanted
+
+
+def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
+    """The paths whose content at head ("" for the index) is exactly what forge sync writes over
+    the base commit's files with this config, so a fix's size doesn't count them."""
+    def show(rev: str, path: str) -> bytes:
+        done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
+        return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
+
+    # ponytail: unpacks the whole base tree once per oversized fix; list sync's inputs if it's slow.
+    with tempfile.TemporaryDirectory() as tmp:
+        tar = subprocess.run(["git", "archive", base], cwd=top, capture_output=True, check=True)
+        subprocess.run(["tar", "-x", "-C", tmp], input=tar.stdout, check=True)
+        wanted = files(Path(tmp), cfg)
+    return {path for path in paths
+            if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
 
 
 def command_page() -> str:

@@ -390,8 +390,9 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 ## Closing
 
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
-recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
-recorded before editing.
+recorded allowance; files whose content is exactly what `forge sync` writes don't count, so an
+upgrade fix needs no allowance. If the work exceeds that boundary, promote it to a story or get the
+allowance recorded before editing.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.

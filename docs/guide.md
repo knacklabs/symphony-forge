@@ -147,7 +147,8 @@ answer and tells you to check `git status` before asking again.
 - **Story:** any change that touches an interface or more than five code files.
 - **Fix:** a small change, started with `forge fix start "<why>" --done "<done when>"`. Specs,
   decisions, the roadmap and discovery notes always ship as fixes, since planning documents don't
-  count toward the limit. A fix that grows past five code files or touches an interface is
+  count toward the limit, and neither does a file whose content is exactly what `forge sync`
+  writes. A fix that grows past five code files or touches an interface is
   refused at commit; either promote it with `forge story new <KEY> --from-fix <fix>`, which keeps
   its commits, or have the human allow it with `forge fix allow-large "<reason>"`. In a client repo,
   fixes started before sign-off have the prototype allowance; a fix keeps that allowance after
