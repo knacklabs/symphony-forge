@@ -68,8 +68,10 @@ Risks: none
    paths only when `record` returned True. So a new `Spotted:` line is recorded on the next close
    even when the review is reused, a close that spots nothing new makes no extra commit, and no file
    is created when nothing was ever spotted. The list sits under `plans/`, which the review's
-   fingerprint skips (`review.BOOKKEEPING`, src/forge/review.py:32), so recording never makes a
-   review stale. `record` reads three sources:
+   fingerprint skips (`review.BOOKKEEPING`, src/forge/review.py:32), and `review.fingerprint` skips
+   `plans/spotted.json` even when a fix's done-when names it (the
+   exception at src/forge/review.py:120 doesn't apply to it), so recording never makes a review
+   stale. `record` reads three sources:
    - worker: each line of each non-merge commit message in `<base>..HEAD` (`base` is
      `origin/<default>`), with trailing whitespace and `\r` stripped, that fully matches
      `Spotted: (bug|simplify|edge|improve) (\S+):([0-9]+) (\S.*)`; a `\` in the path becomes `/`
@@ -89,9 +91,13 @@ Risks: none
    Close reads the file right after merging the default branch, before the review, and refuses an
    unreadable one with `spotted.REFUSALS["bad"]`: `plans/spotted.json isn't a list Forge can read:
    {problem}.` / Next: `{repair}, commit it, then forge close {item}`, running no review and
-   committing nothing. `{repair}` is `git -C {path} checkout origin/{default} -- plans/spotted.json`
-   when the default branch's copy reads, and `git -C {path} rm -q plans/spotted.json` when that copy
-   is missing or unreadable too.
+   committing nothing. `{repair}` is `git -C {path} checkout {commit} -- plans/spotted.json`, where
+   `{commit}` is the newest commit on `origin/{default}` whose copy reads (`git log --format=%H
+   origin/{default} -- plans/spotted.json`, newest first), so no entry the default branch ever held
+   readably is lost; only when no commit there has a readable copy is it
+   `git -C {path} rm -q plans/spotted.json`, and then there was nothing to keep. The entries this
+   branch had are recorded again by the next close, which reads the worker's commits and the
+   review's findings afresh.
    Merging: `forge sync` adds `plans/spotted.json merge=forge-roadmap` (`sync.SPOTTED_RULE`) to
    `.gitattributes` beside `sync.ROADMAP_RULE`, each line added only when missing, and reuses
    `sync.merge_roadmap` and its registered driver unchanged: entries are matched by `key`, every
@@ -112,9 +118,12 @@ Risks: none
    `Spotted:` line is recorded by the next close in a `Review of <item>: clean` commit with no
    Autoreview call, and a third close makes no commit; a close with nothing spotted creates no file
    and the review commit holds only the state file; a file that isn't JSON, and one entry missing
-   `item`, each refuse with the `bad` refusal and no Autoreview call, its Next naming the checkout
-   repair when the default branch's copy reads and the `rm` repair when that copy is unreadable,
-   and running the printed repair lets the next close review; after `forge sync`, `.gitattributes`
+   `item`, each refuse with the `bad` refusal and no Autoreview call; with the default branch's
+   newest copy broken by a hand commit over a readable one, the Next restores the readable one and
+   its entries all come back, with no readable copy ever it is the `rm` repair, and running the
+   printed repair lets the next close review and record the branch's entries again; a fix whose
+   done-when names `plans/spotted.json` gets a clean review that a following close's recording
+   doesn't make stale (no second Autoreview call); after `forge sync`, `.gitattributes`
    holds both rules once, also when it held only the roadmap rule, and two branches that each add
    entries whose keys interleave merge with no conflict and keep every entry, two branches that
    both create the file merge with no conflict, and an entry `open` on one side and `done` on the
@@ -177,26 +186,31 @@ Risks: none
    in an earlier review of this item, and adds the files of a new review's blocking findings to it
    when it saves that review. A new review stops the item when all of these hold: it is blocked; it
    is the item's third `review` step or later; the item has no `state["stop"]`; and a file holding
-   one of its blocking findings is in `state["flagged"]` and is a file on `origin/<default>`. A file
-   only on the item's branch never stops it, since a fix starts from the default branch
-   (src/forge/task.py:230); that review refuses with `blocked` as today. `F` is the first such file
-   in path order. Close sets `state["stop"] = {"file": F, "blob": <F's blob on origin/<default>>,
-   "why": <why>, "done": <done>, "waiting": true}` from `spotted.fix_text(F, <this review's blocking
-   titles in F, in finding order>)` and the status `hotspot`, in the review commit (message
-   `Review of <item>: blocked; <F> keeps breaking`), pushes and updates the draft pull request as
-   for any blocked review, then refuses with `close.REFUSALS["hotspot"]` (`<r>` is the item's number of `review` steps):
-   `Review round <r> of
+   one of its blocking findings is in `state["flagged"]`, is a file on `origin/<default>`, and
+   passes item 1's path rule (only ASCII letters, digits, `.`, `_`, `/` and `-`). Any other review
+   refuses with `blocked` as today: a file only on the item's branch never stops it, since a fix
+   starts from the default branch (src/forge/task.py:230). `F` is the first such file in path
+   order. The stop's fix never carries the review's findings, which may describe the stopped change
+   itself; it asks only to simplify `F` as it is on the default branch: why `Simplify <F> before
+   <item> carries on` and done-when `<F> is simpler and behaves as it did before`. Close sets
+   `state["stop"] = {"file": F, "why": <why>, "done": <done>, "waiting": true}` and the status
+   `hotspot`, in the review commit (message `Review of <item>: blocked; <F> keeps breaking`), pushes
+   and updates the draft pull request as for any blocked review, then refuses with
+   `close.REFUSALS["hotspot"]` (`<r>` is the item's number of `review` steps): `Review round <r> of
    <item> still finds serious problems in <F>, which an earlier round flagged too, so Forge stops
    sending the worker back.` / Next: `forge fix start "<why>" --done "<done>", then forge close
    <item> once that fix merges`.
-   A later `forge close` while `waiting` is true compares, after merging the default branch, `F`'s
-   blob on `origin/<default>` with `blob`. Unchanged, it refuses with `close.REFUSALS["hotspot_wait"]`:
-   `<item> waits for a fix that simplifies <F> to merge.` / Next: `forge next`, running no review
-   and committing nothing, `--dismiss` included. Changed or gone (any merged change to `F`, that
-   fix's or another's), it sets `waiting` to false and the status `fixing`, prints `<F> has changed
-   on <default>, so <item> carries on.`, and runs a new review even when the last one still covers
-   the change, so the state lands in that review's commit as any review's does. An item stops at
-   most once: with `state["stop"]` set, a blocked review refuses with `blocked` as today.
+   One blunt rule decides when the item carries on: that exact fix has merged, meaning a fix state
+   under `.factory/fixes/` on `origin/<default>` has `why` equal to the stop's `why` (a fix's state
+   reaches the default branch only with its merge, and the why names the item, so no earlier fix
+   matches). A later `forge close` while `waiting` is true checks this after merging the default
+   branch. Without it, it refuses with `close.REFUSALS["hotspot_wait"]`: `<item> waits for the fix
+   that simplifies <F> to merge.` / Next: `forge next`, running no review and committing nothing,
+   `--dismiss` included; other changes to `F` landing meanwhile don't count. With it, it sets
+   `waiting` to false and the status `fixing`, prints `The fix that simplifies <F> has merged, so
+   <item> carries on.`, and runs a new review even when the last one still covers the change, so
+   the state lands in that review's commit as any review's does. An item stops at most once: with
+   `state["stop"]` set, a blocked review refuses with `blocked` as today.
    `nextstep._item` shows status `hotspot` as
    `Close stopped <label>: <F> keeps breaking, so a fix that simplifies it goes first.` with
    `Next: forge fix start "<why>" --done "<done>"`, or `Next: forge close <item> once the fix for
@@ -207,15 +221,17 @@ Risks: none
    with the stub gh and Autoreview): three closes whose reviews block in `F`, a file on the default
    branch, in rounds 1 and 3 give, on the third, the `hotspot` refusal with the exact fix command, a
    non-zero exit, the review commit with status `hotspot` and `state["stop"]`, a draft pull request,
-   and `forge next`'s stop lines; round 3 blocking only in a file no earlier round flagged, round 2
-   blocking in the file round 1 flagged, and round 3 blocking in a flagged file that exists only on
-   the item's branch, each give the `blocked` refusal; a round-3 finding in `F` carried over as
-   dismissed gives no stop; a close while waiting with `F` unchanged on the default branch, with and
-   without `--dismiss`, gives `hotspot_wait`, no Autoreview call and no commit; once a commit
-   changing `F` lands on the default branch, close prints the carry-on line, calls Autoreview, and
-   its review commit has `waiting` false; a round-4 block in `F` after that gives `blocked`, not a
-   second stop; with a fix worktree holding the stop's `why`, `forge next` gives the wait line; the
-   skill template and both synced copies hold the stop sentence.
+   and `forge next`'s stop lines; the printed done-when holds none of the findings' titles; round 3
+   blocking only in a file no earlier round flagged, round 2 blocking in the file round 1 flagged,
+   round 3 blocking in a flagged file that exists only on the item's branch, and round 3 blocking in
+   a flagged default-branch file named `src/$cache.py`, each give the `blocked` refusal; a round-3
+   finding in `F` carried over as dismissed gives no stop; a close while waiting, with and without
+   `--dismiss`, gives `hotspot_wait`, no Autoreview call and no commit, also after another change
+   to `F` lands on the default branch; once the printed fix is started, closed and merged into the
+   default branch, close prints the carry-on line, calls Autoreview, and its review commit has
+   `waiting` false; a round-4 block in `F` after that gives `blocked`, not a second stop; with a fix
+   worktree holding the stop's `why`, `forge next` gives the wait line; the skill template and both
+   synced copies hold the stop sentence.
 6. `src/forge/templates/skill.md` gains a `## Hotspots` section after `## Closing`, saying: a
    worker or review notes problems outside its change as spotted items, which Forge keeps in
    `plans/spotted.json` and nobody edits by hand; a spotted item never widens the change in hand,
@@ -234,7 +250,7 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| SPOT | The spotted list | The list file, its format and merge rule, close recording workers' and reviews' spotted items, and the worker brief asking for them | 1, 2 | `src/forge/spotted.py`, `src/forge/close.py`, `src/forge/sync.py`, `src/forge/templates/brief.md`, `.gitattributes` | `tests/test_spotted.py` | none | no |
+| SPOT | The spotted list | The list file, its format and merge rule, close recording workers' and reviews' spotted items, and the worker brief asking for them | 1, 2 | `src/forge/spotted.py`, `src/forge/close.py`, `src/forge/review.py`, `src/forge/sync.py`, `src/forge/templates/brief.md`, `.gitattributes` | `tests/test_spotted.py` | none | no |
 | HOT | Hotspots | Hotspot counting, the next-step lines and ready fix command, a merged fix closing its file's items, and the skill's Hotspots section and Learn the traps step | 3, 4, 6 | `src/forge/spotted.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_hotspots.py` | SPOT | yes |
 | STOP | Review loop stop | Close stopping an item whose third review still blocks in a file flagged before, waiting for the fix, carrying on after it, its next-step lines and the skill's stop sentence | 5 | `src/forge/close.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/` | `tests/test_hotspot_stop.py` | HOT | yes |
 
@@ -252,8 +268,8 @@ New moving parts: one tracked list, `plans/spotted.json` (item 1): no record tha
   values above, `spotted.read`, `spotted.write`, `spotted.record(top, item, state, base, result)
   -> bool`, `spotted.Unreadable`, `spotted.REFUSALS["bad"]` and `sync.SPOTTED_RULE`; its item 1 test asserts the exact
   entries close writes, and HOT's first test starts from a list that `forge close` wrote, crossing
-  both sides. HOT pins `spotted.fix_text`, the one name STOP uses;
-  the stop's fix command and forge next's hotspot command share `fix_text`, so one fix serves both.
+  both sides. STOP uses no name HOT adds; it comes after HOT because both edit `nextstep.py` and
+  the skill.
 - GitHub doesn't run Git's merge rules, so two open pull requests that both add to the list at the
   same place can conflict there, as the roadmap can today; the next `forge close` merges the
   default branch with Forge's rule and settles it (item 6 tells the agent).

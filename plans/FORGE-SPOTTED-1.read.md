@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T02:36:42+00:00
-read_hash: 9aa7d0a19337df78cec5f401feb507fe8cf6f17b
-round: 1
+read_at: 2026-10-01T03:04:09+00:00
+read_hash: 8983883182a9717f63c2735a8c84976fc9b514a7
+round: 2
 passed: no
-doc_seen: 9aa7d0a19337df78cec5f401feb507fe8cf6f17b
+doc_seen: 8983883182a9717f63c2735a8c84976fc9b514a7
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: bc7ae53aa5d582e549f9d326056ea576fe5d098a
 ---
 # Cold read notes
 
@@ -56,3 +56,29 @@ Only a genuine trade-off goes to the human, as a question with options.
 9. Unproven: items 3 and 5 promise runnable commands without proving Windows shell argument handling.
    `shlex.split` proves POSIX tokenization; the harness invokes Python directly. Assign command round-trip checks through PowerShell and cmd, including punctuation in finding text, or state which shells the printed commands support.
    Disposition: cut fix texts keep only letters, digits, spaces and .,:;/_- and recorded paths only letters, digits and ._/-, so double quotes hold plain text in POSIX shells, PowerShell and cmd; tested.
+
+## Round 2
+
+10. Trap: shell quoting: item 5 bypasses item 1’s safe-path restriction.
+    `flagged` and `F` now come directly from blocking findings. An existing file such as `src/$cache.py` can reach `fix_text`, which embeds its path unchanged inside double quotes; shells can expand it. Apply the safe-path rule to stop candidates and prove this case in `tests/test_hotspot_stop.py`.
+    Disposition: cut a stop file must pass item 1's path rule too, else the review refuses with blocked as today; the `src/$cache.py` case is tested.
+
+11. Item 1’s claim that recording never makes a review stale contradicts the fingerprint implementation.
+    [review.py:120](src/forge/review.py:120) includes planning files named in a fix’s done-when. If that text names `plans/spotted.json`, recording after review changes a fingerprinted file. Pin consistent treatment of this generated file and add that regression to `tests/test_spotted.py`.
+    Disposition: cut review.fingerprint skips plans/spotted.json even when a fix's done-when names it (review.py added to SPOT's scope); tested with no second Autoreview call.
+
+12. Item 5 now resumes before the required simplifying fix has merged.
+    Any merged change to `F`, including unrelated formatting, releases the stop permanently. Done when 5 and the guide still require the simplifying fix to merge first. Align the resumption condition with that promise and test an unrelated change arriving while the fix remains open.
+    Disposition: cut one blunt rule: the item carries on only when the stop's exact fix has merged (its state, with the stop's why, is on the default branch); other changes to F don't count; tested.
+
+13. Risks omits the new deletion of recorded observations during repair.
+    When the default copy is unreadable, item 1 recommends deleting the entire list, including otherwise valid entries surrounding one malformed entry. Prefer restoring a readable version where available, name any remaining reset loss under Risks, and test preservation of existing observations.
+    Disposition: cut the repair restores the newest readable copy in the default branch's history, so no readable entry is lost; rm only when no readable copy ever existed; tested.
+
+14. Finding 2 is only partly cut: branch-introduced defects in existing files still produce unreachable fix requirements.
+    A repeated `Not done` finding about a new endpoint in an existing `api.py` passes the default-file check, but its fix starts without that endpoint. The generated done-when can require implementing the stopped change rather than simplifying its baseline. Pin a reachable simplification criterion and prove this case in `tests/test_hotspot_stop.py`.
+    Disposition: cut the stop's fix no longer carries the review's findings; it asks only to simplify F as it is on the default branch; tested that the done-when holds no finding title.
+
+15. Unproven: item 5: `F` disappears from the default branch.
+    The new rule explicitly resumes when `F` is gone, but the tests cover only changed contents. Add the deletion case, including the expected refusal when merging it conflicts with the stopped branch’s edits, and verify resumption after resolution.
+    Disposition: cut resumption no longer looks at F's content, only at the stop's fix having merged, so F's deletion is no special case.
