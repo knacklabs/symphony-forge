@@ -143,9 +143,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 28. Item 5 prevents refreshing doctor’s own unmerged repair after following item 4’s recovery step.
     Doctor commits a repaired workflow; the default branch later changes its test command. After merging the default branch into that fix, both reuse guards pass, but the workflow’s last-changing commit is doctor’s unmerged commit. Item 5 therefore labels it a hand edit and refuses the update. Specify how doctor recognizes its own pending output, and test this merge-and-rerun case in FILES while preserving hand-edit protection.
-    Disposition: cut
+    Disposition: keep doctor never writes in an existing fix again; Decided: stale doctor fix: never refreshed; doctor starts a fresh fix (owner, 2026-10-01)
 
 ## Round 8
 
 29. Item 5’s new exception mistakes an amended doctor commit for untouched generated output.
     A person can edit a skill and run `git commit --amend --no-edit` in doctor’s fix. The subject remains exactly the fix’s `why`, and every changed path still belongs to sync’s list, so doctor overwrites that hand edit. Require evidence beyond the subject and path list, and add this amended-commit case to FILES’ tests.
+    Disposition: keep the exception it attacks is removed; Decided: stale doctor fix: never refreshed; doctor starts a fresh fix (owner, 2026-10-01)
