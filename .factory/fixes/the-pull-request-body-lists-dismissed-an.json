@@ -1,4 +1,5 @@
 {
+  "allow_large": "One code file (close.py); the rest are tests, which the owner decided on 2026-10-01 don't count toward the fix limit (that change is still landing)",
   "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
   "branch": "fix/the-pull-request-body-lists-dismissed-an",
   "done_when": "When nothing blocks, the pull request's review block opens with one plain line, 'Review: clean' followed by how many findings were dismissed and how many are advice, and puts the dismissed and advisory findings with their reasons inside a collapsed details section; a review with open blocking findings still lists them plainly first. A command-level test renders both cases.",
