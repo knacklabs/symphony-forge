@@ -74,6 +74,8 @@ shims = githooks.shims
 
 # Every story and fix adds to the roadmap, so git merges it with Forge's rule instead of by line.
 ROADMAP_RULE = "plans/roadmap.json merge=forge-roadmap"
+# The spotted list grows on every branch too, and merges by the same rule.
+SPOTTED_RULE = "plans/spotted.json merge=forge-roadmap"
 RANK = {"pending": 0, "done": 2}  # planning, started and the rest sit between the two
 
 def install_line(version: str) -> str:
@@ -213,10 +215,11 @@ def _codex_config(top: Path) -> str:
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     text = read(top / ".gitattributes")
-    if ROADMAP_RULE in text.splitlines():
+    missing = [rule for rule in (ROADMAP_RULE, SPOTTED_RULE) if rule not in text.splitlines()]
+    if not missing:
         return {".gitattributes": text}
-    return {".gitattributes": f"{text.rstrip()}\n{ROADMAP_RULE}\n" if text.strip()
-            else f"{ROADMAP_RULE}\n"}
+    return {".gitattributes": (f"{text.rstrip()}\n" if text.strip() else "")
+            + "".join(f"{rule}\n" for rule in missing)}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:

@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, story
+from forge import __version__, checks, codex, init, repo, review, spotted, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -71,6 +71,7 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    spotted.check(top, item)
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
@@ -113,15 +114,16 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
+    noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
-        _save(top, item, state, f"Review of {item}: {result['status']}")
+        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     elif result.get("tree") != (tree := review.whole_tree("HEAD", item, top, state,
-                                                          f"origin/{default}")):
+                                                          f"origin/{default}")) or noted:
         # The clean review still covers the change; keep the v1.1.0 check's fingerprint current.
         result["tree"] = tree
-        _save(top, item, state, f"Review of {item}: {result['status']}")
+        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
     _publish(top, item, state, branch, default, pr, result)
@@ -247,9 +249,9 @@ def _push(top: Path, branch: str) -> None:
             time.sleep(wait)
 
 
-def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
+def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str) -> None:
     repo.write_state(item, state, top)
-    repo.commit_state(message, repo.state_path(item), top=top)
+    repo.commit_state(message, repo.state_path(item), *paths, top=top)
 
 
 def _gh(top: Path, *args: str) -> str:

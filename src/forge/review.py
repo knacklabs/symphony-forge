@@ -19,7 +19,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo
+from forge import machine, repo, spotted
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -118,8 +118,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
-    changed = {path for path in changed
-               if path and (not path.startswith(BOOKKEEPING) or path in named)}
+    # Close writes the spotted list after the review, so it never makes that review stale.
+    changed = {path for path in changed if path and path != spotted.PATH
+               and (not path.startswith(BOOKKEEPING) or path in named)}
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
