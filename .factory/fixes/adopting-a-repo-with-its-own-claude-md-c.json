@@ -3,11 +3,24 @@
   "branch": "fix/adopting-a-repo-with-its-own-claude-md-c",
   "done_when": "forge sync deletes CLAUDE.md when every non-empty line of it, apart from an @AGENTS.md import and Forge's old block, is already in AGENTS.md, so a CLAUDE.md whose lines moved to AGENTS.md doesn't duplicate them; a CLAUDE.md with any line of its own stays, keeping an @AGENTS.md line as today. Command-level tests cover an adopted repo whose CLAUDE.md lines all moved (CLAUDE.md removed) and one with an extra line (kept with the import).",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "50e65397f7cbb8a209d5a9addbab452a06252937f05dd58acf8f113b2b6ab18e",
+    "commit": "1aa759654391c70350cbde67ce27b1d4c1211883",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "528f115e31f858cc6360fc6ad112c2475f1cd050a8d87be9126ff4004be6a2a7"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T11:09:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T15:23:52+00:00",
+      "step": "review"
     }
   ],
   "why": "Adopting a repo with its own CLAUDE.md copies the team's lines into AGENTS.md but leaves them in CLAUDE.md and adds an @AGENTS.md import, so Claude Code reads every line twice"
