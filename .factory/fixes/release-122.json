@@ -1,0 +1,14 @@
+{
+  "base": "6f0e703b94340d7a6e503be4b5f9c04f26f6f09d",
+  "branch": "fix/release-122",
+  "done_when": "Forge's version is 1.2.2 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them), and the full test suite passes.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T14:21:05+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.2 for hooks that find Forge on any machine, full access for Codex and Claude Code, subagent roles for both, Claude reviews that read the code, reviews on Sol 6.1 and the other fixes since v1.2.1"
+}
