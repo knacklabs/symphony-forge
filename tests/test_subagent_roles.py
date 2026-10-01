@@ -167,3 +167,21 @@ def test_5_a_value_from_forge_toml_stays_one_setting_and_design_keeps_its_own_mo
     assert _claude(repo.path, "worker")[0]["effort"] == "medium\\ntools: Bash"
     for name in ("planner", "architect"):
         assert _settings(repo.path, name)[1] == ("custom-opus", "high"), name
+
+
+def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(repo):
+    # The old Forge's Codex config: a role that leaves its model out would run on these defaults
+    # instead of the session's model.
+    repo.git("checkout", "-q", "-b", "fix/roles")
+    repo.write(".codex/config.toml", '[agents]\nmax_depth = 1\n'
+                                     'default_subagent_model = "gpt-6-luna"\n'
+                                     'default_subagent_reasoning_effort = "max"\n\n'
+                                     '[agents.worker]\nconfig_file = "agents/worker.toml"\n')
+
+    assert _synced(repo).returncode == 0
+
+    config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    assert config["agents"] == {"max_depth": 1,
+                                "worker": {"config_file": "agents/worker.toml"}}
+    assert _settings(repo.path, "worker")[0] == (None, "medium")
+    assert repo.forge("sync").stdout.startswith("Nothing to change")
