@@ -1,0 +1,14 @@
+{
+  "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
+  "branch": "fix/forge-next-and-forge-task-start-read-a-s",
+  "done_when": "When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start merges the default branch into the story branch first (refusing with a plain message, changing nothing, when that merge conflicts) before reading the task rows. Command-level tests cover a plan edited on the default branch after approval, the merge in task start, and a conflicting merge.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-01T08:07:30+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge next and forge task start read a story's task rows from its story branch, so a plan edit that reached the default branch another way (a fix) is silently ignored: a client saw a task listed as startable although the merged plan made it wait for a new task"
+}
