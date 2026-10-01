@@ -3,7 +3,7 @@
   "branch": "fix/code-reviews-on-claude-see-only-the-diff",
   "done_when": "When Forge's review runs on Claude (Autoreview's Claude engine), the reviewer can read every file in the review checkout read-only, as Codex reviews can, and still cannot write or run commands that change anything. Find how Autoreview's Claude engine limits file access and change Forge's side (the arguments, environment or review folder Forge passes) to grant it; if Autoreview offers no way, say so with evidence and stop. A command-level test proves the Claude review is started with read access to the checkout.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T01:13:59+00:00",
