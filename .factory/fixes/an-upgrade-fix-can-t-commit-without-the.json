@@ -3,7 +3,7 @@
   "branch": "fix/an-upgrade-fix-can-t-commit-without-the",
   "done_when": "The fix-size limit (the commit hook and close) doesn't count files whose content is exactly what forge sync writes for this repo; any other change to them, and every other file, still counts. A command-level test commits an upgrade fix whose only code changes are forge sync's output (accepted without an allowance) and one that also edits a synced file by hand beyond sync's output (counted).",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T15:37:52+00:00",
