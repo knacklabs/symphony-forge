@@ -342,7 +342,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         [create] = env.gh_calls("pr", "create")
-        assert "1. P2 Simpler: drop the cache (app.py:1): advisory" in body(create)
+        assert "- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory" in body(create)
         # Its version is pinned: forge doctor reports a helper at any other version.
         assert "Autoreview" not in repo.forge("doctor").stdout
         helper = Path(os.environ["AUTOREVIEW"])

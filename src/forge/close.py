@@ -326,8 +326,9 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
 
 def _block(result: dict[str, Any], check: str) -> str:
     """Forge's block in the pull request body: the open blocking findings plainly first, or one
-    `Review: clean` line, then the dismissed and advisory findings folded away, each numbered for
-    --dismiss, then the worker's functional check from its commit message."""
+    `Review: clean` line, then the dismissed and advisory findings folded away, then the worker's
+    functional check from its commit message. Each finding is a bullet naming its --dismiss number
+    in text, since GitHub renumbers an ordered list."""
     because = {d["finding"]: d for d in result["dismissals"]}
     blocking, rest = [], []
     for n, finding in enumerate(result["findings"], 1):
@@ -335,9 +336,9 @@ def _block(result: dict[str, Any], check: str) -> str:
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
-                else "advisory")
+                else "advisory: " + " ".join(finding.get("body", "").split()))
         (blocking if note == "blocks the merge" else rest).append(
-            f"{n}. {finding['priority']} {finding['title']} "
+            f"- Finding {n} ({finding['priority']}): {finding['title']} "
             f"({finding['file']}:{finding['line']}): {note}")
     if result["status"] == "blocked":
         lines = [BEGIN, "The review found serious problems.", "", *blocking]
