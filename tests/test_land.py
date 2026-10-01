@@ -225,6 +225,20 @@ def _merged_while_close_looks(env):
     assert not env.gh_calls("pr", "merge")
 
 
+def _merged_after_close_returned(env):
+    # Open when land and close look, merged by the time close returns Ready: land closes again,
+    # so close's own merged path reports it, and with a human merging there is nothing to hand off.
+    _fix(env, "working", worked=True)
+    opened = json.dumps([{"number": 7, "state": "OPEN", "body": "", "isDraft": False}])
+    _queue(env, ["pr", "list", "--head"], opened, opened, opened.replace("OPEN", "MERGED"))
+    done = _land(env)
+    assert done.returncode == 0, done.stderr
+    assert _steps(done) == [f"Closing {ITEM}."] * 2
+    assert f"Ready: {ITEM} has a clean review" in done.stdout
+    assert done.stdout.rstrip().endswith(f"The pull request for {ITEM} is merged.")
+    assert not env.gh_calls("pr", "merge")
+
+
 def _no_checks_named(env):
     where = _fix(env, "working", worked=True)
     env.commit(where, "forge.toml", (where / "forge.toml").read_text("utf-8").replace(
@@ -291,7 +305,8 @@ def _merge_conflict(env):
 
 ONE = [_unbuilt_fix_built_once_then_merged, _working_fix_closes_without_a_worker,
        _checks_pending_on_every_look, _checks_pending_then_green,
-       _failed_worker_stops_then_builds_again, _merged_while_close_looks, _no_checks_named,
+       _failed_worker_stops_then_builds_again, _merged_while_close_looks,
+       _merged_after_close_returned, _no_checks_named,
        _unsynced_upgrade, _already_merged, _story_key_and_malformed_item_refused,
        _merge_switch_refused, _merge_conflict, "story-done", "migrate"]
 

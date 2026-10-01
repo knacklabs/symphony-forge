@@ -159,11 +159,8 @@ def close(args: argparse.Namespace) -> int:
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
-    """Who merges the item's ready pull request: "agent" or "human". Only the owner merges the
-    merge switch's fix, and a human merges migrate's and adopt's, which bring Forge to the repo."""
-    if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY:
-        return "human"
-    return repo.merge_setting(top)
+    """"human" for migrate, adopt and the merge switch's fix, else the repo's merge setting."""
+    return "human" if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY else repo.merge_setting(top)
 
 
 def _worktree(item: str) -> Path:

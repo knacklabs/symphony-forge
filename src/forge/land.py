@@ -6,16 +6,14 @@ from __future__ import annotations
 
 import argparse
 import json
+from functools import partial
 from pathlib import Path
-from typing import Any
 
 from forge import checks, close, merge, repo, worker
 
 ROUNDS = 3
-# Close runs in a row while the checks are still running, before land stops with close's refusal.
-WAITS = 3
-FINDINGS, FAILING = "the review's serious findings", "the failing checks"
 REFUSALS: dict[str, tuple[str, str]] = {}
+say = partial(print, flush=True)
 
 
 def land(args: argparse.Namespace) -> int:
@@ -26,57 +24,58 @@ def land(args: argparse.Namespace) -> int:
     if item == merge.ENABLE:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
-    state = repo.read_state(item, top) or {}
-    branch = repo.current_branch(top)
-    limited = False
+    state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
+    step = argparse.Namespace(item=item, dismiss=None, because=None)  # for close and work alike
+    rounds = waits = 0
     try:
-        if _is_merged(top, branch):
-            _step(f"Closing {item}.")
-            close.close(_close_args(item))
-            return _after_merged(top, item, state)
+        merged = _merged(top, branch)
         status = state.get("status", "started")
-        if state.get("kind") not in ("story-done", "migrate", "adopt") and (
+        if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
                 status == "started" or status == "working" and
                 repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working"):
-            _step(f"Building {item}.")
-            worker.work(_work_args(item))
-        rounds = waits = 0
+            say(f"Building {item}.")
+            worker.work(step)
         while True:
-            _step(f"Closing {item}.")
+            say(f"Closing {item}.")
             try:
-                close.close(_close_args(item))
-                break
+                close.close(step)
             except repo.Refused as error:
-                if error.entry is checks.REFUSALS["not_green"] and waits < WAITS - 1:
+                if error.entry is checks.REFUSALS["not_green"] and waits < 2:
                     waits += 1
-                    _step("Checks are still running on the pushed head; waiting again.")
+                    say("Checks are still running on the pushed head; waiting again.")
                     continue
-                if error.entry is checks.REFUSALS["red"] and _rerun(top, item, branch):
-                    waits = 0
+                red = error.entry is checks.REFUSALS["red"]
+                if red and _rerun(top, item, branch):
                     continue
-                what = (FINDINGS if error.entry is close.REFUSALS["blocked"] else
-                        FAILING if error.entry is checks.REFUSALS["red"] and worker._failing(branch)
-                        else "")
+                what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
+                        else "the failing checks" if red and worker._failing(branch) else "")
                 if not what:
                     raise
                 if rounds == ROUNDS:
-                    _step(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
-                    limited = True
+                    rounds += 1  # this stop says why itself, so no stop line
+                    say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
                     raise
                 rounds, waits = rounds + 1, 0
-                _step(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
-                worker.work(_work_args(item))
-        if _is_merged(top, branch):  # merged on GitHub while close ran: close said so already
-            return _after_merged(top, item, state)
-        if close.merger(top, state) == "agent":
-            _step(f"Merging {item}.")
-            return merge.merge(argparse.Namespace(item=item))
-        url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
-        _step(f"{item} is ready; a human merges its pull request: {url}")
-        return 0
-    except repo.Refused as error:
-        if not limited:
-            _step(f"Stopped: {item} needs you.")
+                say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
+                worker.work(step)
+                continue
+            # Merged since close looked: close again, so its merged path reports and tidies.
+            if merged or not (merged := _merged(top, branch)):
+                break
+        if merged:  # Forge's tidy-up, where the agent merges and the item was recorded ready
+            ready = repo.ready_path(item, top)
+            receipt = json.loads(ready.read_text(encoding="utf-8")) if ready.is_file() else {}
+            if receipt.get("review") != "clean" or receipt.get("tidied") or close.merger(top, state) != "agent":
+                return 0
+        elif close.merger(top, state) != "agent":
+            url = json.loads(close._gh(top, "pr", "view", branch, "--json", "url"))["url"]
+            say(f"{item} is ready; a human merges its pull request: {url}")
+            return 0
+        say(f"Merging {item}.")
+        return merge.merge(argparse.Namespace(item=item))
+    except repo.Refused:
+        if rounds <= ROUNDS:
+            say(f"Stopped: {item} needs you.")
         raise
 
 
@@ -85,33 +84,8 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     return False
 
 
-def _after_merged(top: Path, item: str, state: dict[str, Any]) -> int:
-    """Finish Forge's tidy-up when the agent merges here and the item was recorded ready."""
-    try:
-        receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
-    except (OSError, ValueError, UnicodeDecodeError):
-        receipt = {}
-    if (isinstance(receipt, dict) and receipt.get("review") == "clean"
-            and receipt.get("tidied") is not True and close.merger(top, state) == "agent"):
-        _step(f"Merging {item}.")
-        return merge.merge(argparse.Namespace(item=item))
-    return 0
-
-
-def _is_merged(top: Path, branch: str) -> bool:
+def _merged(top: Path, branch: str) -> bool:
     return (close._pull_request(top, branch) or {}).get("state") == "MERGED"
-
-
-def _close_args(item: str) -> argparse.Namespace:
-    return argparse.Namespace(item=item, dismiss=None, because=None)
-
-
-def _work_args(item: str) -> argparse.Namespace:
-    return argparse.Namespace(item=item, note=None)
-
-
-def _step(line: str) -> None:
-    print(line, flush=True)
 
 
 COMMANDS = [{
