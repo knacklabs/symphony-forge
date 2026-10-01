@@ -68,7 +68,9 @@ def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
     return ([(str(run.get("name")), PENDING if run.get("status") != "completed"
               else PASS if run.get("conclusion") == "success"
               else SKIPPED if run.get("conclusion") in ("skipped", "neutral") else RED)
-             for run in runs]
+             # A run GitHub reports for another head is an earlier push's result: until the
+             # pushed head's own run arrives, the check counts as not reported yet.
+             for run in runs if run.get("head_sha", sha) == sha]
             + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
                 status.get("state"), RED)) for status in statuses])
 
