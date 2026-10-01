@@ -144,6 +144,18 @@ def _renamed_old_path(env):
     _fix_round(env, _land(env))
 
 
+def _rerun_refused(env):
+    _red_then_green(env)
+    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
+    env.gh.respond("run", "rerun", stderr="HTTP 403: Resource not accessible by integration\n", exit=1)
+    done = _land(env)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert _steps(done) == [f"Closing {ITEM}.", RERUN.format("tests"), FIX_ROUND, f"Closing {ITEM}.",
+                            f"Merging {ITEM}."]
+    assert len(_reruns(env)) == 1
+    assert len(_workers(env)) == 1
+
+
 def _fails_again(env):
     _agent(env, PASSING)
     _fix(env, "working", worked=True)
@@ -175,11 +187,12 @@ def _attempt_never_rises(env):
 FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py", _no_test_command, _no_passed_record,
         _already_second_attempt, _one_of_two_names_a_changed_file, _two_jobs_one_run,
         _status_without_a_job, _attempt_unreadable, _log_unreadable, _non_ascii_name,
-        _renamed_old_path, _fails_again, _attempt_never_rises]
+        _renamed_old_path, _rerun_refused, _fails_again, _attempt_never_rises]
 
 
 @pytest.mark.parametrize("case", FOUR, ids=lambda case: case if isinstance(case, str) else case.__name__.strip("_"))
-def test_4_unrelated_failed_check_rerun_once(land, case):
+def test_4_unrelated_failed_check_rerun_once(land, monkeypatch, case):
+    monkeypatch.setenv("PYTHONIOENCODING", "utf-8")  # the stub gh writes UTF-8 logs, as gh does
     if isinstance(case, str):
         _log_names_changed_file(land, case)
     else:

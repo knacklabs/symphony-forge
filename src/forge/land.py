@@ -123,7 +123,8 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
             say(f"Re-running {name} once: its failure names none of this change's files and the "
                 "tests passed here.")
     for run in runs:
-        repo.run("gh", "run", "rerun", run, "--failed", cwd=top)
+        if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:
+            return False
     # ponytail: FORGE_CHECKS_WAIT is the wait seam, as in checks.wait (tests set 0 to look once).
     deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
     for run, names in runs.items():

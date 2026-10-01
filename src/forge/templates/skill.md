@@ -403,6 +403,10 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
+A failed check whose log names none of the change's files, after this machine's tests passed, is
+re-run once per pushed head instead of costing a fix round. When GitHub has not started that
+re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
+round if the check is still red.
 
 ## Check-back
 
