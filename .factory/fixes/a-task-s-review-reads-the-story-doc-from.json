@@ -1,0 +1,35 @@
+{
+  "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
+  "branch": "fix/a-task-s-review-reads-the-story-doc-from",
+  "done_when": "A task's review reads the story doc (its row, Done-when items and details) from the same place forge task start does: the story branch's copy while the story branch exists, else the default branch's. A command-level test edits a task's row on the story branch after approval and shows the review prompt carries the edited row.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "880a86e2c04ac05aaa4bd6055d18377033ca47a208db162961ef65d40518db38",
+    "commit": "266254acdbddc6c23abfa0b6e3757d37327e9a29",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After one review, commit another task-row or details edit only on the story branch and run `forge close` again without changing task code. `fingerprint()` still hashes the task commit's plan (`src/forge/review.py:145`), while the prompt now reads the story branch's plan. Consequently, `src/forge/close.py:79\u201387` considers the previous review fresh and skips reviewing the edited contract. This can preserve blocking findings for work moved to another task, or reuse a clean review against outdated requirements. Include the selected story-document content in the freshness calculation so changes to the actual review input invalidate the cached result.",
+        "file": "src/forge/review.py",
+        "line": 113,
+        "priority": "P2",
+        "title": "Fingerprint the story document used by the review"
+      }
+    ],
+    "status": "clean",
+    "tree": "dce136138f54fd37611632cac6203861b6e12135f423fc545c8124e20536b3fa"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T15:43:20+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T18:53:38+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A task's review reads the story doc from the default branch while forge next and forge task start read it from the story branch, so a plan edit made in the story worktree after approval never reaches the reviewer and the review raises findings for work the plan moved to another task"
+}
