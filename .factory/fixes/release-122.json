@@ -4,7 +4,7 @@
   "branch": "fix/release-122",
   "done_when": "Forge's version is 1.2.2 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them), and the full test suite passes.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T14:21:05+00:00",
