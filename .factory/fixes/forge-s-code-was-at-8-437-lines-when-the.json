@@ -3,11 +3,32 @@
   "branch": "fix/forge-s-code-was-at-8-437-lines-when-the",
   "done_when": "At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls) and folding duplicated helpers into one, with no behaviour change: the full test suite passes unchanged except tests of deleted dead code, and the handoff lists each removal with why it was dead or duplicated.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "907bbf4cd0de4c5dd7f8ac1457d34cd7f298ffbb699f4911845dd04d9673ba5a",
+    "commit": "e773c0bddffe7549482e78a59f3b379e2fdbdea6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The selected change only adds this task record; it removes zero Python lines under src/forge and provides no handoff listing removals and their justification. The supplied close run also failed: 587 tests passed, but a worker crashed during test_10_new_client_deploys_only_after_migration. Implement the required trim and helper consolidation, document each removal, and obtain a passing full-suite run. The crash alone does not establish a regression caused by this branch.",
+        "file": ".factory/fixes/forge-s-code-was-at-8-437-lines-when-the.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: At least 300 lines of Python under src/forge are removed by deleting dead code (functions, branches and constants nothing calls)"
+      }
+    ],
+    "status": "blocked",
+    "tree": "c8f77e0448d89e0284cf02740a36fc4a4658437a6af825c054b359763f5d0659"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T07:53:25+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T09:21:52+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's code was at 8,437 lines when the owner raised the cap to 10,000 on the condition of one trim pass alongside, to give room back by removing dead or duplicated code"
