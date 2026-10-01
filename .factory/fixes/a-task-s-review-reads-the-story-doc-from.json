@@ -3,7 +3,7 @@
   "branch": "fix/a-task-s-review-reads-the-story-doc-from",
   "done_when": "A task's review reads the story doc (its row, Done-when items and details) from the same place forge task start does: the story branch's copy while the story branch exists, else the default branch's. A command-level test edits a task's row on the story branch after approval and shows the review prompt carries the edited row.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T15:43:20+00:00",
