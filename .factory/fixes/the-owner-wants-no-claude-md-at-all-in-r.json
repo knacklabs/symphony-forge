@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "016188ee2e9b4ed4533bf69a466ebc3ff5dad2e780c79d3b59e4b49c1c0e2c96",
-    "commit": "9decba1239b63aaeff44ee415584cd97bd556721",
+    "changed": "6279fcb23eca9149fe644ef5ad80066cf7317bed3ffbf655466c5a8a81ac033f",
+    "commit": "34339bb226d7f6dac53fc612b81a13d77150c444",
     "dismissals": [],
     "findings": [
       {
-        "body": "An existing zero-byte CLAUDE.md survives sync. This entry requests deletion using an empty string, but src/forge/sync.py:335 selects changes only when the current contents differ from that string. An empty CLAUDE.md therefore never reaches unlink at line 343, and subsequent syncs report nothing to change. This also defeats the purpose of the migration: [Claude's loading contract](https://code.claude.com/docs/en/memory#agentsmd) selects CLAUDE.md instead of AGENTS.md when CLAUDE.md exists. Select deletion by file presence, including empty files, and cover this case through the command.",
+        "body": "If AGENTS.md is a symlink to the repo's CLAUDE.md, sync deletes the only copy of the rules. The unchanged write_file implementation at src/forge/sync.py:123 follows this internal symlink, so writing the merged AGENTS.md updates CLAUDE.md. This deletion entry then reaches unlink at src/forge/sync.py:345, removing that backing file and leaving AGENTS.md dangling while sync reports success. Materialize AGENTS.md as an independent file before deleting its target, or refuse before changing anything; cover this data-loss case through the command.",
         "file": "src/forge/githooks.py",
         "line": 74,
         "priority": "P1",
-        "title": "Not done: forge sync (and so init, adopt, migrate and upgrade) leaves no CLAUDE.md at the repo root: lines of CLAUDE.md that AGENTS.md doesn"
+        "title": "Not done: forge sync leaves no CLAUDE.md while preserving the repo's rules in AGENTS.md"
       }
     ],
     "status": "blocked",
-    "tree": "03adc855624f042d8777a180da929558146d3c90e56f9e39f08b22489857b930"
+    "tree": "9ad14d7068c677977c1ec48f7e4b7145edc8dc5617b9f06594986e32d5e417b3"
   },
   "status": "fixing",
   "steps": [
@@ -29,6 +29,10 @@
     },
     {
       "at": "2026-10-01T18:43:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T20:49:00+00:00",
       "step": "review"
     }
   ],
