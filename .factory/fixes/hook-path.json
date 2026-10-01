@@ -3,7 +3,7 @@
   "branch": "fix/hook-path",
   "done_when": "The host hook commands forge sync writes for Codex and Claude Code find forge even when the hook's PATH lacks uv's tool folder: they add uv's default tool bin folder (XDG_BIN_HOME, else HOME/.local/bin) to the front of PATH before running forge, and still block (exit 2) when forge can't be found at all. A command-level test runs each synced hook command with PATH=/usr/bin:/bin and a HOME whose .local/bin holds forge, and it runs; another with no forge anywhere still blocks. Forge's own repo's hook files are regenerated.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-01T09:49:40+00:00",
