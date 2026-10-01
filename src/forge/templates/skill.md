@@ -350,10 +350,15 @@ resolve that boundary before sending the note.
 
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
-`--effort <effort>` to choose for this question; without them it uses `[models.lite]` in
-`forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+`--effort <effort>` to choose for this question; without them it uses the Codex entry of
+`[models.lite]` in `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
+
+Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
+`[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
+tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
+review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
 
 ## Build simple
 
