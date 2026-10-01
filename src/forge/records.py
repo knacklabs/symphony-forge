@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -73,6 +74,9 @@ REFUSALS = {
                  'forge decision accept {slug} --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
+    "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
+                       "forge roadmap retire <KEY> --by {spec}"),
+    "not_pending": ("{key} is {status}, and only a pending roadmap item can be retired.", "forge next"),
 }
 
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -331,6 +335,29 @@ def roadmap_add(args: argparse.Namespace) -> None:
     print(f"Added {', '.join(new)} to {ROADMAP} from {rel}.")
 
 
+def roadmap_retire(args: argparse.Namespace) -> None:
+    key, slug = args.key, args.by
+    top = _start(args, slug)
+    rel = _spec(top, slug)[0]
+    items = repo.roadmap(top)  # refuses a roadmap it can't read
+    item = next((item for item in items if item["key"] == key), None)
+    if item is None:
+        repo.refuse(REFUSALS["not_on_roadmap"], key=key, spec=slug)
+    started = repo.read_state(key, top) is not None or repo.git(
+        "for-each-ref", f"refs/heads/story/{key}", f"refs/remotes/origin/story/{key}", cwd=top)
+    status = "started" if started and item.get("status") == "pending" else item.get("status")
+    if status != "pending":
+        repo.refuse(REFUSALS["not_pending"], key=key, status=status or "without a status")
+    if not (top / rel).is_file():
+        repo.refuse(REFUSALS["no_spec"], slug=slug)
+    item.update(status="superseded", superseded_by=rel)
+    data = story.json_of(_text(top / ROADMAP))
+    data["items"] = items
+    _write(top / ROADMAP, json.dumps(data, indent=2) + "\n")
+    repo.commit_state(f"Retire {key} from the roadmap; the {slug} spec replaces it", ROADMAP, top=top)
+    print(f"{key} is retired on {ROADMAP}, superseded by {rel}.")
+
+
 # --- helpers ---------------------------------------------------------------------------
 
 
@@ -474,10 +501,15 @@ COMMANDS = [
      "help": "Add roadmap items from a confirmed spec", "args": [(('spec',), {})],
      "position": 230,
      "listing": "| `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |"},
+    {"words": "roadmap retire", "run": "roadmap_retire", "changes_state": True,
+     "help": "Mark a pending roadmap item superseded by the spec that replaces it",
+     "args": [(('key',), {}), (('--by',), {"required": True, "metavar": "SPEC"})],
+     "position": 235,
+     "listing": "| `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |"},
 ]
 
 GROUP_HELP = {
     "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
     "decision": "Write and accept decisions",
-    "roadmap": "Add roadmap items",
+    "roadmap": "Add and retire roadmap items",
 }

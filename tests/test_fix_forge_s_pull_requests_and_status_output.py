@@ -40,8 +40,9 @@ def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
     review = body(env.gh_calls("pr", "create")[-1]).split("<!-- forge:begin -->\n", 1)[1]
+    # A clean review now opens with one count line instead of "The review found no serious problems."
     verdict = ("The review found serious problems." if blocked_review
-               else "The review found no serious problems.")
+               else "Review: clean, 0 dismissed, 0 advice.")
     assert review.startswith(f"{verdict}\n")
     assert reviewed[:12] not in review
 

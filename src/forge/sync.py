@@ -103,7 +103,7 @@ shims = githooks.shims
 
 # Every story and fix adds to the roadmap, so git merges it with Forge's rule instead of by line.
 ROADMAP_RULE = "plans/roadmap.json merge=forge-roadmap"
-RANK = {"pending": 0, "done": 2}  # planning, started and the rest sit between the two
+RANK = {"pending": 0, "done": 2, "superseded": 2}  # planning, started and the rest sit between
 
 def install_line(version: str) -> str:
     """The command that installs the pinned Forge (the pin refusal's own Next line)."""
