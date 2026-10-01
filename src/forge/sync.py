@@ -143,21 +143,21 @@ def _block(top: Path, rel: str, template: str) -> str:
     return text[:start] + block + text[end:]
 
 
-def _claude(top: Path) -> str:
-    """CLAUDE.md without the Forge block an older Forge wrote; "" means delete it.
+def _agents(top: Path) -> str:
+    """AGENTS.md with Forge's block, then CLAUDE.md's lines it doesn't have yet, so CLAUDE.md can go.
 
-    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md, so a CLAUDE.md whose every
-    line is already in AGENTS.md goes. One with a line of its own stays, and keeps an @AGENTS.md
-    line, since Claude Code reads it instead.
+    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md. CLAUDE.md's @AGENTS.md line
+    and an older Forge's block are dropped, never moved.
     """
-    text = read(top / "CLAUDE.md")
-    start, end = _span(text, "CLAUDE.md")
-    rest = (text if start == -1 else text[:start] + text[end:]).strip()
-    agents = {line.strip() for line in read(top / "AGENTS.md").splitlines()}
-    if all(line in agents for line in map(str.strip, rest.splitlines())
-           if line and line != "@AGENTS.md"):
-        return ""
-    return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
+    text = _block(top, "AGENTS.md", "adapters/AGENTS.md")
+    claude = read(top / "CLAUDE.md")
+    start, end = _span(claude, "CLAUDE.md")
+    rest = claude if start == -1 else claude[:start] + claude[end:]
+    have = {line.strip() for line in text.splitlines()} | {"@AGENTS.md"}
+    moved = "\n".join(line.rstrip() for line in rest.splitlines()
+                      if not line.strip() or line.strip() not in have)
+    moved = re.sub(r"\n{3,}", "\n\n", moved).strip("\n")
+    return f"{text.rstrip()}\n\n{moved}\n" if moved.strip() else text
 
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],

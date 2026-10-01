@@ -261,6 +261,8 @@ Adopting changes no app code.
    A rule every review must follow, such as which tests a kind of change needs, goes under
    `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
    default branch and follows it.
+   A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
+   AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
 
 On a live app, every story and fix also follows these:
 
@@ -403,6 +405,10 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
+A failed check whose log names none of the change's files, after this machine's tests passed, is
+re-run once per pushed head instead of costing a fix round. When GitHub has not started that
+re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
+round if the check is still red.
 
 ## Check-back
 

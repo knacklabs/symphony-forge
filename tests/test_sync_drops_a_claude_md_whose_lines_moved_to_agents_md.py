@@ -25,9 +25,12 @@ def test_1_sync_deletes_a_claude_md_whose_lines_all_moved_to_agents_md(repo):
     assert repo.forge("sync").stdout.startswith("Nothing to change")
 
 
-def test_2_sync_keeps_a_claude_md_with_a_line_of_its_own_and_imports_agents_md(repo):
+def test_2_sync_moves_a_claude_md_line_of_its_own_into_agents_md_and_deletes_it(repo):
+    # Was: CLAUDE.md with a line of its own stayed and imported AGENTS.md. Now the owner wants no
+    # CLAUDE.md at all, so the line moves into AGENTS.md and CLAUDE.md goes.
     _adopted(repo, f"{TEAM}- Claude only: keep answers short.\n")
     assert repo.forge("sync").returncode == 0
-    assert (repo.path / "CLAUDE.md").read_text(encoding="utf-8") == (
-        f"{TEAM}- Claude only: keep answers short.\n\n@AGENTS.md\n")
+    assert not (repo.path / "CLAUDE.md").exists()
+    assert (repo.path / "AGENTS.md").read_text(encoding="utf-8").endswith(
+        "<!-- forge:end -->\n\n- Claude only: keep answers short.\n")
     assert repo.forge("sync").stdout.startswith("Nothing to change")

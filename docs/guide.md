@@ -25,6 +25,9 @@ the install line to fix it.
   It writes `forge.toml`, the docs skeleton and the files for both hosts in one first commit,
   pushes it, installs the git hooks and switches on branch protection for the default branch.
 - **A repo that copied in the old Forge:** `forge migrate` moves it over in one pull request.
+- **Rules for agents:** a repo keeps them in AGENTS.md only, outside Forge's block. Claude Code
+  reads AGENTS.md itself, so `forge sync` moves any lines a CLAUDE.md has that AGENTS.md lacks into
+  AGENTS.md, in their order, and deletes CLAUDE.md.
 - **Every clone:** run `forge sync` once, because the git hooks are installed, not committed.
   Then `forge doctor` checks the tools, the pin, the hooks and CI, and prints a fix for each
   problem it finds. With Codex workers, it also checks the pinned Codex SDK, project trust and
