@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T04:17:25+00:00
-read_hash: 4876ffe76e74af1ed67328db12f23aab5fe3d4de
-round: 5
-passed: no
-doc_seen: 4876ffe76e74af1ed67328db12f23aab5fe3d4de
+read_at: 2026-10-01T04:21:24+00:00
+read_hash: eeb7febd88729d6e7cd0dd19610de2e33df6a34d
+round: 6
+passed: yes
+doc_seen: eeb7febd88729d6e7cd0dd19610de2e33df6a34d
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: abd115d1ac5e8814e6c668effadf9027fcdcea18
+notes_seen: 6a0988ba13c78eacc30a326c5deb385cf0d12065
 ---
 # Cold read notes
 
@@ -124,3 +124,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 24. Disputed keep 21: the accepted repair can lose valid observations, but item 1 still promises that only the broken edit is lost.
     The merge driver rejects invalid JSON but accepts an entry missing `item`, so divergent readable histories can still produce the described loss. Keep the blunt rollback, but remove the preservation guarantee and disclose possible observation loss under Risks.
     Disposition: cut item 1 no longer promises that only the broken edit is lost; it calls the repair a blunt rollback that can lose entries, and Risks now says so.
+
+## Round 6
+
+No findings.
