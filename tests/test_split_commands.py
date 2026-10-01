@@ -172,8 +172,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
            '\n'
            'options:\n'
            '  -h, --help  show this help message and exit\n'
-           '  --fix       with Codex workers, install the pinned Codex SDK if it is\n'
-           '              missing or wrong\n',
+           '  --fix       repair what doctor safely can: the pinned Forge, the Codex SDK,\n'
+           '              the git hooks and the folders of finished work\n',
  'migrate': 'usage: forge migrate [-h] [--dry-run]\n'
             '\n'
             'Move a client from the copied-in Forge to v1 in one pull request\n'
