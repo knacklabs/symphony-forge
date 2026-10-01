@@ -61,15 +61,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert repo.forge("read", "SHOP").stderr == COORDINATOR
     assert unchanged() and not stub.exists() and not claude.exists()
 
-    # Under Claude Code the reader is Codex, and the grill kind needs Codex's own entry; the grill
-    # kind has one entry per family.
+    # Under Claude Code the reader is Codex; the grill kind has one entry per family.
     monkeypatch.delenv("CODEX_THREAD_ID")
-    for models, problem in (
-            ({"grill.claude": GRILL["grill.claude"]}, "it has no [models.grill.codex], which this work uses"),
-            ({"grill": GRILL["grill.claude"]},
-             "models.grill has one entry per family, codex and claude, so it can't set model")):
-        toml.write_text(_toml(version, "claude", models), encoding="utf-8")
-        assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(problem)
+    toml.write_text(_toml(version, "claude", {"grill": GRILL["grill.claude"]}), encoding="utf-8")
+    assert repo.forge("read", "SHOP").stderr == MODELS_REFUSAL.format(
+        "models.grill has one entry per family, codex and claude, so it can't set model")
     toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
@@ -161,7 +157,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one refuses. Work runs on GPT-6.1 Sol; reviews stay on GPT-6 Sol at high effort.
+    # an old one refuses. Work and reviews run on GPT-6.1 Sol.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -176,7 +172,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                   "claude": {"model": "opus", "effort": "high"}},
         "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
-        "review": {"model": "gpt-6-sol", "effort": "high"}}
+        "review": {"model": "gpt-6.1-sol", "effort": "high"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml's model setting is now the [models] table.\n"

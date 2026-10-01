@@ -1,0 +1,37 @@
+{
+  "approval": {
+    "at": "2026-10-01T01:17:09+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01FBo7qB27NJVzSs1hUUtEct",
+    "hash": "06828e36f434e400ad2adc2749c013896dd66a265463790ca9e87a4a3a3effb2",
+    "round": 3,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-LAND-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T20:16:31+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:35:49+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:47:37+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:17:09+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "One command lands a change",
+  "touches": 1
+}

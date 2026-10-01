@@ -306,8 +306,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
             ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
              "models.fix sets only one of subagents and subagent_effort; set both or neither"),
             ({**MODELS, "debug": lite},
-             "debug is not a kind of work; the kinds are build, fix, lite, grill, design and review"),
-            ({"lite": lite}, "it has no [models.build], which this work uses")):
+             "debug is not a kind of work; the kinds are build, fix, lite, grill, design and review")):
         toml.write_text(_toml(version, "codex", models), encoding="utf-8")
         refused = repo.forge("work", "BOARD/PAGE")
         assert refused.stderr == MODELS_REFUSAL.format(problem), refused.stderr
@@ -337,7 +336,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
 
     # Claude workers take the kind's model and effort, and refuse subagents.
     claude = install_claude(repo)
-    toml.write_text(_toml(version, "claude", MODELS), encoding="utf-8")
+    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus"}}), encoding="utf-8")
     refused = repo.forge("work", "BOARD/PAGE")
     assert refused.stderr == MODELS_REFUSAL.format(
         "Claude workers take model and effort, so [models.build] can't set subagents")

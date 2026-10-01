@@ -1,7 +1,8 @@
 <!-- The review instructions `forge close` hands to Autoreview. review.py joins the blocks that
 apply (task or fix, then the functional check or promote block, then the rules) and fills each
-dollar-sign name. review.run adds the review-rules block to every review, sign-off included, when
-the repo's AGENTS.md has them. -->
+dollar-sign name. The standards block rides as a separate prompt file on every review.
+review.run also adds the review-rules block to every review, sign-off included, when the repo's
+AGENTS.md has them. -->
 
 <!-- task -->
 Review this branch. It is one part of a story, "$name", and it is meant to deliver:
@@ -73,7 +74,11 @@ A test skipped in your sandbox that the close run passed is not a missing test. 
 deletion, a test showing the old input is now refused is enough.
 
 ## What blocks the merge
-Remember: an edge case the Done-when doesn't ask for, where the item's purpose is already met, is a P2.
+A finding is P0 or P1 only for a defect that would ship, a security, data-loss or accessibility
+gap, an unmet Done-when item, or a missing test for a Done-when item's own behaviour.
+Extra edge-case tests, platform or hardening suggestions beyond what the item promises are P2:
+they never block the merge or start another round. So an edge case the Done-when doesn't ask for,
+where the item's purpose is already met, is a P2.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
@@ -155,6 +160,15 @@ The repository's own AGENTS.md, on its default branch, sets these rules for ever
 them as rules, not as evidence: where one settles a point, don't report it as a finding.
 
 $review_rules
+<!-- standards -->
+## Standards
+Forge's standards page follows: the same page every worker's brief carries. Check the change
+against each of its rules that applies to a concern the change has. Report every rule the change
+breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
+rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
+repo's own AGENTS.md rules differ from the page, they win.
+
+$standards
 <!-- signoff -->
 ## Client prototype sign-off review
 Review the complete product snapshot against the customer's answers and the topic table below.

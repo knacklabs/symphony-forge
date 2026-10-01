@@ -123,14 +123,21 @@ def close(args: argparse.Namespace) -> int:
         result["tree"] = tree
         _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
-    repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+    _push(top, branch)
     _publish(top, item, state, branch, default, pr, result)
     _attach(top, item, branch)
 
-    if serious:
-        for number, finding in serious:
+    for number, finding in serious:
+        print(f"{number}. {finding['priority']} {finding['title']} "
+              f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    advice = [(n, f) for n, f in enumerate(result["findings"], 1) if f["priority"] not in
+              (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)]
+    if advice:
+        print("Advice that does not block the merge:")
+        for number, finding in advice:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+    if serious:
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -144,7 +151,7 @@ def close(args: argparse.Namespace) -> int:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-    merge = "human" if migrating or state.get("why") == WHY else repo.merge_setting(top)
+    merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -156,6 +163,11 @@ def close(args: argparse.Namespace) -> int:
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
+
+
+def merger(top: Path, state: dict[str, Any]) -> str:
+    """"human" for migrate, adopt and the merge switch's fix, else the repo's merge setting."""
+    return "human" if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY else repo.merge_setting(top)
 
 
 def _worktree(item: str) -> Path:
@@ -233,6 +245,18 @@ def _synced(top: Path, item: str) -> None:
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def _push(top: Path, branch: str) -> None:
+    """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    for wait in (1, 2, 4, None):
+        try:
+            repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+            return
+        except subprocess.CalledProcessError:
+            if wait is None:
+                raise
+            time.sleep(wait)
 
 
 def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:

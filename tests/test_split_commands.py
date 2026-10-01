@@ -12,9 +12,10 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
+# forge land joins the list after merge (FORGE-LAND-1).
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -25,7 +26,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
@@ -45,6 +46,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    ask                 Ask Codex a read-only question about this checkout\n'
      '    close               Close a task or fix by the close rule\n'
      '    merge               Merge a ready item when this repo allows it\n'
+     '    land                Build, close, fix and merge a task or fix\n'
      '    spec                Save and confirm specs, weigh whether a build pays\n'
      '                        back, and record its result\n'
      '    decision            Write and accept decisions\n'

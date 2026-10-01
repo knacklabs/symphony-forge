@@ -16,16 +16,21 @@ import pytest
 
 from test_close import PIN
 
+# Forge's subagent roles, which sync writes for both hosts.
+ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
+    "worker", "coder", "frontend", "tester", "refactorer", "explorer", "planner", "architect",
+    "debugger", "security", "performance")
+    for folder, suffix in ((".codex/agents", ".toml"), (".claude/agents", ".md"))}
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
-# .gitattributes carries the roadmap's merge rule.
-LISTED = {"AGENTS.md", ".gitattributes", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+# .gitattributes carries the roadmap's merge rule; .forge/hooks.sh finds forge for the host hooks.
+LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
-            for name in ("SKILL.md", "NOTICE.md"))}
+            for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
@@ -81,6 +86,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     _executable(folder / "forge", f'#!/bin/sh\n{{ echo "$*"; cat; echo; }} >> "{log.as_posix()}"\n'
                                   f'[ "$*" != "{failing}" ]\n')
     monkeypatch.setenv("PATH", f"{folder}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("XDG_BIN_HOME", str(folder))  # host hooks put uv's tool folder first
     return log
 
 
@@ -139,14 +145,17 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert agents.startswith("# Our agents\n\nOur own rules.\n")
     assert agents.count("<!-- forge:begin -->") == agents.count("<!-- forge:end -->") == 1
     settings = json.loads((repo.path / ".claude/settings.json").read_text(encoding="utf-8"))
-    assert settings["permissions"] == {"allow": ["Bash(ls)"]}
+    # The repo's own allow entry stays; Forge adds the tools its full access means.
+    assert settings["permissions"] == {"allow": ["Bash(ls)", "Bash", "Edit", "Write", "WebFetch",
+                                                 "WebSearch"]}
     commands = [hook["command"] for groups in settings["hooks"].values() for group in groups
                 for hook in group["hooks"]]
     assert "our-guard" in commands
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
-    # The repo's own Codex settings stay; only Codex's project hooks are switched on.
+    # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
-    assert config == {"model": "o3", "features": {"web_search": True, "hooks": True}}
+    assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
+                      "features": {"web_search": True, "hooks": True}}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
@@ -348,7 +357,8 @@ def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path
     _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
     path = [folder for folder in os.environ["PATH"].split(os.pathsep)
             if not (Path(folder) / "forge").is_file()]
-    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path])}
+    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path]),
+           "XDG_BIN_HOME": str(broken)}  # host hooks put uv's tool folder first on PATH
     tools = {"PreToolUse": ("Bash", {"command": "ls"}),
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 

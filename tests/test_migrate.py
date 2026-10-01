@@ -200,7 +200,8 @@ def _moves(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     records = {path for path in _files(FIXTURE / "client")
                if path.startswith((".factory/", ".gstack/", "plans/quickfixes/", "plans/lessons",
                                    "plans/deferrals"))}
-    sync_rewrites = {".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md"}
+    sync_rewrites = {".codex/skills/forge/SKILL.md", ".claude/skills/forge/SKILL.md",
+                     ".codex/agents/worker.toml"}
     assert {path for path, status in changed.items() if status == "D"} == (
         (_files(FIXTURE / "source") - sync_rewrites - SHARED) | set(KEPT) | records
         | {"constitution/VENDORED_FROM", ".envrc", SHIP, DRAFT, TIDY, SEARCH, SIGNIN})

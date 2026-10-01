@@ -406,7 +406,8 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             log = install_claude(repo)
             worked = repo.forge("work", "WISH/SAVE")
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
-            assert calls(log)[-1]["args"][:2] == ["-p", "--model"]
+            # forge init's build entry is a gpt model, which is Codex's, so Claude takes its own.
+            assert calls(log)[-1]["args"][:2] == ["-p", "--permission-mode"]
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------
@@ -518,17 +519,26 @@ def test_8_plain_english(env):
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
     # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
     if os.name != "nt":
-        slow, started = env.tmp / "slow", env.tmp / "gh-started"
+        slow, started, gh_pid = env.tmp / "slow", env.tmp / "gh-started", env.tmp / "gh-pid"
         slow.mkdir()
-        _executable(slow / "gh", f'#!/bin/sh\ntouch "{started}"\nsleep 30\n')
+        _executable(slow / "gh", f'#!/bin/sh\necho $$ > "{gh_pid}"\ntouch "{started}"\nexec sleep 30\n')
         doctor = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "doctor"], cwd=repo.path,
                                env={**os.environ, "PATH": f"{slow}{os.pathsep}{os.environ['PATH']}"},
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        while not started.exists() and doctor.poll() is None:
-            time.sleep(0.05)
-        doctor.send_signal(signal.SIGINT)
-        out, err = doctor.communicate(timeout=30)
-        assert (doctor.returncode, err) == (130, ""), (out, err)
+        try:
+            while not started.exists() and doctor.poll() is None:
+                time.sleep(0.05)
+            doctor.send_signal(signal.SIGINT)
+            out, err = doctor.communicate(timeout=30)
+            assert (doctor.returncode, err) == (130, ""), (out, err)
+        finally:  # the SIGINT reached forge alone, so the waiting gh is still running
+            doctor.kill()
+            doctor.communicate()
+            if gh_pid.exists():
+                try:
+                    os.kill(int(gh_pid.read_text("utf-8")), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
 
 # --- criterion 9: nothing changes outside a pull request --------------------------------------
@@ -571,7 +581,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
-                 ("fix", "allow-large", "It touches six files"), ("spec", "save", "carts"),
+                 ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
+                 ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
                  ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
