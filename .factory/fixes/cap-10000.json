@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "b2dcda9830a336e2cae0103380ae9f402eb99cedd99da7d3322f26aa71944552",
-    "commit": "dcedb76fc67fb67354580c70f34497ba2f2e4700",
+    "changed": "efff87b6cc7214ecced6050346434b32b49c2c74a718a510543e5d6eeeb9382f",
+    "commit": "f61a81341f784535abf0cd2e3769f053de3988b9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Decision 0100 still has `status: accepted` at line 2. Adding `superseded_by` alone leaves both conflicting ceilings accepted instead of completing the requested supersession. Forge's own acceptance implementation sets both `status=\"superseded\"` and `superseded_by` (src/forge/records.py:306\u2013307), as previous decision 0099 also demonstrates. Change 0100's status to `superseded`. Reaccepting 0101 will not repair this because already accepted decisions return immediately (src/forge/records.py:248\u2013250).",
-        "file": "docs/decisions/0100-python-cap-8500.md",
-        "line": 7,
-        "priority": "P1",
-        "title": "Not done: pyproject.toml's line ceiling is 10,000, the test that pins it matches, and decision 0101 records the owner's choice and supers"
-      }
-    ],
-    "status": "blocked",
-    "tree": "ae94a6f66fc35022de4205b56f7f7a22447c24f1fc4a97b927cff65c379c1e6d"
+    "findings": [],
+    "status": "clean",
+    "tree": "e4eb9d5dcc9157b323847c5cba816b145475b10678c531f1824ce8ae56ea3c96"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T07:52:50+00:00",
@@ -28,6 +20,10 @@
     },
     {
       "at": "2026-10-01T08:18:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T08:44:06+00:00",
       "step": "review"
     }
   ],
