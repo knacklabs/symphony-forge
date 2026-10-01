@@ -13,7 +13,7 @@ import re
 import shlex
 import shutil
 import tempfile
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -168,7 +168,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    lines = _due(top) + (lines or _idle(top))
+    lines = _due(top) + _refresh(top, trees) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
         if repo.is_prototype(top, cfg):
@@ -232,6 +232,31 @@ def _due(top: Path) -> list[str]:
                       'spec records its result"',
                       f'Next: forge spec measure {slug} --result "<measured result>"']
     return lines
+
+
+LOCKFILES = {"package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb", "bun.lock", "uv.lock",
+             "poetry.lock", "Cargo.lock", "go.sum"}
+REFRESH = "refresh-dependencies"
+
+
+def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
+    """A refresh fix once the default branch's lockfiles and Dockerfiles are a week old by git log."""
+    if f"fix/{REFRESH}" in trees:
+        return []
+    ref = story.landed_ref(top)
+    names = repo.git("ls-tree", "-r", "--name-only", ref, cwd=top).splitlines()
+    locks = [name for name in names if Path(name).name in LOCKFILES]
+    if not locks:
+        return []
+    docker = [name for name in names if Path(name).name == "Dockerfile"
+              or Path(name).name.startswith("Dockerfile.") or name.endswith(".Dockerfile")]
+    last = repo.git("log", "-1", "--format=%cI", ref, "--", *locks, *docker, cwd=top)
+    if datetime.fromisoformat(repo.now()) - datetime.fromisoformat(last) <= timedelta(days=7):
+        return []
+    return ["The dependencies and base images haven't been refreshed in over a week; refresh them.",
+            'Next: forge fix start "Dependencies and base images are over a week old, so new '
+            'security advisories fail the image scan" --done "Lockfiles and base images are updated '
+            f'within their allowed ranges, the image builds and the test command passes" --slug {REFRESH}']
 
 
 def _idle(top: Path) -> list[str]:
