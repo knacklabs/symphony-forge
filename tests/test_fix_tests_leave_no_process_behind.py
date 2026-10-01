@@ -67,3 +67,41 @@ def test_1_a_test_that_leaves_a_process_fails_the_run_by_name(tmp_path):
                 os.kill(int(pid), signal.SIGKILL)
             except ProcessLookupError:
                 pass
+
+
+# A test that starts a process, then kills its own worker, so its cleanup never runs.
+CRASHY = """import os, signal, subprocess, sys
+
+def test_crashes_its_worker():
+    proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(300)"],
+                            start_new_session=True)
+    with open({pids!r}, "w") as pids:
+        pids.write(str(proc.pid))
+    os.kill(os.getpid(), signal.SIGKILL)
+"""
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the check reads processes with ps, which Windows lacks")
+def test_2_a_crashed_worker_s_process_fails_the_run_by_name(tmp_path):
+    pids = tmp_path / "pids.txt"
+    crashy = tmp_path / "crashy" / "test_crashy.py"
+    crashy.parent.mkdir()
+    crashy.write_text(CRASHY.format(pids=str(pids)), encoding="utf-8")
+    try:
+        run = subprocess.run([sys.executable, "-m", "pytest", str(crashy), "-p", "conftest",
+                              "-p", "no:cacheprovider", "-q", "-o", "addopts=", "-n", "1",
+                              "--basetemp", str(tmp_path / "base")],
+                             cwd=tmp_path, env={**os.environ, "PYTHONPATH": str(TESTS)},
+                             capture_output=True, text=True, timeout=120)
+        pid = pids.read_text("utf-8")
+
+        assert run.returncode != 0
+        assert "crashed while running 'crashy/test_crashy.py::test_crashes_its_worker'" in run.stdout
+        assert f"test_crashes_its_worker0 left processes running: {pid} " in run.stdout, run.stdout
+        assert not _up(int(pid))
+    finally:  # the outer check looks for this test's temp folder, which this child lacks
+        if pids.exists():
+            try:
+                os.kill(int(pids.read_text("utf-8")), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
