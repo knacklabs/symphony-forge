@@ -92,12 +92,11 @@ Risks: none
    unreadable one with `spotted.REFUSALS["bad"]`: `plans/spotted.json isn't a list Forge can read:
    {problem}.` / Next: `{repair}, commit it, then forge close {item}`, running no review and
    committing nothing. `{repair}` is `git -C {path} checkout {commit} -- plans/spotted.json`, where
-   `{commit}` is the newest commit on `origin/{default}` whose copy reads (`git log --format=%H
-   origin/{default} -- plans/spotted.json`, newest first), so no entry the default branch ever held
-   readably is lost; only when no commit there has a readable copy is it
-   `git -C {path} rm -q plans/spotted.json`, and then there was nothing to keep. The entries this
-   branch had are recorded again by the next close, which reads the worker's commits and the
-   review's findings afresh.
+   `{commit}` is the newest commit in the branch's own history whose copy reads (`git log
+   --format=%H HEAD -- plans/spotted.json`, newest first). That history holds the branch's earlier
+   review commits and every default-branch commit merged into it, so only the broken edit itself is
+   lost. Only when no commit there has a readable copy is it `git -C {path} rm -q
+   plans/spotted.json`, and then there was nothing to keep.
    Merging: `forge sync` adds `plans/spotted.json merge=forge-roadmap` (`sync.SPOTTED_RULE`) to
    `.gitattributes` beside `sync.ROADMAP_RULE`, each line added only when missing, and reuses
    `sync.merge_roadmap` and its registered driver unchanged: entries are matched by `key`, every
@@ -118,10 +117,10 @@ Risks: none
    `Spotted:` line is recorded by the next close in a `Review of <item>: clean` commit with no
    Autoreview call, and a third close makes no commit; a close with nothing spotted creates no file
    and the review commit holds only the state file; a file that isn't JSON, and one entry missing
-   `item`, each refuse with the `bad` refusal and no Autoreview call; with the default branch's
-   newest copy broken by a hand commit over a readable one, the Next restores the readable one and
-   its entries all come back, with no readable copy ever it is the `rm` repair, and running the
-   printed repair lets the next close review and record the branch's entries again; a fix whose
+   `item`, each refuse with the `bad` refusal and no Autoreview call; with a round-1 entry that
+   round 2's review no longer raises and the file then broken by a hand commit, the Next restores
+   the last readable copy and that entry comes back, with no readable copy ever it is the `rm`
+   repair, and running the printed repair lets the next close review; a fix whose
    done-when names `plans/spotted.json` gets a clean review that a following close's recording
    doesn't make stale (no second Autoreview call); after `forge sync`, `.gitattributes`
    holds both rules once, also when it held only the roadmap rule, and two branches that each add
@@ -193,24 +192,25 @@ Risks: none
    order. The stop's fix never carries the review's findings, which may describe the stopped change
    itself; it asks only to simplify `F` as it is on the default branch: why `Simplify <F> before
    <item> carries on` and done-when `<F> is simpler and behaves as it did before`. Close sets
-   `state["stop"] = {"file": F, "why": <why>, "done": <done>, "waiting": true}` and the status
-   `hotspot`, in the review commit (message `Review of <item>: blocked; <F> keeps breaking`), pushes
+   `state["stop"] = {"file": F, "blob": <F's blob on origin/<default>>, "why": <why>, "done":
+   <done>, "waiting": true}` and the status `hotspot`, in the review commit (message `Review of <item>: blocked; <F> keeps breaking`), pushes
    and updates the draft pull request as for any blocked review, then refuses with
    `close.REFUSALS["hotspot"]` (`<r>` is the item's number of `review` steps): `Review round <r> of
    <item> still finds serious problems in <F>, which an earlier round flagged too, so Forge stops
    sending the worker back.` / Next: `forge fix start "<why>" --done "<done>", then forge close
    <item> once that fix merges`.
-   One blunt rule decides when the item carries on: that exact fix has merged, meaning a fix state
-   under `.factory/fixes/` on `origin/<default>` has `why` equal to the stop's `why` (a fix's state
-   reaches the default branch only with its merge, and the why names the item, so no earlier fix
-   matches). A later `forge close` while `waiting` is true checks this after merging the default
-   branch. Without it, it refuses with `close.REFUSALS["hotspot_wait"]`: `<item> waits for the fix
-   that simplifies <F> to merge.` / Next: `forge next`, running no review and committing nothing,
-   `--dismiss` included; other changes to `F` landing meanwhile don't count. With it, it sets
-   `waiting` to false and the status `fixing`, prints `The fix that simplifies <F> has merged, so
-   <item> carries on.`, and runs a new review even when the last one still covers the change, so
-   the state lands in that review's commit as any review's does. An item stops at most once: with
-   `state["stop"]` set, a blocked review refuses with `blocked` as today.
+   One blunt rule decides when the item carries on: `F` on the default branch is no longer what it
+   was at the stop. A later `forge close` while `waiting` is true, after merging the default branch
+   (whose conflicts refuse as today, src/forge/close.py:192), compares `F`'s blob on
+   `origin/<default>` with `blob`. Unchanged, it refuses with `close.REFUSALS["hotspot_wait"]`:
+   `<item> waits for the fix that simplifies <F> to merge.` / Next: `forge next`, running no review
+   and committing nothing, `--dismiss` included. Changed or gone, whichever change did it (the
+   printed fix, the same fix promoted to a story, or any other merged change to `F`), it sets
+   `waiting` to false and the status `fixing`, prints `<F> has changed on <default>, so <item>
+   carries on.`, and runs a new review even when the last one still covers the change, so the state
+   lands in that review's commit as any review's does. The check reads only `F`'s content, never
+   fix records or why texts, so it needs no rule for fixes merged earlier or promoted. An item
+   stops at most once: with `state["stop"]` set, a blocked review refuses with `blocked` as today.
    `nextstep._item` shows status `hotspot` as
    `Close stopped <label>: <F> keeps breaking, so a fix that simplifies it goes first.` with
    `Next: forge fix start "<why>" --done "<done>"`, or `Next: forge close <item> once the fix for
@@ -226,11 +226,13 @@ Risks: none
    round 3 blocking in a flagged file that exists only on the item's branch, and round 3 blocking in
    a flagged default-branch file named `src/$cache.py`, each give the `blocked` refusal; a round-3
    finding in `F` carried over as dismissed gives no stop; a close while waiting, with and without
-   `--dismiss`, gives `hotspot_wait`, no Autoreview call and no commit, also after another change
-   to `F` lands on the default branch; once the printed fix is started, closed and merged into the
-   default branch, close prints the carry-on line, calls Autoreview, and its review commit has
-   `waiting` false; a round-4 block in `F` after that gives `blocked`, not a second stop; with a fix
-   worktree holding the stop's `why`, `forge next` gives the wait line; the skill template and both
+   `--dismiss`, gives `hotspot_wait`, no Autoreview call and no commit, also after a change to
+   another file lands on the default branch; once the printed fix is started, closed and merged
+   into the default branch, close prints the carry-on line, calls Autoreview, and its review commit
+   has `waiting` false; a commit deleting `F` on the default branch gives close's `conflict`
+   refusal (the item changed `F`), and once that merge is resolved and committed the next close
+   carries on the same way; a round-4 block in `F` after carrying on gives `blocked`, not a second
+   stop; with a fix worktree holding the stop's `why`, `forge next` gives the wait line; the skill template and both
    synced copies hold the stop sentence.
 6. `src/forge/templates/skill.md` gains a `## Hotspots` section after `## Closing`, saying: a
    worker or review notes problems outside its change as spotted items, which Forge keeps in

@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T03:04:09+00:00
-read_hash: 8983883182a9717f63c2735a8c84976fc9b514a7
-round: 2
+read_at: 2026-10-01T03:28:47+00:00
+read_hash: 115f4015e8a6f8faebe876c7cfedfabd54b0f4fd
+round: 3
 passed: no
-doc_seen: 8983883182a9717f63c2735a8c84976fc9b514a7
+doc_seen: 115f4015e8a6f8faebe876c7cfedfabd54b0f4fd
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: bc7ae53aa5d582e549f9d326056ea576fe5d098a
+notes_seen: 7e9df5f55c6bd3019dc0d2e30c11f563c4c06fc7
 ---
 # Cold read notes
 
@@ -69,7 +69,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 12. Item 5 now resumes before the required simplifying fix has merged.
     Any merged change to `F`, including unrelated formatting, releases the stop permanently. Done when 5 and the guide still require the simplifying fix to merge first. Align the resumption condition with that promise and test an unrelated change arriving while the fix remains open.
-    Disposition: cut one blunt rule: the item carries on only when the stop's exact fix has merged (its state, with the stop's why, is on the default branch); other changes to F don't count; tested.
+    Disposition: keep (revised in round 3) the item carries on once F's content on the default branch differs from the stop's; the printed fix does that, and one content check also survives promotion to a story and repeated why texts (findings 17 and 19), where any fix-identity rule needs more cases; the wait still holds against changes to other files, tested (plans/FORGE-SPOTTED-1.md item 5).
 
 13. Risks omits the new deletion of recorded observations during repair.
     When the default copy is unreadable, item 1 recommends deleting the entire list, including otherwise valid entries surrounding one malformed entry. Prefer restoring a readable version where available, name any remaining reset loss under Risks, and test preservation of existing observations.
@@ -81,4 +81,22 @@ Only a genuine trade-off goes to the human, as a question with options.
 
 15. Unproven: item 5: `F` disappears from the default branch.
     The new rule explicitly resumes when `F` is gone, but the tests cover only changed contents. Add the deletion case, including the expected refusal when merging it conflicts with the stopped branch’s edits, and verify resumption after resolution.
-    Disposition: cut resumption no longer looks at F's content, only at the stop's fix having merged, so F's deletion is no special case.
+    Disposition: cut (revised in round 3) F deleted on the default branch resumes like a change; the merge first hits close's existing conflict refusal (src/forge/close.py:192), and once resolved the next close carries on; tested.
+
+## Round 3
+
+16. HOT → STOP is now an artificial dependency caused by shared wiring.
+    Notes explicitly says STOP uses no name HOT adds. Move their shared `nextstep.py`, Hotspots guide section and synced-copy edits into a small final wiring task; let the implementation tasks follow SPOT, with output tests owned by the wiring task.
+    Disposition: keep STOP and HOT both edit nextstep.py's `_report`/`_item` (src/forge/nextstep.py:144, :393) and the skill template with its two synced copies, so running them one after the other avoids conflicts in shared files; a fourth wiring task would add a task and a handoff for no gain at this size.
+
+17. Unproven: item 5: promoting the required fix to a story leaves the original item waiting forever.
+    [story.py:711](src/forge/story.py:711) deletes the fix state and transfers it to a task. After that task merges, no matching state exists under `.factory/fixes/`. Pin resumption through the supported promotion flow and prove it in `tests/test_hotspot_stop.py`.
+    Disposition: cut resumption now reads only F's content on the default branch, so a fix promoted to a story (src/forge/story.py:711) resumes the item when its task merges.
+
+18. Item 1’s repair cannot reconstruct observations from earlier branch reviews.
+    A finding recorded in round 1 may disappear from round 2’s clean result. Restoring only the default branch’s list loses that branch-only entry, and recording the latest result cannot recreate it. Preserve the branch’s readable history too, and test this sequence in `tests/test_spotted.py`.
+    Disposition: cut the repair restores the newest readable copy in the branch's own history, which holds its earlier review commits and merged default commits; a round-1 entry dropped by round 2 comes back, tested.
+
+19. Item 5’s assertion that no earlier fix can have the same why is unsupported.
+    [task.py:224](src/forge/task.py:224) accepts arbitrary, repeated why text; only fix names are made unique. A previously merged fix with the generated why would immediately release a new stop. Pin exclusion of fixes already merged when the stop was recorded and test that case in `tests/test_hotspot_stop.py`.
+    Disposition: cut resumption no longer matches why texts or fix records, only F's content changing since the stop, so an earlier fix with the same why can't release it.
