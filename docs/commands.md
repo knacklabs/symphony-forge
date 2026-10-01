@@ -28,6 +28,7 @@
 | `forge decision new <slug>` | Writes a decision record |
 | `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
 | `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
+| `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |
 | `forge hook context` | Session start: prints `forge next` and the story's state |
 | `forge hook handoff` | Saves current state before context compaction |
 | `forge hook approval` | After the plan and question tools: records approvals and counts human touches |

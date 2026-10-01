@@ -36,6 +36,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
+| "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init` |
@@ -316,6 +317,8 @@ changing a result or "What changes for you" does.
 - Aim for parallel work: split tasks so each owns its files. A line several tasks would edit (a
   command-table row, a guide list or a registry) goes to one task, or to a small last wiring
   task. Use After only when a task needs another task's code.
+- After names this story's tasks by ID; name another story's task as KEY/TASK (for example
+  TURN-1/T4). `forge next` and `forge task start` hold the task until that task's pull request merges.
 - End the Tasks section with its one `New moving parts:` line (see Build simple).
 - Risks names every one-way step: deleting data, a destructive migration, a new vendor.
 - Use the stack already in the repo. Ask the human only when options differ in cost, lock-in or

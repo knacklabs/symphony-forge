@@ -105,14 +105,18 @@ def moving_parts(text: str) -> str:
 
 def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
     """A task's story doc text, its sections and the task's row; refused when the row is missing."""
+    from forge import story  # story imports review indirectly
     key, _, name = item.partition("/")
     path = top / "plans" / f"{key}.md"
-    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    # Like forge task start: the story branch's copy while it exists, so a plan edit made there
+    # after approval reaches the review; else this checkout's, which close merged from the default.
+    text = story.show(top, f"story/{key}", f"plans/{key}.md")
+    if text is None:
+        text = path.read_text(encoding="utf-8") if path.is_file() else ""
     doc = sections(text)
     row = next((r for r in rows(doc.get("Tasks", "")) if r.get("id", "").strip("`") == name), None)
     if row is None:
         repo.refuse(REFUSALS["bad_doc"], key=key, task=name, item=item)
-    from forge import story  # story imports review indirectly
     story._parsed(text, f"plans/{key}.md")  # pyright: ignore[reportPrivateUsage]
     return text, doc, row
 

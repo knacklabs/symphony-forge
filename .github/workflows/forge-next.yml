@@ -21,9 +21,10 @@ jobs:
           - {os: ubuntu-latest, group: 1, groups: 1, timeout: 10}
           - {os: macos-latest, group: 1, groups: 2, timeout: 10}
           - {os: macos-latest, group: 2, groups: 2, timeout: 10}
-          - {os: windows-latest, group: 1, groups: 3, timeout: 20}
-          - {os: windows-latest, group: 2, groups: 3, timeout: 20}
-          - {os: windows-latest, group: 3, groups: 3, timeout: 20}
+          - {os: windows-latest, group: 1, groups: 4, timeout: 20}
+          - {os: windows-latest, group: 2, groups: 4, timeout: 20}
+          - {os: windows-latest, group: 3, groups: 4, timeout: 20}
+          - {os: windows-latest, group: 4, groups: 4, timeout: 20}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.timeout }}
