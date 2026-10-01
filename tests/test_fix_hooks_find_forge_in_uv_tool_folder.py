@@ -3,6 +3,7 @@ machine blocked just because forge isn't on that PATH."""
 from __future__ import annotations
 
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -134,3 +135,17 @@ def test_6_doctor_never_runs_a_launcher_that_differs_from_sync_s(repo, tmp_path)
     assert ("doctor didn't run the host hooks, because .forge/hooks.sh differs from what forge "
             "sync writes.") in done.stdout, done.stdout
     assert not marker.exists()
+
+
+@pytest.mark.parametrize("version", ['v1.2.1\\necho pwned', '1.2.1; touch pwned', '$(touch pwned)'])
+def test_7_a_version_that_isnt_a_release_is_refused_and_no_launcher_is_written(repo, version):
+    _on_a_branch_with_forge_toml(repo)
+    toml = repo.path / "forge.toml"
+    toml.write_text(re.sub(r'version = "[^"]*"', lambda _: f'version = "{version}"',
+                           toml.read_text(encoding="utf-8")), encoding="utf-8")
+    done = repo.forge("sync")
+    assert done.returncode == 1
+    assert done.stderr.splitlines()[-2:] == [
+        "forge.toml is not usable: version must be a Forge release, such as v1.2.1.", "Next: forge doctor"]
+    assert not (repo.path / ".forge/hooks.sh").exists()
+    assert not list(repo.path.rglob("pwned"))
