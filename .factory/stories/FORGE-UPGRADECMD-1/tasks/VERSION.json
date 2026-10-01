@@ -1,10 +1,31 @@
 {
   "branch": "task/FORGE-UPGRADECMD-1-VERSION",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6ea8e4fbf6f8aaaceeb459213d8a18201c132e1f1f440caa436acd2788b9a244",
+    "commit": "5f7ab7b60a7ea12bc815751b94098fb4867ca38b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The regex matches version-looking lines inside multiline settings, rather than identifying the actual top-level assignment. For example, valid TOML `test = '''\\nversion = \"fixture\"\\n'''\\nversion = \"v1.3.0\"\\n` passed to `set_version(text, \"v1.3.0\")` changes the contents of `test`. The parsed top-level version already equals the release, so validation accepts the altered setting. This affects the required same-release rerun and violates item 3's preservation guarantee. Locate the actual top-level version value without matching string contents, and verify that this case preserves every other byte.",
+        "file": "src/forge/repo.py",
+        "line": 345,
+        "priority": "P1",
+        "title": "Not done: Your model choices and every other setting in Forge's settings file stay exactly as they were."
+      }
+    ],
+    "status": "blocked",
+    "tree": "ab9b9dd374c3747a13b1ad7d08f256c434a125a47a42f838e9e9c782d715ad62"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T10:02:51+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T11:38:29+00:00",
+      "step": "review"
     }
   ]
 }
