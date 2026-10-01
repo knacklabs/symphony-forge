@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "ead055b8da7f1749e6bac74a1b9ffc9f4c302c0e06e390644b62b2adba5c0803",
-    "commit": "28cf8ad9f486f79e0c7b8fb3f293aa51a72ed16b",
+    "changed": "d6dfcaf88413f3a72be502b8d811ea010cd13441abf5984e3c7032496d11a4a3",
+    "commit": "9721de9241797eca09c94eaefc5413c20879522a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The supplied close run shows a new failure path: xdist worker gw5 crashed during `test_10_new_client_deploys_only_after_migration`. This guard runs only after a test yields, so it cannot check or clean up processes from a worker that dies. The unchanged deployment test starts detached containers (`tests/test_proto_deploy.py:119\u2013120, 138`) and removes them only in its `finally` block (`tests/test_proto_deploy.py:197\u2013205`), which also cannot run after a worker crash. Add a suite-level check and cleanup that survives worker loss and identifies the responsible test. The supplied output does not establish whether containers remained after this particular crash.",
-        "file": "tests/conftest.py",
-        "line": 123,
-        "priority": "P1",
-        "title": "Not done: Check and clean up processes when a test worker crashes"
-      }
-    ],
-    "status": "blocked",
-    "tree": "7d156ded0973e4ccabfb5975d6fbbf9c1f56922bc27fa19da2135991e944af69"
+    "findings": [],
+    "status": "clean",
+    "tree": "1dcf40f563cfba9846299c7e18c1063ca9834c9ac000cf54756dfec2c95c5919"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T19:14:11+00:00",
@@ -36,6 +28,10 @@
     },
     {
       "at": "2026-09-30T20:47:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T02:50:59+00:00",
       "step": "review"
     }
   ],
