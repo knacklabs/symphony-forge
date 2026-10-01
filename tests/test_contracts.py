@@ -102,9 +102,10 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     conftest._install(repo.bin, "uv", f"#!{sys.executable}\nimport sys\n"
                                       "sys.stderr.write('uv: the network is down\\n')\nsys.exit(1)\n")
-    return (("doctor", "--fix"), None, "",
-            "uv venv failed while installing the Codex SDK: uv: the network is down\n"
-            "Next: forge doctor --fix\n")
+    # FORGE-DOCTORFIX-1: the failed install is a row (tests/test_doctor_fix.py checks it), and
+    # doctor goes on with its other repairs, so it ends with the problems refusal.
+    return (("doctor", "--fix"), None, "", re.compile(
+        r"forge doctor found \d+ problem\(s\); each row above gives its fix\.\nNext: forge doctor\n"))
 
 
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):

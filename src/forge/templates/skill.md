@@ -34,7 +34,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
-| "Is my setup healthy?" | `forge doctor` |
+| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
