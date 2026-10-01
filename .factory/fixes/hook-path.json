@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked on 2026-10-01 to fix hooks blocking every command for good; the shared launcher, both hosts' hook files, sync, doctor and their tests are one change (9 files)",
   "amendments": [
     {
       "at": "2026-10-01T09:50:41+00:00",
