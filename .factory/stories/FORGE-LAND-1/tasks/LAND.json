@@ -2,27 +2,20 @@
   "branch": "task/FORGE-LAND-1-LAND",
   "review": {
     "blocking_level": "P1",
-    "changed": "b182ff20ad217ee1acd1263214385a1d8c75bbab464de85f4fa6a8281720ba45",
-    "commit": "21e4e7ccdc5224c7f4f8c01b65d8090000d82192",
+    "changed": "0ed43f5f71c3fb7ece4d65958a383b53ea51927db9eba03d8c4e3ddef0a2bea1",
+    "commit": "abf2a570ff3025ed095f550fee2d8c985322a78a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The standard requires \u201cForge shrinks over time\u201d and a \u201crefactor ratchet in CI.\u201d This branch brings src/forge/ to 8,564 lines, exceeding pyproject.toml's unchanged 8,500-line ceiling. tests/test_rules.py:67 enforces that ceiling, and the supplied close run confirms it fails. Reduce actual code or process enough to satisfy the existing ceiling; removing blank lines or joining lines does not meet the standard.",
+        "body": "The standard requires \u201cForge shrinks over time\u201d and a \u201crefactor ratchet in CI.\u201d This finding remains open: the current src/forge/*.py files total 8,542 lines, exceeding the unchanged 8,500-line ceiling at pyproject.toml:40. tests/test_rules.py:67 enforces that ceiling, and the supplied close run confirms the failure. Reduce actual code or process enough to pass the existing check; joining lines or removing blank lines does not satisfy the standard.",
         "file": "src/forge/land.py",
         "line": 21,
         "priority": "P1",
         "title": "Standard: Forge shrinks over time"
-      },
-      {
-        "body": "If the PR lookups return OPEN for land, OPEN for close, then MERGED after close finishes, this branch calls only _after_merged. Close never executed its merged path, so land omits the merged report and, for a story's last task, the required forge story done next step (src/forge/close.py:365\u2013375). For migrate/adopt it also skips the merged path's init.protect call (close.py:68\u201369). This is new evidence beyond the ruling that close should not run twice when close itself already found the PR merged: here close did not find it merged. The existing test at tests/test_land.py:220 queues OPEN then MERGED and covers only the ruled case. Handle and test the later transition through the required already-merged path.",
-        "file": "src/forge/land.py",
-        "line": 70,
-        "priority": "P1",
-        "title": "Not done: item 1's already-merged path after a successful close"
       }
     ],
     "status": "blocked",
-    "tree": "234c765779f6ae03ca5b8be0ecb4670d00d727a947d4d541d476a4a5cabb6a2c"
+    "tree": "869b29c861e16564905276d588b6539570b43cb65a7e558ff05696168f45a432"
   },
   "status": "fixing",
   "steps": [
@@ -36,6 +29,10 @@
     },
     {
       "at": "2026-10-01T05:00:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T08:31:19+00:00",
       "step": "review"
     }
   ]
