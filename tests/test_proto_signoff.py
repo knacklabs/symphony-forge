@@ -10,7 +10,7 @@ from pathlib import Path
 
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
-SOL_HIGH = "model: gpt-6-sol\nthinking: high\nautoreview done"
+SOL_HIGH = "model: gpt-6.1-sol\nthinking: high\nautoreview done"
 MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems",
         "Sign-in", "Personal data", "Production host")
 
@@ -152,7 +152,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "status: proposed" in page.read_text()
 
     queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
-                                   "codex model gpt-6-sol is unavailable for this account; "
+                                   "codex model gpt-6.1-sol is unavailable for this account; "
                                    "retrying with gpt-6-astra",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -160,7 +160,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "model and effort" in fallback.stderr
     assert "status: proposed" in page.read_text()
 
-    queue.write_text(json.dumps([{"say": "model: gpt-6-sol\nthinking: xhigh",
+    queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert other_effort.returncode == 1
@@ -215,7 +215,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
     assert len(calls) == 12
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
-    assert options["--model"] == "codex=gpt-6-sol"
+    assert options["--model"] == "codex=gpt-6.1-sol"
     assert options["--thinking"] == "codex=high"
     assert "Sign-off person" in options["--prompt"]
     assert "docs/product/BRIEF.md" in options["--prompt"]
