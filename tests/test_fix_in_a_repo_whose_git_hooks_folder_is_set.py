@@ -51,7 +51,8 @@ def test_2_doctor_reports_missing_hooks_in_husky_folder(repo):
     done = repo.forge("doctor")
     assert done.returncode == 1
     assert "The git hooks that check each commit and push aren't installed." in done.stdout
-    assert "Fix: forge sync" in done.stdout
+    # FORGE-DOCTORFIX-1 changed the Fix from forge sync: doctor --fix now puts the hooks back.
+    assert "Fix: forge doctor --fix" in done.stdout
 
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr

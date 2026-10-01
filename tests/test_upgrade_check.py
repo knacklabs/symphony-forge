@@ -194,7 +194,12 @@ def _upgrade_installs_and_passes_the_release_it_pins(env):
 def _version_that_is_not_a_release_refused_plainly(env):
     steps = _on_v1_2_0(env)
     _, where = env.start_fix()
-    _pin(env, where, '"main; curl evil"')
+    # Forge's pre-commit hook refuses this pin, so it comes from a machine without Forge's hooks.
+    toml = where / "forge.toml"
+    toml.write_text(re.sub(r"^version = .*$", 'version = "main; curl evil"', toml.read_text("utf-8"),
+                           flags=re.M), "utf-8")
+    env.repo.git("add", "-A", cwd=where)
+    env.repo.git("-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "Pin Forge main", cwd=where)
 
     done = _run_pr_check_job(env, where, steps)
 

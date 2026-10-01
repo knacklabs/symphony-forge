@@ -29,7 +29,7 @@ SOURCES = {
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
                        "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
@@ -49,7 +49,7 @@ print(json.dumps(wanted))
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
-    repo.write("forge.toml", 'version = "v1.2.1"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.2"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")
