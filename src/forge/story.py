@@ -27,6 +27,7 @@ import itertools
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -62,7 +63,6 @@ REFUSALS = {
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
-    "plan_behind": ("The default branch has changes to plans/{key}.md that story/{key} lacks.", "{command}"),
     "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
                   "forge next"),
 }
@@ -540,8 +540,8 @@ def landed_ref(top: Path) -> str:
 
 
 def plan_behind(top: Path, key: str, ref: str) -> str:
-    """The command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs from the story
-    branch's and ref changed it last, as when a fix edits the plan; else ""."""
+    """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
+    from the story branch's and ref changed it last, as when a fix edits the plan; else ""."""
     branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
     if show(top, branch, doc) in (None, show(top, ref, doc)):
         return ""
@@ -549,11 +549,13 @@ def plan_behind(top: Path, key: str, ref: str) -> str:
     if not theirs or int(theirs) <= int(ours or 0):
         return ""
     folder = stories_here(top).get(key)
-    if folder:
-        return f"git -C {folder} merge {ref}"
-    main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
-    folder = main.parent / f"{main.name}-story-{key}"
-    return f"git worktree add {folder} story/{key}, then git -C {folder} merge {ref}"
+    add = ""
+    if not folder:
+        main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+        folder = main.parent / f"{main.name}-story-{key}"
+        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+    return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
+            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:

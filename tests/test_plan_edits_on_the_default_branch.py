@@ -5,6 +5,8 @@ with the same line, changing nothing. Neither merges anything. Everything runs t
 command. Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
 
+from shlex import quote
+
 from test_readloop_gates import approve, read
 from test_story import DOC, setup, new_story
 
@@ -13,7 +15,7 @@ FIXED = DOC.replace("| `tests/test_page.py` | SAVE | yes |",
                     "| `tests/test_page.py` | SAVE, FIX | yes |\n"
                     "| FIX | Fix the clock | The time is right | 2 | `src/clock.py` | "
                     "`tests/test_clock.py` | SAVE | no |")
-LACKS = "The default branch has changes to plans/SHOP.md that story/SHOP lacks."
+LACKS = "The default branch has changes to plans/SHOP.md that story/SHOP lacks; merge them in with "
 
 
 def _saved(repo, claude_payload):
@@ -49,24 +51,26 @@ def test_1_a_plan_edited_on_the_default_branch_is_flagged_and_refused(repo, clau
     shop = _saved(repo, claude_payload)
     _fixed(repo, monkeypatch)
     before = repo.git("rev-parse", "story/SHOP")
-    command = f"git -C {shop} merge origin/main"
+    notice = f"{LACKS}git -C {quote(str(shop))} merge origin/main"
 
-    # forge next no longer lists SHOW from the story branch's old rows; it names the merge.
+    # forge next no longer lists SHOW from the story branch's old rows; it prints one line naming the merge.
     lines = repo.forge("next").stdout.splitlines()
-    assert lines[lines.index(LACKS) + 1] == f"Next: {command}"
+    assert notice in lines
     assert "Next: forge task start SHOP/SHOW" not in lines
 
     refused = repo.forge("task", "start", "SHOP/SHOW")
-    assert (refused.returncode, refused.stdout, refused.stderr) == (1, "", f"{LACKS}\nNext: {command}\n")
+    assert (refused.returncode, refused.stdout, refused.stderr) == (1, "", f"{notice}\n")
     assert repo.git("rev-parse", "story/SHOP") == before
     assert repo.git("status", "--porcelain", cwd=shop) == ""
     assert "task/SHOP-SHOW" not in repo.git("branch", "--list", "task/*")
 
-    # With no story folder, the command makes it first.
+    # With no story folder, the command makes it first; a folder with a space is quoted.
     repo.git("worktree", "remove", str(shop))
-    lines = repo.forge("next").stdout.splitlines()
-    assert lines[lines.index(LACKS) + 1] == (
-        f"Next: git worktree add {shop} story/SHOP, then git -C {shop} merge origin/main")
+    assert f"{LACKS}git worktree add {quote(str(shop))} story/SHOP && git -C {quote(str(shop))} merge origin/main" in (
+        repo.forge("next").stdout.splitlines())
+    spaced = shop.with_name("story folder")
+    repo.git("worktree", "add", "-q", str(spaced), "story/SHOP")
+    assert f"{LACKS}git -C {quote(str(spaced))} merge origin/main" in repo.forge("next").stdout.splitlines()
 
 
 def test_2_identical_copies_are_not_flagged(repo, claude_payload):
@@ -74,7 +78,7 @@ def test_2_identical_copies_are_not_flagged(repo, claude_payload):
     repo.git("fetch", "-q", "origin")
 
     lines = repo.forge("next").stdout.splitlines()
-    assert LACKS not in lines
+    assert not any(line.startswith(LACKS) for line in lines)
     assert "Next: forge task start SHOP/SHOW" in lines
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
@@ -83,11 +87,13 @@ def test_2_identical_copies_are_not_flagged(repo, claude_payload):
 def test_3_a_newer_story_branch_edit_is_not_flagged(repo, claude_payload, monkeypatch):
     shop = _saved(repo, claude_payload)
     _fixed(repo, monkeypatch)
-    # The story branch edits its plan after the default branch did.
-    (shop / "plans" / "SHOP.md").write_text(DOC.replace("come back to it later", "come back to it any day"),
+    # The story branch edits its plan after the default branch did, outside what the approval binds.
+    (shop / "plans" / "SHOP.md").write_text(DOC.replace("People lose their basket when they leave.",
+                                                        "People lose their basket when they close the tab."),
                                             encoding="utf-8")
     _commit_later(repo, monkeypatch, "2031-01-01T00:00:00", "-am", "Reword the plan", cwd=shop)
+    read(repo)
 
-    assert LACKS not in repo.forge("next").stdout
-    refused = repo.forge("task", "start", "SHOP/SHOW")
-    assert LACKS not in refused.stderr
+    lines = repo.forge("next").stdout.splitlines()
+    assert not any(line.startswith(LACKS) for line in lines)
+    assert "Next: forge task start SHOP/SHOW" in lines

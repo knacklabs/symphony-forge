@@ -317,7 +317,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
     if behind:
-        return lines + [story.REFUSALS["plan_behind"][0].format(key=key), f"Next: {behind}"], list(states.values())
+        return lines + [behind], list(states.values())
     ready = [task["id"] for task in doc["tasks"]
              if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
