@@ -334,6 +334,9 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     # First, AGENTS.md and CLAUDE.md become regular files holding the text their link led to (none
     # when it dangles), so writing AGENTS.md or deleting CLAUDE.md never loses another file's lines.
     links = {rel: read(top / rel) for rel in ("AGENTS.md", "CLAUDE.md") if (top / rel).is_symlink()}
+    for rel in links:  # never copy a file from outside the repo into it
+        if not (top / rel).resolve().is_relative_to(top.resolve()):
+            repo.refuse(REFUSALS["outside"], path=rel)
     if links:
         repo._work_branch(top)
     for rel, text in links.items():
