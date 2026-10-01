@@ -17,7 +17,7 @@ def job_limits() -> dict[str, set[int]]:
 
 def test_1_each_windows_test_job_allows_twenty_minutes():
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    assert len(re.findall(r"\{os: windows-latest, [^}]*timeout: 20\}", workflow)) == 3
+    assert len(re.findall(r"\{os: windows-latest, [^}]*timeout: 20\}", workflow)) == 4
     assert job_limits()["windows-latest"] == {20}
 
 
