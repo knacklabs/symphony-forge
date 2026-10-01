@@ -11,7 +11,8 @@ turn ends; "hold" never answers thread/start, and "stall" never answers initiali
 stdin for two minutes, as a stuck server would), and STUB_CODEX_NO_USAGE leaves out the token
 counts. STUB_CODEX_OVERLOADED=<n> fails the first n turns as Codex does when the model is at
 capacity; each turn's start time is logged. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
-for a reader that changes a file. `--version` prints the version.
+for a reader that changes a file; STUB_CODEX_COMMIT commits the thread's folder after the turn's
+requests, as a worker does. `--version` prints the version.
 """
 import json
 import os
@@ -118,6 +119,10 @@ def main():
                 if os.environ.get("STUB_CODEX_TOUCH"):
                     (pathlib.Path(cwd) / os.environ["STUB_CODEX_TOUCH"]).write_text(
                         "changed by the reader\n", encoding="utf-8")
+                if os.environ.get("STUB_CODEX_COMMIT"):  # a worker commits its round
+                    import subprocess
+                    subprocess.run(["git", "add", "-A"], cwd=cwd, check=True)
+                    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], cwd=cwd, check=True)
                 if status == "vanish":
                     return
                 finish_turn(config, status,
