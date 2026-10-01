@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T01:26:23+00:00
-read_hash: 71d2e494194c5932b25e4aab233393cf16df40ba
-round: 10
-passed: no
-doc_seen: 71d2e494194c5932b25e4aab233393cf16df40ba
+read_at: 2026-10-01T01:31:08+00:00
+read_hash: daea75c2d854eeb585656218fcfeae19a4f07ecc
+round: 11
+passed: yes
+doc_seen: daea75c2d854eeb585656218fcfeae19a4f07ecc
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 2e21252d0771f00fdc582402c0f01c3961e05fbb
+notes_seen: 3aad91ec2ee5a847031a9839e185ff6a02b23909
 ---
 # Cold read notes
 
@@ -162,3 +162,7 @@ Only a genuine trade-off goes to the human, as a question with options.
 31. Finding 30 remains open when the default branch contains an earlier doctor repair.
     Every doctor fix uses the same commit subject. A newly failed fix inherits an older merged repair with that subject, satisfying the new “has doctor’s files commit” check despite having no repair of its own. Restrict the lookup to commits introduced by this fix, using its recorded base, and test cleanup failure with an earlier doctor repair already on the default branch in FILES.
     Disposition: cut
+
+## Round 11
+
+No findings.
