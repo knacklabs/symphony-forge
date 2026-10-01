@@ -18,34 +18,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "fda8d309f664a6423f412c7b84aad26819a315c14e7591bac1d8bbc7d6c39cec",
-    "commit": "2d7d589fdd6ce6222e9dcd84081bb7864099aaa2",
+    "changed": "9729c90cbef8a7ce20a661479d0d5d0fc52a576b5ff53146b1d0209ecd24b1ac",
+    "commit": "da26b8dd52e53692cfd49dc75fab89652b0b6fff",
     "dismissals": [],
     "findings": [
       {
-        "body": "The launcher implements only the original requirement: prepend XDG_BIN_HOME or HOME/.local/bin, then invoke forge. With PATH=/usr/bin:/bin, it ignores UV_TOOL_BIN_DIR, /opt/homebrew/bin and /usr/local/bin; setting XDG_BIN_HOME also excludes HOME/.local/bin. If forge remains unavailable, it immediately exits 2 with the shell's command-not-found message, even when uv could run the forge-source checkout or uvx could run the repository's pinned release. This preserves the fresh-machine lockout described in the latest amendment. Implement the specified directory search and ordered uv fallbacks, then emit the single-line pinned install command and forge doctor guidance only when nothing is available. Regenerate both hosts' hook files with that launcher.",
-        "file": "src/forge/sync.py",
-        "line": 58,
+        "body": "The new hook commands source `.forge/hooks.sh`, but doctor validates only the command string before executing it. Although src/forge/doctor.py:121\u2013122 reports launcher drift, execution still reaches this subprocess call. A repository can therefore retain the generated host commands and put arbitrary shell commands in the launcher, which `forge doctor` executes. The existing tampered-command protection in tests/test_setup.py:291\u2013345 does not cover this newly introduced route. Skip probes when the launcher differs from the generated text, and verify that a tampered launcher is reported without executing it.",
+        "file": "src/forge/doctor.py",
+        "line": 146,
         "priority": "P1",
-        "title": "Not done: The host hook commands forge sync writes for Codex and Claude Code still block when forge isn't on PATH"
+        "title": "Validate the sourced launcher before doctor executes hook probes"
       },
       {
-        "body": "The required restricted-PATH doctor check is absent. src/forge/doctor.py:140 invokes each generated hook through repo.run without an environment override, and src/forge/repo.py:73-74 inherits the caller's environment. Consequently, forge available only on the interactive shell's PATH makes these probes succeed while the same hooks fail inside Codex. Update the hook probes to use PATH=/usr/bin:/bin while retaining the install-location environment variables, and report commands that cannot run under that environment.",
-        "file": "src/forge/sync.py",
-        "line": 58,
-        "priority": "P1",
-        "title": "Not done: forge doctor must probe synced hooks with PATH=/usr/bin:/bin"
-      },
-      {
-        "body": "The added tests exercise only HOME/.local/bin discovery and an exit-2 result with nothing installed. Missing are the required UV_TOOL_BIN_DIR case, pinned-release uvx fallback with the third-party edge stubbed, forge-source checkout fallback through uv, and doctor detecting hooks that cannot run with the restricted PATH. The nothing-available test also accepts the existing bare command-not-found error because it asserts only the exit code; it must verify the single plain line naming the pinned install command and forge doctor. The existing doctor case in tests/test_setup.py:273 deliberately makes a forge stub reject 'hook deny', so it does not prove detection of launch failures caused by the hook environment. Add these checks through forge sync, the generated commands for both hosts, and the real forge doctor entry point.",
+        "body": "New evidence: this test calls `_home(tmp_path)` for every hook, but `_home` creates the same directory with `mkdir(parents=True)` without `exist_ok=True` at line 44. On a machine where the test is enabled, the second iteration raises FileExistsError before running its hook. The supplied close run skipped this test, so it did not expose the failure or prove the required denial message. Create HOME once before the loop and ensure the nothing-available case runs in an isolated environment through both hosts' generated commands.",
         "file": "tests/test_fix_hooks_find_forge_in_uv_tool_folder.py",
-        "line": 61,
+        "line": 114,
         "priority": "P1",
-        "title": "Not done: Command-level tests for custom tool folders, uv fallbacks, actionable denial and doctor"
+        "title": "Not done: The nothing-available command-level test must run successfully"
+      },
+      {
+        "body": "New evidence: the newly added checkout case replaces `uv` with a logging script that consumes stdin and succeeds without launching Forge. Its repository contains no Forge project: tests/conftest.py:199\u2013205 creates a README-only checkout, and tests/test_setup.py:51\u201354 adds only forge.toml. Consequently, this test proves the argument shape but cannot detect failure to run the checkout's code. The Done-when item requires an end-to-end checkout fallback with no installed forge; run the generated hooks against a real temporary Forge checkout through real uv, retaining stubs only at third-party fetch boundaries.",
+        "file": "tests/test_fix_hooks_find_forge_in_uv_tool_folder.py",
+        "line": 97,
+        "priority": "P1",
+        "title": "Not done: Prove the Forge checkout fallback with real uv and Forge code"
       }
     ],
     "status": "blocked",
-    "tree": "c3bd08a2e17e37282254a3aa3e064d739b4bf52ac6cb9a020c59b66beeae0d0a"
+    "tree": "d893e527f681074950097e143b234a31b6cfe4097d69708638911e0e7c0b114e"
   },
   "status": "fixing",
   "steps": [
@@ -55,6 +55,10 @@
     },
     {
       "at": "2026-10-01T12:07:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T12:48:44+00:00",
       "step": "review"
     }
   ],
