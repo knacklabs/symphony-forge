@@ -331,6 +331,15 @@ def command_page() -> str:
 
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     """Write the files that differ from what sync makes; returns them. Never on the default branch."""
+    # First, AGENTS.md and CLAUDE.md become regular files holding the text their link led to (none
+    # when it dangles), so writing AGENTS.md or deleting CLAUDE.md never loses another file's lines.
+    links = {rel: read(top / rel) for rel in ("AGENTS.md", "CLAUDE.md") if (top / rel).is_symlink()}
+    if links:
+        repo._work_branch(top)
+    for rel, text in links.items():
+        (top / rel).unlink()
+        if text or rel == "AGENTS.md":
+            write_file(top, rel, text)
     wanted = files(top, cfg)
     # "" means delete, so an empty file that is there still counts as a change.
     changed = [rel for rel, text in wanted.items()
@@ -339,14 +348,11 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)
     for rel in changed:
-        path = top / rel
-        if rel == "AGENTS.md" and path.is_symlink() and path.resolve().is_relative_to(top.resolve()):
-            path.unlink()  # a link to CLAUDE.md would lose every line when CLAUDE.md goes
         if wanted[rel]:
             write_file(top, rel, wanted[rel])
         else:
             (top / rel).unlink()
-    return changed
+    return changed + [rel for rel in links if rel not in changed]
 
 
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:

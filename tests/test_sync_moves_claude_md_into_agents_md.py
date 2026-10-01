@@ -60,3 +60,31 @@ def test_4_sync_turns_an_agents_md_link_to_claude_md_into_a_regular_file_with_ev
     assert not agents.is_symlink()
     assert agents.read_text(encoding="utf-8").startswith(f"{TEAM}- Keep answers short.\n")
     assert repo.forge("sync").stdout.startswith("Nothing to change")
+
+
+def test_5_sync_keeps_every_line_when_agents_md_links_to_a_claude_md_already_synced(repo):
+    _on_a_branch_with_forge_toml(repo)
+    repo.write("AGENTS.md", TEAM)
+    assert repo.forge("sync").returncode == 0
+    synced = (repo.path / "AGENTS.md").read_text(encoding="utf-8")
+    (repo.path / "AGENTS.md").rename(repo.path / "CLAUDE.md")
+    (repo.path / "AGENTS.md").symlink_to("CLAUDE.md")
+    repo.git("add", "-A")
+    # The first sync installed Forge's commit hook, which refuses this test branch.
+    repo.git("-c", "core.hooksPath=no-hooks", "commit", "-q", "-m", "AGENTS.md links to CLAUDE.md")
+    assert repo.forge("sync").returncode == 0
+    assert not (repo.path / "CLAUDE.md").exists() and not (repo.path / "CLAUDE.md").is_symlink()
+    agents = repo.path / "AGENTS.md"
+    assert not agents.is_symlink()
+    assert agents.read_text(encoding="utf-8") == synced
+    assert repo.forge("sync").stdout.startswith("Nothing to change")
+
+
+def test_6_sync_removes_a_dangling_claude_md_link(repo):
+    _on_a_branch_with_forge_toml(repo)
+    (repo.path / "CLAUDE.md").symlink_to("gone.md")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "CLAUDE.md links to a file that is gone")
+    assert repo.forge("sync").returncode == 0
+    assert not (repo.path / "CLAUDE.md").is_symlink()
+    assert repo.forge("sync").stdout.startswith("Nothing to change")
