@@ -1,0 +1,31 @@
+{
+  "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
+  "branch": "fix/cap-10000",
+  "done_when": "pyproject.toml's line ceiling is 10,000, the test that pins it matches, and decision 0101 records the owner's choice and supersedes decision 0100",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "efff87b6cc7214ecced6050346434b32b49c2c74a718a510543e5d6eeeb9382f",
+    "commit": "f61a81341f784535abf0cd2e3769f053de3988b9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e4eb9d5dcc9157b323847c5cba816b145475b10678c531f1824ce8ae56ea3c96"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T07:52:50+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T08:18:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T08:44:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's code is at 8,437 of its 8,500-line limit and five approved stories each add a few hundred lines, so the limit would stop all of them"
+}
