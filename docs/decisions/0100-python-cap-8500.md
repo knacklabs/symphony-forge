@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-30
 stories: []
