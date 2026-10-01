@@ -315,9 +315,10 @@ def sections(text: str) -> dict[str, str]:
     return found
 
 
-def parse(text: str, top: Path | None = None) -> dict[str, Any]:
+def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[str, Any]:
     """A story doc's title, sections, Done-when items, task rows and `New moving parts:` line.
-    With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan.
+    With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
+    first at the commit `ref` when given.
 
     Raises ValueError naming what is malformed, and the task row when a row is wrong.
     """
@@ -369,7 +370,7 @@ def parse(text: str, top: Path | None = None) -> dict[str, Any]:
             raise ValueError(f"Tasks row {task['id']}: After {unknown[0]} is not a task in this table")
         for other in (after for after in task["after"] if "/" in after and top):
             key, _, name = other.partition("/")
-            if name not in _task_ids(_plan(top, key)):
+            if name not in _task_ids(_plan(top, key, ref)):
                 raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
     title = re.search(r"^# (.+)$", text, re.M)
@@ -377,12 +378,14 @@ def parse(text: str, top: Path | None = None) -> dict[str, Any]:
             "details": notes, "tasks": list(tasks.values()), "moving_parts": moving[0]}
 
 
-def _plan(top: Path, key: str) -> str:
-    """Story KEY's plan: its worktree's copy, else its story branch's, else the default branch's."""
+def _plan(top: Path, key: str, ref: str | None = None) -> str:
+    """Story KEY's plan: at `ref` when given, else its worktree's copy; else its story branch's,
+    local or fetched, else the default branch's."""
     rel, tree = f"plans/{key}.md", stories_here(top).get(key)
-    if tree and (tree / rel).is_file():
+    if not ref and tree and (tree / rel).is_file():
         return _text(tree / rel)
-    return show(top, f"story/{key}", rel) or show(top, landed_ref(top), rel) or ""
+    refs = ([ref] if ref else []) + [f"story/{key}", f"origin/story/{key}", landed_ref(top)]
+    return next((text for one in refs if (text := show(top, one, rel)) is not None), "")
 
 
 def _task_ids(text: str) -> set[str]:
@@ -498,7 +501,7 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
         if text is None:
             continue
         try:
-            parse(text)
+            parse(text, top, head)
         except ValueError as exc:
             return f"The story doc {path} is malformed: {exc}."
         notes = show(top, head, f"plans/{match[1]}.read.md")

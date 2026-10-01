@@ -178,7 +178,10 @@ def start(args: argparse.Namespace) -> None:
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
-    carry = (source, [doc_rel, notes_rel, repo.state_path(key)]) if source != base else None
+    if any("/" in dep for dep in cell_list(tasks[task].get("After", ""))):
+        base = main  # another story's merged code is only on the default branch
+    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
+             ) if source != base else None
     path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}", carry)
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")
