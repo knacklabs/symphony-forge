@@ -37,7 +37,7 @@ def _run(command: str, event: str, top: Path, home: Path) -> subprocess.Complete
 
 @pytest.mark.skipif(shutil.which("forge", path=BARE_PATH) is not None,
                     reason="this machine has a forge on the bare PATH itself")
-def test_synced_hook_commands_find_forge_in_home_local_bin(repo, tmp_path):
+def test_1_synced_hook_commands_find_forge_in_home_local_bin(repo, tmp_path):
     commands = _synced(repo)
     home = tmp_path / "home"
     (home / ".local/bin").mkdir(parents=True)
@@ -51,7 +51,7 @@ def test_synced_hook_commands_find_forge_in_home_local_bin(repo, tmp_path):
 
 @pytest.mark.skipif(shutil.which("forge", path=BARE_PATH) is not None,
                     reason="this machine has a forge on the bare PATH itself")
-def test_synced_hook_commands_still_block_when_forge_is_nowhere(repo, tmp_path):
+def test_2_synced_hook_commands_still_block_when_forge_is_nowhere(repo, tmp_path):
     commands = _synced(repo)
     home = tmp_path / "empty-home"
     home.mkdir()

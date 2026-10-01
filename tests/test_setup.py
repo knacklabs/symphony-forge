@@ -86,6 +86,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     _executable(folder / "forge", f'#!/bin/sh\n{{ echo "$*"; cat; echo; }} >> "{log.as_posix()}"\n'
                                   f'[ "$*" != "{failing}" ]\n')
     monkeypatch.setenv("PATH", f"{folder}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("XDG_BIN_HOME", str(folder))  # host hooks put uv's tool folder first
     return log
 
 
@@ -356,7 +357,8 @@ def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path
     _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
     path = [folder for folder in os.environ["PATH"].split(os.pathsep)
             if not (Path(folder) / "forge").is_file()]
-    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path])}
+    env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path]),
+           "XDG_BIN_HOME": str(broken)}  # host hooks put uv's tool folder first on PATH
     tools = {"PreToolUse": ("Bash", {"command": "ls"}),
              "PostToolUse": ("ExitPlanMode", {"plan": "A plan"})}
 
