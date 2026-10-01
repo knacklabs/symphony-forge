@@ -6,22 +6,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "496a071a7db27726efa576f7a809c85194734459ba3b8dc2d8c19c7be9f62ea1",
-    "commit": "630f5ec060a56f41545e3624ee7ac597785c721c",
+    "changed": "6af00ef10c4e7071f2bc92361432a78d4790852a0b4048e9ae7287a2330887ac",
+    "commit": "4535aa34dc9c00a729e205af9b4bf5fa61311162",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This change lets coordinators configure per-family worker, review, and ask models, but neither `src/forge/templates/skill.md` nor `src/forge/templates/brief.md` is updated. In particular, `src/forge/templates/skill.md:351-354` still says `forge ask` uses `[models.lite]` without explaining that it selects only the Codex entry. The repository's review rule requires a same-change update to one of those templates when a command or setting changes. Update the shipped guidance to explain the new per-family settings.",
-        "file": "docs/guide.md",
-        "line": 104,
-        "priority": "P1",
-        "title": "Not done: update Forge's shipped guidance for per-family model settings"
-      }
-    ],
-    "status": "blocked",
-    "tree": "6343f13b36b1499deb25a46e2d4895217f0ed78909b524ce295185cf68d86406"
+    "findings": [],
+    "status": "clean",
+    "tree": "f168071b44748fa8cf29e6bc12945b03a943b61b044b4ad73d2568f72d6764bb"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-09-30T11:21:21+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-09-30T20:25:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T03:30:28+00:00",
       "step": "review"
     }
   ],
