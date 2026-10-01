@@ -121,8 +121,9 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
-                reviewed_level: str | None = None) -> str:
-    """What a clean review covers: changed product files, the item's story doc and roadmap entry, its
+                reviewed_level: str | None = None, findings: list[Any] | None = None) -> str:
+    """What a clean review covers: changed product files, every file the review's findings cite
+    (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
     ancestor = repo.git("merge-base", base, commit, cwd=top)
@@ -131,6 +132,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
     changed = {path for path in changed
                if path and (not path.startswith(BOOKKEEPING) or path in named)}
+    if findings is None:
+        findings = (state.get("review") or {}).get("findings", [])
+    changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
@@ -458,7 +462,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     return {"commit": head, "changed": fingerprint(head, item, top, state, base,
-                                                     "P0" if light else "P1"),
+                                                     "P0" if light else "P1", findings),
             "tree": whole_tree(head, item, top, state, base), "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
