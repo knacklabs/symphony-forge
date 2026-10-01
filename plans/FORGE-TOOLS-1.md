@@ -57,10 +57,25 @@ Risks: none
    installed, else a separate conversation of this one; reviews use Codex when `codex` is on PATH,
    else Claude. `workers` keeps its meaning and its default.
 
+   The setting ships with its guide, as the repo's review rules require. `src/forge/templates/skill.md`
+   gets a `## Models` section that opens with **Who does what**: the orchestrator is whichever app
+   the developer opens, Claude Code or Codex; Forge doesn't choose it. `tools` says which tools run
+   Forge's work. With `"both"`, `workers` picks the implementer, plan reads use the tool that isn't
+   orchestrating, and reviews use Codex when it is installed. With one tool, workers, plan reads,
+   questions and reviews all run on that tool and `workers` is ignored. The intent table renames
+   `"Ask Codex about this code"` to `"Ask about this code"`. `docs/guide.md`'s settings section
+   says the same in a paragraph: `tools` and its default. The synced copies in
+   `.claude/skills/forge/` and `.codex/skills/forge/` are written again with `forge sync`.
+
    Tests:
    - a `forge.toml` without `tools` reads as `"both"`;
    - `tools = "gemini"` is refused as `tools must be one of both, claude, codex`;
-   - the existing worker, cold-read and review tests pass unchanged, which proves "both" is today's.
+   - the existing worker, cold-read and review tests pass unchanged, which proves "both" is today's;
+     the one exception is the assertion of `forge init`'s whole models table in
+     `tests/test_codex_reader.py`, which DEFAULTS changes with item 4;
+   - the skill's `## Models` section holds the Who does what paragraph, and `forge ask`'s listing
+     and help name no tool;
+   - the synced copies match the template (the existing sync test).
 2. With `tools` naming one tool:
    - **Workers.** `worker.py` sets `on_codex = repo.worker_tool(config) == "codex" and not design`,
      so `tools` overrides `workers`. Design work (a User-facing task or a prototype fix) runs on the
@@ -182,25 +197,21 @@ Risks: none
      `.codex/agents/coder.toml` names `gpt-6.1-sol` at `medium`;
    - `forge sync` on a repo with a single-entry `[models.build]` leaves `forge.toml` byte for byte;
    - a single gpt `[models.build]` writes no model and no effort into `.claude/agents/coder.md`;
-   - Forge's own synced role files match `forge sync`'s output (the existing roles test).
-5. `src/forge/templates/skill.md` gets a short `## Models` section, at most about 30 lines:
-   - **Who does what.** The orchestrator is whichever app the developer opens, Claude Code or
-     Codex; Forge doesn't choose it. `tools` says which tools run Forge's work. With `"both"`,
-     `workers` picks the implementer, plan reads use the tool that isn't orchestrating, and reviews
-     use Codex when it is installed. With one tool, workers, plan reads and reviews all run on that
-     tool and `workers` is ignored.
-   - **The shape.** `[models.<kind>.codex]` and `[models.<kind>.claude]` for build, fix, lite,
-     grill, design and review; a single `[models.<kind>]` counts for its model's tool.
-   - **Forge's recommended models**, the table in item 4. DEFAULTS adds this table with item 4's
-     defaults; RUN writes the rest of this item in the same change as the setting, as the review
-     rules require.
+   - Forge's own synced role files match `forge sync`'s output (the existing roles test);
+   - the assertion of `forge init`'s whole models table in `tests/test_codex_reader.py` names the
+     new per-tool table.
+5. The skill's `## Models` section, which item 1 opens, gains the rest, at most about 30 lines in
+   all:
+   - **The shape.** `[models.<kind>.codex]` for build, fix, lite, grill, design and review, and
+     `[models.<kind>.claude]` for all but fix; a single `[models.<kind>]` counts for its model's
+     tool.
+   - **Forge's recommended models**, the table in item 4.
    - **Upgrade first.** When `forge.toml` pins a Forge older than the release that adds `tools`,
      follow Upgrade Forge before adding the key, because an older Forge refuses keys it doesn't
      know.
 
    The intent table replaces the row `"Switch to Codex workers" or "Change the test command"` with
-   `"Change the test command"`, renames `"Ask Codex about this code"` to `"Ask about this code"`,
-   and adds:
+   `"Change the test command"` and adds:
 
    | The human says | Run |
    |---|---|
@@ -210,16 +221,14 @@ Risks: none
    | "Claude plans, Codex builds" | Ask, then in a fix: `tools = "both"`, `workers = "codex"`, `forge close <fix>`; the developer opens Claude Code |
    | "Codex plans, Claude builds" | Ask, then in a fix: `tools = "both"`, `workers = "claude"`, `forge close <fix>`; the developer opens Codex |
 
-   `docs/guide.md`'s settings section says the same in a paragraph: `tools`, its default, and the
-   mixed-use pairs. The synced copies in `.claude/skills/forge/` and `.codex/skills/forge/` are
-   written again with `forge sync`.
+   `docs/guide.md`'s settings paragraph on `tools` adds the mixed-use pairs. The synced skill
+   copies are written again with `forge sync`.
 
    Tests:
-   - RUN: the skill holds each of the five intent rows and the `## Models` section, and
-     `forge ask`'s listing names no tool;
-   - DEFAULTS: every model and effort in the skill's recommended table matches `init.MODELS`, so
-     the two can't drift;
-   - both: the synced copies match the template (the existing sync test).
+   - the skill holds each of the five intent rows, the shape and the upgrade step;
+   - every model and effort in the skill's recommended table matches `init.MODELS`, so the two
+     can't drift;
+   - the synced copies match the template (the existing sync test).
 6. Doctor, using `repo.worker_tool(cfg)` and `cfg["tools"]`:
    - **Programs.** The missing-program rows check git, gh and uv, plus `claude` when the worker
      tool is Claude or `tools = "claude"`, plus Codex when `tools = "codex"`, since reviews then
@@ -256,8 +265,8 @@ Risks: none
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| RUN | Tools setting | The `tools` key, `repo.worker_tool`, the `tool_missing` refusal, and workers, design work, cold reads, `forge ask`, reviews and sign-off following it, with the coordinator's guide for them | 1, 2, 3, 5 | `src/forge/repo.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/review.py`, `src/forge/ask.py`, `docs/commands.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/guide.md` | `tests/test_tools_setting.py` | none | no |
-| DEFAULTS | Defaults and doctor | New repos' per-tool models and `tools = "both"`, roles reading per-tool entries, doctor's program, SDK, skills and missing-entry checks, and the skill's recommended-models table | 4, 5, 6 | `src/forge/init.py`, `src/forge/roles.py`, `src/forge/doctor.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `.claude/agents/`, `.codex/agents/`, `tests/test_subagent_roles.py` | `tests/test_tools_defaults.py`, `tests/test_tools_doctor.py`, `tests/test_subagent_roles.py` | RUN | no |
+| RUN | Tools setting | The `tools` key, `repo.worker_tool`, the `tool_missing` refusal, and workers, design work, cold reads, `forge ask`, reviews and sign-off following it, with the coordinator's guide for them | 1, 2, 3 | `src/forge/repo.py`, `src/forge/worker.py`, `src/forge/story.py`, `src/forge/review.py`, `src/forge/ask.py`, `docs/commands.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `docs/guide.md` | `tests/test_tools_setting.py` | none | no |
+| DEFAULTS | Defaults and doctor | New repos' per-tool models and `tools = "both"`, roles reading per-tool entries, doctor's program, SDK, skills and missing-entry checks, and the skill's models guide and intent rows | 4, 5, 6 | `src/forge/init.py`, `src/forge/roles.py`, `src/forge/doctor.py`, `src/forge/templates/skill.md`, `.claude/skills/forge/`, `.codex/skills/forge/`, `.claude/agents/`, `.codex/agents/`, `tests/test_subagent_roles.py`, `tests/test_codex_reader.py`, `docs/guide.md` | `tests/test_tools_defaults.py`, `tests/test_tools_doctor.py`, `tests/test_subagent_roles.py`, `tests/test_codex_reader.py` | RUN | no |
 
 New moving parts: none
 
@@ -269,8 +278,9 @@ New moving parts: none
   moving reviews, the light review and sign-off to gpt-6.1-sol, which the owner chose today.
 - RUN pins `repo.worker_tool`, `cfg["tools"]` and the `tool_missing` refusal; DEFAULTS uses the
   first two in doctor. Each task updates the coordinator's guide for what it changes, as the
-  repo's review rules require: RUN the setting, the intent rows and `forge ask`; DEFAULTS the
-  recommended-models table, whose test reads `init.MODELS`.
+  repo's review rules require: RUN the setting and `forge ask` (item 1's guide text); DEFAULTS the
+  shape, the recommended-models table, whose test reads `init.MODELS`, and the intent rows that
+  add those models (item 5).
 - Decided: Claude workers keep reading build for a task and lite for a fix on every round, since
   their later rounds continue the same session; `fix` stays a Codex kind and new repos get no
   Claude fix entry (owner, 2026-10-01).

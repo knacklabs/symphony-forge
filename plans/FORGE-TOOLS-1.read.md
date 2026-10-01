@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-01T01:14:20+00:00
-read_hash: 5bd7ac818804a755a2d39744657a88fd693dae61
-round: 1
+read_at: 2026-10-01T01:26:33+00:00
+read_hash: 912f4f273c4dbbd027998232348b8d102d8c4d18
+round: 2
 passed: no
-doc_seen: 5bd7ac818804a755a2d39744657a88fd693dae61
+doc_seen: 912f4f273c4dbbd027998232348b8d102d8c4d18
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: f9169c7b4339b2e8ba0edffd9eef65470683726d
 ---
 # Cold read notes
 
@@ -70,3 +70,15 @@ Disposition: cut
     No proposed case covers `.cmd` launchers, paths containing spaces, multiline Unicode input or CRLF output, and current CI runs on Ubuntu. Add focused platform proof to RUN’s tests and name its execution route, or explicitly exclude unsupported platforms with a reason.
 
 Disposition: keep the Claude question uses the same repo.run route with the prompt on stdin as the Claude cold read (src/forge/story.py:613-624), which already runs on every platform Forge supports; it adds no new launcher, quoting or encoding path to prove
+
+## Round 2
+
+11. Split: RUN → settings and worker routing; command routing and coordinator guide.
+    RUN now covers four Done-when items (`1, 2, 3, 5`), exceeding the three-item limit. Pin the shared setting, helper and refusal in the first task; give each task its required template update and owned tests.
+
+Disposition: cut
+
+12. Finding 9 remains partly open: DEFAULTS still excludes an existing default-model assertion it must update.
+    `tests/test_codex_reader.py:170` compares the entire initialized models table with today’s single-entry shape; that assertion also remains in the prerequisite branch. Item 4 necessarily changes it. Add this file to DEFAULTS’s Scope and Tests, and narrow item 1’s promise that existing cold-read tests pass unchanged.
+
+Disposition: cut
