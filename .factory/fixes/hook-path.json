@@ -23,34 +23,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "9729c90cbef8a7ce20a661479d0d5d0fc52a576b5ff53146b1d0209ecd24b1ac",
-    "commit": "da26b8dd52e53692cfd49dc75fab89652b0b6fff",
+    "changed": "368897bf6888c13a4a9abc17bc8222df2af6028495cb3f9fc382917a6595be59",
+    "commit": "02870e64054db9fc1d78da164c943d6831e182c4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new hook commands source `.forge/hooks.sh`, but doctor validates only the command string before executing it. Although src/forge/doctor.py:121\u2013122 reports launcher drift, execution still reaches this subprocess call. A repository can therefore retain the generated host commands and put arbitrary shell commands in the launcher, which `forge doctor` executes. The existing tampered-command protection in tests/test_setup.py:291\u2013345 does not cover this newly introduced route. Skip probes when the launcher differs from the generated text, and verify that a tampered launcher is reported without executing it.",
-        "file": "src/forge/doctor.py",
-        "line": 146,
+        "body": "New evidence beyond the prior launcher-drift finding: `src/forge/repo.py:275\u2013290` accepts any string as `version`, and this replacement inserts it verbatim into shell source. A TOML version containing a newline followed by a shell command puts that command outside the launcher's opening comment. A repository can include the corresponding generated launcher, pass doctor's equality check, and execute the injected command when doctor sources it. Doctor reports a pin mismatch at `src/forge/doctor.py:98\u2013100` but continues to the probes at lines 133\u2013152. Reject invalid release pins before generating or validating the launcher; equality with generated text does not make unchecked configuration safe to execute.",
+        "file": "src/forge/sync.py",
+        "line": 83,
         "priority": "P1",
-        "title": "Validate the sourced launcher before doctor executes hook probes"
-      },
-      {
-        "body": "New evidence: this test calls `_home(tmp_path)` for every hook, but `_home` creates the same directory with `mkdir(parents=True)` without `exist_ok=True` at line 44. On a machine where the test is enabled, the second iteration raises FileExistsError before running its hook. The supplied close run skipped this test, so it did not expose the failure or prove the required denial message. Create HOME once before the loop and ensure the nothing-available case runs in an isolated environment through both hosts' generated commands.",
-        "file": "tests/test_fix_hooks_find_forge_in_uv_tool_folder.py",
-        "line": 114,
-        "priority": "P1",
-        "title": "Not done: The nothing-available command-level test must run successfully"
-      },
-      {
-        "body": "New evidence: the newly added checkout case replaces `uv` with a logging script that consumes stdin and succeeds without launching Forge. Its repository contains no Forge project: tests/conftest.py:199\u2013205 creates a README-only checkout, and tests/test_setup.py:51\u201354 adds only forge.toml. Consequently, this test proves the argument shape but cannot detect failure to run the checkout's code. The Done-when item requires an end-to-end checkout fallback with no installed forge; run the generated hooks against a real temporary Forge checkout through real uv, retaining stubs only at third-party fetch boundaries.",
-        "file": "tests/test_fix_hooks_find_forge_in_uv_tool_folder.py",
-        "line": 97,
-        "priority": "P1",
-        "title": "Not done: Prove the Forge checkout fallback with real uv and Forge code"
+        "title": "Validate the version before embedding it in executable shell"
       }
     ],
     "status": "blocked",
-    "tree": "d893e527f681074950097e143b234a31b6cfe4097d69708638911e0e7c0b114e"
+    "tree": "54357ad3dc33a47ac3dc3d75356113ecfa94d05e3eae3dc3b5dcf068eedf5c23"
   },
   "status": "fixing",
   "steps": [
@@ -64,6 +50,10 @@
     },
     {
       "at": "2026-10-01T12:48:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T13:36:35+00:00",
       "step": "review"
     }
   ],
