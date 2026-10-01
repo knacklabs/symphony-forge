@@ -4,11 +4,32 @@
   "branch": "fix/release-122",
   "done_when": "Forge's version is 1.2.2 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them), and the full test suite passes.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "3ff56f9708eddf7168e2a9c1adb4cebf5a32ad2e33ccee2980c282f748ba02b7",
+    "commit": "8020c46437d4abb14a0ce42921a05fd18f8e3a62",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The version updates satisfy the release requirement, but the required full-suite check is still red. The supplied forge close run exited with status 1: workers crashed during tests/test_codex_record.py::test_6_nothing_left_running and tests/test_proto_deploy.py::test_10_new_client_deploys_only_after_migration, leaving 2 failed, 625 passed and 1 skipped. Resolve the failures and obtain a passing run of forge.toml's test command (line 6) before marking this release complete. The evidence does not establish that the version bump caused either crash.",
+        "file": ".factory/fixes/release-122.json",
+        "line": 5,
+        "priority": "P1",
+        "title": "Not done: Forge's version is 1.2.2 everywhere it is recorded, and the full test suite passes."
+      }
+    ],
+    "status": "blocked",
+    "tree": "15cf5ee924660d8bcc359f8ecd4c1a7035508eebbf64831ee0f3aaaf1b723a20"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T14:21:05+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T15:01:31+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients need v1.2.2 for hooks that find Forge on any machine, full access for Codex and Claude Code, subagent roles for both, Claude reviews that read the code, reviews on Sol 6.1 and the other fixes since v1.2.1"
