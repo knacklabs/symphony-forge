@@ -1,10 +1,23 @@
 {
   "branch": "task/FORGE-LAND-1-LAND",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "cc475c579d1d558fc33250ee03b28bda45847f6bb916ecf9cb073055ed3981d5",
+    "commit": "64004c7de289ea60ee9c7f8410078ac36b045ee2",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "c5c47d1f822567d8137189db1e4f7f95d80be8daa8bfba4a5e07b4a21bb82973"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T01:18:06+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T02:24:49+00:00",
+      "step": "review"
     }
   ]
 }
