@@ -48,15 +48,16 @@ REFUSALS = {
 class Refused(Exception):
     """A refusal: the problem in one sentence, then the next command."""
 
-    def __init__(self, problem: str, next_step: str, code: int = 1):
+    def __init__(self, problem: str, next_step: str, code: int = 1,
+                 entry: tuple[str, str] | None = None):  # the REFUSALS entry refuse() raised
         super().__init__(f"{problem}\nNext: {next_step}")
-        self.code = code
+        self.code, self.entry = code, entry
 
 
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code)
+    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------
@@ -139,6 +140,8 @@ CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
+# A release, and nothing else: sync writes the pin into the hooks' shell launcher.
+VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building, fixing and lite work may add their subagents' model and effort,
 # as a pair.
@@ -284,6 +287,8 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
+        if key == "version" and not VERSION.fullmatch(value):
+            return "version must be a Forge release, such as v1.2.1"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
             return ("signoff must name the client's sign-off record, "
                     "docs/decisions/NNNN-client-signoff.md")

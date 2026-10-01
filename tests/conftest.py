@@ -185,6 +185,9 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    # Host hooks find forge through uv's tool folders, so those name this one too.
+    monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
+    monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)

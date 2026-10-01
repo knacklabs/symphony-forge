@@ -4,7 +4,7 @@
 |---|---|
 | `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
-| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix |
+| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
@@ -20,6 +20,7 @@
 | `forge close <item>` | Closes a task or fix by the close rule |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
+| `forge land <item>` | Builds, closes, runs fix rounds and merges a task or fix where the repo allows agent merges; run it in the background |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |

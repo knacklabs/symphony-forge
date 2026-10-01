@@ -1,0 +1,23 @@
+{
+  "branch": "task/FORGE-DOCTORFIX-1-REPAIRS",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "0e00f439dc176f460f2ad7ab6bd6b0c967e5c72c59efec827265c4a7cd7cf5b2",
+    "commit": "fafe813ae6eb12919340ca8776be43d7b152bd92",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "62506ce85112ef6a25ca8aeb8c339a65ed321d26c7feb7d5292b1e43e84b67fe"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T10:02:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T14:38:27+00:00",
+      "step": "review"
+    }
+  ]
+}
