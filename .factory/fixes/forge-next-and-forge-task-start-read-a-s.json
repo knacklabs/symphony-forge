@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-01T09:40:22+00:00",
+      "because": "Three review rounds kept finding edge cases in the automatic merge (squash merges, worktree cleanup, existing merges); the owner's rule is to simplify a repeatedly breaking area, so the commands now only detect and point to the merge",
+      "done_when": "When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start merges the default branch into the story branch first (refusing with a plain message, changing nothing, when that merge conflicts) before reading the task rows. Command-level tests cover a plan edited on the default branch after approval, the merge in task start, and a conflicting merge."
+    }
+  ],
   "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
   "branch": "fix/forge-next-and-forge-task-start-read-a-s",
-  "done_when": "When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start merges the default branch into the story branch first (refusing with a plain message, changing nothing, when that merge conflicts) before reading the task rows. Command-level tests cover a plan edited on the default branch after approval, the merge in task start, and a conflicting merge.",
+  "done_when": "When the default branch's plans/<KEY>.md differs from the story branch's copy and the default branch's last commit touching it is newer than the story branch's, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start refuses with the same line, changing nothing. Neither command merges anything. Command-level tests cover a plan edited on the default branch after approval (flagged and refused), identical copies (not flagged), and a newer story-branch edit (not flagged).",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
