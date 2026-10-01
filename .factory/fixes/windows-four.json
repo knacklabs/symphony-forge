@@ -3,11 +3,32 @@
   "branch": "fix/windows-four",
   "done_when": ".github/workflows/forge-next.yml splits the Windows tests into four groups (each with the 20-minute limit), and the tests that pin the workflow's matrix match",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "183cca10742424826f892ae5f0a864d9d50e0498fc64aae43a9341605505bd94",
+    "commit": "87448dfe9e6712389462f4221568833ccab4db5c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The workflow now correctly defines four Windows groups with 20-minute limits, but `tests/test_fix_windows_test_jobs_are_cancelled_at_their.py:20` still asserts that exactly three Windows entries have `timeout: 20`. Adding the fourth entry makes that test fail deterministically, as confirmed by the supplied close-run output. Updating `tests/test_rules.py` alone leaves the Done-when requirement for matching matrix tests unmet and the CI suite failing. Update the remaining assertion to expect four jobs while retaining its timeout check.",
+        "file": ".github/workflows/forge-next.yml",
+        "line": 27,
+        "priority": "P1",
+        "title": "Not done: .github/workflows/forge-next.yml splits the Windows tests into four groups (each with the 20-minute limit), and the tests that pin"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e1ed44b61cb61b5a90c3d1ac6790616b24af3be9c49b45b367e4a774c976f93b"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T16:25:28+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-01T16:39:20+00:00",
+      "step": "review"
     }
   ],
   "why": "Windows test group 1 now hits its 20-minute CI limit and is cancelled on unrelated pull requests, because the suite grew while Windows still splits it into three groups"
