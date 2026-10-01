@@ -23,6 +23,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
 | "Ask Codex about this code" | `forge ask "<question>"` |
 | "Close it" or "Is it ready?" | `forge close <item>` |
+| "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
 | "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
@@ -250,6 +251,9 @@ Adopting changes no app code.
    and what must never be touched.
 7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
    block. The repo's own rules win where they differ from Forge's default-stack conventions.
+   A rule every review must follow, such as which tests a kind of change needs, goes under
+   `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
+   default branch and follows it.
 
 On a live app, every story and fix also follows these:
 
@@ -372,6 +376,8 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
+them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 
 ## Check-back
 

@@ -144,7 +144,7 @@ def close(args: argparse.Namespace) -> int:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
-    merge = "human" if migrating or state.get("why") == WHY else repo.merge_setting(top)
+    merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -156,6 +156,14 @@ def close(args: argparse.Namespace) -> int:
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
+
+
+def merger(top: Path, state: dict[str, Any]) -> str:
+    """Who merges the item's ready pull request: "agent" or "human". Only the owner merges the
+    merge switch's fix, and a human merges migrate's and adopt's, which bring Forge to the repo."""
+    if state.get("kind") in ("migrate", "adopt") or state.get("why") == WHY:
+        return "human"
+    return repo.merge_setting(top)
 
 
 def _worktree(item: str) -> Path:
