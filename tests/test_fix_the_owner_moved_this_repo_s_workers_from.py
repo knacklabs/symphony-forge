@@ -8,9 +8,11 @@ import tomllib
 from conftest import ROOT, _install
 from test_codex_worker import _sent, sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
+from test_subagent_roles import _settings
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
+OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -31,10 +33,12 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
     assert config["workers"] == "codex"
-    # Previously these were flat Opus tables. Codex now builds and fixes; lite alone adds helpers.
-    assert config["models"]["build"] == config["models"]["fix"] == SOL
+    # Codex builds and fixes; each Claude entry preserves the previous Opus settings.
+    assert config["models"]["build"] == config["models"]["fix"] == {
+        "codex": SOL, "claude": OPUS}
     assert config["models"]["lite"] == {
-        **SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"}
+        "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
+        "claude": OPUS}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
 
     log = _codex(repo, monkeypatch, sdk_data)
@@ -65,6 +69,10 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     repo.git("checkout", "-q", "-b", "fix/doctor")  # sync refuses on main
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    # A sync that silently drops both nested entries must not make doctor appear healthy.
+    for name in ("worker", "coder", "frontend", "tester", "refactorer", "explorer"):
+        assert _settings(repo.path, name) == (
+            ("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium")), name
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)

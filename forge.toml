@@ -7,19 +7,31 @@ test = "uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
-[models.build]
+[models.build.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 
-[models.fix]
+[models.build.claude]
+model = "claude-opus-5-5"
+effort = "medium"
+
+[models.fix.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 
-[models.lite]
+[models.fix.claude]
+model = "claude-opus-5-5"
+effort = "medium"
+
+[models.lite.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
+
+[models.lite.claude]
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.grill.codex]
 model = "gpt-6.1-sol"
