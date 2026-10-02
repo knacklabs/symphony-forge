@@ -42,7 +42,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
-| "Upgrade Forge" | Upgrade Forge, below |
+| "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
@@ -273,15 +273,17 @@ On a live app, every story and fix also follows these:
 ## Upgrade Forge
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
-repo, rewritten by that version.
+repo, rewritten by that version. One command does all of it.
 
 1. Ask which release to move to, recommending the newest.
-2. `forge fix start "Upgrade Forge to <release>" --done "Forge runs <release>"`.
-3. In the fix's folder, set `version` in `forge.toml` to the release, such as `"v1.2.0"`.
-4. Install that release: `uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`.
-5. Run `forge sync` in the fix's folder and commit everything it wrote.
-6. `forge close <fix>`. If it names files that aren't what `forge sync` writes, go back to step 5.
+2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
+   release, has that release refresh Forge's files in the fix, commits them and closes the fix.
+   It changes only the version in `forge.toml`.
+3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
+4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
+A repo pinned to a release without `forge upgrade` runs it once through uv:
+`uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
 ## Planning a story

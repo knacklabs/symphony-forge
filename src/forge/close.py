@@ -234,17 +234,21 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
-                          cwd=check).stdout
-        # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
-        hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=check)
-        stale = [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
+        stale = synced_changes(check)
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
         repo.git("branch", "-D", branch, cwd=top)
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def synced_changes(top: Path) -> list[str]:
+    """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
+    status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all", cwd=top).stdout
+    # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
+    hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
+    return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
 def _push(top: Path, branch: str) -> None:
