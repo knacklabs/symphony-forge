@@ -1,0 +1,14 @@
+{
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/forge-still-carries-compatibility-code-f",
+  "done_when": "The review record no longer writes or refreshes the tree key (review.py whole_tree and its callers in review.py and close.py are removed), and forge.toml's old top-level model line gets the ordinary unknown-key refusal instead of its own hint (the old_model refusal is removed); tests that pinned either are updated to the new contract, and nothing else changes.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-02T06:55:45+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge still carries compatibility code for clients that no longer exist: the review record's tree key kept only for v1.1.0's pull-request check, and a special hint for an old top-level model line in forge.toml"
+}
