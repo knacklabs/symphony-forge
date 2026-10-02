@@ -70,3 +70,36 @@ def test_3_a_repo_without_a_lockfile_lists_nothing(repo, monkeypatch):
     assert result.returncode == 0, result.stderr
     assert LISTED not in result.stdout
     assert "refresh-dependencies" not in result.stdout
+
+
+def _start_listed(repo):
+    lines = repo.forge("next").stdout.splitlines()
+    assert LISTED in lines
+    started = repo.forge(*shlex.split(lines[lines.index(LISTED) + 1].removeprefix("Next: "))[1:])
+    assert started.returncode == 0, started.stderr
+    return started.stdout
+
+
+def test_4_a_merged_refresh_that_changed_no_lockfile_counts_as_fresh(repo, monkeypatch):
+    _old_lockfile(repo, monkeypatch)
+    monkeypatch.setenv("FORGE_NOW", "2026-09-10T10:00:00+00:00")
+    first = _start_listed(repo)
+    where = first.splitlines()[0].rsplit(" in ", 1)[1]
+    # The refresh found nothing to update: its squash merge carries only its fix record.
+    repo.git("worktree", "remove", "--force", where)
+    repo.git("merge", "-q", "--squash", "fix/refresh-dependencies")
+    monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-11T10:00:00+00:00")
+    repo.git("commit", "-q", "-m", "Refresh dependencies (#1)")
+    monkeypatch.delenv("GIT_COMMITTER_DATE")
+    repo.git("push", "-q", "origin", "main")
+    assert repo.git("diff", "--name-only", "HEAD~1") == ".factory/fixes/refresh-dependencies.json"
+
+    monkeypatch.setenv("FORGE_NOW", "2026-09-12T10:00:00+00:00")
+    assert LISTED not in repo.forge("next").stdout
+
+    # A week after that refresh merged it is offered again, and the numbered refresh holds it back.
+    monkeypatch.setenv("FORGE_NOW", "2026-09-19T10:00:00+00:00")
+    assert _start_listed(repo).startswith("Started fix refresh-dependencies-2")
+    again = repo.forge("next").stdout
+    assert LISTED not in again
+    assert "The fix refresh-dependencies-2 is started" in again

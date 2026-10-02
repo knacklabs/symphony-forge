@@ -241,8 +241,9 @@ REFRESH = "refresh-dependencies"
 
 
 def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
-    """A refresh fix once the default branch's lockfiles and Dockerfiles are a week old by git log."""
-    if f"fix/{REFRESH}" in trees:
+    """A refresh fix once the default branch's lockfiles, Dockerfiles and last merged refresh fix
+    are a week old by git log. fix start numbers a name already used, so a refresh can be -2, -3."""
+    if any(re.fullmatch(rf"fix/{REFRESH}(-\d+)?", branch) for branch in trees):
         return []
     ref = story.landed_ref(top)
     names = repo.git("ls-tree", "-r", "--name-only", ref, cwd=top).splitlines()
@@ -251,7 +252,9 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
         return []
     docker = [name for name in names if Path(name).name == "Dockerfile"
               or Path(name).name.startswith("Dockerfile.") or name.endswith(".Dockerfile")]
-    last = repo.git("log", "-1", "--format=%cI", ref, "--", *locks, *docker, cwd=top)
+    # A refresh that found nothing to update changes no lockfile, so its merged record counts too.
+    done = [name for name in names if re.fullmatch(rf"\.factory/fixes/{REFRESH}(-\d+)?\.json", name)]
+    last = repo.git("log", "-1", "--format=%cI", ref, "--", *locks, *docker, *done, cwd=top)
     if datetime.fromisoformat(repo.now()) - datetime.fromisoformat(last) <= timedelta(days=7):
         return []
     return ["The dependencies and base images haven't been refreshed in over a week; refresh them.",
