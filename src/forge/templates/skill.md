@@ -365,6 +365,11 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+When a round ends with changes left uncommitted, `forge work` continues the same conversation
+once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
+what is committed, so look at them before closing.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
@@ -396,8 +401,9 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 ## Closing
 
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
-recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
-recorded before editing.
+recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
+count, so an upgrade fix needs no allowance. If the work exceeds that boundary, promote it to a story or get the
+allowance recorded before editing.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.

@@ -83,7 +83,8 @@ Why: $why
 Done when: $done
 
 A fix stays small: at most five code files and no interface changes unless a recorded allowance
-says otherwise. If it needs more, stop and say so; it has to become a story.
+says otherwise; test files and files whose content is exactly what `forge sync` writes don't count.
+If it needs more, stop and say so; it has to become a story.
 
 Interface globs in forge.toml: $interfaces. Recorded allowance: $allowance.
 

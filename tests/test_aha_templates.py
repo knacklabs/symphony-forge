@@ -33,6 +33,8 @@ def _conventions(repo, client):
     toml = Path(fix) / "forge.toml"  # the fix's own settings
     toml.write_text(toml.read_text(encoding="utf-8").replace('workers = "codex"', 'workers = "claude"'),
                     encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Use Claude workers", cwd=fix)
     built = repo.forge("work", "show-their-work", cwd=client)
     assert built.returncode == 0, built.stderr
     args = calls(log)[-1]["args"]
