@@ -3,7 +3,7 @@
   "branch": "fix/close-spends-a-full-review-about-15-minu",
   "done_when": "forge close merges the default branch first and stops with the conflict before taking the machine's test lock or starting a review; and when the test command fails, close stops before the review, records the failing output for the next worker round, and says so in one line, instead of running a review that reports the same failure. Command-level tests: a conflicting merge stops before any test run or review, and a failing test command stops before the review with its output kept for the worker.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T06:23:35+00:00",
