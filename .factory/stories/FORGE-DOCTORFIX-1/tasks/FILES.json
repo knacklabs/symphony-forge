@@ -2,34 +2,34 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "1a1b46e219bfa3ad1a3c50afba114ecc82095309c058e2d8c90c50a30e7752ff",
-    "commit": "e322b5e678f577cd7a782dad4770b94efa196faa",
+    "changed": "ef9c7bbc9569412d0b8ae092766cee32c10fb560e9ce2bb4c217651002f7d52d",
+    "commit": "aae6129e27fca6bfc44420a165fa21aeb6943347",
     "dismissals": [],
     "findings": [
       {
-        "body": "If committed AGENTS.md links to CLAUDE.md, deleting CLAUDE.md leaves AGENTS.md dangling and removes the instructions from the checkout. This is reachable in forge-source, where `_held` ignores committed history. When the linked text already matches sync, AGENTS.md is skipped entirely; otherwise its write goes through the link before the target is deleted. Doctor can also commit this broken link in its default-branch fix. `sync.write` prevents this by materializing instruction-file links first (src/forge/sync.py:335-345). Preserve their contents as regular files before removing CLAUDE.md, and cover this through doctor\u2019s real command.",
+        "body": "Ignored untracked files bypass this check: `--untracked-files=all` still excludes ignored files ([Git status contract](https://git-scm.com/docs/git-status)). If a differing skill file has never been committed and matches an ignore rule, `_held` sees neither status nor history and permits the write. On a nondefault branch, doctor then replaces the hand-written contents. Include ignored files when checking these specific paths, and cover their preservation through the real doctor command.",
         "file": "src/forge/doctor.py",
-        "line": 190,
-        "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
-      },
-      {
-        "body": "After doctor repairs both hosts\u2019 files in place, they match sync but remain unstaged, as required. On the next run, this set includes those unstaged modifications and sends matching files to `_held`, producing hand-edit rows and exit status 1 for doctor\u2019s own repairs. `repo.git` trims leading whitespace (src/forge/repo.py:82), accidentally misparsing the first status entry, but the second repaired file reliably triggers this defect. New evidence relative to the previous staged-edit finding is a repeated successful in-place repair with no staged or manual changes. Force-check matching files only for staged differences, and parse untrimmed status output.",
-        "file": "src/forge/doctor.py",
-        "line": 297,
+        "line": 158,
         "priority": "P1",
         "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
       },
       {
-        "body": "A clean, tracked empty CLAUDE.md is skipped because its text equals the wanted empty string. However, empty wanted text means deletion: githooks supplies this entry whenever CLAUDE.md exists (src/forge/githooks.py:74), and sync explicitly counts an existing empty file as a change (src/forge/sync.py:347-349). Consequently doctor neither removes it in place nor includes its removal in a default-branch fix, and reports no drift. Include physical existence when detecting deletion targets and cover an empty file in both repair paths.",
+        "body": "The hold-back check examines the link's Git status and history, but the eventual write can modify its target. For example, in `repo = \"forge-source\"`, a committed `.claude/skills/forge/SKILL.md` link to a repository-local notes file remains clean when that target is edited by hand. History is exempt here, so doctor permits the repair. `sync.write_file` follows internal links (`src/forge/sync.py:117\u2013123`); only AGENTS.md and CLAUDE.md are materialized. An in-place repair therefore overwrites the uncommitted notes. Protect the actual write target or materialize the skill link before writing, with command-level coverage.",
         "file": "src/forge/doctor.py",
-        "line": 177,
+        "line": 182,
+        "priority": "P1",
+        "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
+      },
+      {
+        "body": "New evidence beyond the prior empty-file and AGENTS.md-link findings is a dangling CLAUDE.md link. `githooks.ships` omits it because `exists()` is false (`src/forge/githooks.py:74`), so this helper and doctor's hold-back loop never consider it. However, `sync.write` independently unlinks it at `src/forge/sync.py:348\u2013356`. With no other drift, doctor reports no repair although sync would remove the link. With another repairable file on a nondefault branch, doctor calls sync and deletes even a newly created or staged dangling CLAUDE.md without checking its hand edit. Include these link-cleanup paths in the comparison and hold-back set, and cover both cases through doctor.",
+        "file": "src/forge/sync.py",
+        "line": 338,
         "priority": "P1",
         "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
       }
     ],
     "status": "blocked",
-    "tree": "e58c6ad594c4a855bf3fc49093b1fabd2829478155039e0289dddda9618326f3"
+    "tree": "8bc70026bead29829d7dcda380b6b1c49163329660b9aad2eb2c13a5d17ef275"
   },
   "status": "fixing",
   "steps": [
@@ -47,6 +47,10 @@
     },
     {
       "at": "2026-10-02T03:12:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T07:06:12+00:00",
       "step": "review"
     }
   ]
