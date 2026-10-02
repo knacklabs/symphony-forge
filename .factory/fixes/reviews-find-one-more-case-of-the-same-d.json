@@ -1,0 +1,14 @@
+{
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/reviews-find-one-more-case-of-the-same-d",
+  "done_when": "The review instructions tell the reviewer, when it finds a defect, to check every sibling case of the same kind (other states, other providers, other callers of the same code) and report them together in one finding naming each place. A command-level test shows the instruction reaches the review prompt.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-02T06:23:55+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Reviews find one more case of the same defect each round (one terminal state, then another, then another), costing a round each"
+}
