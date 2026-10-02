@@ -240,7 +240,9 @@ def _synced(top: Path, item: str) -> None:
 
 def synced_changes(top: Path) -> list[str]:
     """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
-    status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all", cwd=top).stdout
+    # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
+    status = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=top).stdout
     # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
     hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
     return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]

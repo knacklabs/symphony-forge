@@ -10,6 +10,7 @@ release, whose skill carries a marker and whose settings check no longer knows `
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -245,6 +246,20 @@ def _failed_install_then_rerun(up):
     assert len(up.env.gh_calls("pr", "create")) == 1
 
 
+def _staged_rename_then_rerun(up):
+    # The first run stops at the install; meanwhile the fix's folder holds a staged rename.
+    (up.repo.bin / "uv-install-fails").touch()
+    assert up.run(RELEASE).returncode == 1
+    (up.repo.bin / "uv-install-fails").unlink()
+    up.repo.git("mv", "README.md", "READ-ME.md", cwd=up.folder)
+
+    done = up.run(RELEASE)
+
+    assert_ready(up, done, ours(up, started=False))
+    assert up.show("READ-ME.md") == "# A test repo"
+    assert up.repo.git("ls-tree", "--name-only", f"fix/{NAME}", "README.md") == ""
+
+
 def _interrupted_after_the_folder(up):
     # The run stopped right after git made the fix's folder and branch, before its state.
     up.repo.git("worktree", "add", "-q", "--no-track", "-b", f"fix/{NAME}", str(up.folder),
@@ -272,8 +287,8 @@ def _failed_release_sync_then_rerun(up):
 
     # With the setting gone from the default branch and from the fix, a rerun goes on.
     up.on_main("forge.toml", original.replace('stage = "live"\n', ""))
-    fixed = (up.folder / "forge.toml").read_text("utf-8").replace('stage = "live"\n', "")
-    (up.folder / "forge.toml").write_text(fixed, "utf-8")
+    fixed = (up.folder / "forge.toml").read_bytes().replace(b'stage = "live"\n', b"")
+    (up.folder / "forge.toml").write_bytes(fixed)  # bytes: Windows would rewrite its line endings
 
     done = up.run(RELEASE)
 
@@ -338,7 +353,7 @@ def _stale_forge_shadows_the_install(up, monkeypatch):
 
     assert done.returncode == 1
     assert done.stderr == (
-        f"After the install, your PATH finds Forge v1.0.0 at {stale / 'forge'} instead of Forge "
+        f"After the install, your PATH finds Forge v1.0.0 at {shutil.which('forge', path=str(stale))} instead of Forge "
         f"{RELEASE}.\nNext: remove that forge or put uv's tool folder ahead of it on PATH, then "
         f"forge upgrade {RELEASE}\n")
     assert [call["args"] for call in up.uv()] == [install()]
@@ -400,7 +415,7 @@ REFUSED = {
                                str(up.tmp / "other-upgrade"), "origin/main"), [RELEASE],
         "The upgrade to Forge v9.8.0 is still open in fix upgrade-forge-to-v9-8-0.\n"
         "Next: forge upgrade v9.8.0 to finish it, or remove it: git worktree remove --force "
-        "<tmp>/other-upgrade && git branch -D fix/upgrade-forge-to-v9-8-0\n"),
+        "<other> && git branch -D fix/upgrade-forge-to-v9-8-0\n"),
     "no version edit": (
         lambda up: up.on_main("forge.toml", up.toml() + "test = '''\nversion = \"fixture\"\n'''\n"),
         [RELEASE],
@@ -432,7 +447,7 @@ def _refused(up, case):
     done = up.run(*[arg.replace("<pinned>", up.version) for arg in args])
 
     assert done.returncode == 1
-    assert done.stderr == (expected.replace("<pinned>", up.version).replace("<tmp>", str(up.tmp))
+    assert done.stderr == (expected.replace("<pinned>", up.version).replace("<other>", str(up.tmp / "other-upgrade"))
                            .replace("<folder>", str(up.folder)))
     assert done.stdout == ""
     assert up.snapshot() == before
@@ -441,7 +456,7 @@ def _refused(up, case):
 
 
 SCENARIOS = [_named, _pinned_older_than_the_installed_forge, _newest_then_a_newer_one,
-             _failed_install_then_rerun, _interrupted_after_the_folder,
+             _failed_install_then_rerun, _staged_rename_then_rerun, _interrupted_after_the_folder,
              _failed_release_sync_then_rerun, _rerun_after_the_commit, _close_refuses,
              _sync_deletes_a_file, _hooks_inside_the_checkout, _stale_forge_shadows_the_install]
 

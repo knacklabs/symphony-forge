@@ -147,7 +147,14 @@ def upgrade(args: argparse.Namespace) -> int:
 
     # 6. One commit: forge.toml and everything sync changed, deletions included, never hook shims.
     changed = close.synced_changes(path)
-    if changed and repo.commit_state(f"Upgrade Forge to {release}", *changed, top=path):
+    # A deletion already staged, such as a rename's old name, is in neither the folder nor the
+    # index, so git add can't name it; the commit by path still takes it.
+    listed = repo.git("ls-files", "-z", "--", *changed, cwd=path).split("\0") if changed else []
+    adding = [rel for rel in changed if rel in listed or (path / rel).exists()]
+    if adding:
+        repo.git("add", "--", *adding, cwd=path)
+    if changed and repo.run("git", "diff", "--cached", "--quiet", "--", *changed, cwd=path).returncode:
+        repo.git("commit", "-q", "-m", f"Upgrade Forge to {release}", "--", *changed, cwd=path)
         print(f"Committed the upgrade to Forge {release}.", flush=True)
     else:
         print("Nothing new to commit.", flush=True)
