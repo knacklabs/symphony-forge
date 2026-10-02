@@ -218,6 +218,7 @@ def _codex_workers(env, monkeypatch, sdk_data):
     (codex_home / "config.toml").write_text(
         f'[projects.{json.dumps(str(env.repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    monkeypatch.setenv("STUB_CODEX_TOUCH", "fixed.txt")  # the worker's change, which it commits
     monkeypatch.setenv("STUB_CODEX_COMMIT", "1")
     toml = (env.repo.path / "forge.toml").read_text("utf-8").replace('workers = "claude"', 'workers = "codex"')
     env.commit(env.repo.path, "forge.toml", toml + 'models.fix = { model = "gpt-6-sol", effort = "medium" }\n')
