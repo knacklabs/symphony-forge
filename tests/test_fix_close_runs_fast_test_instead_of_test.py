@@ -40,9 +40,6 @@ def test_1_close_runs_fast_test_with_the_merge_base_in_place_of_base(env):
     base = env.repo.git("merge-base", "origin/main", "HEAD", cwd=where)
     assert log.read_text("utf-8").splitlines() == [f"fast {base}"]
     assert f"fast {base}" in env.prompt()  # the review sees the command close ran
-    assert env.repo.forge("sync", cwd=where).returncode == 0
-    workflow = next((where / ".github/workflows").glob("*.yml")).read_text("utf-8")
-    assert "logger.py full" in workflow and "logger.py fast" not in workflow  # CI keeps test
 
 
 def test_2_close_runs_test_when_fast_test_is_unset(env):
@@ -53,19 +50,30 @@ def test_2_close_runs_test_when_fast_test_is_unset(env):
     assert log.read_text("utf-8").splitlines() == ["full"]
 
 
-def test_3_doctor_explains_fast_test(env):
+def test_3_the_generated_workflow_s_tests_job_still_runs_test(env):
+    _settings(env, fast=True)
+    _, where = env.start_fix()
+    assert env.repo.forge("sync", cwd=where).returncode == 0
+    workflow = (where / ".github/workflows/forge.yml").read_text("utf-8")
+    assert "logger.py full" in workflow and "logger.py fast" not in workflow
+
+
+def test_4_doctor_explains_fast_test(env):
     _settings(env, fast=True)
     doctor = env.repo.forge("doctor")
     assert "close runs fast_test" in doctor.stdout
     assert "pull request's tests check still runs the full test command" in doctor.stdout
 
 
-def test_4_new_repos_get_fast_test_unset(repo, gh, tmp_path):
+def test_5_new_repos_get_fast_test_unset(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     assert repo.forge("init", cwd=client).returncode == 0
     assert "fast_test" not in tomllib.loads((client / "forge.toml").read_text("utf-8"))
 
 
-def test_5_the_skill_explains_fast_test():
-    skill = (Path(__file__).parents[1] / "src/forge/templates/skill.md").read_text("utf-8")
-    assert "fast_test" in skill and "{base}" in skill
+def test_6_the_skill_and_the_guide_recommend_fast_test():
+    root = Path(__file__).parents[1]
+    for rel in ("src/forge/templates/skill.md", "docs/guide.md"):
+        text = " ".join((root / rel).read_text("utf-8").split())
+        assert "set `fast_test`" in text and "`{base}`" in text, rel
+        assert "runs the full suite" in text, rel
