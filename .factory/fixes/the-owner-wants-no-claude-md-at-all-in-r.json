@@ -6,29 +6,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "7d15427c6d0f45d35bbaa0c56991775f05fa04c1fab930cdb6ca168f708926a2",
-    "commit": "daf776ab4fb486120d7b1be9e1932966c02dae5c",
+    "changed": "200ff955ac8779a796228313590dc6c462ecb490f99526fbff16b19510781cb0",
+    "commit": "443070b9446308cc502a4598c42e280c218e3e65",
     "dismissals": [],
     "findings": [
       {
-        "body": "The earlier data-loss defect remains when AGENTS.md links to CLAUDE.md and that file already contains the current Forge block. New evidence beyond the previous review: `_agents` returns identical text in this case, so this filter excludes AGENTS.md from `changed`. The materialization at lines 343\u2013344 never runs, but CLAUDE.md is deleted at line 348, leaving AGENTS.md dangling and losing the rules. The new command test starts without a Forge block, forcing a text change and missing this case. Include the required symlink materialization even when its contents already match, and cover that state through `forge sync`.",
+        "body": "With an in-repo AGENTS.md symlink and a repo-owned `.claude/agents/tester.md`, this loop replaces the symlink before `roles.refuse_foreign` rejects the sync at line 352. The command therefore fails but leaves AGENTS.md changed into a regular file. `src/forge/roles.py:103` promises refusal before writes, and `tests/test_subagent_roles.py:128` checks that refusal leaves the working tree untouched; its fixture lacks a symlink and misses this case. Compute and validate the planned output before unlinking or materializing either rules file.",
         "file": "src/forge/sync.py",
-        "line": 337,
-        "priority": "P1",
-        "title": "Not done: forge sync leaves no CLAUDE.md while preserving the repo's rules in AGENTS.md"
-      },
-      {
-        "body": "A dangling CLAUDE.md symlink makes `Path.exists()` return false, so it is omitted from the deletion output and remains at the repo root after sync. This is new evidence beyond the ruling about CLAUDE.md links: that ruling covers links whose contents can still be read, whereas a dangling link bypasses deletion entirely. Check `is_symlink()` alongside `exists()` so sync removes the link itself.",
-        "file": "src/forge/githooks.py",
-        "line": 74,
+        "line": 343,
         "priority": "P2",
-        "title": "Delete dangling CLAUDE.md symlinks too"
+        "title": "Validate sync output before replacing symlinks"
       }
     ],
-    "status": "blocked",
-    "tree": "1e867a3f9175ba436c5ec608c0072d75ae5e1685291d2d4ba8463b4e2ef7875b"
+    "status": "clean",
+    "tree": "038a7ed71a335674e0f61864fdec03eb9ee476ab8235fa16d263374eca280648"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T16:48:31+00:00",
@@ -44,6 +37,10 @@
     },
     {
       "at": "2026-10-01T23:25:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T00:19:13+00:00",
       "step": "review"
     }
   ],
