@@ -1,0 +1,51 @@
+{
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/a-new-security-advisory-in-a-transitive",
+  "done_when": "When the default branch's lockfiles (any of package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lockb, bun.lock, uv.lock, poetry.lock, Cargo.lock, go.sum) and Dockerfile base images were last changed more than seven days ago by git history, forge next lists a ready fix to refresh dependencies and base images with a filled-in forge fix start command, and the agent starts it like any ready item; nothing is listed when there are no lockfiles. No new record is kept: the age comes from git log. The skill says how to run that fix (update within the allowed ranges, rebuild, run the test command). Command-level tests cover an old lockfile (listed), a fresh one (not listed) and a repo with no lockfile.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "dd3dcc844b120698aded4b448c407844b99ed948f7efea39ff5fc59a43ea9e7f",
+    "commit": "968a180a1f8fad04ae8cd3a0dc58410d800589ff",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "For repositories using Yarn 2 or later, `yarn upgrade` is unavailable, so this instruction fails instead of refreshing the detected `yarn.lock`. Yarn's [migration guide](https://yarnpkg.com/migration/guide) confirms the command was renamed. Distinguish Yarn Classic from modern Yarn and use `yarn up -R '*'` for the latter: [Yarn documents](https://yarnpkg.com/cli/up) that recursive mode re-resolves dependencies without changing manifests, whereas plain `yarn up` ignores existing ranges.",
+        "file": "src/forge/templates/skill.md",
+        "line": 296,
+        "priority": "P2",
+        "title": "[P2] Give modern Yarn an in-range refresh command"
+      }
+    ],
+    "status": "clean",
+    "tree": "8b0b79ca4151cfdbc3a34c0f97fb83cda6790bef27c387de0976a2e0179033ff"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T17:03:07+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T22:36:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T01:21:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T06:31:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T10:02:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T13:29:12+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A new security advisory in a transitive dependency or the base image fails every pull request's image scan on the same day, because nothing refreshes dependencies on a schedule"
+}
