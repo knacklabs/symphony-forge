@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-02T08:55:29+00:00",
+      "because": "Simplify a repeatedly reviewed area: ownership locks raced, so the owner's simple-rule preference wins; a killed review's folder waits a day for the sweep",
+      "done_when": "Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is interrupted (Ctrl-C or the process killed and run again) or the worktree removal fails; and each review first deletes forge-review-* folders older than a day that no running review owns. A command-level test interrupts a review and shows its folder is gone afterwards, and another shows an old leftover folder is removed by the next review."
+    }
+  ],
   "base": "392464f2476b7d2832672c52ab176980c1ac31f0",
   "branch": "fix/reviews-leave-their-forge-review-tempora",
-  "done_when": "Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is interrupted (Ctrl-C or the process killed and run again) or the worktree removal fails; and each review first deletes forge-review-* folders older than a day that no running review owns. A command-level test interrupts a review and shows its folder is gone afterwards, and another shows an old leftover folder is removed by the next review.",
+  "done_when": "Every review removes its own forge-review-* folder when it finishes, fails or is interrupted with Ctrl-C; and each review first deletes forge-review-* folders whose last change is more than a day old, since no review runs that long, with no lock or ownership record. A folder left by a review that was killed outright is removed by the first review that runs a day later. Command-level tests: a failing and an interrupted review leave no folder, an old leftover folder is removed by the next review, and a fresh folder of another review is left alone.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
