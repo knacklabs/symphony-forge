@@ -3,11 +3,46 @@
   "branch": "fix/windows-ci-jobs-keep-failing-with-permis",
   "done_when": "Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one shared fixture, so pytest can always delete the test's temporary folder on Windows; a test that still leaves a process holding a file fails naming it. The Windows CI groups pass three runs in a row on the fix's pull request without a PermissionError.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "edaba305935c86e323bb4a8da6294870d5d49f52a0398bca948eb0471692041a",
+    "commit": "ab5b9781d99050d7b78f7e31a036807c3aa52852",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required Done-when item remains unmet: `_end_holders` requests termination and immediately returns, after which the fixture raises without waiting for the processes to exit or confirming that their files are released. Windows [TerminateProcess is asynchronous](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess), so this preserves the cleanup race the requirement explicitly asks to eliminate. Wait for every terminated process before completing teardown. The new regression checks process liveness only after the nested pytest invocation has exited, which can hide this missing synchronization.",
+        "file": "tests/conftest.py",
+        "line": 169,
+        "priority": "P1",
+        "title": "Not done: Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one"
+      },
+      {
+        "body": "When the test body fails, this condition bypasses both the holder check and process cleanup. Existing process-starting paths can fail before reaching their cleanup: `tests/test_chatview_words.py:119` reads the record after launching work, while `_crash` is reached only at line 128. An exception there leaves the processes alive on Windows. Keeping the failed test's directory for inspection should not keep its processes running. Perform cleanup regardless of the test result and extend the nested-pytest regression to cover a failing body that leaves a holder.",
+        "file": "tests/conftest.py",
+        "line": 183,
+        "priority": "P1",
+        "title": "Clean up processes even when the test fails"
+      },
+      {
+        "body": "Filtering exclusively by command line misses processes explicitly covered by Done-when. `tests/conftest.py:68` runs git using `cwd`, and `src/forge/codex.py:288\u2013291` starts the Codex driver using SDK/source paths with the checkout supplied only as `cwd`. Neither command necessarily contains this test's temp path. Windows [locks a running process's current directory](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setcurrentdirectory), so a surviving driver can block deletion while this helper neither names nor terminates it. Track the test's process tree rather than relying solely on command text, and cover a holder launched with a relative filename and `cwd`.",
+        "file": "tests/conftest.py",
+        "line": 165,
+        "priority": "P1",
+        "title": "Find holders whose temp directory appears only in their working directory"
+      }
+    ],
+    "status": "blocked",
+    "tree": "554522179870076f86c3ad99fc926b10d41102ffff0bb51d523d40f4f3d604f5"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T11:51:41+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T14:33:08+00:00",
+      "step": "review"
     }
   ],
   "why": "Windows CI jobs keep failing with PermissionError while pytest cleans a test's temporary folder (test_chatview_words test_4, test_codex_resume test_9 and others on unrelated pull requests), because a process the test started still holds files there"
