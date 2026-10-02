@@ -5,14 +5,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "c8d407fa0ae2faf151dbb93bdd8f670e9937e9ca29e031c2f4f01e393b4a8d85",
-    "commit": "8020fc975bdcc3e02ccfe9d1386715f7bec64faf",
+    "changed": "01c547cacfe8749ef65a714e5ecf7a30071b65955f1d31c1e4cf6c10d3fc4394",
+    "commit": "e3375d859e75beada681c0e35cc1517a87dac97f",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "560c9cee18ae11d0c2abf5a435a30cfaff2e68dfd1f8f55543074ef7b95875b8"
+    "findings": [
+      {
+        "body": "The coordinator's ruling requires the pull-request check to accept the same edits as task start, but this changed entry point has no command-level regression test. The new test ends after `forge task start` (`tests/test_builders_edits_need_no_new_read.py:42`). Existing PR coverage at `tests/test_readloop_gates.py:154\u2013163` exercises a document without the builders divider and expects rejection. Reverting this call to its old strict form would therefore leave those tests passing while builders-only edits still block merging. Add a test through `forge hook pr-check` with a committed builders-only edit after a passing round and verify that the document gate accepts it.",
+        "file": "src/forge/story.py",
+        "line": 539,
+        "priority": "P1",
+        "title": "Not done: command test for forge-pr-check accepting builders-only edits after a passing read"
+      }
+    ],
+    "status": "blocked",
+    "tree": "8489324d67563f2b70ae6359f5ff9402575c0954d22fbe3d1e6d44595c9605c2"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T06:29:44+00:00",
@@ -24,6 +32,10 @@
     },
     {
       "at": "2026-10-02T13:43:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T15:51:52+00:00",
       "step": "review"
     }
   ],
