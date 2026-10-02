@@ -209,8 +209,11 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     fixed = repo.forge("work", "BOARD/PAGE")
     assert fixed.returncode == 0, fixed.stdout + fixed.stderr
     assert len(_sent(calls, "thread/start")) == 1
-    [resume] = _sent(calls, "thread/resume")
+    # The round leaves the edits above uncommitted, so a second turn on the same conversation
+    # asks the worker to commit them.
+    resume, nudge = _sent(calls, "thread/resume")
     assert (resume["threadId"], resume["config"]) == ("thr-stub-1", FIX_CONFIG)
+    assert nudge["threadId"] == "thr-stub-1"
     assert (resume["sandbox"], resume["approvalPolicy"]) == ("danger-full-access", "never")
     assert Path(resume["cwd"]).resolve() == folder.resolve()
     # The chat is named on start and keeps that name when this fix round resumes it.
@@ -219,7 +222,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
 
     # The old contract repeated the whole brief and the worker's own commit. A continued
     # conversation now gets the findings and changes since its last turn ended.
-    text = _text(calls)
+    text = _sent(calls, "turn/start")[-2]["input"][0]["text"]
     assert "The earlier brief in this conversation still applies." in text
     assert "You are the worker." not in text
     assert "- P1 Archived stories are missing (web/board.py:12): Show them too." in text
@@ -232,15 +235,17 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert "?? web/" in repo.git("status", "--porcelain", cwd=folder).splitlines()
 
     # The turn log says it continued the conversation.
-    assert _lines(turns)[-1] == {
+    assert _lines(turns)[-3] == {  # before the commit nudge's start and end lines
         "conversation": "thr-stub-1", "turn": "turn-stub-2", "kind": "Fix", "continued": True,
         "fresh_start": None, "status": "completed", "started": NOW, "ended": NOW,
         "input_tokens": None, "cached_input_tokens": None, "output_tokens": None}
+    repo.git("add", "-A", cwd=folder)
+    repo.git("commit", "-qm", "Keep the edits", cwd=folder)
 
     # A very large change is listed by file instead of shown in full.
     (folder / "big.txt").write_text("big line\n" * (LARGE // 9 + 1), encoding="utf-8")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    text = _text(calls)
+    text = _sent(calls, "turn/start")[-2]["input"][0]["text"]  # the last one is the commit nudge
     assert "big line" not in text
     assert "big.txt" in text and "web/new.py" in text and "README.md" in text
     (folder / "big.txt").unlink()
