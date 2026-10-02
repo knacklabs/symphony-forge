@@ -4,11 +4,46 @@
   "branch": "fix/codex-hook-trust",
   "done_when": "Before each Codex thread start or resume, Forge asks the app-server for the checkout's project hooks; each hook whose definition is exactly what forge sync writes for this repo is passed to the turn as trusted (its current hash in the thread config's hooks state), so the guard and the other Forge hooks run on every worker and reader turn; if any project hook is not trusted and differs from Forge's own, the turn stops with one plain line naming the hook and how to review it in Codex's /hooks, changing nothing. Decision 0102 records the owner's choice and supersedes decision 0082 for Forge's own hooks. Command-level tests with the stub app-server: Forge's own untrusted hooks are trusted and the turn starts with them; a modified or foreign untrusted hook stops the turn.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "04ab02087aecb72a7f25248cdde796db58f0a9b3d10156b408f3d6de33ea8f84",
+    "commit": "217bffb8051685bc235af9d35fece5e008e050ea",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The comparison projects each hook onto five fields, so changing a Forge hook's `timeout` still matches and automatically trusts the modified definition. For example, add `\"timeout\": 1` to the generated PreToolUse handler: the stub reports a changed hash and `timeoutSec`, but Forge accepts it and starts the turn. `src/forge/sync.py:183` writes no timeout override. The pinned [Codex contract](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/app-server/tests/suite/v2/hooks_list.rs#L45) includes timeout, status message and context limit in the definition hash. Compare those known definition fields against their generated defaults too, and reject differences rather than trusting their hashes.",
+        "file": "src/forge/codex_turn.py",
+        "line": 167,
+        "priority": "P1",
+        "title": "Not done: Trust only hook definitions that exactly match forge sync"
+      },
+      {
+        "body": "Both new tests exercise only a fresh `forge work` conversation. They would still pass if hook verification were bypassed whenever a thread resumes or a reader runs. The resume stub returns no hooks at `tests/test_codex_resume.py:84`, and the reader-round stub does likewise at `tests/test_readloop_rounds.py:71`; neither proves the new behavior. Extend command-level coverage to verify current hashes reach `thread/resume`, and that an untrusted modified or foreign hook prevents resumed worker and reader turns. These are explicit Done-when behaviors, rather than additional edge cases.",
+        "file": "tests/test_codex_turns_trust_forge_hooks.py",
+        "line": 43,
+        "priority": "P1",
+        "title": "Not done: Test hook trust and refusal on resumed worker and reader turns"
+      },
+      {
+        "body": "This refusal produces two lines: the hook description, followed by a separate `Next:` instruction. `src/forge/repo.py:53` explicitly inserts that newline, and `src/forge/cli.py:121` prints it unchanged. Consequently, the promised single line naming the hook and explaining how to review it in `/hooks` is not delivered. Put both parts in one refusal line and assert the complete output; the new test's substring assertions currently accept the mismatch.",
+        "file": "src/forge/codex.py",
+        "line": 68,
+        "priority": "P1",
+        "title": "Not done: Give the hook refusal and review instruction in one plain line"
+      }
+    ],
+    "status": "blocked",
+    "tree": "822ec149177e03638f75dd947de9919f265518e2ee12494c13e93998f4e35d51"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T08:38:35+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T13:12:28+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's Codex workers run with no Forge hooks at all, the destructive-command guard included: Codex silently skips project hooks that aren't trusted, and every change to a hook un-trusts it, so the guard has not protected Codex worker turns since the hook launcher changed"
