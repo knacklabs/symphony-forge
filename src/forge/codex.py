@@ -16,7 +16,7 @@ import signal
 import subprocess
 import sys
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
@@ -629,36 +629,88 @@ def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] 
 
 
 @contextlib.contextmanager
-def _one_at_a_time(lock: Path, waiting: str = "") -> Iterator[None]:
+def _one_at_a_time(lock: Path) -> Iterator[None]:
     """Hold the lock's guard file while a call checks, clears or takes the lock, so two calls that
     find one stale lock never both clear it, and one clears another's new lock. The system lets
-    go of the guard when its holder ends, however it ends, so it is never stale itself. Prints
-    `waiting`, if given, when another holder makes this call wait."""
+    go of the guard when its holder ends, however it ends, so it is never stale itself."""
     with lock.with_suffix(".guard").open("ab") as guard:
         if os.name != "nt":
-            try:
-                fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
-                if waiting:
-                    print(waiting, flush=True)
-                fcntl.flock(guard, fcntl.LOCK_EX)
+            fcntl.flock(guard, fcntl.LOCK_EX)
             yield
             return
         guard.seek(0)
-        mode = msvcrt.LK_NBLCK
         while True:  # LK_LOCK gives up after ten seconds
             try:
-                msvcrt.locking(guard.fileno(), mode, 1)
+                msvcrt.locking(guard.fileno(), msvcrt.LK_LOCK, 1)
                 break
             except OSError:
-                if waiting and mode == msvcrt.LK_NBLCK:
-                    print(waiting, flush=True)
-                mode = msvcrt.LK_LOCK
+                pass
         try:
             yield
         finally:
             guard.seek(0)
             msvcrt.locking(guard.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+@contextlib.contextmanager
+def in_line(folder: Path, waiting: Callable[[int], str]) -> Iterator[None]:
+    """Wait for this call's turn in `folder`'s line, first come, first served, then hold the turn
+    while the body runs. Each place is a numbered ticket file its holder keeps locked; the system
+    lets go of a dead holder's lock, and the next call that looks drops its ticket. Prints
+    `waiting(places ahead)` when the wait starts and each time that number changes."""
+    folder.mkdir(parents=True, exist_ok=True)
+    with _one_at_a_time(folder / "line"):
+        tickets = sorted(folder.glob("*.ticket"))
+        mine = folder / f"{int(tickets[-1].stem) + 1 if tickets else 1:012d}.ticket"
+        handle = mine.open("ab")
+        _try_lock(handle)  # a new number, so no one else holds it
+    try:
+        said = 0
+        while True:
+            with _one_at_a_time(folder / "line"):
+                ahead = [ticket for ticket in sorted(folder.glob("*.ticket"))
+                         if ticket < mine and not _dropped_if_dead(ticket)]
+            if not ahead:
+                break
+            if len(ahead) != said:
+                said = len(ahead)
+                print(waiting(said), flush=True)
+            # ponytail: polls the line four times a second; fine for a few dozen closes
+            time.sleep(0.25)
+        yield
+    finally:
+        _unlock(handle)
+        handle.close()
+        mine.unlink(missing_ok=True)
+
+
+def _dropped_if_dead(ticket: Path) -> bool:
+    """Delete a ticket whose holder has ended, which is when its lock is free. True if deleted."""
+    with ticket.open("ab") as handle:
+        if not _try_lock(handle):
+            return False
+        _unlock(handle)
+    ticket.unlink(missing_ok=True)
+    return True
+
+
+def _try_lock(handle: Any) -> bool:
+    try:
+        if os.name == "nt":
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def _unlock(handle: Any) -> None:
+    """Windows wants its lock let go before the file closes; elsewhere closing lets go."""
+    if os.name == "nt":
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def tidy(checkout: Path) -> list[str]:

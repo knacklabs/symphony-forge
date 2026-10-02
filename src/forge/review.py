@@ -260,10 +260,8 @@ def _test_run(top: Path, command: str, base: str) -> str:
     if passed and passed.exists():
         print(skipped, flush=True)
         return skipped
-    folder.mkdir(parents=True, exist_ok=True)
-    # ponytail: one test run per machine, whatever the repo; a per-repo lock if that proves slow.
-    with codex._one_at_a_time(folder / "test-run", "Another forge close on this machine is "
-                              "running its tests; this one waits for it."):
+    # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
+    with codex.in_line(folder / "test-runs", WAITING):
         if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
             return skipped
@@ -285,6 +283,9 @@ def _test_run(top: Path, command: str, base: str) -> str:
                       "forge close.", *lines])
 
 
+WAITING = lambda ahead: (  # noqa: E731
+    "Waiting for 1 other close's test run on this machine." if ahead == 1
+    else f"Waiting for {ahead} other closes' test runs on this machine.")
 DOCS = ("docs/", "plans/", ".factory/")
 DOCS_ONLY = ("This change touches only docs, plans, Markdown or Forge's records, so close did not run "
              "`{command}`.")
