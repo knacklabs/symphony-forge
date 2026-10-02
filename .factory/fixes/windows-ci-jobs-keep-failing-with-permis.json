@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-02T14:40:19+00:00",
+      "because": "Simplify a repeatedly reviewed area: per-process tracking kept drawing new cases; retries cover the failures actually seen on CI",
+      "done_when": "Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one shared fixture, so pytest can always delete the test's temporary folder on Windows; a test that still leaves a process holding a file fails naming it. The Windows CI groups pass three runs in a row on the fix's pull request without a PermissionError."
+    }
+  ],
   "base": "3ff38aaacce3d22620e0f2d83a6fe237847e79ab",
   "branch": "fix/windows-ci-jobs-keep-failing-with-permis",
-  "done_when": "Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one shared fixture, so pytest can always delete the test's temporary folder on Windows; a test that still leaves a process holding a file fails naming it. The Windows CI groups pass three runs in a row on the fix's pull request without a PermissionError.",
+  "done_when": "On Windows, the test helpers that read, write or delete files under a test's temporary folder retry a PermissionError for up to five seconds before failing, and pytest's cleanup of temporary folders skips files Windows still has locked instead of erroring, so a process that is a moment late to exit no longer fails an unrelated test. No process tracking. A command-level test simulates a locked file on Windows (or a helper that raises PermissionError twice) and shows the read succeeds.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
