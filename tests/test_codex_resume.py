@@ -21,7 +21,7 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
-from test_codex_record import _crash, _down, _saved
+from test_codex_record import _crash, _down, _save, _saved
 from test_codex_worker import (NOW, SOL, _codex_repo, _lines, _sent, _stub, _toml,  # noqa: F401
                                sdk_data)
 from test_task import DOC, story
@@ -276,7 +276,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     conversation = _saved(record)["conversation"]
     threads = _saved(store)
     del threads[conversation]
-    store.write_text(json.dumps(threads), encoding="utf-8")
+    _save(store, threads)
     fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
     # It was started in another checkout.
     moved = folder.with_name("moved-BOARD-PAGE")
@@ -297,7 +297,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     held = _lines(turns)[-1]
     threads = _saved(store)
     threads[held["conversation"]]["turns"][held["turn"]] = "interrupted"
-    store.write_text(json.dumps(threads), encoding="utf-8")
+    _save(store, threads)
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     assert "Starting a new Codex conversation" not in again.stdout
@@ -449,7 +449,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
             del threads["thr-stub-1"]["turns"][turn]
         else:
             threads["thr-stub-1"]["turns"][turn] = status
-        store.write_text(json.dumps(threads), encoding="utf-8")
+        _save(store, threads)
 
     # forge work crashes mid-turn, leaving its Codex processes and no end line.
     work, saved = _holding(repo, turns)
@@ -556,7 +556,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     [held] = unseen()
     threads = _saved(store)
     threads[conversation]["turns"][held] = "interrupted"
-    store.write_text(json.dumps(threads), encoding="utf-8")
+    _save(store, threads)
     recovered = repo.forge("work", "BOARD/PAGE")
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     lines = _lines(turns)
@@ -573,7 +573,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     held = _lines(turns)[-1]
     threads = _saved(store)
     del threads[held["conversation"]]
-    store.write_text(json.dumps(threads), encoding="utf-8")
+    _save(store, threads)
     gone = repo.forge("work", "BOARD/PAGE")
     assert gone.returncode == 0, gone.stdout + gone.stderr
     lines = _lines(turns)

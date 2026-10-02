@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_worker import PIN, _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
 
 STORY = "FORGE-WARM-1"
@@ -103,14 +103,11 @@ def _codex_repo_direct(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
 
 
 def _saved(path: Path) -> dict:
-    """A record a running process may be replacing: on Windows, opening a file while another
-    process renames a new one over it fails with PermissionError for a moment."""
-    for _ in range(100):
-        try:
-            return json.loads(path.read_text("utf-8")) if path.exists() else {}
-        except PermissionError:
-            time.sleep(0.05)
-    return json.loads(path.read_text("utf-8"))
+    return patient(lambda: json.loads(path.read_text("utf-8")) if path.exists() else {})
+
+
+def _save(path: Path, record: dict) -> None:
+    patient(lambda: path.write_text(json.dumps(record), encoding="utf-8"))
 
 
 def _up(pid: int) -> bool:

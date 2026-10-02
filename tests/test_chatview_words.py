@@ -1,14 +1,13 @@
 """Names and first preview lines seen through Forge's work and read commands."""
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
 import time
 
 from conftest import _install
-from test_codex_record import _crash, _saved
+from test_codex_record import _crash, _save, _saved
 from test_codex_resume import _resuming
 from test_codex_worker import MODELS, ROOT, _codex_repo, _lines, _sent, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
@@ -131,7 +130,7 @@ def _check_recovered_round(repo, calls, turns, record):
     for turn, status in threads[conversation]["turns"].items():
         if status == "inProgress":
             threads[conversation]["turns"][turn] = "interrupted"
-    store.write_text(json.dumps(threads), encoding="utf-8")
+    _save(store, threads)
 
     next_round = repo.forge("work", "BOARD/PAGE")
     assert next_round.returncode == 0, next_round.stdout + next_round.stderr
