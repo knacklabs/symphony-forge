@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner asked for this on 2026-10-02 (one explicit workers setting with three values, visible routing); six code files plus the tests and docs the contract change touches",
   "amendments": [
     {
       "at": "2026-10-02T06:46:19+00:00",
