@@ -12,29 +12,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "03bba9f0138329508fc7c5de7ef220bb29856a22d12b1c507615ced5674c6c25",
-    "commit": "f7e162ace9f0e37b55bb31109230ab434c836621",
+    "changed": "90f4883ec37a9801c8755c342a35ab305840ee926ff1a3a1650254a9f9ca777e",
+    "commit": "99dc95d365b0c733fc96fd67d6ec2b8ec8136d76",
     "dismissals": [],
     "findings": [
       {
-        "body": "This test never changes forge.toml's version. The shared fixture pins the installed version on main (tests/test_close.py:228\u2013235), and env.start_fix() inherits it. Consequently, close's upgrade validation returns immediately at src/forge/close.py:223\u2013224. The existing version-changing tests still supply allow_large (tests/test_upgrade_synced.py:30 and tests/test_upgrade_check.py:181), bypassing the changed limit. Add the required command-level scenario that changes the pin, commits sync's output, and successfully closes and passes the real PR check without an allowance.",
-        "file": "tests/test_fix_sync_output_skips_fix_limit.py",
-        "line": 79,
-        "priority": "P1",
-        "title": "Not done: An upgrade fix closes without an allowance"
-      },
-      {
-        "body": "The four-source/three-test scenario only exercises the commit hook. Neither the new close/PR-check test nor existing tests/test_prcheck.py scenarios include changed test files. Removing the independent exclusion at src/forge/prcheck.py:212\u2013213 would therefore leave this coverage passing while close's required check rejects the same seven-file fix. Extend command-level coverage to close this fix and run the real PR-check command without an allowance, proving the test-file exemption at that enforcement boundary.",
-        "file": "tests/test_fix_sync_output_skips_fix_limit.py",
-        "line": 108,
-        "priority": "P1",
-        "title": "Not done: Close's PR check excludes recognised test files from the fix-size limit"
+        "body": "The sync comparison receives the current checkout's forge.toml, although it examines the pushed SHA. A fix that changes models.build.effort and runs forge sync changes five Codex build-role files (src/forge/roles.py:32\u201343, 83\u201391). Committing inside that fix succeeds, but pushing it from the main checkout with `git push origin fix/<name>` compares those files against main's old settings and incorrectly counts all five plus forge.toml, refusing the push without an allowance. Uncommitted configuration edits can cause the same mismatch. Read the pushed commit's configuration for the sync comparison while retaining the existing interface-rule configuration.",
+        "file": "src/forge/githooks.py",
+        "line": 117,
+        "priority": "P2",
+        "title": "Use the pushed commit's config to recognise sync output"
       }
     ],
-    "status": "blocked",
-    "tree": "65d6164765e31763144da6194ffd7f021e619aee99f0f79baecca0f55721332d"
+    "status": "clean",
+    "tree": "9cdb32c4d04850b9ffed1d80b74db719e0c8c6735c2ebc7d70fa9aa4d734dd51"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T15:37:52+00:00",
@@ -46,6 +39,10 @@
     },
     {
       "at": "2026-10-02T02:36:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T05:26:05+00:00",
       "step": "review"
     }
   ],
