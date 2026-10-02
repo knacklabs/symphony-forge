@@ -57,13 +57,13 @@ def test_1_close_skips_a_test_command_that_passed_on_the_same_committed_tree(env
 
 
 def test_2_close_reruns_a_test_command_that_failed_on_the_same_committed_tree(env):
+    # A failing test command stops close before the review, so each close here stops on it.
     log = _with_test_command(env)
     (env.tmp / "exit").write_text("1", "utf-8")
     item, _ = env.start_fix()
-    env.reviews(FAILED, FAILED, CLEAN)
     assert env.close(item).returncode != 0
     closed = env.close(item)
-    assert closed.returncode == 0, closed.stderr
+    assert closed.returncode != 0
     assert _runs(log) == ["start fix-tidy-readme", "end"] * 2
     assert "already passed" not in closed.stdout
 
