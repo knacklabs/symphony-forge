@@ -503,6 +503,14 @@ def _uncommitted_changes_are_held_back(repo, gh, tmp_path, monkeypatch, _):
     done = repo.forge("doctor", "--fix", cwd=folder)
     assert row in done.stdout and "- Fixed:" not in done.stdout, done.stdout
     assert (folder / SKILL).read_text(encoding="utf-8") == "Our skill\n"
+    # On the fix branch: staged by hand, then the working copy put back to sync's text.
+    repo.git("add", SKILL, cwd=folder)
+    (folder / SKILL).write_text(wanted[SKILL], encoding="utf-8")
+    staged = repo.git("diff", "--cached", cwd=folder)
+    done = repo.forge("doctor", "--fix", cwd=folder)
+    assert row in done.stdout and "- Fixed:" not in done.stdout, done.stdout
+    assert repo.git("diff", "--cached", cwd=folder) == staged
+    repo.git("reset", "-q", "--", SKILL, cwd=folder)
 
     # Staged by hand, with the working copy back to sync's: still held, and the index kept.
     _old_hosts(repo, client)  # so the fix has something else to hold

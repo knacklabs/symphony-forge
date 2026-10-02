@@ -293,7 +293,12 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
         failed = [(f"doctor couldn't fetch {default} from origin, so it started no fix for "
                    f"Forge's files: {_last(fetched)}",
                    f"check your network and GitHub access, then {REPAIR}")]
-    free, rows = _drift(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD")
+    # A staged or unstaged change counts even when the working copy matches sync.
+    changed = frozenset(entry[3:] for entry in repo.git(
+        "status", "--porcelain", "-z", "--untracked-files=no", "--", *wanted, cwd=top).split("\0")
+        if entry)
+    free, rows = _drift(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD",
+                        changed)
     drift = _rows(free)
     if not fix or not free or failed:
         return failed + drift + rows
