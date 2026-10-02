@@ -155,7 +155,7 @@ def _held(top: Path, cfg: dict[str, Any], rel: str, ref: str) -> str:
     """Why doctor won't overwrite a file, or "": changes not committed yet in the checkout doctor
     runs in, or a last commit on ref that isn't Forge's. Forge's is on the default branch and
     changes the pin or is doctor's own fix; neither can carry a hand edit to these files."""
-    if repo.git("status", "--porcelain", "--untracked-files=all", "--", rel, cwd=top):
+    if repo.git("status", "--porcelain", "--untracked-files=all", "--ignored", "--", rel, cwd=top):
         return "has changes not committed yet, so doctor won't overwrite it"
     last = repo.git("log", "-1", "--format=%H %s", ref, "--", rel, cwd=top)
     if not last or cfg["repo"] == "forge-source":  # Forge's own repo keeps its templates here
@@ -179,7 +179,11 @@ def _split(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
     differing = set(sync.differing(folder, wanted))
     free, rows, keep = [], [], set()
     for rel in (rel for rel in wanted if rel in differing or rel in staged):
-        if reason := _held(top, cfg, rel, ref):
+        if (folder / rel).is_symlink():  # a write would change whatever it leads to
+            rows.append((f"{rel} is a link, so doctor won't write through it.",
+                         f"replace the link with a regular file, then {REPAIR}"))
+            keep.add(rel)
+        elif reason := _held(top, cfg, rel, ref):
             rows.append((f"{rel} {reason}.", HAND))
             keep.add(rel)
         else:
