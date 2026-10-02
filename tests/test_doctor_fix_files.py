@@ -398,6 +398,33 @@ def _a_link_that_leads_outside_the_repo(repo, gh, tmp_path, monkeypatch, _):
     assert outside.read_text(encoding="utf-8") == "not the repo's\n"
 
 
+def _the_default_branch_cant_be_fetched(repo, gh, tmp_path, monkeypatch, _):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    _old_hosts(repo, client)
+    repo.git("remote", "set-url", "origin", str(tmp_path / "gone.git"), cwd=client)
+    version = "v" + _version(repo).removeprefix("v")
+    done = repo.forge("doctor", "--fix", cwd=client)
+    assert ("- doctor couldn't fetch main from origin, so it started no fix for Forge's files: "
+            in done.stdout), done.stdout
+    assert "  Fix: check your network and GitHub access, then forge doctor --fix\n" in done.stdout
+    assert _drift(SETTINGS, version) in done.stdout and _drift(HOOKS, version) in done.stdout
+    assert _fixes(repo, client) == []
+
+
+def _the_default_branch_moved_to_another_pin(repo, gh, tmp_path, monkeypatch, _):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    head = _old_hosts(repo, client)
+    _land(repo, client, "Upgrade Forge to v99.0.0", lambda folder: _set(
+        folder, "forge.toml", _pin((folder / "forge.toml").read_text(encoding="utf-8"), "v99.0.0")))
+    repo.git("reset", "-q", "--hard", head, cwd=client)  # this checkout still pins the installed one
+    version = "v" + _version(repo).removeprefix("v")
+    done = repo.forge("doctor", "--fix", cwd=client)
+    assert _row(f"main now pins Forge v99.0.0, not the installed {version}, so doctor started no "
+                "fix for Forge's files.", "git pull --ff-only, then forge doctor --fix") in done.stdout, (
+        done.stdout)
+    assert _drift(SETTINGS, version) in done.stdout and _fixes(repo, client) == []
+
+
 def _a_detached_head_changes_nothing(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
@@ -489,6 +516,10 @@ def _uncommitted_changes_are_held_back(repo, gh, tmp_path, monkeypatch, _):
     assert row in done.stdout, done.stdout
     assert repo.git("diff", "--cached", cwd=client) == index
     assert SKILL not in _in(repo, client, "fix/forge-files")
+    # A second run finds the fix current, and the staged edit still keeps its row.
+    again = repo.forge("doctor", "--fix", cwd=client)
+    assert "Doctor's fix forge-files holds Forge's files" in again.stdout, again.stdout
+    assert row in again.stdout and repo.git("diff", "--cached", cwd=client) == index
 
 
 def _in_forges_own_repo_history_holds_nothing_back(repo, gh, tmp_path, monkeypatch, _):
@@ -585,6 +616,8 @@ def _cases(*cases) -> list:
     (_a_commit_a_git_hook_refuses_leaves_no_fix, [False, True], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),
     (_a_link_that_leads_outside_the_repo, [None], SHELL),
+    (_the_default_branch_cant_be_fetched, [None], ()),
+    (_the_default_branch_moved_to_another_pin, [None], ()),
     (_a_detached_head_changes_nothing, [None], ())))
 def test_4_doctor_brings_forges_files_up_to_date_through_a_fix(repo, gh, tmp_path, monkeypatch,
                                                               case, value):

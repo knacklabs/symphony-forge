@@ -169,12 +169,12 @@ def _held(top: Path, cfg: dict[str, Any], rel: str, ref: str) -> str:
     return f"was changed by hand ({subject}), so doctor won't overwrite it"
 
 
-def _drift(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
-           ref: str) -> tuple[list[str], list[tuple[str, str]]]:
-    """The files in folder that differ from what sync writes and doctor may write, and a row for
-    each one it holds back."""
+def _drift(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str], ref: str,
+           also: frozenset[str] = frozenset()) -> tuple[list[str], list[tuple[str, str]]]:
+    """The files in folder, or named in also, that differ from what sync writes and doctor may
+    write, and a row for each one it holds back."""
     free, rows = [], []
-    for rel in (rel for rel, text in wanted.items() if sync.read(folder / rel) != text):
+    for rel in (rel for rel, text in wanted.items() if rel in also or sync.read(folder / rel) != text):
         if reason := _held(top, cfg, rel, ref):
             rows.append((f"{rel} {reason}.", HAND))
         else:
@@ -197,8 +197,8 @@ def _drop(top: Path, path: Path, branch: str) -> bool:
 
 
 def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tuple[str, str]]:
-    """On the default branch: Forge's files go into doctor's own fix, never onto the branch."""
-    repo.run("git", "fetch", "-q", "origin", cwd=top)  # the default branch's latest commit
+    """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
+    the branch."""
     ref, default = story.landed_ref(top), repo.default_branch(top)
     rows = []
     for branch, path in story.worktrees(top).items():
@@ -216,9 +216,11 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
                 and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
                 and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
                 and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
-            # Files held back here keep their rows; the rest are in the fix.
+            # Files held back keep their rows, judged as the fix was: against the default branch.
+            committed = frozenset(rel for rel, text in wanted.items()
+                                  if (story.show(top, ref, rel) or "") != text)
             return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
-                     f"forge close {name}"), *_drift(top, top, cfg, wanted, ref)[1]]
+                     f"forge close {name}"), *_drift(top, top, cfg, wanted, ref, committed)[1]]
         # Its forge.toml, and so sync's files, may be out of date, or it lacks its files commit.
         rows.append((f"Doctor's fix {name} is behind {default}, so doctor started a new one.",
                      f"close its pull request if it has one, then git worktree remove --force "
@@ -229,6 +231,12 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     if (len(set(heads)) == 1 and not free
             and not repo.git("status", "--porcelain", "--untracked-files=all", "--", *wanted, cwd=top)):
         return [*rows, *held]
+    # The fix inherits the default branch's pin; only that Forge may write its files.
+    newer = repo._pin(story.show(top, ref, "forge.toml") or "")  # pyright: ignore[reportPrivateUsage]
+    if newer != __version__:
+        return [*rows, (f"{default} now pins Forge v{newer}, not the installed v{__version__}, so "
+                        "doctor started no fix for Forge's files.",
+                        f"git pull --ff-only, then {REPAIR}"), *_rows(free), *held]
     # forge fix start's naming rule, with doctor's slug.
     taken = {ref_name.split("/fix/", 1)[1] for ref_name in repo.git(
         "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
@@ -266,18 +274,29 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
                     f"forge close {name}"), *held]
 
 
+def _rows(free: list[str]) -> list[tuple[str, str]]:
+    return [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
+             REPAIR) for rel in free]
+
+
 def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
            fix: bool) -> list[tuple[str, str]]:
     """A row per file that differs from what sync writes. With fix, they are written in doctor's
     own fix on the default branch, or in place, not committed, as forge sync does, elsewhere."""
-    on_default = repo.current_branch(top) == repo.default_branch(top)
+    default = repo.default_branch(top)
+    on_default, failed = repo.current_branch(top) == default, []
     if fix and on_default:
-        return _in_fix(top, cfg, wanted)
+        # The fix starts from the default branch's latest commit, so doctor needs it first.
+        fetched = repo.run("git", "fetch", "-q", "origin", cwd=top)
+        if not fetched.returncode:
+            return _in_fix(top, cfg, wanted)
+        failed = [(f"doctor couldn't fetch {default} from origin, so it started no fix for "
+                   f"Forge's files: {_last(fetched)}",
+                   f"check your network and GitHub access, then {REPAIR}")]
     free, rows = _drift(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD")
-    drift = [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
-              REPAIR) for rel in free]
-    if not fix or not free:
-        return drift + rows
+    drift = _rows(free)
+    if not fix or not free or failed:
+        return failed + drift + rows
     try:  # before anything is written: a detached HEAD, or a role file Forge didn't write
         repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
         roles.refuse_foreign(top, free)
