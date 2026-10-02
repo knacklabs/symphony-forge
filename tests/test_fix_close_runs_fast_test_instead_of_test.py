@@ -22,9 +22,10 @@ print("1 passed")
 def _settings(env, fast: bool) -> Path:
     script = env.tmp / "logger.py"
     script.write_text(LOGGER.format(tmp=str(env.tmp)), "utf-8")
-    lines = f'test = "{sys.executable} {script} full"\n'
+    # TOML literal strings, so a Windows path's backslashes stay as they are.
+    lines = f"test = '{sys.executable} {script} full'\n"
     if fast:
-        lines += f'fast_test = "{sys.executable} {script} fast {{base}}"\n'
+        lines += f"fast_test = '{sys.executable} {script} fast {{base}}'\n"
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + lines)
     env.repo.git("push", "-q", "origin", "main")
