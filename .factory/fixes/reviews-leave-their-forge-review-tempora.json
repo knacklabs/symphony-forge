@@ -12,36 +12,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "cc4fc506af2f7a96e1f42483a82e68ef93b402959fbb5cc296b11ed218821036",
-    "commit": "fbe8517f27b783faa1d416500edff2d88747e338",
+    "changed": "4484d7d980d3ae53e4e319f3bc9ad3f35724a19225dfbe50dbf472d33344cc01",
+    "commit": "ed4c04ef4e43d63e545f9b5f185c1fad780e4d7d",
     "dismissals": [],
     "findings": [
       {
-        "body": "After a review is killed, rerunning the command leaves its fresh temporary checkout behind because this condition excludes every folder less than a day old. The new command-level test demonstrates this at tests/test_reviews_remove_their_temp_folders.py:87\u201394, explicitly asserting that the orphan survives the next review. This does not meet the requirement to clean up when the process is killed and run again. Detect abandoned ownership and remove the orphan on the next review without requiring it to age for a day.",
-        "file": "src/forge/review.py",
-        "line": 400,
-        "priority": "P1",
-        "title": "Not done: Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is"
-      },
-      {
-        "body": "The sweep deletes old folders without checking ownership. A review left running or suspended overnight can therefore have its checkout deleted by another review. The claim that reviews never run that long is not enforced: src/forge/review.py:541\u2013552 streams output and waits for the helper without a timeout, and directory mtime does not track process activity. This is new evidence beyond the earlier startup-lock race: the current implementation has no ownership protection at all. Check that no running review owns the folder before deleting it, and prove that protection through the command entry point.",
+        "body": "A stale leftover containing the non-writable `locked/inner` directories modeled in tests/test_reviews_remove_their_temp_folders.py:28\u201331 survives this sweep indefinitely. Plain `shutil.rmtree(..., ignore_errors=True)` suppresses deletion failures without repairing permissions; removing files inside a mode-0500 directory fails for an ordinary user. The existing cleanup at src/forge/review.py:418 handles this case through TemporaryDirectory, but the new sweep does not. The permission test exercises only cleanup of the current review, so it misses recovery of an aged leftover with those same permissions. Retry recoverable permission failures when sweeping stale folders. See the [Python rmtree contract](https://docs.python.org/3.11/library/shutil.html#shutil.rmtree).",
         "file": "src/forge/review.py",
         "line": 401,
-        "priority": "P1",
-        "title": "Not done: Each review deletes only old forge-review-* folders that no running review owns"
-      },
-      {
-        "body": "This assertion requires the killed review's folder to remain after the next successful review. It therefore passes with the acceptance-criterion defect and would fail if immediate recovery were implemented. Aging the orphan artificially later in the test only proves the separate stale-folder sweep. Change this command-level test to require the killed review's fresh folder to disappear on rerun while a concurrently running review's folder remains protected.",
-        "file": "tests/test_reviews_remove_their_temp_folders.py",
-        "line": 94,
-        "priority": "P1",
-        "title": "Not done: A command-level test proves cleanup after a review is killed and run again"
+        "priority": "P2",
+        "title": "Retry recoverable permission errors when sweeping stale folders"
       }
     ],
-    "status": "blocked",
-    "tree": "cb2d40d81628c9dc834eae96bbb1257de2a5a005e8f29a55c667dd6eddce916b"
+    "status": "clean",
+    "tree": "7a0207e6b5f932f3f9ba0bc4fdf53e24b86f8ac76e93689fe78fcd3b218e9193"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-02T02:36:51+00:00",
@@ -53,6 +39,10 @@
     },
     {
       "at": "2026-10-02T08:53:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T12:14:09+00:00",
       "step": "review"
     }
   ],
