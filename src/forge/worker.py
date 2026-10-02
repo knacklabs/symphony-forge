@@ -101,7 +101,7 @@ def work(args: argparse.Namespace) -> None:
                 refuse(REFUSALS["question"], item=item, question=question)
         else:
             question = None
-        if last != family:  # so a start that fails leaves nothing of the other worker to resume
+        if previous and last != family:  # a failed start leaves nothing of the other to resume
             _forget(top, item)
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later
                          and last == family else (None, "first turn"))
@@ -165,7 +165,7 @@ def work(args: argparse.Namespace) -> None:
                     question = codex.record(top, item).get("question")
                     if question and note is None:
                         refuse(REFUSALS["question"], item=item, question=question)
-                    if last != "codex":
+                    if previous and last != "codex":
                         _forget(top, item)
                     thread, fresh = (codex.conversation(top, item, approval)
                                      if later and last == "codex" else

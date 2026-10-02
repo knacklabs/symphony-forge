@@ -96,7 +96,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert len(_sent(codex_log, "turn/start")) == 3
 
 
-def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, monkeypatch,
+def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
                                                                             sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
@@ -135,7 +135,11 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
         "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
     assert len(calls(claude_log)) == 1
-    assert len(_sent(codex_log, "thread/resume")) == 1
+    # The round started on Claude after a round that ended on Codex, so its fallback starts a new
+    # conversation with the whole brief (it used to resume the first fallback's).
+    assert _sent(codex_log, "thread/resume") == []
+    assert len(_sent(codex_log, "thread/start")) == 2
+    assert "## Tests first" in _sent(codex_log, "turn/start")[-1]["input"][0]["text"]
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # If Claude leaves a file behind, the same failure must stay with Claude.
