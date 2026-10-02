@@ -63,6 +63,8 @@ def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
     config = folder / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
                       encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Use split workers", cwd=folder)
     log = install_claude(repo)
 
     first = repo.forge("work", "BOARD/PAGE")

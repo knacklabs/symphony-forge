@@ -12,7 +12,7 @@ STORY = "FIX-WORKERS-SETTING"
 CLAUDE_BUILD = {"build": {"model": "claude-sonnet-5", "effort": "medium"}}
 
 
-def _workers(folder, workers: str, models: dict | None = None) -> None:
+def _workers(repo, folder, workers: str, models: dict | None = None) -> None:
     """Set the checkout's forge.toml to these workers, keeping the rest unless models are given."""
     config = folder / "forge.toml"
     text = config.read_text("utf-8")
@@ -21,13 +21,15 @@ def _workers(folder, workers: str, models: dict | None = None) -> None:
         text = _toml(version, workers, models, "client")
     config.write_text(text.replace('workers = "codex"', f'workers = "{workers}"'),
                       encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", f"Use {workers} workers", "--allow-empty", cwd=folder)
 
 
 def _help(repo, workers: str, models: dict | None = None):
     started = repo.forge("task", "start", "BOARD/HELP")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = repo.path.parent / "repo-BOARD-HELP"
-    _workers(folder, workers, models)
+    _workers(repo, folder, workers, models)
     return folder
 
 
@@ -56,7 +58,7 @@ def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo
                                                                           sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
-    _workers(folder, "split")
+    _workers(repo, folder, "split")
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
@@ -77,7 +79,7 @@ def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo
 def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
-    _workers(folder, "claude", CLAUDE_BUILD)
+    _workers(repo, folder, "claude", CLAUDE_BUILD)
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
@@ -121,7 +123,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
         repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
-    _workers(folder, "split")
+    _workers(repo, folder, "split")
     first = repo.forge("work", "BOARD/PAGE")
     assert first.returncode == 0, first.stdout + first.stderr
     assert len(calls(claude_log)) == 1
@@ -136,6 +138,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     # Claude to Codex: a new Codex conversation with the whole brief and the finding.
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "split"', 'workers = "codex"'), encoding="utf-8")
+    repo.git("commit", "-qam", "Switch workers", cwd=folder)
     to_codex = repo.forge("work", "BOARD/PAGE")
     assert to_codex.returncode == 0, to_codex.stdout + to_codex.stderr
     assert ("Starting a new Codex conversation, because its last round ran on Claude"
@@ -148,6 +151,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     # Codex back to Claude: Claude's earlier session is not resumed; a new one gets it all.
     (folder / "forge.toml").write_text((folder / "forge.toml").read_text("utf-8").replace(
         'workers = "codex"', 'workers = "split"'), encoding="utf-8")
+    repo.git("commit", "-qam", "Switch workers", cwd=folder)
     to_claude = repo.forge("work", "BOARD/PAGE")
     assert to_claude.returncode == 0, to_claude.stdout + to_claude.stderr
     assert ("Starting a new Claude session with the whole brief, because its last round ran on "

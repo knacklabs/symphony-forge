@@ -18,6 +18,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     config = folder / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
                       encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Use split workers", cwd=folder)
     # A client repo counts as live unless forge.toml says prototype.
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace(
         'repo = "client"', 'repo = "client"\nstage = "prototype"').replace(
