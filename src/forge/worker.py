@@ -26,6 +26,12 @@ TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
 SERIOUS = ("P0", "P1")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
+NUDGING = "The worker left changes uncommitted, so Forge asks it once to test and commit them."
+# Sent once, in the same conversation, when a round ends with changes left uncommitted.
+COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. Run "
+                "the repo's test command{test} in the foreground and wait for it to finish; never "
+                "leave it running in the background. Then commit your work on this branch, and end "
+                "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
@@ -116,6 +122,7 @@ def work(args: argparse.Namespace) -> None:
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         start, clock = repo.now(), time.monotonic()
+        nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
         outcome = "failed"
         try:
             if design:
@@ -152,11 +159,14 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
+                    _nudge_claude(item, top, ["--model", claude_model["model"],
+                                              "--effort", claude_model["effort"]], nudge)
                     outcome = "completed"
                     return
             if not on_codex:
                 _claude(item, top, brief, fresh_brief, claude, session, thread,
                         None if fresh == "first turn" else fresh)
+                _nudge_claude(item, top, claude, nudge)
                 outcome = "completed"
                 return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -168,12 +178,18 @@ def work(args: argparse.Namespace) -> None:
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
+            if outcome == "completed" and _uncommitted(top):
+                print(NUDGING, flush=True)
+                again = codex.run(top, item, kind, name, nudge, "full-access",
+                                  result["conversation"], "", approval, design=design)
+                if again["status"] != "completed":
+                    result, outcome = again, "failed"
         finally:
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
                                if design else repo.models(config, kind.lower(),
                                                           "codex" if on_codex else "claude"))
-            if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
+            if left := _uncommitted(top):
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
         if result["status"] != "completed":
@@ -413,6 +429,25 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
+
+
+def _uncommitted(top: Path) -> list[str]:
+    return git("status", "--porcelain", "-uall", cwd=top).splitlines()
+
+
+def _nudge_claude(item: str, top: Path, models: list[str], nudge: str) -> None:
+    """When the round left changes uncommitted, continue its Claude session once with the nudge.
+    The round count stays: this finishes the round rather than starting one."""
+    if not _uncommitted(top):
+        return
+    print(NUDGING, flush=True)
+    path = codex._item_file(top, item, ".json", "Fix")
+    session = codex.record(top, item)["claude"]
+    try:
+        _run(item, top, nudge, models, ["--resume", session["id"]])
+    finally:
+        codex._record(path, claude={**session, "head": git("rev-parse", "HEAD", cwd=top)})
+
 
 def _run(item: str, top: Path, brief: str, models: list[str],
          session: list[str] | None = None) -> None:
