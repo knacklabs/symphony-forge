@@ -11,11 +11,17 @@ from test_worker import calls, install_claude
 STORY = "FORGE-DESIGN-1"
 
 
-def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, monkeypatch, sdk_data):
+def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypatch, sdk_data):
+    # Was "even with codex workers"; workers = codex now builds everything on Codex, and split
+    # keeps this route.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
+                      encoding="utf-8")
     # A client repo counts as live unless forge.toml says prototype.
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace(
-        'repo = "client"', 'repo = "client"\nstage = "prototype"'))
+        'repo = "client"', 'repo = "client"\nstage = "prototype"').replace(
+        'workers = "codex"', 'workers = "split"'))
     repo.git("commit", "-q", "-am", "Prototype stage")
     repo.git("push", "-q", "origin", "main")
     claude_log = install_claude(repo)
@@ -45,7 +51,6 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     assert len(calls(claude_log)) == 2
 
     # Forge's own repository keeps its configured worker even for a user-facing row.
-    config = folder / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
                                                      'repo = "forge-source"'), encoding="utf-8")
     source = repo.forge("work", "BOARD/PAGE")
@@ -60,9 +65,11 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
-    # The design round continues the session its first round started, so it gets the short prompt.
-    assert "The earlier brief in this conversation still applies." in calls(claude_log)[-1]["brief"]
-    assert "--resume" in calls(claude_log)[-1]["args"]
+    # The round before ran on Codex, so this one starts a fresh Claude session with the whole
+    # brief (it used to continue the first round's session).
+    assert "because its last round ran on Codex" in custom.stdout
+    assert "## Tests first" in calls(claude_log)[-1]["brief"]
+    assert "--resume" not in calls(claude_log)[-1]["args"]
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # A client story row without User-facing uses the configured Codex worker.
@@ -74,7 +81,7 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     assert len(calls(claude_log)) == 3
 
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
-    config.write_text(config.read_text("utf-8").replace('workers = "codex"',
+    config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                      'workers = "claude"'), encoding="utf-8")
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
@@ -87,7 +94,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     config = folder / "forge.toml"
-    config.write_text(config.read_text("utf-8") +
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"') +
                       '\n[models.design.codex]\nmodel = "gpt-6-nova"\neffort = "xhigh"\n',
                       encoding="utf-8")
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
@@ -106,7 +113,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     # A later missing Claude command uses the design defaults without Build/Fix models.
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
-        f'version = "{version}"\nrepo = "client"\nworkers = "codex"\n', encoding="utf-8")
+        f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
     os.unlink(repo.bin / "claude")
     if os.name == "nt":
         os.unlink(repo.bin / "claude.cmd")

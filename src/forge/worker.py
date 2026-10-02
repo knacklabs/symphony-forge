@@ -63,7 +63,11 @@ def work(args: argparse.Namespace) -> None:
         design = config["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
     else:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
-    on_codex = config["workers"] == "codex" and not design
+    family = repo.worker_family(config, design)
+    on_codex = family == "codex"
+    # A round on the other tool than the item's last one starts a fresh session there.
+    last = codex.record(top, item).get("worker")
+    switched = bool(last) and last != family
     if on_codex and note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
@@ -73,7 +77,16 @@ def work(args: argparse.Namespace) -> None:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     # Every check refuses before the status commit, so a refused call changes nothing.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = [] if design else ready(top, config, kind, on_codex)
+    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design)
+    chosen = (repo.design_models(config, family) if design else
+              repo.models(config, kind.lower(), family))
+    why = ("it is user-facing (workers = split)" if config["workers"] == "split" and design else
+           "it isn't user-facing (workers = split)" if config["workers"] == "split" else
+           f"workers = {family}" + (", with the design model as it is user-facing" if design
+                                    else ""))
+    using = ", ".join(chosen[key] for key in ("model", "effort") if key in chosen)
+    print(f"Building {item} with {family.title()} ({using or 'its own settings'}) because {why}",
+          flush=True)
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
@@ -85,12 +98,14 @@ def work(args: argparse.Namespace) -> None:
                 refuse(REFUSALS["question"], item=item, question=question)
         else:
             question = None
-        thread, fresh = (codex.conversation(top, item, approval) if on_codex and later else
-                         (None, "first turn"))
+        thread, fresh = (codex.conversation(top, item, approval) if on_codex and later
+                         and not switched else (None, "first turn"))
         # A Claude worker, design ones too, continues the session its item's last round ran in, in
         # this checkout. Without one, a round after the first starts fresh and says why.
         session = None if on_codex else codex.record(top, item).get("claude")
-        if session and session["checkout"] != str(top):
+        if switched:
+            fresh = f"its last round ran on {last.title()}"
+        elif session and session["checkout"] != str(top):
             fresh = f"its session was started in another checkout, {session['checkout']}"
         elif session:
             thread = session["id"]
@@ -118,7 +133,7 @@ def work(args: argparse.Namespace) -> None:
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         try:
-            if design:
+            if design and not on_codex:
                 before = story._snapshot(top)  # pyright: ignore[reportPrivateUsage]
                 claude_model = repo.design_models(config, "claude")
                 try:
@@ -169,6 +184,8 @@ def work(args: argparse.Namespace) -> None:
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
         finally:
+            codex._record(codex._item_file(top, item, ".json", "Fix"),
+                          worker="codex" if on_codex else "claude")
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
                                if design else repo.models(config, kind.lower(),

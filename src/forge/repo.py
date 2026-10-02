@@ -136,7 +136,7 @@ KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, 
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "signoff": "",
             "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
-           "workers": ("claude", "codex"), "merge": ("agent", "human")}
+           "workers": ("claude", "codex", "split"), "merge": ("agent", "human")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -236,6 +236,12 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
     # when another Codex model family arrives.
     return chosen if chosen["model"].startswith("gpt") == (family == "codex") else {}
+
+
+def worker_family(cfg: dict[str, Any], design: bool) -> str:
+    """The tool that builds an item: workers = codex or claude puts everything on that tool, and
+    split puts user-facing (design) work on Claude and the rest on Codex."""
+    return cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex"
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
