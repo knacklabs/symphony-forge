@@ -27,8 +27,6 @@ REFUSALS = {
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
-    "old_model": ("forge.toml's model setting is now the [models] table.",
-                  "ask your agent to move it into forge.toml's [models] table"),
     "pin": (
         "Forge {installed} is installed, but this repo pins {pinned}.",
         "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}",
@@ -213,8 +211,6 @@ def _config_text(text: str) -> dict[str, Any]:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
-    if "model" in data:
-        refuse(REFUSALS["old_model"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
