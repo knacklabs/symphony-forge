@@ -2,7 +2,6 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: coder
 description: "Builds server-side APIs, data and business logic for a bounded task."
-model: "claude-opus-5-5"
 effort: "medium"
 ---
 

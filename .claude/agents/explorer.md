@@ -2,7 +2,6 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: explorer
 description: "Explores the codebase and traces dependencies without changing files."
-model: "claude-opus-5-5"
 effort: "medium"
 ---
 

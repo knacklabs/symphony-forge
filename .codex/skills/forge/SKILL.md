@@ -383,6 +383,8 @@ For a side job inside your own session, hand it to one of Forge's subagent roles
 `performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
 The diagnosing and planning roles change no files. Building an item still goes through
 `forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
+Roles currently read single entries for build, lite and review; only design reads per-tool
+entries. A model from the other tool is omitted so the role uses the session's model.
 
 ## Build simple
 
@@ -404,6 +406,8 @@ Mark generated files such as migration snapshots `linguist-generated` in `.gitat
 reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
+When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
+close skips forge.toml's test command and says so; the review and every named check still run.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
