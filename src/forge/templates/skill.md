@@ -378,6 +378,11 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+When a round ends with changes left uncommitted, `forge work` continues the same conversation
+once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
+what is committed, so look at them before closing.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
