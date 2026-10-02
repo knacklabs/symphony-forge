@@ -101,6 +101,8 @@ def work(args: argparse.Namespace) -> None:
                 refuse(REFUSALS["question"], item=item, question=question)
         else:
             question = None
+        if last != family:  # so a start that fails leaves nothing of the other worker to resume
+            _forget(top, item)
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later
                          and last == family else (None, "first turn"))
         # A Claude worker, design ones too, continues the session its item's last round ran in, in
@@ -163,6 +165,8 @@ def work(args: argparse.Namespace) -> None:
                     question = codex.record(top, item).get("question")
                     if question and note is None:
                         refuse(REFUSALS["question"], item=item, question=question)
+                    if last != "codex":
+                        _forget(top, item)
                     thread, fresh = (codex.conversation(top, item, approval)
                                      if later and last == "codex" else
                                      (None, moved if previous else "first turn"))
@@ -450,6 +454,13 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
+
+
+def _forget(top: Path, item: str) -> None:
+    """Clear every conversation recorded for the item, Codex's and Claude's, so the next turn on
+    either starts fresh with the whole brief."""
+    codex._record(codex._item_file(top, item, ".json", "Fix"), conversation=None, start=None,
+                  head=None, claude=None)
 
 
 def _uncommitted(top: Path) -> list[str]:
