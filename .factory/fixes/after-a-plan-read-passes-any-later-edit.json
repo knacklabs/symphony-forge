@@ -5,12 +5,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "47a2976fd124d3be2b86238e29636647366dcf074688ec52cf367cad28530bc1",
-    "commit": "b582bb0557e0c9877efff7c9a26e1bd8e92b0974",
+    "changed": "c8d407fa0ae2faf151dbb93bdd8f670e9937e9ca29e031c2f4f01e393b4a8d85",
+    "commit": "8020fc975bdcc3e02ccfe9d1386715f7bec64faf",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "a366603f1385f6da581265f684b254c882d15e6c8fdcd93205a95022c2657f7f"
+    "tree": "560c9cee18ae11d0c2abf5a435a30cfaff2e68dfd1f8f55543074ef7b95875b8"
   },
   "status": "waiting for checks",
   "steps": [
@@ -20,6 +20,10 @@
     },
     {
       "at": "2026-10-02T10:27:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T13:43:02+00:00",
       "step": "review"
     }
   ],
