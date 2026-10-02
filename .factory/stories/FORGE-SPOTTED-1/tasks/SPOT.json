@@ -2,20 +2,27 @@
   "branch": "task/FORGE-SPOTTED-1-SPOT",
   "review": {
     "blocking_level": "P1",
-    "changed": "53df1d2dc9deb661124550aaf24a70f86acfc6b73cb38d6dcf5de488f451c43d",
-    "commit": "ffee0416ac72a45c9492441ce34fe71dd63daac5",
+    "changed": "5ebf61c1923aa068eb65b0409e8421c69b8a5d24d04d0230d485d3ac188bcb5b",
+    "commit": "c92d23d9402349cb9479e7105fc0bfb8863fabd6",
     "dismissals": [],
     "findings": [
       {
-        "body": "New evidence beyond the previous path, whitespace and UTF-8 cases: an otherwise valid entry with `text: \"\"` and its matching key passes this check because whitespace normalization also produces `\"\"`. Close therefore reviews and preserves an entry with no problem text, although item 1 requires one sentence and refusal of invalid field values. Require nonempty normalized text and cover this case through `forge close`, asserting the bad refusal and no review call.",
+        "body": "A checkout can contain `plans/spotted.json` as a symlink to a readable external list, or a dangling symlink into an existing external directory. `read()` follows the former and treats the latter as an absent list (line 80), so close's check permits both. When an observation is recorded, this write follows the link and overwrites or creates a file outside the checkout; that change cannot be captured or reverted by close's commit. Refuse escaping paths before recording, as the existing `sync.write_file` guard does at src/forge/sync.py:125.",
         "file": "src/forge/spotted.py",
-        "line": 65,
+        "line": 87,
         "priority": "P1",
-        "title": "Not done: refuse every unreadable spotted list"
+        "title": "Reject symlinked list paths before writing"
+      },
+      {
+        "body": "The second merge does not test the opposite driver direction: the first merge advances `keeps` to a commit containing `closes`, making `closes-again` its ancestor. This merge therefore fast-forwards without invoking the driver. Moreover, the first merge leaves the open entry unchanged from the base, so it exercises unilateral-change selection rather than done-versus-open ranking (src/forge/sync.py:284). Incorrect ranking for `open` could pass this spotted-list test. Preserve independent branch tips and change the same entry on both sides, then perform genuine divergent merges in both directions, as item 1 explicitly requires.",
+        "file": "tests/test_spotted.py",
+        "line": 313,
+        "priority": "P1",
+        "title": "Not done: done wins whichever side Git calls ours"
       }
     ],
     "status": "blocked",
-    "tree": "62b536b0d8d75f0c759ce5f2139053fac4eb5fbe675ffd93109dae39fdacf57f"
+    "tree": "51f31fc1f40fdfcab923a3914def7ab74338f748806836064a771713d7205a28"
   },
   "status": "fixing",
   "steps": [
@@ -29,6 +36,10 @@
     },
     {
       "at": "2026-10-02T06:24:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T12:58:41+00:00",
       "step": "review"
     }
   ]
