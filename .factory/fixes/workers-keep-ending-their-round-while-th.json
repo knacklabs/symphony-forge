@@ -4,11 +4,32 @@
   "branch": "fix/workers-keep-ending-their-round-while-th",
   "done_when": "When a worker's round ends with uncommitted changes, forge work continues the same worker conversation once with a fixed message telling it to run the test command in the foreground, wait for it, and commit; only if changes are still uncommitted after that does it print today's warning. This works for Claude and Codex workers. Command-level tests with a stub worker that leaves changes uncommitted on its first turn (and commits on the second) show forge work ends with a commit, and one that never commits still gets the warning.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "eac11738fc0c41142f4c49f375563b8ac728328ca4923229ac850374d5b8faca",
+    "commit": "0fff5320b1d5f77031415a52b57ff71fda84ba45",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When the nudge completes successfully, `result` still contains the first turn's response. The question handling at worker.py:199\u2013202 therefore discards any `Question:` raised during the nudge, or preserves an earlier question the nudge resolved. This affects subsequent work and close: src/forge/close.py:57\u201359 uses the recorded question to decide whether closing is blocked. Assign `result = again` after a successful nudge too, so the latest response determines the pending question.",
+        "file": "src/forge/worker.py",
+        "line": 185,
+        "priority": "P2",
+        "title": "Use the nudge's response as the final Codex result"
+      }
+    ],
+    "status": "clean",
+    "tree": "275f917c4d5f07b94c5a503615c1de1cc746cd9c379b42bee0103d83d6332bfb"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T22:44:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T08:39:41+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers keep ending their round while the test suite still runs in the background, leaving their changes uncommitted, so close can't review them and the coordinator has to commit by hand (four times on 2026-10-01)"
