@@ -6,7 +6,6 @@ Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 from __future__ import annotations
 
 import json
-import shlex
 import subprocess
 
 import pytest
@@ -153,16 +152,15 @@ def _naming_the_list_in_done_when_never_makes_the_review_stale(env):
     assert len(env.review_calls()) == 1
 
 
-def _not_json(env):
-    _an_unreadable_list_is_refused_with_its_repair(env, "not json\n", "it isn't JSON")
-
-
-def _an_entry_without_its_item(env):
-    _an_unreadable_list_is_refused_with_its_repair(
-        env, json.dumps({"items": [{k: v for k, v in entry("bug", "app.py", 1, "x", "worker").items()
-                                    if k != "item"}]}),
-        "entry 1 doesn't have exactly the fields key, kind, path, line, text, from, item, status, "
-        "closed_by")
+def _a_review_citing_the_list_stays_current(env):
+    # A finding that cites the list must not make the review stale once close writes the list.
+    env.reviews(blocked(finding("P3", "The list repeats a path", file=LIST)))
+    item, where = env.start_fix()
+    note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
+    assert env.close(item).returncode == 0
+    assert listed(where) == [entry("improve", "app.py", 1, "The greeting is hard-coded.", "worker")]
+    assert env.close(item).returncode == 0
+    assert len(env.review_calls()) == 1
 
 
 def _refused(env, item, where) -> tuple[str, str]:
@@ -173,14 +171,37 @@ def _refused(env, item, where) -> tuple[str, str]:
     return problem, next_line.removesuffix(f", commit it, then forge close {item}")
 
 
-def _an_unreadable_list_is_refused_with_its_repair(env, text, problem):
+def _malformed(**fields) -> bytes:
+    """A list of one entry with these fields changed; its key matches them unless key is given."""
+    made = {**entry("bug", "app.py", 1, "Totals skip refunds.", "worker"), **fields}
+    if "key" not in fields:
+        made["key"] = "\t".join([made["kind"], made["path"], made["text"]])
+    return json.dumps({"items": [made]}).encode("utf-8")
+
+
+def _every_unreadable_list_is_refused(env):
     item, where = env.start_fix()
-    env.commit(where, LIST, text, "Edit the list by hand")
-    said, repair = _refused(env, item, where)
-    assert said == f"plans/spotted.json isn't a list Forge can read: {problem}."
-    # No readable copy was ever committed, so the repair removes the file.
-    assert repair == f"git -C {where} rm -q {LIST}"
-    subprocess.run(shlex.split(repair), check=True)
+    without_item = {k: v for k, v in entry("bug", "app.py", 1, "x", "worker").items() if k != "item"}
+    for raw, problem in (
+            (b"\xff\xfe{}", "it isn't UTF-8 JSON"),
+            (b"not json\n", "it isn't UTF-8 JSON"),
+            (json.dumps({"items": [without_item]}).encode("utf-8"),
+             "entry 1 doesn't have exactly the fields key, kind, path, line, text, from, item, "
+             "status, closed_by"),
+            (_malformed(path="lib\\cart.py"), "entry 1 has a wrong path"),
+            (_malformed(path="/etc/app.py"), "entry 1 has a wrong path"),
+            (_malformed(path="../app.py"), "entry 1 has a wrong path"),
+            (_malformed(text=" Totals  skip refunds."), "entry 1 has a wrong text"),
+            (_malformed(key="bug\tapp.py\tSomething else"), "entry 1 has a wrong key")):
+        (where / LIST).parent.mkdir(exist_ok=True)
+        (where / LIST).write_bytes(raw)
+        env.repo.git("add", LIST, cwd=where)
+        env.repo.git("commit", "-q", "-m", "Edit the list by hand", cwd=where)
+        said, repair = _refused(env, item, where)
+        assert said == f"plans/spotted.json isn't a list Forge can read: {problem}.", raw
+        # No readable copy was ever committed, so the repair removes the file.
+        assert repair == f"git -C {where} rm -q {LIST}"
+    subprocess.run(repair, shell=True, check=True)
     env.repo.git("commit", "-q", "-m", "Repair the list", cwd=where)
     assert env.close(item).returncode == 0 and len(env.review_calls()) == 1
 
@@ -200,9 +221,9 @@ def _the_repair_restores_the_last_readable_copy(env):
     refused = env.close(item)
     assert refused.returncode == 1 and len(env.review_calls()) == calls_before
     repair = f"git -C {where} checkout {readable} -- {LIST}"
-    assert refused.stderr == (f"plans/spotted.json isn't a list Forge can read: it isn't JSON.\n"
+    assert refused.stderr == (f"plans/spotted.json isn't a list Forge can read: it isn't UTF-8 JSON.\n"
                               f"Next: {repair}, commit it, then forge close {item}\n")
-    subprocess.run(shlex.split(repair), check=True)
+    subprocess.run(repair, shell=True, check=True)
     env.repo.git("commit", "-q", "-m", "Repair the list", cwd=where)
     assert env.close(item).returncode == 0
     assert listed(where) == kept
@@ -295,8 +316,9 @@ def _git_merges_the_list_by_forges_rule(env):
     _close_records_the_workers_spotted_lines, _close_records_the_reviews_findings_and_dismissals,
     _each_problem_is_kept_once, _a_serious_finding_counts_once_per_change,
     _a_reused_review_still_records_new_lines,
-    _naming_the_list_in_done_when_never_makes_the_review_stale, _not_json,
-    _an_entry_without_its_item, _the_repair_restores_the_last_readable_copy,
+    _naming_the_list_in_done_when_never_makes_the_review_stale,
+    _a_review_citing_the_list_stays_current, _every_unreadable_list_is_refused,
+    _the_repair_restores_the_last_readable_copy,
     _sync_adds_the_rule_once, _git_merges_the_list_by_forges_rule])
 def test_1_close_keeps_one_shared_spotted_list(env, case):
     case(env)

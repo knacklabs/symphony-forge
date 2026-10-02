@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -36,33 +37,47 @@ def key(kind: str, path: str, text: str, source: str, item: str) -> str:
     return "\t".join([kind, path, text] + ([item] if source == "blocking" else []))
 
 
-def _parse(text: str) -> list[dict[str, Any]]:
+def _path(path: str) -> bool:
+    """A repo-relative, forward-slash path that never needs quoting."""
+    return bool(SAFE.fullmatch(path)) and not path.startswith("/") and ".." not in path.split("/")
+
+
+def _parse(raw: bytes) -> list[dict[str, Any]]:
+    """The list's entries, when the file is exactly what Forge writes; anything else is Unreadable."""
     try:
-        data = json.loads(text)
-    except ValueError:
-        raise Unreadable("it isn't JSON") from None
+        data = json.loads(raw.decode("utf-8"))
+    except ValueError:  # UnicodeDecodeError included
+        raise Unreadable("it isn't UTF-8 JSON") from None
     items = data.get("items") if isinstance(data, dict) else None
     if not isinstance(items, list):
         raise Unreadable('it has no "items" list')
     for n, entry in enumerate(items, 1):
         if not isinstance(entry, dict) or sorted(entry) != sorted(FIELDS):
             raise Unreadable(f"entry {n} doesn't have exactly the fields {', '.join(FIELDS)}")
-        strings = all(isinstance(entry[name], str) for name in FIELDS if name not in ("line", "closed_by"))
-        line, closed = entry["line"], entry["closed_by"]
-        if not (strings and isinstance(line, int) and not isinstance(line, bool)
-                and entry["kind"] in KINDS and entry["from"] in SOURCES
-                and entry["status"] in STATUSES
-                and (closed is None or (isinstance(closed, str) and bool(FIX.fullmatch(closed))))
-                and entry["key"] == key(entry["kind"], entry["path"], entry["text"],
-                                        entry["from"], entry["item"])):
-            raise Unreadable(f"entry {n} has a field of the wrong type or value")
+        if not (all(isinstance(entry[name], str) for name in FIELDS if name not in ("line", "closed_by"))
+                and type(entry["line"]) is int
+                and (entry["closed_by"] is None or isinstance(entry["closed_by"], str))):
+            raise Unreadable(f"entry {n} has a field of the wrong type")
+        item = repo.ITEM.fullmatch(entry["item"])
+        wrong = [name for name, right in (
+            ("kind", entry["kind"] in KINDS),
+            ("path", _path(entry["path"])),
+            ("text", entry["text"] == " ".join(entry["text"].split())),
+            ("from", entry["from"] in SOURCES),
+            ("item", bool(item and (item["task"] or item["fix"]))),
+            ("status", entry["status"] in STATUSES),
+            ("closed_by", entry["closed_by"] is None or bool(FIX.fullmatch(entry["closed_by"]))),
+            ("key", entry["key"] == key(entry["kind"], entry["path"], entry["text"],
+                                        entry["from"], entry["item"]))) if not right]
+        if wrong:
+            raise Unreadable(f"entry {n} has a wrong {wrong[0]}")
     return items
 
 
 def read(top: Path) -> list[dict[str, Any]]:
     """The checkout's list; no file is an empty one. Anything else is Unreadable."""
     path = top / PATH
-    return _parse(path.read_text(encoding="utf-8")) if path.is_file() else []
+    return _parse(path.read_bytes()) if path.is_file() else []
 
 
 def write(top: Path, items: list[dict[str, Any]]) -> None:
@@ -79,7 +94,8 @@ def check(top: Path, item: str) -> None:
     except Unreadable as problem:
         repair = f"git -C {top} rm -q {PATH}"
         for commit in repo.git("log", "--format=%H", "HEAD", "--", PATH, cwd=top).split():
-            shown = repo.run("git", "show", f"{commit}:{PATH}", cwd=top)
+            # Bytes, so a copy that isn't UTF-8 stays unreadable.
+            shown = subprocess.run(["git", "show", f"{commit}:{PATH}"], cwd=top, capture_output=True)
             try:
                 if shown.returncode == 0:
                     _parse(shown.stdout)
@@ -105,7 +121,7 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
         nonlocal changed
         text = " ".join(text.split())
         entry_key = key(kind, path, text, source, item)
-        if (path not in tree or not SAFE.fullmatch(path) or entry_key in known
+        if (path not in tree or not _path(path) or entry_key in known
                 or not isinstance(line, int) or isinstance(line, bool)):
             return
         known[entry_key] = {"key": entry_key, "kind": kind, "path": path, "line": line,

@@ -134,12 +134,13 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
-    # Close writes the spotted list after the review, so it never makes that review stale.
-    changed = {path for path in changed if path and path != spotted.PATH
-               and (not path.startswith(BOOKKEEPING) or path in named)}
+    changed = {path for path in changed
+               if path and (not path.startswith(BOOKKEEPING) or path in named)}
     if findings is None:
         findings = (state.get("review") or {}).get("findings", [])
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
+    # Close writes the spotted list after the review, so it never makes that review stale.
+    changed.discard(spotted.PATH)
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
