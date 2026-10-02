@@ -1,0 +1,14 @@
+{
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/workers-codex",
+  "done_when": "Forge's forge.toml sets workers = \"codex\" and gives build, fix and lite a codex entry (gpt-6.1-sol at medium, lite with gpt-6-luna max subagents) while keeping their claude entries for Claude sessions' roles; forge doctor reports nothing new.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-02T06:41:13+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants Codex to implement Forge's own tasks and fixes instead of Claude"
+}
