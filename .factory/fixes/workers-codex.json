@@ -3,11 +3,46 @@
   "branch": "fix/workers-codex",
   "done_when": "Forge's forge.toml sets workers = \"codex\" and gives build, fix and lite a codex entry (gpt-6.1-sol at medium, lite with gpt-6-luna max subagents) while keeping their claude entries for Claude sessions' roles; forge doctor reports nothing new.",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "ffb2c48006d991acf9ad984ee4d1092127b819985103a87f3bb67e0c36beb82c",
+    "commit": "d7d07c0525bc56c1fa9325550615a4e999fb15e7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The new nested entries are incompatible with the role generator. In src/forge/roles.py:73\u201380, _chosen selects a host-specific entry only for design; for build and lite it reads model and effort from the outer table, yielding empty values. Consequently, sync drops the configured models and efforts from both hosts' building and explorer roles. The checked-in roles also differ from that output, which doctor reports as new problems at src/forge/doctor.py:200\u2013201. The supplied close run confirms the mismatch in tests/test_subagent_roles.py:140. Make role generation consume these per-host entries and commit the regenerated roles; regenerating alone would erase the settings rather than satisfy the acceptance criterion.",
+        "file": "forge.toml",
+        "line": 10,
+        "priority": "P1",
+        "title": "Not done: Forge's forge.toml sets workers = \"codex\" and gives build, fix and lite a codex entry (gpt-6.1-sol at medium, lite with gpt-6-luna"
+      },
+      {
+        "body": "The repository acceptance test still asserts workers == \"claude\" and flat Opus tables at tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:19\u201321, so this change deterministically leaves the configured test command red before the worker invocation runs. Its doctor test also retains Claude prerequisites at lines 47\u201366 without preparing the Codex SDK now checked by src/forge/doctor.py:164\u2013181; the close run reports failure at line 70. Update these checks for the actual repository configuration and Codex prerequisites, preserving explicit assertions for the required model, effort and lite helper settings. Generic fixture tests do not verify this repository's selected settings.",
+        "file": "forge.toml",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: acceptance tests verify Forge's own Codex worker settings and doctor check"
+      },
+      {
+        "body": "The removed lite entry selects claude-opus-5-5 at medium effort, but its new Claude entry selects claude-sonnet-5-5. The acceptance criterion asks to keep the Claude entries while adding Codex entries; changing Claude's lite model is an additional behavior change. Preserve claude-opus-5-5 here so Claude sessions retain their existing role selection once the role generator supports the new tables.",
+        "file": "forge.toml",
+        "line": 33,
+        "priority": "P1",
+        "title": "Preserve the existing Claude lite model"
+      }
+    ],
+    "status": "blocked",
+    "tree": "f3d8fbe424a342f379a648b5ca8ab7713982cdbd89a48530dfc4ab9e2d1c1a10"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T06:41:13+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T09:55:25+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner wants Codex to implement Forge's own tasks and fixes instead of Claude"
