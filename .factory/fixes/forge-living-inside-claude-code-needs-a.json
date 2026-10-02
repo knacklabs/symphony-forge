@@ -1,0 +1,14 @@
+{
+  "base": "3eb14a9236e96fba1376fc87f7be9c2d39d8eb90",
+  "branch": "fix/forge-living-inside-claude-code-needs-a",
+  "done_when": "plans/roadmap.json lists FORGE-MOD-1 as pending, after FORGE-SPOTTED-1",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-02T19:00:36+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge living inside Claude Code needs a roadmap entry for its story"
+}
