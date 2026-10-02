@@ -5,20 +5,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "40fb0e27d106112f1649662238c265e7260b1035ddafffc5cbb7eec2758ab695",
-    "commit": "484cc9778f3e958b7fa47211aea2a5b2d1814ecb",
+    "changed": "cc4fc506af2f7a96e1f42483a82e68ef93b402959fbb5cc296b11ed218821036",
+    "commit": "fbe8517f27b783faa1d416500edff2d88747e338",
     "dismissals": [],
     "findings": [
       {
-        "body": "Concurrent review startup can lose ownership protection. Review A creates its lock at line 449 but has not yet locked it. Review B opens that lock, acquires it, and closes the handle at line 438, releasing it before deletion. A can then acquire the lock and create its review folder; B subsequently deletes that active folder at line 441. Alternatively, B unlinks the lock before A creates the folder, leaving A holding an unlinked lock; if A is killed, the next review leaves its fresh folder behind until it ages past a day. Synchronize lock publication with collection, retain the collector's lock through deletion, and handle failed ownership acquisition. The command-level tests do not exercise concurrent ownership, so they miss this acceptance-criterion failure.",
+        "body": "After a review is killed, rerunning the command leaves its fresh temporary checkout behind because this condition excludes every folder less than a day old. The new command-level test demonstrates this at tests/test_reviews_remove_their_temp_folders.py:87\u201394, explicitly asserting that the orphan survives the next review. This does not meet the requirement to clean up when the process is killed and run again. Detect abandoned ownership and remove the orphan on the next review without requiring it to age for a day.",
         "file": "src/forge/review.py",
-        "line": 441,
+        "line": 400,
         "priority": "P1",
         "title": "Not done: Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is"
+      },
+      {
+        "body": "The sweep deletes old folders without checking ownership. A review left running or suspended overnight can therefore have its checkout deleted by another review. The claim that reviews never run that long is not enforced: src/forge/review.py:541\u2013552 streams output and waits for the helper without a timeout, and directory mtime does not track process activity. This is new evidence beyond the earlier startup-lock race: the current implementation has no ownership protection at all. Check that no running review owns the folder before deleting it, and prove that protection through the command entry point.",
+        "file": "src/forge/review.py",
+        "line": 401,
+        "priority": "P1",
+        "title": "Not done: Each review deletes only old forge-review-* folders that no running review owns"
+      },
+      {
+        "body": "This assertion requires the killed review's folder to remain after the next successful review. It therefore passes with the acceptance-criterion defect and would fail if immediate recovery were implemented. Aging the orphan artificially later in the test only proves the separate stale-folder sweep. Change this command-level test to require the killed review's fresh folder to disappear on rerun while a concurrently running review's folder remains protected.",
+        "file": "tests/test_reviews_remove_their_temp_folders.py",
+        "line": 94,
+        "priority": "P1",
+        "title": "Not done: A command-level test proves cleanup after a review is killed and run again"
       }
     ],
     "status": "blocked",
-    "tree": "a56dbe596a15a232b4872b39cfd301e27b81cb66eeae476523407b15a2beac73"
+    "tree": "cb2d40d81628c9dc834eae96bbb1257de2a5a005e8f29a55c667dd6eddce916b"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +42,10 @@
     },
     {
       "at": "2026-10-02T03:59:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T08:53:12+00:00",
       "step": "review"
     }
   ],
