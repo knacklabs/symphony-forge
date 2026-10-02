@@ -191,6 +191,12 @@
       "title": "What agents notice while working is lost, and reviews keep fixing the same area round after round instead of simplifying it",
       "status": "pending",
       "order": 72
+    },
+    {
+      "key": "FORGE-MOD-1",
+      "title": "Developers on Claude Code babysit Forge: they ask for status, poll runs, type each next command and approve by pasting plan text",
+      "status": "pending",
+      "order": 73
     }
   ],
   "epics": [
