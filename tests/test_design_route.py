@@ -45,6 +45,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     state = json.loads(state_file.read_text("utf-8"))
     state["allow_large"] = "Other allowance"
     state_file.write_text(json.dumps(state), encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Allow other work", cwd=fix)
     ordinary = repo.forge("work", "fix-the-login-typo")
     assert ordinary.returncode == 0, ordinary.stdout + ordinary.stderr
     assert len(_sent(codex_log, "turn/start")) == 1
@@ -53,6 +55,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # Forge's own repository keeps its configured worker even for a user-facing row.
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
                                                      'repo = "forge-source"'), encoding="utf-8")
+    repo.git("commit", "-qam", "Use the source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
     assert len(_sent(codex_log, "turn/start")) == 2
@@ -62,6 +65,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
                                                      'repo = "client"') +
                       '\n[models.design.claude]\nmodel = "custom-opus"\neffort = "high"\n',
                       encoding="utf-8")
+    repo.git("commit", "-qam", "Use a custom design model", cwd=folder)
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
@@ -83,6 +87,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
     config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                      'workers = "claude"'), encoding="utf-8")
+    repo.git("commit", "-qam", "Use Claude workers", cwd=folder)
     claude_worker = repo.forge("work", "BOARD/PAGE")
     assert claude_worker.returncode == 0, claude_worker.stdout + claude_worker.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
@@ -97,6 +102,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"') +
                       '\n[models.design.codex]\nmodel = "gpt-6-nova"\neffort = "xhigh"\n',
                       encoding="utf-8")
+    repo.git("commit", "-qam", "Use Nova for design", cwd=folder)
     monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
     clean = repo.forge("work", "BOARD/PAGE")
     assert clean.returncode == 0, clean.stdout + clean.stderr
@@ -114,6 +120,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
         f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
+    repo.git("commit", "-qam", "Use the defaults", cwd=folder)
     os.unlink(repo.bin / "claude")
     if os.name == "nt":
         os.unlink(repo.bin / "claude.cmd")

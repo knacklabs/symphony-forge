@@ -245,7 +245,7 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     assert state["status"] == "working"
     # Forge leaves nothing behind; the files are what the stub's accepted requests wrote.
     assert repo.git("status", "--porcelain", "--ignored", cwd=folder) == (
-        "?? ran-stub-ask-1\n?? ran-stub-ask-2")
+        "!! ran-stub-ask-1\n!! ran-stub-ask-2")
 
     # A fix gets a Lite conversation named after the fix and its why.
     fixed = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
