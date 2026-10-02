@@ -170,3 +170,32 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     assert read.returncode == 0, read.stdout + read.stderr
     [start] = _sent(calls, "thread/start")
     assert start["sandbox"] == "read-only" and start["config"]["hooks"] == _trusted(calls, before)
+
+    def dispose():  # each finding of the last round cut, so the next round may run
+        notes = shop / "plans" / "SHOP.read.md"
+        text = notes.read_text(encoding="utf-8")
+        line = [line for line in text.splitlines() if line.startswith(("1. ", "2. "))][-1]
+        notes.write_text(text.replace(line, f"{line}\n   Disposition: cut"), encoding="utf-8")
+
+    # The next round resumes the reader's conversation, again with each hook's current hash.
+    dispose()
+    monkeypatch.setenv("STUB_CODEX_RESUME", "1")
+    before = len(_stub(calls))
+    again = repo.forge("read", "SHOP")
+
+    assert again.returncode == 0, again.stdout + again.stderr
+    [resume] = _sent(calls, "thread/resume")
+    assert resume["threadId"] == "thr-stub-1" and resume["sandbox"] == "read-only"
+    assert resume["config"]["hooks"] == _trusted(calls, before)
+    assert len(_sent(calls, "thread/start")) == 1
+
+    # A foreign untrusted hook stops a round that would resume: neither the resume nor a turn.
+    dispose()
+    text, named = _edits(forge_own)[2]
+    hooks_file.write_text(text, encoding="utf-8")
+    before = len(_stub(calls))
+    stopped = repo.forge("read", "SHOP")
+
+    assert stopped.returncode != 0
+    assert stopped.stderr == _refusal(named, hooks_file, "read", "SHOP")
+    assert _stopped(calls, before)
