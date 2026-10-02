@@ -12,27 +12,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "cad9834acfc544828f3307a758b00390ef9d96687b0aaf627599d052ccd1009e",
-    "commit": "0e0a1830652c2c49fad7725b9e4662cbd5f8e10c",
+    "changed": "03bba9f0138329508fc7c5de7ef220bb29856a22d12b1c507615ced5674c6c25",
+    "commit": "f7e162ace9f0e37b55bb31109230ab434c836621",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new test exercises commits and pushes, but never close or its required PR check. Removing the exemption at prcheck.py:209\u2013216 would leave this regression test passing. Existing upgrade coverage in tests/test_upgrade_synced.py:30 and tests/test_upgrade_check.py:181 supplies allow_large, which bypasses the changed limit. Add command-level coverage without an allowance that closes a sync-only fix and verifies that a hand-edited synced file plus five ordinary code files is counted and refused by the real PR-check command.",
+        "body": "This test never changes forge.toml's version. The shared fixture pins the installed version on main (tests/test_close.py:228\u2013235), and env.start_fix() inherits it. Consequently, close's upgrade validation returns immediately at src/forge/close.py:223\u2013224. The existing version-changing tests still supply allow_large (tests/test_upgrade_synced.py:30 and tests/test_upgrade_check.py:181), bypassing the changed limit. Add the required command-level scenario that changes the pin, commits sync's output, and successfully closes and passes the real PR check without an allowance.",
         "file": "tests/test_fix_sync_output_skips_fix_limit.py",
-        "line": 60,
+        "line": 79,
         "priority": "P1",
-        "title": "Not done: A command-level close test proves sync output is exempt and hand edits count"
+        "title": "Not done: An upgrade fix closes without an allowance"
       },
       {
-        "body": "The archive is not an exact copy of the baseline: [Git applies export-ignore and export-subst](https://git-scm.com/docs/git-archive#_attributes). For example, if a client excludes .claude/settings.json from exports, the temporary tree loses its existing permissions. sync._hooks (sync.py:169\u2013189) consequently computes different output from a real sync over that baseline. With five ordinary code changes, a correctly synced settings file is then counted as a sixth file and refused; conversely, manually removing the preserved settings can match the incorrect expected output and become exempt. Materialize the baseline without export transformations.",
-        "file": "src/forge/sync.py",
-        "line": 325,
-        "priority": "P2",
-        "title": "Preserve baseline files when computing sync output"
+        "body": "The four-source/three-test scenario only exercises the commit hook. Neither the new close/PR-check test nor existing tests/test_prcheck.py scenarios include changed test files. Removing the independent exclusion at src/forge/prcheck.py:212\u2013213 would therefore leave this coverage passing while close's required check rejects the same seven-file fix. Extend command-level coverage to close this fix and run the real PR-check command without an allowance, proving the test-file exemption at that enforcement boundary.",
+        "file": "tests/test_fix_sync_output_skips_fix_limit.py",
+        "line": 108,
+        "priority": "P1",
+        "title": "Not done: Close's PR check excludes recognised test files from the fix-size limit"
       }
     ],
     "status": "blocked",
-    "tree": "7dbe9582561dea87847a3914fc13454489611d7f41334011908c008cc807f018"
+    "tree": "65d6164765e31763144da6194ffd7f021e619aee99f0f79baecca0f55721332d"
   },
   "status": "fixing",
   "steps": [
@@ -42,6 +42,10 @@
     },
     {
       "at": "2026-10-01T16:55:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T02:36:29+00:00",
       "step": "review"
     }
   ],
