@@ -2,12 +2,12 @@
   "branch": "task/FORGE-SPOTTED-1-SPOT",
   "review": {
     "blocking_level": "P1",
-    "changed": "90b6f482af410b9e53f49c4636fec2e5ae8de5b486588ed84bc94217b9eae542",
-    "commit": "48661172c5f69dcf3187e68ab21788d13ac705c9",
+    "changed": "38aa662e916304d5e52b30b57ca4642d39287ec33e46c1615234571b7f18238a",
+    "commit": "88c3b7424e25e6756be62705d85b9d1e82af408d",
     "dismissals": [],
     "findings": [],
     "status": "clean",
-    "tree": "edf9770769cff04b0822e8ea6ae70a6bbffe075ead0f18605435af7ffb52d15f"
+    "tree": "82791ab3b890295bb3feac1b592d7b2752de67c4a8083bc029fe13a649fd9c86"
   },
   "status": "waiting for checks",
   "steps": [
@@ -29,6 +29,10 @@
     },
     {
       "at": "2026-10-02T15:35:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T19:39:25+00:00",
       "step": "review"
     }
   ]
