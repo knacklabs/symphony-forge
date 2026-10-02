@@ -13,27 +13,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "d6de78116323ecd3a7c54509ae383136bcd8ee781a42284f19015704cdbce43f",
-    "commit": "f5ecfbf2dc3d14736275efba03c09ec98b4e6ffb",
+    "changed": "231ff6e076d5f5fdcc14c32c671d09023c3bbd91fc3eee19bbc75647b4944d67",
+    "commit": "29cc52b031b2eab9f225c9466e216170b6a28b77",
     "dismissals": [],
     "findings": [
       {
-        "body": "This change only adds the fix record; the promised behavior remains unimplemented. `src/forge/repo.py:139` accepts only claude and codex, so split is rejected. `src/forge/worker.py:63\u201366` still overrides codex for user-facing client tasks, and line 125 launches Claude using its design model. `src/forge/init.py:111` still writes codex for new repos. The worker launch paths contain no required pre-start worker/model/effort/reason line, and `src/forge/nextstep.py:335\u2013338` lists ready tasks without their worker. Session selection at `src/forge/worker.py:88\u201396` and `src/forge/codex.py:175\u2013185` does not check the previous round's worker family, so switching Codex \u2192 Claude \u2192 Codex can resume the earlier Codex session instead of starting fresh with the full brief. Neither `src/forge/templates/skill.md` nor `src/forge/templates/adapters/AGENTS.md` explains the three values. Implement these requirements before closing this fix; recording them does not resolve the reported routing problem.",
-        "file": ".factory/fixes/a-story-task-marked-user-facing-always-g.json",
-        "line": 11,
+        "body": "With `workers = \"claude\"`, a user-facing item still enters the automatic Codex fallback when Claude is missing or fails without changing files. The fallback at `src/forge/worker.py:150\u2013175` launches Codex despite the explicit Claude setting. This contradicts \u201ceverything on Claude\u201d and means the owner cannot enforce the worker choice in forge.toml. Restrict fallback appropriately and cover the explicit Claude setting with a command-level failure test.",
+        "file": "src/forge/worker.py",
+        "line": 143,
         "priority": "P1",
         "title": "Not done: forge.toml's workers takes codex, claude or split with explicit routing, visibility and fresh sessions"
       },
       {
-        "body": "No tests are added or updated for the new contract. Existing command tests enforce the opposite behavior: `tests/test_design_route.py:22\u201328` expects a user-facing task with codex configured to invoke Claude and make no Codex turn, while `tests/test_fix_new_repos_get_claude_as_their_worker_by.py:24\u201330` expects new repos to write codex. Add or update real Forge command tests covering all three settings for user-facing and plain tasks, Codex's design-model selection, explicit split initialization, preservation of existing codex configuration, the pre-start explanation, workers beside ready tasks, and a family switch that starts a fresh session carrying the brief and latest findings. These are required acceptance tests owned by this fix; the existing suite cannot demonstrate completion.",
-        "file": ".factory/fixes/a-story-task-marked-user-facing-always-g.json",
-        "line": 11,
+        "body": "`top` is the caller's checkout, but a ready task inherits forge.toml from its starting branch. `src/forge/task.py:143` selects the remote default branch or story branch, and lines 188 and 116 create the checkout from that base. For example, after changing PAGE's workers to Claude, running forge next from PAGE labels ready HELP as Claude even though HELP starts from a Codex-configured default branch. Resolve the configuration from the same base as task start. The new next test changes only the caller's uncommitted configuration, so it does not catch this mismatch.",
+        "file": "src/forge/nextstep.py",
+        "line": 336,
         "priority": "P1",
-        "title": "Not done: command-level tests for worker choices, launch output, ready-task workers and family switches"
+        "title": "Not done: forge next names the worker that will actually build each ready task"
+      },
+      {
+        "body": "When the selected family has no Build/Fix/Lite model entry, this prints `(its own settings)` instead of the required model and effort. This occurs with an ordinary newly initialized repository after changing only workers to Claude: `src/forge/init.py:63\u201375` writes GPT-only entries, and `src/forge/repo.py:238` returns an empty selection for Claude. Resolve and report the effective model and effort, and test switching the initialized configuration through the real work command.",
+        "file": "src/forge/worker.py",
+        "line": 94,
+        "priority": "P1",
+        "title": "Not done: the launch line names the model and effort when using worker defaults"
+      },
+      {
+        "body": "The switch guard applies only to the primary Codex launch. The fallback at `src/forge/worker.py:166\u2013174` calls codex.conversation whenever `later` is true and can resume an older Codex conversation with the short prompt. After a Codex round, a successful split-mode Claude round, and then a clean Claude failure, the next round returns to that old Codex session instead of starting fresh with the whole brief and latest findings. Apply the family-switch check when choosing the fallback conversation and add a command-level regression for this sequence.",
+        "file": "src/forge/worker.py",
+        "line": 107,
+        "priority": "P1",
+        "title": "Not done: a fallback family switch starts a fresh session with the whole brief"
       }
     ],
     "status": "blocked",
-    "tree": "494fddbfaa58212c3a200f44f1f5200b53100d28d6de2da50b257d5802542f1b"
+    "tree": "c5b9ce95c9deede067a22955f8980f5cb7494a2b476531da1caef5e280c00fe6"
   },
   "status": "fixing",
   "steps": [
@@ -43,6 +57,10 @@
     },
     {
       "at": "2026-10-02T11:50:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:11:53+00:00",
       "step": "review"
     }
   ],
