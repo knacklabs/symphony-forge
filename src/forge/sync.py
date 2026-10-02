@@ -10,10 +10,13 @@ import argparse
 import ast
 import importlib
 import json
+import os
 import pkgutil
 import re
 import shlex
+import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -309,6 +312,32 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 raise ValueError(f"shipped twice: {rel}")
             wanted[rel] = text
     return wanted
+
+
+def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
+    """The paths whose content at head ("" for the index) is exactly what forge sync writes over
+    the base commit's files with this config, so a fix's size doesn't count them."""
+    def show(rev: str, path: str) -> bytes:
+        done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
+        return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
+
+    # A detached worktree is the base exactly, with no export rules applied. A hook's git
+    # variables (its index among them) must not reach it, nor may the repo's own hooks run.
+    plain = {key: value for key, value in os.environ.items()
+             if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX")}
+    git = ["git", "-c", f"core.hooksPath={os.devnull}"]
+    # ponytail: checks out the whole base once per oversized fix; list sync's inputs if it's slow.
+    with tempfile.TemporaryDirectory() as folder:
+        tmp = str(Path(folder) / "base")
+        subprocess.run([*git, "worktree", "add", "-q", "--detach", tmp, base], cwd=top, env=plain,
+                       capture_output=True, check=True)
+        try:
+            wanted = files(Path(tmp), cfg)
+        finally:
+            subprocess.run([*git, "worktree", "remove", "--force", tmp], cwd=top, env=plain,
+                           capture_output=True)
+    return {path for path in paths
+            if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
 
 
 def command_page() -> str:
