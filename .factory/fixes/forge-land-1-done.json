@@ -1,0 +1,29 @@
+{
+  "base": "0594b124754a5b92f6b3cb31008a32e1794f1148",
+  "branch": "fix/forge-land-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "forge land now runs build, close, up to three fix rounds, waits for checks on its own head, re-runs a failure outside the change once, and merges where the repo allows agent merges, from Claude Code or Codex with either kind of worker",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "4f793e7df43ce52c2d719dc39010d0166047506c7c75067f960394da1389b4ad",
+    "commit": "a6abe0f2c6ef289e1c22fbf569c1265a234fb5c6",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "286a0218c8eee944e438c4a5b89013ba62809a468e97b47ce6de4f6a158d0fd7"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T00:49:10+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T01:03:43+00:00",
+      "step": "review"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that One command lands a change is finished, and what it achieved."
+}
