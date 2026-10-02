@@ -5,12 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f8d46c09fce05b4ad4e48aeee74fe2b4c48dd4a21e0ecbc791a71deef6fe06c4",
-    "commit": "f0f90375ccb31343185827176c78884cfbfbaa7c",
+    "changed": "dd3dcc844b120698aded4b448c407844b99ed948f7efea39ff5fc59a43ea9e7f",
+    "commit": "968a180a1f8fad04ae8cd3a0dc58410d800589ff",
     "dismissals": [],
-    "findings": [],
+    "findings": [
+      {
+        "body": "For repositories using Yarn 2 or later, `yarn upgrade` is unavailable, so this instruction fails instead of refreshing the detected `yarn.lock`. Yarn's [migration guide](https://yarnpkg.com/migration/guide) confirms the command was renamed. Distinguish Yarn Classic from modern Yarn and use `yarn up -R '*'` for the latter: [Yarn documents](https://yarnpkg.com/cli/up) that recursive mode re-resolves dependencies without changing manifests, whereas plain `yarn up` ignores existing ranges.",
+        "file": "src/forge/templates/skill.md",
+        "line": 296,
+        "priority": "P2",
+        "title": "[P2] Give modern Yarn an in-range refresh command"
+      }
+    ],
     "status": "clean",
-    "tree": "f021450f141af11b20121a36b9ec1b0b4e88fdf025e78b92979c208c6e4c910f"
+    "tree": "dcc3d87320aa70a246533e5167a137f579d2a07c6cede2f5d9550a5af795fb27"
   },
   "status": "waiting for checks",
   "steps": [
@@ -32,6 +40,10 @@
     },
     {
       "at": "2026-10-02T10:02:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T13:29:12+00:00",
       "step": "review"
     }
   ],
