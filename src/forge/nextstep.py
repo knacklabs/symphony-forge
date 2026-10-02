@@ -216,7 +216,8 @@ def _due(top: Path) -> list[str]:
     keys: dict[str, list[str]] = {}
     for item in items if isinstance(items, list) else []:
         if (isinstance(item, dict) and isinstance(item.get("spec"), str)
-                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))):
+                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))
+                and item.get("status") != "superseded"):  # a replaced story never finishes
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
@@ -238,7 +239,8 @@ def _idle(top: Path) -> list[str]:
     """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
-    if isinstance(items, list) and items:
+    if isinstance(items, list) and any(
+            not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
         return ["No story or fix is in progress.",
                 'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                 'Next: forge fix start "<why>" --done "<done when>"']
@@ -289,7 +291,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     try:
-        doc = story.parse(text)
+        doc = story.parse(text, top)
     except ValueError as exc:
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
@@ -303,7 +305,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    if states and len(merged) == len(states):
+    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
+    if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
@@ -315,9 +318,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
-    ready = [task["id"] for task in doc["tasks"]
-             if not states[task["id"]] and set(task["after"]) <= merged
+    if behind:
+        return lines + [behind], list(states.values())
+    merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
+               and _task(top, *after.split("/"), trees, merged_prs).get("status") == "merged"}
+    waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
+                          if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
+    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
+    # A task held back by another story's task would wait out of sight, so say which.
+    waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
+               if any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
@@ -325,6 +336,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}" for task in ready)]
+    if waiting:
+        lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 

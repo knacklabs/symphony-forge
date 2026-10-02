@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -133,6 +134,8 @@ def start(args: argparse.Namespace) -> None:
     key, task = match["key"], match["task"]
     from forge import story  # story imports this module's helpers
     main = main_ref()
+    if behind := story.plan_behind(repo.root(), key, main):  # a plan edit that came another way, as a fix
+        sys.exit(behind)  # the same one line forge next prints
     doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the
     # story branch holds it, and tasks start from there. After that, a story read in rounds is
@@ -146,7 +149,7 @@ def start(args: argparse.Namespace) -> None:
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
     try:
-        story.parse(text)
+        story.parse(text, repo.root())
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
     notes = show(source, notes_rel)
@@ -168,17 +171,20 @@ def start(args: argparse.Namespace) -> None:
     started = _started(main)
     if item in started or _merged(main, item):
         refuse(REFUSALS["started"], item=item, branch=branch)
-    waiting = [dep for dep in cell_list(tasks[task].get("After", ""))
-               if not _merged(main, f"{key}/{dep}")]
+    waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
+    waiting = [dep for dep in waiting if not _merged(main, dep)]
     if waiting:
-        refuse(REFUSALS["waiting"], item=item, deps=", ".join(f"{key}/{dep}" for dep in waiting))
+        refuse(REFUSALS["waiting"], item=item, deps=", ".join(waiting))
     scope = cell_list(tasks[task].get("Scope", ""))
     for other, theirs in started.items():
         shared = [path for path in scope if any(_overlap(path, their) for their in theirs)]
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
-    carry = (source, [doc_rel, notes_rel, repo.state_path(key)]) if source != base else None
+    if any("/" in dep for dep in cell_list(tasks[task].get("After", ""))):
+        base = main  # another story's merged code is only on the default branch
+    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
+             ) if source != base else None
     path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}", carry)
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")

@@ -1,0 +1,43 @@
+{
+  "base": "dc9187aef2a75f3b688e87898f65e1fd63b91d08",
+  "branch": "fix/a-plan-s-after-column-can-only-name-task",
+  "done_when": "An After entry may name another story's task as KEY/TASK (for example TURN-1/T4): forge next lists the task as ready, and forge task start starts it, only once that other task's pull request has merged, and both say plainly which task it waits for. A story doc whose After names a task that doesn't exist in that story's plan is refused as malformed, the same way an unknown same-story task is. The skill's plan-writing guidance mentions the form. Command-level tests cover waiting, starting after the other task merges, and an unknown task.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "c0ec20e84732ae2e8c68200ea057b2aff2cbea69b5a68bd50f0986ea3fa8d273",
+    "commit": "67c6045a99bf4bca09c3332fc8e9d938c0b8765a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "470b1bd0e2e4ec501419285789cc205057b98a4631456e66cb12eb21d2ae115c"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T08:22:18+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T10:18:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T10:53:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T15:10:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T15:40:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T17:57:45+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A plan's After column can only name tasks in the same story, so a task that must wait for another story's task shows as ready in forge next and the agent has to hold it by hand"
+}

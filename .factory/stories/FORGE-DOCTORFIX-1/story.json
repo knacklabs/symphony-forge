@@ -1,0 +1,69 @@
+{
+  "approval": {
+    "at": "2026-10-01T01:35:13+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01VtDXScFhmdjh8wyCUiMPW2",
+    "hash": "4b0e836e0a887a6055458429363341d1e3f0e449e036ae70084b0343fa1bbb76",
+    "round": 11,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
+  "doc": "plans/FORGE-DOCTORFIX-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-09-30T13:44:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-09-30T20:17:16+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:40:51+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T20:52:00+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T21:04:45+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T21:09:39+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T21:21:40+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T21:25:57+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-09-30T21:29:11+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:22:08+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:26:23+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:31:11+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-01T01:35:13+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "forge doctor fixes what it finds",
+  "touches": 1
+}

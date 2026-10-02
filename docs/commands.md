@@ -4,7 +4,7 @@
 |---|---|
 | `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
-| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix |
+| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
@@ -28,6 +28,7 @@
 | `forge decision new <slug>` | Writes a decision record |
 | `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
 | `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
+| `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |
 | `forge hook context` | Session start: prints `forge next` and the story's state |
 | `forge hook handoff` | Saves current state before context compaction |
 | `forge hook approval` | After the plan and question tools: records approvals and counts human touches |

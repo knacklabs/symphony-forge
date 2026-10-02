@@ -1,0 +1,32 @@
+{
+  "allow_large": "One code file (close.py); the rest are tests, which the owner decided on 2026-10-01 don't count toward the fix limit (that change is still landing)",
+  "base": "5ccbbecf22ff7fba28fea17e65191b3bb91c8d18",
+  "branch": "fix/the-pull-request-body-lists-dismissed-an",
+  "done_when": "When nothing blocks, the pull request's review block opens with one plain line, 'Review: clean' followed by how many findings were dismissed and how many are advice, and puts the dismissed and advisory findings with their reasons inside a collapsed details section; a review with open blocking findings still lists them plainly first. A command-level test renders both cases.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "514a10acb72775b39703cdb49a5a3d6b8c40f4f035fd5e070253549b5d80e84c",
+    "commit": "4d80c1558a0656bcb193cffb72c7338e25753ccd",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "47be15b07859ae2586eb5390716292a1aa5408ad14df1737ca0f16ab8dd42aff"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T15:44:00+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T19:41:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T22:54:15+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The pull request body lists dismissed and advisory review findings as numbered items, so an owner reading it sees open-looking issues on a change whose review is clean, and won't merge"
+}

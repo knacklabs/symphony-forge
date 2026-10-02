@@ -140,6 +140,8 @@ CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
+# A release, and nothing else: sync writes the pin into the hooks' shell launcher.
+VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 # The kinds of work in forge.toml's [models] table. Each has a model and an effort (a review's
 # effort is optional); building, fixing and lite work may add their subagents' model and effort,
 # as a pair.
@@ -285,6 +287,8 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:
             return f"{key} must be one of {', '.join(CHOICES[key])}"
+        if key == "version" and not VERSION.fullmatch(value):
+            return "version must be a Forge release, such as v1.2.1"
         if key == "signoff" and value and not SIGNOFF.fullmatch(value):
             return ("signoff must name the client's sign-off record, "
                     "docs/decisions/NNNN-client-signoff.md")
@@ -324,15 +328,42 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
         refuse(REFUSALS["pin_elsewhere"], item=item, folder=folder, installed=f"v{__version__}",
                pinned=f"v{pinned}", words=words)
     # Run the pinned release through uv instead, unless this already is that run (no loop).
-    uv = shutil.which("uv")
-    if uv and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
+    if shutil.which("uv") and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
         print(f"Forge v{__version__} is installed, but this repo pins v{pinned}, so v{pinned} runs "
               "through uv.", file=sys.stderr)
-        sys.exit(subprocess.run(
-            [uv, "tool", "run", "--from", f"git+https://github.com/knacklabs/symphony-forge@v{pinned}",
-             "forge", *sys.argv[1:]], cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": f"v{pinned}"},
-        ).returncode)
+        sys.exit(run_release(f"v{pinned}", sys.argv[1:], cwd))
     refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
+
+
+def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
+    """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
+    return subprocess.run(
+        [shutil.which("uv") or "uv", "tool", "run", "--from",
+         f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
+        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+
+
+def set_version(text: str, release: str) -> str:
+    """forge.toml's text with its version string set to the release, every other byte kept.
+
+    One blunt rule, failing closed: exactly one line in the whole file starts `version =` (lines
+    inside strings count), it is a plain `version = "..."` before the first table, and the edit
+    parses to the same settings with only the version changed. Otherwise it refuses.
+    """
+    lines = re.findall(r"^[ \t]*version[ \t]*=", text, re.M)
+    plain = re.search(r'^(version[ \t]*=[ \t]*)"[^"\\\r\n]*"([ \t]*(?:#[^\r\n]*)?\r?)$', text, re.M)
+    new = ""
+    if len(lines) == 1 and plain and not re.search(r"^[ \t]*\[", text[:plain.start()], re.M):
+        new = f'{text[:plain.start()]}{plain[1]}"{release}"{plain[2]}{text[plain.end():]}'
+        try:
+            if tomllib.loads(new) != {**tomllib.loads(text), "version": release}:
+                new = ""
+        except tomllib.TOMLDecodeError:
+            new = ""
+    if not new:
+        refuse(REFUSALS["bad_config"], problem=f'Forge could not set version = "{release}" in it, '
+               "so it left it alone")
+    return new
 
 
 def _pin(text: str) -> str:
