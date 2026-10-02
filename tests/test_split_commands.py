@@ -12,7 +12,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
-# forge land joins the list after merge (FORGE-LAND-1).
+# forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -50,7 +50,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    spec                Save and confirm specs, weigh whether a build pays\n'
      '                        back, and record its result\n'
      '    decision            Write and accept decisions\n'
-     '    roadmap             Add roadmap items\n'
+     '    roadmap             Add and retire roadmap items\n'
      '    hook                Internal: the one entry point that git hooks, host\n'
      '                        hooks and CI call\n',
  'decision': 'usage: forge decision [-h] {new,accept} ...\n'
@@ -100,16 +100,18 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '    pre-commit          The git pre-commit rules\n'
          '    pre-push            The git pre-push rules\n'
          '    pr-check            The required forge-pr-check, run from the base branch\n',
- 'roadmap': 'usage: forge roadmap [-h] {add} ...\n'
+ 'roadmap': 'usage: forge roadmap [-h] {add,retire} ...\n'
             '\n'
-            'Add roadmap items\n'
+            'Add and retire roadmap items\n'
             '\n'
             'options:\n'
-            '  -h, --help  show this help message and exit\n'
+            '  -h, --help    show this help message and exit\n'
             '\n'
             'commands:\n'
-            '  {add}\n'
-            '    add       Add roadmap items from a confirmed spec\n',
+            '  {add,retire}\n'
+            '    add         Add roadmap items from a confirmed spec\n'
+            '    retire      Mark a pending roadmap item superseded by the spec that\n'
+            '                replaces it\n',
  'spec': 'usage: forge spec [-h] {save,confirm,measure,payback} ...\n'
          '\n'
          'Save and confirm specs, weigh whether a build pays back, and record its result\n'
@@ -386,6 +388,16 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                 '\n'
                 'options:\n'
                 '  -h, --help  show this help message and exit\n',
+ 'roadmap retire': 'usage: forge roadmap retire [-h] --by SPEC key\n'
+                   '\n'
+                   'Mark a pending roadmap item superseded by the spec that replaces it\n'
+                   '\n'
+                   'positional arguments:\n'
+                   '  key\n'
+                   '\n'
+                   'options:\n'
+                   '  -h, --help  show this help message and exit\n'
+                   '  --by SPEC\n',
  'hook context': 'usage: forge hook context [-h]\n'
                  '\n'
                  'Session start: print forge next and the story state\n'

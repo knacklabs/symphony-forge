@@ -70,8 +70,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
     return {
-        "AGENTS.md": sync._block(top, "AGENTS.md", "adapters/AGENTS.md"),
-        **({"CLAUDE.md": sync._claude(top)} if (top / "CLAUDE.md").exists() else {}),
+        "AGENTS.md": sync._agents(top),
+        **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() else {}),
         **{rel: sync._hooks(top, rel, events, ALLOW.get(rel, [])) for rel, events in HOSTS.items()},
         ".codex/config.toml": sync._codex_config(top),
     }

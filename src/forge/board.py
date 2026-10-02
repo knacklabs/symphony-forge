@@ -106,7 +106,8 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
                 rel, state, f"task/{match['key']}-{match['task']}", "part")
         else:
             found[match["key"]] = (state, where)
-    titles = {item["key"]: item.get("title") for item in repo.roadmap(top)}
+    titles = {item["key"]: item.get("title") for item in repo.roadmap(top)
+              if item.get("status") != "superseded"}
     stories = []
     for key in [*titles, *sorted((set(found) | set(tasks)) - set(titles))]:
         state, where = found.get(key, ({}, landed))
