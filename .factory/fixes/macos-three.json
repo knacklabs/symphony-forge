@@ -1,0 +1,27 @@
+{
+  "base": "392464f2476b7d2832672c52ab176980c1ac31f0",
+  "branch": "fix/macos-three",
+  "done_when": ".github/workflows/forge-next.yml splits the macOS tests into three groups (each keeping the 10-minute limit), and the tests that pin the workflow's matrix match",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "73696428112e5db129c3eca8d7a22a13acca36c72f04150fa416c21ad5d585e9",
+    "commit": "f9dd3bf70be477d540e9bbc0b867f351f741349d",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "18f9cf366d142ded1ffaf03e437f52b69b244b247f013502d14137c3c30f80bf"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T01:29:58+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T03:25:29+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "macOS test group 1 now hits its 10-minute CI limit and is cancelled on unrelated pull requests, because the suite grew while macOS still splits it into two groups"
+}
