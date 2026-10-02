@@ -1,5 +1,6 @@
 """Every kind in forge.toml's [models] table may hold a codex and a claude entry; a single entry
-counts for the family its model belongs to, and the other family gets no Forge model.
+counts for the family its model belongs to, and a worker of the other family gets Forge's
+default.
 
 The worker tests run forge work on task BOARD/PAGE, with Codex through the stub app-server and
 Claude through the stub claude; the review test runs forge close with only Claude installed.
