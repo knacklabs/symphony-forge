@@ -30,6 +30,8 @@ def _write(folder, workers: str, build: str) -> None:
 
 def _work(repo, folder, workers: str, build: str) -> None:
     _write(folder, workers, build)
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Choose the workers", "--allow-empty", cwd=folder)
     done = repo.forge("work", "BOARD/PAGE")
     assert done.returncode == 0, done.stdout + done.stderr
 
