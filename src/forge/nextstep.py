@@ -305,7 +305,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    if states and len(merged) == len(states):
+    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
+    if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
@@ -317,6 +318,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
+    if behind:
+        return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
                and _task(top, *after.split("/"), trees, merged_prs).get("status") == "merged"}
     waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]

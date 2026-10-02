@@ -331,7 +331,8 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes.
+finishes. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
+so with the command that merges it into the story branch; run it, then carry on.
 
 ## Cold read findings
 

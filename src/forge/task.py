@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -133,6 +134,8 @@ def start(args: argparse.Namespace) -> None:
     key, task = match["key"], match["task"]
     from forge import story  # story imports this module's helpers
     main = main_ref()
+    if behind := story.plan_behind(repo.root(), key, main):  # a plan edit that came another way, as a fix
+        sys.exit(behind)  # the same one line forge next prints
     doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
     # The story doc lands on the default branch with its first merged task; until then the
     # story branch holds it, and tasks start from there. After that, a story read in rounds is
