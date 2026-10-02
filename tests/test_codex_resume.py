@@ -274,7 +274,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     fresh("Forge has no record of its conversation on this machine")
     # Codex can't resume it.
     conversation = _saved(record)["conversation"]
-    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads = _saved(store)
     del threads[conversation]
     store.write_text(json.dumps(threads), encoding="utf-8")
     fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
@@ -295,7 +295,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     work, saved = _holding(repo, turns)
     _crash(work, saved)
     held = _lines(turns)[-1]
-    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads = _saved(store)
     threads[held["conversation"]]["turns"][held["turn"]] = "interrupted"
     store.write_text(json.dumps(threads), encoding="utf-8")
     again = repo.forge("work", "BOARD/PAGE")
@@ -444,7 +444,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     def report(turn: str, status: str | None) -> None:
         """Make Codex report this status for the turn, or no such turn at all."""
-        threads = json.loads(store.read_text(encoding="utf-8"))
+        threads = _saved(store)
         if status is None:
             del threads["thr-stub-1"]["turns"][turn]
         else:
@@ -528,7 +528,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     def unseen() -> list[str]:
         """The turns Codex says still run."""
-        threads = json.loads(store.read_text(encoding="utf-8"))
+        threads = _saved(store)
         return [turn for turn, status in threads[conversation]["turns"].items()
                 if status == "inProgress"]
 
@@ -554,7 +554,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     # Once Codex reports that turn's end, it is logged with that status and the work goes on.
     [held] = unseen()
-    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads = _saved(store)
     threads[conversation]["turns"][held] = "interrupted"
     store.write_text(json.dumps(threads), encoding="utf-8")
     recovered = repo.forge("work", "BOARD/PAGE")
@@ -571,7 +571,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     work, saved = _holding(repo, turns)
     _crash(work, saved)
     held = _lines(turns)[-1]
-    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads = _saved(store)
     del threads[held["conversation"]]
     store.write_text(json.dumps(threads), encoding="utf-8")
     gone = repo.forge("work", "BOARD/PAGE")

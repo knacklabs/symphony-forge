@@ -116,7 +116,7 @@ def _check_recovered_round(repo, calls, turns, record):
     store = repo.bin / "threads.json"
     for _ in range(600):
         try:
-            saved_turns = json.loads(store.read_text(encoding="utf-8"))[conversation]["turns"]
+            saved_turns = _saved(store)[conversation]["turns"]
         except (FileNotFoundError, KeyError, ValueError):
             saved_turns = {}
         if any(status == "inProgress" for status in saved_turns.values()):
@@ -127,7 +127,7 @@ def _check_recovered_round(repo, calls, turns, record):
         raise AssertionError("Codex never started the second turn")
     _crash(work, _saved(turns.with_suffix(".json")))
     assert len(_lines(turns)) == recorded
-    threads = json.loads(store.read_text(encoding="utf-8"))
+    threads = _saved(store)
     for turn, status in threads[conversation]["turns"].items():
         if status == "inProgress":
             threads[conversation]["turns"][turn] = "interrupted"

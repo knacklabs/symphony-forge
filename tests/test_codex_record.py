@@ -103,7 +103,14 @@ def _codex_repo_direct(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
 
 
 def _saved(path: Path) -> dict:
-    return json.loads(path.read_text("utf-8")) if path.exists() else {}
+    """A record a running process may be replacing: on Windows, opening a file while another
+    process renames a new one over it fails with PermissionError for a moment."""
+    for _ in range(100):
+        try:
+            return json.loads(path.read_text("utf-8")) if path.exists() else {}
+        except PermissionError:
+            time.sleep(0.05)
+    return json.loads(path.read_text("utf-8"))
 
 
 def _up(pid: int) -> bool:
@@ -147,11 +154,7 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
         except ValueError:
             said = []
         pids = [call["pid"] for call in said if "pid" in call]
-        try:
-            saved = _saved(record)
-        except PermissionError:
-            time.sleep(0.05)  # A replacement can briefly keep the record from this reader.
-            continue
+        saved = _saved(record)
         if len(pids) > servers and said[-1].get("method") == stuck and saved.get("app_server"):
             return work, saved, pids[-1]
         time.sleep(0.05)

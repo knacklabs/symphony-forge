@@ -8,7 +8,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -133,11 +135,55 @@ def _end_left(path: Path) -> list[str]:
     return left
 
 
+def _writable(remove: Callable[[str], None], path: str, _: Any) -> None:
+    os.chmod(path, stat.S_IWRITE)  # git leaves its objects read-only, which Windows won't delete
+    remove(path)
+
+
+def _held(path: Path) -> str | None:
+    """Delete path, waiting for a process the test just ended to let go; return a file still held."""
+    for _ in range(20):
+        try:
+            shutil.rmtree(path, onerror=_writable)
+            return None
+        except FileNotFoundError:
+            return None
+        except OSError as error:
+            held = error.filename
+            time.sleep(0.5)
+    return held
+
+
+def _end_holders(path: Path) -> list[str]:
+    """End the processes whose command names path, and return them. Windows has no ps, and
+    PowerShell shows a process's command but not its environment."""
+    listed = subprocess.run(["powershell", "-NoProfile", "-Command",
+                             'Get-CimInstance Win32_Process | ForEach-Object '
+                             '{ "$($_.ProcessId) $($_.CommandLine)" }'],
+                            capture_output=True, text=True).stdout
+    mark = f"{path}{os.sep}".lower()
+    left = [line for line in listed.splitlines()
+            if mark in line.lower() and int(line.split()[0]) != os.getpid()]
+    for line in left:
+        try:
+            os.kill(int(line.split()[0]), signal.SIGTERM)  # TerminateProcess on Windows
+        except OSError:
+            pass
+    return left
+
+
 @pytest.fixture(autouse=True)
 def no_process_left(request: pytest.FixtureRequest, tmp_path: Path) -> Any:
     # Autouse, so it runs its check after the test's own fixtures have cleaned up.
+    failed = request.session.testsfailed
     yield
-    if os.name == "nt":  # ponytail: no ps on Windows; add a process-tree walk if leaks show there
+    if os.name == "nt":
+        # A file a process still holds is what keeps pytest from deleting the folder there, so
+        # delete it now and fail naming the file. A failed test's folder stays for a look.
+        held = _held(tmp_path) if request.session.testsfailed == failed else None
+        if held:
+            pytest.fail(f"{request.node.name} left processes running, holding {held}: "
+                        + "; ".join(line[:200] for line in _end_holders(tmp_path)), pytrace=False)
         return
     left = _end_left(tmp_path)
     if left:
