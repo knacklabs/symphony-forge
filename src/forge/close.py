@@ -119,10 +119,7 @@ def close(args: argparse.Namespace) -> int:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
-    elif result.get("tree") != (tree := review.whole_tree("HEAD", item, top, state,
-                                                          f"origin/{default}")) or noted:
-        # The clean review still covers the change; keep the v1.1.0 check's fingerprint current.
-        result["tree"] = tree
+    elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)

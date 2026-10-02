@@ -167,28 +167,6 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     return digest.hexdigest()
 
 
-def whole_tree(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
-    """The v1.1.0 release's fingerprint, kept under the record's `tree` key so that release's
-    forge-pr-check passes an upgrade pull request this version reviewed: the whole product tree
-    at commit, what the change must do and the worker's functional check.
-    ponytail: one release only; delete it, and close's refresh of `tree`, after v1.2.0."""
-    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
-    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
-    key, _, name = item.partition("/")
-    if name:
-        text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
-        doc = sections(text)
-        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
-                 moving_parts(text)]
-    else:
-        parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
-    parts.append(functional_check(top, base, commit))
-    for part in parts:
-        digest.update(b"\0" + part.encode("utf-8"))
-    return digest.hexdigest()
-
-
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
     """P0 for an unsigned client prototype fix, P1 for every other review."""
@@ -479,7 +457,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     return {"commit": head, "changed": fingerprint(head, item, top, state, base,
                                                      "P0" if light else "P1", findings),
-            "tree": whole_tree(head, item, top, state, base), "findings": findings,
+            "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
 
