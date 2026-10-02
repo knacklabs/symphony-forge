@@ -199,16 +199,19 @@ def _check_specs(top: Path, head: str, changed: list[str]) -> None:
 def promote_problem(changed: list[str], interfaces: list[str], top: Path, base: str,
                     head: str) -> str:
     """Why a fix must become a story, or "": it touches an interfaces path, or more than five code
-    files. Markdown, .factory/, plans/ and forge sync's own output never count."""
+    files. Markdown, .factory/, plans/, test files and forge sync's own output never count toward
+    the five."""
     code = [path for path in changed
             if not path.lower().endswith(".md") and not path.startswith(review.BOOKKEEPING)]
     for path in code:
         # "/" + path lets "**/routes/**" match a top-level routes/ folder too.
         if any(fnmatch(path, pattern) or fnmatch("/" + path, pattern) for pattern in interfaces):
             return f"changes the interface path {path}"
-    if len(code) > CODE_LIMIT:
-        from forge import story, sync
+    from forge import story, sync, worker
 
+    tests = repo.git("diff", "--name-only", f"{base}...{head}", "--", *worker.TEST_PATHS, cwd=top)
+    code = [path for path in code if path not in tests.splitlines()]
+    if len(code) > CODE_LIMIT:
         # Sync's output for the forge.toml the change pins: an upgrade's check runs that release.
         cfg = repo._config_text(story.show(top, head, "forge.toml") or "")
         fork = repo.git("merge-base", base, head, cwd=top)

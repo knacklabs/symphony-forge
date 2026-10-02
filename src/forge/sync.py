@@ -10,6 +10,7 @@ import argparse
 import ast
 import importlib
 import json
+import os
 import pkgutil
 import re
 import shlex
@@ -320,11 +321,21 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
         done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
         return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
 
-    # ponytail: unpacks the whole base tree once per oversized fix; list sync's inputs if it's slow.
-    with tempfile.TemporaryDirectory() as tmp:
-        tar = subprocess.run(["git", "archive", base], cwd=top, capture_output=True, check=True)
-        subprocess.run(["tar", "-x", "-C", tmp], input=tar.stdout, check=True)
-        wanted = files(Path(tmp), cfg)
+    # A detached worktree is the base exactly, with no export rules applied. A hook's git
+    # variables (its index among them) must not reach it, nor may the repo's own hooks run.
+    plain = {key: value for key, value in os.environ.items()
+             if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX")}
+    git = ["git", "-c", f"core.hooksPath={os.devnull}"]
+    # ponytail: checks out the whole base once per oversized fix; list sync's inputs if it's slow.
+    with tempfile.TemporaryDirectory() as folder:
+        tmp = str(Path(folder) / "base")
+        subprocess.run([*git, "worktree", "add", "-q", "--detach", tmp, base], cwd=top, env=plain,
+                       capture_output=True, check=True)
+        try:
+            wanted = files(Path(tmp), cfg)
+        finally:
+            subprocess.run([*git, "worktree", "remove", "--force", tmp], cwd=top, env=plain,
+                           capture_output=True)
     return {path for path in paths
             if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
 
