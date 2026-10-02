@@ -79,9 +79,9 @@ def test_1_a_review_stopped_with_ctrl_c_leaves_no_folder(env, temp, monkeypatch)
     assert _leftovers(temp) == []
 
 
-def test_2_a_review_whose_process_is_killed_has_its_folder_removed_by_the_next_review(
+def test_2_a_killed_review_s_fresh_folder_is_left_alone_until_it_is_a_day_old(
         env, temp, monkeypatch):
-    item, _ = env.start_fix()
+    item, where = env.start_fix()
     close, helper = _hanging_close(env, item, monkeypatch)
     killed = _leftovers(temp)
     close.kill()
@@ -89,10 +89,16 @@ def test_2_a_review_whose_process_is_killed_has_its_folder_removed_by_the_next_r
     os.kill(helper, signal.SIGKILL if os.name != "nt" else signal.SIGTERM)
     assert _leftovers(temp) == killed  # the killed review could not remove it
 
+    # Fresh, it could be a running review's, so the next review leaves it.
     assert env.close(item).returncode == 0
+    assert _leftovers(temp) == killed
+
+    two_days_ago = time.time() - 2 * 24 * 3600
+    os.utime(temp / killed[0], (two_days_ago, two_days_ago))
+    env.commit(where, "app.py", "print('hello again')\n")  # so the next close reviews again
+    assert env.close(item).returncode == 0
+    assert len(env.review_calls()) == 2  # the killed one never answered
     assert _leftovers(temp) == []
-
-
 def test_3_a_failed_review_and_one_whose_folder_resists_removal_leave_no_folder(
         env, temp, monkeypatch):
     env.reviews(FAILED)
