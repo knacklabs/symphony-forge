@@ -12,20 +12,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "4484d7d980d3ae53e4e319f3bc9ad3f35724a19225dfbe50dbf472d33344cc01",
-    "commit": "ed4c04ef4e43d63e545f9b5f185c1fad780e4d7d",
+    "changed": "5f9695e9622cb09f50ac007d197db20ac35733d4bf5b54249496914a19bf06f2",
+    "commit": "04db5f6d4005166550e8f7ca9b1f4a34dc5d80c0",
     "dismissals": [],
     "findings": [
       {
-        "body": "A stale leftover containing the non-writable `locked/inner` directories modeled in tests/test_reviews_remove_their_temp_folders.py:28\u201331 survives this sweep indefinitely. Plain `shutil.rmtree(..., ignore_errors=True)` suppresses deletion failures without repairing permissions; removing files inside a mode-0500 directory fails for an ordinary user. The existing cleanup at src/forge/review.py:418 handles this case through TemporaryDirectory, but the new sweep does not. The permission test exercises only cleanup of the current review, so it misses recovery of an aged leftover with those same permissions. Retry recoverable permission failures when sweeping stale folders. See the [Python rmtree contract](https://docs.python.org/3.11/library/shutil.html#shutil.rmtree).",
+        "body": "The previously reported gap remains: an aged leftover containing the mode-0500 `locked/inner` directories modeled in tests/test_reviews_remove_their_temp_folders.py:28\u201331 cannot be deleted by an ordinary user. `ignore_errors=True` suppresses the permission failures without repairing them, leaving the folder behind indefinitely. The current review's cleanup uses TemporaryDirectory at src/forge/review.py:396, which retries recoverable permission errors, but the sweep does not. Apply permission recovery during the sweep and verify it with an aged, read-only leftover. See the [Python rmtree contract](https://docs.python.org/3.11/library/shutil.html#shutil.rmtree).",
         "file": "src/forge/review.py",
-        "line": 401,
+        "line": 379,
         "priority": "P2",
         "title": "Retry recoverable permission errors when sweeping stale folders"
       }
     ],
     "status": "clean",
-    "tree": "7a0207e6b5f932f3f9ba0bc4fdf53e24b86f8ac76e93689fe78fcd3b218e9193"
+    "tree": "7812de042651b0b91a7449e42a454bd9e3bbce52bcba306b49314d48eb1bb464"
   },
   "status": "waiting for checks",
   "steps": [
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-10-02T12:14:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:20:26+00:00",
       "step": "review"
     }
   ],
