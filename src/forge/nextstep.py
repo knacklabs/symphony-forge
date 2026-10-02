@@ -333,11 +333,20 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
     if ready:
-        cfg = _report_config(top, refusals)
+        # A task takes forge.toml from where forge task start branches it: the default branch once
+        # the story doc is there, else the story branch.
+        landed = story.landed_ref(top)
+        base = landed if story.show(top, landed, f"plans/{key}.md") is not None else f"story/{key}"
+        settings = story.show(top, base, "forge.toml")
+        try:
+            cfg = (repo._config_text(settings) if settings  # pyright: ignore[reportPrivateUsage]
+                   else _report_config(top, refusals))
+        except repo.Refused:  # none or unreadable there: what forge next reads here
+            cfg = _report_config(top, refusals)
         rows = {task["id"]: task for task in doc["tasks"]}
         # The worker beside each task, as a shell comment so the line still pastes as a command.
-        builds = {task: repo.worker_family(cfg, cfg["repo"] == "client" and rows[task].get(
-            "User-facing", "").lower() in ("yes", "true")).title() for task in ready}
+        builds = {task: repo.worker(cfg, "build", repo.user_facing(cfg, rows[task]))[0].title()
+                  for task in ready}
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
                   *(f"Next: forge task start {key}/{task}  # {builds[task]} builds it"

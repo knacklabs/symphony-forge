@@ -98,25 +98,33 @@ def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, mon
 
 
 def test_4_forge_next_shows_the_worker_beside_each_ready_task(repo, monkeypatch, sdk_data):
-    _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    folder, _ = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     # PAGE is started, so make a ready task user-facing too.
     story(repo, doc=DOC.replace("| `tests/test_api.py` | none | no |",
                                 "| `tests/test_api.py` | none | yes |"))
-    # forge next finds the story where it has landed.
+    # forge next finds the story where it has landed, and tasks start from there.
     repo.git("merge", "-q", "--no-edit", "story/BOARD")
     repo.git("push", "-q", "origin", "main")
     config = repo.path / "forge.toml"
     for workers, style, plain in (("codex", "Codex", "Codex"), ("split", "Claude", "Codex"),
                                   ("claude", "Claude", "Claude")):
-        config.write_text(config.read_text("utf-8").replace('workers = "codex"',
-                                                            f'workers = "{workers}"'),
+        before = config.read_text("utf-8")
+        config.write_text(before.replace('workers = "codex"', f'workers = "{workers}"'),
                           encoding="utf-8")
+        repo.git("commit", "-qam", f"Use {workers} workers", "--allow-empty")
+        repo.git("push", "-q", "origin", "main")
         shown = repo.forge("next").stdout
         assert f"Next: forge task start BOARD/API  # {style} builds it" in shown, shown
         assert f"Next: forge task start BOARD/HELP  # {plain} builds it" in shown, shown
-        config.write_text(config.read_text("utf-8").replace(f'workers = "{workers}"',
-                                                            'workers = "codex"'),
-                          encoding="utf-8")
+        config.write_text(before, encoding="utf-8")
+        repo.git("commit", "-qam", "Back to codex workers", "--allow-empty")
+        repo.git("push", "-q", "origin", "main")
+
+    # Run from PAGE's checkout set to Claude, forge next still names the worker the default
+    # branch's settings give a task started from there: Codex.
+    _workers(repo, folder, "claude")
+    shown = repo.forge("next", cwd=folder).stdout
+    assert "Next: forge task start BOARD/HELP  # Codex builds it" in shown, shown
 
 
 def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findings(
@@ -159,3 +167,73 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     last = calls(claude_log)[-1]
     assert "--resume" not in last["args"] and "--session-id" in last["args"]
     assert "## Tests first" in last["brief"] and "Board misses a story" in last["brief"]
+
+
+def test_6_workers_claude_never_falls_back_to_codex(repo, monkeypatch, sdk_data):
+    folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    claude_log = install_claude(repo)
+    _workers(repo, folder, "claude")
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    failed = repo.forge("work", "BOARD/PAGE")
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert "exit code 3" in failed.stderr
+    assert "fell back to Codex" not in failed.stdout
+    assert len(calls(claude_log)) == 1
+    assert _sent(codex_log, "turn/start") == []
+
+
+def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, monkeypatch,
+                                                                     sdk_data):
+    # Like a new repo's forge.toml: build, fix and lite name only gpt models, so Claude has no
+    # entry of its own.
+    folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    claude_log = install_claude(repo)
+    _help(repo, "claude")
+    plain = repo.forge("work", "BOARD/HELP")
+    assert plain.returncode == 0, plain.stdout + plain.stderr
+    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
+                                                 "--effort", "medium"]
+    assert ("Building BOARD/HELP with Claude (claude-opus-5-5, medium) because workers = claude"
+            in plain.stdout)
+
+    # Codex with no models at all runs, and names, Forge's Codex default.
+    help_folder = repo.path.parent / "repo-BOARD-HELP"
+    _workers(repo, help_folder, "codex", {})
+    again = repo.forge("work", "BOARD/HELP")
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert _sent(codex_log, "thread/start")[-1]["config"] == {
+        "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, medium) because workers = codex"
+            in again.stdout)
+
+
+def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and_findings(
+        repo, monkeypatch, sdk_data):
+    folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    claude_log = install_claude(repo)
+    # A Codex round, then a Claude round under split.
+    assert repo.forge("work", "BOARD/PAGE").returncode == 0
+    _workers(repo, folder, "split")
+    on_claude = repo.forge("work", "BOARD/PAGE")
+    assert on_claude.returncode == 0, on_claude.stdout + on_claude.stderr
+    assert len(calls(claude_log)) == 1
+
+    state_file = folder / ".factory" / "stories" / "BOARD" / "tasks" / "PAGE.json"
+    state = json.loads(state_file.read_text("utf-8"))
+    state["review"] = {"status": "blocked", "findings": [
+        {"priority": "P1", "title": "Board misses a story", "body": "List every story.",
+         "file": "web/board.py", "line": 1}]}
+    state_file.write_text(json.dumps(state), encoding="utf-8")
+    repo.git("commit", "-qam", "Review findings", cwd=folder)
+
+    # Claude fails cleanly, so split falls back to Codex: a new conversation, not the first one.
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    fell = repo.forge("work", "BOARD/PAGE")
+    assert fell.returncode == 0, fell.stdout + fell.stderr
+    assert "fell back to Codex" in fell.stdout
+    assert ("Starting a new Codex conversation, because its last round ran on Claude"
+            in fell.stdout)
+    assert _sent(codex_log, "thread/resume") == []
+    assert len(_sent(codex_log, "thread/start")) == 2
+    sent = _sent(codex_log, "turn/start")[-1]["input"][0]["text"]
+    assert "## Tests first" in sent and "Board misses a story" in sent
