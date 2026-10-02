@@ -2,14 +2,22 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "75c7212908cda6bd89628de4b16fc759d0d4b96f6ad0df1799888d7dab2c1d23",
-    "commit": "d1134540402707334b0599524e93b5df9de59593",
+    "changed": "ae84de6f9a057edc6ea37f7c49995a3c4933f94d048927791d0c9bda98df8433",
+    "commit": "f8b37a38f554e7cd4c1c69f3210b7ed050454ccf",
     "dismissals": [],
-    "findings": [],
-    "status": "clean",
-    "tree": "bbe08b199dc1a744b3e87cc61776d666ecfb7c56f124922f7b79d3375fc25603"
+    "findings": [
+      {
+        "body": "After a refused commit leaves a locked `forge-files` worktree, the next run correctly reports it stale and creates `forge-files-2`. On the following run, this early return drops the stale rows already collected and stops checking remaining worktrees. The locked folder and branch still exist, but their required cleanup row disappears. Item 4 requires a row for each stale doctor fix. Scan all doctor fixes and retain their stale rows when returning the current fix. The locked-worktree test ends after creating the replacement (`tests/test_doctor_fix_files.py:353-359`), so it misses this subsequent-run defect.",
+        "file": "src/forge/doctor.py",
+        "line": 234,
+        "priority": "P1",
+        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
+      }
+    ],
+    "status": "blocked",
+    "tree": "e55b7c7ccdd80f8d992d660151880df732aa23ccdd49a05986abccb690ed3df5"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T15:17:01+00:00",
@@ -37,6 +45,10 @@
     },
     {
       "at": "2026-10-02T14:01:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T17:38:31+00:00",
       "step": "review"
     }
   ]
