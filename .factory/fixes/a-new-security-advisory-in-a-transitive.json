@@ -5,20 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "bf00ac622459681fd15af47a262a04be20c3f3be7d6f5a75a55b602aa2ea3a49",
-    "commit": "74acb9df1b3a2eaf8abc24ec0406a35c616cd87c",
+    "changed": "89c249683cf14c5b8f7f0eff428496370a14c00a6e33440119d70ed3483d79d3",
+    "commit": "9cd637004e3732e37be9c6a45ad5647c8ac54df4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new evidence beyond the slug ruling is `src/forge/task.py:238\u2013240`: `forge fix start` appends a number whenever that name already exists or has merged. `_merged` checks the retained state file on the default branch (`src/forge/task.py:190\u2013192`), so the next weekly refresh becomes `fix/refresh-dependencies-2`, even after normal merge cleanup. This guard recognizes only `fix/refresh-dependencies`; consequently, every subsequent `forge next` continues offering another refresh while the numbered refresh is already running. Since the skill instructs the agent to start ready items, this creates duplicate workers changing the same dependencies. Recognize numbered refresh worktrees too, and extend the command-level test to cover a refresh after a previous one has merged.",
+        "body": "New evidence beyond the coordinator's age ruling is the inclusion of `.factory/fixes/refresh-dependencies*.json` in this git-log pathspec. A record-only merge resets the seven-day clock even though no lockfile or Dockerfile changed. The new command-level test demonstrates this: dependencies dated September 1 are suppressed on September 12 solely because a fix record merged on September 11 (tests/test_forge_next_offers_a_dependency_refresh.py:95\u201398). This contradicts Done-when and the ruling that age is the newest change to any lockfile or Dockerfile. Remove fix records from the age calculation and correct that test while retaining the numbered-worktree suppression.",
         "file": "src/forge/nextstep.py",
-        "line": 245,
+        "line": 257,
         "priority": "P1",
-        "title": "Not done: suppress duplicate refresh offers after the first refresh merges"
+        "title": "Not done: derive refresh age only from lockfile and Dockerfile changes"
       }
     ],
     "status": "blocked",
-    "tree": "f0a6621bbb2212a16775e71963d219009f85b69952af1e73bd4df1fc0f8efce5"
+    "tree": "dff86affa97c979ad936a40856ee227cbac84fb1f8a00dd75aa8fc77b78876fc"
   },
   "status": "fixing",
   "steps": [
@@ -28,6 +28,10 @@
     },
     {
       "at": "2026-10-01T22:36:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T01:21:05+00:00",
       "step": "review"
     }
   ],
