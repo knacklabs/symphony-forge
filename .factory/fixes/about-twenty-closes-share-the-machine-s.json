@@ -3,7 +3,7 @@
   "branch": "fix/about-twenty-closes-share-the-machine-s",
   "done_when": "forge close's test runs on one machine go strictly in the order they started waiting (first come, first served), and a waiting close prints its place in line when it starts waiting and each time the place changes, as one plain line such as 'Waiting for 3 other closes' test runs on this machine.' A close that dies leaves no stale place. A command-level test starts three waiting closes behind a held run and shows they run in arrival order and print their places.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T18:58:11+00:00",
