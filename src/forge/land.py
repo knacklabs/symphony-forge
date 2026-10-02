@@ -53,6 +53,7 @@ def land(args: argparse.Namespace) -> int:
                 if red and _rerun(top, item, branch):
                     continue
                 what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
+                        else "the failing tests" if error.entry is close.REFUSALS["tests_failed"]
                         else "the failing checks" if red and worker._failing(branch) else "")
                 if not what:
                     raise
