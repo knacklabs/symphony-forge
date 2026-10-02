@@ -2,12 +2,12 @@
   "branch": "task/FORGE-UPGRADECMD-1-UPGRADE",
   "review": {
     "blocking_level": "P1",
-    "changed": "1d29bc4cb9a0ab4327a64e48d981e4d5ab61142c0a9f54959806f18cc31dc434",
-    "commit": "a126bfb9d2e4c059b8932c5f207663e8a0069aa5",
+    "changed": "29bf4f83484e7e236bf161ef57437e3428aeebb3de1953c7a7be520ff6579a6d",
+    "commit": "106ad0b404bc5e0865b35db2d2f3f63da9c8a2d6",
     "dismissals": [],
     "findings": [
       {
-        "body": "A repo pinned to `v1.3.0-rc.1` cannot run `forge upgrade v1.3.0`: `_numbers` discards the prerelease suffix, so line 79 treats both versions as equal and refuses. Prerelease pins are accepted by `src/forge/repo.py:142` and its validation at line 286, and the corresponding stable release is newer under [semantic-version precedence](https://semver.org/#spec-item-11). Preserve that distinction when comparing the requested stable release with the existing pin.",
+        "body": "A repo pinned to `v1.3.0-rc.1` still cannot run `forge upgrade v1.3.0`: `_numbers` discards the prerelease suffix, so the comparison at line 79 treats both releases as equal and refuses. Such pins are accepted by `src/forge/repo.py:142` and validated at line 286, while [semantic-version precedence](https://semver.org/#spec-item-11) makes the stable release newer. Preserve that distinction when comparing the requested release with the fetched pin. This previously reported issue remains unresolved.",
         "file": "src/forge/upgrade.py",
         "line": 183,
         "priority": "P2",
@@ -15,7 +15,7 @@
       }
     ],
     "status": "clean",
-    "tree": "31c4e9dbb503f070700a00b91e6864e899692c7cf4b9fa4a1d630bfc96707969"
+    "tree": "f706ce20dc0f240620b40d81eedadd6d7fc042a2a6f6bdeb2bc397567c0120fc"
   },
   "status": "waiting for checks",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-10-02T21:23:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T23:54:32+00:00",
       "step": "review"
     }
   ]
