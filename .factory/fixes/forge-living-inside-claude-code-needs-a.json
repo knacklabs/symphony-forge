@@ -1,0 +1,27 @@
+{
+  "base": "3eb14a9236e96fba1376fc87f7be9c2d39d8eb90",
+  "branch": "fix/forge-living-inside-claude-code-needs-a",
+  "done_when": "plans/roadmap.json lists FORGE-MOD-1 as pending, after FORGE-SPOTTED-1",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "3aee3c701413a56c2a22b4a334509ccf270cd66baf23edc770e3a9030bcad6ba",
+    "commit": "d5524125d50add187aaf8f95d626221644b2c021",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "940cad10080709157d00cd8b9018f91a1174b588d2abcd253f5a624a29b2fcb4"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T19:00:36+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T22:30:56+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge living inside Claude Code needs a roadmap entry for its story"
+}
