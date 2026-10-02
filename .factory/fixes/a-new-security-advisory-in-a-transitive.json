@@ -5,22 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "89c249683cf14c5b8f7f0eff428496370a14c00a6e33440119d70ed3483d79d3",
-    "commit": "9cd637004e3732e37be9c6a45ad5647c8ac54df4",
+    "changed": "d5d02dfb39170d1598c1819cc78bcd0fc8d6447d6c5a707549c4205a0df145fd",
+    "commit": "2c4ab6e5af26730e6569b0908858c9b15cb8212f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "New evidence beyond the coordinator's age ruling is the inclusion of `.factory/fixes/refresh-dependencies*.json` in this git-log pathspec. A record-only merge resets the seven-day clock even though no lockfile or Dockerfile changed. The new command-level test demonstrates this: dependencies dated September 1 are suppressed on September 12 solely because a fix record merged on September 11 (tests/test_forge_next_offers_a_dependency_refresh.py:95\u201398). This contradicts Done-when and the ruling that age is the newest change to any lockfile or Dockerfile. Remove fix records from the age calculation and correct that test while retaining the numbered-worktree suppression.",
-        "file": "src/forge/nextstep.py",
-        "line": 257,
-        "priority": "P1",
-        "title": "Not done: derive refresh age only from lockfile and Dockerfile changes"
-      }
-    ],
-    "status": "blocked",
-    "tree": "dff86affa97c979ad936a40856ee227cbac84fb1f8a00dd75aa8fc77b78876fc"
+    "findings": [],
+    "status": "clean",
+    "tree": "976d8b0e1f15058395da0b4973b0bde5996b299b8a7b43682c4977d64000ff50"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T17:03:07+00:00",
@@ -32,6 +24,10 @@
     },
     {
       "at": "2026-10-02T01:21:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T06:31:37+00:00",
       "step": "review"
     }
   ],
