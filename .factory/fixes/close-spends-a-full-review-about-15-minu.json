@@ -1,0 +1,36 @@
+{
+  "allow_large": "Four code files plus tests; the owner decided on 2026-10-01 that tests don't count toward the fix limit (the installed release still counts them)",
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/close-spends-a-full-review-about-15-minu",
+  "done_when": "forge close merges the default branch first and stops with the conflict before taking the machine's test lock or starting a review; and when the test command fails, close stops before the review, records the failing output for the next worker round, and says so in one line, instead of running a review that reports the same failure. Command-level tests: a conflicting merge stops before any test run or review, and a failing test command stops before the review with its output kept for the worker.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "5e8d1a51e6cd9bf6f151b07936707fa15140637bc72913a70af4dddb28d46aaa",
+    "commit": "44e5da13436c8734a3330b6a4fb9b1875aedabd4",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "e611dae8575cb63b50282cea7ee6be699d23774216c99a0e142c6c382030d949"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T06:23:35+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T10:17:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:51:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T18:41:14+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close spends a full review (about 15 minutes) on a change whose test command already failed, and re-closes queue for the test lock before finding a merge conflict with the default branch"
+}

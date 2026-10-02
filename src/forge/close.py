@@ -43,6 +43,8 @@ REFUSALS = {
                        "so it can't tell whether the {kind}'s files are what {pinned} writes.",
                        "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
                        "then forge close {item}"),
+    "tests_failed": ("`{command}` failed on this machine, so close stopped before the review; the "
+                     "next worker round gets its output.", "forge work {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
 }
@@ -81,12 +83,20 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
+        # read after the merge, which may change the command
+        command = repo.config(top)["test"]
+        failed, tested = review.test_run(top, command, f"origin/{default}")
+        if failed:  # a review would only report the same failure
+            state.update(tests=tested, status="fixing")
+            _save(top, item, state, f"Tests of {item} failed")
+            repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
+        state.pop("tests", None)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
             result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                light=light)
+                                light=light, tested=tested)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 number = dismissal["finding"]
