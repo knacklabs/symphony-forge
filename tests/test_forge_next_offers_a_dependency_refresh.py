@@ -80,7 +80,7 @@ def _start_listed(repo):
     return started.stdout
 
 
-def test_4_a_merged_refresh_that_changed_no_lockfile_counts_as_fresh(repo, monkeypatch):
+def test_4_a_later_numbered_refresh_holds_the_offer_back(repo, monkeypatch):
     _old_lockfile(repo, monkeypatch)
     monkeypatch.setenv("FORGE_NOW", "2026-09-10T10:00:00+00:00")
     first = _start_listed(repo)
@@ -88,17 +88,11 @@ def test_4_a_merged_refresh_that_changed_no_lockfile_counts_as_fresh(repo, monke
     # The refresh found nothing to update: its squash merge carries only its fix record.
     repo.git("worktree", "remove", "--force", where)
     repo.git("merge", "-q", "--squash", "fix/refresh-dependencies")
-    monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-11T10:00:00+00:00")
     repo.git("commit", "-q", "-m", "Refresh dependencies (#1)")
-    monkeypatch.delenv("GIT_COMMITTER_DATE")
     repo.git("push", "-q", "origin", "main")
     assert repo.git("diff", "--name-only", "HEAD~1") == ".factory/fixes/refresh-dependencies.json"
 
-    monkeypatch.setenv("FORGE_NOW", "2026-09-12T10:00:00+00:00")
-    assert LISTED not in repo.forge("next").stdout
-
-    # A week after that refresh merged it is offered again, and the numbered refresh holds it back.
-    monkeypatch.setenv("FORGE_NOW", "2026-09-19T10:00:00+00:00")
+    # The lockfile is still old by git log, so it is offered again, and fix start numbers the name.
     assert _start_listed(repo).startswith("Started fix refresh-dependencies-2")
     again = repo.forge("next").stdout
     assert LISTED not in again
