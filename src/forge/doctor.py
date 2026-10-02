@@ -214,40 +214,40 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
     the branch."""
     ref, default = story.landed_ref(top), repo.default_branch(top)
-    rows = []
-    for branch, path in story.worktrees(top).items():
+    # Doctor keeps at most one fix of its own: a branch of it, current, stale or locked, stops it.
+    trees = story.worktrees(top)
+    for branch in repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads/fix/",
+                           cwd=top).splitlines():
         name = branch.removeprefix("fix/")
-        if not branch.startswith("fix/") or not repo.ITEM.fullmatch(name):
+        if not repo.ITEM.fullmatch(name):
             continue
-        try:
-            state = repo.read_state(name, path) or {}
-        except repo.Refused:
-            continue
+        state = story.json_of(story.show(top, branch, repo.state_path(name)))
         if state.get("why") != WHY or story.show(top, ref, repo.state_path(name)) is not None:
             continue
+        path = trees.get(branch)
         there = lambda *args: repo.run("git", *args, cwd=path)  # noqa: E731
-        if (there("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0
-                and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
-                and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
-                and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
+        if path and (there("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0
+                     and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
+                     and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
+                     and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
             # The files the fix held back still differ there; each keeps its row.
             return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
                      f"forge close {name}"),
                     *_split(top, path, cfg, sync.files(path, repo.config(path)), ref)[1]]
-        # Its forge.toml, and so sync's files, may be out of date, or it lacks its files commit.
-        rows.append((f"Doctor's fix {name} is behind {default}, so doctor started a new one.",
-                     f"close its pull request if it has one, then git worktree remove --force "
-                     f"{path} and git branch -D {branch}"))
+        remove = (f"git worktree remove --force --force {path} and " if path else "")
+        return [(f"Doctor's fix {name} is left over from an earlier run, so doctor started no new "
+                 "one.", f"finish it with forge close {name}, or remove it with {remove}git branch "
+                 f"-D {branch}, then {REPAIR}")]
     # A clean checkout at the default branch's latest commit would make the same fix: none.
     heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
     free, held, _ = _split(top, top, cfg, wanted, ref)
     if (len(set(heads)) == 1 and not free
             and not repo.git("status", "--porcelain", "--untracked-files=all", "--", *wanted, cwd=top)):
-        return [*rows, *held]
+        return held
     # The fix inherits the default branch's pin; only that Forge may write its files.
     newer = repo._pin(story.show(top, ref, "forge.toml") or "")  # pyright: ignore[reportPrivateUsage]
     if newer != __version__:
-        return [*rows, (f"{default} now pins Forge v{newer}, not the installed v{__version__}, so "
+        return [(f"{default} now pins Forge v{newer}, not the installed v{__version__}, so "
                         "doctor started no fix for Forge's files.",
                         f"git pull --ff-only, then {REPAIR}"), *_rows(free), *held]
     # forge fix start's naming rule, with doctor's slug.
@@ -269,7 +269,7 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
         fixed_wanted = sync.files(path, fixed)
         if linked := _linked(path, fixed_wanted):
             _drop(top, path, branch)
-            return [*rows, *linked]
+            return linked
         free, held, keep = _split(top, path, cfg, fixed_wanted, ref)
         if free:  # forge sync's own write, so deletions and links behave exactly as there
             free = sync.write(path, fixed, keep)
@@ -278,14 +278,14 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
         # Only a branch this run made is removed; the next run starts over.
         kept = branch in story.worktrees(top) and not _drop(top, path, branch)
-        return [*rows, (f"Doctor couldn't bring Forge's files up to date in fix {name}: "
+        return [(f"Doctor couldn't bring Forge's files up to date in fix {name}: "
                         f"{_said(failed)}" + (f" Its folder {path} is still there." if kept else ""),
                         REPAIR), *held]
     if not free:
         _drop(top, path, branch)
-        return [*rows, *held]
+        return held
     print(f"- Fixed: wrote {len(free)} of Forge's files in fix {name}.")
-    return [*rows, (f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
+    return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
                     f"forge close {name}"), *held]
 
 

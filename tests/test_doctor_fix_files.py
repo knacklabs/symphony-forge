@@ -260,7 +260,16 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude)
     assert "- Fixed:" not in again.stdout and "CLAUDE.md" not in again.stdout, again.stdout
 
 
-def _a_stale_doctor_fix_is_left_alone_and_a_new_one_starts(repo, gh, tmp_path, monkeypatch,
+def _left_over(name: str, path: Path | None) -> str:
+    remove = f"git worktree remove --force --force {path} and " if path else ""
+    return _row(f"Doctor's fix {name} is left over from an earlier run, so doctor started no new "
+                "one.", f"finish it with forge close {name}, or remove it with {remove}git branch -D "
+                f"fix/{name}, then forge doctor --fix")
+
+
+# Was: a stale doctor fix got a row and a new fix, forge-files-2, beside it. Now doctor keeps at
+# most one fix of its own: a stale one gets one plain step and nothing new starts.
+def _a_stale_doctor_fix_gets_one_step_and_nothing_new_starts(repo, gh, tmp_path, monkeypatch,
                                                            change):
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
@@ -278,15 +287,9 @@ def _a_stale_doctor_fix_is_left_alone_and_a_new_one_starts(repo, gh, tmp_path, m
     before = _status(repo, old)
 
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert _row("Doctor's fix forge-files is behind main, so doctor started a new one.",
-                f"close its pull request if it has one, then git worktree remove --force {old} "
-                "and git branch -D fix/forge-files") in done.stdout, done.stdout
+    assert _left_over("forge-files", old) in done.stdout, done.stdout
     assert _status(repo, old) == before  # nothing changed there
-    assert "- Fixed: wrote " in done.stdout and "in fix forge-files-2.\n" in done.stdout
-    assert "Doctor's fix forge-files-2 holds Forge's files" in done.stdout
-    if change != "its forge.toml was edited":
-        assert 'run: "make check"' in repo.git("show", "fix/forge-files-2:.github/workflows/forge.yml",
-                                                cwd=client)
+    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files"]
 
 
 def _nothing_differing_leaves_no_fix_behind(repo, gh, tmp_path, monkeypatch, _):
@@ -350,13 +353,15 @@ def _a_commit_a_git_hook_refuses_leaves_no_fix(repo, gh, tmp_path, monkeypatch, 
     assert "Doctor's fix forge-files holds" not in done.stdout and done.returncode == 1
 
     hook.unlink()
+    if locked:  # the locked leftover gets its step on this run and every later one
+        for _ in range(2):
+            again = repo.forge("doctor", "--fix", cwd=client)
+            assert _left_over("forge-files", folder) in again.stdout, again.stdout
+            assert "- Fixed: wrote" not in again.stdout and _fixes(repo, client) == ["fix/forge-files"]
+        return
     again = repo.forge("doctor", "--fix", cwd=client)
-    name = "forge-files-2" if locked else "forge-files"
-    assert f"- Fixed: wrote 2 of Forge's files in fix {name}.\n" in again.stdout, again.stdout
-    if locked:
-        assert (f"- Doctor's fix forge-files is behind main, so doctor started a new one.\n"
-                in again.stdout)
-    assert _in(repo, client, f"fix/{name}") == sorted([HOOKS, SETTINGS, STATE.format(name)])
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in again.stdout, again.stdout
+    assert _in(repo, client, "fix/forge-files") == sorted([HOOKS, SETTINGS, STATE.format("forge-files")])
 
 
 def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
@@ -649,7 +654,7 @@ def _cases(*cases) -> list:
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_gets_a_suffix, [None], ()),
     (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
-    (_a_stale_doctor_fix_is_left_alone_and_a_new_one_starts,
+    (_a_stale_doctor_fix_gets_one_step_and_nothing_new_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
