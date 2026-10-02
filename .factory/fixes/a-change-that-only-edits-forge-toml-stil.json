@@ -3,7 +3,7 @@
   "branch": "fix/a-change-that-only-edits-forge-toml-stil",
   "done_when": "forge close skips the test run, as it does for docs-only changes, when the change touches only forge.toml, docs, plans, Markdown or Forge's records, and says so in one line naming the command it did not run. A command-level test closes a forge.toml-only change without running the test command.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T18:58:11+00:00",
