@@ -78,7 +78,9 @@ def _no_test_command(env):
 
 
 def _no_passed_record(env):
-    _red_then_green(env, 'merge = "agent"\ntest = "exit 1"\n')
+    # An untracked file could change the result, so close's passing run records nothing.
+    where = _red_then_green(env)
+    (where / "notes.txt").write_text("draft\n", "utf-8")
     _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
     _fix_round(env, _land(env))
 
