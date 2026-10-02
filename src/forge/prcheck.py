@@ -6,7 +6,6 @@ read through git and never run, imported or checked out.
 from __future__ import annotations
 
 import argparse
-import importlib
 import json
 import re
 from fnmatch import fnmatch
@@ -161,14 +160,9 @@ def pr_check(args: argparse.Namespace) -> int:
         problem = "" if state.get("allow_large") else promote_problem(changed, cfg["interfaces"])
         if problem:
             repo.refuse(REFUSALS["promote"], branch=branch, problem=problem, fix=item)
-    try:
-        story = importlib.import_module("forge.story")
-    except ModuleNotFoundError as exc:
-        if exc.name != "forge.story":
-            raise
-        # ponytail: STORY builds story.py in parallel; its story-doc checks run once it lands.
-        story = None
-    doc_problem = story.check_pr_docs(top, head, changed) if story else None
+    from forge import story
+
+    doc_problem = story.check_pr_docs(top, head, changed)
     if doc_problem:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     _check_specs(top, head, changed)
@@ -191,13 +185,13 @@ def pr_check(args: argparse.Namespace) -> int:
 def _check_specs(top: Path, head: str, changed: list[str]) -> None:
     """Refuse an unconfirmed spec at head whose latest round of cold read had findings or which
     changed after it. A draft with no cold read yet, and a confirmed spec, keep today's rules."""
-    from forge import records, story
+    from forge import story
 
     for path in dict.fromkeys(re.sub(r"\.read\.md$", ".md", path) for path in changed):
         slug = re.fullmatch(r"docs/specs/([a-z0-9]+(?:-[a-z0-9]+)*)\.md", path)
         text = story.show(top, head, path) if slug else None
         notes = story.show(top, head, f"docs/specs/{slug[1]}.read.md") if text is not None else None
-        if notes is not None and records._front(text)[0].get("status") != "confirmed":
+        if notes is not None and story._record(text)[0].get("status") != "confirmed":
             story.gate(slug[1], path, notes, repo.git("rev-parse", f"{head}:{path}", cwd=top))
 
 
@@ -226,6 +220,8 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
     """The task or fix whose state at head names this branch."""
     # ponytail: reads every task and fix state at the head, one git call each; batch them
     # (git cat-file --batch) when a repo holds thousands.
+    from forge import story
+
     listing = repo.git("ls-tree", "-r", "-z", "--name-only", head, "--", ".factory/stories",
                        ".factory/fixes", cwd=top)
     for path in listing.split("\0"):
@@ -233,11 +229,8 @@ def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
                              path)
         if not match:
             continue
-        try:
-            state = json.loads(repo.git("show", f"{head}:{path}", cwd=top))
-        except ValueError:
-            continue
-        if isinstance(state, dict) and state.get("branch") == branch:
+        state = story.json_of(story.show(top, head, path))
+        if state.get("branch") == branch:
             return (f"{match[1]}/{match[2]}" if match[1] else match[3]), state
     repo.refuse(REFUSALS["not_started"], branch=branch)
 

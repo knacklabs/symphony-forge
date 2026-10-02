@@ -8,6 +8,7 @@ from pathlib import Path
 
 import conftest
 import pytest
+from test_setup import ROLE_FILES
 
 STORY = "FORGE-SPLIT-1"
 
@@ -30,7 +31,7 @@ SOURCES = {
 # the same repo in the same run, so a generator change is checked but needs no test edit.
 GENERATED = {"plain": {".gitattributes", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
-                       "git-hook/pre-push"}}
+                       "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
 # Asks the checkout's forge, in its own process, what sync should write for this repo.
 EXPECTED = """

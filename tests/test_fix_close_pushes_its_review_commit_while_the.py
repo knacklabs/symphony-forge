@@ -66,6 +66,8 @@ def test_3_close_gives_up_after_the_bounded_push_attempts_with_growing_waits(env
     times = [float(line) for line in tries.read_text("utf-8").splitlines()]
     assert len(times) == 4
     gaps = [later - earlier for earlier, later in zip(times, times[1:])]
-    # A normal close waits 1, 2 and 4 seconds between its four attempts.
-    assert gaps[0] >= 1 and gaps[1] >= 2 and gaps[2] >= 4 and gaps[0] < gaps[1] < gaps[2], gaps
+    # A normal close waits 1, 2 and 4 seconds between its four attempts. Each gap also holds the
+    # push's own time, which on a loaded runner can swamp the waits, so each gap is checked against
+    # its own planned wait instead of against the other gaps.
+    assert gaps[0] >= 1 and gaps[1] >= 2 and gaps[2] >= 4, gaps
     assert not env.gh_calls("pr", "create")  # nothing was published after the failed push

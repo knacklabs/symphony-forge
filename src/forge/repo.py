@@ -48,15 +48,16 @@ REFUSALS = {
 class Refused(Exception):
     """A refusal: the problem in one sentence, then the next command."""
 
-    def __init__(self, problem: str, next_step: str, code: int = 1):
+    def __init__(self, problem: str, next_step: str, code: int = 1,
+                 entry: tuple[str, str] | None = None):  # the REFUSALS entry refuse() raised
         super().__init__(f"{problem}\nNext: {next_step}")
-        self.code = code
+        self.code, self.entry = code, entry
 
 
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code)
+    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------
@@ -224,15 +225,15 @@ def ready_path(item: str, top: Path) -> Path:
     return forge_dir(top) / "ready" / f"{item}.json"
 
 
-def models(cfg: dict[str, Any], kind: str, family: str = "") -> dict[str, str]:
-    """One kind's models from forge.toml's [models] table, the family's entry for the grill kind;
-    refused when the table lacks it."""
-    chosen = cfg["models"].get(kind)
-    if kind == "grill":
-        kind, chosen = f"grill.{family}", (chosen or {}).get(family)
-    if chosen is None:
-        refuse(REFUSALS["models"], problem=f"it has no [models.{kind}], which this work uses")
-    return chosen
+def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
+    """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
+    own entry, or a single entry whose model is that family's; {} when the kind has none for it."""
+    chosen = cfg["models"].get(kind) or {}
+    if "model" not in chosen:
+        return chosen.get(family) or {}
+    # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
+    # when another Codex model family arrives.
+    return chosen if chosen["model"].startswith("gpt") == (family == "codex") else {}
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:
@@ -248,13 +249,13 @@ def _models_problem(table: Any) -> str:
             return f"{kind} is not a kind of work; the kinds are {', '.join(KINDS[:-1])} and {KINDS[-1]}"
         if not isinstance(chosen, dict):
             return f"models.{kind} must be a table"
-        wrong = [key for key in chosen if key not in FAMILIES] if kind in ("grill", "design") else []
+        per_family = kind in ("grill", "design") or any(family in chosen for family in FAMILIES)
+        wrong = [key for key in chosen if key not in FAMILIES] if per_family else []
         if wrong:
             return (f"models.{kind} has one entry per family, codex and claude, "
                     f"so it can't set {wrong[0]}")
         entries = ({f"{kind}.{family}": entry for family, entry in chosen.items()}
-                   if kind in ("grill", "design")
-                   else {kind: chosen})
+                   if per_family else {kind: chosen})
         for name, entry in entries.items():
             if not isinstance(entry, dict):
                 return f"models.{name} must be a table"
