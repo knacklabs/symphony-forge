@@ -13,41 +13,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "231ff6e076d5f5fdcc14c32c671d09023c3bbd91fc3eee19bbc75647b4944d67",
-    "commit": "29cc52b031b2eab9f225c9466e216170b6a28b77",
+    "changed": "6edae123546bec28287ad91de8f9f94fbbfc23a1149d730fcb277621f31a57bd",
+    "commit": "676fc6ca585d57a0c1a9d1694c007a8e9a4d1765",
     "dismissals": [],
     "findings": [
       {
-        "body": "With `workers = \"claude\"`, a user-facing item still enters the automatic Codex fallback when Claude is missing or fails without changing files. The fallback at `src/forge/worker.py:150\u2013175` launches Codex despite the explicit Claude setting. This contradicts \u201ceverything on Claude\u201d and means the owner cannot enforce the worker choice in forge.toml. Restrict fallback appropriately and cover the explicit Claude setting with a command-level failure test.",
-        "file": "src/forge/worker.py",
-        "line": 143,
-        "priority": "P1",
-        "title": "Not done: forge.toml's workers takes codex, claude or split with explicit routing, visibility and fresh sessions"
-      },
-      {
-        "body": "`top` is the caller's checkout, but a ready task inherits forge.toml from its starting branch. `src/forge/task.py:143` selects the remote default branch or story branch, and lines 188 and 116 create the checkout from that base. For example, after changing PAGE's workers to Claude, running forge next from PAGE labels ready HELP as Claude even though HELP starts from a Codex-configured default branch. Resolve the configuration from the same base as task start. The new next test changes only the caller's uncommitted configuration, so it does not catch this mismatch.",
+        "body": "The configuration lookup misses a task-start rule: `src/forge/task.py:184\u2013185` forces the starting base to the default branch whenever the task has a cross-story dependency. If SHOP's plan has not landed, story/SHOP specifies Claude, and the default branch specifies Codex, a ready SHOP task depending on TURN-1/T4 is labeled Claude here but actually starts with Codex settings. This is new evidence beyond the previous caller-checkout finding: the cross-story base override remains unaccounted for. Select the configuration per ready task using that override and cover differing branch settings through the commands.",
         "file": "src/forge/nextstep.py",
-        "line": 336,
+        "line": 366,
         "priority": "P1",
-        "title": "Not done: forge next names the worker that will actually build each ready task"
+        "title": "Not done: forge next names the actual worker for tasks depending on another story"
       },
       {
-        "body": "When the selected family has no Build/Fix/Lite model entry, this prints `(its own settings)` instead of the required model and effort. This occurs with an ordinary newly initialized repository after changing only workers to Claude: `src/forge/init.py:63\u201375` writes GPT-only entries, and `src/forge/repo.py:238` returns an empty selection for Claude. Resolve and report the effective model and effort, and test switching the initialized configuration through the real work command.",
+        "body": "This records Codex as the last worker before its new conversation exists. After successful Codex and Claude rounds, switch back to Codex and let app-server startup time out: `src/forge/codex_turn.py:106\u2013120` implements this refusal before creating a thread. The old Codex conversation remains recorded because its replacement is written only at `src/forge/codex.py:350\u2013363`. On retry, `last == family` now permits resuming that older conversation with the short brief, despite the intervening Claude round. Preserve the need for a fresh conversation until the replacement is recorded.",
         "file": "src/forge/worker.py",
-        "line": 94,
-        "priority": "P1",
-        "title": "Not done: the launch line names the model and effort when using worker defaults"
-      },
-      {
-        "body": "The switch guard applies only to the primary Codex launch. The fallback at `src/forge/worker.py:166\u2013174` calls codex.conversation whenever `later` is true and can resume an older Codex conversation with the short prompt. After a Codex round, a successful split-mode Claude round, and then a clean Claude failure, the next round returns to that old Codex session instead of starting fresh with the whole brief and latest findings. Apply the family-switch check when choosing the fallback conversation and add a command-level regression for this sequence.",
-        "file": "src/forge/worker.py",
-        "line": 107,
-        "priority": "P1",
-        "title": "Not done: a fallback family switch starts a fresh session with the whole brief"
+        "line": 134,
+        "priority": "P2",
+        "title": "Preserve the family-switch guard when Codex fails before creating a conversation"
       }
     ],
     "status": "blocked",
-    "tree": "c5b9ce95c9deede067a22955f8980f5cb7494a2b476531da1caef5e280c00fe6"
+    "tree": "2629aa810e0891ec3e56136fb40b0066dc9311fcc0d7f84e0404854b96f7dc01"
   },
   "status": "fixing",
   "steps": [
@@ -61,6 +47,10 @@
     },
     {
       "at": "2026-10-02T14:11:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T18:14:50+00:00",
       "step": "review"
     }
   ],
