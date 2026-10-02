@@ -425,6 +425,9 @@ reviews show them only as counts of changed lines.
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
 close skips forge.toml's test command and says so; the review and every named check still run.
+Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+test command fails, close stops before the review and keeps the output for the worker: run
+`forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it

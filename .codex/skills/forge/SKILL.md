@@ -287,6 +287,19 @@ repo, rewritten by that version.
 
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
+## Refresh dependencies
+
+When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
+lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
+fix's folder:
+
+1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
+   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `go get -u=patch ./... && go mod tidy`); never raise a range.
+2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
+   same tag, and rebuild the image.
+3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
@@ -366,6 +379,11 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+When a round ends with changes left uncommitted, `forge work` continues the same conversation
+once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
+what is committed, so look at them before closing.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
@@ -407,6 +425,9 @@ reviews show them only as counts of changed lines.
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
 close skips forge.toml's test command and says so; the review and every named check still run.
+Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+test command fails, close stops before the review and keeps the output for the worker: run
+`forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
