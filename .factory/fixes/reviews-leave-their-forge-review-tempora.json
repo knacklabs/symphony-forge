@@ -3,11 +3,32 @@
   "branch": "fix/reviews-leave-their-forge-review-tempora",
   "done_when": "Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is interrupted (Ctrl-C or the process killed and run again) or the worktree removal fails; and each review first deletes forge-review-* folders older than a day that no running review owns. A command-level test interrupts a review and shows its folder is gone afterwards, and another shows an old leftover folder is removed by the next review.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "40fb0e27d106112f1649662238c265e7260b1035ddafffc5cbb7eec2758ab695",
+    "commit": "484cc9778f3e958b7fa47211aea2a5b2d1814ecb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Concurrent review startup can lose ownership protection. Review A creates its lock at line 449 but has not yet locked it. Review B opens that lock, acquires it, and closes the handle at line 438, releasing it before deletion. A can then acquire the lock and create its review folder; B subsequently deletes that active folder at line 441. Alternatively, B unlinks the lock before A creates the folder, leaving A holding an unlinked lock; if A is killed, the next review leaves its fresh folder behind until it ages past a day. Synchronize lock publication with collection, retain the collector's lock through deletion, and handle failed ownership acquisition. The command-level tests do not exercise concurrent ownership, so they miss this acceptance-criterion failure.",
+        "file": "src/forge/review.py",
+        "line": 441,
+        "priority": "P1",
+        "title": "Not done: Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is"
+      }
+    ],
+    "status": "blocked",
+    "tree": "a56dbe596a15a232b4872b39cfd301e27b81cb66eeae476523407b15a2beac73"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T02:36:51+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T03:59:14+00:00",
+      "step": "review"
     }
   ],
   "why": "Reviews leave their forge-review-* temporary checkouts behind in the system temp folder (304 found on 2026-10-02, part of what filled the disk), because a review that is interrupted or whose worktree removal fails never deletes its folder"
