@@ -3,7 +3,7 @@
   "branch": "fix/reviews-leave-their-forge-review-tempora",
   "done_when": "Every review removes its forge-review-* folder and the git worktree registration it created, including when the review fails, is interrupted (Ctrl-C or the process killed and run again) or the worktree removal fails; and each review first deletes forge-review-* folders older than a day that no running review owns. A command-level test interrupts a review and shows its folder is gone afterwards, and another shows an old leftover folder is removed by the next review.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T02:36:51+00:00",
