@@ -62,7 +62,7 @@ def _parse(raw: bytes) -> list[dict[str, Any]]:
         wrong = [name for name, right in (
             ("kind", entry["kind"] in KINDS),
             ("path", _path(entry["path"])),
-            ("text", entry["text"] == " ".join(entry["text"].split())),
+            ("text", entry["text"] != "" and entry["text"] == " ".join(entry["text"].split())),
             ("from", entry["from"] in SOURCES),
             ("item", bool(item and (item["task"] or item["fix"]))),
             ("status", entry["status"] in STATUSES),

@@ -192,6 +192,7 @@ def _every_unreadable_list_is_refused(env):
             (_malformed(path="/etc/app.py"), "entry 1 has a wrong path"),
             (_malformed(path="../app.py"), "entry 1 has a wrong path"),
             (_malformed(text=" Totals  skip refunds."), "entry 1 has a wrong text"),
+            (_malformed(text=""), "entry 1 has a wrong text"),
             (_malformed(key="bug\tapp.py\tSomething else"), "entry 1 has a wrong key")):
         (where / LIST).parent.mkdir(exist_ok=True)
         (where / LIST).write_bytes(raw)
