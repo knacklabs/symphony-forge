@@ -93,7 +93,7 @@ class Repo:
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+        patient(lambda: path.write_text(text, encoding="utf-8"))
         return path
 
 
@@ -105,14 +105,15 @@ class StubGh:
 
     def respond(self, *args: str, stdout: str = "", stderr: str = "", exit: int = 0) -> None:
         """Answer any call starting with args. The newest matching response wins."""
-        rules = json.loads(self.responses.read_text("utf-8")) if self.responses.exists() else []
+        rules = patient(lambda: json.loads(self.responses.read_text("utf-8"))
+                        if self.responses.exists() else [])
         rules.append({"args": list(args), "stdout": stdout, "stderr": stderr, "exit": exit})
-        self.responses.write_text(json.dumps(rules), encoding="utf-8")
+        patient(lambda: self.responses.write_text(json.dumps(rules), encoding="utf-8"))
 
     def calls(self) -> list[list[str]]:
         if not self.log.exists():
             return []
-        return [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
+        return [json.loads(line) for line in patient(lambda: self.log.read_text("utf-8")).splitlines()]
 
 
 @pytest.fixture(autouse=True)

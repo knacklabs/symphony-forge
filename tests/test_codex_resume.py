@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_record import _crash, _down, _save, _saved
 from test_codex_worker import (NOW, SOL, _codex_repo, _lines, _sent, _stub, _toml,  # noqa: F401
                                sdk_data)
@@ -248,7 +248,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     text = _sent(calls, "turn/start")[-2]["input"][0]["text"]  # the last one is the commit nudge
     assert "big line" not in text
     assert "big.txt" in text and "web/new.py" in text and "README.md" in text
-    (folder / "big.txt").unlink()
+    patient((folder / "big.txt").unlink)
 
     # Forge starts fresh, and says why, when it can't continue the conversation.
     record = turns.with_suffix(".json")
@@ -270,7 +270,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why
 
     # It isn't recorded here.
-    record.unlink()
+    patient(record.unlink)
     fresh("Forge has no record of its conversation on this machine")
     # Codex can't resume it.
     conversation = _saved(record)["conversation"]
@@ -350,7 +350,7 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     repo.git("rm", "-q", ".factory/stories/BOARD/story.json")
     repo.git("commit", "-q", "-m", "Drop the story's record")
     repo.git("checkout", "-q", "main")
-    kept.unlink()
+    patient(kept.unlink)
     unapproved = repo.forge("work", "BOARD/PAGE")
     assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said

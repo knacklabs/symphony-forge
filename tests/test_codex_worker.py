@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -136,7 +136,8 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
 
 
 def _stub(log: Path) -> list[dict]:
-    return [json.loads(line) for line in log.read_text("utf-8").splitlines()] if log.exists() else []
+    return [json.loads(line) for line in patient(lambda: log.read_text("utf-8")).splitlines()
+            ] if log.exists() else []
 
 
 def _sent(log: Path, method: str) -> list[dict]:
@@ -145,7 +146,7 @@ def _sent(log: Path, method: str) -> list[dict]:
 
 
 def _lines(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text("utf-8").splitlines()]
+    return [json.loads(line) for line in patient(lambda: path.read_text("utf-8")).splitlines()]
 
 
 def _started(pid: int) -> int | None:

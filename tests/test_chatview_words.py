@@ -6,7 +6,7 @@ import subprocess
 import sys
 import time
 
-from conftest import _install
+from conftest import _install, patient
 from test_codex_record import _crash, _save, _saved
 from test_codex_resume import _resuming
 from test_codex_worker import MODELS, ROOT, _codex_repo, _lines, _sent, _toml
@@ -71,7 +71,7 @@ def test_4_each_prompt_begins_with_its_round_summary(repo, monkeypatch, sdk_data
         "Fix round 2 on The page.\n")
 
     record = repo.path / ".git/forge/threads/task/BOARD/PAGE.json"
-    record.unlink()  # A later machine has the turn log but no conversation record.
+    patient(record.unlink)  # A later machine has the turn log but no conversation record.
     third = repo.forge("work", "BOARD/PAGE")
     assert third.returncode == 0, third.stdout + third.stderr
     assert _sent(calls, "turn/start")[-1]["input"][0]["text"].startswith(
