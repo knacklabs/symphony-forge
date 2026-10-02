@@ -193,6 +193,8 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
     made = Repo(path, bin_dir)
+    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
+    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
     made.write("README.md", "# A test repo\n")
     made.git("add", "README.md")
     made.git("commit", "-q", "-m", "First commit")

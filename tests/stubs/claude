@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Stub claude: records its arguments, folder and brief, prints one line like a worker, and exits
 with STUB_CLAUDE_EXIT (0 by default). With STUB_CLAUDE_LEAVE set, it writes that file in its folder
-and leaves it uncommitted. Like claude, it keeps each --session-id it starts, for its
+and leaves it uncommitted; with STUB_CLAUDE_COMMIT_FROM=<n>, from its nth call it commits
+everything in its folder, as a worker does. Like claude, it keeps each --session-id it starts, for its
 folder, in claude-sessions.json beside it, and refuses to --resume one it doesn't have there."""
 import io
 import json
@@ -28,5 +29,10 @@ if "--session-id" in args:
     store.write_text(json.dumps(sessions), encoding="utf-8")
 if os.environ.get("STUB_CLAUDE_LEAVE"):
     pathlib.Path(os.environ["STUB_CLAUDE_LEAVE"]).write_text("half done\n", encoding="utf-8")
+if len((here / "claude-calls.jsonl").read_text(encoding="utf-8").splitlines()) >= int(
+        os.environ.get("STUB_CLAUDE_COMMIT_FROM") or 0) > 0:
+    import subprocess
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
 print("stub claude: built it")
 sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))
