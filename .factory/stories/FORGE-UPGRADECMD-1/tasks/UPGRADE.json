@@ -2,36 +2,22 @@
   "branch": "task/FORGE-UPGRADECMD-1-UPGRADE",
   "review": {
     "blocking_level": "P1",
-    "changed": "5b5b0fb14b1ab0858f081798657aca28a60944324d468aeb54117dbadd39afdc",
-    "commit": "2c5b019620df6a698e3194d8a316618b8f343e13",
+    "changed": "ad2b6d489473379a352611eb12b03c9c822ea15e671b9083bb84e34e43c08eda",
+    "commit": "5781dd2f94a0a7a33bc0502ad9690b57645d250a",
     "dismissals": [],
     "findings": [
       {
-        "body": "`git diff HEAD` compares the working tree with HEAD, so staged and unstaged changes can cancel out. For example, edit README.md, stage it, then restore its working-tree contents to HEAD without unstaging. This check returns nothing despite the pending staged change, allowing the fix and installation to proceed. Item 1 requires refusal before creating anything whenever tracked files have uncommitted changes. Use a tracked-only status check that examines both the index and working tree, and cover this case. See the [Git diff contract](https://git-scm.com/docs/git-diff).",
-        "file": "src/forge/upgrade.py",
-        "line": 68,
-        "priority": "P1",
-        "title": "Not done: refuse all uncommitted changes to tracked files"
-      },
-      {
-        "body": "The required leftover-folder case checks the file's bytes only if the file still exists. If the command deleted draft.txt while refusing, this assertion would be skipped and the case would pass: its snapshot observes refs, worktree registrations, uv calls and PR calls, but not file contents. Item 1 explicitly requires this test to prove that the leftover file remains unchanged. Make the byte assertion unconditional for that case so deletion also fails the test.",
-        "file": "tests/test_upgrade_command.py",
-        "line": 434,
-        "priority": "P1",
-        "title": "Not done: leftover-folder refusal preserves the file's bytes"
-      },
-      {
-        "body": "A resumed upgrade fix containing a staged rename produces a porcelain record such as `R  new.txt\\0old.txt\\0`. Splitting on NUL and slicing every entry by three characters returns `new.txt` and `.txt`, corrupting the source filename. Upgrade passes these paths into `repo.commit_state`, whose `git add` at src/forge/repo.py:468 fails on the nonexistent truncated path, preventing the rerun from committing and closing. Disable rename detection for this listing or parse rename records explicitly. The [Git status contract](https://git-scm.com/docs/git-status) documents the separate source-filename field.",
+        "body": "A resumed upgrade fix with a staged rename produces a record such as `R  new.txt\\0old.txt\\0`. Slicing every NUL-separated entry by three characters returns `new.txt` and `.txt`, corrupting the source filename. Upgrade passes these paths to `repo.commit_state` at src/forge/upgrade.py:150; its `git add` at src/forge/repo.py:468 then fails on the nonexistent path, preventing the rerun from committing and closing. This previously reported P2 remains unresolved. Disable rename detection for this listing or parse both filename fields explicitly, as required by the [Git status contract](https://git-scm.com/docs/git-status).",
         "file": "src/forge/close.py",
         "line": 251,
         "priority": "P2",
         "title": "Parse both filenames in staged rename records"
       }
     ],
-    "status": "blocked",
-    "tree": "cdc10205f44b895357aa318cd36625186ac431b053ecceac430ec73313726c5a"
+    "status": "clean",
+    "tree": "7c2b083c67336fbaca2b7c7679d0a37fb8c48e0767dee7f91fb6a6315ea8d4a7"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T22:39:26+00:00",
@@ -39,6 +25,10 @@
     },
     {
       "at": "2026-10-02T08:25:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T12:47:09+00:00",
       "step": "review"
     }
   ]
