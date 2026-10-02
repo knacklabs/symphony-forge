@@ -6,34 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "349b42e37420c132b4034343ee7a33e612ec6153e6710f47b491b97d9e8232a0",
-    "commit": "0ae063f90b9bc17f30ebce6ad0c610b64063de13",
+    "changed": "e0863d08ccc67ab8e1d1c974b205a39b10ba57644d695da96f66d5c277c93df6",
+    "commit": "58b55210c1d24ed16798bdc0dc37ad25c76be817",
     "dismissals": [],
     "findings": [
       {
-        "body": "The selected diff adds only a tracking record; it implements no failing-test gate. In src/forge/review.py:292\u2013305, a nonzero test exit becomes review-prompt text, and review.run continues launching the reviewer after constructing that prompt at line 396. This matches the supplied close run: tests exited 1 and this review still started. Close already merges the default branch first (src/forge/close.py:73), but the remaining required behavior is absent: stop on test failure, preserve its output for the next worker round, and report that stop in one line.",
-        "file": ".factory/fixes/close-spends-a-full-review-about-15-minu.json",
-        "line": 4,
+        "body": "This fixture changes only README.md and the .factory record; the test command is committed on main before the branch starts. In src/forge/review.py:247\u2013252, test_run skips documentation-only changes before acquiring the lock or running the command. Consequently, moving test_run ahead of _merge_default would still pass this test: the held lock is never attempted, no run is logged, and the subsequent merge reports the expected conflict. Add a non-Markdown code change to the conflicting branch so the test would attempt the held lock if ordering regressed. The promised command-level proof remains incomplete.",
+        "file": "tests/test_close_stops_before_review.py",
+        "line": 55,
         "priority": "P1",
-        "title": "Not done: forge close must stop before review on failed tests and retain the output for the next worker round"
-      },
-      {
-        "body": "No test is added for the promised conflict ordering. The existing conflict case in tests/test_close.py:346\u2013353 checks the conflict message, and its shared assertions at lines 419\u2013435 check refusal and merge cleanup. It neither configures a test command nor asserts that tests and review were never started, so moving either before the merge could leave this case passing. Extend the real-command test to prove conflict detection happens before acquiring the machine test lock, running tests, or invoking review.",
-        "file": ".factory/fixes/close-spends-a-full-review-about-15-minu.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: command test proves a merge conflict stops before the test lock, test command, or review"
-      },
-      {
-        "body": "The selected change adds no command-level regression for the failing-test stop or worker handoff. The existing test in tests/test_fix_close_reruns_the_full_test_command_even.py:59\u201368 leaves the test command failing but explicitly expects a later close to succeed when the mocked reviewer returns clean. It protects the old behavior rather than the required refusal. Add a real forge close test that asserts nonzero exit, no reviewer invocation, the one-line stop message, and delivery of the captured failure output to the next worker round.",
-        "file": ".factory/fixes/close-spends-a-full-review-about-15-minu.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: command test proves failed tests stop review and preserve their output for the next worker"
+        "title": "Not done: command test proves conflicts stop before the test lock and test run"
       }
     ],
     "status": "blocked",
-    "tree": "932667305ecae6b9ddfe574e03fa43c7c39788c2b09f7015895998f233faa7bc"
+    "tree": "ad672cb5dc1270e823c28283b821bc9d56faeeec8ea6b64f7347043b29ee3807"
   },
   "status": "fixing",
   "steps": [
@@ -43,6 +29,10 @@
     },
     {
       "at": "2026-10-02T10:17:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:51:03+00:00",
       "step": "review"
     }
   ],
