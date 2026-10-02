@@ -99,7 +99,7 @@ def pre_commit(args: argparse.Namespace) -> None:
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
-        _promote(item, state, repo.config(top)["interfaces"], "--cached", _base("HEAD", *merging))
+        _promote(item, state, repo.config(top), _base("HEAD", *merging), "")
 
 
 def pre_push(args: argparse.Namespace) -> None:
@@ -115,8 +115,7 @@ def pre_push(args: argparse.Namespace) -> None:
         match = repo.ITEM.fullmatch(fix)
         state = task.show(sha, repo.state_path(fix)) if match and match["fix"] else None
         # The pushed commit's own state decides; without one there is no allow-large reason.
-        _promote(fix, json.loads(state) if state else {}, repo.config()["interfaces"],
-                 _base(sha), sha)
+        _promote(fix, json.loads(state) if state else {}, repo.config(), _base(sha), sha)
 
 
 def _base(*tips: str) -> str:
@@ -128,11 +127,16 @@ def _base(*tips: str) -> str:
     return git("merge-base", main, *tips)
 
 
-def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str) -> None:
-    """Refuse a fix over the limit or touching an interface, unless the human allowed it."""
+def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, head: str) -> None:
+    """Refuse a fix over the limit or touching an interface, unless the human allowed it.
+    head "" means the staged changes."""
+    from forge import sync, worker
+
     if state.get("allow_large"):
         return
+    diff = (base, head) if head else ("--cached", base)
     changed = git("diff", "--name-only", "--no-renames", "-z", *diff).split("\0")
+    interfaces = cfg["interfaces"]
     # Markdown, state and planning documents never count.
     code = [path for path in changed if path and not (
         path.lower().endswith(".md") or path.startswith((".factory/", "plans/")))]
@@ -141,6 +145,12 @@ def _promote(fix: str, state: dict[str, Any], interfaces: list[str], *diff: str)
         fnmatchcase(path, glob) or fnmatchcase(path, glob.replace("**/", "")) for glob in interfaces)]
     if touched:
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
+    # Test files and forge sync's own output don't count toward the size.
+    tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *worker.TEST_PATHS)
+    code = [path for path in code if path not in tests.split("\0")]
+    if len(code) > LIMIT:
+        output = sync.synced(repo.root(), cfg, base, head, code)
+        code = [path for path in code if path not in output]
     if len(code) > LIMIT:
         refuse(REFUSALS["promote"], fix=fix,
                problem=f"changes {len(code)} code files, over the limit of {LIMIT}")
