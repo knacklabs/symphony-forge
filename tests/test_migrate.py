@@ -88,6 +88,8 @@ def _review_and_checks(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
     monkeypatch.delenv("CODEX_BIN", raising=False)
     conftest._install(repo.bin, "codex", CODEX_STUB.format(python=sys.executable))
+    # The client's npm test command passes here: close stops before the review on a failing one.
+    conftest._install(repo.bin, "npm", f"#!{sys.executable}\n")
     (tmp_path / "reviews.json").write_text(json.dumps([CLEAN]), "utf-8")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
