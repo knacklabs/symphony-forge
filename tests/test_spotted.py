@@ -163,6 +163,26 @@ def _a_review_citing_the_list_stays_current(env):
     assert len(env.review_calls()) == 1
 
 
+def _a_linked_list_is_refused(env):
+    item, where = env.start_fix()
+    outside = env.tmp / "outside.json"
+    outside.write_text('{"items": []}\n', "utf-8")
+    (where / "plans").mkdir(exist_ok=True)
+    try:
+        (where / LIST).symlink_to(outside)
+    except OSError:
+        pytest.skip("this machine can't make symbolic links")
+    env.repo.git("add", LIST, cwd=where)
+    env.repo.git("commit", "-q", "-m", "Link the list", cwd=where)
+    note(env, where, "Notes\n\nSpotted: improve app.py:1 The greeting is hard-coded.\n")
+
+    refused = env.close(item)
+    assert refused.stderr == (
+        "plans/spotted.json or plans/ is a link, so Forge won't write the list through it.\n"
+        f"Next: replace the link with a real file or folder, commit it, then forge close {item}\n")
+    assert not env.review_calls() and outside.read_text("utf-8") == '{"items": []}\n'
+
+
 def _refused(env, item, where) -> tuple[str, str]:
     refused = env.close(item)
     assert refused.returncode == 1 and not env.review_calls()
@@ -302,15 +322,18 @@ def _git_merges_the_list_by_forges_rule(env):
     _commit_list(repo, [a, c, d], "Add D")
     assert _merge(repo, "adds-a", "adds-b") == [a, b, c, d]
 
-    # Open on one side, done on the other: done wins whichever side git calls ours.
+    # Both sides change the same entry: one closes it, the other edits it and leaves it open.
+    # Each merge joins two diverged tips, so git runs the driver; done wins either way round.
     done = {**a, "status": "done", "closed_by": "fix-totals"}
-    repo.git("checkout", "-q", "-b", "keeps", "base")
-    _commit_list(repo, [a, c, d], "Add D again")
-    repo.git("checkout", "-q", "-b", "closes", "base")
-    _commit_list(repo, [done, c], "Close A")
-    repo.git("branch", "closes-again")
-    assert _merge(repo, "keeps", "closes") == [done, c, d]
-    assert _merge(repo, "closes-again", "keeps") == [done, c, d]
+    edited = {**a, "line": 5}
+    for ours, theirs in (("closes", "edits"), ("edits-again", "closes-again")):
+        closing, editing = (ours, theirs) if ours.startswith("closes") else (theirs, ours)
+        repo.git("checkout", "-q", "-b", closing, "base")
+        _commit_list(repo, [done, c], "Close A")
+        repo.git("checkout", "-q", "-b", editing, "base")
+        _commit_list(repo, [edited, c], "Edit A")
+        assert _merge(repo, ours, theirs) == [done, c]
+        assert len(repo.git("log", "-1", "--format=%P").split()) == 2  # a real merge commit
 
 
 @pytest.mark.parametrize("case", [
@@ -319,6 +342,7 @@ def _git_merges_the_list_by_forges_rule(env):
     _a_reused_review_still_records_new_lines,
     _naming_the_list_in_done_when_never_makes_the_review_stale,
     _a_review_citing_the_list_stays_current, _every_unreadable_list_is_refused,
+    _a_linked_list_is_refused,
     _the_repair_restores_the_last_readable_copy,
     _sync_adds_the_rule_once, _git_merges_the_list_by_forges_rule])
 def test_1_close_keeps_one_shared_spotted_list(env, case):

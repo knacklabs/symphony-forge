@@ -25,6 +25,8 @@ SAFE = re.compile(r"[A-Za-z0-9._/-]+")  # a recorded path never needs quoting
 REFUSALS = {
     "bad": ("plans/spotted.json isn't a list Forge can read: {problem}.",
             "{repair}, commit it, then forge close {item}"),
+    "link": ("plans/spotted.json or plans/ is a link, so Forge won't write the list through it.",
+             "replace the link with a real file or folder, commit it, then forge close {item}"),
 }
 
 
@@ -88,7 +90,10 @@ def write(top: Path, items: list[dict[str, Any]]) -> None:
 
 
 def check(top: Path, item: str) -> None:
-    """Refuse an unreadable list, naming the newest readable copy in the branch's history."""
+    """Refuse a linked list, which a write would follow out of the checkout, and an unreadable
+    one, naming the newest readable copy in the branch's history."""
+    if (top / "plans").is_symlink() or (top / PATH).is_symlink():
+        repo.refuse(REFUSALS["link"], item=item)
     try:
         read(top)
     except Unreadable as problem:
