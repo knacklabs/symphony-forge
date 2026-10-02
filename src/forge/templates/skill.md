@@ -365,6 +365,10 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
+changes. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+ask the human to review it in Codex's /hooks, then run the command again.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of

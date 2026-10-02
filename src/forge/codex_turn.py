@@ -156,6 +156,21 @@ def main() -> int:
         # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
         settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
                     "cwd": request["cwd"], "config": request["config"] or None}
+        # Codex skips a project hook it doesn't trust, and any change to one un-trusts it. Forge
+        # trusts its own hooks for this thread by their current hash (decision 0102) and starts
+        # nothing while any other project hook waits for the user's review.
+        state = {}
+        for entry in client._request_raw("hooks/list", {"cwds": [request["cwd"]]})["data"]:
+            for hook in entry["hooks"]:
+                if hook["source"] != "project" or hook["trustStatus"] in ("trusted", "managed"):
+                    continue
+                if {key: hook.get(key) for key in request["hooks"][0]} not in request["hooks"]:
+                    emit(refused="hook", hook=f'{hook["eventName"]} hook "{hook.get("command")}"',
+                         path=hook["sourcePath"])
+                    return 3
+                state[hook["key"]] = {"trusted_hash": hook["currentHash"]}
+        if state:  # nested: a hook's key holds dots, which a dotted override would split
+            settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
         resumed = None
         if request.get("thread"):
             try:

@@ -365,6 +365,10 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
+changes. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+ask the human to review it in Codex's /hooks, then run the command again.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
@@ -404,6 +408,8 @@ Mark generated files such as migration snapshots `linguist-generated` in `.gitat
 reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
+When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
+close skips forge.toml's test command and says so; the review and every named check still run.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run

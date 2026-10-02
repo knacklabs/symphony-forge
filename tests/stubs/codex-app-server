@@ -12,7 +12,8 @@ stdin for two minutes, as a stuck server would), and STUB_CODEX_NO_USAGE leaves 
 counts. STUB_CODEX_OVERLOADED=<n> fails the first n turns as Codex does when the model is at
 capacity; each turn's start time is logged. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
 for a reader that changes a file; STUB_CODEX_COMMIT commits the thread's folder after the turn's
-requests, as a worker does. `--version` prints the version.
+requests, as a worker does. hooks/list lists each hook in the cwd's .codex/hooks.json as a project
+hook, trusted unless STUB_CODEX_HOOK_TRUST names another status. `--version` prints the version.
 """
 import json
 import os
@@ -75,6 +76,25 @@ def finish_turn(config, status, overloaded=False):
     elif status == "failed":
         turn["error"] = {"message": "stub codex: the model gave up"}
     notify("turn/completed", threadId=THREAD, turn=turn)
+
+
+def hooks(cwd):
+    """Each hook in the cwd's .codex/hooks.json as Codex's hooks/list shows a project hook."""
+    import hashlib
+    import re
+
+    path = pathlib.Path(cwd, ".codex", "hooks.json")
+    events = json.loads(path.read_text(encoding="utf-8"))["hooks"] if path.exists() else {}
+    return [{"key": f"{path}:{re.sub('(?<!^)(?=[A-Z])', '_', event).lower()}:{g}:{h}",
+             "eventName": event[0].lower() + event[1:], "handlerType": hook["type"],
+             "command": hook.get("command"), "async": hook.get("async", False),
+             "matcher": group.get("matcher"), "timeoutSec": hook.get("timeout", 600),
+             "sourcePath": str(path), "source": "project", "enabled": True, "isManaged": False,
+             "displayOrder": 0, "currentHash": "sha256:" + hashlib.sha256(
+                 json.dumps([event, group.get("matcher"), hook]).encode()).hexdigest(),
+             "trustStatus": os.environ.get("STUB_CODEX_HOOK_TRUST", "trusted")}
+            for event, groups in events.items() for g, group in enumerate(groups)
+            for h, hook in enumerate(group["hooks"])]
 
 
 def started():
@@ -152,6 +172,11 @@ def main():
                             "model": (config or {}).get("model", "stub-model"),
                             "modelProvider": "openai", "sandbox": {"type": "dangerFullAccess"},
                             "thread": thread})
+        elif method == "hooks/list":
+            listed = [{"cwd": cwd, "hooks": hooks(cwd), "errors": [], "warnings": []}
+                      for cwd in params["cwds"]]
+            log(listed=listed)
+            reply(message, {"data": listed})
         elif method == "thread/name/set":
             reply(message, {})
         elif method == "turn/start":

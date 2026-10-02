@@ -68,6 +68,9 @@ def main():
             send(id=message["id"], result={"userAgent": "codex_app_server/0.159.2",
                                            "serverInfo": {"name": "codex", "version": "0.159.2"}})
             continue
+        if method == "hooks/list":  # no project hook waits for trust here
+            send(id=message["id"], result={"data": []})
+            continue
         threads = json.loads(STORE.read_text("utf-8")) if STORE.exists() else {}
         id = params.get("threadId") or f"thr-stub-{len(threads) + 1}"
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
