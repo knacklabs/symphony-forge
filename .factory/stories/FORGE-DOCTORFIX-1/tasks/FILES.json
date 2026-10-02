@@ -2,41 +2,20 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "43fd8e9e096551cb534e8a4a0bcac713125c6a37a15ca6529986e8e308ceaa1a",
-    "commit": "962442406804e8d6f4c51e2ce21aec8d240f3323",
+    "changed": "dc348f746800e3c091acd8727781e8bc159c8a62291f4c2290bb11f8de025dae",
+    "commit": "217eb67ab47a3b818283dd9767a613c940dc3b21",
     "dismissals": [],
     "findings": [
       {
-        "body": "The version gate at doctor.py:391 checks the pin in the checkout running doctor, before `_in_fix` fetches origin. If that checkout pins the installed version but origin's latest default branch pins a newer version, the new fix inherits the newer pin while this call still generates its files with the older process's templates. Those files can then be committed as a successful repair. The commit hook does not enforce the pin (src/forge/githooks.py:89-101). Check the new fix's configuration against the running version before generating or writing its files, and run the repair with that pin.",
+        "body": "On a fix branch, stage a hand edit to a synced file, then restore its working copy to sync's expected text without resetting the index. This filter skips the file before `_held` checks its status, so doctor omits the required held-back row and can report everything healthy despite the staged edit. New evidence beyond the previous default-branch ruling is the in-place path: `_files` calls `_drift` without `also`, whereas tests/test_doctor_fix_files.py:507-522 exercises staged matching text only on the default branch with committed drift. Check staged differences before excluding matching working files, and cover this case through the real command on a fix branch.",
         "file": "src/forge/doctor.py",
-        "line": 247,
-        "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
-      },
-      {
-        "body": "The fetch result is ignored. `repo.run` returns a nonzero result without raising (src/forge/repo.py:66-74), and `story.landed_ref` then uses the last-fetched origin ref (src/forge/story.py:556-561). When fetch fails after the remote default branch advances, doctor can declare an outdated fix current or start a repair from outdated configuration, without reporting that it could not obtain the latest commit. Handle the fetch failure before assessing or creating a fix, preserve the drift rows, and give a retry step.",
-        "file": "src/forge/doctor.py",
-        "line": 201,
-        "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
-      },
-      {
-        "body": "A staged hand-edit warning disappears on the second run when the working copy matches sync. The first run compares the new fix's files and correctly holds the staged file back. Once that fix exists, this return compares the running checkout instead; `_drift` skips matching working-copy text before checking the index. Doctor therefore shows only `forge close`, although the fix omitted the held-back file and the staged edit still needs attention. New evidence beyond the current-fix ruling is this combination of staged matching text and a second run: tests/test_doctor_fix_files.py:480-491 exercises only the first run. Retain the held-back row using the default-branch repair comparison and cover the repeated run.",
-        "file": "src/forge/doctor.py",
-        "line": 221,
+        "line": 177,
         "priority": "P1",
         "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
-      },
-      {
-        "body": "This adds a coordinator flow in which `doctor --fix` creates a repair fix that must subsequently be closed and merged, but neither coordinator template changes. AGENTS.md:53-55 requires a command, option, setting or flow change to update `src/forge/templates/skill.md` or `src/forge/templates/brief.md` in the same change. The existing skill's generic setup row at src/forge/templates/skill.md:40 does not describe the new repair-fix handoff or held-back files. Add the corresponding instructions alongside this behavior.",
-        "file": "src/forge/doctor.py",
-        "line": 265,
-        "priority": "P1",
-        "title": "Update the coordinator skill for doctor's new fix flow"
       }
     ],
     "status": "blocked",
-    "tree": "5ab7834a781e11ab193c7c2944fc92b26fe30259e5f55e78ae893ab568bc6b7d"
+    "tree": "2b7ed1416796010f959e79da19855d7aa53f4625da2a3f98f5b763284bab96d9"
   },
   "status": "fixing",
   "steps": [
@@ -46,6 +25,10 @@
     },
     {
       "at": "2026-10-01T20:21:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T00:43:28+00:00",
       "step": "review"
     }
   ]
