@@ -6,6 +6,7 @@ review_status and overall_correctness) and ignores everything else it writes.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import time
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -376,6 +378,16 @@ def helper() -> Path:
     return path
 
 
+def _sweep() -> None:
+    """Delete the forge-review-* folders in the system temp folder last changed over a day ago:
+    a review never runs that long, so they are what killed reviews and failed removals left."""
+    day_ago = time.time() - 24 * 3600
+    for folder in Path(tempfile.gettempdir()).glob("forge-review-*"):
+        with contextlib.suppress(OSError):
+            if folder.is_dir() and folder.stat().st_mtime < day_ago:
+                shutil.rmtree(folder, ignore_errors=True)
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
@@ -389,6 +401,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                        for name in repo.git(*command, cwd=top).split("\0")
                        if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
                if signoff_prompt else [])
+    _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
         tree, out = tmp / "tree", tmp / "review.json"
