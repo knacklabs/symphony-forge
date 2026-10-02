@@ -90,7 +90,7 @@ def test_17_worker(repo, gh, monkeypatch):
     # A fix round adds the open serious findings and the failing checks with their log tails.
     state_file = folder / ".factory" / "stories" / "BOARD" / "tasks" / "PAGE.json"
     state = json.loads(state_file.read_text(encoding="utf-8"))
-    state["review"] = {"commit": "0" * 40, "status": "blocked",
+    state["review"] = {"commit": "0" * 40, "tree": "1" * 40, "status": "blocked",
                        "dismissals": [{"finding": 3, "because": "web/board.py:3 not real"}],
                        "findings": [
         {"priority": "P1", "title": "Archived stories are missing", "body": "Show them too.",
