@@ -6,22 +6,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "e0863d08ccc67ab8e1d1c974b205a39b10ba57644d695da96f66d5c277c93df6",
-    "commit": "58b55210c1d24ed16798bdc0dc37ad25c76be817",
+    "changed": "5e8d1a51e6cd9bf6f151b07936707fa15140637bc72913a70af4dddb28d46aaa",
+    "commit": "44e5da13436c8734a3330b6a4fb9b1875aedabd4",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This fixture changes only README.md and the .factory record; the test command is committed on main before the branch starts. In src/forge/review.py:247\u2013252, test_run skips documentation-only changes before acquiring the lock or running the command. Consequently, moving test_run ahead of _merge_default would still pass this test: the held lock is never attempted, no run is logged, and the subsequent merge reports the expected conflict. Add a non-Markdown code change to the conflicting branch so the test would attempt the held lock if ordering regressed. The promised command-level proof remains incomplete.",
-        "file": "tests/test_close_stops_before_review.py",
-        "line": 55,
-        "priority": "P1",
-        "title": "Not done: command test proves conflicts stop before the test lock and test run"
-      }
-    ],
-    "status": "blocked",
-    "tree": "ad672cb5dc1270e823c28283b821bc9d56faeeec8ea6b64f7347043b29ee3807"
+    "findings": [],
+    "status": "clean",
+    "tree": "c917c80284eb653551a3a113d08aec0e06fe90d278b30cfcfe9a5c2453b1b7ce"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-02T06:23:35+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-02T14:51:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T18:41:14+00:00",
       "step": "review"
     }
   ],
