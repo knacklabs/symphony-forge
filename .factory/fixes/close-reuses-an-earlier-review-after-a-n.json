@@ -1,0 +1,27 @@
+{
+  "base": "c7dfa5645288725a18828546c601b3dc822f096b",
+  "branch": "fix/close-reuses-an-earlier-review-after-a-n",
+  "done_when": "The review fingerprint also covers every file a finding of the earlier review cites, so a commit that changes such a file (even under plans/) makes the next close review the new head instead of reusing the old result. A command-level test closes a fix whose review cites plans/roadmap.json, changes that file, closes again, and shows a fresh review ran.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "8943f25fb78a2319fc9b3a54733186488978d1abd6f6fe718fba11d7b8d9efd8",
+    "commit": "0428624d9d11d0b6304921822698be84f86f50ce",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "a62a00486c29e028b477e378234f4006b7bf7db5f519b85db88e73bb30b0d0b5"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T17:39:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T23:40:21+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close reuses an earlier review after a new commit fixes a finding in a file the review fingerprint ignores (such as plans/roadmap.json), so the stale finding is shown again and has to be dismissed as already resolved"
+}

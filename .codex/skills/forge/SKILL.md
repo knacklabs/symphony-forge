@@ -36,6 +36,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
+| "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch it puts Forge's files in its own fix: `forge close <fix>`, then merge it like any other. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
 | "Set up a new repo" | `forge init` |
@@ -328,7 +329,8 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes.
+finishes. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
+so with the command that merges it into the story branch; run it, then carry on.
 
 ## Cold read findings
 
