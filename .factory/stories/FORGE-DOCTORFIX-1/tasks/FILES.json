@@ -2,29 +2,14 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "34ce86dfca16a8268ac91b1e0c3bce80dc863fe5295272ddd4f970f986d51493",
-    "commit": "5d8045d19f35471c154a6d3cfc64eaeb953596dd",
+    "changed": "75c7212908cda6bd89628de4b16fc759d0d4b96f6ad0df1799888d7dab2c1d23",
+    "commit": "d1134540402707334b0599524e93b5df9de59593",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "New evidence beyond the earlier skill-link finding: a parent directory can be the link. On a fix branch in `repo = \"forge-source\"`, let `.claude/skills/forge` be a committed link to `../../notes`, with an uncommitted edit in `notes/SKILL.md`. The final `SKILL.md` path isn't itself a symlink, so this check permits it. Git does not traverse symlink ancestors when collecting status ([Git source](https://github.com/git/git/blob/master/dir.c#L2963-L2966)), and `_held` exempts history in source mode (`doctor.py:158\u2013162`). `sync.write_file` then follows the internal link and overwrites the hand-edited target (`sync.py:120\u2013126`). Protect linked ancestors or check the resolved write target, with a regression through the real doctor command.",
-        "file": "src/forge/doctor.py",
-        "line": 182,
-        "priority": "P1",
-        "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
-      },
-      {
-        "body": "New evidence beyond the link rulings: a held-back link remains an input to another generated file. If `CLAUDE.md` links to an outside text file, doctor puts only `CLAUDE.md` in `keep`. This comprehension consequently excludes it from the outside-link validation below. However, `sync._agents` still reads that link and incorporates its contents into `AGENTS.md` (`sync.py:155\u2013163`). When AGENTS.md is eligible for repair, doctor writes the outside content into the repository; with a committed absolute CLAUDE.md link on the default branch, it also commits that content in its fix. This bypasses sync's explicit boundary against copying outside files and can expose private content. Hold back the dependent AGENTS.md repair or validate its input before writing, and cover this through doctor.",
-        "file": "src/forge/sync.py",
-        "line": 377,
-        "priority": "P1",
-        "title": "Block copying outside files through held-back CLAUDE.md links"
-      }
-    ],
-    "status": "blocked",
-    "tree": "2ce019843db71fa34a7e23dea8960d1580a3ad3f4cc40454327b375606b58a90"
+    "findings": [],
+    "status": "clean",
+    "tree": "bbe08b199dc1a744b3e87cc61776d666ecfb7c56f124922f7b79d3375fc25603"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T15:17:01+00:00",
@@ -48,6 +33,10 @@
     },
     {
       "at": "2026-10-02T11:03:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:01:48+00:00",
       "step": "review"
     }
   ]
