@@ -62,7 +62,7 @@ def test_2_doctor_accepts_a_claude_only_setup(repo, gh, tmp_path, monkeypatch):
     assert init.returncode == 0, init.stderr
     toml = client / "forge.toml"
     toml.write_text(toml.read_text(encoding="utf-8").replace(
-        'workers = "codex"', 'workers = "claude"', 1), encoding="utf-8")
+        'workers = "split"', 'workers = "claude"', 1), encoding="utf-8")
     gh.respond("auth", "status")
     _claude_only(tmp_path, monkeypatch, repo.bin)
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "no-codex"))

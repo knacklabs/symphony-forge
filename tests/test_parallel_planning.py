@@ -50,4 +50,5 @@ def test_3_forge_next_says_to_start_the_ready_parts_together(repo, claude_payloa
     assert hook(repo, claude_plan(claude_payload, parallel, cwd=shop)).returncode == 0
     assert repo.forge("next").stdout.splitlines()[:3] == [
         "2 parts of Shoppers can save a basket can start now; start them together.",
-        "Next: forge task start SHOP/SAVE", "Next: forge task start SHOP/SHOW"]
+        "Next: forge task start SHOP/SAVE  # Codex builds it",
+        "Next: forge task start SHOP/SHOW  # Codex builds it"]

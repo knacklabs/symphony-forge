@@ -11,11 +11,19 @@ from test_worker import calls, install_claude
 STORY = "FORGE-DESIGN-1"
 
 
-def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, monkeypatch, sdk_data):
+def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypatch, sdk_data):
+    # Was "even with codex workers"; workers = codex now builds everything on Codex, and split
+    # keeps this route.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
+                      encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Use split workers", cwd=folder)
     # A client repo counts as live unless forge.toml says prototype.
     repo.write("forge.toml", (repo.path / "forge.toml").read_text("utf-8").replace(
-        'repo = "client"', 'repo = "client"\nstage = "prototype"'))
+        'repo = "client"', 'repo = "client"\nstage = "prototype"').replace(
+        'workers = "codex"', 'workers = "split"'))
     repo.git("commit", "-q", "-am", "Prototype stage")
     repo.git("push", "-q", "origin", "main")
     claude_log = install_claude(repo)
@@ -47,7 +55,6 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     assert len(calls(claude_log)) == 2
 
     # Forge's own repository keeps its configured worker even for a user-facing row.
-    config = folder / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
                                                      'repo = "forge-source"'), encoding="utf-8")
     repo.git("commit", "-qam", "Use the source repo", cwd=folder)
@@ -64,9 +71,11 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     custom = repo.forge("work", "BOARD/PAGE")
     assert custom.returncode == 0, custom.stdout + custom.stderr
     assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "custom-opus", "--effort", "high"]
-    # The design round continues the session its first round started, so it gets the short prompt.
-    assert "The earlier brief in this conversation still applies." in calls(claude_log)[-1]["brief"]
-    assert "--resume" in calls(claude_log)[-1]["args"]
+    # The round before ran on Codex, so this one starts a fresh Claude session with the whole
+    # brief (it used to continue the first round's session).
+    assert "because its last round ran on Codex" in custom.stdout
+    assert "## Tests first" in calls(claude_log)[-1]["brief"]
+    assert "--resume" not in calls(claude_log)[-1]["args"]
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # A client story row without User-facing uses the configured Codex worker.
@@ -78,7 +87,7 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     assert len(calls(claude_log)) == 3
 
     # Design still uses its own Claude model when the repo chooses Claude for ordinary work.
-    config.write_text(config.read_text("utf-8").replace('workers = "codex"',
+    config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                      'workers = "claude"'), encoding="utf-8")
     repo.git("commit", "-qam", "Use Claude workers", cwd=folder)
     claude_worker = repo.forge("work", "BOARD/PAGE")
@@ -87,12 +96,12 @@ def test_3_user_facing_task_uses_design_claude_even_with_codex_workers(repo, mon
     assert len(_sent(codex_log, "turn/start")) == 3
 
 
-def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, monkeypatch,
+def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
                                                                             sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     config = folder / "forge.toml"
-    config.write_text(config.read_text("utf-8") +
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"') +
                       '\n[models.design.codex]\nmodel = "gpt-6-nova"\neffort = "xhigh"\n',
                       encoding="utf-8")
     repo.git("commit", "-qam", "Use Nova for design", cwd=folder)
@@ -112,7 +121,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
     # A later missing Claude command uses the design defaults without Build/Fix models.
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
-        f'version = "{version}"\nrepo = "client"\nworkers = "codex"\n', encoding="utf-8")
+        f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
     repo.git("commit", "-qam", "Use the defaults", cwd=folder)
     os.unlink(repo.bin / "claude")
     if os.name == "nt":
@@ -126,7 +135,11 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol_and_resumes(repo, 
         "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
     assert len(calls(claude_log)) == 1
-    assert len(_sent(codex_log, "thread/resume")) == 1
+    # The round started on Claude after a round that ended on Codex, so its fallback starts a new
+    # conversation with the whole brief (it used to resume the first fallback's).
+    assert _sent(codex_log, "thread/resume") == []
+    assert len(_sent(codex_log, "thread/start")) == 2
+    assert "## Tests first" in _sent(codex_log, "turn/start")[-1]["input"][0]["text"]
     assert len(_sent(codex_log, "turn/start")) == 2
 
     # If Claude leaves a file behind, the same failure must stay with Claude.
