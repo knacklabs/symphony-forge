@@ -311,14 +311,16 @@ def _checkout(item: str, branches: list[str]) -> Path:
 
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
-    """The open serious findings and the failing checks, once close has reviewed the item."""
+    """The open serious findings and the failing checks, close's own test run among them, once
+    close has run."""
+    tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
     review = state.get("review")
-    if not review:  # no close yet: a first build, with no pull request to read checks from
-        return [], []
+    if not review:  # no review yet: no pull request to read checks from
+        return [], tests
     dismissed = {entry.get("finding") for entry in review.get("dismissals") or []}
     findings = [finding for n, finding in enumerate(review.get("findings") or [], 1)
                 if finding.get("priority") in SERIOUS and n not in dismissed]
-    return findings, _failing(state.get("branch", ""))
+    return findings, tests + _failing(state.get("branch", ""))
 
 
 def _failing(branch: str) -> list[tuple[str, str]]:
