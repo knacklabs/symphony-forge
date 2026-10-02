@@ -288,6 +288,19 @@ A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
+## Refresh dependencies
+
+When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
+lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
+fix's folder:
+
+1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
+   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `go get -u=patch ./... && go mod tidy`); never raise a range.
+2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
+   same tag, and rebuild the image.
+3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
