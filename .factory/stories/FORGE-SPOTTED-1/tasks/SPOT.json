@@ -1,10 +1,38 @@
 {
   "branch": "task/FORGE-SPOTTED-1-SPOT",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "374292c44688ea78f38ab9845cff4bccef1b72b289bedd157124507fbc3aaf85",
+    "commit": "e9d7bf3b43eba6c6b951dd1a716f09c49e949d90",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The exclusion only applies before findings are added. At src/forge/review.py:142, a finding citing plans/spotted.json puts it back into the fingerprint. If a review cites an existing spotted list, recording that finding or another new worker observation changes the list after the review fingerprint was saved. The next close reruns Autoreview, and forge-pr-check rejects the review as stale (src/forge/prcheck.py:175). Exclude spotted.PATH after combining both sets of paths, and cover a review that cites the list.",
+        "file": "src/forge/review.py",
+        "line": 138,
+        "priority": "P1",
+        "title": "Not done: recording never makes a review stale"
+      },
+      {
+        "body": "Validation accepts entries with backslash or absolute paths and untrimmed, repeated-whitespace text, provided their keys match those malformed values. Close therefore reviews and preserves a list that violates item 1's field-value contract instead of issuing the bad refusal. This is new evidence beyond the ruled key-consistency check: these keys match. Invalid UTF-8 also escapes read() at line 65 as UnicodeDecodeError rather than Unreadable, so check() supplies no repair. Validate the required path/text/item values and translate decoding failures into Unreadable; cover these cases through close.",
+        "file": "src/forge/spotted.py",
+        "line": 52,
+        "priority": "P1",
+        "title": "Not done: refuse every unreadable spotted list"
+      }
+    ],
+    "status": "blocked",
+    "tree": "431e1a625ac9d932d958c008d51adab7666c315b5fdb79c02208a14add1483b5"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T10:06:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-02T04:09:14+00:00",
+      "step": "review"
     }
   ]
 }
