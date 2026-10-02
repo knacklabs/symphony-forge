@@ -262,6 +262,8 @@ Adopting changes no app code.
    A rule every review must follow, such as which tests a kind of change needs, goes under
    `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
    default branch and follows it.
+   A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
+   AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
 
 On a live app, every story and fix also follows these:
 
@@ -329,7 +331,8 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes.
+finishes. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
+so with the command that merges it into the story branch; run it, then carry on.
 
 ## Cold read findings
 
@@ -398,8 +401,9 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 ## Closing
 
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
-recorded allowance. If the work exceeds that boundary, promote it to a story or get the allowance
-recorded before editing.
+recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
+count, so an upgrade fix needs no allowance. If the work exceeds that boundary, promote it to a story or get the
+allowance recorded before editing.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
