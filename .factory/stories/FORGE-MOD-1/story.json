@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MOD-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-02T22:55:00+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge lives inside Claude Code",
+  "touches": 0
+}
