@@ -65,9 +65,13 @@ def upgrade(args: argparse.Namespace) -> int:
     if branch != default:
         repo.refuse(REFUSALS["not_default"], default=default, branch=branch or "a detached HEAD",
                     again=again)
-    dirty = repo.git("diff", "--name-only", "HEAD", cwd=top)  # untracked files don't count
+    # The index and the working tree both, so a staged change undone in the folder still counts;
+    # untracked files don't.
+    dirty = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=no",
+                     cwd=top).stdout
     if dirty:
-        repo.refuse(REFUSALS["dirty"], files=", ".join(dirty.splitlines()), again=again)
+        repo.refuse(REFUSALS["dirty"], files=", ".join(entry[3:] for entry in dirty.split("\0") if entry),
+                    again=again)
     release = args.release or _newest(top)
     if not RELEASE.fullmatch(release):
         repo.refuse(REFUSALS["bad_release"], release=release)

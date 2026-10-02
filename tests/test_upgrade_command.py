@@ -371,6 +371,11 @@ REFUSED = {
         lambda up: up.repo.write("README.md", "# Edited\n"), [],
         "This checkout has changes you haven't committed: README.md.\n"
         "Next: commit or undo them, then forge upgrade\n"),
+    "a staged change undone in the folder": (
+        lambda up: (up.repo.write("README.md", "# Edited\n"), up.repo.git("add", "README.md"),
+                    up.repo.write("README.md", "# A test repo\n")), [RELEASE],
+        "This checkout has changes you haven't committed: README.md.\n"
+        f"Next: commit or undo them, then forge upgrade {RELEASE}\n"),
     "no v": (lambda up: None, ["1.3.0"],
              "'1.3.0' is not a Forge release; a release is v and three numbers, such as v1.3.0.\n"
              "Next: forge upgrade <release>\n"),
@@ -431,8 +436,8 @@ def _refused(up, case):
                            .replace("<folder>", str(up.folder)))
     assert done.stdout == ""
     assert up.snapshot() == before
-    if draft.exists():
-        assert draft.read_bytes() == b"keep me\r\n"
+    if case == "a leftover folder with work":
+        assert draft.read_bytes() == b"keep me\r\n"  # fails too if the file were gone
 
 
 SCENARIOS = [_named, _pinned_older_than_the_installed_forge, _newest_then_a_newer_one,
