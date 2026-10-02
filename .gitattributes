@@ -2,3 +2,4 @@
 .claude/settings.json text eol=lf
 .codex/hooks.json text eol=lf
 plans/roadmap.json merge=forge-roadmap
+plans/spotted.json merge=forge-roadmap

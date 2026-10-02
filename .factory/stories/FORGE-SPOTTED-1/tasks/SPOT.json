@@ -1,0 +1,51 @@
+{
+  "branch": "task/FORGE-SPOTTED-1-SPOT",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "bd648fafed9ca85811648ed643db6545cda761730ec3d75efff49103d62dc72b",
+    "commit": "f20ba4947074f08fa265dbd090bb775e88e3908d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "For a blocking title beginning with whitespace, such as ` Simpler: combine the save paths`, recording chooses `bug` because the original title does not start with `Simpler`. Dismissal first collapses whitespace, then chooses `simplify`, so this lookup misses the recorded key and leaves the dismissed entry open. Review titles retain their whitespace in `src/forge/review.py:563`. Derive the kind consistently in both paths so a successful dismissal closes its entry.",
+        "file": "src/forge/spotted.py",
+        "line": 157,
+        "priority": "P2",
+        "title": "Use the same kind when recording and dismissing a finding"
+      }
+    ],
+    "status": "clean",
+    "tree": "afb94537416f30a2d2791b5263cb3c7edbec9b8f318da06deef37e8783b37c75"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T10:06:01+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T04:09:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T06:24:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T12:58:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T15:35:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T19:39:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T23:28:22+00:00",
+      "step": "review"
+    }
+  ]
+}
