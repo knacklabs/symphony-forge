@@ -2,20 +2,27 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "ae84de6f9a057edc6ea37f7c49995a3c4933f94d048927791d0c9bda98df8433",
-    "commit": "f8b37a38f554e7cd4c1c69f3210b7ed050454ccf",
+    "changed": "864ee159b3fff40d6dfc36e320b07ae816bfb988a081f0d8dd296ead7425e509",
+    "commit": "9fea93cecad62d4a88e52624f762f27b4d8db846",
     "dismissals": [],
     "findings": [
       {
-        "body": "After a refused commit leaves a locked `forge-files` worktree, the next run correctly reports it stale and creates `forge-files-2`. On the following run, this early return drops the stale rows already collected and stops checking remaining worktrees. The locked folder and branch still exist, but their required cleanup row disappears. Item 4 requires a row for each stale doctor fix. Scan all doctor fixes and retain their stale rows when returning the current fix. The locked-worktree test ends after creating the replacement (`tests/test_doctor_fix_files.py:353-359`), so it misses this subsequent-run defect.",
-        "file": "src/forge/doctor.py",
-        "line": 234,
+        "body": "Item 4 explicitly requires the tests-command mismatch row to disappear after an in-place repair, but this test drifts only the two host hook files. The existing workflow case in tests/test_setup.py:219 exercises doctor without --fix, and the stale-fix cases do not repair the workflow in place. Consequently, collecting the tests-check row before repairing the workflow would pass the suite. Add a real-command case with a stale workflow eligible for repair, then assert its updated test command, absence of both workflow diagnostic rows, and unchanged HEAD.",
+        "file": "tests/test_doctor_fix_files.py",
+        "line": 201,
         "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
+        "title": "Not done: in-place workflow repair clears the tests-check row"
+      },
+      {
+        "body": "After doctor creates a current fix, an uncommitted broken Forge block in that fix's AGENTS.md leaves all the current-fix conditions satisfied. This sync.files call then raises repo.Refused: src/forge/sync.py:134-135 rejects the malformed block. Unlike the initial comparison, this call has no row-producing exception handler. The CLI prints only the refusal (src/forge/cli.py:120-122), dropping the current-fix row and any other problems doctor already collected. Catch the comparison refusal here, preserve the current-fix row, and report the broken block with its existing plain-step Fix without changing that worktree.",
+        "file": "src/forge/doctor.py",
+        "line": 236,
+        "priority": "P2",
+        "title": "Handle comparison failures inside an existing doctor fix as rows"
       }
     ],
     "status": "blocked",
-    "tree": "e55b7c7ccdd80f8d992d660151880df732aa23ccdd49a05986abccb690ed3df5"
+    "tree": "84c6e4310d963d830bae5a3a5931b41fa65d682b16e20edb3774e4bf02be36a9"
   },
   "status": "fixing",
   "steps": [
@@ -49,6 +56,10 @@
     },
     {
       "at": "2026-10-02T17:38:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T22:48:20+00:00",
       "step": "review"
     }
   ]
