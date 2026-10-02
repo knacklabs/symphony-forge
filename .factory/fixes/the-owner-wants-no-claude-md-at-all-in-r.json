@@ -1,0 +1,52 @@
+{
+  "allow_large": "The owner set the AGENTS.md-only rule on 2026-10-01; two source files change and four existing tests that pinned the old CLAUDE.md behaviour must change with them",
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/the-owner-wants-no-claude-md-at-all-in-r",
+  "done_when": "forge sync (and so init, adopt, migrate and upgrade) leaves no CLAUDE.md at the repo root: lines of CLAUDE.md that AGENTS.md doesn't already have are moved into AGENTS.md outside Forge's block, in their order, then CLAUDE.md is deleted; an @AGENTS.md import line and Forge's old block are dropped, never moved. Claude Code reads AGENTS.md itself when there is no CLAUDE.md. The skill and the guide say a repo keeps its rules in AGENTS.md only. Command-level tests: a CLAUDE.md with its own lines (moved, then deleted), one whose lines are already in AGENTS.md (deleted), and a second sync changes nothing.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "19630881ac9bc50b7f8107a4f6496a11a872d6fb0ebf7f4d4e56be2575a01558",
+    "commit": "b487b00d9759e34f0f44fb700423f4f9d7f3e55e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported gap remains open. With an in-repo AGENTS.md symlink and a repo-owned `.claude/agents/tester.md`, this unlink replaces AGENTS.md before `roles.refuse_foreign` rejects the sync at line 352. The command fails but leaves the working tree modified. `src/forge/roles.py:103` promises refusal before writes, and `tests/test_subagent_roles.py:128` checks that invariant without exercising a symlink. Compute and validate the planned output before materializing either rules-file link.",
+        "file": "src/forge/sync.py",
+        "line": 343,
+        "priority": "P2",
+        "title": "Validate sync output before replacing symlinks"
+      }
+    ],
+    "status": "clean",
+    "tree": "014df03118ceb51e2b93ed7001a10992258a70e0faf9bea59b20cbda4bf15988"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T16:48:31+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T18:43:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T20:49:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T23:25:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T00:19:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T00:55:33+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants no CLAUDE.md at all in repos Forge runs, only AGENTS.md, but forge sync keeps a CLAUDE.md that has lines of its own and adds an @AGENTS.md import to it"
+}
