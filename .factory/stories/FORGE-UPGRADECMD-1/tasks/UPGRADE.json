@@ -2,22 +2,22 @@
   "branch": "task/FORGE-UPGRADECMD-1-UPGRADE",
   "review": {
     "blocking_level": "P1",
-    "changed": "2cdc0dc219b752c14262da5cb3750e0c060c24e01043e8aac63ab959aaa1a3f5",
-    "commit": "ea81e8b48fcbdc48600121b19cf9a317f84860d1",
+    "changed": "1d29bc4cb9a0ab4327a64e48d981e4d5ab61142c0a9f54959806f18cc31dc434",
+    "commit": "a126bfb9d2e4c059b8932c5f207663e8a0069aa5",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previously reported defect remains unresolved. Git's [porcelain -z format](https://git-scm.com/docs/git-status) represents a staged rename as `R  new.txt\\0old.txt\\0`. Removing three characters from every NUL-separated field produces `new.txt` and `.txt`, corrupting the source path. A resumed upgrade passes these paths to `repo.commit_state` at src/forge/upgrade.py:150; the `git add` at src/forge/repo.py:464 then fails on the nonexistent path, preventing the upgrade from committing and closing. Disable rename detection for this listing or parse the second filename explicitly.",
-        "file": "src/forge/close.py",
-        "line": 246,
+        "body": "A repo pinned to `v1.3.0-rc.1` cannot run `forge upgrade v1.3.0`: `_numbers` discards the prerelease suffix, so line 79 treats both versions as equal and refuses. Prerelease pins are accepted by `src/forge/repo.py:142` and its validation at line 286, and the corresponding stable release is newer under [semantic-version precedence](https://semver.org/#spec-item-11). Preserve that distinction when comparing the requested stable release with the existing pin.",
+        "file": "src/forge/upgrade.py",
+        "line": 183,
         "priority": "P2",
-        "title": "Parse both filenames in staged rename records"
+        "title": "Compare prerelease pins before rejecting their stable release"
       }
     ],
     "status": "clean",
-    "tree": "403802112da52668a74b5a8cdfe15cdd7b11da3cf979f6130a7078b69d6dbcf3"
+    "tree": "31c4e9dbb503f070700a00b91e6864e899692c7cf4b9fa4a1d630bfc96707969"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T22:39:26+00:00",
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-02T15:22:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T21:23:40+00:00",
       "step": "review"
     }
   ]
