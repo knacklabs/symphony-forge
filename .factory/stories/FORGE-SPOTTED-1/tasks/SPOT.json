@@ -2,29 +2,14 @@
   "branch": "task/FORGE-SPOTTED-1-SPOT",
   "review": {
     "blocking_level": "P1",
-    "changed": "5ebf61c1923aa068eb65b0409e8421c69b8a5d24d04d0230d485d3ac188bcb5b",
-    "commit": "c92d23d9402349cb9479e7105fc0bfb8863fabd6",
+    "changed": "90b6f482af410b9e53f49c4636fec2e5ae8de5b486588ed84bc94217b9eae542",
+    "commit": "48661172c5f69dcf3187e68ab21788d13ac705c9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "A checkout can contain `plans/spotted.json` as a symlink to a readable external list, or a dangling symlink into an existing external directory. `read()` follows the former and treats the latter as an absent list (line 80), so close's check permits both. When an observation is recorded, this write follows the link and overwrites or creates a file outside the checkout; that change cannot be captured or reverted by close's commit. Refuse escaping paths before recording, as the existing `sync.write_file` guard does at src/forge/sync.py:125.",
-        "file": "src/forge/spotted.py",
-        "line": 87,
-        "priority": "P1",
-        "title": "Reject symlinked list paths before writing"
-      },
-      {
-        "body": "The second merge does not test the opposite driver direction: the first merge advances `keeps` to a commit containing `closes`, making `closes-again` its ancestor. This merge therefore fast-forwards without invoking the driver. Moreover, the first merge leaves the open entry unchanged from the base, so it exercises unilateral-change selection rather than done-versus-open ranking (src/forge/sync.py:284). Incorrect ranking for `open` could pass this spotted-list test. Preserve independent branch tips and change the same entry on both sides, then perform genuine divergent merges in both directions, as item 1 explicitly requires.",
-        "file": "tests/test_spotted.py",
-        "line": 313,
-        "priority": "P1",
-        "title": "Not done: done wins whichever side Git calls ours"
-      }
-    ],
-    "status": "blocked",
-    "tree": "51f31fc1f40fdfcab923a3914def7ab74338f748806836064a771713d7205a28"
+    "findings": [],
+    "status": "clean",
+    "tree": "edf9770769cff04b0822e8ea6ae70a6bbffe075ead0f18605435af7ffb52d15f"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T10:06:01+00:00",
@@ -40,6 +25,10 @@
     },
     {
       "at": "2026-10-02T12:58:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T15:35:56+00:00",
       "step": "review"
     }
   ]
