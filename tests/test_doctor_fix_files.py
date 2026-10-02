@@ -260,34 +260,6 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude)
     assert "- Fixed:" not in again.stdout and "CLAUDE.md" not in again.stdout, again.stdout
 
 
-def _link_row(rel: str) -> str:
-    return _row(f"{rel} is a link, so doctor won't write through it.",
-                "replace the link with a regular file, then forge doctor --fix")
-
-
-# Was: doctor turned an AGENTS.md link into a regular file. Now any synced file that is a link is
-# held back, since a write would change what it leads to; CLAUDE.md stays with it.
-def _an_agents_md_linked_to_claude_md_is_held_back(repo, gh, tmp_path, monkeypatch, _):
-    client = _client(repo, gh, tmp_path, monkeypatch)
-
-    def link(folder: Path) -> None:
-        agents = folder / "AGENTS.md"
-        _set(folder, "CLAUDE.md", agents.read_text(encoding="utf-8") + "\n- Our own rule.\n")
-        agents.unlink()
-        agents.symlink_to("CLAUDE.md")
-    _land(repo, client, "Upgrade Forge", link, forge=True)
-    claude = _row("CLAUDE.md stays until doctor can write AGENTS.md, since sync moves its lines "
-                  "there.", HAND_FIX)
-    done = repo.forge("doctor", "--fix", cwd=client)
-    assert _link_row("AGENTS.md") in done.stdout and claude in done.stdout, done.stdout
-    assert _fixes(repo, client) == []
-    folder = _start_fix(repo, client)
-    done = repo.forge("doctor", "--fix", cwd=folder)
-    assert _link_row("AGENTS.md") in done.stdout and claude in done.stdout, done.stdout
-    assert (folder / "AGENTS.md").is_symlink()
-    assert "- Our own rule." in (folder / "CLAUDE.md").read_text(encoding="utf-8")
-
-
 def _a_stale_doctor_fix_is_left_alone_and_a_new_one_starts(repo, gh, tmp_path, monkeypatch,
                                                            change):
     client = _client(repo, gh, tmp_path, monkeypatch)
@@ -416,31 +388,6 @@ def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
     assert (folder / HOOKS).read_text(encoding="utf-8") == wanted[HOOKS]
 
 
-# Was: a link out of the repo was a write failure. Now any link is held back before writing, so
-# neither a file outside nor a repo file edited by hand is ever written through it.
-def _a_synced_file_that_is_a_link_is_held_back(repo, gh, tmp_path, monkeypatch, target):
-    client = _client(repo, gh, tmp_path, monkeypatch)
-    outside = tmp_path / "outside.md"
-    outside.write_text("not the repo's\n", encoding="utf-8")
-
-    def link(folder: Path) -> None:
-        (folder / SKILL).unlink()
-        if target == "outside":
-            (folder / SKILL).symlink_to(outside)
-        else:
-            _set(folder, "notes.md", "Our notes\n")
-            (folder / SKILL).symlink_to("../../../notes.md")
-    _land(repo, client, "Upgrade Forge", link, forge=True)
-    folder = _start_fix(repo, client)
-    if target != "outside":
-        (folder / "notes.md").write_text("Our notes, edited by hand\n", encoding="utf-8")
-    done = repo.forge("doctor", "--fix", cwd=folder)
-    assert _link_row(SKILL) in done.stdout, done.stdout
-    assert outside.read_text(encoding="utf-8") == "not the repo's\n"
-    if target != "outside":
-        assert (folder / "notes.md").read_text(encoding="utf-8") == "Our notes, edited by hand\n"
-
-
 def _an_ignored_synced_file_written_by_hand_is_held_back(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
     _land(repo, client, "Upgrade Forge", lambda folder: (
@@ -452,22 +399,35 @@ def _an_ignored_synced_file_written_by_hand_is_held_back(repo, gh, tmp_path, mon
     assert (folder / SKILL).read_text(encoding="utf-8") == "Our own skill\n"
 
 
-def _a_dangling_claude_md_link_is_held_back(repo, gh, tmp_path, monkeypatch, case):
+def _a_link_stops_every_repair(repo, gh, tmp_path, monkeypatch, link):
+    """Any file forge sync writes or reads, or a folder above it, that is a link: doctor repairs
+    none of Forge's files, writes and copies nothing, and gives one plain step."""
     client = _client(repo, gh, tmp_path, monkeypatch)
-    if case == "committed":  # no other drift: doctor still reports it
-        _land(repo, client, "Upgrade Forge",
-              lambda folder: (folder / "CLAUDE.md").symlink_to("gone.md"), forge=True)
-        for args in (("doctor",), ("doctor", "--fix")):
-            assert _link_row("CLAUDE.md") in repo.forge(*args, cwd=client).stdout
-        assert (client / "CLAUDE.md").is_symlink() and _fixes(repo, client) == []
-        return
-    # Made by hand on a fix branch, next to a file doctor repairs: the repair leaves the link.
     _old_hosts(repo, client)
+    outside = tmp_path / "private.md"
+    outside.write_text("Private notes\n", encoding="utf-8")
     folder = _start_fix(repo, client)
-    (folder / "CLAUDE.md").symlink_to("gone.md")
+    if link == "CLAUDE.md to a file outside the repo":
+        (folder / "CLAUDE.md").symlink_to(outside)
+        rel = "CLAUDE.md"
+    else:  # the skill's folder leads to notes in the repo, edited by hand
+        skills = folder / ".claude/skills/forge"
+        shutil.copytree(skills, folder / "notes")
+        (folder / "notes/SKILL.md").write_text("Our notes\n", encoding="utf-8")
+        shutil.rmtree(skills)
+        skills.symlink_to("../../notes")
+        rel = SKILL
+    before = {path: path.read_bytes() for path in folder.rglob("*") if path.is_file()
+              and ".git" not in path.parts}
     done = repo.forge("doctor", "--fix", cwd=folder)
-    assert f"- Fixed: wrote {SETTINGS}.\n" in done.stdout, done.stdout
-    assert _link_row("CLAUDE.md") in done.stdout and (folder / "CLAUDE.md").is_symlink()
+    assert _row(f"{rel} is a link, so doctor repaired none of Forge's files.",
+                "replace the link with a regular file, then forge doctor --fix") in done.stdout, (
+        done.stdout)
+    assert "- Fixed: wrote" not in done.stdout and "- Fixed: removed" not in done.stdout
+    assert {path: path.read_bytes() for path in folder.rglob("*") if path.is_file()
+            and ".git" not in path.parts} == before
+    assert outside.read_text(encoding="utf-8") == "Private notes\n"
+    assert "Private notes" not in (folder / "AGENTS.md").read_text(encoding="utf-8")
 
 
 def _the_default_branch_cant_be_fetched(repo, gh, tmp_path, monkeypatch, _):
@@ -689,15 +649,14 @@ def _cases(*cases) -> list:
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_gets_a_suffix, [None], ()),
     (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
-    (_an_agents_md_linked_to_claude_md_is_held_back, [None], SHELL),
     (_a_stale_doctor_fix_is_left_alone_and_a_new_one_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
     (_a_commit_a_git_hook_refuses_leaves_no_fix, [False, True], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),
-    (_a_synced_file_that_is_a_link_is_held_back, ["outside", "a repo file edited by hand"], SHELL),
-    (_a_dangling_claude_md_link_is_held_back, ["committed", "made by hand"], SHELL),
+    (_a_link_stops_every_repair, ["CLAUDE.md to a file outside the repo",
+                                  "the skill's folder to notes in the repo"], SHELL),
     (_the_default_branch_cant_be_fetched, [None], ()),
     (_the_default_branch_moved_to_another_pin, [None], ()),
     (_a_detached_head_changes_nothing, [None], ())))

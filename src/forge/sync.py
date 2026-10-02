@@ -358,15 +358,11 @@ def command_page() -> str:
     return "# Forge commands\n\n| Command | What it does |\n|---|---|\n" + "\n".join(rows) + "\n"
 
 
-LINKED = ("AGENTS.md", "CLAUDE.md")
-
-
 def differing(top: Path, wanted: dict[str, str]) -> list[str]:
-    """The files write would change: text that differs, an empty file that is there ("" means
-    delete), or a rules file that is a link."""
+    """The files write would change: text that differs, or an empty file that is there ("" means
+    delete)."""
     return [rel for rel, text in wanted.items()
-            if read(top / rel) != text or not text and (top / rel).exists()
-            or rel in LINKED and (top / rel).is_symlink()]
+            if read(top / rel) != text or not text and (top / rel).exists()]
 
 
 def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) -> list[str]:
@@ -374,7 +370,7 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
     on the default branch."""
     # First, AGENTS.md and CLAUDE.md become regular files holding the text their link led to (none
     # when it dangles), so writing AGENTS.md or deleting CLAUDE.md never loses another file's lines.
-    links = {rel: read(top / rel) for rel in LINKED if (top / rel).is_symlink() and rel not in keep}
+    links = {rel: read(top / rel) for rel in ("AGENTS.md", "CLAUDE.md") if (top / rel).is_symlink()}
     for rel in links:  # never copy a file from outside the repo into it
         if not (top / rel).resolve().is_relative_to(top.resolve()):
             repo.refuse(REFUSALS["outside"], path=rel)

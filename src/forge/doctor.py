@@ -179,11 +179,7 @@ def _split(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
     differing = set(sync.differing(folder, wanted))
     free, rows, keep = [], [], set()
     for rel in (rel for rel in wanted if rel in differing or rel in staged):
-        if (folder / rel).is_symlink():  # a write would change whatever it leads to
-            rows.append((f"{rel} is a link, so doctor won't write through it.",
-                         f"replace the link with a regular file, then {REPAIR}"))
-            keep.add(rel)
-        elif reason := _held(top, cfg, rel, ref):
+        if reason := _held(top, cfg, rel, ref):
             rows.append((f"{rel} {reason}.", HAND))
             keep.add(rel)
         else:
@@ -194,6 +190,18 @@ def _split(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
         rows.append(("CLAUDE.md stays until doctor can write AGENTS.md, since sync moves its lines "
                      "there.", HAND))
     return free, rows, frozenset(keep)
+
+
+def _linked(folder: Path, wanted: dict[str, str]) -> list[tuple[str, str]]:
+    """One row when a file sync would write or read, or a folder above it, is a link: doctor then
+    repairs none of Forge's files, since a write or a read could reach whatever the link leads to."""
+    for rel in [*wanted, "AGENTS.md", "CLAUDE.md"]:
+        path = folder / rel
+        if any(part.is_symlink() for part in [path, *path.parents] if part.is_relative_to(folder)
+               and part != folder):
+            return [(f"{rel} is a link, so doctor repaired none of Forge's files.",
+                     f"replace the link with a regular file, then {REPAIR}")]
+    return []
 
 
 def _drop(top: Path, path: Path, branch: str) -> bool:
@@ -258,7 +266,11 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     try:
         task._new_checkout(name, branch, f"fix-{name}", ref, state, f"Start the fix: {WHY}")  # pyright: ignore[reportPrivateUsage]
         fixed = repo.config(path)
-        free, held, keep = _split(top, path, cfg, sync.files(path, fixed), ref)
+        fixed_wanted = sync.files(path, fixed)
+        if linked := _linked(path, fixed_wanted):
+            _drop(top, path, branch)
+            return [*rows, *linked]
+        free, held, keep = _split(top, path, cfg, fixed_wanted, ref)
         if free:  # forge sync's own write, so deletions and links behave exactly as there
             free = sync.write(path, fixed, keep)
             repo.git("add", "-A", "-f", "--", *free, cwd=path)
@@ -286,6 +298,8 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
            fix: bool) -> list[tuple[str, str]]:
     """A row per file that differs from what sync writes. With fix, they are written in doctor's
     own fix on the default branch, or in place, not committed, as forge sync does, elsewhere."""
+    if linked := _linked(top, wanted):
+        return linked
     default = repo.default_branch(top)
     on_default, failed = repo.current_branch(top) == default, []
     if fix and on_default:
