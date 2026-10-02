@@ -32,6 +32,9 @@ START = 120  # the seconds Codex gets to start: Codex() waits on initialize with
 STARTING = threading.Lock()  # end() never falls between the app-server starting and SERVER
 SERVER: list[int] = []  # the app-server's process id once it has started, for end() on Windows
 RECORDED = threading.Semaphore(0)  # a release per line Forge sends once it has recorded an id
+# The fields of a hooks/list entry that say where the hook is and its state, not what it runs.
+PLACE = {"key", "sourcePath", "source", "pluginId", "displayOrder", "enabled", "isManaged",
+         "currentHash", "trustStatus"}
 RETRIES = 3  # the times a turn Codex ends as at capacity is sent again, each wait twice the last
 # ponytail: the tests' seam, like FORGE_CHECKS_WAIT
 RETRY_WAIT = float(os.environ.get("FORGE_CODEX_RETRY_WAIT", "30"))
@@ -164,7 +167,10 @@ def main() -> int:
             for hook in entry["hooks"]:
                 if hook["source"] != "project" or hook["trustStatus"] in ("trusted", "managed"):
                     continue
-                if {key: hook.get(key) for key in request["hooks"][0]} not in request["hooks"]:
+                # The whole definition, every field but where and how Codex found it, so a field
+                # Forge doesn't know (or a changed timeout) makes the hook not Forge's.
+                if {key: value for key, value in hook.items()
+                        if key not in PLACE} not in request["hooks"]:
                     emit(refused="hook", hook=f'{hook["eventName"]} hook "{hook.get("command")}"',
                          path=hook["sourcePath"])
                     return 3

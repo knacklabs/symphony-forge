@@ -19,10 +19,11 @@ included. Decision 0082 left that trust to the user's own review of the hook's h
 ## Decision
 
 Before each Codex thread start or resume, Forge asks the app-server for the checkout's project
-hooks. Each untrusted one whose definition (event, matcher, handler type, command, sync) is exactly
-what forge sync writes is trusted for that thread only, by passing its current hash in the
+hooks. Each untrusted one whose whole definition (every field but where Codex found it, Codex's
+defaults for what forge sync leaves out included) is exactly what forge sync writes is trusted for
+that thread only, by passing its current hash in the
 thread's `hooks.state` config. If any other project hook is untrusted, Forge starts no turn and
-names the hook, so the user reviews it in Codex's /hooks. Forge never writes the trust to the
+names the hook in one line, so the user reviews it in Codex's /hooks. Forge never writes the trust to the
 user's Codex config. The owner chose this on 2026-10-02. It supersedes 0082 for Forge's own hooks.
 
 ## Consequences

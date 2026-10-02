@@ -58,16 +58,19 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
-# Forge's own Codex hooks as Codex's hooks/list shows them: the driver trusts exactly these.
+# Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
+# leaves out included: the driver trusts a hook only when its whole definition is one of these.
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
-                "handlerType": "command", "command": sync.command(hook), "async": False}
+                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
                for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
-    "hook": ("Codex doesn't trust the project's {hook} in {path}, and it isn't the one Forge "
-             "writes, so Forge started no Codex turn.",
-             "review it in Codex's /hooks, then forge {command} {item}"),
+    # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
+    "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
+             "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
+             "again.", ""),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",

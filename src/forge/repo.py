@@ -46,11 +46,12 @@ REFUSALS = {
 
 
 class Refused(Exception):
-    """A refusal: the problem in one sentence, then the next command."""
+    """A refusal: the problem in one sentence, then the next command, unless the sentence ends
+    with it."""
 
     def __init__(self, problem: str, next_step: str, code: int = 1,
                  entry: tuple[str, str] | None = None):  # the REFUSALS entry refuse() raised
-        super().__init__(f"{problem}\nNext: {next_step}")
+        super().__init__(f"{problem}\nNext: {next_step}" if next_step else problem)
         self.code, self.entry = code, entry
 
 
