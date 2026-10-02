@@ -1,4 +1,5 @@
 {
+  "allow_large": "Over the limit only by forge sync output (agent roles and skill), which the owner ruled does not count; the counting fix is merged but not yet released",
   "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
   "branch": "fix/workers-codex",
   "done_when": "Forge's forge.toml sets workers = \"codex\" and gives build, fix and lite a codex entry (gpt-6.1-sol at medium, lite with gpt-6-luna max subagents) while keeping their claude entries for Claude sessions' roles; forge doctor reports nothing new.",
