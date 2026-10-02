@@ -52,7 +52,8 @@ sys.stdin.read()
 
 def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review(env):
     log = _with_test_command(env)
-    item, _ = env.start_fix({"README.md": "# Hello, shoppers\n"})
+    # A code change too: a Markdown-only change skips the test command, lock and all.
+    item, _ = env.start_fix({"README.md": "# Hello, shoppers\n", "app.py": "print('hello')\n"})
     env.commit(env.repo.path, "README.md", "# Welcome\n")
     env.repo.git("push", "-q", "origin", "main")
     config = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge"
