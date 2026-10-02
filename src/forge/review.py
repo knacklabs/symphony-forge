@@ -6,6 +6,7 @@ review_status and overall_correctness) and ignores everything else it writes.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -15,12 +16,19 @@ import string
 import subprocess
 import sys
 import tempfile
+import time
+from collections.abc import Iterator
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
 from forge import machine, repo
 from forge.task import sections
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -389,6 +397,68 @@ def helper() -> Path:
     return path
 
 
+def _locked(fd: int) -> bool:
+    """Take the lock on an open file without waiting; whether this process now holds it. The
+    system lets go of it when its holder ends, however it ends."""
+    try:
+        if os.name == "nt":
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return False
+    return True
+
+
+def _remove(folder: Path) -> bool:
+    """Delete the folder, opening up any part a tool made read-only; whether it is gone."""
+    shutil.rmtree(folder, ignore_errors=True)
+    if folder.exists():
+        with contextlib.suppress(OSError):
+            os.chmod(folder, 0o700)
+        for root, dirs, files in os.walk(folder):
+            for name in (*dirs, *files):
+                if not os.path.islink(os.path.join(root, name)):  # never a file outside it
+                    with contextlib.suppress(OSError):
+                        os.chmod(os.path.join(root, name), 0o700)
+        shutil.rmtree(folder, ignore_errors=True)
+    return not folder.exists()
+
+
+@contextlib.contextmanager
+def _review_folder() -> Iterator[Path]:
+    """A forge-review-* folder in the system temp folder, held through its lock file beside it
+    and removed afterwards, however the review ends. First deletes what earlier reviews left: a
+    folder whose lock no running review holds, and one older than a day that has no lock file.
+    The lock is held before the folder exists, so a folder with a free lock is never in use."""
+    temp = Path(tempfile.gettempdir())
+    for lock in temp.glob("forge-review-*.lock"):
+        try:
+            with lock.open("rb") as held:
+                free = _locked(held.fileno())
+        except OSError:
+            continue
+        if free and _remove(lock.with_suffix("")):
+            lock.unlink(missing_ok=True)
+    day_ago = time.time() - 24 * 3600
+    for folder in temp.glob("forge-review-*"):
+        with contextlib.suppress(OSError):
+            if (folder.is_dir() and not folder.with_name(folder.name + ".lock").exists()
+                    and folder.stat().st_mtime < day_ago):
+                _remove(folder)
+    fd, name = tempfile.mkstemp(prefix="forge-review-", suffix=".lock")
+    lock, folder = Path(name), Path(name).with_suffix("")
+    try:
+        _locked(fd)
+        folder.mkdir()
+        yield folder
+    finally:
+        removed = _remove(folder)
+        os.close(fd)
+        if removed:  # otherwise the free lock tells the next review to delete it
+            lock.unlink(missing_ok=True)
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
@@ -402,8 +472,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                        for name in repo.git(*command, cwd=top).split("\0")
                        if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
                if signoff_prompt else [])
-    with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
-        tmp = Path(folder)
+    with _review_folder() as tmp:
         tree, out = tmp / "tree", tmp / "review.json"
         # A local clone keeps Git history inside the reviewer's read-only sandbox.
         repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
