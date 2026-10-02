@@ -1,4 +1,5 @@
 {
+  "allow_large": "Two code files plus tests, a decision record and synced skill copies; under the rule already on main (tests and sync output don't count) it is within the limit, but the installed release still counts them",
   "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
   "branch": "fix/codex-hook-trust",
   "done_when": "Before each Codex thread start or resume, Forge asks the app-server for the checkout's project hooks; each hook whose definition is exactly what forge sync writes for this repo is passed to the turn as trusted (its current hash in the thread config's hooks state), so the guard and the other Forge hooks run on every worker and reader turn; if any project hook is not trusted and differs from Forge's own, the turn stops with one plain line naming the hook and how to review it in Codex's /hooks, changing nothing. Decision 0102 records the owner's choice and supersedes decision 0082 for Forge's own hooks. Command-level tests with the stub app-server: Forge's own untrusted hooks are trusted and the turn starts with them; a modified or foreign untrusted hook stops the turn.",
