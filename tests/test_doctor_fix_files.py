@@ -174,10 +174,11 @@ def _on_the_default_branch_one_fix_holds_both_hosts_files(repo, gh, tmp_path, mo
     assert record["allow_large"] == ("Doctor brings every file forge sync writes up to date in one "
                                      "change; Forge Test allowed it by running forge doctor --fix.")
 
-    # A second run starts nothing and commits nothing: the fix is current.
+    # A second run starts nothing and commits nothing, and gives the fix's one step.
     fix_head = repo.git("rev-parse", "fix/forge-files", cwd=client)
     again = repo.forge("doctor", "--fix", cwd=client)
-    assert fix_row in again.stdout and "- Fixed: wrote" not in again.stdout, again.stdout
+    assert (_left_over("forge-files", _folder_of(repo, client, "fix/forge-files")) in again.stdout
+            and "- Fixed: wrote" not in again.stdout), again.stdout
     assert _fixes(repo, client) == ["fix/forge-files"]
     assert repo.git("rev-parse", "fix/forge-files", "HEAD", cwd=client).split() == [fix_head, head]
 
@@ -212,6 +213,27 @@ def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypa
     again = repo.forge("doctor", "--fix", cwd=folder)
     assert "- Fixed:" not in again.stdout and "won't overwrite" not in again.stdout, again.stdout
     assert SETTINGS not in again.stdout and HOOKS not in again.stdout
+
+
+def _a_stale_tests_workflow_is_repaired_in_place(repo, gh, tmp_path, monkeypatch, _):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    folder = _start_fix(repo, client)
+    toml = folder / "forge.toml"
+    toml.write_text(re.sub(r"^test = .*$", 'test = "make check"', toml.read_text(encoding="utf-8"),
+                           count=1, flags=re.M), encoding="utf-8")
+    repo.git("commit", "-qam", "Run the tests with make", cwd=folder)
+    workflow = ".github/workflows/forge.yml"
+    listed = repo.forge("doctor", cwd=folder).stdout
+    assert f"{workflow} differs from what forge sync writes" in listed, listed
+    assert f"The tests check in {workflow} doesn't run forge.toml's test command." in listed
+    head = repo.git("rev-parse", "HEAD", cwd=folder)
+
+    done = repo.forge("doctor", "--fix", cwd=folder)
+    assert f"- Fixed: wrote {workflow}.\n" in done.stdout, done.stdout
+    assert 'run: "make check"' in (folder / workflow).read_text(encoding="utf-8")
+    assert workflow not in done.stdout.replace(f"- Fixed: wrote {workflow}.\n", "")
+    assert "The tests check" not in done.stdout
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == head
 
 
 def _a_failed_pin_install_writes_nothing(repo, gh, tmp_path, monkeypatch, _):
@@ -261,9 +283,9 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude)
 
 
 def _left_over(name: str, path: Path | None) -> str:
+    """The one step for a doctor fix that already exists, current, stale or locked."""
     remove = f"git worktree remove --force --force {path} and " if path else ""
-    return _row(f"Doctor's fix {name} is left over from an earlier run, so doctor started no new "
-                "one.", f"finish it with forge close {name}, or remove it with {remove}git branch -D "
+    return _row(f"Doctor's fix {name} isn't merged yet, so doctor started no new one.", f"finish it with forge close {name}, or remove it with {remove}git branch -D "
                 f"fix/{name}, then forge doctor --fix")
 
 
@@ -561,10 +583,11 @@ def _uncommitted_changes_are_held_back(repo, gh, tmp_path, monkeypatch, _):
     assert row in done.stdout, done.stdout
     assert repo.git("diff", "--cached", cwd=client) == index
     assert SKILL not in _in(repo, client, "fix/forge-files")
-    # A second run finds the fix current, and the staged edit still keeps its row.
+    # A second run gives only the fix's one step, and the index stays as it was.
     again = repo.forge("doctor", "--fix", cwd=client)
-    assert "Doctor's fix forge-files holds Forge's files" in again.stdout, again.stdout
-    assert row in again.stdout and repo.git("diff", "--cached", cwd=client) == index
+    assert _left_over("forge-files", _folder_of(repo, client, "fix/forge-files")) in again.stdout, (
+        again.stdout)
+    assert repo.git("diff", "--cached", cwd=client) == index
 
 
 def _in_forges_own_repo_history_holds_nothing_back(repo, gh, tmp_path, monkeypatch, _):
@@ -651,6 +674,7 @@ def _cases(*cases) -> list:
     (_on_the_default_branch_one_fix_holds_both_hosts_files, [None], ()),
     (_codex_workers_under_claude_code_repair_both_hosts, [None], ()),
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
+    (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_gets_a_suffix, [None], ()),
     (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),

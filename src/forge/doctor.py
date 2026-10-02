@@ -214,7 +214,7 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
     the branch."""
     ref, default = story.landed_ref(top), repo.default_branch(top)
-    # Doctor keeps at most one fix of its own: a branch of it, current, stale or locked, stops it.
+    # Doctor keeps at most one fix of its own: a branch of it stops a new one.
     trees = story.worktrees(top)
     for branch in repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads/fix/",
                            cwd=top).splitlines():
@@ -224,19 +224,11 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
         state = story.json_of(story.show(top, branch, repo.state_path(name)))
         if state.get("why") != WHY or story.show(top, ref, repo.state_path(name)) is not None:
             continue
+        # Doctor never looks inside it: one step, whether it is current, stale or locked.
         path = trees.get(branch)
-        there = lambda *args: repo.run("git", *args, cwd=path)  # noqa: E731
-        if path and (there("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0
-                     and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
-                     and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
-                     and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
-            # The files the fix held back still differ there; each keeps its row.
-            return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
-                     f"forge close {name}"),
-                    *_split(top, path, cfg, sync.files(path, repo.config(path)), ref)[1]]
         remove = (f"git worktree remove --force --force {path} and " if path else "")
-        return [(f"Doctor's fix {name} is left over from an earlier run, so doctor started no new "
-                 "one.", f"finish it with forge close {name}, or remove it with {remove}git branch "
+        return [(f"Doctor's fix {name} isn't merged yet, so doctor started no new one.",
+                 f"finish it with forge close {name}, or remove it with {remove}git branch "
                  f"-D {branch}, then {REPAIR}")]
     # A clean checkout at the default branch's latest commit would make the same fix: none.
     heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
