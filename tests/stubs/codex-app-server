@@ -158,6 +158,8 @@ def main():
             continue
         method, params = message["method"], message.get("params") or {}
         log(method=method, params=params)
+        if method == "thread/resume" and os.environ.get("STUB_CODEX_RESUME"):
+            method = "thread/start"  # resumed as it starts one
         if "id" not in message:  # a notification, such as initialized
             continue
         if method == "initialize":
@@ -166,8 +168,7 @@ def main():
                 return
             reply(message, {"userAgent": "codex_app_server/" + VERSION,
                             "serverInfo": {"name": "codex", "version": VERSION}})
-        elif method == "thread/start" or (method == "thread/resume"
-                                          and os.environ.get("STUB_CODEX_RESUME")):
+        elif method == "thread/start":
             if status == "hold":
                 time.sleep(120)
                 return
