@@ -3,7 +3,7 @@
   "branch": "fix/windows-ci-jobs-keep-failing-with-permis",
   "done_when": "Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one shared fixture, so pytest can always delete the test's temporary folder on Windows; a test that still leaves a process holding a file fails naming it. The Windows CI groups pass three runs in a row on the fix's pull request without a PermissionError.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T11:51:41+00:00",
