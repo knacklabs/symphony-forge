@@ -8,6 +8,7 @@ from pathlib import Path
 
 from test_close import env  # noqa: F401 (the shared fixture)
 from test_githooks import NEXT_PROMOTE, commit, hooked, push, start_fix
+from test_upgrade_check import _install_release, _pin, _upgrade
 
 STORY = "an-upgrade-fix-can-t-commit-without-the"
 
@@ -70,25 +71,38 @@ def test_1_upgrade_fix_of_only_sync_output_commits_and_pushes_without_an_allowan
     assert f"Fix {fix} changes 6 code files, over the limit of 5" in refused.stderr
 
 
-def test_2_upgrade_fix_of_only_sync_output_closes_and_a_hand_edit_is_counted_by_the_check(env):
+def test_2_upgrade_and_test_heavy_fixes_close_and_a_hand_edit_is_counted_by_the_check(env):
     def pr_check(where: Path, branch: str):
         return env.repo.forge("hook", "pr-check", "--base", env.repo.git("rev-parse", "main"),
                               "--head", env.repo.git("rev-parse", "HEAD", cwd=where),
                               "--branch", branch)
 
-    item, where = env.start_fix()
-    assert env.repo.forge("sync", cwd=where).returncode == 0
-    env.repo.git("add", "-A", cwd=where)
-    env.repo.git("commit", "-q", "-m", "Sync Forge's files", cwd=where)
-    closed = env.close(item)
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    checked = pr_check(where, "fix/tidy-readme")
-    assert (checked.returncode, checked.stdout) == (
-        0, "forge-pr-check passed for fix/tidy-readme.\n"), checked.stderr
+    def passes(item: str, where: Path, branch: str) -> None:
+        closed = env.repo.forge("close", item, cwd=where)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        checked = pr_check(where, branch)
+        assert (checked.returncode, checked.stdout) == (
+            0, f"forge-pr-check passed for {branch}.\n"), checked.stderr
 
-    # A machine without Forge's hooks commits the same output plus a hand edit; the check counts it.
+    # Four source files and three test files: close and its check pass with no allowance.
+    item, where = env.start("tests-too", "fix/tests-too", ".factory/fixes/tests-too.json",
+                            {"kind": "fix", "why": "Login typo", "done_when": "Fixed"},
+                            {**{f"src/f{n}.py": "x = 1\n" for n in range(4)},
+                             "tests/test_login.py": "x = 1\n", "src/login.test.ts": "x\n",
+                             "pkg/users_test.py": "x = 1\n"})
+    passes(item, where, "fix/tests-too")
+
+    # An upgrade: forge.toml pins the next release and the fix commits what its sync writes.
+    item, where = env.start_fix()
+    _install_release(env, "v9.0.0")
+    _upgrade(env, where, '"v9.0.0"')
+    passes(item, where, "fix/tidy-readme")
+
+    # A machine without Forge's hooks commits the same upgrade plus a hand edit; the check counts
+    # forge.toml, the hand-edited settings and the five ordinary files.
     item, where = env.start("hand-edit", "fix/hand-edit", ".factory/fixes/hand-edit.json",
                             {"kind": "fix", "why": "Tighten settings", "done_when": "Tighter"}, {})
+    _pin(env, where, '"v9.0.0"')
     assert env.repo.forge("sync", cwd=where).returncode == 0
     hand_edit(where)
     env.repo.git("add", "-A", cwd=where)
@@ -96,7 +110,7 @@ def test_2_upgrade_fix_of_only_sync_output_closes_and_a_hand_edit_is_counted_by_
     refused = pr_check(where, "fix/hand-edit")
     assert refused.returncode != 0
     assert refused.stderr.startswith(
-        "The fix on fix/hand-edit changes 6 code files, over the limit of 5, and has no "
+        "The fix on fix/hand-edit changes 7 code files, over the limit of 5, and has no "
         "allow-large reason.\n"), refused.stderr
 
 
