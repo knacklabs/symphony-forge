@@ -3,6 +3,8 @@ the review when the test command fails, keeping the failing output for the next 
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,12 +35,35 @@ def _with_test_command(env) -> Path:
     return log
 
 
-def test_1_a_conflicting_merge_stops_before_any_test_run_or_review(env):
+# Holds the machine's test lock, as another close running its tests does, until stdin closes.
+HOLD = '''import os, sys
+guard = open(sys.argv[1], "ab")
+if os.name == "nt":
+    import msvcrt
+    guard.seek(0)
+    msvcrt.locking(guard.fileno(), msvcrt.LK_NBLCK, 1)
+else:
+    import fcntl
+    fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
+print("held", flush=True)
+sys.stdin.read()
+'''
+
+
+def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review(env):
     log = _with_test_command(env)
     item, _ = env.start_fix({"README.md": "# Hello, shoppers\n"})
     env.commit(env.repo.path, "README.md", "# Welcome\n")
     env.repo.git("push", "-q", "origin", "main")
-    done = env.close(item)
+    config = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge"
+    config.mkdir(parents=True, exist_ok=True)
+    holder = subprocess.Popen([sys.executable, "-c", HOLD, str(config / "test-run.guard")],
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    try:
+        assert holder.stdout.readline() == "held\n"
+        done = env.close(item)  # it would wait out the test's timeout if it took the lock
+    finally:
+        holder.communicate("")
     assert done.returncode == 1, done.stdout + done.stderr
     assert "Merging main into fix/tidy-readme conflicts in README.md." in done.stderr
     assert not log.exists()
