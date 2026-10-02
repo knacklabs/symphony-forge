@@ -189,7 +189,7 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
 
 
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-                 base: str, previous: dict[str, Any]) -> str:
+                 base: str, previous: dict[str, Any], tested: str) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
     from forge import story  # story imports review indirectly
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
@@ -200,8 +200,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
-              # read after close merged the default branch, which may change the command
-              "test_run": _test_run(top, repo.config(top)["test"], base)}
+              "test_run": tested}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -238,20 +237,21 @@ def _review_rules(top: Path) -> str:
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
-def _test_run(top: Path, command: str, base: str) -> str:
-    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
-    exit status, every line that mentions a skip with the line before it (where Go's -v prints the
-    reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs).
-    Skipped when it already passed here on the same committed files, or when the change touches
-    only docs, plans, Markdown or Forge's records; one run per machine at a time."""
+def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
+    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
+    Returns its exit status and the report: the exit status, every line that mentions a skip with
+    the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
+    pytest also lists each skip's reason (-rs). Skipped, as status 0, when it already passed here on
+    the same committed files, or when the change touches only docs, plans, Markdown or Forge's
+    records; one run per machine at a time."""
     if not command:
-        return "forge.toml names no test command, so close ran none."
+        return 0, "forge.toml names no test command, so close ran none."
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                        cwd=top).split("\0")
     if all(path.startswith(DOCS) or path.endswith(".md") for path in changed if path):
         said = DOCS_ONLY.format(command=command)
         print(said, flush=True)
-        return said
+        return 0, said
     from forge import codex  # codex imports review indirectly
 
     folder = machine._repos_file().parent
@@ -259,12 +259,13 @@ def _test_run(top: Path, command: str, base: str) -> str:
     skipped = SKIPPED.format(command=command)
     if passed and passed.exists():
         print(skipped, flush=True)
-        return skipped
+        return 0, skipped
+    folder.mkdir(parents=True, exist_ok=True)
     # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
     with codex.in_line(folder / "test-runs", WAITING):
         if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
-            return skipped
+            return 0, skipped
         env = {**os.environ,
                "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
         done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
@@ -279,7 +280,7 @@ def _test_run(top: Path, command: str, base: str) -> str:
     lines = [out[i] for i in picked]
     if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
         lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
-    return "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+    return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
                       "forge close.", *lines])
 
 
@@ -382,9 +383,9 @@ def _sweep() -> None:
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
-        signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
+        signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
-    prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous)
+    prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous, tested)
     prompt += _review_rules(top)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
