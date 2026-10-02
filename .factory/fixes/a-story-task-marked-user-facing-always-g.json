@@ -10,7 +10,7 @@
   "branch": "fix/a-story-task-marked-user-facing-always-g",
   "done_when": "forge.toml's workers takes codex (every task and fix on Codex, user-facing included, using the design model's codex entry for user-facing work), claude (everything on Claude) or split (user-facing story tasks on Claude, the rest on Codex). There is no migration: an existing workers = \"codex\" means everything on Codex after the upgrade, and new repos get split written explicitly. forge work prints one line before starting naming the worker, model and effort and why (for example 'Building PERMFLOW-1/T5 with Claude (claude-opus-5-5, high) because it is user-facing (workers = split)'), and forge next shows the worker beside each ready task. If the worker family changes between rounds of one item, the next forge work starts a fresh session on the new worker with the brief and the latest review findings. The skill and the AGENTS.md block explain the three values in one line each. Command-level tests cover each value for a user-facing task and a plain task, the printed line, and a family switch between rounds.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-02T06:44:28+00:00",
