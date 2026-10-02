@@ -2,34 +2,27 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "ef9c7bbc9569412d0b8ae092766cee32c10fb560e9ce2bb4c217651002f7d52d",
-    "commit": "aae6129e27fca6bfc44420a165fa21aeb6943347",
+    "changed": "34ce86dfca16a8268ac91b1e0c3bce80dc863fe5295272ddd4f970f986d51493",
+    "commit": "5d8045d19f35471c154a6d3cfc64eaeb953596dd",
     "dismissals": [],
     "findings": [
       {
-        "body": "Ignored untracked files bypass this check: `--untracked-files=all` still excludes ignored files ([Git status contract](https://git-scm.com/docs/git-status)). If a differing skill file has never been committed and matches an ignore rule, `_held` sees neither status nor history and permits the write. On a nondefault branch, doctor then replaces the hand-written contents. Include ignored files when checking these specific paths, and cover their preservation through the real doctor command.",
-        "file": "src/forge/doctor.py",
-        "line": 158,
-        "priority": "P1",
-        "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
-      },
-      {
-        "body": "The hold-back check examines the link's Git status and history, but the eventual write can modify its target. For example, in `repo = \"forge-source\"`, a committed `.claude/skills/forge/SKILL.md` link to a repository-local notes file remains clean when that target is edited by hand. History is exempt here, so doctor permits the repair. `sync.write_file` follows internal links (`src/forge/sync.py:117\u2013123`); only AGENTS.md and CLAUDE.md are materialized. An in-place repair therefore overwrites the uncommitted notes. Protect the actual write target or materialize the skill link before writing, with command-level coverage.",
+        "body": "New evidence beyond the earlier skill-link finding: a parent directory can be the link. On a fix branch in `repo = \"forge-source\"`, let `.claude/skills/forge` be a committed link to `../../notes`, with an uncommitted edit in `notes/SKILL.md`. The final `SKILL.md` path isn't itself a symlink, so this check permits it. Git does not traverse symlink ancestors when collecting status ([Git source](https://github.com/git/git/blob/master/dir.c#L2963-L2966)), and `_held` exempts history in source mode (`doctor.py:158\u2013162`). `sync.write_file` then follows the internal link and overwrites the hand-edited target (`sync.py:120\u2013126`). Protect linked ancestors or check the resolved write target, with a regression through the real doctor command.",
         "file": "src/forge/doctor.py",
         "line": 182,
         "priority": "P1",
         "title": "Not done: Doctor never overwrites a change made by hand, and leaves what needs a person as one plain step"
       },
       {
-        "body": "New evidence beyond the prior empty-file and AGENTS.md-link findings is a dangling CLAUDE.md link. `githooks.ships` omits it because `exists()` is false (`src/forge/githooks.py:74`), so this helper and doctor's hold-back loop never consider it. However, `sync.write` independently unlinks it at `src/forge/sync.py:348\u2013356`. With no other drift, doctor reports no repair although sync would remove the link. With another repairable file on a nondefault branch, doctor calls sync and deletes even a newly created or staged dangling CLAUDE.md without checking its hand edit. Include these link-cleanup paths in the comparison and hold-back set, and cover both cases through doctor.",
+        "body": "New evidence beyond the link rulings: a held-back link remains an input to another generated file. If `CLAUDE.md` links to an outside text file, doctor puts only `CLAUDE.md` in `keep`. This comprehension consequently excludes it from the outside-link validation below. However, `sync._agents` still reads that link and incorporates its contents into `AGENTS.md` (`sync.py:155\u2013163`). When AGENTS.md is eligible for repair, doctor writes the outside content into the repository; with a committed absolute CLAUDE.md link on the default branch, it also commits that content in its fix. This bypasses sync's explicit boundary against copying outside files and can expose private content. Hold back the dependent AGENTS.md repair or validate its input before writing, and cover this through doctor.",
         "file": "src/forge/sync.py",
-        "line": 338,
+        "line": 377,
         "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files for Claude Code and Codex up to date through a fix, never on the default branch"
+        "title": "Block copying outside files through held-back CLAUDE.md links"
       }
     ],
     "status": "blocked",
-    "tree": "8bc70026bead29829d7dcda380b6b1c49163329660b9aad2eb2c13a5d17ef275"
+    "tree": "2ce019843db71fa34a7e23dea8960d1580a3ad3f4cc40454327b375606b58a90"
   },
   "status": "fixing",
   "steps": [
@@ -51,6 +44,10 @@
     },
     {
       "at": "2026-10-02T07:06:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T11:03:41+00:00",
       "step": "review"
     }
   ]
