@@ -157,7 +157,7 @@ def start(args: argparse.Namespace) -> None:
         checkout = story.stories_here(repo.root()).get(key)
         if checkout:  # edits not committed yet count too
             story.check_read(key, checkout)
-        story.gate(key, doc_rel, notes or "", git("rev-parse", f"{source}:{doc_rel}"))
+        story.gate(key, doc_rel, notes or "", git("rev-parse", f"{source}:{doc_rel}"), text)
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)

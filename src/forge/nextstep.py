@@ -297,7 +297,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
-        return _approval(top, key, path, title, digest, refusals, "\n## For the builders" in text), []
+        return _approval(top, key, path, title, digest, refusals, text), []
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -329,7 +329,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     # A task held back by another story's task would wait out of sight, so say which.
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if any(not dep.startswith(f"{key}/") for dep in deps)]
-    reread = _next_round(key, notes, doc_hash, title, required)
+    reread = _next_round(key, notes, doc_hash, title, required, text)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
     if ready:
@@ -343,11 +343,11 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
-              refusals: dict[Path, str], builders: bool) -> list[str]:
+              refusals: dict[Path, str], text: str) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
-                         story.rounds(notes))
+                         story.rounds(notes), text)
     if reread:
         return reread
     try:
@@ -359,7 +359,8 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     why = story._text(approval.last_refusal(top)).strip().rstrip(".")  # pyright: ignore[reportPrivateUsage]
-    shown = f"plans/{key}.md" + (" from its title down to ## For the builders" if builders else "")
+    shown = f"plans/{key}.md" + (" from its title down to ## For the builders"
+                                 if story.BUILDERS.search(text) else "")
     return [f"{title} is waiting for approval" + (f" (the last answer was not recorded: {why})." if why
                                                   else "."),
             f"Next: in Claude Code, show {shown} in Plan Mode and exit Plan Mode with it as the plan",
@@ -368,9 +369,10 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
-    changed: `text` is the notes, `doc_hash` the doc's git hash."""
+    changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
+    hash and text."""
     notes = f"plans/{key}.read.md"
     record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
     done, number = int(record.get("round") or 1), story.undisposed(findings)
@@ -380,7 +382,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) 
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
-    elif record.get("read_hash") != doc_hash:
+    elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
         why = f"plans/{key}.md changed after round {done} of its cold read"
     else:
         return []
