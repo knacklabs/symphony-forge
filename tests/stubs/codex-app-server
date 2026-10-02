@@ -12,7 +12,8 @@ stdin for two minutes, as a stuck server would), and STUB_CODEX_NO_USAGE leaves 
 counts. STUB_CODEX_OVERLOADED=<n> fails the first n turns as Codex does when the model is at
 capacity; each turn's start time is logged. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
 for a reader that changes a file; STUB_CODEX_COMMIT commits the thread's folder after the turn's
-requests, as a worker does. `--version` prints the version.
+requests, as a worker does, and STUB_CODEX_COMMIT_FROM=<n> does so from the nth turn this stub
+has run. `--version` prints the version.
 """
 import json
 import os
@@ -119,10 +120,14 @@ def main():
                 if os.environ.get("STUB_CODEX_TOUCH"):
                     (pathlib.Path(cwd) / os.environ["STUB_CODEX_TOUCH"]).write_text(
                         "changed by the reader\n", encoding="utf-8")
-                if os.environ.get("STUB_CODEX_COMMIT"):  # a worker commits its round
+                ran = sum("turn_started" in line for line in LOG.read_text(encoding="utf-8").splitlines())
+                if os.environ.get("STUB_CODEX_COMMIT") or ran >= int(
+                        os.environ.get("STUB_CODEX_COMMIT_FROM") or 0) > 0:  # a worker commits
                     import subprocess
                     subprocess.run(["git", "add", "-A"], cwd=cwd, check=True)
-                    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], cwd=cwd, check=True)
+                    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=cwd).returncode:
+                        subprocess.run(["git", "commit", "-q", "-m", "Worker round"], cwd=cwd,
+                                       check=True, stdout=sys.stderr)
                 if status == "vanish":
                     return
                 finish_turn(config, status,
