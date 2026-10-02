@@ -1,0 +1,54 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-01T09:40:22+00:00",
+      "because": "Three review rounds kept finding edge cases in the automatic merge (squash merges, worktree cleanup, existing merges); the owner's rule is to simplify a repeatedly breaking area, so the commands now only detect and point to the merge",
+      "done_when": "When the default branch has commits to a story's plans/<KEY>.md that its story branch lacks, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start merges the default branch into the story branch first (refusing with a plain message, changing nothing, when that merge conflicts) before reading the task rows. Command-level tests cover a plan edited on the default branch after approval, the merge in task start, and a conflicting merge."
+    }
+  ],
+  "base": "25ab429a1731f0d9c043be2dab56354d7ae2b11c",
+  "branch": "fix/forge-next-and-forge-task-start-read-a-s",
+  "done_when": "When the default branch's plans/<KEY>.md differs from the story branch's copy and the default branch's last commit touching it is newer than the story branch's, forge next says so in one plain line with the command to merge the default branch into the story branch, and forge task start refuses with the same line, changing nothing. Neither command merges anything. Command-level tests cover a plan edited on the default branch after approval (flagged and refused), identical copies (not flagged), and a newer story-branch edit (not flagged).",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "3c32a8503ab489ad611d3bcd1378ef701e489cb6acf5c82460395885f855f8ae",
+    "commit": "45f06b48324ea2f7bf02eda4b946c6ef1ab09c64",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "fde25671085affaf69ed351b183f7870eadf27f01da38e3ef3e9af3faf4baab8"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T08:07:30+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T09:00:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T09:36:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T17:45:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T19:10:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T23:10:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-01T23:54:17+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge next and forge task start read a story's task rows from its story branch, so a plan edit that reached the default branch another way (a fix) is silently ignored: a client saw a task listed as startable although the merged plan made it wait for a new task"
+}
