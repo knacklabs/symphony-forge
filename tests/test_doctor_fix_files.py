@@ -208,6 +208,10 @@ def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypa
     assert sorted(line.split() for line in repo.git("status", "--porcelain", cwd=folder).splitlines()) == [
         ["M", SETTINGS], ["M", HOOKS]]
     assert len(_fixes(repo, client)) == 1
+    # A second run: doctor's own unstaged repairs are nothing to do, never a hand edit.
+    again = repo.forge("doctor", "--fix", cwd=folder)
+    assert "- Fixed:" not in again.stdout and "won't overwrite" not in again.stdout, again.stdout
+    assert SETTINGS not in again.stdout and HOOKS not in again.stdout
 
 
 def _a_failed_pin_install_writes_nothing(repo, gh, tmp_path, monkeypatch, _):
@@ -236,10 +240,10 @@ def _a_fix_already_named_forge_files_gets_a_suffix(repo, gh, tmp_path, monkeypat
                                                              STATE.format("forge-files-2")])
 
 
-def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, _):
+def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude):
     client = _client(repo, gh, tmp_path, monkeypatch)
-    # A CLAUDE.md holding only what AGENTS.md has: forge sync deletes it.
-    _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, "CLAUDE.md", "@AGENTS.md\n"),
+    # A CLAUDE.md holding only what AGENTS.md has, or nothing at all: forge sync deletes it.
+    _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, "CLAUDE.md", claude),
           forge=True)
     done = repo.forge("doctor", "--fix", cwd=client)
     assert "- Fixed: wrote 1 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
@@ -252,6 +256,35 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, _):
     assert "- Fixed: removed CLAUDE.md.\n" in done.stdout, done.stdout
     assert not (folder / "CLAUDE.md").exists()
     assert repo.git("status", "--porcelain", "--", "CLAUDE.md", cwd=folder) == "D CLAUDE.md"
+    again = repo.forge("doctor", "--fix", cwd=folder)  # its own repair is nothing to do
+    assert "- Fixed:" not in again.stdout and "CLAUDE.md" not in again.stdout, again.stdout
+
+
+def _an_agents_md_linked_to_claude_md_keeps_every_line(repo, gh, tmp_path, monkeypatch, _):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+
+    def link(folder: Path) -> None:
+        agents = folder / "AGENTS.md"
+        _set(folder, "CLAUDE.md", agents.read_text(encoding="utf-8") + "\n- Our own rule.\n")
+        agents.unlink()
+        agents.symlink_to("CLAUDE.md")
+    _land(repo, client, "Upgrade Forge", link, forge=True)
+    # In doctor's fix on the default branch: AGENTS.md becomes a file with every line.
+    done = repo.forge("doctor", "--fix", cwd=client)
+    assert "Forge's files in fix forge-files.\n" in done.stdout, done.stdout
+    tree = repo.git("ls-tree", "fix/forge-files", "--", "AGENTS.md", "CLAUDE.md", cwd=client)
+    assert tree.startswith("100644 blob ") and tree.endswith("\tAGENTS.md"), tree
+    assert "- Our own rule." in repo.git("show", "fix/forge-files:AGENTS.md", cwd=client)
+    # In place on a fix branch: the same, and a second run has nothing to do.
+    folder = _start_fix(repo, client)
+    done = repo.forge("doctor", "--fix", cwd=folder)
+    assert "- Fixed: wrote AGENTS.md.\n" in done.stdout, done.stdout
+    assert "- Fixed: removed CLAUDE.md.\n" in done.stdout
+    agents = folder / "AGENTS.md"
+    assert not agents.is_symlink() and "- Our own rule." in agents.read_text(encoding="utf-8")
+    assert not (folder / "CLAUDE.md").exists()
+    again = repo.forge("doctor", "--fix", cwd=folder)
+    assert "- Fixed:" not in again.stdout and "AGENTS.md" not in again.stdout, again.stdout
 
 
 def _a_stale_doctor_fix_is_left_alone_and_a_new_one_starts(repo, gh, tmp_path, monkeypatch,
@@ -373,7 +406,7 @@ def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
     (folder / HOOKS).chmod(0o444)
     done = repo.forge("doctor", "--fix", cwd=folder)
     assert f"- Fixed: wrote {SETTINGS}.\n" in done.stdout, done.stdout
-    assert (f"- doctor couldn't write {HOOKS}: [Errno 13] Permission denied: "
+    assert (f"- doctor couldn't write Forge's files: [Errno 13] Permission denied: "
             f"'{folder / HOOKS}'\n  Fix: forge doctor --fix\n") in done.stdout
     assert (folder / SETTINGS).read_text(encoding="utf-8") == wanted[SETTINGS]
     (folder / HOOKS).chmod(0o644)
@@ -393,7 +426,7 @@ def _a_link_that_leads_outside_the_repo(repo, gh, tmp_path, monkeypatch, _):
     _land(repo, client, "Upgrade Forge", link, forge=True)
     folder = _start_fix(repo, client)
     done = repo.forge("doctor", "--fix", cwd=folder)
-    assert _row(f"doctor couldn't write {SKILL}: {SKILL} leads outside this repo, so Forge won't "
+    assert _row(f"doctor couldn't write Forge's files: {SKILL} leads outside this repo, so Forge won't "
                 "write through it; remove that link.") in done.stdout, done.stdout
     assert outside.read_text(encoding="utf-8") == "not the repo's\n"
 
@@ -616,7 +649,8 @@ def _cases(*cases) -> list:
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_gets_a_suffix, [None], ()),
-    (_a_file_sync_wants_empty_is_removed, [None], ()),
+    (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
+    (_an_agents_md_linked_to_claude_md_keeps_every_line, [None], SHELL),
     (_a_stale_doctor_fix_is_left_alone_and_a_new_one_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),

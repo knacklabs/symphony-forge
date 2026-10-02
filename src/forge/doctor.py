@@ -21,7 +21,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, codex, init, repo, review, roles, story, sync, task
+from forge import __version__, codex, init, repo, review, story, sync, task
 
 COMMANDS = [{
     "words": "doctor", "run": "doctor", "changes_state": False,
@@ -169,25 +169,27 @@ def _held(top: Path, cfg: dict[str, Any], rel: str, ref: str) -> str:
     return f"was changed by hand ({subject}), so doctor won't overwrite it"
 
 
-def _drift(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str], ref: str,
-           also: frozenset[str] = frozenset()) -> tuple[list[str], list[tuple[str, str]]]:
-    """The files in folder, or named in also, that differ from what sync writes and doctor may
-    write, and a row for each one it holds back."""
-    free, rows = [], []
-    for rel in (rel for rel, text in wanted.items() if rel in also or sync.read(folder / rel) != text):
+def _split(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
+           ref: str) -> tuple[list[str], list[tuple[str, str]], frozenset[str]]:
+    """The files forge sync would change in folder, split into those doctor may let it write and a
+    row for each one held back, with the held-back set. A change staged in the checkout doctor
+    runs in counts even when the file already matches sync."""
+    staged = set(repo.run("git", "diff", "--cached", "--name-only", "-z", "--", *wanted,
+                          cwd=top).stdout.split("\0"))
+    differing = set(sync.differing(folder, wanted))
+    free, rows, keep = [], [], set()
+    for rel in (rel for rel in wanted if rel in differing or rel in staged):
         if reason := _held(top, cfg, rel, ref):
             rows.append((f"{rel} {reason}.", HAND))
+            keep.add(rel)
         else:
             free.append(rel)
-    return free, rows
-
-
-def _write(top: Path, rel: str, text: str) -> None:
-    """Write one file as sync does: a file sync wants empty is removed."""
-    if text:
-        sync.write_file(top, rel, text)
-    else:
-        (top / rel).unlink()
+    if "AGENTS.md" in keep and "CLAUDE.md" in free:  # sync moves CLAUDE.md's lines into AGENTS.md
+        free.remove("CLAUDE.md")
+        keep.add("CLAUDE.md")
+        rows.append(("CLAUDE.md stays until doctor can write AGENTS.md, since sync moves its lines "
+                     "there.", HAND))
+    return free, rows, frozenset(keep)
 
 
 def _drop(top: Path, path: Path, branch: str) -> bool:
@@ -216,18 +218,17 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
                 and there("diff", "--quiet", ref, "HEAD", "--", "forge.toml").returncode == 0
                 and there("diff", "--quiet", ref, "--", "forge.toml").returncode == 0
                 and WHY in there("log", "--format=%s", f"{ref}..HEAD").stdout.splitlines()):
-            # Files held back keep their rows, judged as the fix was: against the default branch.
-            committed = frozenset(rel for rel, text in wanted.items()
-                                  if (story.show(top, ref, rel) or "") != text)
+            # The files the fix held back still differ there; each keeps its row.
             return [(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
-                     f"forge close {name}"), *_drift(top, top, cfg, wanted, ref, committed)[1]]
+                     f"forge close {name}"),
+                    *_split(top, path, cfg, sync.files(path, repo.config(path)), ref)[1]]
         # Its forge.toml, and so sync's files, may be out of date, or it lacks its files commit.
         rows.append((f"Doctor's fix {name} is behind {default}, so doctor started a new one.",
                      f"close its pull request if it has one, then git worktree remove --force "
                      f"{path} and git branch -D {branch}"))
     # A clean checkout at the default branch's latest commit would make the same fix: none.
     heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
-    free, held = _drift(top, top, cfg, wanted, ref)
+    free, held, _ = _split(top, top, cfg, wanted, ref)
     if (len(set(heads)) == 1 and not free
             and not repo.git("status", "--porcelain", "--untracked-files=all", "--", *wanted, cwd=top)):
         return [*rows, *held]
@@ -252,12 +253,10 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     branch, path = f"fix/{name}", task._folder(f"fix-{name}")  # pyright: ignore[reportPrivateUsage]
     try:
         task._new_checkout(name, branch, f"fix-{name}", ref, state, f"Start the fix: {WHY}")  # pyright: ignore[reportPrivateUsage]
-        fixed = sync.files(path, repo.config(path))
-        free, held = _drift(top, path, cfg, fixed, ref)
-        if free:
-            roles.refuse_foreign(path, free)
-            for rel in free:
-                _write(path, rel, fixed[rel])
+        fixed = repo.config(path)
+        free, held, keep = _split(top, path, cfg, sync.files(path, fixed), ref)
+        if free:  # forge sync's own write, so deletions and links behave exactly as there
+            free = sync.write(path, fixed, keep)
             repo.git("add", "-A", "-f", "--", *free, cwd=path)
             repo.git("commit", "-q", "-m", WHY, "--", *free, cwd=path)
     except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
@@ -293,28 +292,23 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
         failed = [(f"doctor couldn't fetch {default} from origin, so it started no fix for "
                    f"Forge's files: {_last(fetched)}",
                    f"check your network and GitHub access, then {REPAIR}")]
-    # A staged or unstaged change counts even when the working copy matches sync.
-    changed = frozenset(entry[3:] for entry in repo.git(
-        "status", "--porcelain", "-z", "--untracked-files=no", "--", *wanted, cwd=top).split("\0")
-        if entry)
-    free, rows = _drift(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD",
-                        changed)
-    drift = _rows(free)
+    free, rows, keep = _split(top, top, cfg, wanted,
+                              story.landed_ref(top) if on_default else "HEAD")
     if not fix or not free or failed:
-        return failed + drift + rows
-    try:  # before anything is written: a detached HEAD, or a role file Forge didn't write
-        repo._work_branch(top)  # pyright: ignore[reportPrivateUsage]
-        roles.refuse_foreign(top, free)
-    except repo.Refused as refused:
-        problem, _, next_step = str(refused).partition("\nNext: ")
-        return [(problem, next_step), *drift, *rows]
-    for done, rel in enumerate(free):
-        try:
-            _write(top, rel, wanted[rel])
-        except (repo.Refused, OSError) as failed:  # what is written stays, as forge sync leaves it
-            return [(f"doctor couldn't write {rel}: {_said(failed)}", REPAIR),
-                    *drift[done + 1:], *rows]
-        print(f"- Fixed: {'wrote' if wanted[rel] else 'removed'} {rel}.")
+        return failed + _rows(free) + rows
+    try:  # forge sync's own write, so deletions and links behave exactly as there
+        written = sync.write(top, cfg, keep)
+    except (repo.Refused, OSError) as error:  # what is written stays, as forge sync leaves it
+        still = [rel for rel in sync.differing(top, sync.files(top, cfg)) if rel not in keep]
+        written = [rel for rel in free if rel not in still]
+        if isinstance(error, repo.Refused) and error.entry is repo.REFUSALS["default_branch"]:
+            problem, _, next_step = str(error).partition("\nNext: ")
+            failure = (problem, next_step)  # a detached HEAD: sync's own refusal
+        else:
+            failure = (f"doctor couldn't write Forge's files: {_said(error)}", REPAIR)
+        rows = [failure, *_rows(still), *rows]
+    for rel in written:
+        print(f"- Fixed: {'wrote' if (top / rel).exists() else 'removed'} {rel}.")
     return rows
 
 
