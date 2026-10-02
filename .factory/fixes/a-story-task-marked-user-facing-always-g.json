@@ -13,29 +13,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "6edae123546bec28287ad91de8f9f94fbbfc23a1149d730fcb277621f31a57bd",
-    "commit": "676fc6ca585d57a0c1a9d1694c007a8e9a4d1765",
+    "changed": "59b06cea96ce8026260b701f5b36f6c977d6291e6d381407eed51caa607e5684",
+    "commit": "3ce534d4eb31af64b94effe6cd7263f15f628821",
     "dismissals": [],
     "findings": [
       {
-        "body": "The configuration lookup misses a task-start rule: `src/forge/task.py:184\u2013185` forces the starting base to the default branch whenever the task has a cross-story dependency. If SHOP's plan has not landed, story/SHOP specifies Claude, and the default branch specifies Codex, a ready SHOP task depending on TURN-1/T4 is labeled Claude here but actually starts with Codex settings. This is new evidence beyond the previous caller-checkout finding: the cross-story base override remains unaccounted for. Select the configuration per ready task using that override and cover differing branch settings through the commands.",
-        "file": "src/forge/nextstep.py",
-        "line": 366,
-        "priority": "P1",
-        "title": "Not done: forge next names the actual worker for tasks depending on another story"
-      },
-      {
-        "body": "This records Codex as the last worker before its new conversation exists. After successful Codex and Claude rounds, switch back to Codex and let app-server startup time out: `src/forge/codex_turn.py:106\u2013120` implements this refusal before creating a thread. The old Codex conversation remains recorded because its replacement is written only at `src/forge/codex.py:350\u2013363`. On retry, `last == family` now permits resuming that older conversation with the short brief, despite the intervening Claude round. Preserve the need for a fresh conversation until the replacement is recorded.",
+        "body": "Interrupt a Codex round during its capacity-retry wait, switch to Claude, then switch back to Codex. `src/forge/codex.py:376\u2013377` records a pending retry before that wait. Switching to Claude skips recovery and calls this helper, which clears `conversation` but leaves `pending`. On switching back, `src/forge/codex.py:201\u2013206` therefore attempts recovery using the now-null conversation ID. [Codex's thread/read contract](https://raw.githubusercontent.com/openai/codex/main/codex-rs/app-server-protocol/schema/json/v2/ThreadReadParams.json) requires a string ID, so subsequent Codex work refuses instead of starting fresh. Recover or safely retire the pending retry before discarding its conversation ID. The added interruption test covers startup before a conversation exists, which does not exercise this case.",
         "file": "src/forge/worker.py",
-        "line": 134,
+        "line": 464,
         "priority": "P2",
-        "title": "Preserve the family-switch guard when Codex fails before creating a conversation"
+        "title": "Preserve pending Codex recovery when forgetting a conversation"
       }
     ],
-    "status": "blocked",
-    "tree": "2629aa810e0891ec3e56136fb40b0066dc9311fcc0d7f84e0404854b96f7dc01"
+    "status": "clean",
+    "tree": "0d88bfc17aaba871db7c1b557da8778c3cda1081c1ad8ab7a0d78dac53528de5"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-02T06:44:28+00:00",
@@ -51,6 +44,10 @@
     },
     {
       "at": "2026-10-02T18:14:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T23:02:11+00:00",
       "step": "review"
     }
   ],
