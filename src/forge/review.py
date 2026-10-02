@@ -125,8 +125,9 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
-                reviewed_level: str | None = None) -> str:
-    """What a clean review covers: changed product files, the item's story doc and roadmap entry, its
+                reviewed_level: str | None = None, findings: list[Any] | None = None) -> str:
+    """What a clean review covers: changed product files, every file the review's findings cite
+    (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
     ancestor = repo.git("merge-base", base, commit, cwd=top)
@@ -135,6 +136,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     named = str(state.get("done_when", ""))  # a file the Done-when names is never bookkeeping
     changed = {path for path in changed
                if path and (not path.startswith(BOOKKEEPING) or path in named)}
+    if findings is None:
+        findings = (state.get("review") or {}).get("findings", [])
+    changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
@@ -217,7 +221,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
               # read after close merged the default branch, which may change the command
-              "test_run": _test_run(top, close_test(top, base))}
+              "test_run": _test_run(top, close_test(top, base), base)}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -263,13 +267,20 @@ def close_test(top: Path, base: str) -> str:
     return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
 
 
-def _test_run(top: Path, command: str) -> str:
+def _test_run(top: Path, command: str, base: str) -> str:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run: the
     exit status, every line that mentions a skip with the line before it (where Go's -v prints the
     reason), and the last 30 lines, at most 80 in all. pytest also lists each skip's reason (-rs).
-    Skipped when it already passed here on the same committed files; one run per machine at a time."""
+    Skipped when it already passed here on the same committed files, or when the change touches
+    only docs, plans, Markdown or Forge's records; one run per machine at a time."""
     if not command:
         return "forge.toml names no test command, so close ran none."
+    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                       cwd=top).split("\0")
+    if all(path.startswith(DOCS) or path.endswith(".md") for path in changed if path):
+        said = DOCS_ONLY.format(command=command)
+        print(said, flush=True)
+        return said
     from forge import codex  # codex imports review indirectly
 
     folder = machine._repos_file().parent
@@ -303,6 +314,9 @@ def _test_run(top: Path, command: str) -> str:
                       "forge close.", *lines])
 
 
+DOCS = ("docs/", "plans/", ".factory/")
+DOCS_ONLY = ("This change touches only docs, plans, Markdown or Forge's records, so close did not run "
+             "`{command}`.")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
 
@@ -471,7 +485,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     return {"commit": head, "changed": fingerprint(head, item, top, state, base,
-                                                     "P0" if light else "P1"),
+                                                     "P0" if light else "P1", findings),
             "tree": whole_tree(head, item, top, state, base), "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 

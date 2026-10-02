@@ -342,7 +342,7 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         closed = env.close(env.start_fix()[0])
         assert closed.returncode == 0, closed.stdout + closed.stderr
         [create] = env.gh_calls("pr", "create")
-        assert "1. P2 Simpler: drop the cache (app.py:1): advisory" in body(create)
+        assert "- Finding 1 (P2): Simpler: drop the cache (app.py:1): advisory" in body(create)
         # Its version is pinned: forge doctor reports a helper at any other version.
         assert "Autoreview" not in repo.forge("doctor").stdout
         helper = Path(os.environ["AUTOREVIEW"])
@@ -585,7 +585,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts")):
+                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         repo.forge(*args)
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"

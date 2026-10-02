@@ -1,0 +1,27 @@
+{
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/close-runs-the-full-test-command-even-wh",
+  "done_when": "When every file a change touches is under docs/ or plans/, a Markdown file, or under .factory/, forge close skips forge.toml's test command and says so in one line, and still runs the review and every check forge.toml names; any other changed file runs the test command as today. Command-level tests cover a docs-and-plans-only fix (skipped) and one that also changes a code file (run).",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6823864794676016b9eb91ccff783a52810e457e8f33c8ab5588c394a53722ea",
+    "commit": "e4a29fdbd68471657c7ef627c94ece15d781d73e",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "14bb7017868e898ee1e80393b22aa15718046443efa9b57ca85f52f0178e921c"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T17:02:27+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T22:05:11+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close runs the full test command even when a change touches only docs, plans, Markdown or Forge's own records, so a plan-row fix took 18 minutes in a client"
+}

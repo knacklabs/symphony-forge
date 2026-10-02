@@ -57,5 +57,5 @@ def test_3_close_carries_dismissal_to_same_file_and_title_in_later_review(env):
 
     assert again.returncode == 0, again.stderr
     assert len(env.review_calls()) == 2
-    assert f"2. P1 {title} (app.py:2): dismissed because {reason}" in body(
+    assert f"- Finding 2 (P1): {title} (app.py:2): dismissed because {reason}" in body(
         env.gh_calls("pr", "edit")[-1])

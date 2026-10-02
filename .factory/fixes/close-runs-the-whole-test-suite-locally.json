@@ -1,7 +1,19 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-02T04:38:12+00:00",
+      "because": "The owner confirmed the design on 2026-10-02 and asked that the skill and guide recommend a fast close command when CI runs the full suite",
+      "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files (for example a vitest --changed run) plus fast checks; when fast_test is unset close runs test as today, and the pull request's CI keeps running the full test command. forge doctor and the skill explain the setting, and new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in) and unset (test runs)."
+    },
+    {
+      "at": "2026-10-02T04:38:17+00:00",
+      "because": "y",
+      "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files plus fast checks; when fast_test is unset close runs test as today, and the generated forge.yml tests job keeps running the full test command. forge doctor, the skill and the guide explain the setting and recommend a fast close command when CI runs the full suite; new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in), unset (test runs), and the generated workflow still running test."
+    }
+  ],
   "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
   "branch": "fix/close-runs-the-whole-test-suite-locally",
-  "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files (for example a vitest --changed run) plus fast checks; when fast_test is unset close runs test as today, and the pull request's CI keeps running the full test command. forge doctor and the skill explain the setting, and new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in) and unset (test runs).",
+  "done_when": "x",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",

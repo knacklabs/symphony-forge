@@ -27,6 +27,7 @@ import itertools
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -559,6 +560,25 @@ def landed_ref(top: Path) -> str:
     fetched = f"origin/{default}"
     found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
     return default if found else fetched
+
+
+def plan_behind(top: Path, key: str, ref: str) -> str:
+    """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
+    from the story branch's and ref changed it last, as when a fix edits the plan; else ""."""
+    branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
+    if show(top, branch, doc) in (None, show(top, ref, doc)):
+        return ""
+    ours, theirs = (repo.git("log", "-1", "--format=%ct", tip, "--", doc, cwd=top) for tip in (branch, ref))
+    if not theirs or int(theirs) <= int(ours or 0):
+        return ""
+    folder = stories_here(top).get(key)
+    add = ""
+    if not folder:
+        main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).parent
+        folder = main.parent / f"{main.name}-story-{key}"
+        add = f"git worktree add {shlex.quote(str(folder))} story/{key} && "
+    return (f"The default branch has changes to plans/{key}.md that story/{key} lacks; merge them in with "
+            f"{add}git -C {shlex.quote(str(folder))} merge {ref}")
 
 
 def show(top: Path, ref: str, path: str) -> str | None:
