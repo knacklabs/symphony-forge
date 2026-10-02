@@ -157,7 +157,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one refuses. Work and reviews run on GPT-6.1 Sol.
+    # an old one gets the ordinary unknown-key refusal. Work and reviews run on GPT-6.1 Sol.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
@@ -175,5 +175,5 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         "review": {"model": "gpt-6.1-sol", "effort": "high"}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
-    assert old.stderr == ("forge.toml's model setting is now the [models] table.\n"
-                          "Next: ask your agent to move it into forge.toml's [models] table\n")
+    assert old.stderr == ("forge.toml is not usable: 'model' is not a forge.toml key.\n"
+                          "Next: forge doctor\n")
