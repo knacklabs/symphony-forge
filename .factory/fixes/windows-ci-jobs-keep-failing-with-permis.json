@@ -1,4 +1,5 @@
 {
+  "allow_large": "Over the limit only by test files, which the owner ruled do not count; the counting fix is merged but not yet released",
   "amendments": [
     {
       "at": "2026-10-02T14:40:19+00:00",
