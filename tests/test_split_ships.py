@@ -69,10 +69,13 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
     for path, source in SOURCES.items():
         assert files[path].read_bytes() == (ROOT / source).read_bytes(), path
     agents = (ROOT / "src/forge/templates/adapters/AGENTS.md").read_text(encoding="utf-8")
+    # The team's CLAUDE.md line moves into AGENTS.md after Forge's block, and CLAUDE.md goes.
+    moved = "\n# Team notes\n" if case == "claude_node" else ""
     assert files["AGENTS.md"].read_text(encoding="utf-8") == (
-        f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n")
+        f"<!-- forge:begin -->\n{agents.rstrip()}\n<!-- forge:end -->\n{moved}")
     for path in GENERATED[case]:
-        assert files[path].read_text(encoding="utf-8") == expected[path], path
+        text = files[path].read_text(encoding="utf-8") if files[path].exists() else ""
+        assert text == expected[path], path
     if case != "plain":
         return
 

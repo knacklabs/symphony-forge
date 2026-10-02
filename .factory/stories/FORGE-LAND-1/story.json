@@ -9,7 +9,13 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-LAND-1.md",
-  "status": "approved",
+  "finished": "2026-10-01T16:35:42+00:00",
+  "merged": {
+    "CHECKS": "2026-10-01T16:35:42+00:00",
+    "LAND": "2026-10-01T10:02:36+00:00"
+  },
+  "outcome": "forge land now runs build, close, up to three fix rounds, waits for checks on its own head, re-runs a failure outside the change once, and merges where the repo allows agent merges, from Claude Code or Codex with either kind of worker",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-30T13:44:39+00:00",
@@ -30,6 +36,10 @@
     {
       "at": "2026-10-01T01:17:09+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-10-02T00:49:10+00:00",
+      "step": "done"
     }
   ],
   "title": "One command lands a change",
