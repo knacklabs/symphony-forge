@@ -232,7 +232,9 @@ def _merge(repo, ours: str, theirs: str) -> list[dict]:
 
 def _synced(repo, gitattributes: str | None) -> None:
     repo.git("checkout", "-q", "-b", "fix/spotted")
-    repo.write("forge.toml", 'version = "v1.2.1"\ntest = "echo ok"\n'
+    # The checkout's own version, so this Forge runs sync rather than an older release.
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if gitattributes is not None:
         repo.write(".gitattributes", gitattributes)
