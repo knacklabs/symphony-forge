@@ -59,20 +59,23 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data)
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
 
 
-def test_3_a_single_entry_asked_for_by_the_other_family_gives_no_model(repo, monkeypatch, sdk_data):
+def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
-    # A Claude model never reaches Codex, and a gpt model never reaches Claude: each runs on its
-    # own settings instead. Codex goes first, as the task's first build; any later Codex round is
-    # a fix round, while a Claude worker always builds.
+    # A Claude model never reaches Codex, and a gpt model never reaches Claude: each runs on
+    # Forge's default for its tool instead (it once ran on the tool's own settings; forge work
+    # now names the model it runs). Codex goes first, as the task's first build; any later Codex
+    # round is a fix round, while a Claude worker always builds.
     _work(repo, folder, "codex", f"[models.build]\n{OPUS}")
     assert [line["kind"] for line in _lines(repo.path / ".git" / "forge" / "threads" / "task"
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
-    assert not _sent(calls, "thread/start")[-1].get("config")
+    assert _sent(calls, "thread/start")[-1]["config"] == {
+        "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
-    assert "--model" not in args and "--effort" not in args and "gpt-6-nova" not in args
+    assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
+    assert "gpt-6-nova" not in args
 
 
 def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, sdk_data):
