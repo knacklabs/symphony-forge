@@ -286,6 +286,19 @@ repo, rewritten by that version.
 
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
+## Refresh dependencies
+
+When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
+lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
+fix's folder:
+
+1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
+   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `go get -u=patch ./... && go mod tidy`); never raise a range.
+2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
+   same tag, and rebuild the image.
+3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
@@ -364,6 +377,11 @@ answer returns to the same conversation when it can resume; a fresh brief carrie
 question and answer. Workers change files outside Scope that the change needs and name them in
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
+
+When a round ends with changes left uncommitted, `forge work` continues the same conversation
+once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
+what is committed, so look at them before closing.
 
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and

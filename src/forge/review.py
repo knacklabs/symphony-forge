@@ -6,6 +6,7 @@ review_status and overall_correctness) and ignores everything else it writes.
 """
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import time
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
@@ -160,28 +162,6 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         parts.append("P0-only prototype review")
     if saved_level != current_level:
         parts.append("The recorded review level is no longer allowed")
-    for part in parts:
-        digest.update(b"\0" + part.encode("utf-8"))
-    return digest.hexdigest()
-
-
-def whole_tree(commit: str, item: str, top: Path, state: dict[str, Any], base: str) -> str:
-    """The v1.1.0 release's fingerprint, kept under the record's `tree` key so that release's
-    forge-pr-check passes an upgrade pull request this version reviewed: the whole product tree
-    at commit, what the change must do and the worker's functional check.
-    ponytail: one release only; delete it, and close's refresh of `tree`, after v1.2.0."""
-    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-    product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
-    digest = hashlib.sha256("\0".join(product).encode("utf-8"))
-    key, _, name = item.partition("/")
-    if name:
-        text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
-        doc = sections(text)
-        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
-                 moving_parts(text)]
-    else:
-        parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
-    parts.append(functional_check(top, base, commit))
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
@@ -389,6 +369,16 @@ def helper() -> Path:
     return path
 
 
+def _sweep() -> None:
+    """Delete the forge-review-* folders in the system temp folder last changed over a day ago:
+    a review never runs that long, so they are what killed reviews and failed removals left."""
+    day_ago = time.time() - 24 * 3600
+    for folder in Path(tempfile.gettempdir()).glob("forge-review-*"):
+        with contextlib.suppress(OSError):
+            if folder.is_dir() and folder.stat().st_mtime < day_ago:
+                shutil.rmtree(folder, ignore_errors=True)
+
+
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False) -> dict[str, Any]:
@@ -402,6 +392,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                        for name in repo.git(*command, cwd=top).split("\0")
                        if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))})
                if signoff_prompt else [])
+    _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
         tree, out = tmp / "tree", tmp / "review.json"
@@ -477,7 +468,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     return {"commit": head, "changed": fingerprint(head, item, top, state, base,
                                                      "P0" if light else "P1", findings),
-            "tree": whole_tree(head, item, top, state, base), "findings": findings,
+            "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
 
