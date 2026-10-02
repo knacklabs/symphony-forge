@@ -6,7 +6,8 @@ the reader is the stub `claude` from test_story.
 
 import json
 
-from test_story import DOC, claude_plan, hook, new_story, setup
+from test_readloop_gates import pr_check
+from test_story import DOC, claude_plan, hook, new_story, setup, worktree
 
 STORY = "FIX-AFTER-A-PLAN-READ-PASSES-ANY-LATER-EDIT"
 
@@ -65,3 +66,23 @@ def test_2_a_top_part_edit_after_a_pass_needs_a_round_on_the_diff(repo, claude_p
                  "Check only this diff and the sections it touches"):
         assert part in prompt, part
     assert "read the whole doc again" not in prompt
+
+
+def test_3_the_pull_request_check_accepts_only_a_builders_only_edit_after_a_pass(repo, claude_payload):
+    _passed(repo)
+    assert hook(repo, claude_plan(claude_payload, TOP)).returncode == 0
+    assert repo.forge("task", "start", "SHOP/SAVE").returncode == 0
+    task = worktree(repo, "task/SHOP-SAVE")
+    doc = task / "plans" / "SHOP.md"
+    # A committed edit only below For the builders: the doc check passes and the review is next.
+    doc.write_text(BUILT.replace("kept in the database.", "kept in the database, one per shopper."),
+                   encoding="utf-8")
+    repo.git("commit", "-q", "-am", "Tighten the details", cwd=task)
+    done = pr_check(repo, "task/SHOP-SAVE")
+    assert done.stderr.splitlines()[-2] == "The committed review at the head of task/SHOP-SAVE is missing."
+    # The same kind of edit above it is refused until a round reads it.
+    doc.write_text(doc.read_text("utf-8").replace("People lose", "Shoppers lose"), encoding="utf-8")
+    repo.git("commit", "-q", "-am", "Reword the why", cwd=task)
+    done = pr_check(repo, "task/SHOP-SAVE")
+    assert done.returncode == 1
+    assert done.stderr.splitlines()[-2] == "plans/SHOP.md changed after its last round of cold read."
