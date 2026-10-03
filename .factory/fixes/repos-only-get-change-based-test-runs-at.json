@@ -12,34 +12,48 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "5a9d54493f07fab948d428a8a120ecac75bb645a6c75dc6c9e962e400d0662c0",
-    "commit": "111e8cc99077292a81c635ed2f254ed4a5e622f2",
+    "changed": "beaf7762a6be48e58b113fdccc5340145bf2845a347ec0861b5a466b2d165d00",
+    "commit": "1f44c505f2ec6db475fddff417007cb5a021cb8a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The Done-when requirement remains unmet: `forge.toml:6\u20138` defines `test`, `checks` and `interfaces`, but no `fast_test`. Consequently, `src/forge/review.py:246\u2013247` still selects the full suite for Forge's closes. The supplied close run confirms that this configuration check raises `KeyError` at `own[\"fast_test\"]`. Add the required changed-only pytest command to Forge's own configuration.",
+        "body": "The coordinator deferred Forge's own configuration to a later release, but this test still indexes `own[\"fast_test\"]`. The new evidence is that the amended requirement excludes this setting while the test remains unchanged. Reading `forge.toml:6\u20138` confirms the key is absent, so this collected test raises `KeyError` and prevents the repository suite from passing. Move this test to the deferred work rather than adding the ruled-out configuration.",
         "file": "tests/test_fix_init_sets_a_changed_only_fast_test.py",
         "line": 106,
         "priority": "P1",
-        "title": "Not done: Forge's own forge.toml sets fast_test for its pytest suite"
+        "title": "Remove the obsolete test requiring Forge's own fast_test setting"
       },
       {
-        "body": "The generated command discards everything after the matched `pytest` token, including enclosing shell syntax. For example, adopting with `--test '(cd backend && pytest tests)'` produces a command beginning `(cd backend && python -c \"\u2026\"` without its closing parenthesis. Close executes this through a shell (`src/forge/review.py:283`), so it fails before testing anything. Preserve the surrounding command syntax when replacing the pytest invocation.",
+        "body": "The previous finding remains open: everything after `pytest` is discarded, including shell delimiters. Adoption with `--test '(cd backend && pytest tests)'` generates `(cd backend && python -c \"\u2026\"` without the closing parenthesis. `src/forge/review.py:283` executes this through a shell, so close fails before running tests. Preserve enclosing shell syntax when replacing the pytest invocation.",
         "file": "src/forge/init.py",
         "line": 133,
         "priority": "P2",
         "title": "Preserve enclosing shell syntax when replacing pytest"
       },
       {
-        "body": "With rename detection enabled, `git diff --name-only` reports the post-image filename, as documented by [Git](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---name-only). Renaming `shop/orders.py` to `shop/purchases.py` therefore adds only `purchases` to the module names. An unchanged test importing `shop.orders` is omitted, and a rename-only change can exit successfully without exposing its broken import. Disable rename detection for this list or include both names.",
+        "body": "The previous finding remains open. With rename detection enabled, `--name-only` reports the post-image filename, as specified by the [Git documentation](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---name-only). Renaming `shop/orders.py` to `shop/purchases.py` therefore selects importers of `purchases` but misses unchanged tests importing `shop.orders`. A rename-only change can return success without exposing those broken imports. Include both names or disable rename detection for this list.",
         "file": "src/forge/init.py",
         "line": 71,
         "priority": "P2",
         "title": "Include the old module name when selecting tests for renames"
+      },
+      {
+        "body": "For adoption with `--test 'cd backend && pytest tests'`, the selector runs inside `backend`. `git diff --name-only` supplies `backend/tests/test_orders.py`, while `git ls-files` supplies `tests/test_orders.py`; their default path conventions differ, as documented for [diff](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---relativepath) and [ls-files](https://git-scm.com/docs/git-ls-files#Documentation/git-ls-files.txt---full-name). If only that test changed, `names` is empty and this comparison omits it, returning success without running it. Normalize both lists, for example by using `git diff --relative`.",
+        "file": "src/forge/init.py",
+        "line": 76,
+        "priority": "P2",
+        "title": "Compare changed test paths relative to the same directory"
+      },
+      {
+        "body": "The import expression only searches one line. An unchanged test containing `from shop import (\\n    orders,\\n)` imports `shop.orders`, but changing `shop/orders.py` does not select it: the `from` line contains no `orders`, and the following line contains no `from` or `import`. Close can consequently report that no tests ran despite a direct importer being present. Recognize complete import statements rather than individual lines.",
+        "file": "src/forge/init.py",
+        "line": 74,
+        "priority": "P2",
+        "title": "Recognize changed modules in multiline imports"
       }
     ],
     "status": "blocked",
-    "tree": "acd5c8ac24379d5147ec42182e53c68a51101051496736ab6b2085dc49c1b8b5"
+    "tree": "5cfd115cdb6e703d336a03c7f79f6254ebf241d5cd3b198e1152ac530a0cb685"
   },
   "status": "fixing",
   "steps": [
@@ -53,6 +67,10 @@
     },
     {
       "at": "2026-10-03T06:33:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T07:08:26+00:00",
       "step": "review"
     }
   ],
