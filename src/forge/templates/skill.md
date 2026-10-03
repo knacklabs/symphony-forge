@@ -349,7 +349,7 @@ setup-only, platform or "foundation" stories. A story that no spec behaviour lin
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs at most 2 Forge agents at once (work rounds, plan reads and close
 reviews), across all its repos; the rest wait in line, first come, first served, and print their
-place when they start waiting and each time it changes. A run that dies frees its place. A waiting
+place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on.
 

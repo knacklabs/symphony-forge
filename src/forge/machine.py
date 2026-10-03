@@ -1,17 +1,13 @@
 """The repos this machine has used with Forge, and its line of Forge agent runs."""
 import contextlib
+import json
 import os
 import time
 from collections.abc import Iterator
 from pathlib import Path
-from typing import IO
+from typing import Any
 
 from forge import repo
-
-if os.name == "nt":
-    import msvcrt
-else:
-    import fcntl
 
 # The Forge agent runs (work rounds, plan reads, close reviews) one machine runs at once, whatever
 # the repo, so several repos' agents can't run it out of memory.
@@ -54,60 +50,71 @@ def remember(top: Path) -> None:
 
 
 @contextlib.contextmanager
-def agent_slot() -> Iterator[None]:
-    """Hold one of the machine's agent slots while an agent runs. Each run takes a ticket, a file
-    beside the repo list that it keeps locked while its process lives, so a run that dies frees its
-    place however it ends. Tickets are named by when they were taken, so the line is first come,
-    first served. A run waits while AGENT_SLOTS live tickets are ahead of it, and says its place
-    when it starts waiting and each time that changes."""
-    folder = _repos_file().parent / "agent-runs"
-    folder.mkdir(parents=True, exist_ok=True)
-    while True:
-        mine = folder / f"{time.time_ns():020d}-{os.getpid()}"
-        ticket = mine.open("xb")
-        while not _lock(ticket):  # another run is checking it for a moment
-            time.sleep(0.05)
-        with contextlib.suppress(FileNotFoundError):
-            if os.path.samestat(os.fstat(ticket.fileno()), os.stat(mine)):
-                break
-        ticket.close()  # a check took it, unlocked, for a dead run's and removed it
+def agent_slot(top: Path, kind: str) -> Iterator[None]:
+    """Hold one of the machine's agent slots while a `kind` run in `top` runs its agent. The line
+    is one queue file, read and written only under one lock: a run joins at the end and starts once
+    it is among the first AGENT_SLOTS live entries, first come, first served, saying its place when
+    it starts waiting and each time that changes. An entry is live while its Forge or its agent
+    runs, so a killed Forge whose agent still runs keeps its place until the agent ends; dead ones
+    are dropped."""
+    from forge import codex  # codex imports machine
+
+    me = codex.identity(os.getpid()) or {"pid": os.getpid()}
+    with _queue() as runs:
+        runs.append({"forge": me, "agent": None, "repo": str(top), "kind": kind})
     try:
         said = 0
-        while (ahead := sum(_live(other) for other in folder.iterdir()
-                            if other.name < mine.name)) >= AGENT_SLOTS:
-            if (place := ahead - AGENT_SLOTS + 1) != said:
+        while True:
+            with _queue() as runs:
+                runs[:] = [run for run in runs if _running(run["forge"]) or _running(run["agent"])]
+                place = next(n for n, run in enumerate(runs) if run["forge"] == me) - AGENT_SLOTS + 1
+            if place <= 0:
+                break
+            if place != said:
                 print(f"{AGENT_SLOTS} Forge agents already run on this machine, so this one waits "
                       f"its turn: it is number {place} in line.", flush=True)
                 said = place
             time.sleep(0.5)
         yield
     finally:
-        ticket.close()
-        with contextlib.suppress(OSError):  # on Windows, while another run checks it
-            mine.unlink()
+        with _queue() as runs:
+            runs[:] = [run for run in runs if run["forge"] != me]
 
 
-def _lock(file: IO[bytes]) -> bool:
-    """Lock `file` without waiting; False when another holds it. The system lets go when the
-    holder closes it or ends."""
-    try:
-        if os.name == "nt":
-            msvcrt.locking(file.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
+def started(pid: int) -> None:
+    """Record the agent this Forge just started, so its place lasts as long as the agent does."""
+    from forge import codex
+
+    agent = codex.identity(pid) or {"pid": pid}
+    with _queue() as runs:
+        for run in runs:
+            if run["forge"]["pid"] == os.getpid():
+                run["agent"] = agent
+
+
+@contextlib.contextmanager
+def _queue() -> Iterator[list[dict[str, Any]]]:
+    """The machine's line of agent runs, to read and change while holding its lock."""
+    from forge import codex
+
+    path = _repos_file().parent / "agent-runs.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with codex._one_at_a_time(path):  # pyright: ignore[reportPrivateUsage]
+        try:
+            runs = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            runs = []
+        yield runs
+        path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
+        os.replace(path.with_suffix(".new"), path)
+
+
+def _running(process: dict[str, Any] | None) -> bool:
+    """Whether a recorded process still runs; one recorded by id alone runs while its id does."""
+    from forge import codex
+
+    if not process:
         return False
-    return True
-
-
-def _live(ticket: Path) -> bool:
-    """Whether a live run holds `ticket`. A dead run's ticket is removed."""
-    try:
-        with ticket.open("rb") as held:
-            if not _lock(held):
-                return True
-    except FileNotFoundError:
-        return False
-    with contextlib.suppress(OSError):
-        ticket.unlink()
-    return False
+    if "started" not in process:
+        return codex.identity(process["pid"]) is not None
+    return codex._alive(process) is not False  # pyright: ignore[reportPrivateUsage]

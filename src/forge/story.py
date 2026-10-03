@@ -217,7 +217,7 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        with machine.agent_slot():
+        with machine.agent_slot(top, "read"):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why)
         said, failed = done.stdout.strip(), done.returncode
@@ -225,7 +225,7 @@ def read(args: Any) -> int:
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
         # One read per item, nothing left running, and one of the machine's agent slots.
-        with codex.hold(top, target, "Grill"), machine.agent_slot():
+        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read"):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -673,9 +673,20 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
                  resume: str | None, why: str) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
-    command = ["claude", "-p", *models, "--permission-mode", "plan"]
+    exe = shutil.which("claude")
+    if exe is None:
+        repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
+
+    def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
+        with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args], cwd=top,
+                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              text=True, encoding="utf-8", errors="replace") as reader:
+            machine.started(reader.pid)
+            out, err = reader.communicate(text)
+        return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
+
     if resume:
-        done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
+        done = run("--resume", resume, text=prompt)
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -684,7 +695,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
-    return repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
+    return run("--session-id", session, text=fresh_prompt)
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:

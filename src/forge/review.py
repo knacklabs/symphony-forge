@@ -452,7 +452,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot():
+        with machine.agent_slot(top, "review"):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
                 if not reason:
@@ -527,6 +527,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
+    machine.started(proc.pid)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
         sys.stderr.buffer.write(line)
