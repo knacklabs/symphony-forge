@@ -13,9 +13,7 @@ import json
 import os
 import pkgutil
 import re
-import shlex
 import subprocess
-import sys
 import tempfile
 import tomllib
 from pathlib import Path
@@ -29,7 +27,14 @@ COMMANDS = [{
     "help": "Write the generated adapter files and git hooks for the pinned version",
     "args": [], "position": 20,
     "listing": "| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |",
+}, {
+    "words": "hook merge-roadmap", "run": "merge_hook", "changes_state": False,
+    "help": "Merge the roadmap or spotted list for git",
+    "args": [((name,), {}) for name in ("base", "ours", "theirs")], "position": 285,
+    "listing": "| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |",
 }]
+
+MERGE_DRIVER = "forge hook merge-roadmap %O %A %B"
 
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
@@ -293,6 +298,10 @@ def merge_roadmap(base: str, ours: str, theirs: str) -> int:
     return 0
 
 
+def merge_hook(args: argparse.Namespace) -> int:
+    return merge_roadmap(args.base, args.ours, args.theirs)
+
+
 def _synced_text(source: str, packaged: str) -> str:
     """Read the checkout's copy in editable installs, or the bundled copy in built installs."""
     checked_in = SOURCE / source
@@ -411,13 +420,10 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             path.write_bytes(text.encode("utf-8"))
             changed = True
         path.chmod(0o755)
-    # The roadmap's merge driver runs this Forge's own code with the Python running it now.
-    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
-            "from forge.sync import merge_roadmap; sys.exit(merge_roadmap(*sys.argv[1:]))")
-    driver = f"{shlex.quote(sys.executable)} -c {shlex.quote(code)} %O %A %B"
+    # Git config is shared by worktrees; never tie it to the checkout running sync.
     current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
-    if current.strip() != driver:
-        repo.git("config", "merge.forge-roadmap.driver", driver, cwd=top)
+    if current.strip() != MERGE_DRIVER:
+        repo.git("config", "merge.forge-roadmap.driver", MERGE_DRIVER, cwd=top)
         changed = True
     return changed
 

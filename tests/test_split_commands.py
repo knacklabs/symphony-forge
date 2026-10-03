@@ -12,6 +12,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
+# Git's list merger used a Python snippet; its PATH command now appears as merge-roadmap.
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
@@ -80,7 +81,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         "    amend               Replace a fix's done-when, keeping the old text and\n"
         '                        the reason in its record\n',
  'hook': 'usage: forge hook [-h]\n'
-         '                  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '                  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '                  ...\n'
          '\n'
          'Internal: the one entry point that git hooks, host hooks and CI call\n'
@@ -89,7 +90,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '  -h, --help            show this help message and exit\n'
          '\n'
          'commands:\n'
-         '  {context,handoff,approval,deny,pre-commit,pre-push,pr-check}\n'
+         '  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '    context             Session start: print forge next and the story state\n'
          '    handoff             Before compaction: save forge next beside the agent\'s\n'
          '                        decisions and lessons\n'
@@ -99,6 +100,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '                        --no-verify and gh pr merge\n'
          '    pre-commit          The git pre-commit rules\n'
          '    pre-push            The git pre-push rules\n'
+         '    merge-roadmap       Merge the roadmap or spotted list for git\n'
          '    pr-check            The required forge-pr-check, run from the base branch\n',
  'roadmap': 'usage: forge roadmap [-h] {add,retire} ...\n'
             '\n'

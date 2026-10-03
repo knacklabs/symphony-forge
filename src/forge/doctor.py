@@ -203,13 +203,19 @@ def doctor(args: argparse.Namespace) -> int:
     # that folder. An explicitly configured hooks folder must still be checked.
     checks_hooks = (cfg["repo"] != "forge-source" or
                     repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
-    if checks_hooks and any(sync.read(path) != text for path, text in sync.shims(top, cfg).items()):
+    driver = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout.strip()
+    hooks_drift = checks_hooks and any(sync.read(path) != text
+                                      for path, text in sync.shims(top, cfg).items())
+    if hooks_drift or driver != sync.MERGE_DRIVER:
         if not args.fix:
-            rows.append(("The git hooks that check each commit and push aren't installed.", REPAIR))
+            rows.append(("The git hooks that check each commit and push aren't installed."
+                         if hooks_drift else "The roadmap and spotted-list merge rule doesn't "
+                         "match the installed Forge.", REPAIR))
         else:
             try:  # never committed, so this repair runs on the default branch too
                 sync.install_shims(top, cfg)
-                print("- Fixed: installed the git hooks that check each commit and push.")
+                print("- Fixed: installed the git hooks that check each commit and push."
+                      if hooks_drift else "- Fixed: installed the roadmap and spotted-list merge rule.")
             except repo.Refused as refused:
                 problem, _, fix = str(refused).partition("\nNext: ")
                 rows.append((problem, fix))

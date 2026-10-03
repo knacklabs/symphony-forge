@@ -35,4 +35,5 @@
 | `forge hook deny` | Before each shell command: blocks destructive commands, `--no-verify` and `gh pr merge` |
 | `forge hook pre-commit` | The git pre-commit rules |
 | `forge hook pre-push` | The git pre-push rules |
+| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |
 | `forge hook pr-check` | The required `forge-pr-check`, run in CI from the base branch |

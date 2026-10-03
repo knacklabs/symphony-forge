@@ -423,6 +423,10 @@ from the other tool is omitted so the role uses the session's model.
 
 ## Build simple
 
+Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+New repos get this rule at init; existing repos get it with `forge sync` or
+`forge doctor --fix`. The shared rule keeps working after a worktree is removed.
+
 Read [standards.md](standards.md) beside this skill for Forge's principles, the client's app
 rules and the build-simple ladder. Apply its rules in every phase.
 
