@@ -353,7 +353,10 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
+finishes. One machine runs at most 2 Forge agents at once (work rounds, plan reads and close
+reviews), across all its repos; the rest wait in line, first come, first served, and print their
+place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
+run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on.
 
 ## Cold read findings
@@ -370,6 +373,9 @@ review rounds. For each kind of finding the plan missed that cost two or more fi
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
 outside Forge's block, in the outcome fix's worktree; create the section when it is missing.
 Commit it before closing the fix. Every cold read checks plans against that section.
+Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
+done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
+trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
@@ -466,6 +472,17 @@ A failed check whose log names none of the change's files, after this machine's 
 re-run once per pushed head instead of costing a fix round. When GitHub has not started that
 re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
 round if the check is still red.
+
+## Hotspots
+
+A worker or review notes problems outside its change as spotted items, which Forge keeps in
+`plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
+except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
+command at once, like any ready item, without asking the owner.
+
+When `forge merge` fails because the pull request no longer merges cleanly, run
+`forge close <item>` again, which merges the default branch with Forge's own rule for the spotted
+list and the roadmap.
 
 ## Check-back
 
