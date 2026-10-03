@@ -122,6 +122,8 @@ touches for the first time.
 
 Add every test your task's Tests column names, even when the change is documentation only.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
+A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow sets
+it); don't set it in your runs.
 
 <!-- if user-facing -->
 ## Functional check
@@ -183,6 +185,11 @@ conventions apply only to a repo on the default stack.
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+Note anything you spot outside your item instead of fixing it: end a commit message's body with
+one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
+widen this change for one, and never edit `plans/spotted.json`; Forge keeps it. The one
+exception is a bug that stops your item from working: fix it and name it in your handoff.
 
 <!-- if standards -->
 ## Standards
