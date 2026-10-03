@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:48:20+00:00
-read_hash: 3bb9ed6b2622106e56a4077d0baac3182dde87a4
-round: 9
+read_at: 2026-10-03T13:59:02+00:00
+read_hash: 3999b71cae564b33d80f675032da88297f68098c
+round: 10
 passed: no
-doc_seen: 3bb9ed6b2622106e56a4077d0baac3182dde87a4
+doc_seen: 3999b71cae564b33d80f675032da88297f68098c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e18d9dca48cae45c72d543636e4f56cd1d35c47f
+notes_seen: 60f6a51374f536976d6541e03e2e9a1db113ee41
 ---
 # Cold read notes
 
@@ -292,3 +292,9 @@ No findings.
 63. Item 1’s GitHub-fetch coverage is contradictory.
     Detail 1 requires one request for checks on all open pull requests, then retains the rule that checks beyond the newest 25 show `unknown`. Choose the intended fetch/display bound and prove it in VIEWS with more than 25 open pull requests.
     Disposition: cut one request for the newest 25 open pull requests; the rest show unknown; tested with 30
+
+## Round 10
+
+64. Finding 60 remains open: the unavailable-lanes test still removes the required next-step line.
+    Detail 2 preserves `1: <next command>` without lane data, but its test still says “no lanes view … omits line 1” ([plan:117](/plans/FORGE-MOD-1.md:117)). Replace that expectation with proof that the next-step line and applicable hotkey remain available.
+    Disposition: cut the test now proves the next-step line and its hotkey stay without lane data
