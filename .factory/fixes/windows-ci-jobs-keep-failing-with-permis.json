@@ -34,7 +34,7 @@
     "status": "clean",
     "tree": "2cd7320aa923ec0329377fef7ea4d38aa8a5b30badb176191cfe1d25d159d004"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T11:51:41+00:00",
@@ -61,5 +61,6 @@
       "step": "review"
     }
   ],
-  "why": "Windows CI jobs keep failing with PermissionError while pytest cleans a test's temporary folder (test_chatview_words test_4, test_codex_resume test_9 and others on unrelated pull requests), because a process the test started still holds files there"
+  "why": "Windows CI jobs keep failing with PermissionError while pytest cleans a test's temporary folder (test_chatview_words test_4, test_codex_resume test_9 and others on unrelated pull requests), because a process the test started still holds files there",
+  "worker": "codex"
 }
