@@ -4,11 +4,16 @@
       "at": "2026-10-03T13:57:37+00:00",
       "because": "A model's judgment can't be proven by required tests; a structural check is deterministic",
       "done_when": "The story template has a '## New and existing repos' section above Risks, saying what a fresh init or adoption gets, what an existing repo gets on upgrade, and naming a test for each; the cold read reports a story whose section is missing or covers only one side; the review instructions check the upgrade path of an existing repo; the fix brief and skill say a fix states both sides in one line. One command-level test: a cold read of a story without the section reports it."
+    },
+    {
+      "at": "2026-10-03T14:00:02+00:00",
+      "because": "The owner meant Forge's own features must consider new and existing client repos, not that every client story carries the section",
+      "done_when": "The story template has a '## New and existing repos' section above Risks, saying what a fresh init or adoption gets, what an existing repo gets on upgrade, and naming a test for each; forge read refuses a story doc without that section with one plain line naming it, as it does for other malformed docs, and the cold-read instructions ask the reader to check both sides; the review instructions check the upgrade path of an existing repo; the fix brief and skill say a fix states both sides in one line. One command-level test: forge read on a story without the section refuses with that line."
     }
   ],
   "base": "d08cfdf71b92b29f463ed0c8da1b046b669f084f",
   "branch": "fix/features-get-planned-and-reviewed-for-fo",
-  "done_when": "The story template has a '## New and existing repos' section above Risks, saying what a fresh init or adoption gets, what an existing repo gets on upgrade, and naming a test for each; forge read refuses a story doc without that section with one plain line naming it, as it does for other malformed docs, and the cold-read instructions ask the reader to check both sides; the review instructions check the upgrade path of an existing repo; the fix brief and skill say a fix states both sides in one line. One command-level test: forge read on a story without the section refuses with that line.",
+  "done_when": "This repo's AGENTS.md Review rules say a change to Forge states what new client repos (init or adoption) and existing client repos (on upgrade) each get and tests both, reporting a one-sided change as P1. Nothing changes for client repos' own stories.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
