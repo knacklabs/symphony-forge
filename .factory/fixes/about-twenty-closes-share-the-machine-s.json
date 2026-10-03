@@ -3,11 +3,39 @@
   "branch": "fix/about-twenty-closes-share-the-machine-s",
   "done_when": "forge close's test runs on one machine go strictly in the order they started waiting (first come, first served), and a waiting close prints its place in line when it starts waiting and each time the place changes, as one plain line such as 'Waiting for 3 other closes' test runs on this machine.' A close that dies leaves no stale place. A command-level test starts three waiting closes behind a held run and shows they run in arrival order and print their places.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "c454968b70c452f25518292e38dbf1be062ac7b8b40c93d22588a5ee9ba9e818",
+    "commit": "381b5f2b8036bfcbe05fa8db728596fbeca1dd54",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Ticket cleanup releases the file lock before unlinking its path, outside the queue guard. A concrete interleaving is: A closes ticket 1 and is descheduled; B removes that unlocked ticket, completes its run, and removes ticket 2; C finds the queue empty and creates a new ticket 1; A resumes and unlinks C's live ticket. Another close can now run alongside C and omit C from its waiting count. Keep unlocking, closing, and unlinking inside the same guard used for ticket allocation and stale-ticket removal.",
+        "file": "src/forge/codex.py",
+        "line": 684,
+        "priority": "P1",
+        "title": "Not done: forge close's test runs on one machine go strictly in the order they started waiting (first come, first served), and a waiting ..."
+      },
+      {
+        "body": "This assertion accepts initial-only output: [2] and [3] both equal their sorted unique values. Consequently, the required three-close test passes without any position updates as preceding runs finish. The death test verifies one cancellation update, but does not establish updates during normal queue advancement. Hold each queued test run until later waiters report their next position, then assert [2, 1] and [3, 2, 1]. This tests the promised positive-place updates without requiring the dismissed zero-place message.",
+        "file": "tests/test_close_test_runs_wait_in_line.py",
+        "line": 69,
+        "priority": "P1",
+        "title": "Not done: the three-waiter command test verifies every changed waiting place"
+      }
+    ],
+    "status": "blocked",
+    "tree": "5bfb327696765c70a8143ac78860d5a4bbce3e554f7dfd0bbbab455728de7c60"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T18:58:11+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T00:20:09+00:00",
+      "step": "review"
     }
   ],
   "why": "About twenty closes share the machine's one test-run lock; a waiting close can be overtaken again and again and never says how long it will wait"
