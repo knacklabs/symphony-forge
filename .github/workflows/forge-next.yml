@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   tests:
+    env:
+      FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     strategy:
       fail-fast: false
       matrix:
