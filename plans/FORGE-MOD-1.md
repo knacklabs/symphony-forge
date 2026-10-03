@@ -81,22 +81,30 @@ tightening it needs no new approval. -->
    nothing and redraws; busy shows no hotkey; failed re-read submits nothing and toasts; failed
    submit toasts. Command test: `forge next --json` for a ready task, a waiting item and a
    merge only a human may do (null).
-3. Events. Event identity: item + kind + a value that changes only on a new occurrence: the review
-   commit for findings, the head commit and check suite for failed checks, the head commit for
-   ready-to-merge, the question text for a worker question, and the run's end time for a finished
-   run (from the run records VIEWS adds). Seen identities are kept per repo in `$.store`; at
-   session start and after a reload the current state is recorded as seen without starting turns.
-   Changes found while Claude is working, or several in one refresh, go into one turn after the
-   current one ends, one line each: plain item title, what happened, the `forge next` command for
-   it. A failed submit keeps them unseen for the next refresh. Only interactive sessions get turns
-   (`$.session.surfaces()` includes terminal or desktop) and never a session Forge itself started:
-   Forge sets `FORGE_WORKER=1` in every worker, reader and reviewer it starts, and the mod is inert
-   there. Each session acts only for its own repo (`$.session.repo()` matched to the board's repo
-   root); two sessions on one repo each get the turn. Tests (plugin): two snapshots give one turn
-   per change; progress gives none; the next refresh repeats none; two changes while busy give one
-   turn after; a run that started and ended between refreshes gives one turn; reload gives none;
-   a `FORGE_WORKER=1` session and a `claude -p` session give none; another repo's change gives
-   none. Command test: every worker, reader and reviewer process gets `FORGE_WORKER=1`.
+3. Events. Every occurrence carries an id Forge writes (RUNS): each review result, run end and
+   worker question record gets a fresh random `id` when written; failed checks use the check
+   run's id and attempt number; ready-to-merge uses the review id plus the head commit. Nothing
+   else identifies an event. `forge board --json` lists, per item, its open occurrences and that
+   item's own `next.command` (the same rule as detail 2, applied to that item's `Next:` line; null
+   when it has none or it is not one runnable command), so each event line names its own item's
+   step, or `forge next` when null. Seen ids live in `$.store` under the key repo root + session
+   id, never repo alone, so each session consumes its own; at session start and after a reload the
+   session records the current ids as seen without starting turns. Changes found while Claude is
+   working, or several in one refresh, go into one turn after the current one ends, one line each:
+   plain item title, what happened, that item's next command. A failed submit leaves them unseen
+   for the next refresh. Only interactive sessions get turns (`$.session.surfaces()` includes
+   terminal or desktop), and never a session Forge started: Forge sets `FORGE_WORKER=1` in every
+   worker, reader and reviewer it starts, and the mod is inert there. A session acts only for its
+   own repo (`$.session.repo()` matched to the board's repo root). Tests (plugin): two snapshots
+   give one turn per change; progress gives none; the next refresh repeats none; the same question
+   asked again in a later round (new id, same text) gives a second turn; a check re-run failing
+   again (new attempt) gives a second turn; two changes while busy give one turn after; a run
+   that started and ended between refreshes gives one turn; reload gives none; a failed submit
+   gives the turn on the next refresh; two sessions sharing one store each get the turn; a
+   `FORGE_WORKER=1` session and a `claude -p` session give none; another repo's change gives none.
+   Command tests: (RUNS) every worker, reader and reviewer process gets `FORGE_WORKER=1`; Codex
+   and Claude worker questions, run ends and review results are recorded with fresh ids; (VIEWS)
+   two items in one board each carry their own `next.command`, and an item with none has null.
 4. Approval. First step of APPROVE: prove in a real Claude Code (v2.1.287+) that a mod can start
    `ExitPlanMode` with given plan text so that Claude Code shows its own plan-approval prompt and,
    on approval, runs Forge's existing approval hook. If it can't, APPROVE removes the button,
@@ -121,15 +129,20 @@ tightening it needs no new approval. -->
    update forge`, then `claude plugin install forge@forge --scope user`, or `claude plugin update
    forge@forge` when installed. Sync writes no repo file for the mod. A failure (no network, old
    Claude Code) is one line and sync still succeeds. Version: the mod runs `forge` from PATH with
-   argv and no shell, working directory the session's repo root, as the agent does; when the
-   machine view's `version` is missing or below the one that added it, the pane and band show
-   `This repo's Forge is too old for the pane: upgrade Forge here.` A running session picks the
+   argv and no shell, working directory the session's repo root, as the agent does. A Forge without
+   machine views refuses `--json` as an unrecognized argument (exit status non-zero and the words
+   `unrecognized arguments: --json`); that refusal, and only it, makes the pane and band show
+   `This repo's Forge is too old for the pane: upgrade Forge here.`; any other failure is a normal
+   refresh failure (detail 1). A running session picks the
    mod up after `/reload-plugins` or a restart. Doctor: Claude Code missing or older than v2.1.287
    is one warning line and keeps exit status 0. Tests: command tests of sync's plugin commands
    (fresh machine, already current, older install updated, no network, no `claude`) with a stub
    `claude`, of doctor's warning and exit status, that sync writes no repo file for the mod and
-   Codex files are unchanged; plugin test of the too-old line and of a Windows path with spaces as
-   working directory; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
+   Codex files are unchanged; plugin test that the real refusal text of a Forge without views gives the
+   too-old line and another failure does not, and of a Windows path with spaces as working
+   directory; one integration test with real Claude Code, an isolated home and a local marketplace
+   fixture at a local tag (no network) that sync installs the plugin, a reload loads it, and two
+   repos (one on a Forge without views) each show the right pane line; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
    with npm to run `claude plugin test` and `validate`.
 
 ## Tasks
@@ -137,11 +150,11 @@ tightening it needs no new approval. -->
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | RUNS | Run and question records | Records with ids for run start and end, review results and worker questions on both worker paths, and `FORGE_WORKER=1` for every process Forge starts | 3 | src/forge/repo.py, src/forge/worker.py, src/forge/close.py, src/forge/codex.py | tests/test_run_records.py | | no |
-| VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide and brief text for the pane, band, events and approval | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, src/forge/templates/brief.md, tests/fixtures/board.json | tests/test_machine_views.py | RUNS | no |
-| PANE | Pane and next-step band | The plugin skeleton, `/forge`, the pane, the band and its hotkey, the `forge` call and too-old line, and the seam: register.ts calls `registerEvents(on)` from events.ts and `registerApproval(on)` from approval.ts, created here as empty functions | 1, 2 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/pane.test.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, pyproject.toml | src/forge/mod/hooks/pane.test.ts, tests/test_mod_plugin.py | VIEWS | yes |
-| EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts | src/forge/mod/hooks/events.test.ts | PANE | yes |
-| APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
-| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml | tests/test_mod_sync.py | PANE | no |
+| VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide's machine views section | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, tests/fixtures/board.json | tests/test_machine_views.py | RUNS | no |
+| PANE | Pane and next-step band | The plugin skeleton, `/forge`, the pane, the band and its hotkey, the `forge` call and too-old line, and the seam: register.ts calls `registerEvents(on)` from events.ts and `registerApproval(on)` from approval.ts, created here as empty functions | 1, 2 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/pane.test.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, pyproject.toml, src/forge/templates/skill.md | src/forge/mod/hooks/pane.test.ts, tests/test_mod_plugin.py | VIEWS | yes |
+| EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/skill.md, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | PANE | yes |
+| APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md, src/forge/templates/skill.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
+| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml, src/forge/templates/skill.md, tests/fixtures/marketplace/** | tests/test_mod_sync.py, tests/test_mod_install.py | PANE | no |
 
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
@@ -152,5 +165,7 @@ New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns o
   `$.store`, `$.session.surfaces`, `$.session.repo`, `$.session.id`.
 - All Forge rules stay in the `forge` command; the mod only reads the machine views, runs `forge`
   commands and draws. It never writes repo files.
-- VIEWS writes all guide and brief text for the story up front, so later tasks don't touch
-  skill.md or brief.md.
+- Each task updates the guide for what it adds, in its own section of skill.md (VIEWS: machine
+  views; PANE: the pane and band; EVENTS: events, plus brief.md's line that workers never act on
+  them; APPROVE: approving from the pane; SHIP: how the mod is installed). Tasks that run at the
+  same time wait for each other on skill.md through task start's overlap rule.

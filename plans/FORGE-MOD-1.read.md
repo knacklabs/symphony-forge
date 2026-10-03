@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T03:03:07+00:00
-read_hash: 6d040c647bb00d208bb8c5ca7efbd68036f19ed0
-round: 2
+read_at: 2026-10-03T03:20:12+00:00
+read_hash: f783eb5666effc185f5c55f8368ba24f9120531c
+round: 3
 passed: no
-doc_seen: 6d040c647bb00d208bb8c5ca7efbd68036f19ed0
+doc_seen: f783eb5666effc185f5c55f8368ba24f9120531c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9194fab43cfe71105fe7321210dc6b125a38d79e
+notes_seen: 67bea52c2825b7f5b4636cfa7bc1294b29997ef0
 ---
 # Cold read notes
 
@@ -146,3 +146,29 @@ Only a genuine trade-off goes to the human, as a question with options.
 31. Simpler: separate Request changes input → Claude Code’s native approval interaction.
     The revised owner-facing behavior asks for the native plan prompt, while APPROVE still adds a separate input and submission path. Use the native interaction unless a distinct required behavior needs the extra control; otherwise cut it from the task.
     Disposition: cut Request changes is Claude Code's own prompt answer; no extra control
+
+## Round 3
+
+32. Item 3 still contradicts its session-specific event delivery.
+    Details 3 keeps seen identities “per repo”; EVENTS says “per repo and session.” Since [`$.store` is shared across sessions](https://code.claude.com/docs/en/plugins/mods/reference#mods-api-methods), reconcile the contract and name the promised test with two sessions sharing one store. Finding 21 remains open.
+    Disposition: cut detail 3 rewritten: seen ids keyed by repo root + session id only; two sessions sharing one store tested
+
+33. Item 3 still specifies event identities that repeated occurrences can reuse.
+    Details 3 retains review commits, check suites, question text and end timestamps despite RUNS adding fresh IDs. Replace those identities with the disposition’s occurrence IDs and check attempts; name tests for repeated occurrences and failed-submit retries. Finding 22 remains open.
+    Disposition: cut detail 3 now uses only Forge-written ids and check run id plus attempt; repeated question, re-run and failed-submit retry tested
+
+34. The per-item next-command contract is still absent.
+    Only the global `next.command` is defined; EVENTS needs one for each changed item. VIEWS must pin the board field and null-command behavior, with a contract test proving different items receive their own next steps. Finding 26 is only partly closed.
+    Disposition: cut board --json gives each item its own next.command with the same rule, null otherwise; contract test with two items
+
+35. P1: writing all instructions in VIEWS conflicts with the repository’s same-change review rule.
+    PANE, EVENTS, APPROVE and SHIP change coordinator capabilities without an instruction update in their own changes. AGENTS.md explicitly requires that update in the same change. Resolve task ownership without relying on an earlier documentation-only update.
+    Disposition: cut each task updates its own guide section in the same change; parallel tasks wait on skill.md via task start
+
+36. Unproven: item 5: Forge versions that reject `--json` entirely.
+    The current CLI refuses that flag and returns no machine-view object, so checking its `version` field cannot establish this fallback. Pin how unsupported views are distinguished from ordinary refresh failures and test the actual refusal producing the upgrade line.
+    Disposition: cut the too-old line comes only from the real --json refusal text; other failures are refresh failures; both tested
+
+37. Unproven: item 5: the shipped plugin installs and loads in real Claude Code.
+    Stubbed CLI tests and validation cannot prove tagged-source resolution, activation after reload, or use across two repos on different Forge versions. Add a SHIP integration test using real Claude Code, isolated user state and a local tagged marketplace fixture so execution needs no network.
+    Disposition: cut SHIP adds one real Claude Code integration test with an isolated home and a local tagged marketplace fixture
