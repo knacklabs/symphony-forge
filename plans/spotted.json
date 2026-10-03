@@ -142,6 +142,39 @@
       "item": "features-get-planned-and-reviewed-for-fo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
+      "kind": "bug",
+      "path": "tests/test_upgrade_command.py",
+      "line": 132,
+      "text": "Not done: upgrade coverage for a repo adopted on the previous release",
+      "from": "blocking",
+      "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 262,
+      "text": "Exclude staged new hook shims on an upgrade rerun",
+      "from": "review",
+      "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
+      "kind": "edge",
+      "path": "src/forge/upgrade.py",
+      "line": 149,
+      "text": "Exclude staged new hook shims on an upgrade rerun",
+      "from": "review",
+      "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
