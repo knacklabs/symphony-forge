@@ -8,15 +8,19 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 import pytest
+import _pytest.pathlib
+import _pytest.tmpdir
 
 ROOT = Path(__file__).resolve().parents[1]
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
@@ -55,6 +59,87 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
         (bin_dir / f"{name}.cmd").write_text(f'@"{sys.executable}" "%~dp0{name}" %*\n',
                                              encoding="utf-8")
 
+
+T = TypeVar("T")
+
+
+_inside = threading.local()
+
+
+def patient(action: Callable[[], T]) -> T:
+    """Run a file action, retrying a PermissionError for up to five seconds: on Windows a process
+    renaming a file over this one, or a moment late to exit, holds it briefly. An action inside
+    another's retry runs once, since the outer one retries it."""
+    if getattr(_inside, "retrying", False):
+        return action()
+    _inside.retrying = True
+    try:
+        for _ in range(100):
+            try:
+                return action()
+            except PermissionError:
+                time.sleep(0.05)
+        return action()
+    finally:
+        _inside.retrying = False
+
+
+def _patiently(owner: Any, name: str) -> None:
+    real = getattr(owner, name)
+
+    def retried(*args: Any, **kwargs: Any) -> Any:
+        return patient(lambda: real(*args, **kwargs))
+    setattr(owner, name, retried)
+
+
+# Every test helper reads, writes, copies and deletes files through these, so each one waits out a
+# lock. copytree copies each file with the retried copy2 instead of retrying the whole tree.
+for _owner, _names in ((Path, ("read_text", "read_bytes", "write_text", "write_bytes", "touch",
+                               "unlink", "rename", "replace", "chmod")),
+                       (shutil, ("copy", "copy2", "copyfile", "move")),
+                       (os, ("unlink", "remove", "rename", "replace", "chmod"))):
+    for _name in _names:
+        _patiently(_owner, _name)
+_copytree = shutil.copytree
+
+
+def _copy_tree(src: Any, dst: Any, *args: Any, **kwargs: Any) -> Any:
+    if len(args) < 3:  # copytree passes copy_function by position to its subfolders
+        kwargs.setdefault("copy_function", shutil.copy2)
+    return _copytree(src, dst, *args, **kwargs)
+
+
+shutil.copytree = _copy_tree
+
+
+_rmtree = shutil.rmtree
+
+
+def _remove_tree(path: Any, ignore_errors: bool = False, *args: Any, **kwargs: Any) -> Any:
+    if not ignore_errors:
+        return patient(lambda: _rmtree(path, ignore_errors, *args, **kwargs))
+    # Best-effort cleanup must not wait five seconds for every read-only or locked file.
+    nested = getattr(_inside, "retrying", False)
+    _inside.retrying = True
+    try:
+        return _rmtree(path, ignore_errors, *args, **kwargs)
+    finally:
+        _inside.retrying = nested
+
+
+shutil.rmtree = _pytest.tmpdir.rmtree = _remove_tree
+_rm_error = _pytest.pathlib.on_rm_rf_error
+
+
+def _skip_locked(func: Any, path: Any, excinfo: Any, **kwargs: Any) -> Any:
+    try:
+        return _rm_error(func, path, excinfo, **kwargs)
+    except PermissionError:
+        # Pytest already retries read-only files after chmod; a persistent lock is skipped.
+        return False
+
+
+_pytest.pathlib.on_rm_rf_error = _skip_locked
 
 class Repo:
     """A git repo on main whose origin is a bare remote, with forge and a stub gh on PATH."""
