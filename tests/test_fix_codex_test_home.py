@@ -39,8 +39,9 @@ def _isolated_home(isolated_codex_home):
     pass
 
 
-@pytest.mark.skipif(not (ENV / "forge-sdk-ready").is_file(),
-                    reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
+@pytest.mark.skipif(os.environ.get("FORGE_LIVE_CODEX") != "1" or not (ENV / "forge-sdk-ready").is_file(),
+                    reason=f"calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK {PIN} "
+                           f"installed in {ENV} (forge doctor --fix installs it)")
 def test_1_forge_command_leaves_real_codex_threads_unchanged(repo, tmp_path):
     real_home = REAL_CODEX_HOME
     test_home = Path(os.environ["CODEX_HOME"])

@@ -39,9 +39,10 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
-| "Set up a new repo" | `forge init` |
+| "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
@@ -264,6 +265,10 @@ Adopting changes no app code.
    default branch and follows it.
    A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
    AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
+8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
+   with the test tool's built-in changed-only option and `{base}` (for example
+   `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
+   `forge.toml` through a fix. Forge writes no `fast_test` by itself.
 
 On a live app, every story and fix also follows these:
 
@@ -413,6 +418,8 @@ For a side job inside your own session, hand it to one of Forge's subagent roles
 `performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
 The diagnosing and planning roles change no files. Building an item still goes through
 `forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
+Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
+from the other tool is omitted so the role uses the session's model.
 
 ## Build simple
 
@@ -434,11 +441,16 @@ Mark generated files such as migration snapshots `linguist-generated` in `.gitat
 reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
-When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
-close skips forge.toml's test command and says so; the review and every named check still run.
+When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
+`.factory/`, close skips forge.toml's test command and says so; the review and every named check
+still run.
 Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
+When the pull request's `tests` check runs the full suite, recommend a fast close command: set
+`fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
+fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
+instead of `test`; the `tests` check keeps running the full `test`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
