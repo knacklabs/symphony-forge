@@ -226,7 +226,7 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
             continue
         # Doctor never looks inside it: one step, whether it is current, stale or locked.
         path = trees.get(branch)
-        remove = (f"git worktree remove --force --force {path} and " if path else "")
+        remove = (f'git worktree remove --force --force "{path}" and ' if path else "")
         return [(f"Doctor's fix {name} isn't merged yet, so doctor started no new one.",
                  f"finish it with forge close {name}, or remove it with {remove}git branch "
                  f"-D {branch}, then {REPAIR}")]
@@ -505,9 +505,9 @@ def doctor(args: argparse.Namespace) -> int:
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
-        ui = "claude" if cfg["workers"] == "split" else cfg["workers"]  # who builds the UI
-        # That host, and every host whose program is installed, since either may build UI work.
-        for host in (host for host in skills if host == ui or shutil.which(host)):
+        # Every configured host, and every host whose program is installed, may build UI work.
+        for host in (host for host in skills
+                     if cfg["workers"] in (host, "split") or shutil.which(host)):
             for skill in ("impeccable", "emil-design-eng"):
                 if not any((folder / "skills" / skill / "SKILL.md").is_file()
                            for folder in skills[host]):

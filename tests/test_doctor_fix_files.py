@@ -11,7 +11,9 @@ import os
 import re
 import shutil
 import subprocess
-import uuid
+import sys
+import tempfile
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -56,20 +58,21 @@ def _land(repo, client: Path, message: str, edit, forge: bool = False) -> str:
     """Push a commit to the default branch from a clone without Forge's hooks, then pull it into
     the client. forge=True makes it look like Forge's own: the same commit moves the pin, and a
     second commit moves it back."""
-    clone = client.parent / f"lander-{uuid.uuid4().hex[:8]}"
-    repo.git("clone", "-q", repo.git("remote", "get-url", "origin", cwd=client), str(clone))
-    edit(clone)
-    toml = clone / "forge.toml"
-    pinned = toml.read_text(encoding="utf-8")
-    if forge:
-        toml.write_text(_pin(pinned, "v0.0.1"), encoding="utf-8")
-    repo.git("add", "-A", cwd=clone)
-    repo.git("commit", "-q", "-m", message, cwd=clone)
-    if forge:
-        toml.write_text(pinned, encoding="utf-8")
-        repo.git("commit", "-q", "-am", "Pin the installed Forge again", cwd=clone)
-    repo.git("push", "-q", "origin", "HEAD:main", cwd=clone)
-    shutil.rmtree(clone)
+    # TemporaryDirectory also removes Git's read-only objects on Windows.
+    with tempfile.TemporaryDirectory(prefix="lander-", dir=client.parent) as directory:
+        clone = Path(directory)
+        repo.git("clone", "-q", repo.git("remote", "get-url", "origin", cwd=client), str(clone))
+        edit(clone)
+        toml = clone / "forge.toml"
+        pinned = toml.read_text(encoding="utf-8")
+        if forge:
+            toml.write_text(_pin(pinned, "v0.0.1"), encoding="utf-8")
+        repo.git("add", "-A", cwd=clone)
+        repo.git("commit", "-q", "-m", message, cwd=clone)
+        if forge:
+            toml.write_text(pinned, encoding="utf-8")
+            repo.git("commit", "-q", "-am", "Pin the installed Forge again", cwd=clone)
+        repo.git("push", "-q", "origin", "HEAD:main", cwd=clone)
     repo.git("pull", "-q", "--ff-only", "origin", "main", cwd=client)
     return repo.git("rev-parse", "HEAD", cwd=client)
 
@@ -284,7 +287,7 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude)
 
 def _left_over(name: str, path: Path | None) -> str:
     """The one step for a doctor fix that already exists, current, stale or locked."""
-    remove = f"git worktree remove --force --force {path} and " if path else ""
+    remove = f'git worktree remove --force --force "{path}" and ' if path else ""
     return _row(f"Doctor's fix {name} isn't merged yet, so doctor started no new one.", f"finish it with forge close {name}, or remove it with {remove}git branch -D "
                 f"fix/{name}, then forge doctor --fix")
 
@@ -297,6 +300,9 @@ def _a_stale_doctor_fix_gets_one_step_and_nothing_new_starts(repo, gh, tmp_path,
     _old_hosts(repo, client)
     assert "fix forge-files." in repo.forge("doctor", "--fix", cwd=client).stdout
     old = _folder_of(repo, client, "fix/forge-files")
+    spaced = old.with_name(old.name + " with spaces")
+    repo.git("worktree", "move", str(old), str(spaced), cwd=client)
+    old = spaced
     if change == "its forge.toml was edited":
         toml = old / "forge.toml"
         toml.write_text(re.sub(r"^test = .*$", 'test = "make it"', toml.read_text(encoding="utf-8"),
@@ -602,8 +608,8 @@ def _in_forges_own_repo_history_holds_nothing_back(repo, gh, tmp_path, monkeypat
     assert SKILL in _in(repo, client, "fix/forge-files")
 
 
-def _ui_client(repo, gh, tmp_path, monkeypatch) -> Path:
-    client = _client(repo, gh, tmp_path, monkeypatch)
+def _ui_client(repo, gh, tmp_path, monkeypatch, workers="claude") -> Path:
+    client = _client(repo, gh, tmp_path, monkeypatch, workers=workers)
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
@@ -619,14 +625,15 @@ def _ui_client(repo, gh, tmp_path, monkeypatch) -> Path:
     return client
 
 
-def _the_ui_skills_check_covers_each_installed_host(repo, gh, tmp_path, monkeypatch, codex):
-    client = _ui_client(repo, gh, tmp_path, monkeypatch)
+def _the_ui_skills_check_covers_each_installed_host(repo, gh, tmp_path, monkeypatch, case):
+    workers, codex = case
+    client = _ui_client(repo, gh, tmp_path, monkeypatch, workers=workers)
     if codex:
         _executable(repo.bin / "codex", "#!/bin/sh\n")
     done = repo.forge("doctor", cwd=client)
     for name in ("impeccable", "emil-design-eng"):
         assert (f"- {name} is required for UI work but isn't installed where the codex worker "
-                "reads skills.\n" in done.stdout) == codex, done.stdout
+                "reads skills.\n" in done.stdout) == (codex or workers in ("split", "codex")), done.stdout
         assert "where the claude worker reads skills" not in done.stdout
 
 
@@ -660,6 +667,48 @@ def _exit_codes(repo, gh, tmp_path, monkeypatch, _):
     assert "Everything checks out" in done.stdout
 
 
+def _an_existing_app_adopted_on_v1_2_2_is_repaired(repo, gh, tmp_path, monkeypatch, _):
+    # Unlike fresh-init coverage, this app has history before its previous-release adoption.
+    client = repo.path
+    application = (client / "README.md").read_text(encoding="utf-8")
+    with zipfile.ZipFile(Path(__file__).parent / "fixtures/doctor-v1.2.2.zip") as fixture:
+        fixture.extractall(client)
+    assert 'version = "v1.2.2"' in (client / "forge.toml").read_text(encoding="utf-8")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Adopt Forge")
+    repo.git("push", "-q", "origin", "main")
+    _land(repo, client, "Upgrade Forge", lambda folder: _set(
+        folder, "forge.toml", _pin((folder / "forge.toml").read_text(encoding="utf-8"),
+                                 "v" + _version(repo).removeprefix("v"))))
+    _land(repo, client, "Keep our skill instructions", lambda folder: _set(folder, SKILL, "Ours.\n"))
+    gh.respond("auth", "status")
+    gh.respond("api", stdout="{}")
+    _autoreview(tmp_path, monkeypatch)
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    _install(repo.bin, "uv", f"#!{sys.executable}\nimport sys\nsys.exit(1)\n")
+    head = repo.git("rev-parse", "HEAD")
+    before = repo.forge("doctor", cwd=client)
+    assert "differs from what forge sync writes" in before.stdout, before.stdout
+    done = repo.forge("doctor", "--fix", cwd=client)
+    assert "- Fixed: wrote " in done.stdout and "in fix forge-files." in done.stdout, done.stdout
+    assert _row("Doctor's fix forge-files holds Forge's files and isn't merged yet.",
+                "forge close forge-files") in done.stdout, done.stdout
+    assert _held(SKILL, "was changed by hand (Keep our skill instructions)") in done.stdout
+    assert repo.git("rev-parse", "HEAD", "origin/main").splitlines() == [head, head]
+    folder = _folder_of(repo, client, "fix/forge-files")
+    for checkout in (client, folder):
+        assert (checkout / SKILL).read_text(encoding="utf-8") == "Ours.\n"
+        assert (checkout / "README.md").read_text(encoding="utf-8") == application
+        assert "Keep our application." in (checkout / "AGENTS.md").read_text(encoding="utf-8")
+    assert SKILL not in _in(repo, client, "fix/forge-files")
+    # Compare at the user's real sync boundary: only the protected hand edit still differs.
+    checked = repo.forge("doctor", cwd=folder)
+    assert "differs from what forge sync writes" not in checked.stdout, checked.stdout
+    assert _held(SKILL, "was changed by hand (Keep our skill instructions)") in checked.stdout
+    assert repo.git("status", "--porcelain", cwd=folder) == ""
+
+
 SHELL = pytest.mark.skipif(os.name == "nt", reason="shell scripts, file modes and links")
 
 
@@ -671,6 +720,7 @@ def _cases(*cases) -> list:
 
 
 @pytest.mark.parametrize("case, value", _cases(
+    (_an_existing_app_adopted_on_v1_2_2_is_repaired, [None], ()),
     (_on_the_default_branch_one_fix_holds_both_hosts_files, [None], ()),
     (_codex_workers_under_claude_code_repair_both_hosts, [None], ()),
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
@@ -700,7 +750,8 @@ def test_4_doctor_brings_forges_files_up_to_date_through_a_fix(repo, gh, tmp_pat
     (_uncommitted_changes_are_held_back, [None], ()),
     (_an_ignored_synced_file_written_by_hand_is_held_back, [None], ()),
     (_in_forges_own_repo_history_holds_nothing_back, [None], ()),
-    (_the_ui_skills_check_covers_each_installed_host, [True, False], SHELL),
+    (_the_ui_skills_check_covers_each_installed_host,
+     [("claude", True), ("claude", False), ("split", False), ("codex", False)], SHELL),
     (_signing_in_to_github_stays_a_plain_step, [None], ()),
     (_exit_codes, [None], SHELL)))
 def test_5_doctor_never_overwrites_a_change_made_by_hand(repo, gh, tmp_path, monkeypatch, case,
