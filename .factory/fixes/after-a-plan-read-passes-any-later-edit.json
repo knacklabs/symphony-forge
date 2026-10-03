@@ -1,0 +1,55 @@
+{
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/after-a-plan-read-passes-any-later-edit",
+  "done_when": "After a plan's latest read round passed, edits only below '## For the builders' need no new read (as they need no new approval): forge next, approval and task start accept them. An edit to the top part (title down to For the builders) still needs a round, and that round's prompt asks the reader to check only the diff and the sections it touches. Command-level tests: a builders-only edit after a pass (no round needed), a top-part edit after a pass (round needed, prompt names the diff and touched sections).",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "156f1384f2f4cbc8741d885d0a2f56d686afd359cf6d60ac73a8571d29af0fe7",
+    "commit": "aaa084cbb1b58fd53f5db3873bc3b60fc057e42e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The earlier P2 remains open. After the first task merges, edit the plan's Why, pass another read, then commit a builders-only edit and start a later task. The passing read commits locally without pushing (story.py:279\u2013281; repo.py:482\u2013493), and the Why edit does not require renewed approval. Later tasks start from main and copy the current plan, notes and state without the story history (task.py:119\u2013121, 143\u2013147, 184\u2013187). Consequently, the pushed task can omit the earlier plan blob named by read_hash. In a fresh CI checkout, this cat-file fails and the pull-request check incorrectly requires another read for the builders-only edit. Make the passing baseline reachable from the pushed task and cover this later-task carry scenario.",
+        "file": "src/forge/story.py",
+        "line": 487,
+        "priority": "P2",
+        "title": "Preserve the read baseline when carrying a plan into a later task"
+      }
+    ],
+    "status": "clean",
+    "tree": "f904d8bb00efb8d7056cc5210c1617cf2517887fc4f63c0be9db3d207df26212"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T06:29:44+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T10:27:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T13:43:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T15:51:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T21:48:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T00:32:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T01:25:44+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "After a plan read passes, any later edit, even a one-line wording change, costs a full new read round of about ten minutes before the plan can be approved or its next task started"
+}

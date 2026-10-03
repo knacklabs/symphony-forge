@@ -108,7 +108,7 @@ def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
-            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "codex"\n'
+            + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(checks)}\n"
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")

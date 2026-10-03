@@ -158,7 +158,7 @@ def doctor(args: argparse.Namespace) -> int:
             rows.append((f"{problem} Installing it failed: {said}", install))
         else:
             rows.append((problem, REPAIR if repairs and not args.fix else install))
-    on_codex = cfg["workers"] == "codex"
+    on_codex = cfg["workers"] != "claude"  # split runs Codex and Claude
     # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too, unless
     # Codex isn't installed: a Claude-only team.
     needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE")
@@ -172,7 +172,7 @@ def doctor(args: argparse.Namespace) -> int:
             sdk_failed = str(refused).partition("\nNext: ")[0]
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
-    for tool in ("git", "gh", "uv") if on_codex else ("git", "gh", "uv", "claude"):
+    for tool in ("git", "gh", "uv") if cfg["workers"] == "codex" else ("git", "gh", "uv", "claude"):
         if not shutil.which(tool):
             rows.append((f"{tool} is not installed or not on PATH.", INSTALL[tool]))
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode:
@@ -319,11 +319,12 @@ def doctor(args: argparse.Namespace) -> int:
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
+        ui = "claude" if cfg["workers"] == "split" else cfg["workers"]  # who builds the UI
         for skill in ("impeccable", "emil-design-eng"):
             if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                       for folder in skills[cfg["workers"]]):
+                       for folder in skills[ui]):
                 rows.append((f"{skill} is required for UI work but isn't installed where the "
-                             f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
+                             f"{ui} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")

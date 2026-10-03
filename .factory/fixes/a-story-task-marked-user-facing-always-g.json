@@ -1,0 +1,55 @@
+{
+  "allow_large": "The owner asked for this on 2026-10-02 (one explicit workers setting with three values, visible routing); six code files plus the tests and docs the contract change touches",
+  "amendments": [
+    {
+      "at": "2026-10-02T06:46:19+00:00",
+      "because": "The owner said on 2026-10-02 that Forge keeps no legacy: no one-time rewrite of codex to split",
+      "done_when": "forge.toml's workers takes codex (every task and fix on Codex, user-facing included, using the design model's codex entry for user-facing work), claude (everything on Claude) or split (user-facing story tasks on Claude, the rest on Codex: today's behaviour). forge sync changes an existing workers = \"codex\" to \"split\" once, so an upgrade keeps behaviour and the file says it; new repos get split written explicitly. forge work prints one line before starting naming the worker, model and effort and why (for example 'Building PERMFLOW-1/T5 with Claude (claude-opus-5-5, high) because it is user-facing (workers = split)'), and forge next shows the worker beside each ready task. If the worker family changes between rounds of one item, the next forge work starts a fresh session on the new worker with the brief and the latest review findings. The skill and the AGENTS.md block explain the three values in one line each. Command-level tests cover each value for a user-facing task and a plain task, the sync rewrite, the printed line, and a family switch between rounds."
+    }
+  ],
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/a-story-task-marked-user-facing-always-g",
+  "done_when": "forge.toml's workers takes codex (every task and fix on Codex, user-facing included, using the design model's codex entry for user-facing work), claude (everything on Claude) or split (user-facing story tasks on Claude, the rest on Codex). There is no migration: an existing workers = \"codex\" means everything on Codex after the upgrade, and new repos get split written explicitly. forge work prints one line before starting naming the worker, model and effort and why (for example 'Building PERMFLOW-1/T5 with Claude (claude-opus-5-5, high) because it is user-facing (workers = split)'), and forge next shows the worker beside each ready task. If the worker family changes between rounds of one item, the next forge work starts a fresh session on the new worker with the brief and the latest review findings. The skill and the AGENTS.md block explain the three values in one line each. Command-level tests cover each value for a user-facing task and a plain task, the printed line, and a family switch between rounds.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "59b06cea96ce8026260b701f5b36f6c977d6291e6d381407eed51caa607e5684",
+    "commit": "3ce534d4eb31af64b94effe6cd7263f15f628821",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Interrupt a Codex round during its capacity-retry wait, switch to Claude, then switch back to Codex. `src/forge/codex.py:376\u2013377` records a pending retry before that wait. Switching to Claude skips recovery and calls this helper, which clears `conversation` but leaves `pending`. On switching back, `src/forge/codex.py:201\u2013206` therefore attempts recovery using the now-null conversation ID. [Codex's thread/read contract](https://raw.githubusercontent.com/openai/codex/main/codex-rs/app-server-protocol/schema/json/v2/ThreadReadParams.json) requires a string ID, so subsequent Codex work refuses instead of starting fresh. Recover or safely retire the pending retry before discarding its conversation ID. The added interruption test covers startup before a conversation exists, which does not exercise this case.",
+        "file": "src/forge/worker.py",
+        "line": 464,
+        "priority": "P2",
+        "title": "Preserve pending Codex recovery when forgetting a conversation"
+      }
+    ],
+    "status": "clean",
+    "tree": "0d88bfc17aaba871db7c1b557da8778c3cda1081c1ad8ab7a0d78dac53528de5"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T06:44:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T11:50:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T14:11:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T18:14:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T23:02:11+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A story task marked user-facing always goes to a Claude worker even when forge.toml says workers = \"codex\", and nothing in forge.toml, forge next or forge work says so; the owner wants which agent builds what to be visible and switchable in one place"
+}
