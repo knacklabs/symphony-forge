@@ -7,18 +7,18 @@
   "review": {
     "blocking_level": "P1",
     "changed": "847585d485ee8cc510206b70f637edb4816da340a1cbb836bc98bc2ee1b0ee4f",
-    "commit": "8a494f5d3c3f44b5570377ca2c89df557cbbaab4",
+    "commit": "dd94800b6a18516b2734fea2d203cb8469ec1134",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 gap remains: `src/forge/doctor.py:75\u201382` accepts a trusted main repository even when this checkout explicitly has `trust_level = \"untrusted\"`. [Codex 0.159.2\u2019s resolver](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) gives the checkout decision precedence and disables its project-hook layer. Forge consequently admits worker, reader and `forge ask` turns while Codex omits the guard. `tests/stubs/codex-app-server:97\u2013100` repeats Forge\u2019s permissive check, masking the discrepancy. Honor explicit checkout distrust before inheriting repository trust, update the stub, and cover conflicting trust entries through a Forge command.",
+        "body": "The previous P2 gap remains. `src/forge/doctor.py:75\u201382` accepts a trusted main repository even when the checkout explicitly has `trust_level = \"untrusted\"`. [Codex 0.159.2\u2019s resolver](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) gives the checkout decision precedence and disables its project-hook layer. Forge therefore admits worker, reader and `forge ask` turns while Codex omits the guard. `tests/stubs/codex-app-server:97\u2013100` repeats the permissive check, masking this case. Honor explicit checkout distrust before inheriting repository trust, update the stub, and cover conflicting trust entries through a Forge command.",
         "file": "src/forge/codex.py",
         "line": 251,
         "priority": "P2",
         "title": "Respect explicit worktree distrust before inheriting repository trust"
       },
       {
-        "body": "The previous P3 gap remains: a hook refusal from `forge ask` tells the user to run `forge ask ask`. `src/forge/ask.py:30` passes the internal item name `ask`, so following this instruction after reviewing the hook asks the literal question \u201cask\u201d instead of repeating the original question. Tell the user to rerun their original command or provide a question placeholder. Update `tests/test_codex_turns_trust_forge_hooks.py:318`, which currently asserts the incorrect guidance.",
+        "body": "The previous P3 gap remains. A hook refusal from `forge ask` tells the user to run `forge ask ask`. `src/forge/ask.py:30` passes the internal item name `ask`, so following the instruction after reviewing the hook asks the literal question \u201cask\u201d instead of repeating the original question. Tell the user to rerun their original command or provide a question placeholder, and update `tests/test_codex_turns_trust_forge_hooks.py:318`, which asserts the incorrect guidance.",
         "file": "src/forge/codex.py",
         "line": 74,
         "priority": "P3",
@@ -66,7 +66,7 @@
       "step": "review"
     },
     {
-      "at": "2026-10-03T22:47:37+00:00",
+      "at": "2026-10-03T22:58:12+00:00",
       "step": "review"
     }
   ],
