@@ -3,11 +3,31 @@
   "branch": "fix/ubuntu-two",
   "done_when": "The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix passes.",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "1c18446c10ac7fa1fd9b5a898a86b1775ee8c6e89476f1f0cf2ead7bc08476bb",
+    "commit": "3219efe3a4dbaee3e0dae7a0d8baf7bdb59321f5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Adding the second Ubuntu entry makes `test_1_ubuntu_test_job_allows_ten_minutes` fail: `tests/test_fix_ubuntu_ci_timeout.py:13` asserts that the Ubuntu timeout matches equal `[\"10\"]`, but this workflow produces `[\"10\", \"10\"]`. CI runs this test through `pytest tests`, so the branch leaves the suite red and does not meet Done-when. Update the workflow test to verify groups 1 and 2 of 2, each with a 10-minute limit, and run it. The reported close run selected no tests, so its zero exit status does not establish that this check passes.",
+        "file": ".github/workflows/forge-next.yml",
+        "line": 22,
+        "priority": "P1",
+        "title": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-03T14:56:50+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T15:13:41+00:00",
+      "step": "review"
     }
   ],
   "why": "Ubuntu's full test suite now takes about 10 minutes, the job's own limit, so pull requests get cancelled at random"
