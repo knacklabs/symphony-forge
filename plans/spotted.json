@@ -1,12 +1,34 @@
 {
   "items": [
     {
-      "key": "edge\tsrc/forge/codex.py\tRespect explicit worktree distrust before inheriting repository trust",
-      "kind": "edge",
-      "path": "src/forge/codex.py",
-      "line": 251,
-      "text": "Respect explicit worktree distrust before inheriting repository trust",
-      "from": "review",
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 22,
+      "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
+      "from": "blocking",
+      "item": "ubuntu-two",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
+      "kind": "bug",
+      "path": "tests/stubs/codex-app-server",
+      "line": 101,
+      "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
+      "from": "blocking",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
+      "kind": "bug",
+      "path": "tests/test_codex_turns_trust_forge_hooks.py",
+      "line": 76,
+      "text": "Not done: Hook trust in new and upgraded client repos",
+      "from": "blocking",
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
@@ -19,6 +41,17 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/codex.py\tRespect explicit worktree distrust before inheriting repository trust",
+      "kind": "edge",
+      "path": "src/forge/codex.py",
+      "line": 251,
+      "text": "Respect explicit worktree distrust before inheriting repository trust",
+      "from": "review",
+      "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
     },
@@ -41,17 +74,6 @@
       "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
       "from": "worker",
       "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 22,
-      "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
-      "from": "blocking",
-      "item": "ubuntu-two",
       "status": "open",
       "closed_by": null
     }

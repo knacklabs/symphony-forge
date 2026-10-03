@@ -6,21 +6,35 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "a7f55fbbebfd33ea27360981eacbf75f796f80c03fdfa526e6995bc917210baf",
-    "commit": "62f2f32f53ddb482fda1d17a2ca629516d34b7b6",
+    "changed": "6c1c7977a744514c88e07934411c16d608431ed5ff119db5d2a15c4f328c30e7",
+    "commit": "cd3183186773d986e9ec616edb28a7e2f6311e43",
     "dismissals": [],
     "findings": [
       {
-        "body": "When Codex's config trusts the main repository but explicitly marks a linked worktree untrusted, this prerequisite still succeeds: `src/forge/doctor.py:75\u201382` accepts either path being trusted. New external evidence in [Codex 0.159.2's trust resolver](https://raw.githubusercontent.com/openai/codex/refs/tags/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) (`decision_for_dir`, lines 985\u20131016) shows that the checkout's explicit entry takes precedence over main-repository trust. Codex therefore excludes project hooks while Forge proceeds to start the turn with an empty hook listing. This affects the newly gated `forge read` and `forge ask` paths, as well as the shared worker path. The stub repeats the same permissive check at `tests/stubs/codex-app-server:97\u2013100`, so the current tests hide the discrepancy. Honor an explicit checkout trust decision before falling back to main-repository trust, and cover conflicting entries through a Forge command.",
+        "body": "The stub reads hooks from the worktree, while new dependency evidence in [Codex 0.159.2's loader](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) shows that linked worktrees use main-checkout hook declarations (`root_checkout_hooks_folder_for_dir` and `merge_root_checkout_project_hooks`). The new worker and reader tests sync and modify only worktree hooks, so their positive and refusal cases exercise a different hook source from production. Make the stub follow this contract and update fresh/resumed worker and reader fixtures to modify the hooks Codex actually loads.",
+        "file": "tests/stubs/codex-app-server",
+        "line": 101,
+        "priority": "P1",
+        "title": "Not done: Hook-trust command tests model Codex's worktree hook source"
+      },
+      {
+        "body": "All four new regression tests use Forge-source fixtures. `_codex_repo` defaults to `client=False` (`tests/test_codex_worker.py:110\u2013128`), and the reader's `setup` and `_toml` helpers also default to `forge-source` (`tests/test_story.py:67`, `tests/test_codex_worker.py:102`). None exercises this behavior after client init/adoption or after upgrading an existing client adopted on the previous release. The repository's explicit review rule requires both. Extend the command-level proof to those client lifecycles, checking Forge-hook trust and modified/foreign-hook refusal.",
+        "file": "tests/test_codex_turns_trust_forge_hooks.py",
+        "line": 76,
+        "priority": "P1",
+        "title": "Not done: Hook trust in new and upgraded client repos"
+      },
+      {
+        "body": "The previously reported gap remains: `src/forge/doctor.py:75\u201382` accepts either checkout or main-repository trust, even when the checkout is explicitly untrusted. [Codex's trust resolver](https://raw.githubusercontent.com/openai/codex/refs/tags/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) gives the checkout's explicit decision precedence. Forge therefore proceeds while Codex excludes project hooks, leaving workers, readers and `forge ask` without the guard. The stub repeats the permissive check at `tests/stubs/codex-app-server:97\u2013100`. Honor explicit checkout distrust before inheriting repository trust and cover conflicting entries through a Forge command.",
         "file": "src/forge/codex.py",
         "line": 251,
         "priority": "P2",
         "title": "Respect explicit worktree distrust before inheriting repository trust"
       }
     ],
-    "status": "clean"
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T08:38:35+00:00",
@@ -44,6 +58,10 @@
     },
     {
       "at": "2026-10-03T15:52:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T17:21:47+00:00",
       "step": "review"
     }
   ],
