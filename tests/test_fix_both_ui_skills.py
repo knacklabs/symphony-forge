@@ -63,7 +63,7 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     client, initialized = _fresh_client(repo, gh, tmp_path)
     assert initialized.returncode == 0, initialized.stderr
     config = client / "forge.toml"
-    config.write_text(config.read_text("utf-8").replace('workers = "codex"',
+    config.write_text(config.read_text("utf-8").replace('workers = "split"',
                                                        'workers = "claude"', 1), "utf-8")
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)

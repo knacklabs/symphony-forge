@@ -31,7 +31,7 @@ def _conventions(repo, client):
     assert started.returncode == 0, started.stderr
     fix = repo.git("worktree", "list", "--porcelain", cwd=client).split("worktree ")[-1].splitlines()[0]
     toml = Path(fix) / "forge.toml"  # the fix's own settings
-    toml.write_text(toml.read_text(encoding="utf-8").replace('workers = "codex"', 'workers = "claude"'),
+    toml.write_text(toml.read_text(encoding="utf-8").replace('workers = "split"', 'workers = "claude"'),
                     encoding="utf-8")
     # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
     repo.git("commit", "-qam", "Use Claude workers", cwd=fix)

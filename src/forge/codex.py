@@ -130,12 +130,14 @@ def install() -> None:
 
 
 def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
-    """The kind's models from forge.toml, as the Codex settings its conversation starts with.
+    """The kind's models from forge.toml, as the Codex settings its conversation starts with; a
+    worker's (Build, Fix, Lite) fall back to Forge's default when forge.toml has none for Codex.
 
     Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
     """
-    return {OVERRIDES[key]: value for key, value in repo.models(
-        cfg, "lite" if kind == "Ask" else kind.lower(), "codex").items()}
+    chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
+              else repo.models(cfg, "lite" if kind == "Ask" else kind.lower(), "codex"))
+    return {OVERRIDES[key]: value for key, value in chosen.items()}
 
 
 def installed() -> bool:

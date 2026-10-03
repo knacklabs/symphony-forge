@@ -56,7 +56,7 @@ def test_1_a_plan_edited_on_the_default_branch_is_flagged_and_refused(repo, clau
     # forge next no longer lists SHOW from the story branch's old rows; it prints one line naming the merge.
     lines = repo.forge("next").stdout.splitlines()
     assert notice in lines
-    assert "Next: forge task start SHOP/SHOW" not in lines
+    assert not any(line.startswith("Next: forge task start SHOP/SHOW") for line in lines)
 
     refused = repo.forge("task", "start", "SHOP/SHOW")
     assert (refused.returncode, refused.stdout, refused.stderr) == (1, "", f"{notice}\n")
@@ -79,7 +79,7 @@ def test_2_identical_copies_are_not_flagged(repo, claude_payload):
 
     lines = repo.forge("next").stdout.splitlines()
     assert not any(line.startswith(LACKS) for line in lines)
-    assert "Next: forge task start SHOP/SHOW" in lines
+    assert "Next: forge task start SHOP/SHOW  # Codex builds it" in lines
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
 
@@ -96,7 +96,7 @@ def test_3_a_newer_story_branch_edit_is_not_flagged(repo, claude_payload, monkey
 
     lines = repo.forge("next").stdout.splitlines()
     assert not any(line.startswith(LACKS) for line in lines)
-    assert "Next: forge task start SHOP/SHOW" in lines
+    assert "Next: forge task start SHOP/SHOW  # Codex builds it" in lines
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
     assert not started.stderr.startswith(LACKS)

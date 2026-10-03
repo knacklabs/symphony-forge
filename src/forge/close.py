@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, story
+from forge import __version__, checks, codex, init, repo, review, spotted, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -73,6 +73,7 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    spotted.check(top, item)
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
@@ -83,7 +84,7 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
         # read after the merge, which may change the command
-        command = repo.config(top)["test"]
+        command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}")
         if failed:  # a review would only report the same failure
             state.update(tests=tested, status="fixing")
@@ -111,7 +112,7 @@ def close(args: argparse.Namespace) -> int:
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
-    elif (command := repo.config(top)["test"]) and (
+    elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
     for number, because in dismissals:
@@ -123,10 +124,13 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
+    noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
-        _save(top, item, state, f"Review of {item}: {result['status']}")
+        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+    elif noted:  # a reused clean review still records what the worker spotted
+        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
     _publish(top, item, state, branch, default, pr, result)
@@ -264,9 +268,9 @@ def _push(top: Path, branch: str) -> None:
             time.sleep(wait)
 
 
-def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
+def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str) -> None:
     repo.write_state(item, state, top)
-    repo.commit_state(message, repo.state_path(item), top=top)
+    repo.commit_state(message, repo.state_path(item), *paths, top=top)
 
 
 def _gh(top: Path, *args: str) -> str:
