@@ -1,0 +1,41 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-03T15:35:53+00:00",
+      "because": "plans/spotted.json reached main and the records test rejects it, so every pull request fails; ported the one-line fix",
+      "done_when": "The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix passes."
+    }
+  ],
+  "base": "5ca1846f6c1fced8d375d2206e758eea2367a881",
+  "branch": "fix/ubuntu-two",
+  "done_when": "The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, the workflow test that checks the job matrix passes, and the records test accepts the spotted list file that is now on main.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "e3350a0e6c6cb6d1b23254bf2710ef0932ffb2d9ef12efab598a253bff72c6d7",
+    "commit": "625874606697055e1a54d1c9878c2ad8b74bd3ef",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-03T14:56:50+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-03T15:13:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T15:15:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T15:45:23+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Ubuntu's full test suite now takes about 10 minutes, the job's own limit, so pull requests get cancelled at random"
+}

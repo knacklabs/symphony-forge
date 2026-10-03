@@ -18,7 +18,8 @@ jobs:
         # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests,
         # and twice the time limit.
         include:
-          - {os: ubuntu-latest, group: 1, groups: 1, timeout: 10}
+          - {os: ubuntu-latest, group: 1, groups: 2, timeout: 10}
+          - {os: ubuntu-latest, group: 2, groups: 2, timeout: 10}
           - {os: macos-latest, group: 1, groups: 3, timeout: 10}
           - {os: macos-latest, group: 2, groups: 3, timeout: 10}
           - {os: macos-latest, group: 3, groups: 3, timeout: 10}

@@ -18,7 +18,7 @@ def test_1_only_current_forge_state_and_story_plans_remain(repo):
 
     plans = {path.relative_to(ROOT).as_posix() for path in (ROOT / "plans").rglob("*")
              if path.is_file()}
-    assert all(re.fullmatch(r"plans/(?:[A-Z][A-Z0-9-]*(?:\.read)?\.md|roadmap\.json)",
+    assert all(re.fullmatch(r"plans/(?:[A-Z][A-Z0-9-]*(?:\.read)?\.md|roadmap\.json|spotted\.json)",
                             path) for path in plans), sorted(plans)
 
     for old in ("WORKFLOW.md", ".review-notes.md", "projects", ".forge-migrate",

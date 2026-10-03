@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 22,
+      "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
+      "from": "blocking",
+      "item": "ubuntu-two",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
