@@ -75,6 +75,7 @@ RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
+BUILDERS = re.compile(r"^## For the builders[ \t]*$", re.M)
 DETAILS = re.compile(r"^### Done-when details[ \t]*\n(.*?)(?=^#{1,3} |\Z)", re.M | re.S)
 DISPOSITION = re.compile(r"^[ \t]*(?:[-*][ \t]+)?\**disposition:\**[ \t]*(cut|defer|keep)\b"
                          r"[ \t:\u2014\u2013-]*(\S?)", re.I | re.M)
@@ -175,8 +176,8 @@ def read(args: Any) -> int:
     left = left.get("conversation") if recorded == "codex" else (left.get("claude") or {}).get("id")
     config = repo.config(top)
     models = worker.ready(top, config, "Grill", reader == "codex")  # forge work's checks
-    first, again, head = re.split(r"<!-- forge:(?:round|notes) -->\n",
-                                  (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
+                                        (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = _store(top, text, rel)
@@ -198,7 +199,14 @@ def read(args: Any) -> int:
             why = why or "Forge has no copy of what its last round read"
             diff = spec_diff = "(not available)"
         saw = _findings(_record(seen["notes_seen"].stdout)[1])
-        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1)
+        old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
+        touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
+                   if old_sections.get(name) != new_sections.get(name)]
+        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
+                    touched="(not available)" if diff == "(not available)" else
+                    ", ".join(touched) or "the title")
+        if passed(record, findings):  # only an edit since a passing round: read just that edit
+            again = edit
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocks.values()))
         # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
@@ -234,8 +242,8 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    passed = said == "No findings."
-    if not passed:
+    clean = said == "No findings."
+    if not clean:
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
         numbers = itertools.count(max(blocks, default=0) + 1)
@@ -246,12 +254,12 @@ def read(args: Any) -> int:
                   f", a separate {NAMES[reader]} conversation because {NAMES[other]} isn't installed"
                   if reader == here else ""),
               "read_at": repo.now(), "read_hash": read_hash,
-              "round": str(round_number), "passed": "yes" if passed else "no",
+              "round": str(round_number), "passed": "yes" if clean else "no",
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8"))}
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
-    if reader == "codex" and passed and ran.get("conversation"):
+    if reader == "codex" and clean and ran.get("conversation"):
         try:
             archived = codex.archive(top, target, "Grill", ran["conversation"])
         except Exception:
@@ -259,7 +267,7 @@ def read(args: Any) -> int:
         if not archived:
             print(f"Forge could not archive the cold read's Codex conversation for {target}; "
                   "archive it in Codex when it is available.")
-    if passed and left:
+    if clean and left:
         print(f"The cold read's earlier {NAMES[recorded]} conversation for {target}, {left}, is left "
               f"as it is, because {NAMES[recorded]} is no longer installed.")
     changed = [rel, _rel(top, notes)]
@@ -268,10 +276,10 @@ def read(args: Any) -> int:
         if (state.get("approval") or {}).get("hash") != approval_hash(text.decode("utf-8")):
             state["status"] = "read"
         changed.append(repo.write_state(target, repo.add_step(state, "read"), top))
-    if passed:  # a passing round is committed, so tasks and pull requests carry what passed
+    if clean:  # a passing round is committed, so tasks and pull requests carry what passed
         repo.commit_state(f"Round {round_number} of the cold read of {rel} found nothing", *changed,
                           top=top)
-    print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if passed else
+    print(f"Round {round_number} of the cold read of {rel} found nothing.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
           f"Next: give every finding a disposition, amend the doc, then forge read {target}")
     return 0
@@ -444,13 +452,15 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top))
+    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
     if is_story:
         _parsed(_text(doc), rel)
 
 
-def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
-    """check_read on a doc's notes text and the doc's git hash (a worktree file or a commit's)."""
+def gate(target: str, rel: str, notes: str, doc_hash: str, text: str | None = None,
+         top: Path | None = None) -> None:
+    """check_read on a doc's notes text and the doc's git hash (a worktree file or a commit's).
+    With the doc's `text`, an edit only below `## For the builders` needs no round."""
     record, findings = _record(notes)
     if not record.get("read_hash"):
         repo.refuse(REFUSALS["no_read"], doc=rel, target=target)
@@ -459,8 +469,23 @@ def gate(target: str, rel: str, notes: str, doc_hash: str) -> None:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=rel.removesuffix(".md") + ".read.md")
     if not passed(record, findings):
         repo.refuse(REFUSALS["not_passed"], doc=rel, target=target, round=record.get("round") or 1)
-    if doc_hash != record["read_hash"]:
+    if changed_since_read(record["read_hash"], doc_hash, text, top):
         repo.refuse(REFUSALS["changed"], doc=rel, target=target)
+
+
+def above_builders(text: str) -> str:
+    """What an approval shows: the doc from its title down to `## For the builders`, or all of it."""
+    return BUILDERS.split(text.replace("\r\n", "\n"), 1)[0]
+
+
+def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = None,
+                       top: Path | None = None) -> bool:
+    """Whether a doc changed since the round that read `read_hash`: any change without its `text`,
+    else only one above `## For the builders`, which needs no new approval and so no new round."""
+    if doc_hash == read_hash or text is None:
+        return doc_hash != read_hash
+    old = repo.run("git", "cat-file", "blob", read_hash or "-", cwd=top)
+    return old.returncode != 0 or above_builders(old.stdout) != above_builders(text)
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -510,7 +535,8 @@ def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
         if rounds(notes, show(top, head, repo.state_path(match[1]))):
             try:
-                gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top))
+                gate(match[1], path, notes or "", repo.git("rev-parse", f"{head}:{path}", cwd=top),
+                     text, top)
             except repo.Refused as refusal:
                 return str(refusal).partition("\nNext: ")[0]
     return None

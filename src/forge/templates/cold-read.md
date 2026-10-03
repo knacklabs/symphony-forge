@@ -110,6 +110,29 @@ $traps
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
 If there is nothing to report, write exactly `No findings.` and nothing else.
 
+<!-- forge:edit -->
+Round $round of your cold read of `$path`: you are continuing your own earlier read.
+
+Your last round found nothing, and the doc changed since. Do not change any file. This read is
+discarded if any file in the repository changes. Its diff since your last round:
+
+$diff
+
+It touches these sections: $touched.
+
+For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
+
+$spec_diff
+
+Check only this diff and the sections it touches, not the rest of the doc, which passed: apply
+your first round's checks to them, including Forge's general traps and this repository's own
+known traps:
+
+$traps
+
+Write only your new findings, as a numbered list starting at $next, in your first round's format.
+If there is nothing to report, write exactly `No findings.` and nothing else.
+
 <!-- forge:notes -->
 # Cold read notes
 
