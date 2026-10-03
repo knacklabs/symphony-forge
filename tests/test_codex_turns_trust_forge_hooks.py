@@ -212,3 +212,28 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     assert stopped.returncode != 0
     assert stopped.stderr == _refusal(named, hooks_file, "read", "SHOP")
     assert _stopped(calls, before)
+
+
+def test_4_forge_ask_refuses_a_project_codex_doesn_t_trust_before_codex_starts(
+        repo, monkeypatch, sdk_data):
+    folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
+    _sync(repo, folder)
+    config = repo.path.parent / "codex-home" / "config.toml"
+    trusted = config.read_text(encoding="utf-8")
+    config.write_text("", encoding="utf-8")  # Codex trusts no project
+
+    asked = repo.forge("ask", "Where is the parser?", cwd=folder)
+
+    assert asked.returncode != 0
+    assert asked.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
+                            "Forge starts no Codex turn here.\nNext: forge doctor\n")
+    assert not calls.exists()
+
+    # Once Codex trusts it, the ask runs with Forge's hooks trusted for its thread.
+    config.write_text(trusted, encoding="utf-8")
+    monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")
+    answered = repo.forge("ask", "Where is the parser?", cwd=folder)
+
+    assert answered.returncode == 0, answered.stdout + answered.stderr
+    [start] = _sent(calls, "thread/start")
+    assert start["sandbox"] == "read-only" and start["config"]["hooks"] == _trusted(calls)

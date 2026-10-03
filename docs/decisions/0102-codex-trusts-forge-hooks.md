@@ -34,6 +34,6 @@ user's Codex config. The owner chose this on 2026-10-02. It supersedes 0082 for 
   Codex turns until it gets one.
 - The approval recorder's own checks from 0082 stand: the exact plan digest, the session and tool
   identity, replay refusal and one candidate. Forge still claims no signed host provenance.
-- Codex lists and runs no project hook in a project it doesn't trust, so a Codex reader, like a
-  worker, starts only once Codex trusts the project.
+- Codex lists and runs no project hook in a project it doesn't trust, so every Codex turn Forge
+  starts (worker, reader or `forge ask`) starts only once Codex trusts the project.
 - Interactive Codex sessions outside Forge still follow the user's own /hooks trust.

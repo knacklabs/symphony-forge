@@ -14,7 +14,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, repo, story, task
+from forge import codex, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -37,8 +37,6 @@ REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
-    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex turn here.", "forge doctor"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
@@ -245,11 +243,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
-    # Readers too: Codex lists and runs no project hook, Forge's own included, in a project it
-    # doesn't trust, so Forge could neither trust its hooks for the turn nor see a foreign one.
-    codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    if not doctor._codex_trusts(top, codex_config):
-        refuse(REFUSALS["untrusted"])
+    codex.require_trust(top)  # before the status commit, so a refusal changes nothing
     return []
 
 

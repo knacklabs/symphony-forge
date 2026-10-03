@@ -67,6 +67,8 @@ FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
+    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
+                  "no Codex turn here.", "forge doctor"),
     # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
     "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
              "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
@@ -241,6 +243,15 @@ def recover(checkout: Path, item: str) -> None:
           "as lost.", flush=True)
 
 
+def require_trust(top: Path) -> None:
+    """Refuse unless the user's Codex config trusts the checkout or its main repo: in a project it
+    doesn't trust, Codex lists and runs no project hook, Forge's own included."""
+    from forge import doctor  # doctor imports codex
+    config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(REFUSALS["untrusted"])
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -267,6 +278,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
+    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+        require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
     config = repo.config(checkout)
