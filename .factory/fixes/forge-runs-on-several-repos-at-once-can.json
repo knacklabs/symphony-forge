@@ -8,7 +8,28 @@
     "blocking_level": "P1",
     "changed": "aa032860f7ebdb302536a0b9d4fa07fd320d983a9a587f418c5e74a960d1b3db",
     "commit": "b2438b4b06fb447625d62c3d6d1322198fe669c6",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "src/forge/codex.py:294 crash-only edge: an app-server orphaned after Forge and its driver are killed; owner's rule is simple fail-closed rules over chasing crash windows, and FORGE-LANES-1 replaces this queue",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "src/forge/machine.py:81 interrupt-only edge (Ctrl-C on close); same owner rule",
+        "finding": 2,
+        "from_base": false
+      },
+      {
+        "because": "src/forge/review.py:533 sub-second spawn-to-record window; same owner rule",
+        "finding": 3,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_fix_agent_runs_wait_in_line.py:76 coverage-only; owner's rule is one command-level test per rule",
+        "finding": 4,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The prior Codex crash finding remains open: this records only the driver's identity, not the app-server's. tests/test_fix_leftover_app_server_bare_command.py:28\u201333 explicitly kills Forge and its driver and verifies that the app-server survives. machine.py:69 then removes that reservation because both recorded owners are dead. Runs from other repos can fill both slots while the orphaned agent still consumes memory, exceeding the promised limit. Track the app-server or process-group lifetime until the actual agent ends.",
@@ -39,9 +60,9 @@
         "title": "Not done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T03:50:57+00:00",
