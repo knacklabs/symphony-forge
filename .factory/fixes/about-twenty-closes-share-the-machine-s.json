@@ -1,0 +1,31 @@
+{
+  "base": "3eb14a9236e96fba1376fc87f7be9c2d39d8eb90",
+  "branch": "fix/about-twenty-closes-share-the-machine-s",
+  "done_when": "forge close's test runs on one machine go strictly in the order they started waiting (first come, first served), and a waiting close prints its place in line when it starts waiting and each time the place changes, as one plain line such as 'Waiting for 3 other closes' test runs on this machine.' A close that dies leaves no stale place. A command-level test starts three waiting closes behind a held run and shows they run in arrival order and print their places.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "9ccce7bc45d17ce301a5431d93c80488de580f63128e32ac811ae8e22333ac6d",
+    "commit": "8652cabeb08aa6117ee996a2ce38243bd8f0bec3",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "24f870d24d9b2c3dd76360ec491fd0fc2e01faa4f336667b93640b970b8c815c"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T18:58:11+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-03T00:20:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T08:05:09+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "About twenty closes share the machine's one test-run lock; a waiting close can be overtaken again and again and never says how long it will wait"
+}
