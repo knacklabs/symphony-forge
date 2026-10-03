@@ -1,21 +1,35 @@
 # Forge's settings. Your coding agent keeps this file: ask it to change a setting or upgrade Forge.
 version = "v1.2.3"
 repo = "forge-source"
-workers = "claude"
+workers = "codex"
 merge = "agent"
 test = "uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
-[models.build]
+[models.build.codex]
+model = "gpt-6.1-sol"
+effort = "medium"
+
+[models.build.claude]
 model = "claude-opus-5-5"
 effort = "medium"
 
-[models.fix]
+[models.fix.codex]
+model = "gpt-6.1-sol"
+effort = "medium"
+
+[models.fix.claude]
 model = "claude-opus-5-5"
 effort = "medium"
 
-[models.lite]
+[models.lite.codex]
+model = "gpt-6.1-sol"
+effort = "medium"
+subagents = "gpt-6-luna"
+subagent_effort = "max"
+
+[models.lite.claude]
 model = "claude-opus-5-5"
 effort = "medium"
 

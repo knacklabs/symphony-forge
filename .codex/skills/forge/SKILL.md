@@ -414,6 +414,8 @@ For a side job inside your own session, hand it to one of Forge's subagent roles
 `performance` to diagnose; `worker`, `coder`, `frontend`, `tester` and `refactorer` to build.
 The diagnosing and planning roles change no files. Building an item still goes through
 `forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
+Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
+from the other tool is omitted so the role uses the session's model.
 
 ## Build simple
 
