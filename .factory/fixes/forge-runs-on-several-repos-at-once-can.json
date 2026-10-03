@@ -1,0 +1,14 @@
+{
+  "base": "b4c71b05d77a0fc1fc54b8435c49aca8de2c7bf9",
+  "branch": "fix/forge-runs-on-several-repos-at-once-can",
+  "done_when": "At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the others wait in line first come, first served and print one plain line with their place when they start waiting and each time it changes; a run that dies frees its place; the guide says so. A command-level test starts three runs with stub agents and shows the third waits until one ends, then runs.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-03T03:50:57+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge runs on several repos at once can start many workers, readers and reviews together and run a Mac out of memory, stopping live services"
+}
