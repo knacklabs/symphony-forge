@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, repo, worker
+from forge import codex, machine, repo, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -217,12 +217,15 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"], why)
+        with machine.agent_slot():
+            done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
+                                why)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
-        with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
+        # One read per item, nothing left running, and one of the machine's agent slots.
+        with codex.hold(top, target, "Grill"), machine.agent_slot():
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]

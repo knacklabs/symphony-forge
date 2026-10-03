@@ -443,11 +443,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        for attempt in ((1,) if signoff_prompt else (1, 2)):
-            findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
-            if not reason:
-                break
-            print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
+        with machine.agent_slot():
+            for attempt in ((1,) if signoff_prompt else (1, 2)):
+                findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                if not reason:
+                    break
+                print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
