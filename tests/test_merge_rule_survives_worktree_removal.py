@@ -3,7 +3,6 @@ import json
 import shutil
 import subprocess
 import sys
-import zipfile
 
 import pytest
 
@@ -37,8 +36,8 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
         # Adopt a real existing repository with the previous release, then upgrade its pin.
         old = tmp_path / "previous-release"
         # A shipped release fixture keeps this real adoption runnable in CI's shallow clone.
-        with zipfile.ZipFile(ROOT / "tests/fixtures/forge-v1.2.2.zip") as files:
-            files.extractall(old)
+        shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
+        (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
         _install(repo.bin, "old-forge", FORGE_SHIM.format(
             python=sys.executable, src=str(old / "src")))
         adopted = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "init",
