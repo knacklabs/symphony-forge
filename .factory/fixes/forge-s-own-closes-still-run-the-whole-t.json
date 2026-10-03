@@ -3,11 +3,23 @@
   "branch": "fix/forge-s-own-closes-still-run-the-whole-t",
   "done_when": "Forge's own forge.toml sets fast_test to a command that runs only the test files changed since {base} plus the test files that mention a changed module's name, with pytest -n capped at half the machine's cores, and falls back to the full test command when the change touches conftest.py, pyproject.toml or uv.lock. One command-level test closes a change in this repo and shows only the related tests ran.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "a58d0eedf61c479709ca62db24bfc18de966b712ec43a1154955d50a05e191c5",
+    "commit": "e6e71a2c2b7208837fcdc3669039c6d900ba4c75",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T12:45:21+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T13:36:24+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's own closes still run the whole test suite locally because its forge.toml has no fast_test, now that v1.2.3 knows the setting",
