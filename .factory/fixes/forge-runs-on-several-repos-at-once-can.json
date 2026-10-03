@@ -3,11 +3,60 @@
   "branch": "fix/forge-runs-on-several-repos-at-once-can",
   "done_when": "At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the others wait in line first come, first served and print one plain line with their place when they start waiting and each time it changes; a run that dies frees its place; the guide says so. A command-level test starts three runs with stub agents and shows the third waits until one ends, then runs.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "80634543af59b195184cfa34377d7fc3181a9036e6c7f46039e6e8ba205f276f",
+    "commit": "fb620f14d78387b1f1dd67436bee8f6e17d170bb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Killing Forge releases its ticket while its Claude agent continues running. The new crash test explicitly demonstrates this: lines 117\u2013125 kill the first Forge process and admit a third agent, while line 127 only later releases the first agent. There are therefore three live agents at once. The subprocess launch in src/forge/worker.py:497\u2013499 provides no cleanup when the parent is killed. Tie slot ownership to the agent's lifetime, or ensure the orphan ends before admitting its replacement, and assert the live-agent limit in the crash test.",
+        "file": "src/forge/worker.py",
+        "line": 97,
+        "priority": "P1",
+        "title": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the \u0000\u0000\u0000\u0000"
+      },
+      {
+        "body": "The timestamp is obtained before the ticket is published, without synchronization. If run A is paused between lines 66 and 67, runs B and C can publish later-named tickets and start their agents. When A resumes, it publishes the oldest ticket, sees no earlier names, and starts a third agent. This violates both the concurrency ceiling and first-come admission under simultaneous starts. Synchronize ticket registration so an older ticket cannot appear after later tickets have already been admitted.",
+        "file": "src/forge/machine.py",
+        "line": 66,
+        "priority": "P1",
+        "title": "Make ticket registration atomic before admitting agents"
+      },
+      {
+        "body": "_live releases the exclusive lock before unlinking the ticket. A checker can acquire a newly created ticket before its creator locks it, close the handle, then be paused. The creator can now acquire the lock, pass the existence check at line 71, and enter the queue; the checker then unlinks that live ticket. On macOS, the creator's open descriptor survives unlinking, but subsequent scans cannot count it, allowing additional agents to exceed the limit. Keep stale-ticket validation and removal synchronized with registration; the current inode check does not cover deletion after that check.",
+        "file": "src/forge/machine.py",
+        "line": 112,
+        "priority": "P1",
+        "title": "Synchronize stale-ticket removal with its owner's registration"
+      },
+      {
+        "body": "Both added tests launch only Claude forge work commands for fixes belonging to one repository. They do not prove that independent repositories share the limit, or that forge read and forge close participate in it. Removing the new slot guards from story.py and review.py would leave these tests passing. Extend the command-level coverage with independent repositories and mixed work/read/close commands, using stub agents and asserting that the third agent waits until a slot becomes available.",
+        "file": "tests/test_fix_agent_runs_wait_in_line.py",
+        "line": 82,
+        "priority": "P1",
+        "title": "Not done: Command-level proof of the shared limit across repos, plan reads and close reviews"
+      },
+      {
+        "body": "The queue is documented only in the agent skill template. docs/guide.md, headed \u201cForge guide\u201d, still says at lines 91\u201393 that tasks with separate scopes run at the same time and contains no explanation of the machine-wide limit, FIFO waiting, position messages, or crash recovery. The Done-when explicitly requires the guide to say so. Add that explanation to the guide alongside the work/close workflow.",
+        "file": "src/forge/templates/skill.md",
+        "line": 350,
+        "priority": "P1",
+        "title": "Not done: Document the concurrency limit and queue in the Forge guide"
+      }
+    ],
+    "status": "blocked",
+    "tree": "7e1fc49f203a2809088a3c5aa81a7ccf20d95a45c3a3269a82f22f9e2a74c19e"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-03T03:50:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T06:48:22+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge runs on several repos at once can start many workers, readers and reviews together and run a Mac out of memory, stopping live services"
