@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:40:34+00:00
-read_hash: a8488fc6d7535a70d01d45460fe3cd7ea2fa4c3c
-round: 3
+read_at: 2026-10-03T13:48:26+00:00
+read_hash: 90ea8f696beee7521be30541d48a97dc283337a2
+round: 4
 passed: no
-doc_seen: a8488fc6d7535a70d01d45460fe3cd7ea2fa4c3c
+doc_seen: 90ea8f696beee7521be30541d48a97dc283337a2
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 90e68f8f2ea9974ce0c0e2d8cc7eaf1739f4578b
+notes_seen: b45bb26b7f0856cec3408f86848e4d2d777c4d41
 ---
 # Cold read notes
 
@@ -139,3 +139,13 @@ Only a genuine trade-off goes to the human, as a question with options.
 28. Unproven: item 1: FIFO admission between surviving waiters.
     Stopping the first of two waiters leaves only one eligible run, so the revised scenario still cannot distinguish FIFO from LIFO admission. Extend the same command-level test to release a slot while two waiters remain, then exercise cancellation.
     Disposition: cut the scenario now has three waiters, releases a place before stopping one, and checks the order
+
+## Round 4
+
+29. Unproven: item 5: stopping the shell also stops the actual test runner.
+    With `shell=True`, the recorded PID can be `sh` or `cmd.exe`, with the test runner as its child. I reproduced the runner surviving shell termination. Freeing the lane then permits overlapping suites. Reuse process-tree termination for stop and prove the foreground runner ends before admission resumes.
+    Disposition: cut stop ends the whole process tree as Forge already does for Codex runs; the test proves the runner under the shell ends before the next run starts
+
+30. Finding 24 remains open in the TESTS task row.
+    Its delivery still includes “the process-group lane hold,” although the details now specify holding only the recorded process. Remove that stale delivery wording so the task has one lifetime contract.
+    Disposition: cut the TESTS row now says the test entry's process record

@@ -114,14 +114,16 @@ tightening it needs no new approval. -->
    the test entry's progress and output fields. `forge stop --id <entry id>` ends exactly that lane
    entry (the mod uses this); `forge stop [--repo <root>] <item>` ends every entry of that item in
    that repo, in both lanes (a worker and its own `forge test`). A running entry's process is
-   terminated only after its identity checks out; when it can't be verified, stop refuses with one
+   terminated with its whole tree, the way Forge already ends Codex runs (taskkill /T on Windows,
+   the process group elsewhere, as in codex.py and codex_turn.py), so the test runner a shell
+   started ends too, and only after the recorded identity checks out; when it can't be verified, stop refuses with one
    line and terminates nothing. A waiting entry leaves the line and never starts later. No entry
    found says there is nothing to stop and exits 0. Only a person runs it (the mod
    asks first; the brief tells workers never to). Tests (one
    each, command-level): AGENTS: one agent running and one waiting from another repo show all agent
    fields; `forge stop` frees the place; a process whose pid was reused is not terminated. TESTS: a running
-   test shows its progress and output path; stopping a running test ends the test command and frees
-   the lane; a stopped waiting test never starts; `forge stop <item>` ends both a worker and its
+   test shows its progress and output path; stopping a running test ends the test runner the shell started, not only the shell,
+   before the next run is let in; a stopped waiting test never starts; `forge stop <item>` ends both a worker and its
    test run.
 
 ## Tasks
@@ -129,7 +131,7 @@ tightening it needs no new approval. -->
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | AGENTS | Agent lane by cores | `machine.half_cores()`, the agent queue sized by it, doctor's split line, the guide's lanes section, `forge lanes --json` with agent entries, `forge stop <item>` | 1, 4, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/cli.py, src/forge/templates/skill.md, docs/guide.md, tests/conftest.py | tests/test_lanes_agents.py, tests/test_lanes_view.py | | no |
-| TESTS | One test lane for workers and close | `forge test`, the core-limit variables in every test run, the process-group lane hold, test progress and output path in the lane entry, the brief's line and commit nudge, the test-audit skill's run step, the upgrade test | 2, 3, 5 | src/forge/review.py, src/forge/worker.py, .claude/skills/test-audit/SKILL.md, .codex/skills/test-audit/SKILL.md, src/forge/templates/brief.md, src/forge/templates/skill.md | tests/test_lanes_tests.py, tests/test_lanes_upgrade.py | AGENTS | no |
+| TESTS | One test lane for workers and close | `forge test`, the core-limit variables in every test run, the test entry's process record, test progress and output path in the lane entry, the brief's line and commit nudge, the test-audit skill's run step, the upgrade test | 2, 3, 5 | src/forge/review.py, src/forge/worker.py, .claude/skills/test-audit/SKILL.md, .codex/skills/test-audit/SKILL.md, src/forge/templates/brief.md, src/forge/templates/skill.md | tests/test_lanes_tests.py, tests/test_lanes_upgrade.py | AGENTS | no |
 | CI | Slow tests in CI only | Container tests gated on `FORGE_CONTAINERS=1`, set by the CI workflow | 3 | tests/test_proto_deploy.py, .github/workflows/forge-next.yml, .github/workflows/codex-smoke.yml | tests/test_lanes_ci.py | | no |
 
 New moving parts: none
