@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "662ddc3c6a0f8f667683501d085a38a2d4c44001b77b3fbe1bf5adf8412d1202",
-    "commit": "0b8b155b70500f6a84540166bb68b07396d45a75",
+    "changed": "36f02b8684bec0331e7d59935f4f5f2c68df9995ef040e2af810984075c7e1d8",
+    "commit": "efaf18daedd03ee6594f040246f7d26ae4ab2c22",
     "dismissals": [],
     "findings": [
       {
-        "body": "The reader test ends after a fresh `thread/start`; it never resumes the reader with Forge hooks or attempts a resumed read with a modified or foreign untrusted hook. The existing reader-round stub still returns no hooks at `tests/test_readloop_rounds.py:71\u201373`, although `src/forge/story.py:216\u2013225` explicitly resumes subsequent reads. Consequently, all these tests would pass if verification were bypassed specifically for resumed read-only threads. This leaves the reader-resume portion of previous finding 2 open. Extend the command-level reader test to assert current hashes reach `thread/resume` and an untrusted non-Forge hook prevents both resume and turn start.",
+        "body": "The reader test creates an empty Codex home at lines 142\u2013143, but the stub lists project hooks regardless of project trust. [Codex's documented contract](https://learn.chatgpt.com/docs/hooks) loads project hooks only when the project layer is trusted. Forge explicitly bypasses that prerequisite for readers in `src/forge/worker.py:223\u2013224`, called by `src/forge/story.py:177`. Consequently, a real reader in this supported configuration can receive no project hooks here, leave `state` empty, and start without Forge's hooks; an untrusted foreign hook is also never inspected. The added reader-resume assertions address the previous finding, but this newly verified discovery prerequisite invalidates the stub's proof for readers with no existing project trust. Make the stub respect project-layer trust and ensure reader commands establish the required prerequisite or refuse before starting a thread, with command-level coverage.",
         "file": "tests/test_codex_turns_trust_forge_hooks.py",
-        "line": 172,
+        "line": 143,
         "priority": "P1",
-        "title": "Not done: Test hook trust and refusal on resumed reader turns"
+        "title": "Not done: Test reader hook trust with Codex's project-trust discovery gate"
       }
     ],
     "status": "blocked",
-    "tree": "2ba20e82b49294321022a8ace6706fafb07712e30d2c8e67572ed78bde54623b"
+    "tree": "45c21a6298173ab5e7cbf69d7b2f0b896120a8334ebd8c7a680d2c19792af24b"
   },
   "status": "fixing",
   "steps": [
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-02T20:18:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T01:00:10+00:00",
       "step": "review"
     }
   ],
