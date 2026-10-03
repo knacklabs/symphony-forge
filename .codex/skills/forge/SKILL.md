@@ -39,7 +39,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "The story is finished" | `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
-| "Set up a new repo" | `forge init` |
+| "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
@@ -265,6 +265,10 @@ Adopting changes no app code.
    default branch and follows it.
    A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
    AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
+8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
+   with the test tool's built-in changed-only option and `{base}` (for example
+   `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
+   `forge.toml` through a fix. Forge writes no `fast_test` by itself.
 
 On a live app, every story and fix also follows these:
 

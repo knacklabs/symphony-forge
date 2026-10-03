@@ -103,30 +103,14 @@ ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, c
               "folders, and AGENTS.md keeps the team's lines and its house rules.")
 
 
-def _fast_test(top: Path) -> str:
-    """A changed-only command for the repo's test tool, or "" when Forge doesn't recognise it."""
-    # ponytail: npm only; a yarn or pnpm repo's agent proposes its own.
-    if not (top / "package-lock.json").is_file():
-        return ""
-    try:
-        package = json.loads((top / "package.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return ""
-    tools = {**package.get("dependencies", {}), **package.get("devDependencies", {})}
-    return ("npm ci && npx vitest run --changed {base} --passWithNoTests" if "vitest" in tools
-            else "npm ci && npx jest --changedSince {base} --passWithNoTests" if "jest" in tools
-            else "")
-
-
 def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
-              merge: str = "", fast_test: str = "") -> str:
+              merge: str = "") -> str:
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
             + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
             f"test = {json.dumps(test)}\n"
-            + (f"fast_test = {json.dumps(fast_test)}\n" if fast_test else "")
-            + f"checks = {json.dumps(checks)}\n"
+            f"checks = {json.dumps(checks)}\n"
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
 
 
@@ -135,8 +119,7 @@ def _scaffold(top: Path) -> dict[str, str]:
     skeleton = sync.TEMPLATES / "skeleton"
     test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
     return {
-        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
-                                fast_test=_fast_test(top)),
+        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()},
         "plans/roadmap.json": ROADMAP,
@@ -312,8 +295,7 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["adopting"])
     # Forge's own check gates each pull request once Forge is on the default branch.
     checks = [*args.checks, *(["forge-pr-check"] if "forge-pr-check" not in args.checks else [])]
-    toml = _settings("live", args.test, checks, args.interfaces, merge="human",
-                     fast_test=_fast_test(top))
+    toml = _settings("live", args.test, checks, args.interfaces, merge="human")
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
     # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
     # already there with other text is the team's, and adoption stops before changing anything.
