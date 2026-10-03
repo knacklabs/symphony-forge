@@ -4,7 +4,8 @@ Forge's files in a fix and close it.
 
 uv, gh and Autoreview are faked at their edges. The fake uv logs each call; its `tool install` puts
 a launcher on PATH, and its `tool run` runs a copy of this checkout's code that reads as the
-release, whose skill carries a marker and whose settings check no longer knows `stage`.
+release, whose skill carries a marker. The sync-failure case removes a settings key only from
+its fake release, so the real settings check supplies the refusal.
 """
 
 import json
@@ -13,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import tomllib
 from pathlib import Path
 
@@ -41,10 +43,12 @@ def launcher(release, via):
         for host in (".claude", ".codex"):
             shutil.copytree(pathlib.Path({root!r}, host, "skills"), src.parent / host / "skills")
         for rel, old, new in (("__init__.py", re.compile(r'__version__ = ".*"'), f'__version__ = "{{release[1:]}}"'),
-                              ("templates/skill.md", re.compile(r"\\Z"), f"\\n<!-- {mark} {{release}} -->\\n"),
-                              ("repo.py", re.compile(r'"stage": str, '), "")):
+                              ("templates/skill.md", re.compile(r"\\Z"), f"\\n<!-- {mark} {{release}} -->\\n")):
             path = src / "forge" / rel
             path.write_text(old.sub(new, path.read_text("utf-8"), count=1), "utf-8")
+        if (here / "uv-reject-stage").exists():
+            path = src / "forge" / "repo.py"
+            path.write_text(path.read_text("utf-8").replace('"stage": str, ', ""), "utf-8")
     return (f"#!{{sys.executable}}\\nimport json, os, sys\\n"
             f"with open({{str(here.parent / 'forge-calls.jsonl')!r}}, 'a') as log:\\n"
             f"    log.write(json.dumps({{{{'via': {{via!r}}, 'args': sys.argv[1:], 'cwd': os.getcwd()}}}}) + '\\\\n')\\n"
@@ -121,22 +125,27 @@ class Upgrade:
 
 
 @pytest.fixture
-def up(env, tmp_path, monkeypatch) -> Upgrade:
+def unsynced_up(env, tmp_path, monkeypatch) -> Upgrade:
     conftest._install(env.repo.bin, "uv", UV.format(python=sys.executable, mark=MARK,
                                                     root=str(conftest.ROOT)))
     monkeypatch.setenv("PATH", f"{tmp_path / 'uvbin'}{os.pathsep}{os.environ['PATH']}")
     (tmp_path / "no-hooks").mkdir()
-    made = Upgrade(env, tmp_path)
+    return Upgrade(env, tmp_path)
+
+
+@pytest.fixture
+def up(unsynced_up) -> Upgrade:
+    made = unsynced_up
     # The pinned Forge synced this repo once, as every client on Forge is.
     made.repo.git("switch", "-q", "-c", "setup")
     synced = made.repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     made.repo.git("add", "-A")
-    made.repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-q", "-m", "Sync")
+    made.repo.git("-c", f"core.hooksPath={made.tmp / 'no-hooks'}", "commit", "-q", "-m", "Sync")
     made.repo.git("switch", "-q", "main")
     made.repo.git("merge", "-q", "--ff-only", "setup")
     made.repo.git("branch", "-q", "-D", "setup")
-    made.repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    made.repo.git("-c", f"core.hooksPath={made.tmp / 'no-hooks'}", "push", "-q", "origin", "main")
     return made
 
 
@@ -283,6 +292,7 @@ def _interrupted_after_the_folder(up):
 
 def _failed_release_sync_then_rerun(up):
     # The new release no longer knows a setting this repo still has.
+    (up.repo.bin / "uv-reject-stage").touch()
     up.on_main("forge.toml", up.toml() + 'stage = "live"\n')
     original = up.toml()
 
@@ -465,14 +475,55 @@ def _refused(up, case):
         assert draft.read_bytes() == b"keep me\r\n"  # fails too if the file were gone
 
 
+def _repo_adopted_on_the_previous_release(up):
+    # A landed v1.2.2 adoption, including that release's synced files, rather than a current
+    # sync with an older version string. The fixture README records its real-command origin.
+    with tarfile.open(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client.tar.gz") as archive:
+        archive.extractall(up.repo.path, filter="data")
+    up.repo.git("switch", "-q", "-c", "adoption")
+    up.repo.git("add", "-A")
+    up.repo.git("commit", "-q", "-m", "Adopt Forge v1.2.2")
+    up.repo.git("switch", "-q", "main")
+    up.repo.git("merge", "-q", "--ff-only", "adoption")
+    up.repo.git("branch", "-q", "-D", "adoption")
+    up.repo.git("push", "-q", "origin", "main")
+    original = up.toml()
+    assert tomllib.loads(original)["version"] == "v1.2.2"
+    for host in (".claude", ".codex"):
+        assert "forge upgrade" not in (up.repo.path / host / "skills/forge/SKILL.md").read_text("utf-8")
+
+    done = up.run(RELEASE)
+
+    assert_ready(up, done, ours(up))
+    assert [call["args"] for call in up.uv()] == [
+        install(), release_run(RELEASE, "sync"), release_run(RELEASE, "close", NAME)]
+    assert up.show("forge.toml") == original.replace('"v1.2.2"', f'"{RELEASE}"').strip()
+    assert up.toml() == original
+    for host in (".claude", ".codex"):
+        skill = up.show(f"{host}/skills/forge/SKILL.md")
+        assert f"<!-- {MARK} {RELEASE} -->" in skill
+        assert "`forge upgrade <release>`" in skill.split("## Upgrade Forge\n", 1)[1]
+    assert "forge hook deny" in up.show(".claude/settings.json")
+    assert "forge hook deny" in up.show(".codex/hooks.json")
+    config = tomllib.loads(up.show(".codex/config.toml"))
+    assert config["features"]["hooks"] is True
+    assert config["mcp_servers"]["docs"]["command"] == "docs-server"
+    assert RELEASE in up.show(".forge/hooks.sh")
+    assert "Keep the public API stable." in up.show("AGENTS.md")
+    assert len(up.env.gh_calls("pr", "create")) == 1
+
+
 SCENARIOS = [_named, _pinned_older_than_the_installed_forge, _pinned_to_its_own_prerelease, _newest_then_a_newer_one,
              _failed_install_then_rerun, _staged_rename_then_rerun, _interrupted_after_the_folder,
              _failed_release_sync_then_rerun, _rerun_after_the_commit, _close_refuses,
-             _sync_deletes_a_file, _hooks_inside_the_checkout, _stale_forge_shadows_the_install]
+             _sync_deletes_a_file, _hooks_inside_the_checkout, _stale_forge_shadows_the_install,
+             _repo_adopted_on_the_previous_release]
 
 
 @pytest.mark.parametrize("case", [*SCENARIOS, *REFUSED], ids=lambda case: getattr(case, "__name__", case))
-def test_1_one_command_upgrades_forge_and_opens_its_pull_request(up, case, monkeypatch):
+def test_1_one_command_upgrades_forge_and_opens_its_pull_request(unsynced_up, case, monkeypatch,
+                                                              request):
+    up = unsynced_up if case is _repo_adopted_on_the_previous_release else request.getfixturevalue("up")
     up.version = re.search(r'^version = "(.+)"$', up.toml(), re.M)[1]
     if isinstance(case, str):  # each refusal stops before anything is created
         _refused(up, case)
