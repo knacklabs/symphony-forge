@@ -326,10 +326,11 @@ def _nothing_differing_leaves_no_fix_behind(repo, gh, tmp_path, monkeypatch, _):
     assert "Forge's files" not in done.stdout and "- Fixed: wrote" not in done.stdout, done.stdout
     assert _fixes(repo, client) == [] and repo.git("worktree", "list", cwd=client) == folders
 
-    # Behind the default branch, whose files are already sync's: a fix starts, finds nothing,
-    # and goes.
+    # Behind the default branch, whose files are already sync's: no fix starts, even when
+    # a commit would be refused. Previously doctor started an empty fix and removed it.
     _land(repo, client, "A note", lambda folder: _set(folder, "NOTES.txt", "a note\n"))
     repo.git("reset", "-q", "--hard", "HEAD~1", cwd=client)
+    _refusing_hook(client, "record")
     done = repo.forge("doctor", "--fix", cwd=client)
     assert "Forge's files" not in done.stdout and "- Fixed: wrote" not in done.stdout, done.stdout
     assert _fixes(repo, client) == [] and repo.git("worktree", "list", cwd=client) == folders
@@ -347,87 +348,36 @@ def _a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row(repo, gh, tmp_
     assert SKILL not in _in(repo, client, "fix/forge-files")
 
 
-def _an_overlapping_doctor_run_keeps_the_other_runs_fix(repo, gh, tmp_path, monkeypatch, _):
-    client = _client(repo, gh, tmp_path, monkeypatch)
-    head = _old_hosts(repo, client)
-    folder = client.parent / f"{client.name}-fix-forge-files"
-    real_git = shutil.which("git")
-    receipt = tmp_path / "first-doctor.json"
-    # Pause the second run at its real checkout command. Let the first run create the
-    # selected branch, then resume the second's Git command: it must fail on that branch.
-    _install(repo.bin, "git", f"""#!{sys.executable}
-import json, pathlib, subprocess, sys
-receipt = pathlib.Path({str(receipt)!r})
-args = sys.argv[1:]
-if args[:2] == ["worktree", "add"] and "fix/forge-files" in args and not receipt.exists():
-    receipt.write_text("{{}}", encoding="utf-8")
-    first = subprocess.run([{sys.executable!r}, {str(repo.bin / 'forge')!r}, "doctor", "--fix"],
-                           cwd={str(client)!r}, capture_output=True, text=True)
-    folder = pathlib.Path({str(folder)!r})
-    (folder / "notes.txt").write_text("Work still in progress.\\n", encoding="utf-8")
-    status = subprocess.run([{real_git!r}, "status", "--porcelain"], cwd=folder,
-                            capture_output=True, text=True, check=True).stdout
-    head = subprocess.run([{real_git!r}, "rev-parse", "HEAD"], cwd=folder,
-                          capture_output=True, text=True, check=True).stdout.strip()
-    receipt.write_text(json.dumps({{"stdout": first.stdout, "returncode": first.returncode,
-                                   "head": head, "status": status}}), encoding="utf-8")
-sys.exit(subprocess.run([{real_git!r}, *args]).returncode)
-""")
-    second = repo.forge("doctor", "--fix", cwd=client)
-    first = json.loads(receipt.read_text(encoding="utf-8"))
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in first["stdout"]
-    assert first["returncode"] == second.returncode == 1
-    assert folder.is_dir() and _fixes(repo, client) == ["fix/forge-files"], second.stdout
-    assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == first["head"]
-    assert repo.git("status", "--porcelain", cwd=folder) == first["status"].strip()
-    assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).splitlines() == [head, head]
-    assert _left_over("forge-files", folder) in second.stdout, second.stdout
-    assert "- Fixed: wrote" not in second.stdout
-
-
-def _refusing_hook(client: Path, lock: bool) -> Path:
-    """The team's own pre-commit check, which Forge's hook runs first: it refuses a commit that
-    changes the Claude settings, and may lock the folder it runs in first."""
+def _refusing_hook(client: Path, commit: str) -> Path:
+    """The team's check refuses either the record commit or the later files commit."""
     hook = Path(subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-path",
                                 "hooks/pre-commit.pre-forge"], cwd=client, capture_output=True,
                                text=True, check=True).stdout.strip())
     _executable(hook, "#!/bin/sh\n"
-                      f"git diff --cached --name-only | grep -qx '{SETTINGS}' || exit 0\n"
-                      + ('git worktree lock "$(git rev-parse --show-toplevel)"\n' if lock else "")
-                      + "echo 'our check refuses changes to the Claude settings' >&2\nexit 1\n")
+                      f"git diff --cached --name-only | grep -qx "
+                      f"'{STATE.format('forge-files') if commit == 'record' else SETTINGS}' || exit 0\n"
+                      "echo 'Work still in progress.' > notes.txt\n"
+                      "echo 'our check refuses this commit' >&2\nexit 1\n")
     return hook
 
 
-def _a_commit_a_git_hook_refuses_leaves_no_fix(repo, gh, tmp_path, monkeypatch, locked):
+def _a_commit_a_git_hook_refuses_leaves_the_fix(repo, gh, tmp_path, monkeypatch, commit):
+    # Old contract: doctor removed a failed fix. The revised story leaves it intact, with
+    # the rejection reason and a finish-or-remove step, even if its record commit failed.
     client = _client(repo, gh, tmp_path, monkeypatch)
-    _old_hosts(repo, client)
-    if locked:  # an earlier doctor repair already merged must not make the failed one current
-        _land(repo, client, f"{WHY} (#7)", lambda folder: _set(folder, "NOTES.txt", "x\n"))
-    hook = _refusing_hook(client, locked)
+    head = _old_hosts(repo, client)
+    _refusing_hook(client, commit)
     folder = client.parent / f"{client.name}-fix-forge-files"
 
     done = repo.forge("doctor", "--fix", cwd=client)
     problem = ("Doctor couldn't bring Forge's files up to date in fix forge-files: our check "
-               "refuses changes to the Claude settings")
-    if locked:
-        assert _row(f"{problem} Its folder {folder} is still there.") in done.stdout, done.stdout
-        assert folder.exists() and _fixes(repo, client) == ["fix/forge-files"]
-    else:
-        assert _row(problem) in done.stdout, done.stdout
-        assert not folder.exists() and _fixes(repo, client) == []
+               "refuses this commit")
+    step = _left_over("forge-files", folder).split("\n  Fix: ", 1)[1].strip()
+    assert _row(problem, step) in done.stdout, done.stdout
+    assert folder.exists() and _fixes(repo, client) == ["fix/forge-files"]
+    assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
+    assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).splitlines() == [head, head]
     assert "Doctor's fix forge-files holds" not in done.stdout and done.returncode == 1
-
-    hook.unlink()
-    if locked:  # the locked leftover gets its step on this run and every later one
-        for _ in range(2):
-            again = repo.forge("doctor", "--fix", cwd=client)
-            assert _left_over("forge-files", folder) in again.stdout, again.stdout
-            assert "- Fixed: wrote" not in again.stdout and _fixes(repo, client) == ["fix/forge-files"]
-        return
-    again = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in again.stdout, again.stdout
-    assert _in(repo, client, "fix/forge-files") == sorted([HOOKS, SETTINGS, STATE.format("forge-files")])
 
 
 def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
@@ -438,10 +388,11 @@ def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
         _set(folder, SETTINGS, OLD), _set(folder, HOOKS, None),
         _set(folder, f"{HOOKS}/inside", "x\n")), forge=True)
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert ("- Doctor couldn't bring Forge's files up to date in fix forge-files: [Errno 21] Is a "
-            f"directory: '{client.parent / (client.name + '-fix-forge-files') / HOOKS}'\n"
-            "  Fix: forge doctor --fix\n") in done.stdout, done.stdout
-    assert _fixes(repo, client) == []
+    failed_folder = client.parent / (client.name + "-fix-forge-files")
+    step = _left_over("forge-files", failed_folder).split("\n  Fix: ", 1)[1].strip()
+    assert _row("Doctor couldn't bring Forge's files up to date in fix forge-files: [Errno 21] "
+                f"Is a directory: '{failed_folder / HOOKS}'", step) in done.stdout, done.stdout
+    assert failed_folder.is_dir() and _fixes(repo, client) == ["fix/forge-files"]
 
     # In place: the settings are written, the read-only hooks file isn't, and stays a row.
     _land(repo, client, "Upgrade Forge", lambda folder: (
@@ -770,8 +721,7 @@ def _cases(*cases) -> list:
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
-    (_an_overlapping_doctor_run_keeps_the_other_runs_fix, [None], ()),
-    (_a_commit_a_git_hook_refuses_leaves_no_fix, [False, True], SHELL),
+    (_a_commit_a_git_hook_refuses_leaves_the_fix, ["record", "files"], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),
     (_a_link_stops_every_repair, ["CLAUDE.md to a file outside the repo",
                                   "the skill's folder to notes in the repo"], SHELL),
