@@ -1,9 +1,11 @@
-"""The test helpers that read, write and delete files under a test's temp folder wait out the
-moment Windows keeps a file from them, and fail only once it stays locked for five seconds."""
+"""The test helpers that read, write, copy and delete files under a test's temp folder wait out
+the moment Windows keeps a file from them, and fail only once it stays locked for five seconds."""
 from __future__ import annotations
 
+import builtins
 import io
 import os
+import shutil
 import time
 from pathlib import Path
 
@@ -12,14 +14,15 @@ import pytest
 from test_codex_record import _saved
 from test_codex_resume import _resuming
 from test_codex_worker import _lines, _sent
-from test_codex_worker import sdk_data  # noqa: F401 (a fixture)
+from test_codex_worker import ROOT, sdk_data  # noqa: F401 (a fixture)
+from test_worker import install_claude
 
 STORY = "windows-ci-jobs-keep-failing-with-permis"
 
 
 def _locked(monkeypatch, path: Path, times: float) -> list[str]:
     """Make opening or deleting path refuse as a locked file does on Windows, this many times,
-    beneath the Path methods every helper uses. Returns each attempt."""
+    beneath the Path, shutil and os calls every helper uses. Returns each attempt."""
     real_open, real_unlink, tries = io.open, os.unlink, []
 
     def refused(what: str, target) -> None:
@@ -36,7 +39,8 @@ def _locked(monkeypatch, path: Path, times: float) -> list[str]:
         refused("unlink", target)
         return real_unlink(target, *args, **kwargs)
 
-    monkeypatch.setattr(io, "open", opening)
+    monkeypatch.setattr(io, "open", opening)  # what Path opens with
+    monkeypatch.setattr(builtins, "open", opening)  # what shutil copies with
     monkeypatch.setattr(os, "unlink", unlinking)
     return tries
 
@@ -56,6 +60,21 @@ def test_1_a_read_a_write_and_a_delete_succeed_after_a_locked_file_lets_go(tmp_p
         tries = _locked(locked, record, 2)
         record.unlink()
     assert tries == ["unlink"] * 3 and not record.exists()
+
+    # A copied file, and a file in a copied tree, wait out two refusals each.
+    source = tmp_path / "source"
+    (source / "inner").mkdir(parents=True)
+    (source / "inner" / "stub").write_text("stub\n", encoding="utf-8")
+    copied = tmp_path / "copied"
+    with monkeypatch.context() as locked:
+        tries = _locked(locked, copied, 2)
+        shutil.copy(source / "inner" / "stub", copied)
+    assert tries == ["open"] * 3 and copied.read_text("utf-8") == "stub\n"
+    tree = tmp_path / "tree"
+    with monkeypatch.context() as locked:
+        tries = _locked(locked, tree / "inner" / "stub", 2)
+        shutil.copytree(source, tree)
+    assert tries == ["open"] * 3 and (tree / "inner" / "stub").read_text("utf-8") == "stub\n"
 
 
 def test_2_a_file_that_stays_locked_fails_after_five_seconds(tmp_path, monkeypatch):
@@ -91,3 +110,10 @@ def test_3_forge_work_rounds_go_on_while_their_records_refuse_twice(repo, monkey
     second = repo.forge("work", "BOARD/PAGE")
     assert second.returncode == 0, second.stdout + second.stderr
     assert _sent(calls, "turn/start")[-1]["input"][0]["text"].startswith("Fix round 2 on The page.\n")
+
+    # Installing the stub claude after those rounds copies it in through two refusals too.
+    with monkeypatch.context() as locked:
+        tries = _locked(locked, repo.bin / "claude", 2)
+        install_claude(repo)
+    assert len(tries) == 3
+    assert (repo.bin / "claude").read_bytes() == (ROOT / "tests" / "stubs" / "claude").read_bytes()

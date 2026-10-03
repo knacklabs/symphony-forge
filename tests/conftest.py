@@ -8,9 +8,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -59,26 +61,53 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
 T = TypeVar("T")
 
 
+_inside = threading.local()
+
+
 def patient(action: Callable[[], T]) -> T:
     """Run a file action, retrying a PermissionError for up to five seconds: on Windows a process
-    renaming a file over this one, or a moment late to exit, holds it briefly."""
-    for _ in range(100):
-        try:
-            return action()
-        except PermissionError:
-            time.sleep(0.05)
-    return action()
+    renaming a file over this one, or a moment late to exit, holds it briefly. An action inside
+    another's retry runs once, since the outer one retries it."""
+    if getattr(_inside, "retrying", False):
+        return action()
+    _inside.retrying = True
+    try:
+        for _ in range(100):
+            try:
+                return action()
+            except PermissionError:
+                time.sleep(0.05)
+        return action()
+    finally:
+        _inside.retrying = False
 
 
-def _patiently(name: str) -> None:
-    real = getattr(Path, name)
-    setattr(Path, name, lambda self, *args, **kwargs: patient(lambda: real(self, *args, **kwargs)))
+def _patiently(owner: Any, name: str) -> None:
+    real = getattr(owner, name)
+
+    def retried(*args: Any, **kwargs: Any) -> Any:
+        return patient(lambda: real(*args, **kwargs))
+    setattr(owner, name, retried)
 
 
-# Every test helper reads, writes and deletes files through these, so each one waits out a lock.
-for _name in ("read_text", "read_bytes", "write_text", "write_bytes", "unlink"):
-    _patiently(_name)
+# Every test helper reads, writes, copies and deletes files through these, so each one waits out a
+# lock. copytree copies each file with the retried copy2 instead of retrying the whole tree.
+for _owner, _names in ((Path, ("read_text", "read_bytes", "write_text", "write_bytes", "touch",
+                               "unlink", "rename", "replace", "chmod")),
+                       (shutil, ("copy", "copy2", "copyfile", "move", "rmtree")),
+                       (os, ("unlink", "remove", "rename", "replace", "chmod"))):
+    for _name in _names:
+        _patiently(_owner, _name)
+_copytree = shutil.copytree
 
+
+def _copy_tree(src: Any, dst: Any, *args: Any, **kwargs: Any) -> Any:
+    if len(args) < 3:  # copytree passes copy_function by position to its subfolders
+        kwargs.setdefault("copy_function", shutil.copy2)
+    return _copytree(src, dst, *args, **kwargs)
+
+
+shutil.copytree = _copy_tree
 
 class Repo:
     """A git repo on main whose origin is a bare remote, with forge and a stub gh on PATH."""
