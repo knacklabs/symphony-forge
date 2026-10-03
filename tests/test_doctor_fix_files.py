@@ -13,7 +13,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import zipfile
 from pathlib import Path
 
 import pytest
@@ -671,8 +670,8 @@ def _an_existing_app_adopted_on_v1_2_2_is_repaired(repo, gh, tmp_path, monkeypat
     # Unlike fresh-init coverage, this app has history before its previous-release adoption.
     client = repo.path
     application = (client / "README.md").read_text(encoding="utf-8")
-    with zipfile.ZipFile(Path(__file__).parent / "fixtures/doctor-v1.2.2.zip") as fixture:
-        fixture.extractall(client)
+    shutil.copytree(Path(__file__).parent / "fixtures/doctor-v1.2.2", client,
+                    dirs_exist_ok=True)
     assert 'version = "v1.2.2"' in (client / "forge.toml").read_text(encoding="utf-8")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Adopt Forge")

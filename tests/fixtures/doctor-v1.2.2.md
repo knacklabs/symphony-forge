@@ -1,7 +1,11 @@
-This archive holds the files committed by the real `forge init` from tag v1.2.2
-when adopting an existing app, excluding the machine-specific adoption record.
-It includes that release's pin and all its synced files, with no current Forge
-output substituted. The app had a README and these AGENTS.md lines before adoption:
+The `doctor-v1.2.2/` folder holds ordinary text files committed by the real
+`forge init` from tag v1.2.2 when adopting an existing app. It retains that
+release's pin, both hosts' hooks, the Codex config, hook launcher, workflow,
+Claude Forge skill and AGENTS.md. These are the files the regression needs for
+repairs, hand-edit protection and preserved team instructions; the other synced
+skills and roles and the machine-specific adoption record are omitted. No
+current Forge output is substituted. The app had a README and these AGENTS.md
+lines before adoption:
 
 ```markdown
 # Team rules
@@ -19,7 +23,7 @@ python -c 'from forge.cli import main; main()' init --test 'npm test' --checks t
 ```
 
 Use author `Forge Test <forge@example.test>` and a gh edge stub returning `{}`.
-Archive the paths from `git diff --name-only main...fix/adopt-forge`, reading
-their bytes from that branch and excluding `.factory/`. The test supplies the
+Copy the retained paths from `git diff --name-only main...fix/adopt-forge`, reading
+their bytes from that branch. The test supplies the
 existing application history and commits this adoption snapshot itself; it does
 not run today's init or manufacture drift to stand in for the old release.
