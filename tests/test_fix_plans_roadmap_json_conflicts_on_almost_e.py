@@ -24,7 +24,7 @@ def _commit_roadmap(repo, items: list[dict], message: str) -> None:
 
 def _synced(repo, items: list[dict]) -> None:
     repo.git("checkout", "-q", "-b", "fix/roadmap")
-    repo.write("forge.toml", 'version = "v1.2.2"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.3"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     repo.write("plans/roadmap.json", json.dumps({"items": items}, indent=2) + "\n")
     synced = repo.forge("sync")

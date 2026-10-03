@@ -1,0 +1,34 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the install scripts, sync output and the tests that pin them",
+  "amendments": [
+    {
+      "at": "2026-10-03T11:56:31+00:00",
+      "because": "That test passes alone in 45 s but is killed at 150 s under a full parallel run, which blocked this release three times",
+      "done_when": "Forge's version is 1.2.3 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them)."
+    }
+  ],
+  "base": "1a8e83a609e345952f36e758eca22bdd6ce814cc",
+  "branch": "fix/release-123",
+  "done_when": "Forge's version is 1.2.3 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them), and the container deploy test gets 600 seconds so it passes under a full parallel run.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "51d179609ac2990d2b6634460ea51feecdd28b48506253a779dff5877460b4f1",
+    "commit": "402475260d29ff4983db251332d62951e73e5c35",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-03T06:48:52+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-03T12:13:21+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.3 to get the close speedups merged since v1.2.2"
+}
