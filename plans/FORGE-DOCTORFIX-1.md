@@ -196,6 +196,10 @@ teams on Claude Code, Codex or both.
      the differing files that item 5 doesn't hold back, and commits exactly those paths with the
      fix's `why` as the subject. It prints `- Fixed: wrote <n> of Forge's files in fix <name>.`
      and the current fix's row.
+   - Doctor makes its fix only when the checkout has no uncommitted changes and is at
+     `origin/<default>`; otherwise a row says to commit or discard the changes first, and nothing
+     is made. Doctor's fix is whatever is on its fixed branch name (`fix/forge-files`), whether or
+     not its record was committed, so a later run always finds it and never makes a second one.
    - Doctor works out what differs before it makes the fix, so it never makes a fix with nothing
      in it. Doctor never removes its own fix's folder or branch, whatever happens (simpler, and no
      uncommitted work can be lost; owner rule for areas that keep breaking).
