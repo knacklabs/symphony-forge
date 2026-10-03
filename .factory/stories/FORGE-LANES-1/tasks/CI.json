@@ -1,10 +1,22 @@
 {
   "branch": "task/FORGE-LANES-1-CI",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "ee37364d197b36bbf24fa6c55cd19883712040f589a49e2a7f85f20fbc1914c3",
+    "commit": "0b9fce9e5b28a8722e9a7fe0d54c20afaa59f2c5",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T14:16:53+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T15:14:02+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
