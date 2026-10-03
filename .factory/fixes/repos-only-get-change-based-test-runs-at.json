@@ -5,41 +5,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "8063a7bae148c7945cfecafd7499ac11d3f37cc751e3fcc692689edb4265176b",
-    "commit": "73c98785bc97b8fdb881b6363d1f5f2752a459d8",
+    "changed": "5a9d54493f07fab948d428a8a120ecac75bb645a6c75dc6c9e962e400d0662c0",
+    "commit": "111e8cc99077292a81c635ed2f254ed4a5e622f2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The required setting is missing: `forge.toml:6\u20138` defines `test`, `checks` and `interfaces`, but no `fast_test`. Consequently, `src/forge/review.py:246\u2013247` still selects the full suite for Forge's closes. This new test also necessarily raises `KeyError` at `own[\"fast_test\"]`. Add the changed-only pytest command to Forge's own configuration.",
+        "body": "The Done-when requirement remains unmet: `forge.toml:6\u20138` defines `test`, `checks` and `interfaces`, but no `fast_test`. Consequently, `src/forge/review.py:246\u2013247` still selects the full suite for Forge's closes. The supplied close run confirms that this configuration check raises `KeyError` at `own[\"fast_test\"]`. Add the required changed-only pytest command to Forge's own configuration.",
         "file": "tests/test_fix_init_sets_a_changed_only_fast_test.py",
-        "line": 102,
+        "line": 106,
         "priority": "P1",
         "title": "Not done: Forge's own forge.toml sets fast_test for its pytest suite"
       },
       {
-        "body": "Adopting a repo with `--test 'python -m pytest tests'` generates `python -m python -c \"\u2026\"`. Python then attempts to execute a module named `python` instead of running the selector, so close fails before testing anything. [Pytest documents](https://docs.pytest.org/en/stable/how-to/usage.html#calling-pytest-through-python-m-pytest) this invocation as supported. Recognition is consistent with the coordinator's ruling; the defect is the malformed replacement after recognition. Handle the interpreter's `-m pytest` invocation when constructing the command.",
+        "body": "The generated command discards everything after the matched `pytest` token, including enclosing shell syntax. For example, adopting with `--test '(cd backend && pytest tests)'` produces a command beginning `(cd backend && python -c \"\u2026\"` without its closing parenthesis. Close executes this through a shell (`src/forge/review.py:283`), so it fails before testing anything. Preserve the surrounding command syntax when replacing the pytest invocation.",
         "file": "src/forge/init.py",
-        "line": 132,
-        "priority": "P1",
-        "title": "Preserve valid Python module invocations when generating fast_test"
+        "line": 133,
+        "priority": "P2",
+        "title": "Preserve enclosing shell syntax when replacing pytest"
       },
       {
-        "body": "Lowercase `--diff-filter=d` excludes deletions from the changed-module list. If `shop/orders.py` is deleted while an unchanged test still imports it, that test is never selected; a deletion-only change can report success without running any tests despite the broken import. Keep deleted source modules in the dependency selection and exclude nonexistent files only from the runnable test candidates.",
+        "body": "With rename detection enabled, `git diff --name-only` reports the post-image filename, as documented by [Git](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---name-only). Renaming `shop/orders.py` to `shop/purchases.py` therefore adds only `purchases` to the module names. An unchanged test importing `shop.orders` is omitted, and a rename-only change can exit successfully without exposing its broken import. Disable rename detection for this list or include both names.",
         "file": "src/forge/init.py",
         "line": 71,
         "priority": "P2",
-        "title": "Include deleted modules when selecting their importing tests"
-      },
-      {
-        "body": "A change to a source file with no related tests makes this command fail with Vitest's default configuration. In [Vitest 3's source](https://github.com/vitest-dev/vitest/blob/v3.0.0/packages/vitest/src/node/core.ts#L511-L528), run mode sets exit status 1 when selection is empty unless `passWithNoTests` is enabled. `src/forge/close.py:88\u201392` treats that as failed tests and stops the close. Add `--passWithNoTests` so an empty changed-only selection succeeds, as the pytest command already does.",
-        "file": "src/forge/init.py",
-        "line": 141,
-        "priority": "P2",
-        "title": "Allow an empty changed-test selection in the Vitest command"
+        "title": "Include the old module name when selecting tests for renames"
       }
     ],
     "status": "blocked",
-    "tree": "cdd272de0d26aed3b5fb21b36abe72ec55eba7df0e3ba373a0ce6f7b761953a8"
+    "tree": "acd5c8ac24379d5147ec42182e53c68a51101051496736ab6b2085dc49c1b8b5"
   },
   "status": "fixing",
   "steps": [
@@ -49,6 +42,10 @@
     },
     {
       "at": "2026-10-03T06:01:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T06:33:53+00:00",
       "step": "review"
     }
   ],
