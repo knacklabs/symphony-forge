@@ -2,27 +2,27 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "864ee159b3fff40d6dfc36e320b07ae816bfb988a081f0d8dd296ead7425e509",
-    "commit": "9fea93cecad62d4a88e52624f762f27b4d8db846",
+    "changed": "3aa73c30ce324e1c274e2f8cfff4336d804270b97cab9ea53ab1b61c1038acb8",
+    "commit": "9d00283232f6fcf28446a5e3060597d86a9c1c90",
     "dismissals": [],
     "findings": [
       {
-        "body": "Item 4 explicitly requires the tests-command mismatch row to disappear after an in-place repair, but this test drifts only the two host hook files. The existing workflow case in tests/test_setup.py:219 exercises doctor without --fix, and the stale-fix cases do not repair the workflow in place. Consequently, collecting the tests-check row before repairing the workflow would pass the suite. Add a real-command case with a stale workflow eligible for repair, then assert its updated test command, absence of both workflow diagnostic rows, and unchanged HEAD.",
-        "file": "tests/test_doctor_fix_files.py",
-        "line": 201,
+        "body": "The check at lines 508\u2013513 still selects a single `ui` host. With `workers = \"claude\"` and `codex` on PATH, missing Codex UI skills produce no rows, contrary to item 5. New evidence is the verified raw-parent patch for merge ee157bfc: it removed the installed-host loop. The existing real-command case in tests/test_doctor_fix_files.py:622\u2013630 explicitly expects those Codex rows. Preserve worker routing while checking the configured hosts plus every host whose program is on PATH.",
+        "file": "src/forge/doctor.py",
+        "line": 493,
         "priority": "P1",
-        "title": "Not done: in-place workflow repair clears the tests-check row"
+        "title": "Not done: the UI skills check covers both hosts"
       },
       {
-        "body": "After doctor creates a current fix, an uncommitted broken Forge block in that fix's AGENTS.md leaves all the current-fix conditions satisfied. This sync.files call then raises repo.Refused: src/forge/sync.py:134-135 rejects the malformed block. Unlike the initial comparison, this call has no row-producing exception handler. The CLI prints only the refusal (src/forge/cli.py:120-122), dropping the current-fix row and any other problems doctor already collected. Catch the comparison refusal here, preserve the current-fix row, and report the broken block with its existing plain-step Fix without changing that worktree.",
-        "file": "src/forge/doctor.py",
-        "line": 236,
-        "priority": "P2",
-        "title": "Handle comparison failures inside an existing doctor fix as rows"
+        "body": "The supplied functional check exercises file repairs and hand-edit protection but omits the required UI skills check for both hosts. Earlier commit messages describe exercising that path, but those checks precede merge ee157bfc, whose verified raw-parent patch removes the installed-host loop. Exercise the final implementation through `forge doctor` with Claude workers, Codex on PATH, and missing Codex UI skills, then record the observed rows. This required path currently exposes the defect above.",
+        "file": "tests/test_doctor_fix_files.py",
+        "line": 622,
+        "priority": "P1",
+        "title": "Not done: functional check"
       }
     ],
     "status": "blocked",
-    "tree": "84c6e4310d963d830bae5a3a5931b41fa65d682b16e20edb3774e4bf02be36a9"
+    "tree": "f86bc77e38a109f3345f80c19027b46091a5a32060e0eb7d7536e7eaafd6ebff"
   },
   "status": "fixing",
   "steps": [
@@ -60,6 +60,10 @@
     },
     {
       "at": "2026-10-02T22:48:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T03:22:24+00:00",
       "step": "review"
     }
   ]
