@@ -1,6 +1,8 @@
 """Process cleanup for interrupted Codex work and a crashed cold read."""
 from __future__ import annotations
 
+import json
+
 import os
 import signal
 
@@ -38,6 +40,12 @@ def test_2_crashed_cold_read_releases_its_processes(repo, monkeypatch, sdk_data)
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / "codex-app-server"))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    home = repo.path.parent / "codex-home"
+    home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(home))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    (home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.delenv("CODEX_THREAD_ID")
     shop = new_story(repo, "SHOP")
