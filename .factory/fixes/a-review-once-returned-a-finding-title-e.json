@@ -3,7 +3,7 @@
   "branch": "fix/a-review-once-returned-a-finding-title-e",
   "done_when": "forge close removes null characters from every text a review returns (titles, bodies, the overall line) before saving it, so a later review or worker round never receives them. One command-level test: a stub reviewer returns a title with null characters, the saved finding has none, and the next close runs.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-03T10:23:31+00:00",
