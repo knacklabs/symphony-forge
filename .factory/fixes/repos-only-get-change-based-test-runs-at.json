@@ -3,11 +3,53 @@
   "branch": "fix/repos-only-get-change-based-test-runs-at",
   "done_when": "When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command for the repo's test tool when it recognises one (vitest: vitest related or --changed {base}; jest: --changedSince {base}; pytest: the test files that changed since {base} plus those that import a changed module), and leaves it unset otherwise; the skill tells the agent to propose one when a repo has none. Forge's own forge.toml sets fast_test the same way for its pytest suite. Command-level tests cover init in a vitest repo, a jest repo, a pytest repo and an unknown one.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "8063a7bae148c7945cfecafd7499ac11d3f37cc751e3fcc692689edb4265176b",
+    "commit": "73c98785bc97b8fdb881b6363d1f5f2752a459d8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required setting is missing: `forge.toml:6\u20138` defines `test`, `checks` and `interfaces`, but no `fast_test`. Consequently, `src/forge/review.py:246\u2013247` still selects the full suite for Forge's closes. This new test also necessarily raises `KeyError` at `own[\"fast_test\"]`. Add the changed-only pytest command to Forge's own configuration.",
+        "file": "tests/test_fix_init_sets_a_changed_only_fast_test.py",
+        "line": 102,
+        "priority": "P1",
+        "title": "Not done: Forge's own forge.toml sets fast_test for its pytest suite"
+      },
+      {
+        "body": "Adopting a repo with `--test 'python -m pytest tests'` generates `python -m python -c \"\u2026\"`. Python then attempts to execute a module named `python` instead of running the selector, so close fails before testing anything. [Pytest documents](https://docs.pytest.org/en/stable/how-to/usage.html#calling-pytest-through-python-m-pytest) this invocation as supported. Recognition is consistent with the coordinator's ruling; the defect is the malformed replacement after recognition. Handle the interpreter's `-m pytest` invocation when constructing the command.",
+        "file": "src/forge/init.py",
+        "line": 132,
+        "priority": "P1",
+        "title": "Preserve valid Python module invocations when generating fast_test"
+      },
+      {
+        "body": "Lowercase `--diff-filter=d` excludes deletions from the changed-module list. If `shop/orders.py` is deleted while an unchanged test still imports it, that test is never selected; a deletion-only change can report success without running any tests despite the broken import. Keep deleted source modules in the dependency selection and exclude nonexistent files only from the runnable test candidates.",
+        "file": "src/forge/init.py",
+        "line": 71,
+        "priority": "P2",
+        "title": "Include deleted modules when selecting their importing tests"
+      },
+      {
+        "body": "A change to a source file with no related tests makes this command fail with Vitest's default configuration. In [Vitest 3's source](https://github.com/vitest-dev/vitest/blob/v3.0.0/packages/vitest/src/node/core.ts#L511-L528), run mode sets exit status 1 when selection is empty unless `passWithNoTests` is enabled. `src/forge/close.py:88\u201392` treats that as failed tests and stops the close. Add `--passWithNoTests` so an empty changed-only selection succeeds, as the pytest command already does.",
+        "file": "src/forge/init.py",
+        "line": 141,
+        "priority": "P2",
+        "title": "Allow an empty changed-test selection in the Vitest command"
+      }
+    ],
+    "status": "blocked",
+    "tree": "cdd272de0d26aed3b5fb21b36abe72ec55eba7df0e3ba373a0ce6f7b761953a8"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-03T04:48:14+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T06:01:16+00:00",
+      "step": "review"
     }
   ],
   "why": "Repos only get change-based test runs at close if someone sets fast_test by hand, so most closes still run the full suite that CI runs again"
