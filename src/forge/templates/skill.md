@@ -452,6 +452,9 @@ Mark generated files such as migration snapshots `linguist-generated` in `.gitat
 reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
+Test fixtures are plain text files, never archives or other binary files. Build an old repo for
+an upgrade test in the test from a text fixture folder. Close refuses added binary files under
+`tests/` before the review, naming the file to replace.
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
