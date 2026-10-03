@@ -24,7 +24,13 @@
     "blocking_level": "P1",
     "changed": "045cd5f435ce339dba718840b8394f4e67cc20a8253d39b61df902d19bbb805a",
     "commit": "ed9ba91fc7882257555b807dce1e72179f8a0620",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "because": "tests/test_setup_proposes_a_fast_test.py:20 coverage-only: the test proves the setup step ships in the synced skills; the owner's rule is one test per rule, and the step's wording is reviewed text, not code",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
     "findings": [
       {
         "body": "The setup test checks the proposal's opening sentence and the statement that Forge writes no fast_test, but never checks the built-in changed-only option, `{base}`, human agreement, or setting forge.toml through a fix. Removing those instructions from src/forge/templates/skill.md:269\u2013271 while retaining the final sentence leaves every assertion passing, despite breaking the core Done-when requirement. Extend this test to verify those required parts of the setup step in the generated skills.",
@@ -34,10 +40,10 @@
         "title": "Not done: A test checks the complete fast_test setup step"
       }
     ],
-    "status": "blocked",
+    "status": "clean",
     "tree": "6054d741aa6b712c3eadcb38addd66d3aea1f9b72bb2308141f83bf8c8fefdce"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T04:48:14+00:00",
