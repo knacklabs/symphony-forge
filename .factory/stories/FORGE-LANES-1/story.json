@@ -1,6 +1,15 @@
 {
+  "approval": {
+    "at": "2026-10-03T14:13:55+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01EzDRxDNZzejjnprABCqgUY",
+    "hash": "976ca68bd4d70ed3d1ccc491ebed7f132bcee8705e9de0b32d4854c0712906a5",
+    "round": 5,
+    "runtime": "claude",
+    "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
+  },
   "doc": "plans/FORGE-LANES-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-03T12:59:17+00:00",
@@ -25,8 +34,12 @@
     {
       "at": "2026-10-03T13:58:59+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-03T14:13:55+00:00",
+      "step": "approved"
     }
   ],
   "title": "Forge splits the machine between agents and tests",
-  "touches": 0
+  "touches": 1
 }
