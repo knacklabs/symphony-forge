@@ -451,6 +451,9 @@ When the pull request's `tests` check runs the full suite, recommend a fast clos
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
 instead of `test`; the `tests` check keeps running the full `test`.
+Forge's own repo uses `scripts/fast-test.py`: changed test files and tests mentioning changed
+Python module names, with at most half the machine's cores. Changes to `conftest.py`,
+`pyproject.toml` or `uv.lock` run the full test command instead.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run

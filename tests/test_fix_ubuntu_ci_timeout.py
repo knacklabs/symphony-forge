@@ -10,4 +10,5 @@ def test_1_ubuntu_test_job_allows_ten_minutes():
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
     assert "    timeout-minutes: ${{ matrix.timeout }}\n" in tests_job
-    assert re.findall(r"\{os: ubuntu-latest, [^}]*timeout: (\d+)\}", tests_job) == ["10"]
+    assert re.findall(r"\{os: ubuntu-latest, group: (\d), groups: (\d), timeout: (\d+)\}", tests_job) == [
+        ("1", "2", "10"), ("2", "2", "10")]
