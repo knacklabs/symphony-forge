@@ -1,0 +1,44 @@
+{
+  "allow_large": "Over the limit only by forge sync output (agent roles and skill), which the owner ruled does not count; the counting fix is merged but not yet released",
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/workers-codex",
+  "done_when": "Forge's forge.toml sets workers = \"codex\" and gives build, fix and lite a codex entry (gpt-6.1-sol at medium, lite with gpt-6-luna max subagents) while keeping their claude entries for Claude sessions' roles; forge doctor reports nothing new.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6d04b85f606f8c40741a07666066cad6da6cf6ee410d1bb2572b4d8c4f0f4735",
+    "commit": "1f30eea6e0ef3a4f0a04a36fea28c604b9eea995",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "051ebf8246c2efe89ce2a49c4ceebe23ca6dd56da9fe7cbec96b5b3d2b8bf2ef"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T06:41:13+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T09:55:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T22:11:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T01:10:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T05:04:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T09:00:57+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants Codex to implement Forge's own tasks and fixes instead of Claude"
+}
