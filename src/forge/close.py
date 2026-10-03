@@ -12,6 +12,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -73,6 +74,14 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
+                           f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
+        added, _, rest = record.partition("\t")
+        _, _, path = rest.partition("\t")
+        if added == "-" and path:
+            print(f"Test fixture {path} is binary; replace it with plain text files.",
+                  file=sys.stderr)
+            return 1
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
