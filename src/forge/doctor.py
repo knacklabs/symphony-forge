@@ -17,7 +17,6 @@ import os
 import re
 import shutil
 import subprocess
-import tempfile
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -216,62 +215,26 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
     the branch."""
     ref, default = story.landed_ref(top), repo.default_branch(top)
-    # Doctor keeps at most one fix of its own: a branch of it stops a new one.
-    trees = story.worktrees(top)
-    for branch in repo.git("for-each-ref", "--format=%(refname:short)", "refs/heads/fix/",
-                           cwd=top).splitlines():
-        name = branch.removeprefix("fix/")
-        if not repo.ITEM.fullmatch(name):
-            continue
-        state = story.json_of(story.show(top, branch, repo.state_path(name)))
-        if state.get("why") != WHY or story.show(top, ref, repo.state_path(name)) is not None:
-            continue
-        # Doctor never looks inside it: one step, whether it is current, stale or locked.
-        return [_unfinished(name, branch, trees.get(branch))]
-    # A clean checkout at the default branch's latest commit would make the same fix: none.
-    heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
+    name, branch = "forge-files", "fix/forge-files"
+    # The fixed branch name counts even when its first record commit failed.
+    if repo.run("git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}", cwd=top
+                ).returncode == 0:
+        return [_unfinished(name, branch, story.worktrees(top).get(branch))]
     free, held, _ = _split(top, top, cfg, wanted, ref)
-    if len(set(heads)) == 1 and not free:
+    # A clean checkout at the fetched default commit supplies exactly the fix's inputs.
+    heads = repo.git("rev-parse", "HEAD", ref, cwd=top).splitlines()
+    if (len(set(heads)) != 1
+            or repo.git("status", "--porcelain", "--untracked-files=all", cwd=top)):
+        return [(f"Doctor needs a clean checkout at origin/{default} before it makes a fix for "
+                 "Forge's files.", f"commit or discard your changes first, bring this checkout "
+                 f"to origin/{default}, then {REPAIR}"), *_rows(free), *held]
+    if not free:
         return held
-    # The fix inherits the default branch's pin; only that Forge may write its files.
-    newer = repo._pin(story.show(top, ref, "forge.toml") or "")  # pyright: ignore[reportPrivateUsage]
-    if newer != __version__:
-        return [(f"{default} now pins Forge v{newer}, not the installed v{__version__}, so "
-                        "doctor started no fix for Forge's files.",
-                        f"git pull --ff-only, then {REPAIR}"), *_rows(free), *held]
-    # When this checkout is behind, inspect the fetched default branch before starting a fix.
-    # This detached preview has no fix branch or record, and runs no checkout hook.
-    if len(set(heads)) != 1:
-        try:
-            with tempfile.TemporaryDirectory() as temporary:
-                preview = Path(temporary) / "default"
-                repo.git("-c", f"core.hooksPath={os.devnull}", "worktree", "add", "-q", "--detach",
-                         str(preview), ref, cwd=top)
-                try:
-                    if linked := _linked(preview, wanted):
-                        return linked
-                    fixed = repo.config(preview)
-                    free, held, _ = _split(top, preview, fixed, sync.files(preview, fixed), ref)
-                finally:
-                    repo.git("worktree", "remove", "--force", str(preview), cwd=top)
-        except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
-            return [(f"doctor couldn't check Forge's files on {default}: {_said(failed)}", REPAIR),
-                    *held]
-        if not free:
-            return held
-    # forge fix start's naming rule, with doctor's slug.
-    taken = {ref_name.split("/fix/", 1)[1] for ref_name in repo.git(
-        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
-        cwd=top).splitlines()}
-    name, n = "forge-files", 1
-    while name in taken or story.show(top, ref, repo.state_path(name)) is not None:
-        n += 1
-        name = f"forge-files-{n}"
     who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=top).split("<")[0].strip()
     state = {"kind": "fix", "why": WHY, "done_when": DONE, "base": repo.git("rev-parse", ref, cwd=top),
              "allow_large": "Doctor brings every file forge sync writes up to date in one change; "
                             f"{who} allowed it by running forge doctor --fix."}
-    branch, path = f"fix/{name}", task._folder(f"fix-{name}")  # pyright: ignore[reportPrivateUsage]
+    path = task._folder(f"fix-{name}")  # pyright: ignore[reportPrivateUsage]
     try:
         task._new_checkout(name, branch, f"fix-{name}", ref, state, f"Start the fix: {WHY}")  # pyright: ignore[reportPrivateUsage]
         fixed = repo.config(path)

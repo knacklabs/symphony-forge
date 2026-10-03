@@ -251,17 +251,20 @@ def _a_failed_pin_install_writes_nothing(repo, gh, tmp_path, monkeypatch, _):
     assert _fixes(repo, client) == [] and (client / SETTINGS).read_text(encoding="utf-8") == OLD
 
 
-def _a_fix_already_named_forge_files_gets_a_suffix(repo, gh, tmp_path, monkeypatch, _):
+def _a_fix_already_named_forge_files_is_left_alone(repo, gh, tmp_path, monkeypatch, _):
+    # The fixed branch name now identifies doctor's fix, regardless of its record or why.
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
     started = repo.forge("fix", "start", "Something else", "--done", "x", "--slug", "forge-files",
                          cwd=client)
     assert started.returncode == 0, started.stderr
+    folder = _folder_of(repo, client, "fix/forge-files")
+    before = _status(repo, folder)
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files-2.\n" in done.stdout, done.stdout
+    assert _left_over("forge-files", folder) in done.stdout, done.stdout
+    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files"]
+    assert _status(repo, folder) == before
     assert _in(repo, client, "fix/forge-files") == [STATE.format("forge-files")]  # left alone
-    assert _in(repo, client, "fix/forge-files-2") == sorted([HOOKS, SETTINGS,
-                                                             STATE.format("forge-files-2")])
 
 
 def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude):
@@ -326,14 +329,38 @@ def _nothing_differing_leaves_no_fix_behind(repo, gh, tmp_path, monkeypatch, _):
     assert "Forge's files" not in done.stdout and "- Fixed: wrote" not in done.stdout, done.stdout
     assert _fixes(repo, client) == [] and repo.git("worktree", "list", cwd=client) == folders
 
-    # Behind the default branch, whose files are already sync's: no fix starts, even when
-    # a commit would be refused. Previously doctor started an empty fix and removed it.
-    _land(repo, client, "A note", lambda folder: _set(folder, "NOTES.txt", "a note\n"))
-    repo.git("reset", "-q", "--hard", "HEAD~1", cwd=client)
-    _refusing_hook(client, "record")
+
+def _clean_checkout_step() -> str:
+    return _row("Doctor needs a clean checkout at origin/main before it makes a fix for Forge's files.",
+                "commit or discard your changes first, bring this checkout to origin/main, "
+                "then forge doctor --fix")
+
+
+def _doctor_starts_its_fix_only_from_a_clean_checkout_at_origin(repo, gh, tmp_path, monkeypatch,
+                                                               change):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    # Previously an uncommitted test command could cause a permanently empty doctor fix.
+    if change in ("unstaged config", "staged config"):
+        toml = client / "forge.toml"
+        original = toml.read_text(encoding="utf-8")
+        _set(client, "forge.toml", re.sub(r'^test = .*$', 'test = "make check"', original, flags=re.M))
+        if change == "staged config":
+            repo.git("add", "forge.toml", cwd=client)
+            toml.write_text(original, encoding="utf-8")  # an index change still blocks creation
+    elif change == "untracked file":
+        _set(client, "notes.txt", "Our work.\n")
+    else:
+        _land(repo, client, "A note", lambda folder: _set(folder, "NOTES.txt", "a note\n"))
+        repo.git("reset", "-q", "--hard", "HEAD~1", cwd=client)
+    before = _status(repo, client)
+    folders = repo.git("worktree", "list", cwd=client)
+
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "Forge's files" not in done.stdout and "- Fixed: wrote" not in done.stdout, done.stdout
-    assert _fixes(repo, client) == [] and repo.git("worktree", "list", cwd=client) == folders
+
+    assert _clean_checkout_step() in done.stdout and done.returncode == 1, done.stdout
+    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == []
+    assert repo.git("worktree", "list", cwd=client) == folders
+    assert _status(repo, client) == before
 
 
 def _a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row(repo, gh, tmp_path,
@@ -378,6 +405,15 @@ def _a_commit_a_git_hook_refuses_leaves_the_fix(repo, gh, tmp_path, monkeypatch,
     assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
     assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).splitlines() == [head, head]
     assert "Doctor's fix forge-files holds" not in done.stdout and done.returncode == 1
+    # Even the failed record commit must be recognized on the next run, without a second fix.
+    before = _status(repo, folder)
+    folders = repo.git("worktree", "list", cwd=client)
+    again = repo.forge("doctor", "--fix", cwd=client)
+    assert _left_over("forge-files", folder) in again.stdout, again.stdout
+    assert "- Fixed: wrote" not in again.stdout and _fixes(repo, client) == ["fix/forge-files"]
+    assert _status(repo, folder) == before
+    assert repo.git("worktree", "list", cwd=client) == folders
+    assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
 
 
 def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
@@ -473,9 +509,7 @@ def _the_default_branch_moved_to_another_pin(repo, gh, tmp_path, monkeypatch, _)
     repo.git("reset", "-q", "--hard", head, cwd=client)  # this checkout still pins the installed one
     version = "v" + _version(repo).removeprefix("v")
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert _row(f"main now pins Forge v99.0.0, not the installed {version}, so doctor started no "
-                "fix for Forge's files.", "git pull --ff-only, then forge doctor --fix") in done.stdout, (
-        done.stdout)
+    assert _clean_checkout_step() in done.stdout, done.stdout
     assert _drift(SETTINGS, version) in done.stdout and _fixes(repo, client) == []
 
 
@@ -567,21 +601,22 @@ def _uncommitted_changes_are_held_back(repo, gh, tmp_path, monkeypatch, _):
     repo.git("reset", "-q", "--", SKILL, cwd=folder)
 
     # Staged by hand, with the working copy back to sync's: still held, and the index kept.
-    _old_hosts(repo, client)  # so the fix has something else to hold
+    _old_hosts(repo, client)  # other files need repair, but a staged edit blocks the new fix
     _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, SKILL, "Older skill\n"),
           forge=True)
     (client / SKILL).write_text("Our skill\n", encoding="utf-8")
     repo.git("add", SKILL, cwd=client)
     (client / SKILL).write_text(wanted[SKILL], encoding="utf-8")
     index = repo.git("diff", "--cached", cwd=client)
+    branches = _fixes(repo, client)  # the earlier in-place test already made a user's fix
     done = repo.forge("doctor", "--fix", cwd=client)
     assert row in done.stdout, done.stdout
     assert repo.git("diff", "--cached", cwd=client) == index
-    assert SKILL not in _in(repo, client, "fix/forge-files")
-    # A second run gives only the fix's one step, and the index stays as it was.
+    assert _clean_checkout_step() in done.stdout and _fixes(repo, client) == branches
+    # The next run also refuses creation, leaves the hand-edit row and keeps the index.
     again = repo.forge("doctor", "--fix", cwd=client)
-    assert _left_over("forge-files", _folder_of(repo, client, "fix/forge-files")) in again.stdout, (
-        again.stdout)
+    assert _clean_checkout_step() in again.stdout and row in again.stdout, again.stdout
+    assert _fixes(repo, client) == branches
     assert repo.git("diff", "--cached", cwd=client) == index
 
 
@@ -715,11 +750,13 @@ def _cases(*cases) -> list:
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
     (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
-    (_a_fix_already_named_forge_files_gets_a_suffix, [None], ()),
+    (_a_fix_already_named_forge_files_is_left_alone, [None], ()),
     (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
     (_a_stale_doctor_fix_gets_one_step_and_nothing_new_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
+    (_doctor_starts_its_fix_only_from_a_clean_checkout_at_origin,
+     ["unstaged config", "staged config", "untracked file", "behind origin"], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
     (_a_commit_a_git_hook_refuses_leaves_the_fix, ["record", "files"], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),
