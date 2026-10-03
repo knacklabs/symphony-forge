@@ -2,27 +2,33 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "3aa73c30ce324e1c274e2f8cfff4336d804270b97cab9ea53ab1b61c1038acb8",
-    "commit": "9d00283232f6fcf28446a5e3060597d86a9c1c90",
+    "changed": "505dce2ed811fb0f875eb8ceb531ec4ad1e1c9ff9cd58ca01af2dc0a2ab48b01",
+    "commit": "b9fd61cca44559727ceecc4a6063f48a737b56f5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The check at lines 508\u2013513 still selects a single `ui` host. With `workers = \"claude\"` and `codex` on PATH, missing Codex UI skills produce no rows, contrary to item 5. New evidence is the verified raw-parent patch for merge ee157bfc: it removed the installed-host loop. The existing real-command case in tests/test_doctor_fix_files.py:622\u2013630 explicitly expects those Codex rows. Preserve worker routing while checking the configured hosts plus every host whose program is on PATH.",
+        "body": "The restored loop fixes the previous Claude-workers/Codex-on-PATH case, but still skips Codex with `workers = \"split\"` when `codex` is absent from PATH: `ui` becomes `claude`, so neither condition includes Codex. This is a distinct configured-host case. Doctor itself notes at lines 347 and 360 that split uses Codex and that Codex workers use the SDK-bundled program rather than one on PATH. Item 5 requires checking every configured host as well as installed hosts. Include both configured hosts for split and add a real-command regression case with Codex absent from PATH.",
         "file": "src/forge/doctor.py",
-        "line": 493,
+        "line": 510,
         "priority": "P1",
         "title": "Not done: the UI skills check covers both hosts"
       },
       {
-        "body": "The supplied functional check exercises file repairs and hand-edit protection but omits the required UI skills check for both hosts. Earlier commit messages describe exercising that path, but those checks precede merge ee157bfc, whose verified raw-parent patch removes the installed-host loop. Exercise the final implementation through `forge doctor` with Claude workers, Codex on PATH, and missing Codex UI skills, then record the observed rows. This required path currently exposes the defect above.",
+        "body": "Every new repair case uses `_client`, which calls `_fresh_client`. That helper creates an empty repository and runs the current `forge init` (tests/test_setup.py:178\u2013188). `_old_hosts` subsequently simulates drift by editing files and temporarily moving the pin; it never exercises a repository adopted on the previous release. The repository review rule explicitly requires that upgrade case alongside fresh-init coverage. Add a real-command test of these repairs and hand-edit protection in an existing app adopted on the previous release.",
         "file": "tests/test_doctor_fix_files.py",
-        "line": 622,
+        "line": 79,
         "priority": "P1",
-        "title": "Not done: functional check"
+        "title": "Not done: repairs in an existing repo adopted on the previous release"
+      },
+      {
+        "body": "The suggested removal command interpolates the worktree path without shell quoting. When the checkout lives under a directory containing spaces, Git receives multiple path arguments and refuses the command, leaving the existing doctor fix blocking further repairs. Quote the path when formatting this instruction so the cleanup step works for those checkouts.",
+        "file": "src/forge/doctor.py",
+        "line": 229,
+        "priority": "P2",
+        "title": "Quote the worktree path in the removal step"
       }
     ],
-    "status": "blocked",
-    "tree": "f86bc77e38a109f3345f80c19027b46091a5a32060e0eb7d7536e7eaafd6ebff"
+    "status": "blocked"
   },
   "status": "fixing",
   "steps": [
@@ -64,6 +70,10 @@
     },
     {
       "at": "2026-10-03T03:22:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T17:03:06+00:00",
       "step": "review"
     }
   ]
