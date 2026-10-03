@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:31:27+00:00
-read_hash: 1785a3e62d9b1dafca8e215d9ffdb23445fd712f
-round: 2
+read_at: 2026-10-03T13:40:34+00:00
+read_hash: a8488fc6d7535a70d01d45460fe3cd7ea2fa4c3c
+round: 3
 passed: no
-doc_seen: 1785a3e62d9b1dafca8e215d9ffdb23445fd712f
+doc_seen: a8488fc6d7535a70d01d45460fe3cd7ea2fa4c3c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9a99bb8bde42c7a6cfdb2891f46c9ae220e34948
+notes_seen: 90e68f8f2ea9974ce0c0e2d8cc7eaf1739f4578b
 ---
 # Cold read notes
 
@@ -117,3 +117,25 @@ Only a genuine trade-off goes to the human, as a question with options.
 23. The test-audit skill still instructs workers to bypass the lane.
     Its Validation step says to run `forge.toml`’s `test` command directly, and the worker brief requires using that skill. Assign its source, `.codex/skills/test-audit/SKILL.md`, to TESTS and align the shipped instruction with `forge test`.
     Disposition: cut TESTS owns both test-audit skill copies and points their run step at forge test
+
+## Round 3
+
+24. The lifetime contract still contradicts itself.
+    Detail 1 releases the lane when the recorded PID ends and explicitly excludes descendants; detail 2 still holds it until the entire process group ends. Pick one rule and align the implementation, public promise and tests.
+    Disposition: cut one rule: the place is held while the recorded process is alive; for tests that is the test command itself; process-group wording removed
+
+25. Unproven: item 5: stop preserves process-identity protection.
+    The new entry contract records a PID but does not pin protection against PID reuse or unreadable identity. Preserve the existing `codex.identity`/`codex._alive` safeguards, specify the refusal when identity cannot be verified, and prove an unrelated process cannot be terminated.
+    Disposition: cut entries record process identity through codex.identity and codex._alive; unverifiable identity refuses; a reused pid is tested
+
+26. `forge stop` is still ambiguous when one item occupies both lanes.
+    A worker remains an agent while its `forge test` runs, so the same repo and item can have two entries. Pin whether stop cancels both or selects a lane, and prove that the separate test process cannot remain running after its place is freed.
+    Disposition: cut every entry has an id; stop --id ends one entry, stop <item> ends all of the item's entries in both lanes; tested
+
+27. Unproven: item 5: stopping running and waiting test entries.
+    AGENTS’ named scenarios cover agent entries; TESTS’ stop proof is absent and its Covers cell excludes item 5. Assign the real test-command cancellation cases to TESTS, including confirmation that a stopped waiter never starts later.
+    Disposition: cut TESTS covers item 5 with running and waiting test stops
+
+28. Unproven: item 1: FIFO admission between surviving waiters.
+    Stopping the first of two waiters leaves only one eligible run, so the revised scenario still cannot distinguish FIFO from LIFO admission. Extend the same command-level test to release a slot while two waiters remain, then exercise cancellation.
+    Disposition: cut the scenario now has three waiters, releases a place before stopping one, and checks the order

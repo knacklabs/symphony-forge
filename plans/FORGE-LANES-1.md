@@ -61,15 +61,18 @@ tightening it needs no new approval. -->
    or 2) // 2)` (process_cpu_count exists only from Python 3.13; Forge supports 3.11); the agent lane, the test lane and doctor all call it. Same queue for
    forge work, forge read and close reviews, all repos. Test (one, command-level): the test shim
    that starts Forge reports 6 cores; a work round in repo A, a plan read in repo B and a close
-   review in repo A take the 3 places, a fourth and fifth run wait and say they are 1st and 2nd,
-   the 1st is stopped with `forge stop` and the 2nd then says 1st, and when a running one ends the
-   remaining waiter starts. Shared entry contract, pinned by AGENTS and used by TESTS, the machine
+   review in repo A take the 3 places, a fourth, fifth and sixth run wait and say they are 1st, 2nd
+   and 3rd; when a running one ends the 1st starts (not a later one); then the 2nd is stopped with
+   `forge stop` and the 3rd says 1st and starts when the next place frees. Shared entry contract, pinned by AGENTS and used by TESTS, the machine
    view and `forge stop`: `machine.join(kind, repo, item, model, effort) -> entry`,
    `machine.started(entry, pid)`, `machine.leave(entry)`, `machine.entries() -> list`; each entry
-   holds kind, repo root, repo name, item, model, effort, joined and started times, the run's pid,
-   output path and progress (both null until TESTS sets them). A run counts as live while its
-   recorded pid is alive; a test command's own child processes are not tracked (ceiling: a
-   grandchild left running after its parent ends no longer holds the lane). One AGENTS test crosses
+   holds a unique `id`, kind, repo root, repo name, item, model, effort, joined and started times,
+   the run's process identity (pid plus start time, through the existing `codex.identity` and
+   `codex._alive`, so a reused pid never counts), output path and progress (both null until TESTS
+   sets them). One rule for both lanes: a place is held while the recorded process is alive; for a
+   test run that process is the test command itself, so it holds the lane even if Forge is killed;
+   the command's own children are not tracked (ceiling: a grandchild left running after the
+   command ends no longer holds the lane). One AGENTS test crosses
    join, started, entries and leave.
 2. The test lane is the fair test queue close already uses (review.test_run). Workers reach it
    through a new `forge test` command: it runs forge.toml's fast_test (or test when none is set)
@@ -79,8 +82,8 @@ tightening it needs no new approval. -->
    Windows behave as close does today. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS` and
    `FORGE_TEST_CPUS` to `machine.half_cores()` in every test run's environment; that is the whole
    promise: `pytest -n auto` honours the first, other commands may read the second. The test
-   command starts in its own process group and its lane entry records that group, so the lane stays
-   taken until the group has ended even if Forge itself is killed. The worker's commit nudge
+   entry records the test command's own process (detail 1's rule), so the lane stays taken until
+   that command ends even if Forge itself is killed. The worker's commit nudge
    (worker.py COMMIT_NUDGE) tells workers to run `forge test`, not the raw test command. Test (one,
    command-level): a worker's `forge test` in repo A runs while a close in repo B waits for the
    lane, both see the two variables set to half the shim's cores, a failing run reports its exit
@@ -108,20 +111,25 @@ tightening it needs no new approval. -->
    waiting), output file path, and for a running test the runner's progress as `done`/`total`
    when the runner prints it (pytest's `[ NN%]` and xdist counts), else null. Machine load and
    memory come from the OS. AGENTS delivers the view with agent entries and its schema; TESTS adds
-   the test entry's progress and output fields. `forge stop [--repo <root>] <item>` ends that item's
-   lane entry and frees its place: a running entry's process is terminated, a waiting entry leaves
-   the line; the repo defaults to the current one, so equal item names in two repos are told apart;
-   an item with no entry says there is nothing to stop and exits 0. Only a person runs it (the mod
+   the test entry's progress and output fields. `forge stop --id <entry id>` ends exactly that lane
+   entry (the mod uses this); `forge stop [--repo <root>] <item>` ends every entry of that item in
+   that repo, in both lanes (a worker and its own `forge test`). A running entry's process is
+   terminated only after its identity checks out; when it can't be verified, stop refuses with one
+   line and terminates nothing. A waiting entry leaves the line and never starts later. No entry
+   found says there is nothing to stop and exits 0. Only a person runs it (the mod
    asks first; the brief tells workers never to). Tests (one
    each, command-level): AGENTS: one agent running and one waiting from another repo show all agent
-   fields; `forge stop` frees the place. TESTS: a running test shows its progress and output path.
+   fields; `forge stop` frees the place; a process whose pid was reused is not terminated. TESTS: a running
+   test shows its progress and output path; stopping a running test ends the test command and frees
+   the lane; a stopped waiting test never starts; `forge stop <item>` ends both a worker and its
+   test run.
 
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | AGENTS | Agent lane by cores | `machine.half_cores()`, the agent queue sized by it, doctor's split line, the guide's lanes section, `forge lanes --json` with agent entries, `forge stop <item>` | 1, 4, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/cli.py, src/forge/templates/skill.md, docs/guide.md, tests/conftest.py | tests/test_lanes_agents.py, tests/test_lanes_view.py | | no |
-| TESTS | One test lane for workers and close | `forge test`, the core-limit variables in every test run, the process-group lane hold, test progress and output path in the lane entry, the brief's line and commit nudge, the test-audit skill's run step, the upgrade test | 2, 3 | src/forge/review.py, src/forge/worker.py, .claude/skills/test-audit/SKILL.md, .codex/skills/test-audit/SKILL.md, src/forge/templates/brief.md, src/forge/templates/skill.md | tests/test_lanes_tests.py, tests/test_lanes_upgrade.py | AGENTS | no |
+| TESTS | One test lane for workers and close | `forge test`, the core-limit variables in every test run, the process-group lane hold, test progress and output path in the lane entry, the brief's line and commit nudge, the test-audit skill's run step, the upgrade test | 2, 3, 5 | src/forge/review.py, src/forge/worker.py, .claude/skills/test-audit/SKILL.md, .codex/skills/test-audit/SKILL.md, src/forge/templates/brief.md, src/forge/templates/skill.md | tests/test_lanes_tests.py, tests/test_lanes_upgrade.py | AGENTS | no |
 | CI | Slow tests in CI only | Container tests gated on `FORGE_CONTAINERS=1`, set by the CI workflow | 3 | tests/test_proto_deploy.py, .github/workflows/forge-next.yml, .github/workflows/codex-smoke.yml | tests/test_lanes_ci.py | | no |
 
 New moving parts: none
