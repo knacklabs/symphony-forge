@@ -22,12 +22,6 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-For a story, report a missing `## New and existing repos` section or a section that covers only
-one side. It must say what a fresh init or adoption gets and what an existing client repo on an
-older Forge version gets on upgrade, including how its existing work keeps working. Name a
-proving test for each side; a side that does not apply must say why. Forge's own repo alone is
-not proof of either client path.
-
 Check:
 
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,

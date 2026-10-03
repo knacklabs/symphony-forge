@@ -326,10 +326,7 @@ checks only the edit and the sections it touches.
   get the entries of the items their task covers. An item with nothing to add has no entry.
 - Done-when or Notes names supported inputs and exclusions. A dismissal that narrows those
   inputs needs an amendment to the story doc before the review can close.
-- Put `## New and existing repos` after Done when and above Risks: say what fresh init or adoption
-  gets and what an existing client repo on an older Forge version gets on upgrade, naming a proving
-  test for each side. If a side does not apply, say why. Forge's own repo alone proves neither.
-- Put Risks after New and existing repos, then the `## For the builders` heading, so the owner's
+- Put Risks right after Done when, then the `## For the builders` heading, so the owner's
   sections come first and everything for the agents sits below.
 - Tasks: each row names the Done-when items it Covers, its Scope (the paths it may change) and
   its Tests. A task that covers nothing is cut; work wanted later goes to the spec's Out of scope.
@@ -439,9 +436,6 @@ Before building a fix, check its brief for the five-code-file limit, interface g
 recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
 count, so an upgrade fix needs no allowance. If the work exceeds that boundary, promote it to a story or get the
 allowance recorded before editing.
-
-A fix states both sides in one line: what fresh init or adoption gets, and what an existing client
-repo on an older Forge version gets on upgrade, with a proving test for each or why it does not apply.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
