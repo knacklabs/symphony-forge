@@ -180,8 +180,9 @@ def _newest(top: Path) -> str:
 
 
 def _numbers(version: str) -> tuple[int, ...]:
-    found = re.match(r"v?(\d+)\.(\d+)\.(\d+)", version)
-    return tuple(map(int, found.groups())) if found else ()
+    """A version's three numbers, then 1 for a release or 0 for a prerelease, which comes before it."""
+    found = re.match(r"v?(\d+)\.(\d+)\.(\d+)(.*)", version)
+    return (*map(int, found.groups()[:3]), 0 if found[4] else 1) if found else ()
 
 
 def _on_path() -> tuple[str, str]:

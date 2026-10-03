@@ -204,6 +204,16 @@ def _pinned_older_than_the_installed_forge(up):
     assert [call["args"] for call in up.uv()][0] == install()
 
 
+def _pinned_to_its_own_prerelease(up):
+    # The release comes after its prerelease, so a repo on v9.9.9-rc.1 upgrades to v9.9.9.
+    up.on_main("forge.toml", up.toml().replace(f'"{up.version}"', '"v9.9.9-rc.1"'), "Pin the rc")
+
+    done = up.run(RELEASE)
+
+    assert_ready(up, done, ours(up))
+    assert 'version = "v9.9.9"' in up.show("forge.toml")
+
+
 def _newest_then_a_newer_one(up):
     up.env.gh.respond("release", "view", stdout=json.dumps({"tagName": RELEASE}))
 
@@ -455,7 +465,7 @@ def _refused(up, case):
         assert draft.read_bytes() == b"keep me\r\n"  # fails too if the file were gone
 
 
-SCENARIOS = [_named, _pinned_older_than_the_installed_forge, _newest_then_a_newer_one,
+SCENARIOS = [_named, _pinned_older_than_the_installed_forge, _pinned_to_its_own_prerelease, _newest_then_a_newer_one,
              _failed_install_then_rerun, _staged_rename_then_rerun, _interrupted_after_the_folder,
              _failed_release_sync_then_rerun, _rerun_after_the_commit, _close_refuses,
              _sync_deletes_a_file, _hooks_inside_the_checkout, _stale_forge_shadows_the_install]
