@@ -2,16 +2,21 @@
 the guard runs on worker and reader turns; a project hook Codex doesn't trust whose definition
 isn't exactly Forge's stops the turn with one line and nothing started.
 
-The stub app-server lists the checkout's .codex/hooks.json as Codex's hooks/list does, with the
+The stub app-server lists the main checkout's .codex/hooks.json as Codex's hooks/list does, with the
 trust status STUB_CODEX_HOOK_TRUST names."""
 from __future__ import annotations
 
 import json
 import os
+import subprocess
+
+import pytest
 
 from conftest import _install
 from test_codex_worker import ROOT, _codex_repo, _sent, _stub, _toml, sdk_data  # noqa: F401
 from test_story import DOC, new_story, setup
+from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
+from test_live_adopt import ANSWERS
 
 STORY = "codex-hook-trust"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
@@ -19,9 +24,13 @@ GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
 
 
 def _sync(repo, folder):
-    """The checkout holding, committed, the hooks forge sync writes."""
+    """Sync the hook source; commit a worker checkout so its turn can start clean."""
+    if folder == repo.path:
+        repo.git("checkout", "-q", "-b", "fix/hook-source")
     synced = repo.forge("sync", cwd=folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    if folder == repo.path:
+        return  # Codex loads these declarations from disk, including uncommitted edits.
     repo.git("-C", str(folder), "add", "-A")
     repo.git("-C", str(folder), "commit", "-q", "-m", "Sync Forge's files")
 
@@ -74,7 +83,7 @@ def _stopped(calls, before):
 def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_turns(
         repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    _sync(repo, folder)
+    _sync(repo, repo.path)
     monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")  # as after the hook launcher changed
 
     built = repo.forge("work", "BOARD/PAGE")
@@ -83,6 +92,8 @@ def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_t
     assert _sent(calls, "hooks/list") == [{"cwds": [str(folder)]}]
     assert {hook["eventName"] for hook in _listed(calls)} == {
         "sessionStart", "preCompact", "preToolUse", "postToolUse"}
+    assert {hook["sourcePath"] for hook in _listed(calls)} == {
+        str(repo.path / ".codex" / "hooks.json")}
     [start] = _sent(calls, "thread/start")
     assert start["config"]["hooks"] == _trusted(calls)
     assert len(_sent(calls, "turn/start")) == 1
@@ -102,8 +113,8 @@ def test_1_forge_s_own_untrusted_hooks_are_trusted_on_fresh_and_resumed_worker_t
 def test_2_a_changed_or_foreign_untrusted_hook_stops_fresh_and_resumed_worker_turns(
         repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    _sync(repo, folder)
-    hooks_file = folder / ".codex" / "hooks.json"
+    _sync(repo, repo.path)
+    hooks_file = repo.path / ".codex" / "hooks.json"
     forge_own = hooks_file.read_text(encoding="utf-8")
     codex_config = (repo.path.parent / "codex-home" / "config.toml").read_text(encoding="utf-8")
     (first, first_named), *later = _edits(forge_own)
@@ -150,7 +161,8 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     (shop / "forge.toml").write_text(
         _toml(repo.forge("--version").stdout.split()[-1], "claude", GRILL), encoding="utf-8")
     _sync(repo, shop)
-    hooks_file = shop / ".codex" / "hooks.json"
+    _sync(repo, repo.path)
+    hooks_file = repo.path / ".codex" / "hooks.json"
     forge_own = hooks_file.read_text(encoding="utf-8")
     monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")  # as after the hook launcher changed
 
@@ -217,7 +229,7 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
 def test_4_forge_ask_refuses_a_project_codex_doesn_t_trust_before_codex_starts(
         repo, monkeypatch, sdk_data):
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
-    _sync(repo, folder)
+    _sync(repo, repo.path)
     config = repo.path.parent / "codex-home" / "config.toml"
     trusted = config.read_text(encoding="utf-8")
     config.write_text("", encoding="utf-8")  # Codex trusts no project
@@ -237,3 +249,74 @@ def test_4_forge_ask_refuses_a_project_codex_doesn_t_trust_before_codex_starts(
     assert answered.returncode == 0, answered.stdout + answered.stderr
     [start] = _sent(calls, "thread/start")
     assert start["sandbox"] == "read-only" and start["config"]["hooks"] == _trusted(calls)
+
+
+@pytest.mark.parametrize("lifecycle", ["new", "adopted-on-v1.2.2"])
+def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_foreign_hooks(
+        repo, gh, tmp_path, monkeypatch, sdk_data, lifecycle):
+    client = _new_repo(repo, gh, tmp_path)
+    if lifecycle == "new":
+        made = repo.forge("init", cwd=client)
+        assert made.returncode == 0, made.stdout + made.stderr
+        repo.git("checkout", "-q", "-b", "fix/hook-trust", cwd=client)
+    else:
+        # Run the released command, rather than labelling today's generated files as old.
+        (client / "README.md").write_text("# An existing app\n", encoding="utf-8")
+        repo.git("add", "README.md", cwd=client)
+        repo.git("commit", "-q", "-m", "Existing app", cwd=client)
+        repo.git("push", "-q", "-u", "origin", "main", cwd=client)
+        made = subprocess.run(
+            ["uv", "tool", "run", "--from",
+             "git+https://github.com/knacklabs/symphony-forge@v1.2.2", "forge", "init", *ANSWERS],
+            cwd=client, capture_output=True, text=True, encoding="utf-8", timeout=120)
+        assert made.returncode == 0, made.stdout + made.stderr
+        repo.git("merge", "-q", "--ff-only", "fix/adopt-forge", cwd=client)
+        repo.git("checkout", "-q", "-b", "fix/upgrade-forge", cwd=client)
+        config = client / "forge.toml"
+        old = config.read_text(encoding="utf-8")
+        assert 'version = "v1.2.2"' in old
+        version = repo.forge("--version").stdout.split()[-1]
+        config.write_text(old.replace('version = "v1.2.2"', f'version = "{version}"'),
+                          encoding="utf-8")
+        synced = repo.forge("sync", cwd=client)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+
+    _install(repo.bin, "codex-app-server",
+             (ROOT / "tests" / "stubs" / "codex-app-server").read_text(encoding="utf-8"))
+    program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
+    monkeypatch.setenv("CODEX_BIN", str(program))
+    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    codex_home = tmp_path / "client-codex-home"
+    codex_home.mkdir()
+    config = codex_home / "config.toml"
+    config.write_text(f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n',
+                      encoding="utf-8")
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")
+    calls = repo.bin / "codex-app-server.jsonl"
+    hooks_file = client / ".codex" / "hooks.json"
+    forge_own = hooks_file.read_text(encoding="utf-8")
+
+    asked = repo.forge("ask", "Where is the parser?", cwd=client)
+
+    assert asked.returncode == 0, asked.stdout + asked.stderr
+    assert {hook["eventName"] for hook in _listed(calls)} == {
+        "sessionStart", "preCompact", "preToolUse", "postToolUse"}
+    [start] = _sent(calls, "thread/start")
+    assert start["config"]["hooks"] == _trusted(calls)
+    assert len(_sent(calls, "turn/start")) == 1
+
+    for text, named in _edits(forge_own)[1:]:
+        hooks_file.write_text(text, encoding="utf-8")
+        before = len(_stub(calls))
+        status = repo.git("status", "--porcelain", cwd=client)
+        trust = config.read_text(encoding="utf-8")
+
+        stopped = repo.forge("ask", "Where is the parser?", cwd=client)
+
+        assert stopped.returncode != 0
+        assert stopped.stderr == _refusal(named, hooks_file, "ask", "ask")
+        assert _stopped(calls, before)
+        assert hooks_file.read_text(encoding="utf-8") == text
+        assert repo.git("status", "--porcelain", cwd=client) == status
+        assert config.read_text(encoding="utf-8") == trust
