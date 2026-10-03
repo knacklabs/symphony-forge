@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install, patient
-from test_codex_record import _crash, _down, _save, _saved
+from conftest import _install
+from test_codex_record import _crash, _down, _saved
 from test_codex_worker import (NOW, SOL, _codex_repo, _lines, _sent, _stub, _toml,  # noqa: F401
                                sdk_data)
 from test_task import DOC, story
@@ -248,7 +248,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     text = _sent(calls, "turn/start")[-2]["input"][0]["text"]  # the last one is the commit nudge
     assert "big line" not in text
     assert "big.txt" in text and "web/new.py" in text and "README.md" in text
-    patient((folder / "big.txt").unlink)
+    (folder / "big.txt").unlink()
 
     # Forge starts fresh, and says why, when it can't continue the conversation.
     record = turns.with_suffix(".json")
@@ -270,13 +270,13 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why
 
     # It isn't recorded here.
-    patient(record.unlink)
+    record.unlink()
     fresh("Forge has no record of its conversation on this machine")
     # Codex can't resume it.
     conversation = _saved(record)["conversation"]
-    threads = _saved(store)
+    threads = json.loads(store.read_text(encoding="utf-8"))
     del threads[conversation]
-    _save(store, threads)
+    store.write_text(json.dumps(threads), encoding="utf-8")
     fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
     # It was started in another checkout.
     moved = folder.with_name("moved-BOARD-PAGE")
@@ -295,9 +295,9 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     work, saved = _holding(repo, turns)
     _crash(work, saved)
     held = _lines(turns)[-1]
-    threads = _saved(store)
+    threads = json.loads(store.read_text(encoding="utf-8"))
     threads[held["conversation"]]["turns"][held["turn"]] = "interrupted"
-    _save(store, threads)
+    store.write_text(json.dumps(threads), encoding="utf-8")
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     assert "Starting a new Codex conversation" not in again.stdout
@@ -350,7 +350,7 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     repo.git("rm", "-q", ".factory/stories/BOARD/story.json")
     repo.git("commit", "-q", "-m", "Drop the story's record")
     repo.git("checkout", "-q", "main")
-    patient(kept.unlink)
+    kept.unlink()
     unapproved = repo.forge("work", "BOARD/PAGE")
     assert unapproved.stderr == "Story BOARD is not approved yet.\nNext: forge next\n"
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
@@ -444,12 +444,12 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     def report(turn: str, status: str | None) -> None:
         """Make Codex report this status for the turn, or no such turn at all."""
-        threads = _saved(store)
+        threads = json.loads(store.read_text(encoding="utf-8"))
         if status is None:
             del threads["thr-stub-1"]["turns"][turn]
         else:
             threads["thr-stub-1"]["turns"][turn] = status
-        _save(store, threads)
+        store.write_text(json.dumps(threads), encoding="utf-8")
 
     # forge work crashes mid-turn, leaving its Codex processes and no end line.
     work, saved = _holding(repo, turns)
@@ -528,7 +528,7 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     def unseen() -> list[str]:
         """The turns Codex says still run."""
-        threads = _saved(store)
+        threads = json.loads(store.read_text(encoding="utf-8"))
         return [turn for turn, status in threads[conversation]["turns"].items()
                 if status == "inProgress"]
 
@@ -554,9 +554,9 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
 
     # Once Codex reports that turn's end, it is logged with that status and the work goes on.
     [held] = unseen()
-    threads = _saved(store)
+    threads = json.loads(store.read_text(encoding="utf-8"))
     threads[conversation]["turns"][held] = "interrupted"
-    _save(store, threads)
+    store.write_text(json.dumps(threads), encoding="utf-8")
     recovered = repo.forge("work", "BOARD/PAGE")
     assert recovered.returncode == 0, recovered.stdout + recovered.stderr
     lines = _lines(turns)
@@ -571,9 +571,9 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     work, saved = _holding(repo, turns)
     _crash(work, saved)
     held = _lines(turns)[-1]
-    threads = _saved(store)
+    threads = json.loads(store.read_text(encoding="utf-8"))
     del threads[held["conversation"]]
-    _save(store, threads)
+    store.write_text(json.dumps(threads), encoding="utf-8")
     gone = repo.forge("work", "BOARD/PAGE")
     assert gone.returncode == 0, gone.stdout + gone.stderr
     lines = _lines(turns)

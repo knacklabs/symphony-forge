@@ -1,13 +1,14 @@
 """Names and first preview lines seen through Forge's work and read commands."""
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 import time
 
-from conftest import _install, patient
-from test_codex_record import _crash, _save, _saved
+from conftest import _install
+from test_codex_record import _crash, _saved
 from test_codex_resume import _resuming
 from test_codex_worker import MODELS, ROOT, _codex_repo, _lines, _sent, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
@@ -71,7 +72,7 @@ def test_4_each_prompt_begins_with_its_round_summary(repo, monkeypatch, sdk_data
         "Fix round 2 on The page.\n")
 
     record = repo.path / ".git/forge/threads/task/BOARD/PAGE.json"
-    patient(record.unlink)  # A later machine has the turn log but no conversation record.
+    record.unlink()  # A later machine has the turn log but no conversation record.
     third = repo.forge("work", "BOARD/PAGE")
     assert third.returncode == 0, third.stdout + third.stderr
     assert _sent(calls, "turn/start")[-1]["input"][0]["text"].startswith(
@@ -115,7 +116,7 @@ def _check_recovered_round(repo, calls, turns, record):
     store = repo.bin / "threads.json"
     for _ in range(600):
         try:
-            saved_turns = _saved(store)[conversation]["turns"]
+            saved_turns = json.loads(store.read_text(encoding="utf-8"))[conversation]["turns"]
         except (FileNotFoundError, KeyError, ValueError):
             saved_turns = {}
         if any(status == "inProgress" for status in saved_turns.values()):
@@ -126,11 +127,11 @@ def _check_recovered_round(repo, calls, turns, record):
         raise AssertionError("Codex never started the second turn")
     _crash(work, _saved(turns.with_suffix(".json")))
     assert len(_lines(turns)) == recorded
-    threads = _saved(store)
+    threads = json.loads(store.read_text(encoding="utf-8"))
     for turn, status in threads[conversation]["turns"].items():
         if status == "inProgress":
             threads[conversation]["turns"][turn] = "interrupted"
-    _save(store, threads)
+    store.write_text(json.dumps(threads), encoding="utf-8")
 
     next_round = repo.forge("work", "BOARD/PAGE")
     assert next_round.returncode == 0, next_round.stdout + next_round.stderr

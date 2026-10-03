@@ -60,15 +60,24 @@ T = TypeVar("T")
 
 
 def patient(action: Callable[[], T]) -> T:
-    """Run a file action under a test's temp folder, retrying a PermissionError for up to five
-    seconds: on Windows a process renaming a file over this one, or a moment late to exit, holds
-    it briefly."""
+    """Run a file action, retrying a PermissionError for up to five seconds: on Windows a process
+    renaming a file over this one, or a moment late to exit, holds it briefly."""
     for _ in range(100):
         try:
             return action()
         except PermissionError:
             time.sleep(0.05)
     return action()
+
+
+def _patiently(name: str) -> None:
+    real = getattr(Path, name)
+    setattr(Path, name, lambda self, *args, **kwargs: patient(lambda: real(self, *args, **kwargs)))
+
+
+# Every test helper reads, writes and deletes files through these, so each one waits out a lock.
+for _name in ("read_text", "read_bytes", "write_text", "write_bytes", "unlink"):
+    _patiently(_name)
 
 
 class Repo:
@@ -93,7 +102,7 @@ class Repo:
     def write(self, rel: str, text: str) -> Path:
         path = self.path / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        patient(lambda: path.write_text(text, encoding="utf-8"))
+        path.write_text(text, encoding="utf-8")
         return path
 
 
@@ -105,15 +114,14 @@ class StubGh:
 
     def respond(self, *args: str, stdout: str = "", stderr: str = "", exit: int = 0) -> None:
         """Answer any call starting with args. The newest matching response wins."""
-        rules = patient(lambda: json.loads(self.responses.read_text("utf-8"))
-                        if self.responses.exists() else [])
+        rules = json.loads(self.responses.read_text("utf-8")) if self.responses.exists() else []
         rules.append({"args": list(args), "stdout": stdout, "stderr": stderr, "exit": exit})
-        patient(lambda: self.responses.write_text(json.dumps(rules), encoding="utf-8"))
+        self.responses.write_text(json.dumps(rules), encoding="utf-8")
 
     def calls(self) -> list[list[str]]:
         if not self.log.exists():
             return []
-        return [json.loads(line) for line in patient(lambda: self.log.read_text("utf-8")).splitlines()]
+        return [json.loads(line) for line in self.log.read_text("utf-8").splitlines()]
 
 
 @pytest.fixture(autouse=True)

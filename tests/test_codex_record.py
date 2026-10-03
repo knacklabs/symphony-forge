@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install, patient
+from conftest import _install
 from test_codex_worker import PIN, _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
 
 STORY = "FORGE-WARM-1"
@@ -103,11 +103,7 @@ def _codex_repo_direct(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
 
 
 def _saved(path: Path) -> dict:
-    return patient(lambda: json.loads(path.read_text("utf-8")) if path.exists() else {})
-
-
-def _save(path: Path, record: dict) -> None:
-    patient(lambda: path.write_text(json.dumps(record), encoding="utf-8"))
+    return json.loads(path.read_text("utf-8")) if path.exists() else {}
 
 
 def _up(pid: int) -> bool:
@@ -151,7 +147,11 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
         except ValueError:
             said = []
         pids = [call["pid"] for call in said if "pid" in call]
-        saved = _saved(record)
+        try:
+            saved = _saved(record)
+        except PermissionError:
+            time.sleep(0.05)  # A replacement can briefly keep the record from this reader.
+            continue
         if len(pids) > servers and said[-1].get("method") == stuck and saved.get("app_server"):
             return work, saved, pids[-1]
         time.sleep(0.05)
