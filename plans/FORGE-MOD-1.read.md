@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:59:02+00:00
+read_at: 2026-10-03T14:05:24+00:00
 read_hash: 3999b71cae564b33d80f675032da88297f68098c
-round: 10
+round: 11
 passed: no
 doc_seen: 3999b71cae564b33d80f675032da88297f68098c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 60f6a51374f536976d6541e03e2e9a1db113ee41
+notes_seen: c8e7979413ccea4d184430ed6fd8c14e00946677
 ---
 # Cold read notes
 
@@ -298,3 +298,9 @@ No findings.
 64. Finding 60 remains open: the unavailable-lanes test still removes the required next-step line.
     Detail 2 preserves `1: <next command>` without lane data, but its test still says “no lanes view … omits line 1” ([plan:117](/plans/FORGE-MOD-1.md:117)). Replace that expectation with proof that the next-step line and applicable hotkey remain available.
     Disposition: cut the test now proves the next-step line and its hotkey stay without lane data
+
+## Round 11
+
+65. Finding 64 remains open: the claimed test correction is absent from the doc.
+    [Line 117](/plans/FORGE-MOD-1.md:117) still says “no lanes view (older Forge) omits line 1.” Replace this with a test proving the next-step line and applicable hotkey remain without lane data.
+    Disposition: cut the line now reads: without lane data line 1 is the next step and pressing 1 still runs it

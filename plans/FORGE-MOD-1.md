@@ -113,8 +113,8 @@ tightening it needs no new approval. -->
    within 60 s and refetched after, and a check that turns red on GitHub alone shows after expiry;
    with 30 open pull requests the newest 25 have checks and the rest `unknown`. Under 80 columns the band is one line: `N
    running, W+K waiting · <first item>: <stage> <time> (<total>) · 1: <next command>`. Every state has a symbol, so it reads
-   without colour. Tests (plugin): two items and a third; failed stage; narrow width; no lanes
-   view (older Forge) omits line 1.
+   without colour. Tests (plugin): two items and a third; failed stage; narrow width; without lane
+   data (older Forge) line 1 is the next step and pressing 1 still runs it.
    Next step. Data: `forge next --json` (VIEWS) gives `next.command`: the first `Next:` command that
    is one runnable forge command with no placeholder and no alternative; otherwise null, with
    `next.line` the plain state. With a command and Claude idle: `1: <command>`, hotkey `1`
