@@ -253,13 +253,14 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     Returns its exit status and the report: the exit status, every line that mentions a skip with
     the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
     pytest also lists each skip's reason (-rs). Skipped, as status 0, when it already passed here on
-    the same committed files, or when the change touches only docs, plans, Markdown or Forge's
-    records; one run per machine at a time."""
+    the same committed files, or when the change touches only forge.toml, docs, plans, Markdown
+    or Forge's records; one run per machine at a time."""
     if not command:
         return 0, "forge.toml names no test command, so close ran none."
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                        cwd=top).split("\0")
-    if all(path.startswith(DOCS) or path.endswith(".md") for path in changed if path):
+    if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
+           for path in changed if path):
         said = DOCS_ONLY.format(command=command)
         print(said, flush=True)
         return 0, said
@@ -299,8 +300,8 @@ WAITING = lambda ahead: (  # noqa: E731
     "Waiting for 1 other close's test run on this machine." if ahead == 1
     else f"Waiting for {ahead} other closes' test runs on this machine.")
 DOCS = ("docs/", "plans/", ".factory/")
-DOCS_ONLY = ("This change touches only docs, plans, Markdown or Forge's records, so close did not run "
-             "`{command}`.")
+DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
+             "did not run `{command}`.")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
 
