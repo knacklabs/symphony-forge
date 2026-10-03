@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "36f02b8684bec0331e7d59935f4f5f2c68df9995ef040e2af810984075c7e1d8",
-    "commit": "efaf18daedd03ee6594f040246f7d26ae4ab2c22",
+    "changed": "26046010f7ffefd34f99ca0641f36d01e31591087965da3f0e4a796edb1bb49d",
+    "commit": "7e632e54120322c8d2e74c93b2ed66f1e84f295f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The reader test creates an empty Codex home at lines 142\u2013143, but the stub lists project hooks regardless of project trust. [Codex's documented contract](https://learn.chatgpt.com/docs/hooks) loads project hooks only when the project layer is trusted. Forge explicitly bypasses that prerequisite for readers in `src/forge/worker.py:223\u2013224`, called by `src/forge/story.py:177`. Consequently, a real reader in this supported configuration can receive no project hooks here, leave `state` empty, and start without Forge's hooks; an untrusted foreign hook is also never inspected. The added reader-resume assertions address the previous finding, but this newly verified discovery prerequisite invalidates the stub's proof for readers with no existing project trust. Make the stub respect project-layer trust and ensure reader commands establish the required prerequisite or refuse before starting a thread, with command-level coverage.",
-        "file": "tests/test_codex_turns_trust_forge_hooks.py",
-        "line": 143,
+        "body": "The new loop treats an empty project-hook listing as permission to start. Newly inspected evidence in `src/forge/ask.py:22\u201331` shows that `forge ask` calls `codex.run` directly without the project-trust check in `worker.ready`. In an untrusted checkout, [Codex's documented discovery contract](https://learn.chatgpt.com/docs/hooks) excludes project hooks, so this command starts a reader turn without Forge's hooks and never inspects an untrusted foreign hook. The previous finding is fixed for `forge read`, but this separate entry point remains uncovered. Apply the prerequisite to every turn entry point and add command-level coverage showing that `forge ask` refuses an untrusted project before starting a thread.",
+        "file": "src/forge/codex_turn.py",
+        "line": 166,
         "priority": "P1",
-        "title": "Not done: Test reader hook trust with Codex's project-trust discovery gate"
+        "title": "Not done: Apply the project-trust prerequisite to forge ask"
       }
     ],
     "status": "blocked",
-    "tree": "45c21a6298173ab5e7cbf69d7b2f0b896120a8334ebd8c7a680d2c19792af24b"
+    "tree": "8945c5046b5116b1a7b6aa37e044c5d0e5ea0dadf0dd73a539b22ef9d241607b"
   },
   "status": "fixing",
   "steps": [
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-10-03T01:00:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T05:46:17+00:00",
       "step": "review"
     }
   ],
