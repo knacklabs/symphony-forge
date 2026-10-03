@@ -122,6 +122,8 @@ touches for the first time.
 
 Add every test your task's Tests column names, even when the change is documentation only.
 In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
+A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow sets
+it); don't set it in your runs.
 
 <!-- if user-facing -->
 ## Functional check
