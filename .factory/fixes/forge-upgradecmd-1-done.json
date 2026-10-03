@@ -1,0 +1,16 @@
+{
+  "base": "105989ca1f9db60db3ff07b747c9b50a07d8ff26",
+  "branch": "fix/forge-upgradecmd-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "forge upgrade <release> moves a repo to a new Forge release in one step: it edits the pin in a fix, syncs Forge's files with the new release and lands, and it is tested on a repo adopted on the previous release",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-03T20:10:39+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that One command upgrades Forge in a repo is finished, and what it achieved."
+}
