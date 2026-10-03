@@ -54,6 +54,8 @@ LINUX_CONTAINERS = pytest.mark.skipif(sys.platform == "win32", reason="Needs Doc
 
 
 @LINUX_CONTAINERS
+# ponytail: builds and starts containers; under a full parallel run it needs more than the 150 s default.
+@pytest.mark.timeout(600)
 def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypatch):
     if not shutil.which("docker"):
         pytest.skip("Docker daemon is required for the deployment lifecycle test")

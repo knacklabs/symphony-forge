@@ -1,4 +1,4 @@
-"""The v1.2.2 release installs as 1.2.2, this repo pins it, and the install steps fetch it."""
+"""The v1.2.3 release installs as 1.2.3, this repo pins it, and the install steps fetch it."""
 
 import tomllib
 from pathlib import Path
@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_1_forge_version_is_1_2_1_everywhere_it_is_recorded(repo):
-    assert repo.forge("--version").stdout.split()[-1] == "v1.2.2"
-    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.2"
-    assert "FORGE_VERSION=1.2.2\n" in (ROOT / "scripts/install-mac.sh").read_text(encoding="utf-8")
-    assert "$ForgeVersion = '1.2.2'" in (ROOT / "scripts/install-windows.ps1").read_text(encoding="utf-8")
-    assert "symphony-forge@v1.2.2\"" in (ROOT / "README.md").read_text(encoding="utf-8")
+    assert repo.forge("--version").stdout.split()[-1] == "v1.2.3"
+    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.3"
+    assert "FORGE_VERSION=1.2.3\n" in (ROOT / "scripts/install-mac.sh").read_text(encoding="utf-8")
+    assert "$ForgeVersion = '1.2.3'" in (ROOT / "scripts/install-windows.ps1").read_text(encoding="utf-8")
+    assert "symphony-forge@v1.2.3\"" in (ROOT / "README.md").read_text(encoding="utf-8")
