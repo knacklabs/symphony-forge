@@ -13,20 +13,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "204d9b2afab3b63351d6458240b453272a08940e835a064895968a72f754c538",
-    "commit": "0e71a74a668564d5660c0fc40082ba04a2476ec8",
+    "changed": "3a329290f1be59c73d18f5ecfb68aab17740d4d8a273c67a3125c60399372d45",
+    "commit": "c666a762fdf4e4ff785736b9a1abf211e19ac04e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously identified helpers are covered, but the five wrapped Path methods do not cover every temporary-file helper. New evidence beyond the prior finding and the Path-wrapper ruling: `install_claude` writes the temporary executable using `shutil.copy` at tests/test_worker.py:20; `_closable` does likewise at tests/test_chatview_attach.py:25, and `_copied_client` uses `shutil.copytree` at tests/test_migrate.py:62\u201367. These operations use file APIs outside the wrapped methods, so a PermissionError still fails immediately. `install_claude` is also called again after command execution at tests/test_design_route.py:136. Route these helper operations through `patient` or equivalent retries to meet the promised five-second window.",
+        "body": "New evidence beyond the previous copy/copytree finding and the Path-wrapper ruling: `_record_bundles` writes the temporary Autoreview executable through built-in `open` at tests/test_fix_review_bundles_include_generated_files_s.py:32, and the `temp` fixture does the same at tests/test_reviews_remove_their_temp_folders.py:46. The test also appends to its temporary README through `Path.open` at tests/test_codex_resume.py:193. Neither built-in `open` nor `Path.open` passes through the wrapped methods, so these operations still fail on the first PermissionError rather than retrying for five seconds. Route these existing file operations through the retry mechanism to complete the promised helper coverage.",
         "file": "tests/conftest.py",
-        "line": 79,
+        "line": 95,
         "priority": "P1",
-        "title": "Not done: Windows temporary-file helpers still bypass PermissionError retries"
+        "title": "Not done: On Windows, the test helpers that read, write or delete files under a test's temporary folder retry a PermissionError for up to\u4e94\u79d2?"
       }
     ],
     "status": "blocked",
-    "tree": "068586b14e767dd5a197994a8978c11ec331015ca560ad16b6c8c9f648eab3fd"
+    "tree": "2cd7320aa923ec0329377fef7ea4d38aa8a5b30badb176191cfe1d25d159d004"
   },
   "status": "fixing",
   "steps": [
@@ -48,6 +48,10 @@
     },
     {
       "at": "2026-10-03T05:23:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T11:28:36+00:00",
       "step": "review"
     }
   ],
