@@ -83,8 +83,9 @@ tightening it needs no new approval. -->
    merge only a human may do (null).
 3. Events. Every occurrence carries an id Forge writes (RUNS): each review result, run end and
    worker question record gets a fresh random `id` when written; a failed check uses the id
-   GitHub gives it: a check run's database id (a re-run creates a new check run with a new id) or
-   a commit status's id (each new status gets its own); ready-to-merge uses the review id plus the head commit. Nothing
+   GitHub gives it plus when it completed: a check run's database id and `completed_at` (a
+   re-run may reuse the id, but completes again later), or a commit status's id (each new status
+   gets its own); ready-to-merge uses the review id plus the head commit. Nothing
    else identifies an event. `forge board --json` lists, per item, its open occurrences and that
    item's own `next.command` (the same rule as detail 2, applied to that item's `Next:` line; null
    when it has none or it is not one runnable command), so each event line names its own item's
@@ -99,14 +100,16 @@ tightening it needs no new approval. -->
    own repo (`$.session.repo()` matched to the board's repo root). Tests (plugin): two snapshots
    give one turn per change; progress gives none; the next refresh repeats none; the same question
    asked again in a later round (new id, same text) gives a second turn; a check re-run failing
-   again (new check run id) and a new failed commit status each give a second turn; two changes while busy give one turn after; a run
+   again under a new check run id, or under the same id with a later completion (failed, running,
+   failed), and a new failed commit status each give a second turn; two changes while busy give one turn after; a run
    that started and ended between refreshes gives one turn; reload gives none; a failed submit
    gives the turn on the next refresh; two sessions sharing one store each get the turn; a
    `FORGE_WORKER=1` session and a `claude -p` session give none; another repo's change gives none.
    Command tests: (RUNS) every worker, reader and reviewer process gets `FORGE_WORKER=1`; Codex
    and Claude worker questions, run ends and review results are recorded with fresh ids; (VIEWS)
    two items in one board each carry their own `next.command`, and an item with none has null;
-   a failed check run and a failed commit status each appear with GitHub's own id, using
+   a failed check run and a failed commit status each appear with GitHub's own id (and the check
+   run's completion time), including one check run failing twice under one id, using
    recorded GitHub responses as fixtures.
 4. Approval. First step of APPROVE: prove in a real Claude Code (v2.1.287+) that a mod can start
    `ExitPlanMode` with given plan text so that Claude Code shows its own plan-approval prompt and,
