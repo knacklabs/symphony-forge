@@ -288,7 +288,8 @@ def _old_story_keeps_todays_rules(repo, claude_payload, monkeypatch, tmp_path,
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     repo.git("checkout", "-q", "main")
 
-    assert repo.forge("next").stdout.splitlines()[-1] == "Next: forge task start SHOP/SHOW"
+    assert (repo.forge("next").stdout.splitlines()[-1] ==
+            "Next: forge task start SHOP/SHOW  # Codex builds it")
     started = repo.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stderr
     assert repo.git("rev-parse", "task/SHOP-SHOW~1") == repo.git("rev-parse", "origin/main")
