@@ -41,7 +41,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
-| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
@@ -288,6 +288,19 @@ A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
+## Refresh dependencies
+
+When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
+lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
+fix's folder:
+
+1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
+   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `go get -u=patch ./... && go mod tidy`); never raise a range.
+2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
+   same tag, and rebuild the image.
+3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
@@ -367,6 +380,11 @@ question and answer. Workers change files outside Scope that the change needs an
 the handoff, so answer a Scope question only when the change isn't needed. If the answer needs a
 choice the item does not settle, get that choice made before sending the note.
 
+When a round ends with changes left uncommitted, `forge work` continues the same conversation
+once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
+what is committed, so look at them before closing.
+
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
@@ -378,6 +396,16 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+
+`forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
+model and effort it starts with, and why; `forge next` names the worker beside each ready task:
+
+- `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
+- `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
+- `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+
+When the worker changes between rounds of one item, the next `forge work` starts a fresh session
+on the new worker with the whole brief and the latest review findings.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
@@ -408,6 +436,9 @@ reviews show them only as counts of changed lines.
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
 close skips forge.toml's test command and says so; the review and every named check still run.
+Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+test command fails, close stops before the review and keeps the output for the worker: run
+`forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
