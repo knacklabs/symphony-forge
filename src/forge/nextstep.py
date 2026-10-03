@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import approval, board, close, codex, records, repo, review, story
+from forge.task import start_base
 
 COMMANDS = [
     {
@@ -360,9 +361,23 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
     if ready:
+        rows = {task["id"]: task for task in doc["tasks"]}
+        landed = story.landed_ref(top)
+        builds = {}
+        for name in ready:
+            # A task takes forge.toml from the branch forge task start branches it from.
+            settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
+            try:
+                cfg = (repo._config_text(settings) if settings  # pyright: ignore[reportPrivateUsage]
+                       else _report_config(top, refusals))
+            except repo.Refused:  # unreadable there: what forge next reads here
+                cfg = _report_config(top, refusals)
+            # The worker beside each task, as a shell comment so the line still pastes as a command.
+            builds[name] = repo.worker(cfg, "build", repo.user_facing(cfg, rows[name]))[0].title()
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
-                  *(f"Next: forge task start {key}/{task}" for task in ready)]
+                  *(f"Next: forge task start {key}/{task}  # {builds[task]} builds it"
+                    for task in ready)]
     if waiting:
         lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",

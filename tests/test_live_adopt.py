@@ -152,7 +152,8 @@ def _stops(repo, gh, case: str) -> None:
 
 
 def _keeps_gitattributes(repo) -> None:
-    """The team's .gitattributes is kept and gets Forge's roadmap rule, not listed as taken."""
+    """The team's .gitattributes is kept and gets Forge's roadmap and spotted-list rules, not listed
+    as taken."""
     _live_app(repo)
     repo.write(".gitattributes", "*.png binary\n")
     repo.git("add", "-A")
@@ -161,7 +162,8 @@ def _keeps_gitattributes(repo) -> None:
     adopted = repo.forge("init", *ANSWERS)
     assert adopted.returncode == 0, adopted.stdout + adopted.stderr
     assert repo.git("show", f"{BRANCH}:.gitattributes") == (
-        "*.png binary\nplans/roadmap.json merge=forge-roadmap")
+        "*.png binary\nplans/roadmap.json merge=forge-roadmap\n"
+        "plans/spotted.json merge=forge-roadmap")
 
 
 @pytest.mark.parametrize("case", ["adopts", "team gitattributes", "taken files", "state file",

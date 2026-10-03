@@ -406,8 +406,10 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             log = install_claude(repo)
             worked = repo.forge("work", "WISH/SAVE")
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
-            # forge init's build entry is a gpt model, which is Codex's, so Claude takes its own.
-            assert calls(log)[-1]["args"][:2] == ["-p", "--permission-mode"]
+            # forge init's build entry is a gpt model, which is Codex's, so Claude takes Forge's
+            # default (once its own settings; forge work now names the model it runs).
+            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5",
+                                                  "--effort", "medium"]
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------

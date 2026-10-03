@@ -27,7 +27,8 @@ def test_1_forge_init_writes_codex_workers(repo, gh, tmp_path):
     result = repo.forge("init", cwd=client)
 
     assert result.returncode == 0, result.stderr
-    assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["workers"] == "codex"
+    # Was "codex"; new repos now get split written explicitly, the old codex route.
+    assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["workers"] == "split"
 
 
 def test_2_forge_toml_defaults_to_codex_workers(repo, gh, tmp_path, monkeypatch):

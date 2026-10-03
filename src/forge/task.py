@@ -181,13 +181,22 @@ def start(args: argparse.Namespace) -> None:
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
-    if any("/" in dep for dep in cell_list(tasks[task].get("After", ""))):
-        base = main  # another story's merged code is only on the default branch
+    base = start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None
     path = _new_checkout(item, branch, f"{key}-{task}", base, {}, f"Start {item}", carry)
     print(f"Started {item} on {branch} in {path}")
     print(f"Next: forge work {item}")
+
+
+def start_base(main: str, key: str, row: dict[str, str]) -> str:
+    """Where forge task start branches a task, so the task takes that branch's forge.toml: the
+    default branch once the story doc is there, or when the task comes after another story's
+    task, whose merged code is only there; else the story branch."""
+    if (any("/" in dep for dep in cell_list(row.get("After", "")))
+            or show(main, f"plans/{key}.md") is not None):
+        return main
+    return f"story/{key}"
 
 
 def _merged(main: str, item: str) -> bool:
