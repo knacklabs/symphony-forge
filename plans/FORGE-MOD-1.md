@@ -1,6 +1,6 @@
 # Forge lives inside Claude Code
 
-6 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
+7 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
 
 ## What changes for you
 
@@ -9,6 +9,11 @@
   itself, so nobody asks for status. Type `/forge` to open it; on a wide screen it opens by itself.
 - The strip above the prompt always shows Forge's next step. Pressing 1 on an empty prompt runs
   it.
+- A Machine tab in the pane shows what runs on this machine across all your repos: the agents
+  building, reading or reviewing, with model and time; the one test run with a progress bar and
+  time left; who waits next in each lane; and the machine's load and memory. The strip shows how
+  many agents and tests run, and while Claude works the spinner line says where your work is in
+  line. Pressing `o` opens a run's live output; pressing `s` stops a run after you confirm.
 - When work needs the agent (a review found problems, checks failed, a pull request is ready to
   merge, a worker asked a question, or a run finished), Forge tells the session and the agent acts
   on it straight away. Progress such as a run starting or checks running only updates the pane.
@@ -38,6 +43,16 @@ all four.
 3. **When a review finds problems, checks fail, a pull request is ready to merge, a worker asks a question or a run finishes, the session starts a turn that names each such change and its next step; progress only updates the pane.**
 4. **Pressing Approve on a waiting story opens Claude Code's own plan-approval prompt with the story's exact text from its file, and approving there records the same approval Plan Mode does; if Claude Code doesn't allow this, the button is left out and Plan Mode stays the way to approve.**
 5. **`forge sync` turns the mod on from Forge's latest release, it works in every repo whatever Forge version that repo pins, and Codex and sessions without the mod work as today.**
+6. **The Machine tab shows every agent and test run on the machine across repos, with model, time, test progress and who waits next, plus load and memory; a run's output opens with one key and a run stops only after a person confirms.**
+
+## New and existing repos
+
+- **New repos**: `forge sync` at init or adoption turns the mod on; everything shows from the
+  first session.
+- **Existing repos**: the next `forge sync` after moving to this release turns the mod on. A repo
+  still pinned to an older Forge shows one line in the pane saying to upgrade Forge there; the
+  Machine tab still shows its runs once any repo on the machine runs the new release. Nothing in
+  their `forge.toml` changes. Tested by syncing a repo adopted on the previous release.
 
 ## Risks
 
@@ -151,6 +166,18 @@ tightening it needs no new approval. -->
    repos (one on a Forge without views) each show the right pane line; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
    with npm to run `claude plugin test` and `validate`.
 
+6. Machine tab. Data: `forge lanes --json` (FORGE-LANES-1). Rows per lane in queue order: repo
+   name, item in plain words, kind, model and effort, elapsed; the test row draws a bar from
+   `done`/`total` and time left from that repo's last full run time in Forge's timings, or no
+   estimate without one. Load line: a `Raster` sparkline of the last 30 load samples (Text on
+   Desktop), amber when load is above the core count. Strip: `Agents N/M · Tests: <state>`.
+   Spinner suffix while Claude works: the session's item place in its lane. `o` opens the run's
+   output file in a pane (last 200 lines, refreshing); `s` asks `$.ui.ask` to confirm, then runs
+   `forge stop <item>` (FORGE-LANES-1 adds it if missing; stopping only from a person's press).
+   Toasts when a run in either lane starts, passes, fails, or the machine passes 1.5x its cores.
+   Tests (plugin): rows, bar and estimate from a fixture; amber load; `s` without confirm stops
+   nothing; `o` shows the tail. Command test of `forge stop` stopping a fixture run.
+
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
@@ -161,6 +188,8 @@ tightening it needs no new approval. -->
 | EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/skill.md, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | PANE | yes |
 | APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md, src/forge/templates/skill.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
 | SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml, src/forge/templates/skill.md, tests/fixtures/marketplace/** | tests/test_mod_sync.py, tests/test_mod_install.py | PANE | no |
+
+| MACHINE | Machine tab | The Machine tab, the strip's lane counts, the spinner line, output and stop keys, lane toasts | 6 | src/forge/mod/hooks/machine.ts, src/forge/mod/hooks/machine.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/machine.test.ts | PANE, FORGE-LANES-1/AGENTS, FORGE-LANES-1/TESTS | yes |
 
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
