@@ -2,23 +2,23 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "7e949e812ae3f82883001e9e257174c51ccd8259fc342990ae02542ab7759a2e",
-    "commit": "402fa301956af4dc80c8a1abecd4d857690bc7af",
+    "changed": "adb47e8203fd9f8194791fb48371b70de80753a78ff94a71639cfc5cbe707972",
+    "commit": "443da848ab313e1cd7d0ae23354008f099116172",
     "dismissals": [],
     "findings": [
       {
-        "body": "Ownership is recorded only after `_new_checkout` returns, but that helper creates the worktree at `src/forge/task.py:116` and commits its record at line 122 through `repo.commit_state` (`src/forge/repo.py:494`). If a hook rejects this first commit, `created` remains false although this invocation created the folder and branch. The handler at lines 277\u2013279 then treats them as another run's fix: it skips cleanup and replaces the rejection reason with the finish-or-remove step. This leaves an unlocked, incomplete checkout behind, contrary to item 4. This failure boundary is new evidence beyond the overlapping-run race already fixed. Record ownership immediately after successful worktree creation while retaining protection for competing runs. Extend the command-level refusal test: its hook currently rejects only the later files commit (`tests/test_doctor_fix_files.py:396`).",
+        "body": "After a hook refuses the initial record commit, the retained fix is invisible to this lookup: its record exists only in the working tree/index, so `story.show` returns no record. `task._new_checkout` creates the worktree and writes that record before committing it (`src/forge/task.py:116\u2013122`; `src/forge/repo.py:494`), while `story.show` reads committed content (`src/forge/story.py:613\u2013616`). Running doctor again therefore skips this fix and creates `forge-files-2`, violating the coordinator's rule against replacement doctor fixes. This is new evidence beyond the retention ruling: retaining the failed checkout works, but recognizing it afterward does not. Extend the record-refusal command test with a second run and recognize the retained checkout without requiring its record to be committed.",
         "file": "src/forge/doctor.py",
-        "line": 264,
+        "line": 226,
         "priority": "P1",
-        "title": "Not done: failed commits clean up the new fix and show the reason"
+        "title": "Not done: doctor keeps at most one fix of its own"
       },
       {
-        "body": "The empty-fix path ignores `_drop`'s result. If the new worktree cannot be removed\u2014for example, its successful record-commit hook locks it\u2014doctor returns only `held`, potentially reporting success while leaving its folder and branch behind. The link-refusal path at line 268 likewise ignores cleanup failure and omits the leftover folder from its message. Check both results and report the remaining folder when removal fails.",
+        "body": "This preflight compares the current working files using the working copy's configuration, even though the new fix inherits committed `origin/<default>`. In an otherwise synced checkout at that commit, edit only forge.toml's test command without committing it. The workflow now differs from `wanted`, so doctor creates a fix; inside that fix, the original configuration and workflow already match, leaving only the record commit and a permanently retained empty fix. `sync.files` explicitly generates output for the supplied checkout and configuration (`src/forge/sync.py:302\u2013316`). This is new evidence beyond the clean-checkout shortcut ruling: equal commit hashes do not establish that the working configuration matches the default branch. Perform preflight against the committed default-branch files while retaining hand-edit checks against the invoking checkout, and cover this case through the command.",
         "file": "src/forge/doctor.py",
-        "line": 285,
-        "priority": "P2",
-        "title": "Report cleanup failures when discarding a new fix"
+        "line": 233,
+        "priority": "P1",
+        "title": "Not done: no empty doctor fix is created"
       }
     ],
     "status": "blocked"
@@ -75,6 +75,10 @@
     },
     {
       "at": "2026-10-03T21:05:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T21:45:39+00:00",
       "step": "review"
     }
   ],

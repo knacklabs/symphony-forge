@@ -23,11 +23,33 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 226,
+      "text": "Not done: doctor keeps at most one fix of its own",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: failed commits clean up the new fix and show the reason\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
       "line": 264,
       "text": "Not done: failed commits clean up the new fix and show the reason",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: no empty doctor fix is created\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 233,
+      "text": "Not done: no empty doctor fix is created",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
       "status": "open",
