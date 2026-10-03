@@ -14,7 +14,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, repo, story, task
+from forge import codex, doctor, machine, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -93,7 +93,8 @@ def work(args: argparse.Namespace) -> None:
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
-    with codex.hold(top, item, kind):
+    # The round then waits for one of the machine's agent slots.
+    with codex.hold(top, item, kind), machine.agent_slot(top, "work"):
         if on_codex:
             codex.recover(top, item)
             question = codex.record(top, item).get("question")
@@ -496,6 +497,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:
+        machine.started(worker.pid)
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()
