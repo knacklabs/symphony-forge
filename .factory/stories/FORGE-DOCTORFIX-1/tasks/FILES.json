@@ -2,12 +2,12 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "de49006a908bc7a033e525d8f5e087023469f94353bc58650de17d974d9fd639",
-    "commit": "f60e48d9bf96a849c250592ed2fad93d8da8c329",
+    "changed": "3d894891e2b04e3dd6baf2da0a02f38a13cf9e17b48d9d449a6f1df59d60d7c7",
+    "commit": "4781021dcf50067503b217e5cff606b765fc069b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The revised retention rule is bypassed by the earlier finished-work cleanup. `_finished` (doctor.py:120\u2013142) includes `fix/forge-files` when GitHub reports a MERGED or CLOSED pull request at its head and the worktree is clean or contains only permitted leftovers. Lines 381\u2013387 then remove its folder and branch before this call reaches `_in_fix`'s existing-branch guard. Closing a doctor's repair pull request without merging therefore lets the next `doctor --fix` delete that fix and create another; a merged fix is also automatically deleted. This is new evidence from the general cleanup path, distinct from the failed-repair cleanup superseded by the coordinator's retention ruling. Exclude doctor's fixed branch from that cleanup and cover both CLOSED and MERGED cases through the real command.",
+        "body": "The previous retention finding remains open. `_finished` in src/forge/doctor.py:120\u2013142 still includes `fix/forge-files` when its head has a CLOSED or MERGED pull request and the worktree has no disallowed leftovers. The cleanup at lines 381\u2013387 removes its folder and branch before this call reaches `_in_fix`'s preservation guard. Closing an unmerged repair therefore lets doctor delete it and create another; merged repairs are also deleted. Exclude doctor's fixed branch from finished-work cleanup and add real-command tests for both CLOSED and MERGED cases.",
         "file": "src/forge/doctor.py",
         "line": 394,
         "priority": "P1",
@@ -80,6 +80,10 @@
     },
     {
       "at": "2026-10-03T23:14:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T23:43:28+00:00",
       "step": "review"
     }
   ],
