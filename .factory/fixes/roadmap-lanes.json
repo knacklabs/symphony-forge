@@ -3,11 +3,23 @@
   "branch": "fix/roadmap-lanes",
   "done_when": "plans/roadmap.json lists FORGE-LANES-1 as pending, after FORGE-MOD-1",
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "966b052ff5c1254f70c74dc50385ae815e546e71d0892c969a204fa4fbeef210",
+    "commit": "f68021aa7e28ee320e950d60bbaa8f99a522022a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T12:45:31+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T12:46:47+00:00",
+      "step": "review"
     }
   ],
   "why": "Using a developer machine in two lanes needs a roadmap entry for its story"
