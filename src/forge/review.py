@@ -239,6 +239,15 @@ def _review_rules(top: Path) -> str:
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
+def close_test(top: Path, base: str) -> str:
+    """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
+    else its test. The pull request's tests check always runs test."""
+    cfg = repo.config(top)
+    if not cfg["fast_test"]:
+        return cfg["test"]
+    return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
+
+
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
     Returns its exit status and the report: the exit status, every line that mentions a skip with

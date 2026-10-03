@@ -174,6 +174,13 @@ command, usually `forge work <item>` for a fix round. Open the line a finding ci
 code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <reason>"`.
 
+Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
+runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
+command close runs instead of `test`, with `{base}` replaced by the merge base with the default
+branch, so it runs only the tests related to the changed files plus fast checks (for example
+`npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
+`test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
+
 ## Merging a ready item
 
 The human merges by default: omitting `merge` from `forge.toml` is the same as
