@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:17:22+00:00
-read_hash: 027a0c1522b29a34fa780f5310b14cf76f8d27f5
-round: 1
+read_at: 2026-10-03T13:31:27+00:00
+read_hash: 1785a3e62d9b1dafca8e215d9ffdb23445fd712f
+round: 2
 passed: no
-doc_seen: 027a0c1522b29a34fa780f5310b14cf76f8d27f5
+doc_seen: 1785a3e62d9b1dafca8e215d9ffdb23445fd712f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 9a99bb8bde42c7a6cfdb2891f46c9ae220e34948
 ---
 # Cold read notes
 
@@ -78,3 +78,42 @@ Only a genuine trade-off goes to the human, as a question with options.
 14. Unproven: items 1–4: upgrading a repository adopted on the previous release.
     The upgrade test promised above the builders section has no task owner or Tests-cell entry. Assign it and prove both lanes, refreshed worker instructions and doctor behavior after upgrading, while preserving settings other than the release pin.
     Disposition: cut AGENTS owns tests/test_lanes_upgrade.py: a repo pinned to the previous release, moved to this one
+
+## Round 2
+
+15. The proposed CPU helper fails on supported Python 3.11 and 3.12.
+    `os.process_cpu_count` is unavailable there; the fallback expression raises before reaching `os.cpu_count`. Forge supports Python 3.11 and CI runs it. Guard the optional API and prove that path without the test shim masking its absence.
+    Disposition: cut getattr fallback to os.cpu_count for Python 3.11 and 3.12
+
+16. Disputed keep 10: one command-level test can still prove FIFO admission and cancellation.
+    The revised scenario has only one waiting agent, so it cannot distinguish FIFO from another admission order or prove cancellation updates positions. Extend that same scenario with multiple waiters and cancellation; no additional test is necessary.
+    Disposition: cut the one scenario now has two waiters and a forge stop that moves the 2nd to 1st
+
+17. Unproven: item 2: the test lane remains occupied after Forge is killed.
+    Recording a process group specifies the repair, but the named test still covers only normal failure and release. Include controller termination and a surviving child in `tests/test_lanes_tests.py`.
+    Pin Windows group-lifetime handling too: the existing `codex._alive` checks one PID, which cannot establish that all descendants have ended.
+    Disposition: cut the TESTS scenario kills Forge mid-run and the lane stays taken; the lane follows the test command's own pid, with descendants as a stated ceiling (no Windows job objects)
+
+18. Finding 7 remains open for the shared lane-entry contract.
+    `machine.half_cores()` is pinned, but the shared registration/update/removal API and record fields consumed by machine view, stop and `review.test_run` are not. AGENTS must pin their names, process identity/group fields and schema, with a crossing test before TESTS consumes them.
+    Disposition: cut join, started, leave, entries and the entry fields are pinned in AGENTS with one crossing test
+
+19. AGENTS’ upgrade proof depends on the later TESTS task.
+    It must demonstrate both completed lanes, while TESTS delivers `forge test`, test-run CPU settings and group lifetime handling. Move `tests/test_lanes_upgrade.py` to TESTS or a final integration task so AGENTS can finish independently.
+    Disposition: cut the upgrade test moved to TESTS
+
+20. Cut or defer: `forge stop <item>`.
+    This new user action traces to none of the approved outcomes; choosing the machine view does not establish a need for cancellation. If retained, add its outcome above the builders boundary and pin targeting across duplicate item names, waiting entries without process groups, and already-finished entries, with command-level proof.
+    Disposition: cut forge stop is now an owner-facing outcome (Done-when 5) with targeting, waiting and finished cases pinned and tested
+
+21. Unproven: item 2: `forge test` resolves `{base}` and handles missing inputs.
+    Reusing close’s shell invocation does not specify which default-branch reference the standalone command uses, what happens when that reference is unavailable, or the result when neither test command exists. Finding 12’s command-contract gaps remain; name these cases in TESTS.
+    Disposition: cut {base} is the merge base with origin/<default>, a missing ref refuses with one line, no test command exits 0; in the TESTS scenario
+
+22. Unproven: item 3: the failing run contains a worker’s uncommitted change.
+    “Never skips” fixes the specified behavior, but the named scenario does not exercise the original failure: committed history containing only documentation while code changes remain uncommitted. Include that state in the existing TESTS scenario.
+    Disposition: cut the TESTS scenario has a doc-only commit with a failing uncommitted code change
+
+23. The test-audit skill still instructs workers to bypass the lane.
+    Its Validation step says to run `forge.toml`’s `test` command directly, and the worker brief requires using that skill. Assign its source, `.codex/skills/test-audit/SKILL.md`, to TESTS and align the shipped instruction with `forge test`.
+    Disposition: cut TESTS owns both test-audit skill copies and points their run step at forge test
