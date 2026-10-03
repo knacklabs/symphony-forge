@@ -310,7 +310,9 @@ The owner approves only the top of the story doc. Show it from its title down to
 Codex, show the same part, then ask the approval question `forge next` gives. A doc with no
 `## For the builders` heading is shown whole. The approval binds "What changes for you" and
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
-changing a result or "What changes for you" does.
+changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
+below `## For the builders` needs no new round either; an edit above it does, and that round
+checks only the edit and the sections it touches.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
