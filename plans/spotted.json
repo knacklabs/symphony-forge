@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/codex.py\tRespect explicit worktree distrust before inheriting repository trust",
+      "kind": "edge",
+      "path": "src/forge/codex.py",
+      "line": 251,
+      "text": "Respect explicit worktree distrust before inheriting repository trust",
+      "from": "review",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
