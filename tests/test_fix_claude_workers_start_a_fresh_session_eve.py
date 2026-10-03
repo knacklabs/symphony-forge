@@ -57,8 +57,14 @@ def test_1_a_claude_fix_round_continues_its_session_with_the_short_prompt(repo, 
 
 def test_2_a_design_claude_worker_continues_its_session_with_the_short_prompt(
         repo, monkeypatch, sdk_data):
-    # A client repo's user-facing task runs on design Claude even with Codex workers.
+    # A client repo's user-facing task runs on design Claude with split workers (once "even with
+    # Codex workers"; workers = codex now builds it on Codex).
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "codex"', 'workers = "split"'),
+                      encoding="utf-8")
+    # Committed: a round that ends with changes uncommitted gets a second, commit-nudge turn.
+    repo.git("commit", "-qam", "Use split workers", cwd=folder)
     log = install_claude(repo)
 
     first = repo.forge("work", "BOARD/PAGE")
