@@ -353,6 +353,8 @@ def _exec_driver_is_stopped(repo) -> None:
         proc.wait()
 
 
+# ponytail: four kill-and-wait scenarios; under a full parallel run they need more than the 150 s default.
+@pytest.mark.timeout(600)
 def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
