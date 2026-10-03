@@ -1,6 +1,28 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 22,
+      "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
+      "from": "blocking",
+      "item": "ubuntu-two",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix enables spotted-list merging in repos adopted on the previous release\tforge-sync-points-git-s-merge-rule-for-t",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 209,
+      "text": "Not done: doctor --fix enables spotted-list merging in repos adopted on the previous release",
+      "from": "blocking",
+      "item": "forge-sync-points-git-s-merge-rule-for-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
       "kind": "bug",
       "path": "tests/test_new_and_existing_repo_planning.py",
@@ -8,6 +30,17 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tPreserve the source-repo hook exclusion during driver repair",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 209,
+      "text": "Preserve the source-repo hook exclusion during driver repair",
+      "from": "review",
+      "item": "forge-sync-points-git-s-merge-rule-for-t",
       "status": "open",
       "closed_by": null
     },
@@ -30,17 +63,6 @@
       "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
       "from": "worker",
       "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 22,
-      "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
-      "from": "blocking",
-      "item": "ubuntu-two",
       "status": "open",
       "closed_by": null
     }

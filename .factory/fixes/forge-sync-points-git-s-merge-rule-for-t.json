@@ -3,11 +3,38 @@
   "branch": "fix/forge-sync-points-git-s-merge-rule-for-t",
   "done_when": "forge sync sets the roadmap and spotted-list merge rule to run the installed Forge (the forge command on PATH, through a forge hook subcommand), never a checkout path, so any worktree's sync leaves a rule that keeps working after that worktree is removed. New repos get it at init; existing repos get it from their next forge sync or forge doctor --fix. One command-level test: sync in a worktree, remove it, and a spotted-list merge in another worktree still merges by itself.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "5e9b541d2d572a0ccc83b1884d8e88c3b1a77e41a49376b7bc45840d8f155c44",
+    "commit": "6ce6ac25ff837ecf01657b11d54ba2a74d1b42fd",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "A repo adopted with v1.2.2 has only the roadmap merge attribute: that release's src/forge/sync.py registers ROADMAP_RULE alone. After upgrading, doctor --fix installs the new driver but leaves .gitattributes unchanged; src/forge/doctor.py:200\u2013201 only reports generated-file drift, while src/forge/sync.py:269\u2013272 supplies the missing spotted-list attribute through sync. Spotted-list merges therefore still conflict when this existing repo upgrades through doctor --fix alone, contrary to Done-when. The doctor test masks this by running current-release sync first at tests/test_merge_rule_survives_worktree_removal.py:59. Ensure doctor registers both paths and test the previous-release upgrade without that preparatory sync.",
+        "file": "src/forge/doctor.py",
+        "line": 209,
+        "priority": "P1",
+        "title": "Not done: doctor --fix enables spotted-list merging in repos adopted on the previous release"
+      },
+      {
+        "body": "When repo is forge-source and core.hooksPath is unset, checks_hooks deliberately excludes the default commit and push hooks. Driver drift now enters this repair branch anyway and calls install_shims, which unconditionally writes both hooks before updating the driver (src/forge/sync.py:409\u2013426; src/forge/githooks.py:53\u201355). Thus doctor --fix unexpectedly enables shared commit and push gates across all source worktrees while reporting only a merge-rule repair. Repair the driver without installing hooks when checks_hooks is false.",
+        "file": "src/forge/doctor.py",
+        "line": 209,
+        "priority": "P2",
+        "title": "Preserve the source-repo hook exclusion during driver repair"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-03T16:54:13+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T17:41:54+00:00",
+      "step": "review"
     }
   ],
   "why": "forge sync points git's merge rule for the roadmap and spotted list at the checkout that ran it, so after running sync in a work folder, merges use that folder's old code (or a deleted folder) and the spotted list conflicts",
