@@ -2,30 +2,16 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "505dce2ed811fb0f875eb8ceb531ec4ad1e1c9ff9cd58ca01af2dc0a2ab48b01",
-    "commit": "b9fd61cca44559727ceecc4a6063f48a737b56f5",
+    "changed": "f71b13a33ef0867db51b743c8950e68db4da9e599adf2d739c0e6107b470d6ba",
+    "commit": "622f967cbf388ae520a291ea96610d1cc84cc07f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The restored loop fixes the previous Claude-workers/Codex-on-PATH case, but still skips Codex with `workers = \"split\"` when `codex` is absent from PATH: `ui` becomes `claude`, so neither condition includes Codex. This is a distinct configured-host case. Doctor itself notes at lines 347 and 360 that split uses Codex and that Codex workers use the SDK-bundled program rather than one on PATH. Item 5 requires checking every configured host as well as installed hosts. Include both configured hosts for split and add a real-command regression case with Codex absent from PATH.",
+        "body": "Two overlapping `forge doctor --fix` runs can both select `forge-files` before either creates it. Once the first creates the worktree, the second's checkout attempt fails because the branch exists (`src/forge/task.py:116`). This handler then sees that branch in `story.worktrees(top)` and calls `_drop`, force-removing the first run's worktree and deleting its branch. Any uncommitted work there is lost. Worktree membership does not establish ownership; cleanup must distinguish a checkout this invocation created from an existing checkout that caused creation to fail.",
         "file": "src/forge/doctor.py",
-        "line": 510,
+        "line": 272,
         "priority": "P1",
-        "title": "Not done: the UI skills check covers both hosts"
-      },
-      {
-        "body": "Every new repair case uses `_client`, which calls `_fresh_client`. That helper creates an empty repository and runs the current `forge init` (tests/test_setup.py:178\u2013188). `_old_hosts` subsequently simulates drift by editing files and temporarily moving the pin; it never exercises a repository adopted on the previous release. The repository review rule explicitly requires that upgrade case alongside fresh-init coverage. Add a real-command test of these repairs and hand-edit protection in an existing app adopted on the previous release.",
-        "file": "tests/test_doctor_fix_files.py",
-        "line": 79,
-        "priority": "P1",
-        "title": "Not done: repairs in an existing repo adopted on the previous release"
-      },
-      {
-        "body": "The suggested removal command interpolates the worktree path without shell quoting. When the checkout lives under a directory containing spaces, Git receives multiple path arguments and refuses the command, leaving the existing doctor fix blocking further repairs. Quote the path when formatting this instruction so the cleanup step works for those checkouts.",
-        "file": "src/forge/doctor.py",
-        "line": 229,
-        "priority": "P2",
-        "title": "Quote the worktree path in the removal step"
+        "title": "Only remove a fix created by this doctor run"
       }
     ],
     "status": "blocked"
@@ -74,6 +60,10 @@
     },
     {
       "at": "2026-10-03T17:03:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T19:38:15+00:00",
       "step": "review"
     }
   ],
