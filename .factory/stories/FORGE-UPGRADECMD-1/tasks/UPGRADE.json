@@ -2,28 +2,21 @@
   "branch": "task/FORGE-UPGRADECMD-1-UPGRADE",
   "review": {
     "blocking_level": "P1",
-    "changed": "af7bd658728324dec1dc4c33ad41d9efd5a4655436ded44152773e370216d5cb",
-    "commit": "31baf981fd6236e81744e536f4de5792274c4c06",
+    "changed": "2014bad1751cba9e90f7a71cc7aaa30f57d5d6ea03dd9bbeaf7eff12a9635176",
+    "commit": "db1a07968c85e1826bb7a9d6f5de81340c7f1faa",
     "dismissals": [],
     "findings": [
       {
-        "body": "The repository's review rule explicitly requires coverage of an existing client adopted on the previous release. Every upgrade case uses this fixture, which directly syncs a manually configured repo: `tests/test_close.py:228\u2013236` writes its settings using the current checkout's version. The older-pin case only changes that version string; it never adopts a client using the previous release. Add an end-to-end case that adopts and lands the previous release, then runs the upgrade and verifies the resulting files and preserved client settings.",
-        "file": "tests/test_upgrade_command.py",
-        "line": 132,
-        "priority": "P1",
-        "title": "Not done: upgrade coverage for a repo adopted on the previous release"
-      },
-      {
-        "body": "After close refuses, a user can stage the fix's changes with `git add -A` before rerunning the upgrade. With `core.hooksPath = \".husky/_\"`, that also stages sync's new hook shims. `close.synced_changes` at `src/forge/close.py:262` excludes only `??` entries, so staged additions enter `changed` and the commit at line 157 records them. The command therefore commits hook shims it promises to leave out. Exclude newly added hook shims whether they are staged or untracked.",
-        "file": "src/forge/upgrade.py",
-        "line": 149,
+        "body": "The previous P2 remains open. After an install failure or close refusal, a user can run `git add -A` in the fix with `core.hooksPath = \".husky/_\"`, staging sync's new shims. This filter excludes only `??` entries, so staged additions enter `changed` at `src/forge/upgrade.py:149` and are committed at line 157. Exclude newly added hook shims whether staged or untracked, while retaining checks for modified tracked hooks.",
+        "file": "src/forge/close.py",
+        "line": 262,
         "priority": "P2",
         "title": "Exclude staged new hook shims on an upgrade rerun"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T22:39:26+00:00",
@@ -55,6 +48,10 @@
     },
     {
       "at": "2026-10-03T16:56:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T19:56:31+00:00",
       "step": "review"
     }
   ],

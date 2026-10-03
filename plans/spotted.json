@@ -12,6 +12,61 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 294,
+      "text": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos",
+      "from": "blocking",
+      "item": "forge-runs-on-several-repos-at-once-can",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 81,
+      "text": "Keep reservations until interrupted agents have actually ended",
+      "from": "blocking",
+      "item": "forge-runs-on-several-repos-at-once-can",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 533,
+      "text": "Prevent review execution before its ownership is durably recorded",
+      "from": "blocking",
+      "item": "forge-runs-on-several-repos-at-once-can",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_codex_record.py",
+      "line": 438,
+      "text": "The process-cleanup test exceeds its timeout on the default branch too.",
+      "from": "worker",
+      "item": "windows-ci-jobs-keep-failing-with-permis",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_agent_runs_wait_in_line.py\tNot done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters\tforge-runs-on-several-repos-at-once-can",
+      "kind": "bug",
+      "path": "tests/test_fix_agent_runs_wait_in_line.py",
+      "line": 76,
+      "text": "Not done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters",
+      "from": "blocking",
+      "item": "forge-runs-on-several-repos-at-once-can",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
       "kind": "bug",
       "path": "tests/test_new_and_existing_repo_planning.py",
@@ -29,6 +84,17 @@
       "line": 132,
       "text": "Not done: upgrade coverage for a repo adopted on the previous release",
       "from": "blocking",
+      "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 262,
+      "text": "Exclude staged new hook shims on an upgrade rerun",
+      "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
       "status": "open",
       "closed_by": null
@@ -65,61 +131,6 @@
       "item": "features-get-planned-and-reviewed-for-fo",
       "status": "open",
       "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_codex_record.py",
-      "line": 438,
-      "text": "The process-cleanup test exceeds its timeout on the default branch too.",
-      "from": "worker",
-      "item": "windows-ci-jobs-keep-failing-with-permis",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 294,
-      "text": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos",
-      "from": "blocking",
-      "item": "forge-runs-on-several-repos-at-once-can",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 81,
-      "text": "Keep reservations until interrupted agents have actually ended",
-      "from": "blocking",
-      "item": "forge-runs-on-several-repos-at-once-can",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 533,
-      "text": "Prevent review execution before its ownership is durably recorded",
-      "from": "blocking",
-      "item": "forge-runs-on-several-repos-at-once-can",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_fix_agent_runs_wait_in_line.py\tNot done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters\tforge-runs-on-several-repos-at-once-can",
-      "kind": "bug",
-      "path": "tests/test_fix_agent_runs_wait_in_line.py",
-      "line": 76,
-      "text": "Not done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters",
-      "from": "blocking",
-      "item": "forge-runs-on-several-repos-at-once-can",
-      "status": "done",
-      "closed_by": "dismissed"
     }
   ]
 }
