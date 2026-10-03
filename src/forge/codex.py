@@ -678,10 +678,11 @@ def in_line(folder: Path, waiting: Callable[[int], str]) -> Iterator[None]:
             # ponytail: polls the line four times a second; fine for a few dozen closes
             time.sleep(0.25)
         yield
-    finally:
-        _unlock(handle)
-        handle.close()
-        mine.unlink(missing_ok=True)
+    finally:  # under the guard, so no one drops this ticket and reuses its number meanwhile
+        with _one_at_a_time(folder / "line"):
+            _unlock(handle)
+            handle.close()
+            mine.unlink(missing_ok=True)
 
 
 def _dropped_if_dead(ticket: Path) -> bool:

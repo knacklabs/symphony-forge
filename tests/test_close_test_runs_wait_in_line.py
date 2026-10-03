@@ -3,16 +3,39 @@ its place in line when it starts waiting and each time the place changes. A clos
 while waiting leaves no place behind."""
 from __future__ import annotations
 
-import re
 import subprocess
+import sys
 import time
+from pathlib import Path
 
 from test_close import env  # noqa: F401
-from test_fix_close_reruns_the_full_test_command_even import _close, _runs, _with_test_command
+from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 
 STORY = "FIX-ABOUT-TWENTY-CLOSES-SHARE-THE-MACHINE-S"
 
-PLACE = re.compile(r"^Waiting for (\d+) other close(?:'s test run|s' test runs) on this machine\.$")
+# The repo's test command: it logs each run's start and end, and ends when the test releases this
+# checkout's run (or after 60 seconds).
+SUITE = '''import os, pathlib, time
+tmp, name = pathlib.Path({tmp!r}), os.path.basename(os.getcwd())
+with (tmp / "runs.log").open("a") as log:
+    log.write("start " + name + "\\n")
+deadline = time.monotonic() + 60
+while not (tmp / ("release-" + name)).exists() and time.monotonic() < deadline:
+    time.sleep(0.05)
+with (tmp / "runs.log").open("a") as log:
+    log.write("end\\n")
+print("1 passed")
+'''
+
+
+def _with_test_command(env) -> Path:
+    script = env.tmp / "suite.py"
+    script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
+    toml = env.repo.path / "forge.toml"
+    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+               + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"'))
+    env.repo.git("push", "-q", "origin", "main")
+    return env.tmp / "runs.log"
 
 
 def _fix(env, name: str) -> str:
@@ -22,63 +45,87 @@ def _fix(env, name: str) -> str:
     return item
 
 
-def _holding(env) -> subprocess.Popen[str]:
-    """A close inside its test run, which holds until the test touches the release file."""
-    log = _with_test_command(env)
-    (env.tmp / "gated").touch()
-    held = _close(env, _fix(env, "held"))
-    deadline = time.monotonic() + 30
-    while _runs(log) != ["start fix-held"]:
-        assert time.monotonic() < deadline and held.poll() is None, held.communicate()
+def _release(env, name: str) -> None:
+    (env.tmp / f"release-fix-{name}").touch()
+
+
+def _running(env, log: Path, *runs: str) -> None:
+    """Wait until the run log reads `runs`: the last named close is inside its test run."""
+    deadline = time.monotonic() + 60
+    while _runs(log) != list(runs):
+        assert time.monotonic() < deadline, _runs(log)
         time.sleep(0.05)
-    return held
 
 
-def _until(close: subprocess.Popen[str], line: str) -> str:
-    """What the close printed, read up to and including `line`."""
-    said = ""
-    while not said.endswith(line + "\n"):
-        got = close.stdout.readline()
-        assert got, (said, close.communicate())
-        said += got
-    return said
+class Close:
+    """A forge close running in the background, and what it has printed so far."""
+
+    def __init__(self, env, name: str):
+        self.process: subprocess.Popen[str] = _close(env, _fix(env, name))
+        self.said = ""
+
+    def until(self, line: str) -> None:
+        while not self.said.endswith(line + "\n"):
+            got = self.process.stdout.readline()
+            assert got, (self.said, self.process.communicate())
+            self.said += got
+
+    def end(self) -> None:
+        out, err = self.process.communicate(timeout=120)
+        self.said += out
+        assert self.process.returncode == 0, (self.said, err)
+
+    def places(self) -> list[str]:
+        return [line for line in self.said.splitlines() if line.startswith("Waiting for ")]
 
 
-def _places(said: str) -> list[int]:
-    return [int(m.group(1)) for line in said.splitlines() if (m := PLACE.match(line))]
+ONE = "Waiting for 1 other close's test run on this machine."
+TWO = "Waiting for 2 other closes' test runs on this machine."
+THREE = "Waiting for 3 other closes' test runs on this machine."
 
 
-def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_their_places(env):
-    held = _holding(env)
-    waiting, said = [], []
-    for n, name in enumerate(["first", "second", "third"], 1):
-        item = _fix(env, name)
-        close = _close(env, item)
-        noun = "close's test run" if n == 1 else "closes' test runs"
-        said.append(_until(close, f"Waiting for {n} other {noun} on this machine."))
-        waiting.append(close)
-    assert _runs(env.tmp / "runs.log") == ["start fix-held"]
-    (env.tmp / "release").touch()
-    outs = [close.communicate(timeout=120) for close in [held, *waiting]]
-    assert all(close.returncode == 0 for close in [held, *waiting]), outs
-    assert _runs(env.tmp / "runs.log") == ["start fix-held", "end", "start fix-first", "end",
-                                           "start fix-second", "end", "start fix-third", "end"]
-    assert _places(outs[0][0]) == []
-    for n, (before, (after, _)) in enumerate(zip(said, outs[1:]), 1):
-        places = _places(before + after)
-        assert places[0] == n and places == sorted(set(places), reverse=True), places
+def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env):
+    log = _with_test_command(env)
+    held = Close(env, "held")
+    _running(env, log, "start fix-held")
+    first = Close(env, "first")
+    first.until(ONE)
+    second = Close(env, "second")
+    second.until(TWO)
+    third = Close(env, "third")
+    third.until(THREE)
+    _release(env, "held")
+    second.until(ONE)
+    third.until(TWO)
+    _running(env, log, "start fix-held", "end", "start fix-first")
+    _release(env, "first")
+    third.until(ONE)
+    _running(env, log, "start fix-held", "end", "start fix-first", "end", "start fix-second")
+    _release(env, "second")
+    _release(env, "third")
+    for close in (held, first, second, third):
+        close.end()
+    assert _runs(log) == ["start fix-held", "end", "start fix-first", "end",
+                          "start fix-second", "end", "start fix-third", "end"]
+    assert held.places() == []
+    assert first.places() == [ONE]
+    assert second.places() == [TWO, ONE]
+    assert third.places() == [THREE, TWO, ONE]
 
 
 def test_2_a_close_that_dies_while_waiting_leaves_no_place(env):
-    held = _holding(env)
-    dies = _close(env, _fix(env, "dies"))
-    _until(dies, "Waiting for 1 other close's test run on this machine.")
-    lives = _close(env, _fix(env, "lives"))
-    _until(lives, "Waiting for 2 other closes' test runs on this machine.")
-    dies.kill()
-    dies.communicate(timeout=30)
-    _until(lives, "Waiting for 1 other close's test run on this machine.")
-    (env.tmp / "release").touch()
-    outs = [close.communicate(timeout=120) for close in (held, lives)]
-    assert held.returncode == 0 and lives.returncode == 0, outs
-    assert _runs(env.tmp / "runs.log") == ["start fix-held", "end", "start fix-lives", "end"]
+    log = _with_test_command(env)
+    held = Close(env, "held")
+    _running(env, log, "start fix-held")
+    dies = Close(env, "dies")
+    dies.until(ONE)
+    lives = Close(env, "lives")
+    lives.until(TWO)
+    dies.process.kill()
+    dies.process.communicate(timeout=30)
+    lives.until(ONE)
+    _release(env, "held")
+    _release(env, "lives")
+    held.end()
+    lives.end()
+    assert _runs(log) == ["start fix-held", "end", "start fix-lives", "end"]
