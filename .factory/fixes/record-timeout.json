@@ -1,0 +1,14 @@
+{
+  "base": "5548becdb49390d0f463e7b24fc0dfdc4190ca33",
+  "branch": "fix/record-timeout",
+  "done_when": "That test gets a 600-second limit, like the container deploy test, so it passes under a full parallel run.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-03T20:44:44+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "test_codex_record's 'nothing left running' test runs four scenarios with up to a minute of waiting each, so on a busy machine it passes the 150-second per-test limit and is killed, blocking closes"
+}
