@@ -3,11 +3,32 @@
   "branch": "fix/a-change-that-only-edits-forge-toml-stil",
   "done_when": "forge close skips the test run, as it does for docs-only changes, when the change touches only forge.toml, docs, plans, Markdown or Forge's records, and says so in one line naming the command it did not run. A command-level test closes a forge.toml-only change without running the test command.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "25ee78bd80aae35e35f3343979a157c98b192e8128b2ccb57674df0c6a181780",
+    "commit": "3645c85f6fe6d9bbd6a17feb25e7d7aac4348025",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This test also changes `docs/settings.md`, so it exercises a mixed settings-and-docs change rather than the forge.toml-only case explicitly required by Done-when. No other reviewed test proves that case. Remove the docs change, or parameterize the test to include a settings-only case, retaining the successful-close, absent execution log, and single-line command announcement assertions. The automatic Forge record created by `tests/test_close.py:184` is permitted bookkeeping.",
+        "file": "tests/test_close_skips_tests_for_a_settings_only_change.py",
+        "line": 15,
+        "priority": "P1",
+        "title": "Not done: a command-level test closes a forge.toml-only change without running the test command"
+      }
+    ],
+    "status": "blocked",
+    "tree": "6236cd1c67071fcdb49b7fe2528134c8b15707604927cad13978a1e8321385b3"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-02T18:58:11+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T00:05:01+00:00",
+      "step": "review"
     }
   ],
   "why": "A change that only edits forge.toml still waits for and runs the whole test suite at close, though it changes no code; CI runs the suite anyway"
