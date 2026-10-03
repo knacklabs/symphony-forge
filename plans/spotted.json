@@ -23,6 +23,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: failed commits clean up the new fix and show the reason\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 264,
+      "text": "Not done: failed commits clean up the new fix and show the reason",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -111,39 +122,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/doctor.py\tQuote the worktree path in the removal step",
-      "kind": "edge",
-      "path": "src/forge/doctor.py",
-      "line": 229,
-      "text": "Quote the worktree path in the removal step",
-      "from": "review",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
-      "kind": "edge",
-      "path": "tests/test_codex_record.py",
-      "line": 346,
-      "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
-      "from": "worker",
-      "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
-      "kind": "edge",
-      "path": "tests/test_proto_deploy.py",
-      "line": 128,
-      "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
-      "from": "worker",
-      "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
       "kind": "bug",
       "path": "tests/test_upgrade_command.py",
@@ -166,6 +144,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/doctor.py\tQuote the worktree path in the removal step",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 229,
+      "text": "Quote the worktree path in the removal step",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tReport cleanup failures when discarding a new fix",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 285,
+      "text": "Report cleanup failures when discarding a new fix",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",
@@ -173,6 +173,28 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "kind": "edge",
+      "path": "tests/test_codex_record.py",
+      "line": 346,
+      "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_proto_deploy.py",
+      "line": 128,
+      "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
       "status": "open",
       "closed_by": null
     }

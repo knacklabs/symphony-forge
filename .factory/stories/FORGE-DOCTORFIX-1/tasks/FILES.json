@@ -2,16 +2,23 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "f71b13a33ef0867db51b743c8950e68db4da9e599adf2d739c0e6107b470d6ba",
-    "commit": "622f967cbf388ae520a291ea96610d1cc84cc07f",
+    "changed": "7e949e812ae3f82883001e9e257174c51ccd8259fc342990ae02542ab7759a2e",
+    "commit": "402fa301956af4dc80c8a1abecd4d857690bc7af",
     "dismissals": [],
     "findings": [
       {
-        "body": "Two overlapping `forge doctor --fix` runs can both select `forge-files` before either creates it. Once the first creates the worktree, the second's checkout attempt fails because the branch exists (`src/forge/task.py:116`). This handler then sees that branch in `story.worktrees(top)` and calls `_drop`, force-removing the first run's worktree and deleting its branch. Any uncommitted work there is lost. Worktree membership does not establish ownership; cleanup must distinguish a checkout this invocation created from an existing checkout that caused creation to fail.",
+        "body": "Ownership is recorded only after `_new_checkout` returns, but that helper creates the worktree at `src/forge/task.py:116` and commits its record at line 122 through `repo.commit_state` (`src/forge/repo.py:494`). If a hook rejects this first commit, `created` remains false although this invocation created the folder and branch. The handler at lines 277\u2013279 then treats them as another run's fix: it skips cleanup and replaces the rejection reason with the finish-or-remove step. This leaves an unlocked, incomplete checkout behind, contrary to item 4. This failure boundary is new evidence beyond the overlapping-run race already fixed. Record ownership immediately after successful worktree creation while retaining protection for competing runs. Extend the command-level refusal test: its hook currently rejects only the later files commit (`tests/test_doctor_fix_files.py:396`).",
         "file": "src/forge/doctor.py",
-        "line": 272,
+        "line": 264,
         "priority": "P1",
-        "title": "Only remove a fix created by this doctor run"
+        "title": "Not done: failed commits clean up the new fix and show the reason"
+      },
+      {
+        "body": "The empty-fix path ignores `_drop`'s result. If the new worktree cannot be removed\u2014for example, its successful record-commit hook locks it\u2014doctor returns only `held`, potentially reporting success while leaving its folder and branch behind. The link-refusal path at line 268 likewise ignores cleanup failure and omits the leftover folder from its message. Check both results and report the remaining folder when removal fails.",
+        "file": "src/forge/doctor.py",
+        "line": 285,
+        "priority": "P2",
+        "title": "Report cleanup failures when discarding a new fix"
       }
     ],
     "status": "blocked"
@@ -64,6 +71,10 @@
     },
     {
       "at": "2026-10-03T19:38:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T21:05:31+00:00",
       "step": "review"
     }
   ],
