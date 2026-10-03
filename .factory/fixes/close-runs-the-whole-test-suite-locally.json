@@ -1,0 +1,72 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-02T04:38:12+00:00",
+      "because": "The owner confirmed the design on 2026-10-02 and asked that the skill and guide recommend a fast close command when CI runs the full suite",
+      "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files (for example a vitest --changed run) plus fast checks; when fast_test is unset close runs test as today, and the pull request's CI keeps running the full test command. forge doctor and the skill explain the setting, and new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in) and unset (test runs)."
+    },
+    {
+      "at": "2026-10-02T04:38:17+00:00",
+      "because": "y",
+      "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files plus fast checks; when fast_test is unset close runs test as today, and the generated forge.yml tests job keeps running the full test command. forge doctor, the skill and the guide explain the setting and recommend a fast close command when CI runs the full suite; new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in), unset (test runs), and the generated workflow still running test."
+    },
+    {
+      "at": "2026-10-02T04:41:56+00:00",
+      "because": "The owner confirmed the design on 2026-10-02 and asked that the skill and guide recommend a fast close command when CI runs the full suite",
+      "done_when": "x"
+    }
+  ],
+  "base": "f4a541d86175f914cec700fa520a1b9c88f6bb86",
+  "branch": "fix/close-runs-the-whole-test-suite-locally",
+  "done_when": "forge.toml may set fast_test, a command close runs instead of test, with {base} replaced by the merge base with the default branch so it can run only the tests related to the changed files plus fast checks; when fast_test is unset close runs test as today, and the generated forge.yml tests job keeps running the full test command. forge doctor, the skill and the guide explain the setting and recommend a fast close command when CI runs the full suite; new repos get it unset. Command-level tests cover close with fast_test set (that command runs, with {base} filled in), unset (test runs), and the generated workflow still running test.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "e58f9da7165d501f9472eaa5ac48182bfa2abaa71829c5f548eda42605df6edf",
+    "commit": "371caaafb290c0068958a8dbaa5708575212322f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean",
+    "tree": "793c702b364f17cb51e16b4bdc7f044ad57889416d5f679479631267425580ea"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-01T17:02:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-01T21:32:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T07:08:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T10:34:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T13:50:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T16:06:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T20:46:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T23:39:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T04:35:27+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close runs the whole test suite locally (15-30 minutes under load) and then the pull request's CI runs it again, so each review round costs twice the suite time"
+}
