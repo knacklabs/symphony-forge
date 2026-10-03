@@ -1,10 +1,11 @@
 {
   "branch": "task/FORGE-LANES-1-CI",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-03T14:16:53+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "worker": "codex"
 }
