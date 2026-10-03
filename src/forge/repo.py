@@ -128,13 +128,15 @@ def record_timing(top: Path, item: str, step: str, start: str, clock: float,
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
-KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "signoff": str,
+KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "test": str, "fast_test": str,
+        "signoff": str,
         "merge": str, "checks": list, "interfaces": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
-DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "signoff": "",
+DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "test": "", "fast_test": "",
+            "signoff": "",
             "merge": "human", "checks": [], "interfaces": [], "models": {}}
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
-           "workers": ("claude", "codex"), "merge": ("agent", "human")}
+           "workers": ("claude", "codex", "split"), "merge": ("agent", "human")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -147,6 +149,9 @@ VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 KINDS = ("build", "fix", "lite", "grill", "design", "review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
+# A worker's models when forge.toml has no entry for its family, so Forge always names them.
+WORKER_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "medium"},
+                   "codex": {"model": "gpt-6.1-sol", "effort": "medium"}}
 DESIGN_DEFAULTS = {"claude": {"model": "claude-opus-5-5", "effort": "high"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 
@@ -232,6 +237,28 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
     # when another Codex model family arrives.
     return chosen if chosen["model"].startswith("gpt") == (family == "codex") else {}
+
+
+def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
+    """Whether a story's task row is design work: a client repo's User-facing row."""
+    return cfg["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
+
+
+def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
+    """A worker's models for this kind: forge.toml's entry for the family, else Forge's default."""
+    return models(cfg, kind, family) or WORKER_DEFAULTS[family]
+
+
+def worker(cfg: dict[str, Any], kind: str, design: bool) -> tuple[str, dict[str, str], str]:
+    """Who builds an item, with which models, and why: workers = codex or claude puts everything on
+    that tool, and split puts user-facing (design) work on Claude and the rest on Codex. Design
+    work uses the family's design model. forge work and forge next both ask this."""
+    family = cfg["workers"] if cfg["workers"] != "split" else "claude" if design else "codex"
+    chosen = design_models(cfg, family) if design else worker_models(cfg, kind, family)
+    why = (("it is user-facing" if design else "it isn't user-facing") + " (workers = split)"
+           if cfg["workers"] == "split" else f"workers = {family}"
+           + (", with the design model as it is user-facing" if design else ""))
+    return family, chosen, why
 
 
 def design_models(cfg: dict[str, Any], family: str) -> dict[str, str]:

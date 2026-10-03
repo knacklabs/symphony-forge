@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo
+from forge import machine, repo, spotted
 from forge.task import sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -141,6 +141,8 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if findings is None:
         findings = (state.get("review") or {}).get("findings", [])
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
+    # Close writes the spotted list after the review, so it never makes that review stale.
+    changed.discard(spotted.PATH)
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
              if (path := entry.partition("\t")[2]) in changed}
@@ -235,6 +237,15 @@ def _review_rules(top: Path) -> str:
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     block = text.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
+
+
+def close_test(top: Path, base: str) -> str:
+    """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
+    else its test. The pull request's tests check always runs test."""
+    cfg = repo.config(top)
+    if not cfg["fast_test"]:
+        return cfg["test"]
+    return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
 
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:

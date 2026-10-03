@@ -41,7 +41,8 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
-| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
@@ -309,7 +310,9 @@ The owner approves only the top of the story doc. Show it from its title down to
 Codex, show the same part, then ask the approval question `forge next` gives. A doc with no
 `## For the builders` heading is shown whole. The approval binds "What changes for you" and
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
-changing a result or "What changes for you" does.
+changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
+below `## For the builders` needs no new round either; an edit above it does, and that round
+checks only the edit and the sections it touches.
 
 - Done when: a few results the client or their user can observe, each tracing to the spec's
   behaviour or success measure. Each item is one bold plain sentence and nothing more, with no
@@ -395,6 +398,16 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
 
+`forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
+model and effort it starts with, and why; `forge next` names the worker beside each ready task:
+
+- `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
+- `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
+- `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+
+When the worker changes between rounds of one item, the next `forge work` starts a fresh session
+on the new worker with the whole brief and the latest review findings.
+
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
 `planner` and `architect` for planning and design choices; `debugger`, `security` and
@@ -428,6 +441,10 @@ still run.
 Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
+When the pull request's `tests` check runs the full suite, recommend a fast close command: set
+`fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
+fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
+instead of `test`; the `tests` check keeps running the full `test`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
