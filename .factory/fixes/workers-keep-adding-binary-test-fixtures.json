@@ -3,11 +3,23 @@
   "branch": "fix/workers-keep-adding-binary-test-fixtures",
   "done_when": "The worker brief says test fixtures are plain text files, never archives or other binary files, and that an old repo for an upgrade test is built in the test from a text fixture folder; forge close refuses a change that adds a binary file under tests/ with one plain line naming it, before the review. New and existing repos: the brief line ships to every repo through forge sync; the refusal applies to any repo on this release. One command-level test: close on a change adding tests/fixtures/x.zip refuses before review.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "52bab21e1de8cfdd2ab19ea7ce3f7c5da1a3676d015d9502a7f5ab5f0cbec6af",
+    "commit": "b9d9bd57369bd46c34eb577f7355475d04be7fc1",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T19:25:31+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T20:13:20+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers keep adding binary test fixtures (zip and tar.gz archives of an old repo), which the review cannot read, so the review fails twice and the round is wasted",
