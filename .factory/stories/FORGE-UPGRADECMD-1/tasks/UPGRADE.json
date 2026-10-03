@@ -2,22 +2,28 @@
   "branch": "task/FORGE-UPGRADECMD-1-UPGRADE",
   "review": {
     "blocking_level": "P1",
-    "changed": "880f52291d12ade84c6007ef624418c1ff791c6103217b2e877a4c5fc5f7abbf",
-    "commit": "c84acb6b4459c8d8f51756fb0e79678a90e51c29",
+    "changed": "af7bd658728324dec1dc4c33ad41d9efd5a4655436ded44152773e370216d5cb",
+    "commit": "31baf981fd6236e81744e536f4de5792274c4c06",
     "dismissals": [],
     "findings": [
       {
-        "body": "A repo pinned to `v1.3.0-rc.1` cannot run `forge upgrade v1.3.0`: this regex discards the prerelease suffix, so line 79 treats the versions as equal and refuses. Such pins remain accepted by `src/forge/repo.py:142` and validated at line 311, while [SemVer precedence](https://semver.org/#spec-item-11) makes the stable release newer. Preserve the prerelease distinction in the comparison. This previously reported issue remains unresolved.",
+        "body": "The repository's review rule explicitly requires coverage of an existing client adopted on the previous release. Every upgrade case uses this fixture, which directly syncs a manually configured repo: `tests/test_close.py:228\u2013236` writes its settings using the current checkout's version. The older-pin case only changes that version string; it never adopts a client using the previous release. Add an end-to-end case that adopts and lands the previous release, then runs the upgrade and verifies the resulting files and preserved client settings.",
+        "file": "tests/test_upgrade_command.py",
+        "line": 132,
+        "priority": "P1",
+        "title": "Not done: upgrade coverage for a repo adopted on the previous release"
+      },
+      {
+        "body": "After close refuses, a user can stage the fix's changes with `git add -A` before rerunning the upgrade. With `core.hooksPath = \".husky/_\"`, that also stages sync's new hook shims. `close.synced_changes` at `src/forge/close.py:262` excludes only `??` entries, so staged additions enter `changed` and the commit at line 157 records them. The command therefore commits hook shims it promises to leave out. Exclude newly added hook shims whether they are staged or untracked.",
         "file": "src/forge/upgrade.py",
-        "line": 183,
+        "line": 149,
         "priority": "P2",
-        "title": "Compare prerelease pins before rejecting their stable release"
+        "title": "Exclude staged new hook shims on an upgrade rerun"
       }
     ],
-    "status": "clean",
-    "tree": "ea9e6d1e328b63ab4d397cb35a6a01edefc1361ba29a6c4c0a0dc0e6deb39d20"
+    "status": "blocked"
   },
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T22:39:26+00:00",
@@ -45,6 +51,10 @@
     },
     {
       "at": "2026-10-03T04:05:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T16:56:46+00:00",
       "step": "review"
     }
   ]
