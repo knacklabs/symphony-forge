@@ -5,29 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "c454968b70c452f25518292e38dbf1be062ac7b8b40c93d22588a5ee9ba9e818",
-    "commit": "381b5f2b8036bfcbe05fa8db728596fbeca1dd54",
+    "changed": "9ccce7bc45d17ce301a5431d93c80488de580f63128e32ac811ae8e22333ac6d",
+    "commit": "8652cabeb08aa6117ee996a2ce38243bd8f0bec3",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Ticket cleanup releases the file lock before unlinking its path, outside the queue guard. A concrete interleaving is: A closes ticket 1 and is descheduled; B removes that unlocked ticket, completes its run, and removes ticket 2; C finds the queue empty and creates a new ticket 1; A resumes and unlinks C's live ticket. Another close can now run alongside C and omit C from its waiting count. Keep unlocking, closing, and unlinking inside the same guard used for ticket allocation and stale-ticket removal.",
-        "file": "src/forge/codex.py",
-        "line": 684,
-        "priority": "P1",
-        "title": "Not done: forge close's test runs on one machine go strictly in the order they started waiting (first come, first served), and a waiting ..."
-      },
-      {
-        "body": "This assertion accepts initial-only output: [2] and [3] both equal their sorted unique values. Consequently, the required three-close test passes without any position updates as preceding runs finish. The death test verifies one cancellation update, but does not establish updates during normal queue advancement. Hold each queued test run until later waiters report their next position, then assert [2, 1] and [3, 2, 1]. This tests the promised positive-place updates without requiring the dismissed zero-place message.",
-        "file": "tests/test_close_test_runs_wait_in_line.py",
-        "line": 69,
-        "priority": "P1",
-        "title": "Not done: the three-waiter command test verifies every changed waiting place"
-      }
-    ],
-    "status": "blocked",
-    "tree": "5bfb327696765c70a8143ac78860d5a4bbce3e554f7dfd0bbbab455728de7c60"
+    "findings": [],
+    "status": "clean",
+    "tree": "24f870d24d9b2c3dd76360ec491fd0fc2e01faa4f336667b93640b970b8c815c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-02T18:58:11+00:00",
@@ -35,6 +20,10 @@
     },
     {
       "at": "2026-10-03T00:20:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T08:05:09+00:00",
       "step": "review"
     }
   ],
