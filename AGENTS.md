@@ -59,6 +59,10 @@ each item:
 
 ## Review rules
 
+- A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
+  upgrade to the new release) each get, and its tests cover both, including an existing repo adopted
+  on the previous release. Report a change that covers only one side, or only Forge's own repo, as
+  P1.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
