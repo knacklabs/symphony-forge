@@ -210,6 +210,13 @@ def _drop(top: Path, path: Path, branch: str) -> bool:
             and repo.run("git", "branch", "-D", branch, cwd=top).returncode == 0)
 
 
+def _unfinished(name: str, branch: str, path: Path | None) -> tuple[str, str]:
+    remove = (f'git worktree remove --force --force "{path}" and ' if path else "")
+    return (f"Doctor's fix {name} isn't merged yet, so doctor started no new one.",
+            f"finish it with forge close {name}, or remove it with {remove}git branch "
+            f"-D {branch}, then {REPAIR}")
+
+
 def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tuple[str, str]]:
     """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
     the branch."""
@@ -225,11 +232,7 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
         if state.get("why") != WHY or story.show(top, ref, repo.state_path(name)) is not None:
             continue
         # Doctor never looks inside it: one step, whether it is current, stale or locked.
-        path = trees.get(branch)
-        remove = (f'git worktree remove --force --force "{path}" and ' if path else "")
-        return [(f"Doctor's fix {name} isn't merged yet, so doctor started no new one.",
-                 f"finish it with forge close {name}, or remove it with {remove}git branch "
-                 f"-D {branch}, then {REPAIR}")]
+        return [_unfinished(name, branch, trees.get(branch))]
     # A clean checkout at the default branch's latest commit would make the same fix: none.
     heads = repo.run("git", "rev-parse", "HEAD", ref, cwd=top).stdout.split()
     free, held, _ = _split(top, top, cfg, wanted, ref)
@@ -255,8 +258,10 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
              "allow_large": "Doctor brings every file forge sync writes up to date in one change; "
                             f"{who} allowed it by running forge doctor --fix."}
     branch, path = f"fix/{name}", task._folder(f"fix-{name}")  # pyright: ignore[reportPrivateUsage]
+    created = False
     try:
         task._new_checkout(name, branch, f"fix-{name}", ref, state, f"Start the fix: {WHY}")  # pyright: ignore[reportPrivateUsage]
+        created = True
         fixed = repo.config(path)
         fixed_wanted = sync.files(path, fixed)
         if linked := _linked(path, fixed_wanted):
@@ -269,7 +274,10 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
             repo.git("commit", "-q", "-m", WHY, "--", *free, cwd=path)
     except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
         # Only a branch this run made is removed; the next run starts over.
-        kept = branch in story.worktrees(top) and not _drop(top, path, branch)
+        if not created and repo.run("git", "show-ref", "--verify", "--quiet",
+                                    f"refs/heads/{branch}", cwd=top).returncode == 0:
+            return [_unfinished(name, branch, story.worktrees(top).get(branch)), *held]
+        kept = created and not _drop(top, path, branch)
         return [(f"Doctor couldn't bring Forge's files up to date in fix {name}: "
                         f"{_said(failed)}" + (f" Its folder {path} is still there." if kept else ""),
                         REPAIR), *held]

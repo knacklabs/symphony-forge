@@ -347,6 +347,45 @@ def _a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row(repo, gh, tmp_
     assert SKILL not in _in(repo, client, "fix/forge-files")
 
 
+def _an_overlapping_doctor_run_keeps_the_other_runs_fix(repo, gh, tmp_path, monkeypatch, _):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    head = _old_hosts(repo, client)
+    folder = client.parent / f"{client.name}-fix-forge-files"
+    real_git = shutil.which("git")
+    receipt = tmp_path / "first-doctor.json"
+    # Pause the second run at its real checkout command. Let the first run create the
+    # selected branch, then resume the second's Git command: it must fail on that branch.
+    _install(repo.bin, "git", f"""#!{sys.executable}
+import json, pathlib, subprocess, sys
+receipt = pathlib.Path({str(receipt)!r})
+args = sys.argv[1:]
+if args[:2] == ["worktree", "add"] and "fix/forge-files" in args and not receipt.exists():
+    receipt.write_text("{{}}", encoding="utf-8")
+    first = subprocess.run([{sys.executable!r}, {str(repo.bin / 'forge')!r}, "doctor", "--fix"],
+                           cwd={str(client)!r}, capture_output=True, text=True)
+    folder = pathlib.Path({str(folder)!r})
+    (folder / "notes.txt").write_text("Work still in progress.\\n", encoding="utf-8")
+    status = subprocess.run([{real_git!r}, "status", "--porcelain"], cwd=folder,
+                            capture_output=True, text=True, check=True).stdout
+    head = subprocess.run([{real_git!r}, "rev-parse", "HEAD"], cwd=folder,
+                          capture_output=True, text=True, check=True).stdout.strip()
+    receipt.write_text(json.dumps({{"stdout": first.stdout, "returncode": first.returncode,
+                                   "head": head, "status": status}}), encoding="utf-8")
+sys.exit(subprocess.run([{real_git!r}, *args]).returncode)
+""")
+    second = repo.forge("doctor", "--fix", cwd=client)
+    first = json.loads(receipt.read_text(encoding="utf-8"))
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in first["stdout"]
+    assert first["returncode"] == second.returncode == 1
+    assert folder.is_dir() and _fixes(repo, client) == ["fix/forge-files"], second.stdout
+    assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
+    assert repo.git("rev-parse", "HEAD", cwd=folder) == first["head"]
+    assert repo.git("status", "--porcelain", cwd=folder) == first["status"].strip()
+    assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).splitlines() == [head, head]
+    assert _left_over("forge-files", folder) in second.stdout, second.stdout
+    assert "- Fixed: wrote" not in second.stdout
+
+
 def _refusing_hook(client: Path, lock: bool) -> Path:
     """The team's own pre-commit check, which Forge's hook runs first: it refuses a commit that
     changes the Claude settings, and may lock the folder it runs in first."""
@@ -731,6 +770,7 @@ def _cases(*cases) -> list:
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
+    (_an_overlapping_doctor_run_keeps_the_other_runs_fix, [None], ()),
     (_a_commit_a_git_hook_refuses_leaves_no_fix, [False, True], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),
     (_a_link_stops_every_repair, ["CLAUDE.md to a file outside the repo",
