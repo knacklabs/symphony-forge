@@ -6,48 +6,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "80634543af59b195184cfa34377d7fc3181a9036e6c7f46039e6e8ba205f276f",
-    "commit": "fb620f14d78387b1f1dd67436bee8f6e17d170bb",
+    "changed": "15efeb9116195b56e6756ab79e0de70ecb1dba2552933657f9fe3000ed87ffe8",
+    "commit": "86d471b756a2102e8da2b34525bfc7201f7e9d4d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Killing Forge releases its ticket while its Claude agent continues running. The new crash test explicitly demonstrates this: lines 117\u2013125 kill the first Forge process and admit a third agent, while line 127 only later releases the first agent. There are therefore three live agents at once. The subprocess launch in src/forge/worker.py:497\u2013499 provides no cleanup when the parent is killed. Tie slot ownership to the agent's lifetime, or ensure the orphan ends before admitting its replacement, and assert the live-agent limit in the crash test.",
-        "file": "src/forge/worker.py",
-        "line": 97,
+        "body": "The queue records the Codex driver's lifetime, rather than the actual app-server's. Existing command-level evidence in tests/test_fix_leftover_app_server_bare_command.py:28\u201333 kills the driver and Forge and asserts that the app-server remains alive. In that situation, machine.py:69 drops the reservation because both recorded processes are dead, allowing replacement runs while the orphaned Codex agent still consumes memory. This is new evidence beyond the previous Claude-only crash finding. Track the app-server or process-group lifetime so the reservation survives until the agent actually ends.",
+        "file": "src/forge/codex.py",
+        "line": 294,
         "priority": "P1",
-        "title": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the "
+        "title": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos"
       },
       {
-        "body": "The timestamp is obtained before the ticket is published, without synchronization. If run A is paused between lines 66 and 67, runs B and C can publish later-named tickets and start their agents. When A resumes, it publishes the oldest ticket, sees no earlier names, and starts a third agent. This violates both the concurrency ceiling and first-come admission under simultaneous starts. Synchronize ticket registration so an older ticket cannot appear after later tickets have already been admitted.",
+        "body": "Sending SIGINT to the Forge close process unwinds _attempt, but review.py:531\u2013546 neither terminates nor waits for Autoreview on that path. This finally block nevertheless deletes its reservation unconditionally, and cli.py:123\u2013124 then exits Forge. A waiting run can therefore start while the interrupted review's agent continues running, exceeding the two-agent limit. Preserve reservations whose agents remain alive, or stop and reap the review before releasing its slot.",
         "file": "src/forge/machine.py",
-        "line": 66,
+        "line": 81,
         "priority": "P1",
-        "title": "Make ticket registration atomic before admitting agents"
+        "title": "Keep a live review's reservation when Forge is interrupted"
       },
       {
-        "body": "_live releases the exclusive lock before unlinking the ticket. A checker can acquire a newly created ticket before its creator locks it, close the handle, then be paused. The creator can now acquire the lock, pass the existence check at line 71, and enter the queue; the checker then unlinks that live ticket. On macOS, the creator's open descriptor survives unlinking, but subsequent scans cannot count it, allowing additional agents to exceed the limit. Keep stale-ticket validation and removal synchronized with registration; the current inode check does not cover deletion after that check.",
-        "file": "src/forge/machine.py",
-        "line": 112,
+        "body": "Autoreview starts at line 531 with its prompt already in argv, but its identity is recorded only afterward. If Forge dies between spawning it and completing started(), the queue still contains agent=None. Another waiting process then removes that entry at machine.py:69 and admits a replacement even though Autoreview is alive. The synchronized queue fixes ticket-publication races, but does not close this launch/registration crash window. Make the child retain its reservation, or gate execution on recorded ownership with cleanup when the parent disappears.",
+        "file": "src/forge/review.py",
+        "line": 533,
         "priority": "P1",
-        "title": "Synchronize stale-ticket removal with its owner's registration"
+        "title": "Prevent review execution before its ownership is durably recorded"
       },
       {
-        "body": "Both added tests launch only Claude forge work commands for fixes belonging to one repository. They do not prove that independent repositories share the limit, or that forge read and forge close participate in it. Removing the new slot guards from story.py and review.py would leave these tests passing. Extend the command-level coverage with independent repositories and mixed work/read/close commands, using stub agents and asserting that the third agent waits until a slot becomes available.",
+        "body": "The single added test proves mixed work/read/close commands across two repos on normal completion. It has only one waiter, never kills a run, and uses Claude for both work and read. Consequently it cannot detect non-FIFO admission, missing position updates, broken crash release, or removal of the Codex-specific read guard at story.py:228. These are promised runtime behaviors, and the standards require the same behavior tests through both adapters. Extend command-level coverage with multiple waiters and controlled process deaths, asserting admission order, changed positions, and the actual live-agent ceiling.",
         "file": "tests/test_fix_agent_runs_wait_in_line.py",
-        "line": 82,
+        "line": 76,
         "priority": "P1",
-        "title": "Not done: Command-level proof of the shared limit across repos, plan reads and close reviews"
-      },
-      {
-        "body": "The queue is documented only in the agent skill template. docs/guide.md, headed \u201cForge guide\u201d, still says at lines 91\u201393 that tasks with separate scopes run at the same time and contains no explanation of the machine-wide limit, FIFO waiting, position messages, or crash recovery. The Done-when explicitly requires the guide to say so. Add that explanation to the guide alongside the work/close workflow.",
-        "file": "src/forge/templates/skill.md",
-        "line": 350,
-        "priority": "P1",
-        "title": "Not done: Document the concurrency limit and queue in the Forge guide"
+        "title": "Not done: Command-level proof of FIFO admission, queue-position changes, crash recovery, and both adapters"
       }
     ],
     "status": "blocked",
-    "tree": "7e1fc49f203a2809088a3c5aa81a7ccf20d95a45c3a3269a82f22f9e2a74c19e"
+    "tree": "70b2f2d4aa76d90694560f62f61c7ac0db4aa34476cf0cc84f0820b9b0b8e28b"
   },
   "status": "fixing",
   "steps": [
@@ -57,6 +50,10 @@
     },
     {
       "at": "2026-10-03T06:48:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T11:14:08+00:00",
       "step": "review"
     }
   ],
