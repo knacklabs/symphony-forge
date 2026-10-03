@@ -168,7 +168,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     head = repo.git("rev-parse", "HEAD", cwd=worktree)
     refused = repo.forge("work", "SHOP/CART", cwd=worktree)
     assert refused.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                              "Forge starts no Codex worker here.\nNext: forge doctor\n")
+                              "Forge starts no Codex turn here.\nNext: forge doctor\n")
     assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
     trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)

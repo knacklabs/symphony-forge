@@ -252,6 +252,61 @@
       "item": "features-get-planned-and-reviewed-for-fo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tA hook refusal from forge ask prints forge ask ask as its retry command.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 449,
+      "text": "A hook refusal from forge ask prints forge ask ask as its retry command.",
+      "from": "worker",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
+      "kind": "bug",
+      "path": "tests/stubs/codex-app-server",
+      "line": 101,
+      "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
+      "from": "blocking",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
+      "kind": "bug",
+      "path": "tests/test_codex_turns_trust_forge_hooks.py",
+      "line": 76,
+      "text": "Not done: Hook trust in new and upgraded client repos",
+      "from": "blocking",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/codex.py\tRespect explicit worktree distrust before inheriting repository trust",
+      "kind": "edge",
+      "path": "src/forge/codex.py",
+      "line": 251,
+      "text": "Respect explicit worktree distrust before inheriting repository trust",
+      "from": "review",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
+      "kind": "improve",
+      "path": "src/forge/codex.py",
+      "line": 74,
+      "text": "Give forge ask a retry instruction that preserves the question",
+      "from": "review",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
