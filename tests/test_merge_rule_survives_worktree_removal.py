@@ -1,5 +1,6 @@
 """Merge rules use Forge on PATH even after the checkout that registered them is gone."""
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -52,7 +53,10 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
         config.write_text(config.read_text().replace('version = "v1.2.2"',
                                                      f'version = "{version}"'))
         assert "plans/spotted.json" not in (client / ".gitattributes").read_text()
-        assert str(old) in repo.git("config", "--get", "merge.forge-roadmap.driver", cwd=client)
+        # Git runs this through sh even on Windows; the Python literal escapes backslashes.
+        legacy_driver = shlex.split(repo.git("config", "--get", "merge.forge-roadmap.driver",
+                                            cwd=client))
+        assert repr(str(old / "src")) in legacy_driver[2]
         shutil.rmtree(old)
         if setup == "doctor source":
             config.write_text(config.read_text().replace('repo = "client"', 'repo = "forge-source"'))
