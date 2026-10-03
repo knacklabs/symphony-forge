@@ -14,7 +14,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tarfile
 import tomllib
 from pathlib import Path
 
@@ -478,8 +477,8 @@ def _refused(up, case):
 def _repo_adopted_on_the_previous_release(up):
     # A landed v1.2.2 adoption, including that release's synced files, rather than a current
     # sync with an older version string. The fixture README records its real-command origin.
-    with tarfile.open(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client.tar.gz") as archive:
-        archive.extractall(up.repo.path, filter="data")
+    shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
+                    dirs_exist_ok=True)
     up.repo.git("switch", "-q", "-c", "adoption")
     up.repo.git("add", "-A")
     up.repo.git("commit", "-q", "-m", "Adopt Forge v1.2.2")
