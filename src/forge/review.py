@@ -531,6 +531,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
                             stderr=subprocess.STDOUT)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
+        line = line.replace(b"\0", b"")
         sys.stderr.buffer.write(line)
         sys.stderr.flush()
         last = line.decode("utf-8", "replace").strip() or last
@@ -543,7 +544,10 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
             selected["model"] = match[1]
     code = proc.wait()
     try:
-        report = json.loads(out.read_text(encoding="utf-8"))
+        # Decode first: JSON represents null characters as escaped text.
+        report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {
+            key: value.replace("\0", "") if isinstance(value, str) else value
+            for key, value in fields.items()})
     except (OSError, ValueError):
         report = None
     if code not in (0, 1, 2) or not isinstance(report, dict):
