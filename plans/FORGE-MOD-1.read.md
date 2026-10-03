@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:35:50+00:00
-read_hash: 0e5244bdc4826fa5651effda74999bada049ff5b
-round: 8
+read_at: 2026-10-03T13:48:20+00:00
+read_hash: 3bb9ed6b2622106e56a4077d0baac3182dde87a4
+round: 9
 passed: no
-doc_seen: 0e5244bdc4826fa5651effda74999bada049ff5b
+doc_seen: 3bb9ed6b2622106e56a4077d0baac3182dde87a4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 5ddc35f7e2cc6eda98b44adf08c5be659540241b
+notes_seen: e18d9dca48cae45c72d543636e4f56cd1d35c47f
 ---
 # Cold read notes
 
@@ -262,3 +262,33 @@ No findings.
 56. Split: PANE → plugin transport/refresh and pane/summary controls.
     Packaging, command execution, snapshot watching, refresh recovery, pane rendering, stage summaries, narrow layouts, text fallback, hotkey refusal paths and three registration seams now suggest more than about 400 changed lines. Give transport and lifecycle handling one owner, then let rendering and controls consume its pinned interface.
     Disposition: cut split into CORE (transport, refresh, seams, text) and PANE (pane and strip)
+
+## Round 9
+
+57. Finding 52 remains partly open: test timing changes have no complete owner.
+    RUNS promises to time close’s tests and `forge test`, but scopes neither [review.py:251](/src/forge/review.py:251) nor a dependency on the task introducing `forge test`. Assign that boundary, add item 2 to RUNS’s Covers, and name producer tests for round association, actual test durations and skipped tests.
+    Disposition: cut RUNS covers 2, scopes review.py and records the test timing inside review.test_run, which forge test also uses; producer tests named
+
+58. Item 2 still has no defined source for other repos’ stage summaries.
+    CORE runs `forge board --json` in the session’s repo, while the lanes contract supplies run entries without stage histories or totals. Pin how VIEWS or CORE obtains another repo’s title, current round and stages, and test two repos with different histories. A fixture containing those fields cannot prove their production.
+    Disposition: cut the strip shows only this repo's items; other repos appear in the Machine tab from the lanes view
+
+59. CORE’s new shared interfaces remain incomplete and contradict detail 6.
+    CORE calls consumers with `data` and `addTab`, but neither contract nor their initial implementation is pinned; PANE delivers `addTab` later. Detail 6 also still assigns creation of `machine.ts` to PANE, whose Scope excludes it. CORE must pin the shared data/update interface and tab stub, with one owner for the summary formatting used by both text and drawing.
+    Disposition: cut CORE pins data and onUpdate, creates the pane.ts addTab stub and machine.ts, and owns summary.ts used by text and strip
+
+60. Finding 53’s unavailable-lanes test still contradicts the required behavior.
+    Detail 2 now preserves the next step without lanes, but its test still says “no lanes view … omits line 1.” Replace that expectation with proof that the next-step line and applicable hotkey remain available.
+    Disposition: cut without lanes the strip keeps the next step and its hotkey; test updated
+
+61. SHIP’s real installation test still depends on PANE.
+    SHIP now lists only CORE in After, although its integration test must load the plugin and show the correct pane lines in two repos. CORE creates an empty `registerPane`; it cannot deliver that observation. Restore PANE as a dependency or move the pane integration proof to a task that follows it.
+    Disposition: cut SHIP's After is PANE again
+
+62. Unproven: item 1: the GitHub cache survives separate command invocations and expires correctly.
+    CORE’s plugin test can prove polling against supplied responses, but not VIEWS’s actual 60-second cache: every refresh starts a new Forge process. Add a producer test covering successive invocations, cache expiry and a GitHub-only check change.
+    Disposition: cut a VIEWS producer test covers reuse within 60 s across invocations, expiry, and a GitHub-only change
+
+63. Item 1’s GitHub-fetch coverage is contradictory.
+    Detail 1 requires one request for checks on all open pull requests, then retains the rule that checks beyond the newest 25 show `unknown`. Choose the intended fetch/display bound and prove it in VIEWS with more than 25 open pull requests.
+    Disposition: cut one request for the newest 25 open pull requests; the rest show unknown; tested with 30
