@@ -1,0 +1,14 @@
+{
+  "base": "c2c3363c0f8e5a925756eeec06f7b723871ad424",
+  "branch": "fix/live-codex-tests",
+  "done_when": "The real-model Codex tests run only when FORGE_LIVE_CODEX=1, which the codex-smoke workflow sets; every other run skips them with a reason naming that variable.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-03T08:19:38+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Two tests call a real Codex model in every local close once the SDK is installed, so closes are slow and fail when the model answers differently"
+}
