@@ -186,6 +186,28 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_hotspots.py\tNot done: test_4_only_a_fix_closes_its_named_files_entries\tFORGE-SPOTTED-1/HOT",
+      "kind": "bug",
+      "path": "tests/test_hotspots.py",
+      "line": 150,
+      "text": "Not done: test_4_only_a_fix_closes_its_named_files_entries",
+      "from": "blocking",
+      "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 203,
+      "text": "Validate fix branch names before reading their states",
+      "from": "review",
+      "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
