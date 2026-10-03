@@ -264,12 +264,15 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
-def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    text = read(top / ".gitattributes")
+def merge_attributes(text: str) -> str:
     missing = [rule for rule in (ROADMAP_RULE, SPOTTED_RULE) if rule not in text.splitlines()]
     if missing:
         text = (f"{text.rstrip()}\n" if text.strip() else "") + "".join(f"{rule}\n" for rule in missing)
-    return {".gitattributes": text, LAUNCHER: launcher(cfg)}
+    return text
+
+
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg)}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
@@ -420,7 +423,17 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             path.write_bytes(text.encode("utf-8"))
             changed = True
         path.chmod(0o755)
-    # Git config is shared by worktrees; never tie it to the checkout running sync.
+    return install_merge_rules(top) or changed
+
+
+def install_merge_rules(top: Path) -> bool:
+    # Local attributes and config are shared by worktrees, including on an older default branch.
+    common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
+    current_attributes = read(common / "info/attributes")
+    attributes = merge_attributes(current_attributes)
+    changed = current_attributes != attributes
+    if changed:
+        write_file(common, "info/attributes", attributes)
     current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
     if current.strip() != MERGE_DRIVER:
         repo.git("config", "merge.forge-roadmap.driver", MERGE_DRIVER, cwd=top)

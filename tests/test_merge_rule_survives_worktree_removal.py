@@ -1,5 +1,4 @@
 """Merge rules use Forge on PATH even after the checkout that registered them is gone."""
-import io
 import json
 import shutil
 import subprocess
@@ -20,7 +19,7 @@ def _commit(repo, cwd, message):
     repo.git("-c", "core.hooksPath=no-hooks", "commit", "-qm", message, cwd=cwd)
 
 
-@pytest.mark.parametrize("setup", ["init", "sync", "doctor --fix"])
+@pytest.mark.parametrize("setup", ["init", "sync", "doctor --fix", "doctor source"])
 def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
         repo, gh, tmp_path, setup):
     gh.respond("api", stdout="{}")
@@ -37,9 +36,8 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
     else:
         # Adopt a real existing repository with the previous release, then upgrade its pin.
         old = tmp_path / "previous-release"
-        archive = subprocess.run(["git", "archive", "--format=zip", "v1.2.2"], cwd=ROOT,
-                                 capture_output=True, check=True).stdout
-        with zipfile.ZipFile(io.BytesIO(archive)) as files:
+        # A shipped release fixture keeps this real adoption runnable in CI's shallow clone.
+        with zipfile.ZipFile(ROOT / "tests/fixtures/forge-v1.2.2.zip") as files:
             files.extractall(old)
         _install(repo.bin, "old-forge", FORGE_SHIM.format(
             python=sys.executable, src=str(old / "src")))
@@ -54,13 +52,15 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(config.read_text().replace('version = "v1.2.2"',
                                                      f'version = "{version}"'))
-        # Make hook shims current before restoring the old merge rule: doctor must detect
-        # driver drift even when there is no hook drift to trigger its repair.
-        synced = repo.forge("sync", cwd=client)
-        assert synced.returncode == 0, synced.stderr
-        repo.git("config", "merge.forge-roadmap.driver", "deleted-forge %O %A %B", cwd=client)
+        assert "plans/spotted.json" not in (client / ".gitattributes").read_text()
+        assert str(old) in repo.git("config", "--get", "merge.forge-roadmap.driver", cwd=client)
+        shutil.rmtree(old)
+        if setup == "doctor source":
+            config.write_text(config.read_text().replace('repo = "client"', 'repo = "forge-source"'))
         _commit(repo, client, "Upgrade the client pin")
 
+    hooks = [repo.path / ".git/hooks" / name for name in ("pre-commit", "pre-push")]
+    before_hooks = [path.read_bytes() if path.exists() else None for path in hooks]
     work = tmp_path / "sync-worktree"
     repo.git("worktree", "add", "-qb", "fix/register-rule", str(work), cwd=client)
     # Run real Forge from code in this disposable checkout, as a Forge source worker does.
@@ -68,13 +68,16 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
     _install(repo.bin, "work-forge", FORGE_SHIM.format(
         python=sys.executable, src=str(work / "src")))
     if setup != "init":
-        done = subprocess.run([sys.executable, str(repo.bin / "work-forge"), *setup.split()],
+        command = ["sync"] if setup == "sync" else ["doctor", "--fix"]
+        done = subprocess.run([sys.executable, str(repo.bin / "work-forge"), *command],
                               cwd=work, capture_output=True, text=True)
         if setup == "sync":
             assert done.returncode == 0, done.stdout + done.stderr
         else:
             # Other doctor checks may report missing third-party tools; only this repair is owned.
             assert done.returncode in (0, 1), done.stdout + done.stderr
+        if setup == "doctor source":
+            assert [path.read_bytes() if path.exists() else None for path in hooks] == before_hooks
     repo.git("worktree", "remove", "--force", str(work), cwd=client)
     driver = repo.git("config", "--get", "merge.forge-roadmap.driver", cwd=client)
 
