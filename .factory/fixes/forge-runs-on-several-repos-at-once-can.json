@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed it: five code files plus the agent guide the review rule requires",
   "base": "b4c71b05d77a0fc1fc54b8435c49aca8de2c7bf9",
   "branch": "fix/forge-runs-on-several-repos-at-once-can",
   "done_when": "At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the others wait in line first come, first served and print one plain line with their place when they start waiting and each time it changes; a run that dies frees its place; the guide says so. A command-level test starts three runs with stub agents and shows the third waits until one ends, then runs.",
@@ -14,7 +15,7 @@
         "file": "src/forge/worker.py",
         "line": 97,
         "priority": "P1",
-        "title": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the \u0000\u0000\u0000\u0000"
+        "title": "Not done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos; the "
       },
       {
         "body": "The timestamp is obtained before the ticket is published, without synchronization. If run A is paused between lines 66 and 67, runs B and C can publish later-named tickets and start their agents. When A resumes, it publishes the oldest ticket, sees no earlier names, and starts a third agent. This violates both the concurrency ceiling and first-come admission under simultaneous starts. Synchronize ticket registration so an older ticket cannot appear after later tickets have already been admitted.",
