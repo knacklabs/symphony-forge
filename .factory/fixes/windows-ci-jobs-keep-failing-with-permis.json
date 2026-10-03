@@ -13,27 +13,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "02360ace9316aee343086ad9c673a1ef6b8108f1813c8dfc9ced8e8f5523185e",
-    "commit": "9cca544231c1efa4e5a4129738986405f1c7e9e1",
+    "changed": "b7a342c3dc613473c7db8546d88ea0f3e6cb32ab9861f7b6086d10c5cc7b1ebe",
+    "commit": "dd7727050f81d7993681678195a5843f1850acf2",
     "dismissals": [],
     "findings": [
       {
-        "body": "Only `_saved` and `_save` use `patient`. Other temporary-file helpers still fail immediately: `Repo.write` at `tests/conftest.py:93\u201396`, `_stub` at `tests/test_codex_worker.py:138\u2013139`, and `_lines` at `tests/test_codex_worker.py:147\u2013148`. In particular, `_holding` reads through `_lines` while Forge is running (`tests/test_codex_resume.py:169\u2013174`) and catches only ValueError. Deletions such as `record.unlink()` at `tests/test_codex_resume.py:273` also remain unprotected. These operations do not meet the updated Done-when requirement to retry permission errors on temporary-file reads, writes and deletes.",
+        "body": "The previously identified helpers now retry, but additional helpers still fail on the first PermissionError. New evidence beyond the previous finding: `_install` writes temporary command files directly at tests/conftest.py:52 and :55; `_left` reads a temporary work log directly at tests/test_codex_worker.py:195; and `calls` reads the temporary Claude log directly at tests/test_worker.py:29. `_left` is exercised on Windows by tests/test_codex_worker.py:373, :380, :391 and :405. The retry wrapper therefore does not cover all temporary-file helpers promised by Done-when. Route these remaining helper operations through `patient` so a transient refusal receives the same five-second retry window.",
         "file": "tests/conftest.py",
         "line": 62,
         "priority": "P1",
         "title": "Not done: Windows temporary-file helpers do not all retry PermissionError for five seconds"
-      },
-      {
-        "body": "The new regression calls `_saved` and `_save` directly; it never invokes Forge. It therefore proves the retry helpers but does not supply the command-level regression explicitly required by Done-when. The existing command test at `tests/test_fix_macos_app_server.py:25\u201334` injects only one permission error through `_held`, whose pre-fix implementation already caught that error and retried. Extend a command scenario to inject two permission errors and verify the read and command flow succeed with the fix.",
-        "file": "tests/test_file_helpers_wait_out_a_locked_file.py",
-        "line": 33,
-        "priority": "P1",
-        "title": "Not done: A command-level test shows a read succeeds after two PermissionErrors"
       }
     ],
     "status": "blocked",
-    "tree": "03fd5430ea0fdf9d2cfe40531476d178f46ad579af473f371416b5a2b5b49ae9"
+    "tree": "803d6fa31cb255b1d605f5ae88344bdeca0cfb2a9a4d2249d13a568279199018"
   },
   "status": "fixing",
   "steps": [
@@ -47,6 +40,10 @@
     },
     {
       "at": "2026-10-02T19:20:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T00:42:33+00:00",
       "step": "review"
     }
   ],
