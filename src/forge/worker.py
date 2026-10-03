@@ -38,7 +38,7 @@ REFUSALS = {
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex worker here.", "forge doctor"),
+                  "no Codex turn here.", "forge doctor"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
@@ -207,7 +207,7 @@ def work(args: argparse.Namespace) -> None:
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
           design: bool = False) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
-    the SDK with the declining handler's place and, for a worker, the project's trust. Returns
+    the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
         chosen = repo.models(config, kind.lower(), "claude")
@@ -220,8 +220,8 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
-    if kind == "Grill":  # a read-only turn with approvals "never" can't write, so it needs no trust
-        return []
+    # Readers too: Codex lists and runs no project hook, Forge's own included, in a project it
+    # doesn't trust, so Forge could neither trust its hooks for the turn nor see a foreign one.
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     if not doctor._codex_trusts(top, codex_config):
         refuse(REFUSALS["untrusted"])

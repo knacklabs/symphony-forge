@@ -35,10 +35,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    # Codex trusts no project here: a read-only turn with approvals "never" can't write, so a read
-    # needs no trust.
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     stub, claude = repo.bin / "codex-app-server.jsonl", repo.bin / "claude-calls.jsonl"
     version = repo.forge("--version").stdout.split()[-1]
     shop = new_story(repo, "SHOP")

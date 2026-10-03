@@ -231,6 +231,9 @@ def _setup(repo, monkeypatch, tmp_path, sdk_data, app: str) -> Reader:  # noqa: 
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.setenv("FORGE_NOW", "2026-09-29T10:00:00+00:00")
     new_story(repo, "SHOP")
     reader = Reader(repo, monkeypatch, app)

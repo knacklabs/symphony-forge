@@ -139,8 +139,9 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    (repo.path.parent / "codex-home").mkdir()
-    monkeypatch.setenv("CODEX_HOME", str(repo.path.parent / "codex-home"))
+    codex_home = repo.path.parent / "codex-home"
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
     monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("CLAUDECODE", "1")  # under Claude Code the reader is Codex
     calls = repo.bin / "codex-app-server.jsonl"
@@ -153,6 +154,17 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     forge_own = hooks_file.read_text(encoding="utf-8")
     monkeypatch.setenv("STUB_CODEX_HOOK_TRUST", "modified")  # as after the hook launcher changed
 
+    # Codex lists and runs no project hook in a project it doesn't trust, so a read there would
+    # run without Forge's hooks: it stops before Codex starts.
+    untrusted = repo.forge("read", "SHOP")
+
+    assert untrusted.returncode != 0
+    assert untrusted.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
+                                "Forge starts no Codex turn here.\nNext: forge doctor\n")
+    assert not calls.exists()
+    (codex_home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
+
     # A changed hook stops the read before any conversation starts.
     text, named = _edits(forge_own)[0]
     hooks_file.write_text(text, encoding="utf-8")
@@ -161,6 +173,7 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
     assert stopped.returncode != 0
     assert stopped.stderr == _refusal(named, hooks_file, "read", "SHOP")
     assert _stopped(calls, 0)
+    assert {hook["eventName"] for hook in _listed(calls)} >= {"preToolUse"}
 
     # Forge's own hooks, though Codex doesn't trust them, are trusted for the read's thread.
     hooks_file.write_text(forge_own, encoding="utf-8")

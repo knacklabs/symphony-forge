@@ -13,9 +13,9 @@ counts. STUB_CODEX_OVERLOADED=<n> fails the first n turns as Codex does when the
 capacity; each turn's start time is logged. STUB_CODEX_TOUCH names a file it writes in the thread's folder during the turn, to stand
 for a reader that changes a file; STUB_CODEX_COMMIT commits the thread's folder after the turn's
 requests, as a worker does, and STUB_CODEX_COMMIT_FROM=<n> does so from the nth turn this stub
-has run. hooks/list lists each hook in the cwd's .codex/hooks.json as a project hook, trusted
-unless STUB_CODEX_HOOK_TRUST names another status. With STUB_CODEX_RESUME set it resumes a
-thread as it starts one. `--version` prints the version.
+has run. hooks/list lists each hook in the cwd's .codex/hooks.json as a project hook, once
+CODEX_HOME trusts the project, and trusted unless STUB_CODEX_HOOK_TRUST names another status.
+With STUB_CODEX_RESUME set it resumes a thread as it starts one. `--version` prints the version.
 """
 import json
 import os
@@ -85,6 +85,19 @@ def hooks(cwd):
     import hashlib
     import re
 
+    import subprocess
+    import tomllib
+
+    # As Codex does, none unless CODEX_HOME's config trusts the cwd or its main checkout.
+    config = pathlib.Path(os.environ.get("CODEX_HOME", "~/.codex"), "config.toml").expanduser()
+    projects = tomllib.loads(config.read_text(encoding="utf-8")).get("projects", {}) \
+        if config.exists() else {}
+    main = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                          cwd=cwd, capture_output=True, text=True).stdout.strip()
+    places = {pathlib.Path(cwd).resolve(), pathlib.Path(main).parent.resolve()}
+    if not any(pathlib.Path(root).resolve() in places and project.get("trust_level") == "trusted"
+               for root, project in projects.items()):
+        return []
     path = pathlib.Path(cwd, ".codex", "hooks.json")
     events = json.loads(path.read_text(encoding="utf-8"))["hooks"] if path.exists() else {}
     return [{"key": f"{path}:{re.sub('(?<!^)(?=[A-Z])', '_', event).lower()}:{g}:{h}",

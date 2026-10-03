@@ -286,6 +286,19 @@ repo, rewritten by that version.
 
 Until the upgrade merges, the default branch keeps working with the new release installed.
 
+## Refresh dependencies
+
+When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
+lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
+fix's folder:
+
+1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
+   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `go get -u=patch ./... && go mod tidy`); never raise a range.
+2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
+   same tag, and rebuild the image.
+3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+
 ## Planning a story
 
 Use one framing line before showing a story in Plan Mode:
@@ -371,7 +384,8 @@ if changes are still uncommitted after that does it warn, naming them: `forge cl
 what is committed, so look at them before closing.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
-changes. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
+changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers
+both refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
 ask the human to review it in Codex's /hooks, then run the command again.
 
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
@@ -415,6 +429,9 @@ reviews show them only as counts of changed lines.
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
 When every file a change touches is under `docs/` or `plans/`, a Markdown file or under `.factory/`,
 close skips forge.toml's test command and says so; the review and every named check still run.
+Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+test command fails, close stops before the review and keeps the output for the worker: run
+`forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
