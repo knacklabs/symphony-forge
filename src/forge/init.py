@@ -61,14 +61,14 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # module, by name. Inside the shell's double quotes, so no double quote, $ or backtick.
 # ponytail: a changed conftest or fixture file picks no tests, and the match is by module name;
 # the pull request's tests check runs the full suite either way.
-PYTEST_CHANGED = r'''python -c "
+PYTEST_CHANGED = r'''-c "
 import pathlib, re, subprocess, sys
 def git(*args):
     return subprocess.run(['git', *args], capture_output=True, text=True,
                           check=True).stdout.splitlines()
 def is_test(path):
     return re.fullmatch('test_.*[.]py|.*_test[.]py', pathlib.PurePath(path).name)
-changed = git('diff', '--name-only', '--diff-filter=d', '{base}', '--', '*.py')
+changed = git('diff', '--name-only', '{base}', '--', '*.py')
 names = [pathlib.PurePath(path).parent.name if path.endswith('__init__.py')
          else pathlib.PurePath(path).stem for path in changed if not is_test(path)]
 imports = re.compile(r'^[ ]*(from|import)[ ].*\b(' + '|'.join(map(re.escape, names))
@@ -128,8 +128,9 @@ ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, c
 
 def _fast_test(top: Path, test: str) -> str:
     """A changed-only command for the repo's test tool, or "" when Forge doesn't recognise it."""
-    if "pytest" in test:  # whatever runs pytest (uv run, a cd) runs the selection too
-        return test.split("pytest", 1)[0] + PYTEST_CHANGED
+    # Whatever runs pytest (uv run, a cd, an interpreter's -m) runs the selection too.
+    if called := re.match(r"(.*?)(?:(\S+)\s+-m\s+)?pytest", test):
+        return f"{called[1]}{called[2] or 'python'} {PYTEST_CHANGED}"
     # ponytail: npm only; a yarn or pnpm repo's agent proposes its own.
     if not (top / "package-lock.json").is_file():
         return ""
@@ -138,8 +139,8 @@ def _fast_test(top: Path, test: str) -> str:
     except (OSError, ValueError):
         return ""
     tools = {**package.get("dependencies", {}), **package.get("devDependencies", {})}
-    return ("npm ci && npx vitest run --changed {base}" if "vitest" in tools
-            else "npm ci && npx jest --changedSince {base}" if "jest" in tools else "")
+    return ("npm ci && npx vitest run --changed {base} --passWithNoTests" if "vitest" in tools
+            else "npm ci && npx jest --changedSince {base} --passWithNoTests" if "jest" in tools else "")
 
 
 def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],

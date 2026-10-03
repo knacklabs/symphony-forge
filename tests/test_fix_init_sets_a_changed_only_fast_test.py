@@ -33,12 +33,12 @@ def _node(dev: str) -> dict[str, str]:
 
 def test_1_init_in_a_vitest_repo_sets_vitest_changed(repo, gh, tmp_path):
     cfg = _init(repo, gh, tmp_path, _node("vitest"))
-    assert cfg["fast_test"] == "npm ci && npx vitest run --changed {base}"
+    assert cfg["fast_test"] == "npm ci && npx vitest run --changed {base} --passWithNoTests"
 
 
 def test_2_init_in_a_jest_repo_sets_jest_changed_since(repo, gh, tmp_path):
     cfg = _init(repo, gh, tmp_path, _node("jest"))
-    assert cfg["fast_test"] == "npm ci && npx jest --changedSince {base}"
+    assert cfg["fast_test"] == "npm ci && npx jest --changedSince {base} --passWithNoTests"
 
 
 def test_3_init_in_an_unknown_repo_leaves_fast_test_unset(repo, gh, tmp_path):
@@ -55,7 +55,7 @@ def test_4_adoption_sets_fast_test_for_a_vitest_repo(repo, gh):
     adopted = repo.forge("init", *ANSWERS)
     assert adopted.returncode == 0, adopted.stdout + adopted.stderr
     cfg = tomllib.loads(repo.git("show", "fix/adopt-forge:forge.toml"))
-    assert cfg["fast_test"] == "npm ci && npx vitest run --changed {base}"
+    assert cfg["fast_test"] == "npm ci && npx vitest run --changed {base} --passWithNoTests"
 
 
 # Close runs the command through the shell; the multi-line python -c needs a POSIX shell.
@@ -95,6 +95,10 @@ def test_5_init_in_a_pytest_repo_runs_changed_tests_and_their_importers(repo, gh
     assert ran.returncode == 0, ran.stdout + ran.stderr
     assert "2 passed" in ran.stdout  # test_orders imports the changed module, test_new changed
 
+    git("rm", "-q", "shop/stock.py")  # a deleted module still picks the tests that import it
+    broken = fast()
+    assert broken.returncode != 0 and "test_stock" in broken.stdout, broken.stdout
+
 
 def test_6_forge_s_own_forge_toml_uses_the_pytest_command(repo, gh, tmp_path):
     generated = _init(repo, gh, tmp_path, {"pyproject.toml": "[project]\nname = 'shop'\n"})
@@ -106,3 +110,24 @@ def test_6_forge_s_own_forge_toml_uses_the_pytest_command(repo, gh, tmp_path):
 def test_7_the_skill_tells_the_agent_to_propose_a_fast_test():
     text = " ".join((ROOT / "src/forge/templates/skill.md").read_text("utf-8").split())
     assert "has no `fast_test`, propose one" in text
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the pytest command needs a POSIX shell")
+def test_8_adoption_keeps_an_interpreter_s_m_pytest(repo, gh):
+    repo.write("pyproject.toml", "[project]\nname = 'shop'\n")
+    repo.write("tests/test_old.py", "def test_old(): assert False\n")  # fails if picked
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "The app")
+    repo.git("push", "-q", "origin", "main")
+    answers = list(ANSWERS)
+    answers[answers.index("--test") + 1] = f"'{sys.executable}' -m pytest tests"
+    adopted = repo.forge("init", *answers)
+    assert adopted.returncode == 0, adopted.stdout + adopted.stderr
+    fast = tomllib.loads(repo.git("show", "fix/adopt-forge:forge.toml"))["fast_test"]
+    assert fast.startswith(f"'{sys.executable}' -c \"")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write("tests/test_new.py", "def test_new(): assert True\n")
+    repo.git("add", "tests/test_new.py")
+    ran = subprocess.run(fast.replace("{base}", base), shell=True, cwd=repo.path,
+                         capture_output=True, text=True)
+    assert ran.returncode == 0 and "1 passed" in ran.stdout, ran.stdout + ran.stderr
