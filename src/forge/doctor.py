@@ -506,11 +506,13 @@ def doctor(args: argparse.Namespace) -> int:
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
         ui = "claude" if cfg["workers"] == "split" else cfg["workers"]  # who builds the UI
-        for skill in ("impeccable", "emil-design-eng"):
-            if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                       for folder in skills[ui]):
-                rows.append((f"{skill} is required for UI work but isn't installed where the "
-                             f"{ui} worker reads skills.", INSTALL[skill]))
+        # That host, and every host whose program is installed, since either may build UI work.
+        for host in (host for host in skills if host == ui or shutil.which(host)):
+            for skill in ("impeccable", "emil-design-eng"):
+                if not any((folder / "skills" / skill / "SKILL.md").is_file()
+                           for folder in skills[host]):
+                    rows.append((f"{skill} is required for UI work but isn't installed where the "
+                                 f"{host} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")
