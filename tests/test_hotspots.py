@@ -128,11 +128,22 @@ def _missing_deleted_and_unreadable_lists(env):
     assert result.stdout.startswith("plans/spotted.json on the default branch can't be read, so no hotspots are listed: it isn't UTF-8 JSON.\n")
 
 
+def _unrelated_branches_do_not_block_hotspots(env):
+    seed(env, opens())
+    for number, branch in enumerate(("fix/bug_123", "forge/upgrade/v2")):
+        env.repo.git("worktree", "add", "-q", "-b", branch, str(env.tmp / f"unrelated-{number}"))
+    result = env.repo.forge("next")
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.startswith("app.py keeps breaking: 3 noted problems are open there.\n"
+                                    + COMMAND + "\nNo story or fix is in progress")
+
+
 @pytest.mark.parametrize("case,details", [
     (_close_lands_hotspots_and_the_printed_command_starts_the_fix, ()),
     (_command_cleans_punctuation_and_limits_texts, ()),
     (_success_checks_then_sorted_hotspots_then_idle_lines, ()),
     (_missing_deleted_and_unreadable_lists, ()),
+    (_unrelated_branches_do_not_block_hotspots, ()),
     *[(_counts_open_advice_and_distinct_changes_per_kind, details) for details in COUNT_CASES],
 ])
 def test_3_hotspots_offer_ready_fixes(env, monkeypatch, case, details):
@@ -147,9 +158,12 @@ def _closed_fix_resolves_only_named_paths_and_leaves_its_own_notes(env):
     note(env, where, "Notes\n\nSpotted: edge app.py:1 New issue")
     assert env.close(item).returncode == 0
     entries = listed(where)
-    assert all(e["status"] == "done" and e["closed_by"] == item
-               for e in entries if e["text"] in ("Alpha", "Beta", "Gamma"))
-    assert all(e["status"] == "open" for e in entries if e["text"] in ("Other", "Backup", "New issue"))
+    expected = [entry("bug", "app.py", 1, text, "worker", item="earlier",
+                      status="done", closed_by=item) for text in ("Alpha", "Beta", "Gamma")]
+    expected += [entry("bug", "other/app.py", 1, "Other", "worker", item="earlier"),
+                 entry("bug", "app.py.bak", 1, "Backup", "worker", item="earlier"),
+                 entry("edge", "app.py", 1, "New issue", "worker", item=item)]
+    assert entries == sorted(expected, key=lambda e: e["key"])
     assert "keeps breaking" in env.repo.forge("next").stdout
     land(env, "fix/tidy-readme")
     assert "keeps breaking" not in env.repo.forge("next").stdout

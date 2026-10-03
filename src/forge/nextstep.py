@@ -201,7 +201,8 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
         return []
     files = set(repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top).split("\0"))
     whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
-            for branch, path in trees.items() if branch.startswith(("fix/", "forge/"))}
+            for branch, path in trees.items()
+            if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
     lines = []
     for hotspot in hotspots:
         path, count = hotspot["path"], hotspot["count"]
