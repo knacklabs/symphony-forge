@@ -17,48 +17,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "beaf7762a6be48e58b113fdccc5340145bf2845a347ec0861b5a466b2d165d00",
-    "commit": "1f44c505f2ec6db475fddff417007cb5a021cb8a",
+    "changed": "1b901a5b60612595e894a1dd886fdde3271482d389424fd00985a7635afeffe7",
+    "commit": "588eb1d66d312630d9e79f0e8b641aaa9244540b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The coordinator deferred Forge's own configuration to a later release, but this test still indexes `own[\"fast_test\"]`. The new evidence is that the amended requirement excludes this setting while the test remains unchanged. Reading `forge.toml:6\u20138` confirms the key is absent, so this collected test raises `KeyError` and prevents the repository suite from passing. Move this test to the deferred work rather than adding the ruled-out configuration.",
-        "file": "tests/test_fix_init_sets_a_changed_only_fast_test.py",
-        "line": 106,
+        "body": "The package-lock.json guard excludes Vitest and Jest repositories using pnpm or Yarn, even when adoption receives an explicit command such as `pnpm exec vitest run`. Their test tools have the required built-in changed-only mode, but fast_test remains unset and close continues running the full suite. The amended Done-when has no npm-only restriction; the ponytail comment does not satisfy that requirement. Generate the changed-only command using the repository's package manager. Jest explicitly supports forwarding CLI options through these managers: [Jest documentation](https://jestjs.io/docs/cli#using-with-package-manager).",
+        "file": "src/forge/init.py",
+        "line": 109,
         "priority": "P1",
-        "title": "Remove the obsolete test requiring Forge's own fast_test setting"
+        "title": "Not done: When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command when the test tool has a"
       },
       {
-        "body": "The previous finding remains open: everything after `pytest` is discarded, including shell delimiters. Adoption with `--test '(cd backend && pytest tests)'` generates `(cd backend && python -c \"\u2026\"` without the closing parenthesis. `src/forge/review.py:283` executes this through a shell, so close fails before running tests. Preserve enclosing shell syntax when replacing the pytest invocation.",
+        "body": "All three new command tests initialize repositories without commits, so they exercise _scaffold and never reach _adopt. The existing adoption test checks other settings at tests/test_live_adopt.py:49\u201354 but neither supplies a recognized test tool nor asserts fast_test. Removing the new adoption argument would therefore leave these tests passing. Add command-level adoption coverage that verifies Vitest and Jest receive changed-only commands and pytest leaves fast_test unset.",
         "file": "src/forge/init.py",
-        "line": 133,
-        "priority": "P2",
-        "title": "Preserve enclosing shell syntax when replacing pytest"
+        "line": 316,
+        "priority": "P1",
+        "title": "Not done: Command-level tests for automatic fast_test during adoption"
       },
       {
-        "body": "The previous finding remains open. With rename detection enabled, `--name-only` reports the post-image filename, as specified by the [Git documentation](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---name-only). Renaming `shop/orders.py` to `shop/purchases.py` therefore selects importers of `purchases` but misses unchanged tests importing `shop.orders`. A rename-only change can return success without exposing those broken imports. Include both names or disable rename detection for this list.",
+        "body": "_fast_test ignores the test command and chooses solely from dependencies, preferring Vitest whenever both tools are installed. A repository with pyproject.toml and frontend Vitest dependencies gets `test = \"uv run pytest\"` from src/forge/init.py:136 but a Vitest fast_test; adoption likewise ignores an explicit Jest or pytest --test command. src/forge/review.py:246\u2013248 substitutes fast_test for the entire test command, so close checks a different suite and can omit all relevant tests. Base detection on the selected invocation rather than merely the presence of a dependency.",
         "file": "src/forge/init.py",
-        "line": 71,
+        "line": 116,
         "priority": "P2",
-        "title": "Include the old module name when selecting tests for renames"
+        "title": "Derive the fast command from the selected test invocation"
       },
       {
-        "body": "For adoption with `--test 'cd backend && pytest tests'`, the selector runs inside `backend`. `git diff --name-only` supplies `backend/tests/test_orders.py`, while `git ls-files` supplies `tests/test_orders.py`; their default path conventions differ, as documented for [diff](https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---relativepath) and [ls-files](https://git-scm.com/docs/git-ls-files#Documentation/git-ls-files.txt---full-name). If only that test changed, `names` is empty and this comparison omits it, returning success without running it. Normalize both lists, for example by using `git diff --relative`.",
+        "body": "The generated bare npx invocation bypasses npm test and any arguments supplied during adoption. For example, adopting with `--test 'npm ci && npx jest --config config/jest.integration.js'` produces a fast_test without that configuration, changing how tests are discovered and executed. [Jest documents this configuration contract](https://jestjs.io/docs/cli#--configpath). Similarly, setup performed by npm's pretest hook is omitted. Preserve the configured invocation and required setup when adding the changed-only option, rather than replacing it with a generic runner command.",
         "file": "src/forge/init.py",
-        "line": 76,
+        "line": 117,
         "priority": "P2",
-        "title": "Compare changed test paths relative to the same directory"
-      },
-      {
-        "body": "The import expression only searches one line. An unchanged test containing `from shop import (\\n    orders,\\n)` imports `shop.orders`, but changing `shop/orders.py` does not select it: the `from` line contains no `orders`, and the following line contains no `from` or `import`. Close can consequently report that no tests ran despite a direct importer being present. Recognize complete import statements rather than individual lines.",
-        "file": "src/forge/init.py",
-        "line": 74,
-        "priority": "P2",
-        "title": "Recognize changed modules in multiline imports"
+        "title": "Preserve the test runner's configuration and setup"
       }
     ],
     "status": "blocked",
-    "tree": "5cfd115cdb6e703d336a03c7f79f6254ebf241d5cd3b198e1152ac530a0cb685"
+    "tree": "6ac18700d41e0fd6a665aee24d85dc4cb067a33eef051b896d3f63cfdbd61a2e"
   },
   "status": "fixing",
   "steps": [
@@ -76,6 +69,10 @@
     },
     {
       "at": "2026-10-03T07:08:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T07:52:13+00:00",
       "step": "review"
     }
   ],
