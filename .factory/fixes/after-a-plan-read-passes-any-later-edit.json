@@ -5,12 +5,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f91c3329a4049a82ab685d27006268be17d8cb462d1fa361961a8ddab04db8d6",
-    "commit": "20931ed4d600e5e5517946710b618869bafc4583",
+    "changed": "086cfedfbe7a8ecd20bfd1bd95217ad9cbf799ad26ae61edb181bb56f6d15672",
+    "commit": "ac913ad1f16156b298c83d91cf1c82e3d604ba61",
     "dismissals": [],
-    "findings": [],
+    "findings": [
+      {
+        "body": "After the first task merges, edit the plan's Why, pass another read, then commit a builders-only edit and start a later task. The Why edit leaves the approval hash unchanged, so no renewed approval pushes the story branch; the passing read only commits locally (story.py:279\u2013281 and repo.py:457\u2013468). Later tasks start from main and copy the current plan, notes and state without the story history (task.py:143\u2013147, 186\u2013187 and 119\u2013121). Consequently, pushing that task need not transmit the earlier plan blob named by read_hash. In a fresh CI checkout, this cat-file fails and the pull-request check incorrectly demands another read for the builders-only edit. Ensure the passing baseline is available from the pushed task, and cover this later-task carry scenario.",
+        "file": "src/forge/story.py",
+        "line": 487,
+        "priority": "P2",
+        "title": "Preserve the read baseline when carrying a plan into a later task"
+      }
+    ],
     "status": "clean",
-    "tree": "a2fd389b29160773bdf4b3f867de6854913dd1fc052fb3a7ab286562eef4a03c"
+    "tree": "2fbb90a1c2ee28102f8545d449982ef0691beb1794d7e589864ce90d4b7825bb"
   },
   "status": "waiting for checks",
   "steps": [
@@ -32,6 +40,10 @@
     },
     {
       "at": "2026-10-02T21:48:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T00:32:26+00:00",
       "step": "review"
     }
   ],
