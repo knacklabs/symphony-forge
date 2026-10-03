@@ -353,7 +353,10 @@ to end and usable by the client; it brings only the setup, sign-in and data it n
 setup-only, platform or "foundation" stories. A story that no spec behaviour line needs is cut.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
+finishes. One machine runs at most 2 Forge agents at once (work rounds, plan reads and close
+reviews), across all its repos; the rest wait in line, first come, first served, and print their
+place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
+run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on.
 
 ## Cold read findings
