@@ -197,6 +197,12 @@
       "title": "Developers on Claude Code babysit Forge: they ask for status, poll runs, type each next command and approve by pasting plan text",
       "status": "pending",
       "order": 73
+    },
+    {
+      "key": "FORGE-LANES-1",
+      "title": "Forge runs agents and test suites on one machine with no plan for its cores, so parallel suites time out, overload the machine and cost extra rounds",
+      "status": "pending",
+      "order": 74
     }
   ],
   "epics": [

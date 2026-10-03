@@ -35,7 +35,8 @@ def _with_test_command(env) -> Path:
     return log
 
 
-# Holds the machine's test lock, as another close running its tests does, until stdin closes.
+# Holds the first place in the machine's test-run line, as another close running its tests does,
+# until stdin closes.
 HOLD = '''import os, sys
 guard = open(sys.argv[1], "ab")
 if os.name == "nt":
@@ -56,9 +57,9 @@ def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review
     item, _ = env.start_fix({"README.md": "# Hello, shoppers\n", "app.py": "print('hello')\n"})
     env.commit(env.repo.path, "README.md", "# Welcome\n")
     env.repo.git("push", "-q", "origin", "main")
-    config = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge"
-    config.mkdir(parents=True, exist_ok=True)
-    holder = subprocess.Popen([sys.executable, "-c", HOLD, str(config / "test-run.guard")],
+    line = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge" / "test-runs"
+    line.mkdir(parents=True, exist_ok=True)
+    holder = subprocess.Popen([sys.executable, "-c", HOLD, str(line / "000000000001.ticket")],
                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     try:
         assert holder.stdout.readline() == "held\n"
@@ -69,7 +70,7 @@ def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review
     assert "Merging main into fix/tidy-readme conflicts in README.md." in done.stderr
     assert not log.exists()
     assert env.review_calls() == []
-    assert "waits for it" not in done.stdout
+    assert "Waiting for" not in done.stdout
 
 
 def test_2_a_failing_test_command_stops_before_the_review_and_the_worker_gets_its_output(land):

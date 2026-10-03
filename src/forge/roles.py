@@ -71,13 +71,14 @@ def _chosen(cfg: dict[str, Any], kind: str, family: str) -> tuple[str, str]:
     models = cfg.get("models", {})
     # A kind with no entry for this family gets none: the role inherits the session's settings.
     entry = models.get(kind, {})
-    if kind == "design":
+    per_family = kind == "design" or any(host in entry for host in repo.FAMILIES)
+    if per_family:
         entry = entry.get(family, {})
     model, effort = entry.get("model", ""), entry.get("effort", "")
     if family == "claude" and effort == "ultra":
         effort = "max"
-    # A design entry is already the host's own; other kinds name one model for both hosts.
-    return (model if model and (kind == "design" or _family(model) == family) else ""), effort
+    # A per-family entry is already the host's own; a single entry names one model for both hosts.
+    return (model if model and (per_family or _family(model) == family) else ""), effort
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
