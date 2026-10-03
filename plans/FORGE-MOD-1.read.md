@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T13:23:55+00:00
-read_hash: 605ee0431c003284938d1c0b4bfab08a797e349b
-round: 7
+read_at: 2026-10-03T13:35:50+00:00
+read_hash: 0e5244bdc4826fa5651effda74999bada049ff5b
+round: 8
 passed: no
-doc_seen: 605ee0431c003284938d1c0b4bfab08a797e349b
+doc_seen: 0e5244bdc4826fa5651effda74999bada049ff5b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: add1e6d01c7954255cc637770e305d4fab1c95ee
+notes_seen: 5ddc35f7e2cc6eda98b44adf08c5be659540241b
 ---
 # Cold read notes
 
@@ -220,3 +220,45 @@ No findings.
 46. Cut or defer: lane and load toasts.
     Detail 6 adds notifications for run starts, outcomes and load thresholds, although item 6 requires machine visibility and controls, and item 3 explicitly says progress only updates the pane. Remove these notifications, or reconcile the owner-facing behavior and assign their occurrence, reload and repetition tests.
     Disposition: cut toasts removed
+
+## Round 8
+
+47. Disputed keep 40: Forge can resolve dependencies before the other story reaches the default branch.
+    `story._plan` reads another story’s worktree or local branch ([story.py:378](/src/forge/story.py:378)); `task.start` then waits for its tasks to merge. Add the lane-producing tasks to After rather than replacing that gate with a coordinator check.
+    Disposition: cut MACHINE's After now names FORGE-LANES-1/AGENTS and FORGE-LANES-1/TESTS
+
+48. Item 6’s stop contract still cannot distinguish a replacement run.
+    `forge stop --repo <root> <item>` carries no identity for the run the person confirmed. A replacement for the same item can therefore be stopped. The current FORGE-LANES-1 plan also specifies only `forge stop <item>`. Pin an expected-run identity, reconcile both plans, and test identical item names across repos and replacement during confirmation.
+    Disposition: cut stop targets the lane entry id the person saw (forge stop --id); a replacement has a new id; FORGE-LANES-1 gives entries ids
+
+49. Unproven: item 6: confirmed stop success/failure and failed/malformed refreshes.
+    Finding 45’s disposition claims every case has a named test, but detail 6 still names none for successful confirmed stopping, stop failure, or retaining rows after failed/malformed refreshes. Add those cases to the owning Tests cells.
+    Disposition: cut confirmed stop, failed stop and kept rows after failed refresh are named MACHINE tests
+
+50. The new refresh contract contradicts itself and can miss GitHub-only changes.
+    Detail 1 says to run the board only when snapshot modification time changes, then retains unconditional 30-second and post-command refreshes. No producer is assigned to refresh GitHub when local state stays unchanged. Choose one schedule and test initial load, a check failing without local writes, and retry after a failed refresh with unchanged modification time.
+    Disposition: cut one schedule: every 10 s, no snapshot file; GitHub checks cached 60 s by forge board; initial load, red check without local change and retry are tested
+
+51. VIEWS cannot deliver the promised snapshot invalidation within its Scope.
+    State, run and lane writers live outside VIEWS’s files. No earlier task pins the snapshot writer, schema or notification interface they must share. Assign those changes and define atomic updates, the shared-Git-directory path across worktrees, and how another repo’s lane change refreshes this session; prove the producer/consumer boundary.
+    Disposition: cut the snapshot file is gone, so there is no writer to assign
+
+52. Item 2’s stage timings and round association have no complete producer contract.
+    Current timing records contain item, step, start, duration and outcome, but no round; no test-run timing is recorded ([repo.py:115](/src/forge/repo.py:115)). Worker duration also includes tests the worker runs. Assign the missing observations and pin how views expose current stages, retries, skipped stages and other repos’ timings, with producer tests rather than fixtures supplying those facts.
+    Disposition: cut RUNS records the round on every timing and times every test run; VIEWS exposes per-item stages; Build includes the worker's own tests
+
+53. Item 2’s narrow and unavailable-lanes layouts drop promised summary content.
+    The under-80-column format contains no next step or hotkey, and “no lanes view … omits line 1” also removes their assigned row. `Agents N/M` shows occupancy and capacity without the promised waiting-agent count. Pin layouts retaining the next step and both waiting counts, and test them at narrow width and without lane data.
+    Disposition: cut every layout keeps the next step; line 1 shows both waiting counts; without lane data line 1 is the next step
+
+54. Finding 41’s tab seam still leaves the strip’s shared ownership unresolved.
+    PANE builds the lane summary in detail 2, while MACHINE also delivers “the strip’s lane line.” `addTab(name, render)` connects only tab content. Assign the strip to one task, or have PANE pin a contribution interface and crossing test before MACHINE uses it.
+    Disposition: cut PANE owns the whole strip; MACHINE adds only the tab, spinner line and keys
+
+55. Unproven: item 6: `/forge` text fallback on VS Code, Remote Control and headless sessions.
+    PANE owns this behavior but does not cover item 6, and no test names those surfaces. Detail 1 relies on `e.surface`, which the [reference documents for render events](https://code.claude.com/docs/en/plugins/mods/reference#render-sites), although this decision occurs in `command.run`. Pin a supported command-time capability check and prove text output on each promised surface, including Remote Control attached to a drawing terminal.
+    Disposition: cut /forge always returns the text summary and opens the pane, so no surface check is needed; a headless test proves the text
+
+56. Split: PANE → plugin transport/refresh and pane/summary controls.
+    Packaging, command execution, snapshot watching, refresh recovery, pane rendering, stage summaries, narrow layouts, text fallback, hotkey refusal paths and three registration seams now suggest more than about 400 changed lines. Give transport and lifecycle handling one owner, then let rendering and controls consume its pinned interface.
+    Disposition: cut split into CORE (transport, refresh, seams, text) and PANE (pane and strip)
