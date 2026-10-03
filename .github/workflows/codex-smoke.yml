@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 15
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      FORGE_LIVE_CODEX: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6

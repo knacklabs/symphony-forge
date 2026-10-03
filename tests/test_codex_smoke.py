@@ -123,6 +123,8 @@ def _one(lines: list[dict], key: str) -> dict:
     return found[0]
 
 
+@pytest.mark.skipif(os.environ.get("FORGE_LIVE_CODEX") != "1",
+                    reason="calls a real Codex model; set FORGE_LIVE_CODEX=1 to run it")
 @pytest.mark.skipif(not (ENV / "forge-sdk-ready").is_file(),
                     reason=f"the Codex SDK {PIN} isn't installed in {ENV}; forge doctor --fix installs it")
 def test_12_the_real_sdk_starts_names_resumes_declines_streams_and_stops(tmp_path,
