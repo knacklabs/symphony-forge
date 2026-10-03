@@ -65,5 +65,6 @@
       "step": "review"
     }
   ],
-  "why": "Forge's Codex workers run with no Forge hooks at all, the destructive-command guard included: Codex silently skips project hooks that aren't trusted, and every change to a hook un-trusts it, so the guard has not protected Codex worker turns since the hook launcher changed"
+  "why": "Forge's Codex workers run with no Forge hooks at all, the destructive-command guard included: Codex silently skips project hooks that aren't trusted, and every change to a hook un-trusts it, so the guard has not protected Codex worker turns since the hook launcher changed",
+  "worker": "codex"
 }
