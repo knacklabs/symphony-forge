@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-02T23:10:01+00:00
-read_hash: ecf423364a5c968c4a07a41b4e39d56674de3b0c
-round: 1
+read_at: 2026-10-03T03:03:07+00:00
+read_hash: 6d040c647bb00d208bb8c5ca7efbd68036f19ed0
+round: 2
 passed: no
-doc_seen: ecf423364a5c968c4a07a41b4e39d56674de3b0c
+doc_seen: 6d040c647bb00d208bb8c5ca7efbd68036f19ed0
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 9194fab43cfe71105fe7321210dc6b125a38d79e
 ---
 # Cold read notes
 
@@ -92,3 +92,57 @@ Only a genuine trade-off goes to the human, as a question with options.
 18. Trap: installed-version mismatch and unavailable test tooling: items 1–5.
     Read-only `forge next` and `forge board` bypass the CLI’s pin check, so a pinned plugin can reach an installed Forge lacking its JSON flags. Pin executable/version resolution and test mismatch recovery. CI currently provisions only Python/uv; assign ownership for a pinned Claude test binary and executable plugin test/validation runs without network-dependent test execution. [Mod test runner](https://code.claude.com/docs/en/plugins/mods/test).
    Disposition: cut version check through the launcher with the too-old line; CI installs a pinned Claude Code for plugin tests
+
+## Round 2
+
+19. Item 5’s launcher cannot satisfy the stated shell-free, repo-pinned invocation.
+    `.forge/hooks.sh` is a fragment that must be sourced by a shell; it defines a fallback function and prefers installed Forge. Read-only commands bypass pin enforcement. Pin an executable invocation that selects the repo’s version, assign its owner before PANE, and test mismatched installations and Windows paths.
+    Disposition: cut the mod runs forge from PATH with argv as the agent does; the machine view's version drives the too-old line; launcher dropped
+
+20. Item 3 still has no defined source for Claude worker questions.
+    Finding 4’s disposition says both workers already write them, but `worker.work` returns from the Claude path before the question-recording code. VIEWS must explicitly capture Claude questions and test their appearance in the machine view.
+    Disposition: cut RUNS records Claude and Codex worker questions with ids, tested
+
+21. Item 3’s per-repo seen store contradicts delivery to each session.
+    `$.store` is shared across sessions: one session consuming an event—or recording everything as seen during startup—can suppress another session’s turn. Namespace consumption by repository and session, and test two sessions sharing the same store. [Store contract](https://code.claude.com/docs/en/plugins/mods/reference#mods-api-methods).
+    Disposition: cut seen ids keyed by repo root and session id; two sessions sharing one store tested
+
+22. Unproven: item 3: repeated occurrences can reuse the chosen event identities.
+    A worker can ask the same question in another round; checks can fail again on a retry at the same head and suite. Run end times can also collide because `repo.now()` has second precision. Use occurrence identities and test repeated occurrences, plus failed-submit retries, which remain absent from the named cases.
+    Disposition: cut Forge writes a fresh id per review result, run end and question; checks use run id and attempt; repeats and failed-submit retry tested
+
+23. Item 5 does not define how sync obtains the latest released mod.
+    Registering an unpinned repository and enabling its plugin does not update an existing cached installation; marketplace auto-update is off by default. Pin released-catalog selection, plugin versioning and the update operation, then test an existing older install. [Marketplace updates](https://code.claude.com/docs/en/plugins/host-marketplace#keep-users-up-to-date).
+    Disposition: cut sync adds, updates the marketplace and installs or updates the plugin at user scope; the default branch's marketplace lists the latest release; older install tested
+
+24. Item 5’s settings-only delivery does not install the plugin or enable it across every repo.
+    Project settings apply to that repository, and an enabled entry can still lack an installed plugin. Define installation and scope consistently with the machine-wide promise; test a fresh installation and a second repo on another Forge version. [Installation scopes](https://code.claude.com/docs/en/plugins/install#choose-an-install-scope).
+    Disposition: cut install is user scope through the claude CLI, one per machine; sync writes no repo file for it; fresh machine tested
+
+25. Disputed keep 7: separate guide sections do not remove Forge’s file-level scope conflict or finish plugin wiring.
+    `task.start` rejects overlapping file paths, so every task still overlaps on `skill.md`. EVENTS and APPROVE also cannot edit PANE-owned `register.ts`, and no registration seam is pinned. Assign shared guide wiring to one owner and make PANE deliver the registration contract its successors use.
+    Disposition: cut VIEWS owns all guide and brief text; PANE creates the events.ts and approval.ts seam that EVENTS and APPROVE fill
+
+26. The shared per-item next-step and approval-file contracts remain unspecified.
+    Details define only one global `next.command`, while EVENTS needs a next step for each changed item and APPROVE needs the waiting story’s actual worktree document. VIEWS must pin those fields, including null-command handling, document location and repository/item identities, with a contract test.
+    Disposition: cut board --json carries each item's next.command and approval.doc, pinned with a contract test and shared fixture
+
+27. Split: VIEWS → run observations and machine views.
+    VIEWS now owns run lifecycle recording, process gating and both JSON views across seven Python modules, suggesting more than about 400 changed lines. Put observations first, then have machine views consume their pinned records.
+    Disposition: cut split into RUNS then VIEWS
+
+28. Unproven: item 1: several claimed refresh cases still have no named proof.
+    The test list omits refresh after a Forge tool call, the 20-second timeout, skipping overlapping refreshes, missing state and unavailable GitHub data. Add these cases to PANE’s tests and the relevant machine-view tests; the disposition currently claims more coverage than the doc specifies.
+    Disposition: cut named tests added for refresh after forge calls, timeout, overlap, missing state and GitHub unreachable
+
+29. Unproven: item 2: reread failure and submission failure.
+    Details promise a toast for failed submission but name no test for it, and give no behavior when the pre-submit `forge next --json` reread fails. Pin that refusal behavior and test that neither failure submits an outdated command.
+    Disposition: cut failed re-read and failed submit submit nothing and toast; tested
+
+30. Unproven: item 4: document selection, read failures and Request changes delivery.
+    The new tests still omit approval from another story worktree, missing/malformed documents and delivery of the exact Request changes note. Also reconcile “CRLF normalised to LF” with “byte for byte” comparison against a CRLF document by naming the expected normalized text.
+    Disposition: cut doc comes from approval.doc in the story's worktree; missing doc tested; expected text is the part with CRLF turned into LF
+
+31. Simpler: separate Request changes input → Claude Code’s native approval interaction.
+    The revised owner-facing behavior asks for the native plan prompt, while APPROVE still adds a separate input and submission path. Use the native interaction unless a distinct required behavior needs the extra control; otherwise cut it from the task.
+    Disposition: cut Request changes is Claude Code's own prompt answer; no extra control

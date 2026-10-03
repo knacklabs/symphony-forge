@@ -1,6 +1,6 @@
 # Forge lives inside Claude Code
 
-5 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
+6 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
 
 ## What changes for you
 
@@ -65,17 +65,21 @@ tightening it needs no new approval. -->
    board: one line `Nothing in progress.` Pull requests past the 25 whose checks `board` fetches
    show checks `unknown`. Tests (plugin): rows from a fixture; timer refresh advances elapsed time;
    failed and malformed refresh keep rows and show the line; empty board; `/forge` opens at 80
-   columns. Command test: `forge board --json` on a repo with a story, a fix, a running worker and
-   an open pull request.
+   columns; refresh after a tool call running `forge`; a refresh over 20 s is abandoned with the
+   line; an overlapping refresh is skipped; an item with missing state shows `unknown`; GitHub
+   unreachable shows checks `unknown`. Command test: `forge board --json` on a repo with a story, a
+   fix, a running worker and an open pull request, and with GitHub unreachable.
 2. Band. Data: `forge next --json` (VIEWS) gives `next.command`: the first `Next:` command that
    is one runnable forge command with no placeholder and no alternative; otherwise null, with
    `next.line` the plain state. With a command and Claude idle: `1: <command>`, hotkey `1`
    (Claude Code fires a digit hotkey only into an empty prompt, so typing stays typing). Pressing
    it re-reads `forge next --json`; if the command changed it shows the new one and runs nothing;
-   else `$.prompt.submit({ text: command, asUser: true })`. Null command, or Claude working: the
-   line without a hotkey. A failed submit shows a toast with the reason. Tests (plugin): press
-   submits the exact command; null command has no hotkey; stale command runs nothing and redraws;
-   busy shows no hotkey. Command test: `forge next --json` for a ready task, a waiting item and a
+   else `$.prompt.submit({ text: command, asUser: true })`. If the re-read fails, nothing is
+   submitted and a toast says `Couldn't check the next step: <reason>`. Null command, or Claude
+   working: the line without a hotkey. A failed submit shows a toast with the reason. Tests
+   (plugin): press submits the exact command; null command has no hotkey; stale command runs
+   nothing and redraws; busy shows no hotkey; failed re-read submits nothing and toasts; failed
+   submit toasts. Command test: `forge next --json` for a ready task, a waiting item and a
    merge only a human may do (null).
 3. Events. Event identity: item + kind + a value that changes only on a new occurrence: the review
    commit for findings, the head commit and check suite for failed checks, the head commit for
@@ -100,36 +104,44 @@ tightening it needs no new approval. -->
    button reads the story doc from disk at press time (CRLF normalised to LF), takes the part
    `forge next` names for approval exactly as Plan Mode approval expects, and starts the prompt
    with it; all trust checks stay in `forge hook approval` unchanged (digest, completed call,
-   replay, one waiting story). Request changes: an Input whose text is submitted as the user's
-   words; it records nothing. Tests: plugin test that the plan text equals the doc's part byte
-   for byte, including a CRLF doc; command tests that the hook records the approval from that
-   payload, refuses after the doc changed between press and approval, and that Request changes
-   records nothing.
-5. Delivery. Marketplace `forge` at Forge's repository root (`.claude-plugin/marketplace.json`)
-   lists plugin `forge` whose source is the `src/forge/mod` folder at tag `v<version>`, where
-   version is pyproject's; a test fails when they differ, so each version bump moves it. `forge sync` adds, in `.claude/settings.json`,
-   `extraKnownMarketplaces.forge` (GitHub source, Forge's repository) and
-   `enabledPlugins["forge@forge"] = true`, leaving every other entry as it was; a malformed
-   settings file is reported by sync and left unchanged. Version: the mod runs the repo's own
-   Forge through the repo's launcher (`.forge/hooks.sh`, the same one the hooks use), with argv and
-   no shell, working directory the session's repo root; when `forge --version` is below the
-   version that added `--json`, the pane and band show one line: `This repo's Forge is too old
-   for the pane: upgrade Forge here.` A running session picks the mod up after `/reload-plugins`
-   or a restart. Doctor: Claude Code missing or older than v2.1.287 is one warning line and keeps
-   exit status 0. Tests: command tests of sync's settings output (fresh, repeated, with unrelated
-   entries, malformed), of doctor's warning and exit status, and that Codex files are unchanged;
-   plugin test of the too-old line; `claude plugin validate --strict` passes. CI installs a pinned
-   Claude Code with npm to run `claude plugin test` and `validate`.
+   replay, one waiting story). The doc is the one `forge board --json` names for the waiting story
+   (`approval.doc`, an absolute path in that story's worktree). Request changes is Claude Code's
+   own answer in that prompt; the mod adds no control of its own. A missing or unreadable doc
+   shows a toast and opens nothing. Tests: plugin test that the plan text equals the doc's part
+   with CRLF line ends turned into LF and nothing else changed; that the doc named for the story
+   is read, not the session's checkout; a missing doc toasts and opens nothing; command tests that
+   the hook records the approval from that payload and refuses after the doc changed between
+   press and approval.
+5. Delivery. Forge's repository is public and holds a marketplace `forge`
+   (`.claude-plugin/marketplace.json`) listing plugin `forge` with `version` equal to the package
+   version and source the `src/forge/mod` folder at tag `v<version>`; a test fails when they
+   differ, so each version bump moves it, and the default branch always lists the latest release.
+   When `claude` is on PATH, `forge sync` makes the mod current at user scope (one per machine):
+   `claude plugin marketplace add knacklabs/symphony-forge` if missing, `claude plugin marketplace
+   update forge`, then `claude plugin install forge@forge --scope user`, or `claude plugin update
+   forge@forge` when installed. Sync writes no repo file for the mod. A failure (no network, old
+   Claude Code) is one line and sync still succeeds. Version: the mod runs `forge` from PATH with
+   argv and no shell, working directory the session's repo root, as the agent does; when the
+   machine view's `version` is missing or below the one that added it, the pane and band show
+   `This repo's Forge is too old for the pane: upgrade Forge here.` A running session picks the
+   mod up after `/reload-plugins` or a restart. Doctor: Claude Code missing or older than v2.1.287
+   is one warning line and keeps exit status 0. Tests: command tests of sync's plugin commands
+   (fresh machine, already current, older install updated, no network, no `claude`) with a stub
+   `claude`, of doctor's warning and exit status, that sync writes no repo file for the mod and
+   Codex files are unchanged; plugin test of the too-old line and of a Windows path with spaces as
+   working directory; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
+   with npm to run `claude plugin test` and `validate`.
 
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| VIEWS | Machine views and run records | `--json` on `forge next` and `forge board` with the fields in details 1-3, run start and end records, `FORGE_WORKER=1` for every process Forge starts, the guide's "Machine views" section | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/repo.py, src/forge/worker.py, src/forge/close.py, src/forge/codex.py, src/forge/templates/skill.md | tests/test_machine_views.py, tests/test_run_records.py | | no |
-| PANE | Pane and next-step band | The plugin skeleton, `/forge`, the pane, the band and its hotkey, the launcher call and too-old line, the guide's "The Forge pane" section | 1, 2 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/pane.test.ts, pyproject.toml, src/forge/templates/skill.md | src/forge/mod/hooks/pane.test.ts, tests/test_mod_plugin.py | VIEWS | yes |
-| EVENTS | Turns when work needs the agent | Event identities, seen store, batching, session gating, the guide's "Forge events" section and the brief's line that workers never act on events | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/skill.md, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | PANE | yes |
-| APPROVE | Approve from the pane | The proof step, then the button, the plan prompt and Request changes, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, src/forge/templates/skill.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
-| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's settings entries, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, src/forge/templates/skill.md, .github/workflows/forge-next.yml | tests/test_mod_sync.py | PANE | no |
+| RUNS | Run and question records | Records with ids for run start and end, review results and worker questions on both worker paths, and `FORGE_WORKER=1` for every process Forge starts | 3 | src/forge/repo.py, src/forge/worker.py, src/forge/close.py, src/forge/codex.py | tests/test_run_records.py | | no |
+| VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide and brief text for the pane, band, events and approval | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, src/forge/templates/brief.md, tests/fixtures/board.json | tests/test_machine_views.py | RUNS | no |
+| PANE | Pane and next-step band | The plugin skeleton, `/forge`, the pane, the band and its hotkey, the `forge` call and too-old line, and the seam: register.ts calls `registerEvents(on)` from events.ts and `registerApproval(on)` from approval.ts, created here as empty functions | 1, 2 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/pane.test.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, pyproject.toml | src/forge/mod/hooks/pane.test.ts, tests/test_mod_plugin.py | VIEWS | yes |
+| EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts | src/forge/mod/hooks/events.test.ts | PANE | yes |
+| APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
+| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml | tests/test_mod_sync.py | PANE | no |
 
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
@@ -137,8 +149,8 @@ New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns o
 
 - Mods docs: code.claude.com/docs/en/plugins/mods/overview, /reference, /interface (v2.1.287+).
   Render sites `Pane`, `AbovePrompt`; `$.clock.every`, `$.process.run`, `$.prompt.submit`,
-  `$.store`, `$.session.surfaces`, `$.session.repo`.
+  `$.store`, `$.session.surfaces`, `$.session.repo`, `$.session.id`.
 - All Forge rules stay in the `forge` command; the mod only reads the machine views, runs `forge`
   commands and draws. It never writes repo files.
-- Guide sections: each task adds its own named section to skill.md so tasks don't edit the same
-  lines.
+- VIEWS writes all guide and brief text for the story up front, so later tasks don't touch
+  skill.md or brief.md.
