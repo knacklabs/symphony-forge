@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T03:20:12+00:00
-read_hash: f783eb5666effc185f5c55f8368ba24f9120531c
-round: 3
+read_at: 2026-10-03T03:31:51+00:00
+read_hash: 9ed19121c55d7bc2e38487886e39cfb2e4fd1e9c
+round: 4
 passed: no
-doc_seen: f783eb5666effc185f5c55f8368ba24f9120531c
+doc_seen: 9ed19121c55d7bc2e38487886e39cfb2e4fd1e9c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 67bea52c2825b7f5b4636cfa7bc1294b29997ef0
+notes_seen: db409bccd8739c27afe32d75de164857ec650278
 ---
 # Cold read notes
 
@@ -172,3 +172,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 37. Unproven: item 5: the shipped plugin installs and loads in real Claude Code.
     Stubbed CLI tests and validation cannot prove tagged-source resolution, activation after reload, or use across two repos on different Forge versions. Add a SHIP integration test using real Claude Code, isolated user state and a local tagged marketplace fixture so execution needs no network.
     Disposition: cut SHIP adds one real Claude Code integration test with an isolated home and a local tagged marketplace fixture
+
+## Round 4
+
+38. Item 3’s failed-check identity is undefined for the check sources Forge supports.
+    GitHub’s [CheckRun schema](https://docs.github.com/en/graphql/reference/checks#checkrun) has no attempt-number field; [commit statuses](https://docs.github.com/en/rest/commits/statuses#get-the-combined-status-for-a-specific-reference), which `checks._seen` also handles, have their own IDs rather than check-run IDs.
+    VIEWS must pin identities from fields those providers actually return. Name producer and event tests for failed check runs, failed commit statuses and repeated failures, rather than supplying invented attempt fields in fixtures.
+    Disposition: cut a failed check is identified by GitHub's own id: check run database id or commit status id; both and repeats tested from recorded responses
