@@ -161,16 +161,19 @@ def _text(calls: Path) -> str:
 
 def _holding(repo, turns: Path) -> tuple[subprocess.Popen, dict]:
     """forge work BOARD/PAGE whose turn Codex never ends. Returns the call and the item's record
-    once the turn's "started" line is in the turn log."""
+    once the turn's "started" line and recovery record both say it started."""
     before = len(_lines(turns)) if turns.exists() else 0
     work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
                             cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "hold"},
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    for _ in range(600):
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
         try:  # the line may be halfway written
             if turns.exists() and len(_lines(turns)) > before:
-                return work, _saved(turns.with_suffix(".json"))
-        except ValueError:
+                saved = _saved(turns.with_suffix(".json"))
+                if saved.get("pending") is None and "continued" in saved:
+                    return work, saved
+        except (ValueError, PermissionError):
             pass
         time.sleep(0.05)
     work.kill()
@@ -535,7 +538,8 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
     work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
                             cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "starting"},
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    for _ in range(600):
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
         if unseen():
             break
         time.sleep(0.05)
