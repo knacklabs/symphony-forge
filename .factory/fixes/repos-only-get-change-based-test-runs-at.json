@@ -9,11 +9,16 @@
       "at": "2026-10-03T07:11:53+00:00",
       "because": "The pytest test picker kept drawing parsing findings; tools with a built-in changed-only mode are reliable, others get a hand-written command",
       "done_when": "When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command for the repo's test tool when it recognises one (vitest: vitest related or --changed {base}; jest: --changedSince {base}; pytest: the test files that changed since {base} plus those that import a changed module), and leaves it unset otherwise; the skill tells the agent to propose one when a repo has none. Command-level tests cover init in a vitest repo, a jest repo, a pytest repo and an unknown one."
+    },
+    {
+      "at": "2026-10-03T07:53:56+00:00",
+      "because": "Generating the command in code kept missing package managers, configs and mixed stacks; the agent reads the repo's real command and the owner chose that the agent sets it at setup",
+      "done_when": "When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command when the test tool has one built in (vitest: vitest related or --changed {base}; jest: --changedSince {base}), and leaves it unset otherwise; the skill tells the agent to propose one by hand when a repo has none. Command-level tests cover init in a vitest repo, a jest repo and a pytest repo (left unset)."
     }
   ],
   "base": "1a8e83a609e345952f36e758eca22bdd6ce814cc",
   "branch": "fix/repos-only-get-change-based-test-runs-at",
-  "done_when": "When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command when the test tool has one built in (vitest: vitest related or --changed {base}; jest: --changedSince {base}), and leaves it unset otherwise; the skill tells the agent to propose one by hand when a repo has none. Command-level tests cover init in a vitest repo, a jest repo and a pytest repo (left unset).",
+  "done_when": "At forge init and adoption the skill tells the coordinating agent to propose a fast_test for the repo: its own test command with the test tool's built-in changed-only option and {base} (for example vitest --changed {base}, jest --changedSince {base}), keeping the command's configuration and setup, and to set it in forge.toml through a fix once the human agrees; Forge writes no fast_test by itself. A test checks the skill carries that step.",
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
