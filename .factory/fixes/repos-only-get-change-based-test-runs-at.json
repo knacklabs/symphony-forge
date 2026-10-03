@@ -22,41 +22,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "1b901a5b60612595e894a1dd886fdde3271482d389424fd00985a7635afeffe7",
-    "commit": "588eb1d66d312630d9e79f0e8b641aaa9244540b",
+    "changed": "045cd5f435ce339dba718840b8394f4e67cc20a8253d39b61df902d19bbb805a",
+    "commit": "ed9ba91fc7882257555b807dce1e72179f8a0620",
     "dismissals": [],
     "findings": [
       {
-        "body": "The package-lock.json guard excludes Vitest and Jest repositories using pnpm or Yarn, even when adoption receives an explicit command such as `pnpm exec vitest run`. Their test tools have the required built-in changed-only mode, but fast_test remains unset and close continues running the full suite. The amended Done-when has no npm-only restriction; the ponytail comment does not satisfy that requirement. Generate the changed-only command using the repository's package manager. Jest explicitly supports forwarding CLI options through these managers: [Jest documentation](https://jestjs.io/docs/cli#using-with-package-manager).",
-        "file": "src/forge/init.py",
-        "line": 109,
+        "body": "The setup test checks the proposal's opening sentence and the statement that Forge writes no fast_test, but never checks the built-in changed-only option, `{base}`, human agreement, or setting forge.toml through a fix. Removing those instructions from src/forge/templates/skill.md:269\u2013271 while retaining the final sentence leaves every assertion passing, despite breaking the core Done-when requirement. Extend this test to verify those required parts of the setup step in the generated skills.",
+        "file": "tests/test_setup_proposes_a_fast_test.py",
+        "line": 20,
         "priority": "P1",
-        "title": "Not done: When forge init or adoption sets a repo's test command, it also sets fast_test to a changed-only command when the test tool has a"
-      },
-      {
-        "body": "All three new command tests initialize repositories without commits, so they exercise _scaffold and never reach _adopt. The existing adoption test checks other settings at tests/test_live_adopt.py:49\u201354 but neither supplies a recognized test tool nor asserts fast_test. Removing the new adoption argument would therefore leave these tests passing. Add command-level adoption coverage that verifies Vitest and Jest receive changed-only commands and pytest leaves fast_test unset.",
-        "file": "src/forge/init.py",
-        "line": 316,
-        "priority": "P1",
-        "title": "Not done: Command-level tests for automatic fast_test during adoption"
-      },
-      {
-        "body": "_fast_test ignores the test command and chooses solely from dependencies, preferring Vitest whenever both tools are installed. A repository with pyproject.toml and frontend Vitest dependencies gets `test = \"uv run pytest\"` from src/forge/init.py:136 but a Vitest fast_test; adoption likewise ignores an explicit Jest or pytest --test command. src/forge/review.py:246\u2013248 substitutes fast_test for the entire test command, so close checks a different suite and can omit all relevant tests. Base detection on the selected invocation rather than merely the presence of a dependency.",
-        "file": "src/forge/init.py",
-        "line": 116,
-        "priority": "P2",
-        "title": "Derive the fast command from the selected test invocation"
-      },
-      {
-        "body": "The generated bare npx invocation bypasses npm test and any arguments supplied during adoption. For example, adopting with `--test 'npm ci && npx jest --config config/jest.integration.js'` produces a fast_test without that configuration, changing how tests are discovered and executed. [Jest documents this configuration contract](https://jestjs.io/docs/cli#--configpath). Similarly, setup performed by npm's pretest hook is omitted. Preserve the configured invocation and required setup when adding the changed-only option, rather than replacing it with a generic runner command.",
-        "file": "src/forge/init.py",
-        "line": 117,
-        "priority": "P2",
-        "title": "Preserve the test runner's configuration and setup"
+        "title": "Not done: A test checks the complete fast_test setup step"
       }
     ],
     "status": "blocked",
-    "tree": "6ac18700d41e0fd6a665aee24d85dc4cb067a33eef051b896d3f63cfdbd61a2e"
+    "tree": "6054d741aa6b712c3eadcb38addd66d3aea1f9b72bb2308141f83bf8c8fefdce"
   },
   "status": "fixing",
   "steps": [
@@ -78,6 +57,10 @@
     },
     {
       "at": "2026-10-03T07:52:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T08:47:10+00:00",
       "step": "review"
     }
   ],
