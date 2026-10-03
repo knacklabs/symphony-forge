@@ -5,12 +5,12 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "086cfedfbe7a8ecd20bfd1bd95217ad9cbf799ad26ae61edb181bb56f6d15672",
-    "commit": "ac913ad1f16156b298c83d91cf1c82e3d604ba61",
+    "changed": "156f1384f2f4cbc8741d885d0a2f56d686afd359cf6d60ac73a8571d29af0fe7",
+    "commit": "aaa084cbb1b58fd53f5db3873bc3b60fc057e42e",
     "dismissals": [],
     "findings": [
       {
-        "body": "After the first task merges, edit the plan's Why, pass another read, then commit a builders-only edit and start a later task. The Why edit leaves the approval hash unchanged, so no renewed approval pushes the story branch; the passing read only commits locally (story.py:279\u2013281 and repo.py:457\u2013468). Later tasks start from main and copy the current plan, notes and state without the story history (task.py:143\u2013147, 186\u2013187 and 119\u2013121). Consequently, pushing that task need not transmit the earlier plan blob named by read_hash. In a fresh CI checkout, this cat-file fails and the pull-request check incorrectly demands another read for the builders-only edit. Ensure the passing baseline is available from the pushed task, and cover this later-task carry scenario.",
+        "body": "The earlier P2 remains open. After the first task merges, edit the plan's Why, pass another read, then commit a builders-only edit and start a later task. The passing read commits locally without pushing (story.py:279\u2013281; repo.py:482\u2013493), and the Why edit does not require renewed approval. Later tasks start from main and copy the current plan, notes and state without the story history (task.py:119\u2013121, 143\u2013147, 184\u2013187). Consequently, the pushed task can omit the earlier plan blob named by read_hash. In a fresh CI checkout, this cat-file fails and the pull-request check incorrectly requires another read for the builders-only edit. Make the passing baseline reachable from the pushed task and cover this later-task carry scenario.",
         "file": "src/forge/story.py",
         "line": 487,
         "priority": "P2",
@@ -18,7 +18,7 @@
       }
     ],
     "status": "clean",
-    "tree": "2fbb90a1c2ee28102f8545d449982ef0691beb1794d7e589864ce90d4b7825bb"
+    "tree": "f904d8bb00efb8d7056cc5210c1617cf2517887fc4f63c0be9db3d207df26212"
   },
   "status": "waiting for checks",
   "steps": [
@@ -44,6 +44,10 @@
     },
     {
       "at": "2026-10-03T00:32:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T01:25:44+00:00",
       "step": "review"
     }
   ],
