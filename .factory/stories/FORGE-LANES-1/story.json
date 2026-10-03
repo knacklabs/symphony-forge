@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-LANES-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-03T12:59:17+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge splits the machine between agents and tests",
+  "touches": 0
+}
