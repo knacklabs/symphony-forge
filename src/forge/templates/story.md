@@ -18,6 +18,14 @@ details. -->
 
 1. **$done**
 
+## New and existing repos
+
+- Fresh init or adoption: <What a new client repo gets, and the test that proves it.>
+- Existing repo on upgrade: <What a client repo on an older Forge version gets, how it gets
+  there without breaking its existing work, and the test that proves it.>
+
+<!-- State both sides even when one does not apply, and say why. -->
+
 ## Risks
 
 <!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->

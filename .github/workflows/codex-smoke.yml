@@ -12,6 +12,8 @@ on:
       - src/forge/codex_turn.py
       - tests/test_codex_smoke.py
       - tests/test_fix_codex_test_home.py
+      - tests/test_new_and_existing_repo_planning.py
+      - src/forge/templates/cold-read.md
       - tests/conftest.py
       - .github/workflows/codex-smoke.yml
 
@@ -39,3 +41,5 @@ jobs:
           printenv OPENAI_API_KEY | "$("$python" -c 'import codex_cli_bin; print(codex_cli_bin.bundled_codex_path())')" login --with-api-key
       - if: env.OPENAI_API_KEY != ''
         run: uv run --python 3.11 pytest tests/test_fix_codex_test_home.py -v -s
+      - if: env.OPENAI_API_KEY != ''
+        run: uv run --python 3.11 pytest tests/test_new_and_existing_repo_planning.py -v -s --timeout=600

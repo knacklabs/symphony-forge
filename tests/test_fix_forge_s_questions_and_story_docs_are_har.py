@@ -33,7 +33,9 @@ def test_2_story_done_when_and_builder_sections_are_readable_after_sync(repo):
     # FORGE-SHORTPLAN-1: each item was a bold sentence followed by its detail; now it is the bold
     # sentence alone, and the detail moves under the same number in Done-when details below.
     assert "one bold plain sentence and nothing more" in skill
-    assert "Risks right after Done when" in skill
+    # New and existing repo planning now sits between Done when and Risks; the owner's
+    # sections still precede the builder details.
+    assert "Put Risks after New and existing repos" in skill
     assert "For the builders" in skill
 
     made = repo.forge("story", "new", "SHOP", "Shoppers can save a basket")
@@ -41,7 +43,8 @@ def test_2_story_done_when_and_builder_sections_are_readable_after_sync(repo):
     doc = (worktree(repo, "story/SHOP") / "plans/SHOP.md").read_text(encoding="utf-8")
     assert re.search(r"^1\. \*\*[^*]+\.\*\*$", doc, re.M)
     headings = re.findall(r"^## (.+)$", doc, re.M)
-    assert headings.index("Done when") + 1 == headings.index("Risks")
+    assert headings.index("Done when") + 1 == headings.index("New and existing repos")
+    assert headings.index("New and existing repos") + 1 == headings.index("Risks")
     assert headings.index("Risks") < headings.index("For the builders") < headings.index("Tasks")
 
 

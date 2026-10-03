@@ -82,6 +82,9 @@ Why: $why
 
 Done when: $done
 
+State both sides in one line: what fresh init or adoption gets, and what an existing client repo
+on an older Forge version gets on upgrade, with a proving test for each or why it does not apply.
+
 A fix stays small: at most five code files and no interface changes unless a recorded allowance
 says otherwise; test files and files whose content is exactly what `forge sync` writes don't count.
 If it needs more, stop and say so; it has to become a story.

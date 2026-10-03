@@ -99,6 +99,12 @@ checklist.
 Documentation-only changes still need every test named in the task's Tests column; check claims,
 commands and links.
 
+Check both client paths: fresh init or adoption, and an existing repo on an older Forge version
+upgrading to this change. Read the upgrade path and its proving test: settings, generated files
+and existing work must keep working after upgrade. Forge's own repo or a fresh init alone does
+not prove the existing client path. A side that does not apply must say why; report a promised
+path this branch owns but does not deliver or prove as P1 `Not done: <the path>`.
+
 Every Done-when item needs an end-to-end test through the real entry point when it changes runtime
 behaviour: Forge's own command; for client apps, the running API with a real database and user
 flows in a browser through Playwright. Settings, docs, deletions and test-only items are proven by
