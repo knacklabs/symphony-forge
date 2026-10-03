@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_codex_record.py",
+      "line": 438,
+      "text": "The process-cleanup test exceeds its timeout on the default branch too.",
+      "from": "worker",
+      "item": "windows-ci-jobs-keep-failing-with-permis",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
