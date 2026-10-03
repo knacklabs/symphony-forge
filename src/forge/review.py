@@ -239,18 +239,28 @@ def _review_rules(top: Path) -> str:
     return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
 
 
+def close_test(top: Path, base: str) -> str:
+    """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
+    else its test. The pull request's tests check always runs test."""
+    cfg = repo.config(top)
+    if not cfg["fast_test"]:
+        return cfg["test"]
+    return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
+
+
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
     Returns its exit status and the report: the exit status, every line that mentions a skip with
     the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
     pytest also lists each skip's reason (-rs). Skipped, as status 0, when it already passed here on
-    the same committed files, or when the change touches only docs, plans, Markdown or Forge's
-    records; one run per machine at a time."""
+    the same committed files, or when the change touches only forge.toml, docs, plans, Markdown
+    or Forge's records; one run per machine at a time."""
     if not command:
         return 0, "forge.toml names no test command, so close ran none."
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
                        cwd=top).split("\0")
-    if all(path.startswith(DOCS) or path.endswith(".md") for path in changed if path):
+    if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
+           for path in changed if path):
         said = DOCS_ONLY.format(command=command)
         print(said, flush=True)
         return 0, said
@@ -263,9 +273,8 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
         print(skipped, flush=True)
         return 0, skipped
     folder.mkdir(parents=True, exist_ok=True)
-    # ponytail: one test run per machine, whatever the repo; a per-repo lock if that proves slow.
-    with codex._one_at_a_time(folder / "test-run", "Another forge close on this machine is "
-                              "running its tests; this one waits for it."):
+    # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
+    with codex.in_line(folder / "test-runs", WAITING):
         if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
             return 0, skipped
@@ -287,9 +296,12 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
                       "forge close.", *lines])
 
 
+WAITING = lambda ahead: (  # noqa: E731
+    "Waiting for 1 other close's test run on this machine." if ahead == 1
+    else f"Waiting for {ahead} other closes' test runs on this machine.")
 DOCS = ("docs/", "plans/", ".factory/")
-DOCS_ONLY = ("This change touches only docs, plans, Markdown or Forge's records, so close did not run "
-             "`{command}`.")
+DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
+             "did not run `{command}`.")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
 
