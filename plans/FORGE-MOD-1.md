@@ -166,7 +166,8 @@ tightening it needs no new approval. -->
    repos (one on a Forge without views) each show the right pane line; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
    with npm to run `claude plugin test` and `validate`.
 
-6. Machine tab. Data: `forge lanes --json` (FORGE-LANES-1). Rows per lane in queue order: repo
+6. Machine tab. Start MACHINE only after FORGE-LANES-1 has merged. Data: `forge lanes --json`
+   (FORGE-LANES-1). Rows per lane in queue order: repo
    name, item in plain words, kind, model and effort, elapsed; the test row draws a bar from
    `done`/`total` and time left from that repo's last full run time in Forge's timings, or no
    estimate without one. Load line: a `Raster` sparkline of the last 30 load samples (Text on
@@ -189,7 +190,7 @@ tightening it needs no new approval. -->
 | APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md, src/forge/templates/skill.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
 | SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml, src/forge/templates/skill.md, tests/fixtures/marketplace/** | tests/test_mod_sync.py, tests/test_mod_install.py | PANE | no |
 
-| MACHINE | Machine tab | The Machine tab, the strip's lane counts, the spinner line, output and stop keys, lane toasts | 6 | src/forge/mod/hooks/machine.ts, src/forge/mod/hooks/machine.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/machine.test.ts | PANE, FORGE-LANES-1/AGENTS, FORGE-LANES-1/TESTS | yes |
+| MACHINE | Machine tab | The Machine tab, the strip's lane counts, the spinner line, output and stop keys, lane toasts | 6 | src/forge/mod/hooks/machine.ts, src/forge/mod/hooks/machine.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/machine.test.ts | PANE | yes |
 
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
