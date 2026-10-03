@@ -488,6 +488,10 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
+When close stops an item because a file keeps breaking, start the fix it prints without
+asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
+after that fix merges.
+
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted
 list and the roadmap.
