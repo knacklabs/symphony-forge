@@ -58,9 +58,21 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
+# Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
+# leaves out included: the driver trusts a hook only when its whole definition is one of these.
+FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
+                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
+    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
+                  "no Codex turn here.", "forge doctor"),
+    # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
+    "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
+             "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
+             "again.", ""),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
@@ -231,6 +243,15 @@ def recover(checkout: Path, item: str) -> None:
           "as lost.", flush=True)
 
 
+def require_trust(top: Path) -> None:
+    """Refuse unless the user's Codex config trusts the checkout or its main repo: in a project it
+    doesn't trust, Codex lists and runs no project hook, Forge's own included."""
+    from forge import doctor  # doctor imports codex
+    config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(REFUSALS["untrusted"])
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -257,6 +278,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
+    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+        require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
     config = repo.config(checkout)
@@ -266,7 +289,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                           {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
-               "ephemeral": kind == "Ask"}
+               "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
     if attach_request is not None:
         request.update(attach=True, **attach_request)
     if fresh_prompt is not None:
@@ -283,7 +306,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
-    refused, server = "", None
+    refused, server, untrusted = "", None, {}
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
@@ -333,7 +356,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     recorded()
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
-                    refused, text = said["refused"], ""
+                    refused, text, untrusted = said["refused"], "", said
                 elif "read" in said:
                     result["read"], text = said["read"], ""
                 elif "archived" in said:
@@ -425,7 +448,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
-                    pid=driver.pid if refused == "driver" else server)
+                    pid=driver.pid if refused == "driver" else server,
+                    hook=untrusted.get("hook"), path=untrusted.get("path"))
     return result
 
 

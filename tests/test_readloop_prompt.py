@@ -2,6 +2,7 @@ STORY = "FORGE-READLOOP-1"
 # What the cold reader is asked each round, and what the synced skill tells the agent to do with
 # its findings.
 
+import json
 import os
 from pathlib import Path
 
@@ -40,6 +41,9 @@ def _first_round_prompt(repo, monkeypatch, sdk_data, tmp_path) -> str:  # noqa: 
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("CLAUDECODE", "1")  # under Claude Code the reader is Codex
     shop = new_story(repo, "SHOP")
