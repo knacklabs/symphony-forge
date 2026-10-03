@@ -13,20 +13,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "b7a342c3dc613473c7db8546d88ea0f3e6cb32ab9861f7b6086d10c5cc7b1ebe",
-    "commit": "dd7727050f81d7993681678195a5843f1850acf2",
+    "changed": "204d9b2afab3b63351d6458240b453272a08940e835a064895968a72f754c538",
+    "commit": "0e71a74a668564d5660c0fc40082ba04a2476ec8",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously identified helpers now retry, but additional helpers still fail on the first PermissionError. New evidence beyond the previous finding: `_install` writes temporary command files directly at tests/conftest.py:52 and :55; `_left` reads a temporary work log directly at tests/test_codex_worker.py:195; and `calls` reads the temporary Claude log directly at tests/test_worker.py:29. `_left` is exercised on Windows by tests/test_codex_worker.py:373, :380, :391 and :405. The retry wrapper therefore does not cover all temporary-file helpers promised by Done-when. Route these remaining helper operations through `patient` so a transient refusal receives the same five-second retry window.",
+        "body": "The previously identified helpers are covered, but the five wrapped Path methods do not cover every temporary-file helper. New evidence beyond the prior finding and the Path-wrapper ruling: `install_claude` writes the temporary executable using `shutil.copy` at tests/test_worker.py:20; `_closable` does likewise at tests/test_chatview_attach.py:25, and `_copied_client` uses `shutil.copytree` at tests/test_migrate.py:62\u201367. These operations use file APIs outside the wrapped methods, so a PermissionError still fails immediately. `install_claude` is also called again after command execution at tests/test_design_route.py:136. Route these helper operations through `patient` or equivalent retries to meet the promised five-second window.",
         "file": "tests/conftest.py",
-        "line": 62,
+        "line": 79,
         "priority": "P1",
-        "title": "Not done: Windows temporary-file helpers do not all retry PermissionError for five seconds"
+        "title": "Not done: Windows temporary-file helpers still bypass PermissionError retries"
       }
     ],
     "status": "blocked",
-    "tree": "803d6fa31cb255b1d605f5ae88344bdeca0cfb2a9a4d2249d13a568279199018"
+    "tree": "068586b14e767dd5a197994a8978c11ec331015ca560ad16b6c8c9f648eab3fd"
   },
   "status": "fixing",
   "steps": [
@@ -44,6 +44,10 @@
     },
     {
       "at": "2026-10-03T00:42:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T05:23:10+00:00",
       "step": "review"
     }
   ],
