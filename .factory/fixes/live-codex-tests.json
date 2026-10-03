@@ -5,29 +5,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "013241a956d05f6d247094a4c40e24a8e8a95e7b37abc4e48e1292b5e4c4b1d4",
-    "commit": "64bbe7c94a1def916b9a92971d4cc011007a8d48",
+    "changed": "edb5b96e929ba2792177890433cebcc517f174effeee333adf1ba8e7d3b862e7",
+    "commit": "d4108a90b81ba5e273c4d6a2af3597b8a34b4f06",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "When FORGE_LIVE_CODEX is unset or differs from \"1\" and the SDK is absent, both tests skip with the SDK-installation reason, which does not name FORGE_LIVE_CODEX. Python applies the lower decorator first; pytest [appends markers](https://github.com/pytest-dev/pytest/blob/9.1.1/src/_pytest/mark/structures.py#L440-L456) and [returns the first matching skip reason](https://github.com/pytest-dev/pytest/blob/9.1.1/src/_pytest/skipping.py#L158-L174). The existing SDK guard at tests/test_codex_smoke.py:128 and tests/test_fix_codex_test_home.py:44 therefore wins. Reverse the decorators in both files so the opt-in reason takes precedence. The supplied close result covers the SDK-installed case only.",
-        "file": "tests/test_codex_smoke.py",
-        "line": 126,
-        "priority": "P1",
-        "title": "Not done: The real-model Codex tests run only when FORGE_LIVE_CODEX=1, which the codex-smoke workflow sets; every other run skips them with"
-      },
-      {
-        "body": "The supplied repository review rule requires changes to a setting workers can use to update src/forge/templates/skill.md or src/forge/templates/brief.md in the same change. This introduces FORGE_LIVE_CODEX as the required opt-in for running the real-model checks, but neither template is updated. The existing worker brief at src/forge/templates/brief.md:100 discusses handling local real-Codex test failures without explaining the new opt-in. Update a template to explain how workers deliberately run these checks and that ordinary suite runs skip them.",
-        "file": "tests/test_fix_codex_test_home.py",
-        "line": 42,
-        "priority": "P1",
-        "title": "Document the live-Codex opt-in in the worker template"
-      }
-    ],
-    "status": "blocked",
-    "tree": "180c2ac56fac884ec37bae52e3e965596898d85ba1ef2366de047b50a20cdeaa"
+    "findings": [],
+    "status": "clean",
+    "tree": "10083bb38c44e4ced9171ca3e5877f38fe758acd90e0949ed10a9bbef46e420c"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T08:19:38+00:00",
@@ -35,6 +20,10 @@
     },
     {
       "at": "2026-10-03T09:15:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T09:57:56+00:00",
       "step": "review"
     }
   ],
