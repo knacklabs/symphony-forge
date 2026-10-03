@@ -1,0 +1,9 @@
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+
+[mcp_servers.docs]
+command = "docs-server"
+
+# Codex runs the project hooks in .codex/hooks.json only with this on; forge sync keeps it on.
+[features]
+hooks = true
