@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T06:01:45+00:00
-read_hash: f1830a634ec5fe6bc078e838c8090232e3b235eb
-round: 6
-passed: yes
-doc_seen: f1830a634ec5fe6bc078e838c8090232e3b235eb
+read_at: 2026-10-03T13:23:55+00:00
+read_hash: 605ee0431c003284938d1c0b4bfab08a797e349b
+round: 7
+passed: no
+doc_seen: 605ee0431c003284938d1c0b4bfab08a797e349b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 9b51a3de8fd5fe2583235916976d356f0c353a63
+notes_seen: add1e6d01c7954255cc637770e305d4fab1c95ee
 ---
 # Cold read notes
 
@@ -190,3 +190,33 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 6
 
 No findings.
+
+## Round 7
+
+40. MACHINE’s required cross-story dependency is missing from After.
+    Detail 6 requires FORGE-LANES-1 to merge first, but MACHINE lists only PANE. `task.start` enforces dependencies from After ([task.py:174](/src/forge/task.py:174)). Add the external tasks that deliver the lane view and test progress so Forge cannot start MACHINE prematurely.
+    Disposition: keep Forge's After column resolves only stories on the default branch and FORGE-LANES-1 isn't there yet; detail 6 says MACHINE starts only after it merges, and the coordinator checks that
+
+41. PANE does not pin the registration and rendering seams MACHINE needs.
+    PANE owns `register.ts`, `pane.ts` and the band, while MACHINE can edit only `machine.ts` and its tests. Unlike EVENTS and APPROVE, MACHINE has no registration stub or shared contract for adding its tab and strip counts. PANE must deliver those seams and a test crossing them; the platform’s [tab example](https://code.claude.com/docs/en/plugins/mods/interface#build-a-pane-with-tabs) composes tabs within the pane renderer.
+    Disposition: cut PANE exports addTab and creates machine.ts with registerMachine, called from register.ts, with one test crossing the seam
+
+42. Item 6’s promise to show older repos’ runs contradicts its data producer.
+    “New and existing repos” promises those runs appear once any repo runs the new release. The local FORGE-LANES-1 story explicitly says older versions use their own test lock and no agent lane; they therefore do not supply the promised queue entries. Define and test how those runs become observable, or narrow the promise.
+    Disposition: cut narrowed: the Machine tab shows repos on this release; older repos show the upgrade line
+
+43. Item 6 has no committed owner or targeting contract for `forge stop`.
+    FORGE-LANES-1’s current task table does not deliver this command, and MACHINE scopes no command implementation or command test. Assign its implementation and named test before MACHINE. Pin how stopping a selected row targets another repo, distinguishes identical item names, and handles a run ending or restarting while confirmation is open.
+    Disposition: cut forge stop --repo <root> <item> is owned by FORGE-LANES-1 AGENTS with its test; ended or changed runs say nothing to stop
+
+44. Item 6’s telemetry and estimate contracts remain incomplete.
+    Detail 6 omits memory rendering and leaves load sampling undefined. Its “last full run time” source also does not exist in the current timings: Forge records worker, review and CI-wait durations, while FORGE-LANES-1 moves full suites to CI. Pin the producer fields, memory units, sampling cadence and duration source, with producer/consumer proof before MACHINE uses them.
+    Disposition: cut memory and time-left estimates dropped; load comes from the lanes view, sampled at each refresh, hidden where the OS gives none
+
+45. Unproven: item 6: empty, unavailable and changing machine state.
+    The named fixture tests do not cover empty lanes, null progress or missing estimates, Windows load/memory availability, failed or malformed refreshes, growing or unreadable output files, or stop success and failure after confirmation. Pin what each state displays and assign these cases to MACHINE’s Tests cell and the stop command’s owner.
+    Disposition: cut each state's display is pinned in detail 6 with a named plugin test
+
+46. Cut or defer: lane and load toasts.
+    Detail 6 adds notifications for run starts, outcomes and load thresholds, although item 6 requires machine visibility and controls, and item 3 explicitly says progress only updates the pane. Remove these notifications, or reconcile the owner-facing behavior and assign their occurrence, reload and repetition tests.
+    Disposition: cut toasts removed
