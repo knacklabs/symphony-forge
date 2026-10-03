@@ -179,10 +179,10 @@ runs it again. When that check runs the full suite, ask your agent to set `fast_
 command close runs instead of `test`, with `{base}` replaced by the merge base with the default
 branch, so it runs only the tests related to the changed files plus fast checks (for example
 `npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
-`test`. `forge init` and adoption set `fast_test` themselves when they recognise the test tool:
-vitest and jest run the tests related to the files changed since `{base}`, and pytest runs the
-test files that changed plus those that import a changed module. Any other tool leaves it unset,
-and your agent proposes one. `forge doctor` says when it is set.
+`test`. `forge init` and adoption set `fast_test` themselves when the test tool has a
+changed-only mode built in: vitest and jest run the tests related to the files changed since
+`{base}`. Any other tool, pytest included, leaves it unset, and your agent proposes one by hand.
+`forge doctor` says when it is set.
 
 ## Merging a ready item
 

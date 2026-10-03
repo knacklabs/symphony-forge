@@ -57,29 +57,6 @@ STACKS = [("pyproject.toml", "uv run pytest"), ("go.mod", "go test -v ./...")]
 # Otherwise the smallest client stack (Node). Before the first story adds the app there is
 # nothing to test, and the tests check passes; after that it runs the app's tests.
 NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
-# fast_test for pytest: the test files changed since {base} plus those that import a changed
-# module, by name. Inside the shell's double quotes, so no double quote, $ or backtick.
-# ponytail: a changed conftest or fixture file picks no tests, and the match is by module name;
-# the pull request's tests check runs the full suite either way.
-PYTEST_CHANGED = r'''-c "
-import pathlib, re, subprocess, sys
-def git(*args):
-    return subprocess.run(['git', *args], capture_output=True, text=True,
-                          check=True).stdout.splitlines()
-def is_test(path):
-    return re.fullmatch('test_.*[.]py|.*_test[.]py', pathlib.PurePath(path).name)
-changed = git('diff', '--name-only', '{base}', '--', '*.py')
-names = [pathlib.PurePath(path).parent.name if path.endswith('__init__.py')
-         else pathlib.PurePath(path).stem for path in changed if not is_test(path)]
-imports = re.compile(r'^[ ]*(from|import)[ ].*\b(' + '|'.join(map(re.escape, names))
-                     + r')\b', re.M)
-picked = [path for path in git('ls-files', '*.py') if is_test(path) and (path in changed
-          or names and imports.search(pathlib.Path(path).read_text('utf-8', 'replace')))]
-if not picked:
-    print('No test file changed or imports a changed module, so no tests ran.')
-    sys.exit(0)
-sys.exit(subprocess.run([sys.executable, '-m', 'pytest', *sys.argv[1:], *picked]).returncode)
-"'''
 # The model and effort each kind of work runs on; the review kind's model goes to Autoreview. The
 # cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
 MODELS = """
@@ -126,11 +103,8 @@ ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, c
               "folders, and AGENTS.md keeps the team's lines and its house rules.")
 
 
-def _fast_test(top: Path, test: str) -> str:
+def _fast_test(top: Path) -> str:
     """A changed-only command for the repo's test tool, or "" when Forge doesn't recognise it."""
-    # Whatever runs pytest (uv run, a cd, an interpreter's -m) runs the selection too.
-    if called := re.match(r"(.*?)(?:(\S+)\s+-m\s+)?pytest", test):
-        return f"{called[1]}{called[2] or 'python'} {PYTEST_CHANGED}"
     # ponytail: npm only; a yarn or pnpm repo's agent proposes its own.
     if not (top / "package-lock.json").is_file():
         return ""
@@ -140,7 +114,8 @@ def _fast_test(top: Path, test: str) -> str:
         return ""
     tools = {**package.get("dependencies", {}), **package.get("devDependencies", {})}
     return ("npm ci && npx vitest run --changed {base} --passWithNoTests" if "vitest" in tools
-            else "npm ci && npx jest --changedSince {base} --passWithNoTests" if "jest" in tools else "")
+            else "npm ci && npx jest --changedSince {base} --passWithNoTests" if "jest" in tools
+            else "")
 
 
 def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
@@ -161,7 +136,7 @@ def _scaffold(top: Path) -> dict[str, str]:
     test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
     return {
         "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
-                                fast_test=_fast_test(top, test)),
+                                fast_test=_fast_test(top)),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()},
         "plans/roadmap.json": ROADMAP,
@@ -338,7 +313,7 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
     # Forge's own check gates each pull request once Forge is on the default branch.
     checks = [*args.checks, *(["forge-pr-check"] if "forge-pr-check" not in args.checks else [])]
     toml = _settings("live", args.test, checks, args.interfaces, merge="human",
-                     fast_test=_fast_test(top, args.test))
+                     fast_test=_fast_test(top))
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
     # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
     # already there with other text is the team's, and adoption stops before changing anything.
