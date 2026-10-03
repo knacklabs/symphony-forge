@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
+      "kind": "bug",
+      "path": "tests/test_new_and_existing_repo_planning.py",
+      "line": 34,
+      "text": "Not done: a cold read of a story without the section reports it",
+      "from": "blocking",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "kind": "edge",
+      "path": "tests/test_codex_record.py",
+      "line": 346,
+      "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_proto_deploy.py",
+      "line": 128,
+      "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

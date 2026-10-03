@@ -3,11 +3,31 @@
   "branch": "fix/features-get-planned-and-reviewed-for-fo",
   "done_when": "The story template has a '## New and existing repos' section above Risks, saying what a fresh init or adoption gets, what an existing repo gets on upgrade, and naming a test for each; the cold read reports a story whose section is missing or covers only one side; the review instructions check the upgrade path of an existing repo; the fix brief and skill say a fix states both sides in one line. One command-level test: a cold read of a story without the section reports it.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "7123dad7bc1a69d09c8d34c514b9977cfd84228bbd8b995454c72887c18ea74a",
+    "commit": "02c7c91e1269fad1f0fffb4e1f9086a2de57d446",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The only test that checks the actual cold-read finding is skipped unless live Codex is enabled and installed, and the supplied close run explicitly skipped it. The required tests workflow also leaves it disabled (.github/workflows/forge.yml:23); the added smoke step is optional and conditional on credentials. The passing offline test checks only prompt delivery: its reader returns \"No findings.\" by default (tests/test_story.py:59). Consequently, required validation can pass without proving the command-level behavior promised by Done-when. Make the existing real-command test run as required validation without silently skipping it; this does not require a new command interface.",
+        "file": "tests/test_new_and_existing_repo_planning.py",
+        "line": 34,
+        "priority": "P1",
+        "title": "Not done: a cold read of a story without the section reports it"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-03T12:52:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T13:56:13+00:00",
+      "step": "review"
     }
   ],
   "why": "Features get planned and reviewed for Forge's own repo or a fresh init only, so existing client repos on older Forge versions get skipped or broken on upgrade",
