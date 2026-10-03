@@ -17,7 +17,9 @@ from test_worker import calls
 ITEM, BRANCH = "tidy-readme", "fix/tidy-readme"
 URL = "https://github.com/acme/shop/pull/7"
 RUNS = ["api", "--paginate", "--jq", ".check_runs[]"]
-STEPS = re.compile(r"(Building|Closing|Checks are still|Fix round|Re-running|Merging|Stopped"
+# forge work's own "Building <item> with <worker> ..." line is not one of land's steps.
+STEPS = re.compile(r"(Building(?! \S+ with )|Closing|Checks are still|Fix round|Re-running"
+                   r"|Merging|Stopped"
                    r"|\S+ is ready; a human)")
 
 # In front of the stub gh: a pull request whose head is the remote branch's, a squash merge done

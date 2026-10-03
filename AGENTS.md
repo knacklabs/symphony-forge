@@ -26,6 +26,15 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 - **Fix:** a small change, started with `forge fix start "<why>" --done "<done when>"`.
   Specs, decisions, the roadmap and discovery notes ship as fixes.
 
+### Who builds
+
+`forge.toml`'s `workers` picks who builds; `forge work` and `forge next` name the worker for
+each item:
+
+- `codex`: every task and fix on Codex, user-facing ones with the design model's codex entry.
+- `claude`: every task and fix on Claude.
+- `split`: user-facing story tasks on Claude, everything else on Codex.
+
 ### Rules
 
 - Never commit to the default branch. Work happens on a story, task or fix branch, and the

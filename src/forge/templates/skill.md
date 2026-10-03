@@ -41,7 +41,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch it puts Forge's files in its own fix: `forge close <fix>`, then merge it like any other. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
 | "Set up a new repo" | `forge init` |
 | "Bring our live app into Forge" | Adopt a live app, below |
-| "Switch to Codex workers" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
+| "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Upgrade Forge" | Upgrade Forge, below |
 
 The human approves stories and chooses between options. In a client repo before the default
@@ -394,6 +394,16 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+
+`forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
+model and effort it starts with, and why; `forge next` names the worker beside each ready task:
+
+- `codex`: everything on Codex; user-facing work uses `[models.design.codex]`.
+- `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
+- `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
+
+When the worker changes between rounds of one item, the next `forge work` starts a fresh session
+on the new worker with the whole brief and the latest review findings.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;
