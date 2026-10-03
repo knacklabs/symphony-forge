@@ -20,7 +20,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from forge import repo, sync
+from forge import machine, repo, sync
 
 if os.name == "nt":
     import msvcrt
@@ -291,6 +291,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace", **GROUP) as driver:
+        machine.started(driver.pid)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
