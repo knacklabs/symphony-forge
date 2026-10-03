@@ -1,0 +1,14 @@
+{
+  "base": "0120f11b0440fbe356a2c8cc6a6df7dd5c0f8d63",
+  "branch": "fix/forge-sync-points-git-s-merge-rule-for-t",
+  "done_when": "forge sync sets the roadmap and spotted-list merge rule to run the installed Forge (the forge command on PATH, through a forge hook subcommand), never a checkout path, so any worktree's sync leaves a rule that keeps working after that worktree is removed. New repos get it at init; existing repos get it from their next forge sync or forge doctor --fix. One command-level test: sync in a worktree, remove it, and a spotted-list merge in another worktree still merges by itself.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-03T16:54:13+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge sync points git's merge rule for the roadmap and spotted list at the checkout that ran it, so after running sync in a work folder, merges use that folder's old code (or a deleted folder) and the spotted list conflicts"
+}
