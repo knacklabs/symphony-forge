@@ -4,11 +4,23 @@
   "done_when": "The board shows the story as finished, with its outcome.",
   "kind": "story-done",
   "outcome": "forge upgrade <release> moves a repo to a new Forge release in one step: it edits the pin in a fix, syncs Forge's files with the new release and lands, and it is tested on a repo adopted on the previous release",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "b64719eb67eba302fb32412b4ccef4ab34926b2a18ee08aa10e1caceefe17254",
+    "commit": "06ba8fd219371598518b30c56bbb103c406594fe",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-03T20:10:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-03T20:12:02+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
