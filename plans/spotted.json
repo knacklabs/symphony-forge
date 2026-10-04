@@ -406,6 +406,39 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "from": "worker",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Abort source-code conflicts before scanning live Forge modules",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Include sync-managed deletions absent from the default tree",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
