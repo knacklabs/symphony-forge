@@ -2,16 +2,23 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "3d894891e2b04e3dd6baf2da0a02f38a13cf9e17b48d9d449a6f1df59d60d7c7",
-    "commit": "4781021dcf50067503b217e5cff606b765fc069b",
+    "changed": "e56134d33d711a2f1761db59acec2f467a960a11dc0778e30bc2ae38738ab193",
+    "commit": "3be658ada798cd41f3027668e820f40a03a654b3",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous retention finding remains open. `_finished` in src/forge/doctor.py:120\u2013142 still includes `fix/forge-files` when its head has a CLOSED or MERGED pull request and the worktree has no disallowed leftovers. The cleanup at lines 381\u2013387 removes its folder and branch before this call reaches `_in_fix`'s preservation guard. Closing an unmerged repair therefore lets doctor delete it and create another; merged repairs are also deleted. Exclude doctor's fixed branch from finished-work cleanup and add real-command tests for both CLOSED and MERGED cases.",
+        "body": "The new exclusion fixes the earlier deletion defect, but neither test_doctor_fix_files.py nor the existing cleanup tests exercise fix/forge-files with a CLOSED or MERGED pull request. The existing CLOSED/MERGED cases in tests/test_doctor_fix.py:256\u2013274 use fix/done and expect deletion. Removing this exclusion would therefore restore the reported defect without failing the tests. Add real-command cases for both states that verify doctor's fix folder, branch and contents survive and no replacement fix starts.",
         "file": "src/forge/doctor.py",
-        "line": 394,
+        "line": 123,
         "priority": "P1",
-        "title": "Not done: doctor never removes its own fix"
+        "title": "Not done: CLOSED and MERGED doctor-fix retention tests"
+      },
+      {
+        "body": "The latest worker changes add the finished-work retention exclusion without the required Functional check: paragraph. Earlier paragraphs cover file repairs and failed commits, but do not exercise the cleanup path with doctor's fix marked CLOSED or MERGED. Walk those cases through forge doctor --fix, verify that the folder and branch remain, and record the observed output and next step in the required paragraph.",
+        "file": "src/forge/doctor.py",
+        "line": 123,
+        "priority": "P1",
+        "title": "Not done: functional check"
       }
     ],
     "status": "blocked"
@@ -84,6 +91,10 @@
     },
     {
       "at": "2026-10-03T23:43:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T00:51:53+00:00",
       "step": "review"
     }
   ],
