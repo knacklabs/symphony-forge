@@ -1,0 +1,48 @@
+{
+  "base": "921d8f5fe72e3b63d40b2627d150256d55fc7dee",
+  "branch": "fix/test-codex-resume-s-crash-recovery-test",
+  "done_when": "On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the Codex test stub or Forge's turn handling (read the failing log with gh api repos/knacklabs/symphony-forge/actions/jobs/111366127008/logs) is fixed, the test still proves the same recovery, and it passes in CI's Windows groups on this branch. New and existing repos: test-only or stub-only unless the cause is in Forge, in which case both get the fix through the release.",
+  "flagged": [
+    "tests/test_codex_resume.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "188b8ef3e03cec94af68712f71fd6b9e23a0cd6de9676bab81bc371ba3249599",
+    "commit": "6add993e8bf39d724300e046de2e81b9ac643b83",
+    "dismissals": [
+      {
+        "because": "tests/test_codex_resume.py:54 Windows CI run 37180349591 passes all groups; the original failure has not recurred, so its cause cannot be shown from logs; the fix hardens the stub and adds a diagnostic that records the driver log if it ever recurs, which is the most this change can do",
+        "finding": 1,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "New evidence after the coordinator\u2019s ruling leaves the root-cause requirement unfinished: commit f1bbc779 explicitly corrects the earlier claim, stating that injected PermissionError proves a possible stub failure, not the cause of job 111366127008, and that the original cause remains unconfirmed. The failing job\u2019s log contains the premature-end symptom but no driver exception. I verified that run 37180349591 passed all five Windows groups, so the previous missing-CI check has evidence now; however, that passing run does not resolve the acknowledged root-cause gap. The added failure diagnostic helps investigation but does not complete it. Establish whether the reported failure follows the repaired replacement path and complete the corresponding repair and Windows verification while preserving the recovery assertions.",
+        "file": "tests/test_codex_resume.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T05:12:17+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T05:35:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T18:38:33+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "test_codex_resume's crash-recovery test fails on Windows CI across several pull requests: the held turn ends with 'Codex never reported its end' before the test sees it start, blocking unrelated merges",
+  "worker": "codex"
+}
