@@ -3,12 +3,35 @@
   "base": "921d8f5fe72e3b63d40b2627d150256d55fc7dee",
   "branch": "fix/release-124",
   "done_when": "Forge's version is 1.2.4 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, the plugin marketplace if present, and the tests that pin them).",
+  "flagged": [
+    "tests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "26727cdc80affe97b3949f5b0547f77e80b9af00facb5f92dbce0b4d4fc429ea",
+    "commit": "bb10ec45fcdb803ef6665133caf26b8fc68b7ea9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The repository's review rules require coverage of an existing client adopted on the previous release. For this release that is v1.2.3, but the adoption scenarios still use v1.2.2: tests/test_codex_turns_trust_forge_hooks.py:254 and :270, tests/test_merge_rule_survives_worktree_removal.py:40, and tests/test_upgrade_command.py:480. The changed release checks verify constants without covering that required lifecycle. Add a real v1.2.3 adoption scenario upgraded to v1.2.4 through Forge's entry point, checking the resulting client pin and synced files. The passing suite does not supply this missing scenario.",
+        "file": "tests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: Upgrade a client adopted on v1.2.3 to v1.2.4"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T05:12:26+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T05:35:19+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients need v1.2.4 for Codex hook trust, the merge-rule repair and faster closes merged since v1.2.3"
