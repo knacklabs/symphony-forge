@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump touches the version, the pin, the install scripts, sync output and the tests that pin them",
   "base": "741f19f43ab61cb0f9f4ed2aa2207387eca4301b",
   "branch": "fix/release-125",
   "done_when": "Forge's version is 1.2.5 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them).",
