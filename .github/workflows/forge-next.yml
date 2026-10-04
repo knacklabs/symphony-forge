@@ -17,25 +17,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macOS and Windows need more runners as the suite grows; Windows also needs twice the time limit.
+        # Slower platforms need more runners as the suite grows.
         include:
-          - {os: ubuntu-latest, group: 1, groups: 2, timeout: 10}
-          - {os: ubuntu-latest, group: 2, groups: 2, timeout: 10}
-          - {os: macos-latest, group: 1, groups: 4, timeout: 10}
-          - {os: macos-latest, group: 2, groups: 4, timeout: 10}
-          - {os: macos-latest, group: 3, groups: 4, timeout: 10}
-          - {os: macos-latest, group: 4, groups: 4, timeout: 10}
-          - {os: windows-latest, group: 1, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 2, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 3, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 4, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 5, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 6, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 7, groups: 8, timeout: 20}
-          - {os: windows-latest, group: 8, groups: 8, timeout: 20}
+          - {os: ubuntu-latest, group: 1, groups: 2}
+          - {os: ubuntu-latest, group: 2, groups: 2}
+          - {os: macos-latest, group: 1, groups: 4}
+          - {os: macos-latest, group: 2, groups: 4}
+          - {os: macos-latest, group: 3, groups: 4}
+          - {os: macos-latest, group: 4, groups: 4}
+          - {os: windows-latest, group: 1, groups: 8}
+          - {os: windows-latest, group: 2, groups: 8}
+          - {os: windows-latest, group: 3, groups: 8}
+          - {os: windows-latest, group: 4, groups: 8}
+          - {os: windows-latest, group: 5, groups: 8}
+          - {os: windows-latest, group: 6, groups: 8}
+          - {os: windows-latest, group: 7, groups: 8}
+          - {os: windows-latest, group: 8, groups: 8}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
