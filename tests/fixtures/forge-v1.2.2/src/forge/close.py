@@ -12,13 +12,12 @@ import json
 import os
 import re
 import subprocess
-import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, spotted, story
+from forge import __version__, checks, codex, init, repo, review, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -38,17 +37,12 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
-    "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
-                "earlier round flagged too, so Forge stops sending the worker back.",
-                'forge fix start "{why}" --done "{done}", then forge close {item} once that fix merges'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
                        "so it can't tell whether the {kind}'s files are what {pinned} writes.",
                        "uv tool install git+https://github.com/knacklabs/symphony-forge@{pinned}, "
                        "then forge close {item}"),
-    "tests_failed": ("`{command}` failed on this machine, so close stopped before the review; the "
-                     "next worker round gets its output.", "forge work {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
 }
@@ -77,42 +71,21 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
-    for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
-                           f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
-        added, _, rest = record.partition("\t")
-        _, _, path = rest.partition("\t")
-        if added == "-" and path:
-            print(f"Test fixture {path} is binary; replace it with plain text files.",
-                  file=sys.stderr)
-            return 1
-    spotted.check(top, item)
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
-    resuming = state.get("status") == "hotspot"
-    if resuming:
-        print(f"{item} carries on after the stop for {state['stop']['file']}.")
-    fresh = (not resuming and result.get("changed") ==
-             review.fingerprint("HEAD", item, top, state, f"origin/{default}"))
+    fresh = result.get("changed") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
-        # read after the merge, which may change the command
-        command = review.close_test(top, f"origin/{default}")
-        failed, tested = review.test_run(top, command, f"origin/{default}")
-        if failed:  # a review would only report the same failure
-            state.update(tests=tested, status="fixing")
-            _save(top, item, state, f"Tests of {item} failed")
-            repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
-        state.pop("tests", None)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
             result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                light=light, tested=tested)
+                                light=light)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 number = dismissal["finding"]
@@ -128,7 +101,7 @@ def close(args: argparse.Namespace) -> int:
         finally:
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
-    elif (command := review.close_test(top, f"origin/{default}")) and (
+    elif (command := repo.config(top)["test"]) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
     for number, because in dismissals:
@@ -140,33 +113,15 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
-    stopped = None
-    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if not fresh:
-        flagged = set(state.get("flagged", []))
-        files = {finding["file"] for _, finding in serious}
-        if serious and round_number >= 3 and not state.get("stop"):
-            default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
-                                         f"origin/{default}", cwd=top).split("\0"))
-            candidates = sorted(file for file in files & flagged & default_files
-                                if spotted._path(file))
-            if candidates:
-                file = candidates[0]
-                stopped = {"file": file, "why": f"Simplify {file} before {item} carries on",
-                           "done": f"{file} is simpler and behaves as it did before"}
-                state["stop"] = stopped
-        state["flagged"] = sorted(flagged | files)
-    noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
-        state.update(review=result, status="hotspot" if stopped else
-                     "fixing" if serious else "waiting for checks")
-        message = f"Review of {item}: {result['status']}"
-        if stopped:
-            message += f"; {stopped['file']} keeps breaking"
-        _save(top, item, state, message, *noted)
-    elif noted:  # a reused clean review still records what the worker spotted
-        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+        state.update(review=result, status="fixing" if serious else "waiting for checks")
+        _save(top, item, state, f"Review of {item}: {result['status']}")
+    elif result.get("tree") != (tree := review.whole_tree("HEAD", item, top, state,
+                                                          f"origin/{default}")):
+        # The clean review still covers the change; keep the v1.1.0 check's fingerprint current.
+        result["tree"] = tree
+        _save(top, item, state, f"Review of {item}: {result['status']}")
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
     _publish(top, item, state, branch, default, pr, result)
@@ -183,8 +138,6 @@ def close(args: argparse.Namespace) -> int:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     if serious:
-        if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -281,23 +234,17 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        stale = synced_changes(check)
+        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
+                          cwd=check).stdout
+        # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
+        hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=check)
+        stale = [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
         repo.git("branch", "-D", branch, cwd=top)
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
-
-
-def synced_changes(top: Path) -> list[str]:
-    """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
-    # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
-    status = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
-                      cwd=top).stdout
-    # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
-    hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
-    return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
 def _push(top: Path, branch: str) -> None:
@@ -312,9 +259,9 @@ def _push(top: Path, branch: str) -> None:
             time.sleep(wait)
 
 
-def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str) -> None:
+def _save(top: Path, item: str, state: dict[str, Any], message: str) -> None:
     repo.write_state(item, state, top)
-    repo.commit_state(message, repo.state_path(item), *paths, top=top)
+    repo.commit_state(message, repo.state_path(item), top=top)
 
 
 def _gh(top: Path, *args: str) -> str:
@@ -378,28 +325,20 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
 
 
 def _block(result: dict[str, Any], check: str) -> str:
-    """Forge's block in the pull request body: the open blocking findings plainly first, or one
-    `Review: clean` line, then the dismissed and advisory findings folded away, then the worker's
-    functional check from its commit message. Each finding is a bullet naming its --dismiss number
-    in text, since GitHub renumbers an ordered list."""
+    """Forge's block in the pull request body: every finding, numbered for --dismiss, then the
+    worker's functional check from its commit message."""
     because = {d["finding"]: d for d in result["dismissals"]}
-    blocking, rest = [], []
+    verdict = ("The review found serious problems." if result["status"] == "blocked"
+               else "The review found no serious problems.")
+    lines = [BEGIN, verdict, ""]
     for n, finding in enumerate(result["findings"], 1):
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if finding["priority"] in (("P0",) if result.get("blocking_level") == "P0" else review.SERIOUS)
-                else "advisory: " + " ".join(finding.get("body", "").split()))
-        (blocking if note == "blocks the merge" else rest).append(
-            f"- Finding {n} ({finding['priority']}): {finding['title']} "
-            f"({finding['file']}:{finding['line']}): {note}")
-    if result["status"] == "blocked":
-        lines = [BEGIN, "The review found serious problems.", "", *blocking]
-    else:
-        lines = [BEGIN, f"Review: clean, {len(because)} dismissed, {len(rest) - len(because)} advice."]
-    if rest:
-        lines += ["", "<details>", "<summary>Dismissed and advisory findings</summary>", "", *rest,
-                  "", "</details>"]
+                else "advisory")
+        lines.append(f"{n}. {finding['priority']} {finding['title']} "
+                     f"({finding['file']}:{finding['line']}): {note}")
     return "\n".join([*lines, *(["", check] if check else []), END])
 
 

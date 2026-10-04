@@ -1,0 +1,27 @@
+{
+  "branch": "task/FORGE-SPOTTED-1-STOP",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "b3e4b10b5d836783959d0572dcf80cb68d09d73207552f2ff1b01b3a609ba3a9",
+    "commit": "e5e921f2a968e0cbdfd09c7eac32414fa9148ec3",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-03T23:15:17+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-03T23:57:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T00:19:30+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}

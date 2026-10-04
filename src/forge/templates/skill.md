@@ -436,6 +436,12 @@ from the other tool is omitted so the role uses the session's model.
 
 ## Build simple
 
+Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+New repos get this rule at init; existing repos get it with `forge sync` or
+`forge doctor --fix`. The shared rule keeps working after a worktree is removed.
+Doctor repairs both paths in Git's shared local attributes, including when an older
+repo's tracked attributes only name the roadmap, without enabling excluded git hooks.
+
 Read [standards.md](standards.md) beside this skill for Forge's principles, the client's app
 rules and the build-simple ladder. Apply its rules in every phase.
 
@@ -487,6 +493,10 @@ A worker or review notes problems outside its change as spotted items, which For
 `plans/spotted.json` and nobody edits by hand. A spotted item never widens the change in hand,
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
+
+When close stops an item because a file keeps breaking, start the fix it prints without
+asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
+after that fix merges.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

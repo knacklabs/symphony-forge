@@ -13,12 +13,11 @@ import re
 import shlex
 import shutil
 import tempfile
-from datetime import date, datetime, timedelta
+from datetime import date
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, close, codex, records, repo, review, spotted, story
-from forge.task import start_base
+from forge import approval, board, close, codex, records, repo, review, story
 
 COMMANDS = [
     {
@@ -169,7 +168,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    lines = _refresh(top, trees) + (lines or _idle(top))
+    lines = _due(top) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
         if repo.is_prototype(top, cfg):
@@ -185,35 +184,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top) + _hotspots(top, trees) + lines, states
-
-
-def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
-    """Hotspots on the default branch, unless their fix already has a worktree."""
-    ref = story.landed_ref(top)
-    try:
-        items = spotted.read(top, ref)
-    except spotted.Unreadable as problem:
-        return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
-                f"listed: {problem}."]
-    hotspots = spotted.hotspots(items)
-    if not hotspots:
-        return []
-    files = set(repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top).split("\0"))
-    whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
-            for branch, path in trees.items()
-            if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
-    lines = []
-    for hotspot in hotspots:
-        path, count = hotspot["path"], hotspot["count"]
-        why, done = spotted.fix_text(path, hotspot["texts"])
-        if path not in files or why in whys:
-            continue
-        reason = (f"{count} noted problems are open there." if hotspot["reason"] == "open"
-                  else f"{count} changes had the same kind of serious review finding there.")
-        lines += [f"{path} keeps breaking: {reason}",
-                  f'Next: forge fix start "{why}" --done "{done}"']
-    return lines
+    return lines, states
 
 
 def _needs_demo_address(top: Path) -> bool:
@@ -245,8 +216,7 @@ def _due(top: Path) -> list[str]:
     keys: dict[str, list[str]] = {}
     for item in items if isinstance(items, list) else []:
         if (isinstance(item, dict) and isinstance(item.get("spec"), str)
-                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))
-                and item.get("status") != "superseded"):  # a replaced story never finishes
+                and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))):
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
@@ -264,39 +234,11 @@ def _due(top: Path) -> list[str]:
     return lines
 
 
-LOCKFILES = {"package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb", "bun.lock", "uv.lock",
-             "poetry.lock", "Cargo.lock", "go.sum"}
-REFRESH = "refresh-dependencies"
-
-
-def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
-    """A refresh fix once the default branch's lockfiles and Dockerfiles are a week old by git log.
-    fix start numbers a name already used, so a later refresh is refresh-dependencies-2, -3."""
-    if any(re.fullmatch(rf"fix/{REFRESH}(-\d+)?", branch) for branch in trees):
-        return []
-    ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "-r", "--name-only", ref, cwd=top).splitlines()
-    locks = [name for name in names if Path(name).name in LOCKFILES]
-    if not locks:
-        return []
-    docker = [name for name in names if Path(name).name == "Dockerfile"
-              or Path(name).name.startswith("Dockerfile.") or name.endswith(".Dockerfile")]
-    # ponytail: a refresh that changed no lockfile is offered again; a week later that is fine
-    last = repo.git("log", "-1", "--format=%cI", ref, "--", *locks, *docker, cwd=top)
-    if datetime.fromisoformat(repo.now()) - datetime.fromisoformat(last) <= timedelta(days=7):
-        return []
-    return ["The dependencies and base images haven't been refreshed in over a week; refresh them.",
-            'Next: forge fix start "Dependencies and base images are over a week old, so new '
-            'security advisories fail the image scan" --done "Lockfiles and base images are updated '
-            f'within their allowed ranges, the image builds and the test command passes" --slug {REFRESH}']
-
-
 def _idle(top: Path) -> list[str]:
     """Nothing in progress: discovery while the roadmap is empty and no card is filled, then its spec."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
-    if isinstance(items, list) and any(
-            not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
+    if isinstance(items, list) and items:
         return ["No story or fix is in progress.",
                 'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
                 'Next: forge fix start "<why>" --done "<done when>"']
@@ -347,13 +289,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     try:
-        doc = story.parse(text, top)
+        doc = story.parse(text)
     except ValueError as exc:
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
-        return _approval(top, key, path, title, digest, refusals, text), []
+        return _approval(top, key, path, title, digest, refusals, "\n## For the builders" in text), []
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -361,8 +303,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
-    if states and len(merged) == len(states) and not behind:
+    if states and len(merged) == len(states):
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
@@ -374,50 +315,26 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
-    if behind:
-        return lines + [behind], list(states.values())
-    merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
-               and _task(top, *after.split("/"), trees, merged_prs).get("status") == "merged"}
-    waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
-                          if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
-    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []
+    ready = [task["id"] for task in doc["tasks"]
+             if not states[task["id"]] and set(task["after"]) <= merged
              and not any(story.overlaps(task["scope"], scope) for scope in busy)]
-    # A task held back by another story's task would wait out of sight, so say which.
-    waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
-               if any(not dep.startswith(f"{key}/") for dep in deps)]
-    reread = _next_round(key, notes, doc_hash, title, required, text)
+    reread = _next_round(key, notes, doc_hash, title, required)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
     if ready:
-        rows = {task["id"]: task for task in doc["tasks"]}
-        landed = story.landed_ref(top)
-        builds = {}
-        for name in ready:
-            # A task takes forge.toml from the branch forge task start branches it from.
-            settings = story.show(top, start_base(landed, key, rows[name]), "forge.toml")
-            try:
-                cfg = (repo._config_text(settings) if settings  # pyright: ignore[reportPrivateUsage]
-                       else _report_config(top, refusals))
-            except repo.Refused:  # unreadable there: what forge next reads here
-                cfg = _report_config(top, refusals)
-            # The worker beside each task, as a shell comment so the line still pastes as a command.
-            builds[name] = repo.worker(cfg, "build", repo.user_facing(cfg, rows[name]))[0].title()
         lines += [f"{len(ready)} part{'s' if len(ready) != 1 else ''} of {title} can start now"
                   f"{'; start them together.' if len(ready) > 1 else '.'}",
-                  *(f"Next: forge task start {key}/{task}  # {builds[task]} builds it"
-                    for task in ready)]
-    if waiting:
-        lines += waiting + ([] if ready else ["Next: git fetch origin, then forge next"])
+                  *(f"Next: forge task start {key}/{task}" for task in ready)]
     return lines or [f"{title} is approved; its other parts wait for earlier parts to merge.",
                      "Next: git fetch origin, then forge next"], list(states.values())
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
-              refusals: dict[Path, str], text: str) -> list[str]:
+              refusals: dict[Path, str], builders: bool) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
-                         story.rounds(notes), text)
+                         story.rounds(notes))
     if reread:
         return reread
     try:
@@ -429,8 +346,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
         return [f"{title} can't be approved until the client's sign-off is recorded.",
                 f"Next: {approval.REFUSALS['no_signoff'][1]}"]
     why = story._text(approval.last_refusal(top)).strip().rstrip(".")  # pyright: ignore[reportPrivateUsage]
-    shown = f"plans/{key}.md" + (" from its title down to ## For the builders"
-                                 if story.BUILDERS.search(text) else "")
+    shown = f"plans/{key}.md" + (" from its title down to ## For the builders" if builders else "")
     return [f"{title} is waiting for approval" + (f" (the last answer was not recorded: {why})." if why
                                                   else "."),
             f"Next: in Claude Code, show {shown} in Plan Mode and exit Plan Mode with it as the plan",
@@ -439,10 +355,9 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
-    changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
-    hash and text."""
+    changed: `text` is the notes, `doc_hash` the doc's git hash."""
     notes = f"plans/{key}.read.md"
     record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
     done, number = int(record.get("round") or 1), story.undisposed(findings)
@@ -452,7 +367,7 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
-    elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
+    elif record.get("read_hash") != doc_hash:
         why = f"plans/{key}.md changed after round {done} of its cold read"
     else:
         return []
@@ -479,11 +394,6 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str]) -> list[str]:
     status = state.get("status") or "started"
-    if status == "hotspot":
-        stop = state["stop"]
-        return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
-                "it goes first.",
-                "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     ready = repo.ready_path(item, top)
     try:
         receipt = json.loads(ready.read_text(encoding="utf-8"))

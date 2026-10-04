@@ -307,6 +307,28 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix enables spotted-list merging in repos adopted on the previous release\tforge-sync-points-git-s-merge-rule-for-t",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 209,
+      "text": "Not done: doctor --fix enables spotted-list merging in repos adopted on the previous release",
+      "from": "blocking",
+      "item": "forge-sync-points-git-s-merge-rule-for-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tPreserve the source-repo hook exclusion during driver repair",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 209,
+      "text": "Preserve the source-repo hook exclusion during driver repair",
+      "from": "review",
+      "item": "forge-sync-points-git-s-merge-rule-for-t",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
