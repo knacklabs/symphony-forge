@@ -1,0 +1,14 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/forge-s-python-changed-test-picker-scrip",
+  "done_when": "Forge ships a Python changed-test picker that any repo can name in fast_test (for example uv run python -m forge.fasttest {base}): it runs changed test files, test files named after a changed module, and test files that import or mention it by module path, runs the full test command when shared inputs (conftest.py, pyproject.toml, lock files) change, and limits pytest to half the machine's cores; Forge's own forge.toml uses it and scripts/fast-test.py is removed; the setup step proposes it for pytest repos. Audit item 5 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New repos: proposed at setup. Existing repos: available after upgrade; their forge.toml is never rewritten. One command-level test in a small pytest repo.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T10:23:46+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's Python changed-test picker (scripts/fast-test.py) does not ship, so Python client repos either run their whole suite at close or write their own"
+}
