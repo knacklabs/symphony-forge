@@ -29,18 +29,21 @@ def _prose(text: str) -> list[str]:
 
 
 def test_36_client_apps_simple(repo, tmp_path):
-    # The page stays short and opens with Forge's 13 principles, word for word from the spec, then
-    # the 11 client-app principles the spec names, in order.
+    # Forge's principles used to open every client's standards. They now stay in Forge's review
+    # rules, word for word from the spec; the shared page opens with the 11 client-app principles.
     assert len(PAGE.splitlines()) <= 320
     forge_principles = re.findall(r"^\d+\. (.+)$", SPEC.split("\n## Principles\n")[1].split("\n## ")[0],
                                   re.M)
     names = re.search(r"client-app principles on the standards page: (.+?)\. They add", SPEC, re.S)[1]
     client_principles = re.split(r",\s+(?:and\s+)?", " ".join(names.split()).lower())
     assert len(forge_principles) == 13 and len(client_principles) == 11
-    assert re.findall(r"^## (.*)$", PAGE, re.M)[:2] == ["Forge's 13 principles",
-                                                         "The 11 client-app principles"]
-    _, forge_part, client_part, *_ = re.split(r"^## .*$", PAGE, flags=re.M)
+    assert re.findall(r"^## (.*)$", PAGE, re.M)[0] == "The 11 client-app principles"
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    review_rules = agents.split("## Review rules\n")[1].split("\n## ")[0]
+    forge_part = review_rules.split("### Forge's 13 principles\n")[1].split("\n### ")[0]
     assert re.findall(r"^\d+\. (.+)$", forge_part, re.M) == forge_principles
+    assert "FORGE_LIVE_CODEX=1" in review_rules and "codex-smoke" in review_rules
+    _, client_part, *_ = re.split(r"^## .*$", PAGE, flags=re.M)
     titles = re.findall(r"^\d+\. \*\*(.+?)\.\*\*", client_part, re.M)
     assert [title.lower() for title in titles] == client_principles
 
