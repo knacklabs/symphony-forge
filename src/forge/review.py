@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import machine, repo, spotted
-from forge.task import sections
+from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -262,11 +262,11 @@ def close_test(top: Path, base: str) -> str:
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     """Record every test stage here, including docs-only and cached skips."""
-    item = _test_item(top, repo.current_branch(top))
+    item = (branch_item(repo.current_branch(top), top) or (repo.current_branch(top), {}))[0]
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:
-        failed, report = _test_run(top, command, base)
+        failed, report = _test_run(top, command, base, item)
         outcome = ("failed" if failed else "passed" if report.startswith(
             f"`{command}` exited with status") else "skipped")
         return failed, report
@@ -274,16 +274,7 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
         repo.record_timing(top, item, "test run", start, clock, outcome)
 
 
-def _test_item(top: Path, branch: str) -> str:
-    """Find the task from its state: both story and task names can contain hyphens."""
-    if branch.startswith("task/"):
-        for path in (top / ".factory" / "stories").glob("*/tasks/*.json"):
-            if json.loads(path.read_text(encoding="utf-8")).get("branch") == branch:
-                return f"{path.parent.parent.name}/{path.stem}"
-    return branch.removeprefix("fix/").removeprefix("forge/")
-
-
-def _test_run(top: Path, command: str, base: str) -> tuple[int, str]:
+def _test_run(top: Path, command: str, base: str, item: str) -> tuple[int, str]:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
     Returns its exit status and the report: the exit status, every line that mentions a skip with
     the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
@@ -315,8 +306,7 @@ def _test_run(top: Path, command: str, base: str) -> tuple[int, str]:
             return 0, skipped
         env = {**os.environ, "FORGE_WORKER": "1",
                "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-        branch = repo.current_branch(top)
-        with repo.record_run(top, _test_item(top, branch), "test") as ran:
+        with repo.record_run(top, item, "test") as ran:
             done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                   encoding="utf-8", errors="replace")

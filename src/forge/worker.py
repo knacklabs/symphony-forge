@@ -140,27 +140,26 @@ def work(args: argparse.Namespace) -> None:
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
         outcome = "failed"
-        answered = False
-        final = ""
+        final = None
         nudged = ""
         try:
-            if design and not on_codex:
-                before = story._snapshot(top)  # pyright: ignore[reportPrivateUsage]
-                claude_model = repo.design_models(config, "claude")
+            if not on_codex:
+                before = story._snapshot(top) if design else None  # pyright: ignore[reportPrivateUsage]
+                if design:
+                    claude = ["--model", chosen["model"], "--effort", chosen["effort"]]
                 try:
-                    final = _claude(item, top, brief, fresh_brief, ["--model", claude_model["model"],
-                                                            "--effort", claude_model["effort"]],
+                    final = _claude(item, top, brief, fresh_brief, claude,
                             session, thread, None if fresh == "first turn" else fresh)
                 except (repo.Refused, OSError) as error:
                     # Only split falls back: workers = claude means Claude, even when it fails.
-                    if (config["workers"] != "split" or
+                    if (not design or config["workers"] != "split" or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
                     reason = ("claude command missing" if shutil.which("claude") is None else
                               str(error).split("\n", 1)[0].removeprefix("The worker "))
-                    codex_model = repo.design_models(config, "codex")
+                    chosen = repo.design_models(config, "codex")
                     message = (f"Claude {reason}; fell back to Codex with "
-                               f"{codex_model['model']} at {codex_model['effort']} effort.")
+                               f"{chosen['model']} at {chosen['effort']} effort.")
                     print(message, flush=True)
                     with repo.work_log(top, item).open("a", encoding="utf-8") as out:
                         out.write(message + "\n")
@@ -186,18 +185,16 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
-                    answered = True
-                    nudged = _nudge_claude(item, top, ["--model", claude_model["model"],
-                                              "--effort", claude_model["effort"]], nudge) or ""
+                    if git("status", "--porcelain", "-uall", cwd=top):
+                        print(NUDGING, flush=True)
+                        saved = codex.record(top, item)["claude"]
+                        try:
+                            nudged = _run(item, top, nudge, claude, ["--resume", saved["id"]])
+                        finally:
+                            codex._record(codex._item_file(top, item, ".json", kind),
+                                claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
                     outcome = "completed"
                     return
-            if not on_codex:
-                final = _claude(item, top, brief, fresh_brief, claude, session, thread,
-                        None if fresh == "first turn" else fresh)
-                answered = True
-                nudged = _nudge_claude(item, top, claude, nudge) or ""
-                outcome = "completed"
-                return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -207,9 +204,8 @@ def work(args: argparse.Namespace) -> None:
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
-            answered = outcome == "completed"
-            final = (result.get("text") or "").strip()
-            if outcome == "completed" and _uncommitted(top):
+            final = (result.get("text") or "") if outcome == "completed" else None
+            if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
                                   result["conversation"], "", approval, design=design)
@@ -218,13 +214,10 @@ def work(args: argparse.Namespace) -> None:
                 else:
                     nudged = (again.get("text") or "").strip()
         finally:
-            if answered:
+            if final is not None:
                 _question(top, item, kind, final, nudged)
-            repo.record_timing(top, item, "worker round", start, clock, outcome,
-                               repo.design_models(config, "codex" if on_codex else "claude")
-                               if design else repo.worker_models(config, kind.lower(),
-                                                                 "codex" if on_codex else "claude"))
-            if left := _uncommitted(top):
+            repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
+            if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
                       f"won't see them: {', '.join(line.split(maxsplit=1)[1] for line in left)}.")
         if result["status"] != "completed":
@@ -474,24 +467,6 @@ def _forget(top: Path, item: str) -> None:
     either starts fresh with the whole brief."""
     codex._record(codex._item_file(top, item, ".json", "Fix"), conversation=None, start=None,
                   head=None, claude=None)
-
-
-def _uncommitted(top: Path) -> list[str]:
-    return git("status", "--porcelain", "-uall", cwd=top).splitlines()
-
-
-def _nudge_claude(item: str, top: Path, models: list[str], nudge: str) -> str | None:
-    """When the round left changes uncommitted, continue its Claude session once with the nudge.
-    The round count stays: this finishes the round rather than starting one."""
-    if not _uncommitted(top):
-        return
-    print(NUDGING, flush=True)
-    path = codex._item_file(top, item, ".json", "Fix")
-    session = codex.record(top, item)["claude"]
-    try:
-        return _run(item, top, nudge, models, ["--resume", session["id"]])
-    finally:
-        codex._record(path, claude={**session, "head": git("rev-parse", "HEAD", cwd=top)})
 
 
 def _run(item: str, top: Path, brief: str, models: list[str],

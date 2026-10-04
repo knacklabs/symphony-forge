@@ -85,7 +85,8 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     else:  # forge/<name> is migrate's fix branch
         items = [name] if kind in ("story", "fix", "forge") else []
     for item in items:
-        if repo.ITEM.fullmatch(item) and (state := repo.read_state(item, top)) is not None:
+        if (repo.ITEM.fullmatch(item) and (state := repo.read_state(item, top)) is not None
+                and (kind != "task" or state.get("branch") == branch)):
             return item, state
     return None
 
