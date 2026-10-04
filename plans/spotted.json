@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -19,6 +30,17 @@
       "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "from": "worker",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
       "status": "open",
       "closed_by": null
     },
@@ -74,6 +96,17 @@
       "text": "[P1] Preserve the default outcome for forge land callers",
       "from": "blocking",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
       "status": "open",
       "closed_by": null
     },
@@ -210,6 +243,39 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 48,
+      "text": "Cap worker counts supplied through pytest configuration",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 82,
+      "text": "Exclude unrelated tests explicitly named by the full command",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 22,
+      "text": "Recognize source-prefixed paths and package-relative imports",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
       "kind": "edge",
       "path": "src/forge/merge.py",
@@ -228,6 +294,17 @@
       "text": "Validate fix branch names before reading their states",
       "from": "review",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
       "status": "open",
       "closed_by": null
     },
@@ -272,50 +349,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "from": "worker",
-      "item": "a-client-s-coordinating-agent-has-no-shi",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 152,
-      "text": "Preserve compatibility with the default-branch PR checker",
-      "from": "blocking",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 149,
-      "text": "Canonicalize raw diff ordering before hashing",
-      "from": "review",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 28,
-      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
-      "from": "blocking",
-      "item": "windows-eight",
       "status": "open",
       "closed_by": null
     }
