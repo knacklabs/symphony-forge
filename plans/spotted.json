@@ -307,6 +307,28 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

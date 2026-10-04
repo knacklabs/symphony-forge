@@ -127,8 +127,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
-                reviewed_level: str | None = None, findings: list[Any] | None = None, *,
-                branch_diff: bool = False) -> str:
+                reviewed_level: str | None = None, findings: list[Any] | None = None) -> str:
     """What a clean review covers: changed product files, every file the review's findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
@@ -144,22 +143,11 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     # Close writes the spotted list after the review, so it never makes that review stale.
     changed.discard(spotted.PATH)
-    if branch_diff:
-        # Close alone uses both sides of the diff to reuse a review after a base-only merge.
-        # Sort header/path pairs: diff.orderFile can reorder even raw Git output.
-        raw = (repo.git("--literal-pathspecs", "diff", "--raw", "--no-abbrev", "--no-renames",
-                        "--no-ext-diff", "--no-color", "-z", ancestor, commit, "--",
-                        *sorted(changed), cwd=top) if changed else "").split("\0")
-        entries = sorted(zip(raw[::2], raw[1::2]), key=lambda entry: entry[1])
-        digest = hashlib.sha256("\0".join(
-            f"{path}\0{entry}" for entry, path in entries).encode("utf-8"))
-    else:
-        # review.changed must retain the fingerprint used by the PR base's installed checker.
-        listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-        blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
-                 if (path := entry.partition("\t")[2]) in changed}
-        digest = hashlib.sha256("\0".join(
-            f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
+    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
+    blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
+             if (path := entry.partition("\t")[2]) in changed}
+    digest = hashlib.sha256("\0".join(
+        f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
     key, _, name = item.partition("/")
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
@@ -261,29 +249,6 @@ def close_test(top: Path, base: str) -> str:
 
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
-    """Record every test stage here, including docs-only and cached skips."""
-    item = _test_item(top, repo.current_branch(top))
-    start, clock = repo.now(), time.monotonic()
-    outcome = "failed"
-    try:
-        failed, report = _test_run(top, command, base)
-        outcome = ("failed" if failed else "passed" if report.startswith(
-            f"`{command}` exited with status") else "skipped")
-        return failed, report
-    finally:
-        repo.record_timing(top, item, "test run", start, clock, outcome)
-
-
-def _test_item(top: Path, branch: str) -> str:
-    """Find the task from its state: both story and task names can contain hyphens."""
-    if branch.startswith("task/"):
-        for path in (top / ".factory" / "stories").glob("*/tasks/*.json"):
-            if json.loads(path.read_text(encoding="utf-8")).get("branch") == branch:
-                return f"{path.parent.parent.name}/{path.stem}"
-    return branch.removeprefix("fix/").removeprefix("forge/")
-
-
-def _test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
     Returns its exit status and the report: the exit status, every line that mentions a skip with
     the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
@@ -313,14 +278,11 @@ def _test_run(top: Path, command: str, base: str) -> tuple[int, str]:
         if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
             return 0, skipped
-        env = {**os.environ, "FORGE_WORKER": "1",
+        env = {**os.environ,
                "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-        branch = repo.current_branch(top)
-        with repo.record_run(top, _test_item(top, branch), "test") as ran:
-            done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                  encoding="utf-8", errors="replace")
-            ran["outcome"] = "passed" if done.returncode == 0 else "failed"
+        done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                              encoding="utf-8", errors="replace")
         if done.returncode == 0 and passed:
             passed.parent.mkdir(exist_ok=True)
             passed.touch()
@@ -495,17 +457,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             argv += [f"--{engine}-bin", str(launcher)]
         with machine.agent_slot(top, "review"):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
-                with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
-                    findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
-                    ran["outcome"] = "failed" if reason else "completed"
+                findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
-            serious = [f for f in findings if f["priority"] in SERIOUS]
-            repo.record_event(top, item, "review result", commit=head,
-                outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
-                or selected.get("effort") != "high" else "blocked" if serious else "clean")
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
@@ -513,6 +469,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 repo.refuse(("The sign-off review did not confirm GPT-6.1 Sol at high effort: "
                              "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
+            serious = [f for f in findings if f["priority"] in SERIOUS]
             if serious:
                 repo.refuse(("Customer sign-off review found a blocking issue: "
                              + "; ".join(f["title"] for f in serious) + ".",
@@ -524,13 +481,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    identity = repo.record_event(top, item, "review result", commit=head,
-                                 outcome="blocked" if any(f["priority"] in
-                                 (("P0",) if light else SERIOUS) for f in findings) else "clean")
-    return {"id": identity, "commit": head, "changed": fingerprint(head, item, top, state, base,
+    return {"commit": head, "changed": fingerprint(head, item, top, state, base,
                                                      "P0" if light else "P1", findings),
-            "branch_diff": fingerprint(head, item, top, state, base,
-                                       "P0" if light else "P1", findings, branch_diff=True),
             "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
@@ -577,7 +529,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
+                            stderr=subprocess.STDOUT)
     machine.started(proc.pid)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
