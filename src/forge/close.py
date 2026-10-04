@@ -24,7 +24,8 @@ REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "git -C {path} merge origin/{default}, fix the conflicts and commit, "
+                 "git -C {path} merge origin/{default}, follow Keeping work moving in "
+                 ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
                  "then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",

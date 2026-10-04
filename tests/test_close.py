@@ -349,7 +349,9 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            "next": re.compile(r"Next: git -C .+ merge origin/main, fix the conflicts and commit, "
+            # Recovery now points to the shipped recipe before committing the resolved merge.
+            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
+                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
                                r"then forge close tidy-readme")}
 
 
