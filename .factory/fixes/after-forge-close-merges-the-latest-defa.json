@@ -8,28 +8,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "396a368bddc124a54b60b65db08d986dc072bc22874e28ffb71fcd923bc620c5",
-    "commit": "b9818df81c2e419e05b2973492e1e1cb2f7321e2",
+    "changed": "728dcde6722529b454433c15834904232b73c3f0141bb2e856dd09d36490119c",
+    "commit": "a2534b73cacc163388d43a61dfb7a3b60ed8833d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "This replaces the fingerprint stored in `review.changed`, but the required checker still uses the old algorithm. `.github/workflows/forge.yml:31` checks out the PR base and line 41 installs Forge from that checkout; `src/forge/prcheck.py:176` then compares the recorded fingerprint with its own calculation. The supplied base's raw source confirms it hashes paths and HEAD blobs, whereas this branch hashes raw diff entries. Consequently, a review produced by this branch's close command is rejected as out of date by its required PR check, and another close cannot resolve it. Preserve compatibility with that checker during the transition. The command tests mock green GitHub checks, so they do not catch this mismatch.",
-        "file": "src/forge/review.py",
-        "line": 152,
-        "priority": "P1",
-        "title": "Preserve compatibility with the default-branch PR checker"
-      },
-      {
-        "body": "Raw output still honors `diff.orderFile`; sorting the pathspec arguments does not sort the returned records. Read-only Git checks against this branch confirmed that ordering `src/forge/templates/skill.md` first reverses the two raw records without changing any paths, modes or blob IDs. Changing this display preference therefore invalidates an unchanged review and rejects same-command dismissals at `src/forge/close.py:99`. A coordinator's local ordering preference can also make its fingerprint disagree with the PR check's default ordering. Disable configured ordering or canonicalize the raw records before hashing.",
-        "file": "src/forge/review.py",
-        "line": 149,
-        "priority": "P2",
-        "title": "Canonicalize raw diff ordering before hashing"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:21:09+00:00",
@@ -37,6 +22,10 @@
     },
     {
       "at": "2026-10-04T08:45:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T10:15:54+00:00",
       "step": "review"
     }
   ],
