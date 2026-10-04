@@ -1,0 +1,43 @@
+{
+  "base": "3caadd6446a848c50bd81aadfe62dad4d9c0afbc",
+  "branch": "fix/simplify-fasttest",
+  "done_when": "src/forge/fasttest.py is simpler and none of these happen any more: Cap worker counts supplied through pytest configuration; Exclude unrelated tests explicitly named by the full command; Recognize source-prefixed paths and package-relative imports",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "1e01e238fd0a97299c0e04ef5a76935c4acdbb1e4f5adda662973bc24a1e23bd",
+    "commit": "e00176e3fd4388014d64a28df6a8230a699aa2a5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When `tests/test_unrelated.py` is excluded, a valid command such as `pytest tests --ignore tests/test_unrelated.py -q` loses the value following `--ignore`. Pytest then rejects the modified command before running any tests. Whitespace-separated `--ignore-glob` and `--deselect` values have the same problem, including node IDs because this filter strips `::` suffixes. These are [pytest options requiring values](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py). Remove excluded positional collection arguments while preserving option/value pairs.",
+        "file": "src/forge/fasttest.py",
+        "line": 29,
+        "priority": "P2",
+        "title": "Preserve option values when removing explicit test paths"
+      },
+      {
+        "body": "At this hook, `early_config.option.maxprocesses` still contains its default, not the client's parsed setting. [Pytest 9.1.1 stores the parsed options in `known_args_namespace` before invoking this hook](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/config/__init__.py). Consequently, on an eight-core machine, `-n auto --maxprocesses=1` gets an appended `--maxprocesses=4` and starts four workers. This also overrides smaller limits from pytest configuration and `PYTEST_ADDOPTS`, in both focused and full-fallback runs. Read the parsed limit from `known_args_namespace` before taking the minimum. This preserves the coordinator's hook-based approach while addressing the newly verified parsing-order issue.",
+        "file": "src/forge/fasttest.py",
+        "line": 26,
+        "priority": "P2",
+        "title": "Honor an existing worker limit below the machine cap"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T19:26:08+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:20:28+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Simplify src/forge/fasttest.py: problems keep turning up there",
+  "worker": "codex"
+}

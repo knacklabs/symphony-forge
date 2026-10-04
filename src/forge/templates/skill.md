@@ -515,9 +515,11 @@ instead of `test`; the `tests` check keeps running the full `test`.
 For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
 Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
-mentioning its module path, such as `shop/prices.py` or `shop.prices`. It supports root packages
-and the `src/` layout, and pytest's `test_*.py` and `*_test.py` filenames. It keeps the full
-`test` command's setup and options, caps pytest-xdist at half the machine's cores, and runs the
+mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
+imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
+filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
+the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
+when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings.

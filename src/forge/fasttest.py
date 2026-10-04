@@ -1,8 +1,8 @@
 """Run a pytest repo's changed and module-related tests: python -m forge.fasttest BASE."""
 import ast
+import json
 import os
 import re
-import shlex
 import subprocess
 import sys
 import tomllib
@@ -14,12 +14,29 @@ def git_files(*args: str) -> list[str]:
                           text=True).stdout.rstrip("\0").split("\0")
 
 
-def mentions(text: str, module: str) -> bool:
+def module_parts(path: Path) -> list[str]:
+    parts = list(path.with_suffix("").parts)
+    return parts[1:] if parts[0] == "src" else parts
+
+
+def pytest_load_initial_conftests(early_config, parser, args):
+    # Let pytest parse every source of options before imposing our machine limit.
+    if hasattr(early_config.option, "numprocesses"):
+        limit = int(os.environ["PYTEST_XDIST_AUTO_NUM_WORKERS"])
+        args.append("--maxprocesses=" + str(min(limit, early_config.option.maxprocesses or limit)))
+    excluded = json.loads(os.environ.get("FORGE_FASTTEST_EXCLUDED", "[]"))
+    paths = {Path(path).resolve() for path in excluded}
+    args[:] = [arg for arg in args if Path(arg.split("::", 1)[0]).resolve() not in paths]
+    args.extend("--ignore=" + path for path in excluded)
+
+
+def mentions(file: Path, module: str) -> bool:
+    text = file.read_text("utf-8")
     # A bare word is not a module reference; qualified paths and imports are.
     path = module.replace(".", "/")
     if "." in module and re.search(r"(?<![\w.])" + re.escape(module) + r"(?![\w])", text):
         return True
-    if re.search(r"(?<![\w/])" + re.escape(path + ".py") + r"(?![\w])", text):
+    if re.search(r"(?<![\w/])(?:src/)?" + re.escape(path + ".py") + r"(?![\w])", text):
         return True
     try:
         tree = ast.parse(text)
@@ -28,9 +45,11 @@ def mentions(text: str, module: str) -> bool:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import) and any(alias.name == module for alias in node.names):
             return True
-        if isinstance(node, ast.ImportFrom) and node.level == 0:
-            if node.module == module or any(f"{node.module}.{alias.name}" == module
-                                            for alias in node.names):
+        if isinstance(node, ast.ImportFrom):
+            prefix = module_parts(file)[:-node.level] if node.level else []
+            imported = ".".join(prefix + ([node.module] if node.module else []))
+            if imported == module or any(f"{imported}.{alias.name}" == module
+                                         for alias in node.names):
                 return True
     return False
 
@@ -44,10 +63,9 @@ def main() -> int:
     environment = dict(os.environ)
     workers = str(max(1, (os.cpu_count() or 1) // 2))
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
-    # Explicit worker counts must obey the same limit as auto, including full fallback.
-    command = re.sub(r"(?<!\S)(-n\s*|--numprocesses[=\s]+)(auto|logical|\d+)(?!\S)",
-                     lambda match: match[1] + (workers if match[2] in {"auto", "logical"}
-                                              else str(min(int(match[2]), int(workers)))), command)
+    environment["PYTEST_PLUGINS"] = ",".join(filter(None, [
+        environment.get("PYTEST_PLUGINS"), "forge.fasttest"]))
+    environment.pop("FORGE_FASTTEST_EXCLUDED", None)
     if any(Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile"}
            or Path(name).name.endswith(".lock")
            or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)
@@ -63,9 +81,7 @@ def main() -> int:
             path = Path(name)
             if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
                 continue
-            parts = list(path.with_suffix("").parts)
-            if parts[0] == "src":
-                parts.pop(0)
+            parts = module_parts(path)
             if parts[-1] == "__init__":
                 parts.pop()
             if parts:
@@ -73,16 +89,14 @@ def main() -> int:
         selected = sorted(path.as_posix() for path in tests
                           if path.as_posix() in changed
                           or any(module.rsplit(".", 1)[-1] in path.name
-                                 or mentions(path.read_text("utf-8"), module)
+                                 or mentions(path, module)
                                  for module in modules))
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        ignores = ["--ignore=" + path.as_posix() for path in tests
-                   if path.as_posix() not in selected]
-        environment["PYTEST_ADDOPTS"] = (environment.get("PYTEST_ADDOPTS", "") + " "
-                                         + shlex.join(ignores))
+        environment["FORGE_FASTTEST_EXCLUDED"] = json.dumps(
+            [path.as_posix() for path in tests if path.as_posix() not in selected])
         print("Related tests: " + ", ".join(selected), flush=True)
     return subprocess.run(command, shell=True, env=environment).returncode
 
