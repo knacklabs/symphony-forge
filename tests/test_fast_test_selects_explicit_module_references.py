@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def run_fast_test(repo, *, collect_only=False):
-    command = shlex.join([sys.executable, "-m", "pytest", "tests", "-q"]
+    # Forward slashes keep Windows' executable path out of POSIX single quotes,
+    # which cmd.exe treats as literal filename characters.
+    command = shlex.join([Path(sys.executable).as_posix(), "-m", "pytest", "tests", "-q"]
                          + (["--collect-only"] if collect_only else []))
     repo.write("forge.toml", "test = " + json.dumps(command) + "\n")
     repo.write("scripts/fast-test.py", (ROOT / "scripts/fast-test.py").read_text("utf-8"))
