@@ -2,12 +2,40 @@
   "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
   "branch": "fix/when-forge-close-merges-the-default-bran",
   "done_when": "When close's merge of the default branch conflicts only in files forge sync writes, close takes the default branch's copy of those files, re-runs sync, commits the merge and continues; a conflict in any other file still stops close as today. New and existing repos: works in any repo on this release, since it uses the repo's own sync output. One command-level test: two branches that both changed the skill template merge through close without stopping, and a conflict in a code file still stops it.",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "e425f6d4852038709aaa18e08826c49a960b0f49137bbabe71aa3b8bdef1317a",
+    "commit": "42c5d223ab1835dde433d99e2a4efd1f8d3a96b3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "In Forge's source repo, a conflict in any `src/forge/*.py` module leaves conflict markers in the running checkout. Although `base` is clean, `sync.files()` scans `forge.__path__` and parses those live source files (`src/forge/sync.py:317\u2013322`), so it raises `SyntaxError` before reaching `merge --abort` or the normal conflict refusal. Close consequently leaves the merge active without its recovery instructions, and subsequent Forge commands cannot parse the checkout either. Classify non-generated conflicts without parsing conflicted source, or ensure this failure restores the existing abort/refusal behavior. The new code-conflict case uses a client-side `app.py`, so it does not exercise this failure.",
+        "file": "src/forge/close.py",
+        "line": 266,
+        "priority": "P2",
+        "title": "Abort source-code conflicts before scanning live Forge modules"
+      },
+      {
+        "body": "The default-tree inventory omits `CLAUDE.md` after sync has deleted it: `src/forge/githooks.py:74` includes that path only when it exists. If the worker modified an existing `CLAUDE.md` while the default branch ran sync and removed it, Git produces a modify/delete conflict. This check then treats it as a non-sync file and stops, even though sync manages its deletion. Recognize sync-managed deletion paths as well as outputs present on the default branch, so this case can take the default branch's deletion and continue.",
+        "file": "src/forge/close.py",
+        "line": 266,
+        "priority": "P2",
+        "title": "Include sync-managed deletions absent from the default tree"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:20:49+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:44:23+00:00",
+      "step": "review"
     }
   ],
   "why": "When forge close merges the default branch, the copies of the skill and guide that forge sync writes conflict on almost every busy day, and close stops until someone takes main's copy and re-runs sync by hand",
