@@ -76,9 +76,9 @@ def walk(env, claude_payload, monkeypatch) -> dict:
     seen: dict = {}
     merged: dict[str, str] = {}  # branch -> when the human merged its pull request
 
-    def step(when: str, *args: str):
+    def step(when: str, *args: str, **options):
         monkeypatch.setenv("FORGE_NOW", f"2026-09-{when}:00+00:00")
-        done = repo.forge(*args)
+        done = repo.forge(*args, **options)
         assert done.returncode == 0, (args, done.stdout, done.stderr)
         return done
 
@@ -119,7 +119,12 @@ def walk(env, claude_payload, monkeypatch) -> dict:
         seen["close"] = step(f"{landed}:05", "close", item)
 
     seen["next"] = repo.forge("next").stdout
-    seen["done"] = step("23T11:00", "story", "done", "CART", OUTCOME)
+    # A human merge has no Forge squash message. Recording or correcting its outcome now uses
+    # an existing work branch; story done itself no longer opens an outcome fix.
+    step("23T10:55", "fix", "start", "Correct the cart outcome", "--done",
+         "The board describes what the cart achieved", "--slug", "cart-done")
+    seen["done"] = step("23T11:00", "story", "done", "CART", OUTCOME,
+                        cwd=worktree(repo, "fix/cart-done"))
     step("23T11:10", "close", "cart-done")
     merge("fix/cart-done", "23T12:00")
 
@@ -148,9 +153,8 @@ def test_42_story_done(env, claude_payload, monkeypatch):
         "Every part of CART is merged.", 'Next: forge story done CART "<outcome>"']
     assert ("Every part of Shoppers can share a cart is merged; record its outcome.\n"
             'Next: forge story done CART "<outcome sentence>"') in seen["next"]
-    # It records the outcome, the finished date (the last merge) and each part's merged date,
-    # through a fix Forge made.
-    assert seen["done"].stdout.splitlines()[-1] == "Next: forge close cart-done"
+    # It retains outcome and date recording on the caller's existing correction branch.
+    assert seen["done"].stdout.splitlines()[-1] == "Next: forge next"
     made = repo.git("log", "-1", "--format=%H", "--grep=Record the outcome", "fix/cart-done")
     recorded = repo.git("show", "--format=", made, "--", ".factory/stories/CART/story.json")
     for fact in (OUTCOME, "2026-09-22T10:00:00+00:00", "2026-09-23T10:00:00+00:00"):

@@ -250,7 +250,7 @@ def _due(top: Path) -> list[str]:
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
-        if not all(story.json_of(story.show(top, ref, repo.state_path(key))).get("status") == "done"
+        if not all(story.completed(top, key, ref).get("status") == "done"
                    for key in spec_keys):
             continue
         found = records.due_check(story.show(top, ref, rel) or "", repo.now()[:10])
@@ -319,7 +319,7 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
     ref = story.landed_ref(top)
     listing = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories/", cwd=top)
     for key in re.findall(r"^\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json$", listing, re.M):
-        found[key] = (None, story.json_of(story.show(top, ref, repo.state_path(key))),
+        found[key] = (None, story.completed(top, key, ref),
                       story.show(top, ref, f"plans/{key}.md") or "")
     for key, path in story.stories_here(top).items():
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"

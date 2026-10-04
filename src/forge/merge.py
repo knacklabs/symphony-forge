@@ -10,8 +10,8 @@ from forge import checks, close, codex, repo, story, task
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
     "help": "Merge a ready item when this repo allows it",
-    "args": [(('item',), {})], "position": 160,
-    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |\n"
+    "args": [(('item',), {}), (('--outcome',), {"help": "outcome for a story's last task; defaults to its title"})], "position": 160,
+    "listing": "| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |\n"
                "| `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |",
 }]
 ENABLE = "let-the-agent-merge"
@@ -57,7 +57,7 @@ def merge(args: argparse.Namespace) -> int:
     branch = repo.current_branch(worktree)
     default = repo.default_branch(top)
     shown = repo.run("gh", "pr", "view", branch, "--json",
-                     "number,state,baseRefName,headRefName,headRefOid,title,isDraft", cwd=top)
+                     "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
     try:
         pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
@@ -72,8 +72,22 @@ def merge(args: argparse.Namespace) -> int:
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         checks.wait(top, item, head, config["checks"])
+        completion = []
+        if "/" in item:
+            key, tid = item.split("/")
+            state = story.json_of(story.show(top, head, repo.state_path(key)))
+            landed = story.completed(top, key, f"origin/{default}")
+            doc = story.show(top, head, f"plans/{key}.md") or ""
+            tasks = story.parse(doc)["tasks"]
+            if (state.get("status") != "done" and landed.get("status") != "done"
+                    and any(row["id"] == tid for row in tasks)
+                    and all(row["id"] == tid or story.merged_at(
+                        top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
+                outcome = args.outcome or state.get("title") or doc.splitlines()[0].lstrip("# ")
+                completion = ["--body", (pr.get("body") or "") + "\n\nForge-story-done: "
+                              + json.dumps({"key": key, "outcome": outcome})]
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
-                        "--subject", pr["title"], "--match-head-commit", head, cwd=top)
+                        "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
         if not merged:

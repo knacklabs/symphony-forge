@@ -82,7 +82,7 @@ developer can take over using the discovery notes and answers page. To start one
 | 7. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
 | 8. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
 | 9. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
-| 10. Close the loop | The story gets a one-line outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge story done`, `forge spec measure` |
+| 10. Close the loop | The last task's merge records the story's outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge merge --outcome`, `forge spec measure` |
 
 Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
 Each still goes through tests, review and a pull request. The agent confirms specs during this
