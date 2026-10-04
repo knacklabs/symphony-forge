@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
-| "The story is finished" | `forge story done <KEY> "<outcome>"` |
+| "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
@@ -52,6 +52,13 @@ default (`merge = "human"`), or the agent runs `forge merge <item>` for `merge =
 Forge's own repo follows its setting throughout. Never run `gh pr merge`; the agent merges only
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
+
+When `forge merge` merges a story's last task, the same squash merge records the story as done.
+Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
+uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
+extra pull request, review or CI run is needed. Stories already marked done keep their outcome.
+Use `forge story done` only to correct an outcome later, on an existing work branch that carries
+the correction through its own pull request; the command opens no branch or pull request.
 
 Give each question one line of context and a header of 12 characters or less. Use 1-5 word options
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
@@ -268,7 +275,11 @@ Adopting changes no app code.
 8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
    with the test tool's built-in changed-only option and `{base}` (for example
    `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
-   `forge.toml` through a fix. Forge writes no `fast_test` by itself.
+   `forge.toml` through a fix. For pytest repos, propose
+   `uv run python -m forge.fasttest {base}`: Forge ships this picker, which keeps the repo's
+   full `test` command and narrows pytest to changed and module-related test files. Use the
+   repo's Python runner with Forge installed; keep lint and other checks in `test`.
+   Forge writes no `fast_test` by itself.
 
 On a live app, every story and fix also follows these:
 
@@ -368,11 +379,11 @@ so with the command that merges it into the story branch; run it, then carry on.
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
   one the disposition `keep` citing that line.
 
-**Learn the traps.** After `forge story done` opens the outcome fix, look back at the story's
+**Learn the traps.** Before closing the story's last task, look back at the story's
 review rounds. For each kind of finding the plan missed that cost two or more fix rounds or hit
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
-outside Forge's block, in the outcome fix's worktree; create the section when it is missing.
-Commit it before closing the fix. Every cold read checks plans against that section.
+outside Forge's block, in the last task's worktree; create the section when it is missing.
+Commit it before closing the task. Every cold read checks plans against that section.
 Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
 done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
 trap line naming the file and the kind of problem that kept coming back.
@@ -473,19 +484,60 @@ When the pull request's `tests` check runs the full suite, recommend a fast clos
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
 instead of `test`; the `tests` check keeps running the full `test`.
-Forge's own repo uses `scripts/fast-test.py`: changed test files and tests mentioning changed
-Python module names, with at most half the machine's cores. Changes to `conftest.py`,
-`pyproject.toml` or `uv.lock` run the full test command instead.
+For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
+Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
+test files, tests whose filenames contain a changed Python module name, and tests importing or
+mentioning its module path, such as `shop/prices.py` or `shop.prices`. It supports root packages
+and the `src/` layout, and pytest's `test_*.py` and `*_test.py` filenames. It keeps the full
+`test` command's setup and options, caps pytest-xdist at half the machine's cores, and runs the
+full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+New pytest repos get this proposal at setup; existing repos get the picker and guidance after
+upgrade. Upgrade never rewrites their `test` or `fast_test` settings.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+When close merges the latest default branch, an unchanged branch diff keeps the last review and
+its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
 re-run once per pushed head instead of costing a fix round. When GitHub has not started that
 re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
 round if the check is still red.
+
+## Keeping work moving
+
+Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
+otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
+loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
+Closing section above, then run it again. Run it in the background and keep watching it.
+
+Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
+`forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
+To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
+`forge work`, `forge read` and close reviews already queue agent runs across the machine;
+close serializes test runs separately, so no private slot loop is needed.
+
+If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
+
+1. Rerun the merge command close printed. Resolve team-owned content and `forge.toml` first.
+   Keep the team's notes outside Forge's blocks in shared files such as `AGENTS.md`; never take
+   one side of a whole shared file blindly. Resolve the structure of shared Markdown, JSON and
+   TOML files so sync can read them.
+2. With the pinned Forge installed, run `forge sync` to regenerate Forge's own files and blocks.
+   For merge-driver setup or drift, use `forge sync` or `forge doctor --fix`.
+3. Reconcile story docs with their current approval and cold-read evidence, preserving the
+   approved user-facing contract and both parts' builder changes. If that contract must change,
+   use the story amendment and approval flow; do not invent or overwrite approval evidence.
+4. Check the diff and remaining conflicts, stage only resolved paths with `git add <paths>`,
+   and commit once every conflict is resolved. Then rerun `forge close <item>` or
+   `forge land <item>`.
+
+Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
+keep other ready work moving while that work finishes. Run `forge next` after each merge to
+start what was unblocked. Retry a start only after its dependency or overlap clears; follow
+other refusals' next actions instead of repeatedly retrying them.
 
 ## Hotspots
 

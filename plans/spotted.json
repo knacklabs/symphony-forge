@@ -362,6 +362,127 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 190,
+      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "from": "worker",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 86,
+      "text": "[P1] Preserve the default outcome for forge land callers",
+      "from": "blocking",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py\tNot done: Upgrade a client adopted on v1.2.3 to v1.2.4\trelease-124",
+      "kind": "bug",
+      "path": "tests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py",
+      "line": 12,
+      "text": "Not done: Upgrade a client adopted on v1.2.3 to v1.2.4",
+      "from": "blocking",
+      "item": "release-124",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 48,
+      "text": "Cap worker counts supplied through pytest configuration",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 82,
+      "text": "Exclude unrelated tests explicitly named by the full command",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 22,
+      "text": "Recognize source-prefixed paths and package-relative imports",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 84,
+      "text": "Preserve completion when sibling tasks merge concurrently",
+      "from": "review",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

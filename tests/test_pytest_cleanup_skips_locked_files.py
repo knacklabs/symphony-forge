@@ -17,6 +17,12 @@ def test_4_pytest_cleanup_skips_files_that_stay_locked(tmp_path, cleanup):
     # both encounter Windows-style persistent locks, even on a non-Windows host.
     suite = tmp_path / "suite"
     suite.mkdir()
+    # Reproduce an ancestor config selecting a collection root outside the suite,
+    # as happens when Windows runs this checkout and its temp files on different drives.
+    (tmp_path / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
+    # A parent conftest is a tripwire for collection escaping the child suite.
+    (tmp_path / "conftest.py").write_text(
+        'raise RuntimeError("Collection escaped the isolated cleanup suite")\n', encoding="utf-8")
     harness = Path(__file__).with_name("conftest.py").read_text("utf-8")
     (suite / "conftest.py").write_text(harness + '''
 _real_unlink = os.unlink
@@ -43,14 +49,18 @@ def test_locked_files(tmp_path):
             (old / f"{number}.locked").write_text("locked", encoding="utf-8")
         options = ["-o", "tmp_path_retention_count=0"]
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", str(suite), "-q", *options,
+        # Without a cutoff pytest scans shared temp ancestors; Windows' same-file
+        # checks then fail if another test deletes a directory during collection.
+        [sys.executable, "-m", "pytest", str(suite), "--confcutdir", str(suite), "-q", *options,
          "-o", "tmp_path_retention_policy=failed"],
         capture_output=True, text=True, encoding="utf-8", timeout=15,
         env={**os.environ, "PYTEST_DEBUG_TEMPROOT": str(base)},
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "1 passed" in result.stdout
-    assert list(base.rglob("*.locked")), "Cleanup must leave the files it cannot delete"
+    assert sorted(path.name for path in base.rglob("*.locked")) == [
+        f"{number}.locked" for number in range(4)
+    ], "Cleanup must leave every file it cannot delete"
     # Numbered-folder cleanup can visit the same garbage folder twice, but must
     # never spend the file helpers' 100 retries on each persistent lock.
     attempts = Counter((suite / "attempts").read_text("utf-8").splitlines())
