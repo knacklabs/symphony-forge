@@ -8,21 +8,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "ac0d94f95dd8e80595779300fb1f19848b5224364d8ee553ff47e97bb2d8345c",
-    "commit": "08de09a1d178cd6f354e83ed030539069a6b0b32",
+    "changed": "ce64e1cb8a64591e0f984fddc41e62971277bc1407836d3f42b70d06f72f40ea",
+    "commit": "de858893f619f591de220ca63ff0a55c97ef5726",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Two existing workflow tests still require five Windows groups: `tests/test_ci_platform_group_counts.py:13` supplies count 5 to the exact matrix assertion at line 20, and `tests/test_fix_windows_test_jobs_are_cancelled_at_their.py:21` asserts exactly five Windows entries with 20-minute limits. Both assertions fail against this eight-group matrix. CI runs the full `tests` directory (`.github/workflows/forge-next.yml:45`), so the workflow tests will fail despite the successful close run, which selected only `tests/test_rules.py`. Update both stale expectations to eight while retaining their timeout checks.",
-        "file": ".github/workflows/forge-next.yml",
-        "line": 28,
-        "priority": "P1",
-        "title": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass."
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:28:25+00:00",
@@ -30,6 +22,10 @@
     },
     {
       "at": "2026-10-04T11:20:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T11:44:33+00:00",
       "step": "review"
     }
   ],
