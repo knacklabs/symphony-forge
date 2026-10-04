@@ -428,6 +428,50 @@
       "item": "recording-that-a-story-is-done-opens-a-s",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 110,
+      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P1] Make the fast command include uncommitted changes before testing",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
+      "kind": "bug",
+      "path": "tests/test_worker_nudge_names_related_tests.py",
+      "line": 14,
+      "text": "Not done: Test related-test instructions in new and previously adopted client repos",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\t[P2] Select fast_test even when the full test command is empty",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P2] Select fast_test even when the full test command is empty",
+      "from": "review",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

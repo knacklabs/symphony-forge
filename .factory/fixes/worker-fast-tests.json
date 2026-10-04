@@ -1,0 +1,40 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/worker-fast-tests",
+  "done_when": "Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base with the default branch, or the test command when the repo has no fast_test; the commit nudge names that same command; CI keeps running the full suite. New and existing repos: every repo gets the instruction from the new release's brief and its next forge sync; a repo without fast_test behaves as today. One command-level test: the commit nudge in a repo with fast_test names the fast command with the base filled in.",
+  "flagged": [
+    "src/forge/templates/brief.md",
+    "src/forge/worker.py",
+    "tests/test_worker_nudge_names_related_tests.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d703e09abee1e895530a035114eff399bcc8c1787ecc223eacff0c85c4e85f11",
+    "commit": "0cdfe5b8ca1a8269013a6a4d66d2c4adbd3fc191",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T10:29:03+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T11:23:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T13:40:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T14:50:06+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every worker round runs the repo's whole test suite on the developer's machine before finishing, about 15-20 minutes of each 30-minute round, though CI runs the same full suite again",
+  "worker": "codex"
+}
