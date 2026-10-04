@@ -1,0 +1,16 @@
+{
+  "base": "762aa2f1221da55a538d75a6662546f3eed7143d",
+  "branch": "fix/forge-spotted-1-done",
+  "done_when": "The board shows the story as finished, with its outcome.",
+  "kind": "story-done",
+  "outcome": "Workers and reviews note problems outside their change in one shared list that merges by itself; forge next names files where problems pile up with a ready fix to simplify them; a change that keeps failing review in one file stops once for that fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T00:33:38+00:00",
+      "step": "start"
+    }
+  ],
+  "touches": 0,
+  "why": "Record that Forge learns where code keeps breaking is finished, and what it achieved."
+}
