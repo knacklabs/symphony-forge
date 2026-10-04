@@ -54,7 +54,11 @@ each item:
   "Done when" sections exactly, so a summary or a rewrite records nothing, and an edit below
   `## For the builders` needs no new approval. There is no other approval step.
 - Run long `forge work` runs in the background and keep watching them.
-- Put the rules every review of this repo must follow under `## Building Forge (this repo only)
+- Put the rules every review of this repo must follow under `## Review rules`, outside the
+  forge:begin and forge:end lines. Forge's review reads them from the default branch.
+<!-- forge:end -->
+
+## Building Forge (this repo only)
 
 Forge is a product for client repos, and this repo builds it with Forge's own process: every
 change is dogfooded on Forge itself before clients get it.
@@ -66,10 +70,6 @@ change is dogfooded on Forge itself before clients get it.
 - Every change says what a new client repo and an existing client repo each get.
 - Forge's own principles and its own test policies (such as the real-Codex tests) live here, not in
   the shared standards.
-
-## Review rules`, outside the
-  forge:begin and forge:end lines. Forge's review reads them from the default branch.
-<!-- forge:end -->
 
 ## Review rules
 
