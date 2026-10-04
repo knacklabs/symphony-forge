@@ -51,7 +51,14 @@ def save(threads):
     """Through a temporary file and a rename: Forge may end this at any moment once a turn ends,
     and a half-written store would read as empty."""
     (HERE / "threads.tmp").write_text(json.dumps(threads), encoding="utf-8")
-    os.replace(HERE / "threads.tmp", STORE)
+    for wait in (0.05,) * 100 + (0,):  # Windows readers briefly block replacing the store
+        try:
+            os.replace(HERE / "threads.tmp", STORE)
+            return
+        except PermissionError:
+            if not wait:
+                raise
+            time.sleep(wait)
 
 
 def send(**message):
@@ -548,7 +555,10 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
         time.sleep(0.05)
     else:
         work.kill()
-        pytest.fail(f"the turn never started: {work.communicate()[1]}")
+        # Forge's refusal reports only the symptom; its work log contains the driver exception.
+        # Keep it in CI output, since the temporary checkout is removed after this test fails.
+        error = work.communicate()[1]
+        pytest.fail(f"the turn never started: {error}\n{log.read_text(encoding='utf-8')}")
     saved = _saved(turns.with_suffix(".json"))
     _crash(work, saved)
     assert _lines(turns) == logged
