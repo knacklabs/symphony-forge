@@ -23,17 +23,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
-      "kind": "bug",
-      "path": "docs/guide.md",
-      "line": 190,
-      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
-      "from": "worker",
-      "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -89,17 +78,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 86,
-      "text": "[P1] Preserve the default outcome for forge land callers",
-      "from": "blocking",
-      "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -120,6 +98,28 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 110,
+      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P1] Make the fast command include uncommitted changes before testing",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
@@ -210,6 +210,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
+      "kind": "bug",
+      "path": "tests/test_worker_nudge_names_related_tests.py",
+      "line": 14,
+      "text": "Not done: Test related-test instructions in new and previously adopted client repos",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -239,6 +250,105 @@
       "text": "Preserve the source-repo hook exclusion during driver repair",
       "from": "review",
       "item": "forge-sync-points-git-s-merge-rule-for-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 203,
+      "text": "Validate fix branch names before reading their states",
+      "from": "review",
+      "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
+      "kind": "edge",
+      "path": "src/forge/upgrade.py",
+      "line": 149,
+      "text": "Exclude staged new hook shims on an upgrade rerun",
+      "from": "review",
+      "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\t[P2] Select fast_test even when the full test command is empty",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P2] Select fast_test even when the full test command is empty",
+      "from": "review",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "kind": "edge",
+      "path": "tests/test_codex_record.py",
+      "line": 346,
+      "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_proto_deploy.py",
+      "line": 128,
+      "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
+      "from": "worker",
+      "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
+      "kind": "improve",
+      "path": "src/forge/codex.py",
+      "line": 74,
+      "text": "Give forge ask a retry instruction that preserves the question",
+      "from": "review",
+      "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 190,
+      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "from": "worker",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 86,
+      "text": "[P1] Preserve the default outcome for forge land callers",
+      "from": "blocking",
+      "item": "recording-that-a-story-is-done-opens-a-s",
       "status": "open",
       "closed_by": null
     },
@@ -283,72 +393,6 @@
       "text": "Preserve completion when sibling tasks merge concurrently",
       "from": "review",
       "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
-      "kind": "edge",
-      "path": "src/forge/nextstep.py",
-      "line": 203,
-      "text": "Validate fix branch names before reading their states",
-      "from": "review",
-      "item": "FORGE-SPOTTED-1/HOT",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 149,
-      "text": "Canonicalize raw diff ordering before hashing",
-      "from": "review",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
-      "kind": "edge",
-      "path": "src/forge/upgrade.py",
-      "line": 149,
-      "text": "Exclude staged new hook shims on an upgrade rerun",
-      "from": "review",
-      "item": "FORGE-UPGRADECMD-1/UPGRADE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
-      "kind": "edge",
-      "path": "tests/test_codex_record.py",
-      "line": 346,
-      "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
-      "from": "worker",
-      "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
-      "kind": "edge",
-      "path": "tests/test_proto_deploy.py",
-      "line": 128,
-      "text": "The Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
-      "from": "worker",
-      "item": "features-get-planned-and-reviewed-for-fo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
-      "kind": "improve",
-      "path": "src/forge/codex.py",
-      "line": 74,
-      "text": "Give forge ask a retry instruction that preserves the question",
-      "from": "review",
-      "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
     }
