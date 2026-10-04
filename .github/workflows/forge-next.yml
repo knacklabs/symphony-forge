@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   tests:
@@ -35,11 +36,20 @@ jobs:
     timeout-minutes: ${{ matrix.timeout }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+      - id: parent-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
+        if: steps.parent-tests.outputs.reuse != 'true'
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
           uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits ${{ matrix.groups }} --group ${{ matrix.group }}
+        if: steps.parent-tests.outputs.reuse != 'true'
 
   net-lines:
     if: github.event_name == 'pull_request'
