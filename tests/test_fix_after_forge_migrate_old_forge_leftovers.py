@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 STORY = "FIX-AFTER-FORGE-MIGRATE-OLD-FORGE-LEFTOVERS"
-SKILL = Path(__file__).resolve().parents[1] / "docs/migrate-skill.md"
+SKILL = Path(__file__).resolve().parents[1] / "src/forge/templates/migrate-skill.md"
 
 
 def test_1_post_merge_leftover_audit_sets_cleanup_and_history_rules(repo):

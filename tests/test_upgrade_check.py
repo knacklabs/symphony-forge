@@ -71,7 +71,7 @@ def _close(env, item, where) -> None:
 
 
 def _pr_check_steps(env) -> list[str]:
-    """The forge-pr-check job's shell steps, as forge sync writes them on the default branch."""
+    """The forge-pr-check job's required shell steps, written on the default branch."""
     synced = env.tmp / "synced"
     env.repo.git("worktree", "add", "-q", "-b", "fix/sync", str(synced))
     done = env.repo.forge("sync", cwd=synced)
@@ -79,6 +79,10 @@ def _pr_check_steps(env) -> list[str]:
     job = (synced / ".github/workflows/forge.yml").read_text("utf-8").split("\n  forge-pr-check:\n")[1]
     steps = []
     for step in re.split(r"^      - ", job, flags=re.M)[1:]:
+        # Advisory reporting now has its own real-script proof in test_client_setup_and_migration;
+        # this harness preserves the required gate's output and refusal checks.
+        if "continue-on-error: true" in step:
+            continue
         found = re.search(r"^ *run: (\|\n)?(.*)", step, re.M | re.S)
         if found:
             body = found[2]
