@@ -286,10 +286,13 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     chosen = (repo.design_models(config, "codex") if design else None)
     request = {"cwd": str(checkout), "root": str(root), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": ({} if archive_thread or attach_request else
-                          {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
+                          {**settings(config, kind),
+                           **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+    if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
+        request["config"]["features.multi_agent"] = True
     if attach_request is not None:
         request.update(attach=True, **attach_request)
     if fresh_prompt is not None:

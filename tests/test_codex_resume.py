@@ -30,7 +30,7 @@ STORY = "FORGE-WARM-1"
 FIX = {**SOL, "effort": "high"}
 MODELS = {"build": SOL, "fix": FIX, "lite": {"model": "gpt-6-sol", "effort": "low"}}
 # What [models.fix] becomes on the continued conversation: Codex's own names for those settings.
-FIX_CONFIG = {"model": "gpt-6-sol", "model_reasoning_effort": "high",
+FIX_CONFIG = {"features.multi_agent": True, "model": "gpt-6-sol", "model_reasoning_effort": "high",
               "agents.default_subagent_model": "gpt-6-luna",
               "agents.default_subagent_reasoning_effort": "max"}
 LARGE = 200 * 1024

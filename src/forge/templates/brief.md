@@ -5,6 +5,9 @@ $summary
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
+- When the work splits into independent parts, spawn the repo's subagent roles: an explorer to
+  trace code paths, a tester to write tests while you build, or builders with separate files
+  edited in parallel. Run at most 3 subagents at a time. Do small tasks yourself.
 - Edit files only inside this checkout.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
