@@ -360,8 +360,8 @@
       "text": "Cap worker counts supplied through pytest configuration",
       "from": "review",
       "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "simplify-fasttest"
     },
     {
       "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
@@ -371,8 +371,8 @@
       "text": "Exclude unrelated tests explicitly named by the full command",
       "from": "review",
       "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "simplify-fasttest"
     },
     {
       "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
@@ -382,8 +382,8 @@
       "text": "Recognize source-prefixed paths and package-relative imports",
       "from": "review",
       "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "simplify-fasttest"
     },
     {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
@@ -470,6 +470,28 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 26,
+      "text": "Honor an existing worker limit below the machine cap",
+      "from": "review",
+      "item": "simplify-fasttest",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 29,
+      "text": "Preserve option values when removing explicit test paths",
+      "from": "review",
+      "item": "simplify-fasttest",
       "status": "open",
       "closed_by": null
     }
