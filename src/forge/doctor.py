@@ -119,8 +119,8 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
     found = []
     for branch, path in story.worktrees(top).items():
         # Doctor never removes its own fix; forge merge tidies it once its pull request merges.
-        if (not branch.startswith(("story/", "task/", "fix/", "forge/")) or branch == "fix/forge-files"
-                or path.resolve() in (main, top.resolve()) or (path / ".gitmodules").exists()):
+        if (not branch.startswith(("story/", "task/", "fix/", "forge/"))
+                or branch == "fix/forge-files" or path.resolve() in (main, top.resolve()) or (path / ".gitmodules").exists()):
             continue
         done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", "--limit", "100",
                         "--json", "headRefOid,state", cwd=top)
