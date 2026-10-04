@@ -83,7 +83,7 @@ def merge(args: argparse.Namespace) -> int:
                     and any(row["id"] == tid for row in tasks)
                     and all(row["id"] == tid or story.merged_at(
                         top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
-                outcome = args.outcome or state.get("title") or doc.splitlines()[0].lstrip("# ")
+                outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
                 completion = ["--body", (pr.get("body") or "") + "\n\nForge-story-done: "
                               + json.dumps({"key": key, "outcome": outcome})]
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",

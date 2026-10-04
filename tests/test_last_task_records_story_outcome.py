@@ -47,17 +47,19 @@ if args[:2] == ["pr", "merge"]:
              + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
 
 
-@pytest.mark.parametrize("history,outcome,already_done", [
-    ("new", None, False),
-    ("new", 'Shoppers keep "their" baskets.\nThey return later.', False),
-    ("adopted", None, False),
-    ("adopted", "Baskets survive a return visit.", False),
-    ("current", "Leave the original outcome alone.", True),
+@pytest.mark.parametrize("history,outcome,already_done,command", [
+    ("new", None, False, "merge"),
+    ("new", 'Shoppers keep "their" baskets.\nThey return later.', False, "merge"),
+    ("adopted", None, False, "merge"),
+    ("adopted", "Baskets survive a return visit.", False, "merge"),
+    ("current", "Leave the original outcome alone.", True, "merge"),
+    ("current", None, False, "land"),
 ])
 def test_1_last_task_merge_records_story_done_without_another_pull_request(
-        env, history, outcome, already_done):
+        env, history, outcome, already_done, command):
     # Audit: real merge/board/next commands protect the missing completion record. Existing
     # merge tests cover gates and cleanup, not story completion; no production seam is needed.
+    # land calls merge in-process without CLI defaults; its case protects that caller boundary.
     repo = env.repo
     if history == "new":
         client, remote = env.tmp / "new-client", env.tmp / "new-client.git"
@@ -125,7 +127,7 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
     head = repo.git("rev-parse", "HEAD", cwd=where)
     before = len(env.gh_calls("pr", "create"))
     github_merge(env, "task/SHOP-T1")
-    merged = repo.forge("merge", item, *(["--outcome", outcome] if outcome else []))
+    merged = repo.forge(command, item, *(["--outcome", outcome] if outcome else []))
     assert merged.returncode == 0, merged.stderr
     assert len(env.gh_calls("pr", "create")) == before
     assert len(env.gh_calls("pr", "merge")) == 1
