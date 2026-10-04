@@ -4,10 +4,13 @@ The real close command owns review reuse and dismissals; only Autoreview and Git
 """
 
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
+from conftest import FORGE_SHIM, ROOT
 from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_setup import _fresh_client
 
@@ -99,3 +102,59 @@ def test_2_close_reviews_again_when_main_changes_the_branch_diff(env):
     assert (where / "app.py").read_text() == changed
     assert env.repo.git("diff", "origin/main...HEAD", "--", "app.py", cwd=where) != before
     assert len(env.review_calls()) == 2
+
+
+@pytest.mark.parametrize("review_before_fix", [False, True], ids=["new-review", "existing-review"])
+def test_3_default_branch_checker_accepts_new_and_reused_reviews(env, review_before_fix):
+    # CI installs Forge from the PR base. Pin its actual checker and fingerprint owner, so the
+    # current close command cannot silently change the required check's record contract.
+    source = env.tmp / "base-src"
+    shutil.copytree(ROOT / "src/forge", source / "forge", ignore=shutil.ignore_patterns("__pycache__"))
+    fixture = ROOT / "tests/fixtures/pr-check-before-branch-diff"
+    for name in ("close.py", "review.py", "prcheck.py"):
+        shutil.copy(fixture / name, source / "forge" / name)
+    command = env.tmp / "base-forge"
+    command.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)), encoding="utf-8")
+
+    def base_forge(*args):
+        return subprocess.run([sys.executable, str(command), *args], cwd=env.repo.path,
+                              input="", capture_output=True, text=True, timeout=60)
+
+    close = (lambda item, *args: base_forge("close", item, *args)) if review_before_fix else env.close
+    env.commit(env.repo.path, "NEWS.md", "Old news\n")
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_fix()
+    env.reviews(blocked(finding("P1", "Greeting is missing", "NEWS.md")))
+    assert close(item).returncode == 1
+    dismissed = close(item, "--dismiss", "1", "--because", "app.py:1 the greeting is here")
+    assert dismissed.returncode == 0, dismissed.stderr
+    for after_merge in (False, True):
+        if after_merge:
+            env.commit(env.repo.path, "NEWS.md", "New news\n")
+            env.repo.git("push", "-q", "origin", "main")
+            closed = env.close(item)
+            assert closed.returncode == 0, closed.stderr
+            assert len(env.review_calls()) == 1
+        checked = base_forge(
+             "hook", "pr-check", "--base",
+             env.repo.git("rev-parse", "HEAD"), "--head",
+             env.repo.git("rev-parse", "HEAD", cwd=where), "--branch", "fix/tidy-readme")
+        assert checked.returncode == 0, checked.stdout + checked.stderr
+        assert "forge-pr-check passed for fix/tidy-readme." in checked.stdout
+
+
+def test_4_diff_order_preferences_do_not_invalidate_same_command_dismissals(env):
+    item, where = env.start_fix(changes={"app.py": "print('hello')\n", "other.py": "pass\n"})
+    env.reviews(blocked(finding("P1", "Greeting is missing")))
+    assert env.close(item).returncode == 1
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+    order = env.tmp / "diff-order"
+    order.write_text("other.py\napp.py\n", encoding="utf-8")
+    env.repo.git("config", "diff.orderFile", str(order), cwd=where)
+    moved = env.commit(env.repo.path, "NEWS.md", "New news\n")
+    env.repo.git("push", "-q", "origin", "main")
+    closed = env.close(item, "--dismiss", "1", "--because", "app.py:1 the greeting is here")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
+    assert len(env.review_calls()) == 1
+    assert "dismissed because app.py:1 the greeting is here" in body(env.gh_calls("pr", "edit")[-1])
