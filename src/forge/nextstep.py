@@ -479,6 +479,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str]) -> list[str]:
     status = state.get("status") or "started"
+    if status == "hotspot":
+        stop = state["stop"]
+        return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
+                "it goes first.",
+                "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     ready = repo.ready_path(item, top)
     try:
         receipt = json.loads(ready.read_text(encoding="utf-8"))
