@@ -2,19 +2,22 @@
   "base": "921d8f5fe72e3b63d40b2627d150256d55fc7dee",
   "branch": "fix/test-codex-resume-s-crash-recovery-test",
   "done_when": "On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the Codex test stub or Forge's turn handling (read the failing log with gh api repos/knacklabs/symphony-forge/actions/jobs/111366127008/logs) is fixed, the test still proves the same recovery, and it passes in CI's Windows groups on this branch. New and existing repos: test-only or stub-only unless the cause is in Forge, in which case both get the fix through the release.",
+  "flagged": [
+    "tests/test_codex_resume.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "5c44173e5a2451c441d42ce57337452f6706e636ecb921fc498d6624ec31637e",
-    "commit": "a824c9544b75093f67399be93b35be8ba1e0df23",
+    "changed": "188b8ef3e03cec94af68712f71fd6b9e23a0cd6de9676bab81bc371ba3249599",
+    "commit": "6add993e8bf39d724300e046de2e81b9ac643b83",
     "dismissals": [],
     "findings": [
       {
-        "body": "The completion criterion explicitly requires passing this branch's Windows CI groups. The head commit's validation notes state: \"Windows groups have not run on this branch.\" The supplied close run establishes four local passes, but does not satisfy that platform-specific check. The Windows groups already exist in `.github/workflows/forge-next.yml:28`, and line 42 runs the suite containing both affected test files. Run those groups on this branch and confirm that the crash-recovery test passes before marking the fix complete. This is an outstanding acceptance check, not a request to change Forge or weaken the recovery assertions.",
+        "body": "New evidence after the coordinator\u2019s ruling leaves the root-cause requirement unfinished: commit f1bbc779 explicitly corrects the earlier claim, stating that injected PermissionError proves a possible stub failure, not the cause of job 111366127008, and that the original cause remains unconfirmed. The failing job\u2019s log contains the premature-end symptom but no driver exception. I verified that run 37180349591 passed all five Windows groups, so the previous missing-CI check has evidence now; however, that passing run does not resolve the acknowledged root-cause gap. The added failure diagnostic helps investigation but does not complete it. Establish whether the reported failure follows the repaired replacement path and complete the corresponding repair and Windows verification while preserving the recovery assertions.",
         "file": "tests/test_codex_resume.py",
         "line": 54,
         "priority": "P1",
-        "title": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b"
+        "title": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably"
       }
     ],
     "status": "blocked"
@@ -27,6 +30,10 @@
     },
     {
       "at": "2026-10-04T05:35:37+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T18:38:33+00:00",
       "step": "review"
     }
   ],
