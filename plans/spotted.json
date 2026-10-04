@@ -274,6 +274,17 @@
       "item": "after-forge-close-merges-the-latest-defa",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
