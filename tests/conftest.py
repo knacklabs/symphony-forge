@@ -148,8 +148,12 @@ class Repo:
         self.path, self.bin = path, bin_dir
 
     def git(self, *args: str, cwd: Path | None = None) -> str:
-        return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                              text=True, encoding="utf-8").stdout.strip()
+        try:
+            return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
+                                  text=True, encoding="utf-8").stdout.strip()
+        except subprocess.CalledProcessError as error:
+            error.add_note(error.stdout + error.stderr)
+            raise
 
     def forge(self, *args: str, input: str = "", cwd: Path | None = None,
               ) -> subprocess.CompletedProcess[str]:

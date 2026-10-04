@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, spotted, story
+from forge import __version__, checks, codex, init, repo, review, spotted, story, sync
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -263,6 +263,7 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
+    cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
@@ -271,6 +272,28 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if not files:
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
+    # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
+    with tempfile.TemporaryDirectory() as folder:
+        base = Path(folder) / "default"
+        repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
+        try:
+            generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+            if cfg.get("repo") == "forge-source":
+                generated.add("docs/commands.md")
+        finally:
+            repo.git("worktree", "remove", "-f", str(base), cwd=top)
+    if set(files) <= generated:
+        repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
+                 *files, cwd=top)
+        done = repo.run("forge", "sync", cwd=top)
+        if done.returncode:
+            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
+                                                done.stderr)
+        changed = [path for path in synced_changes(top) if path in generated]
+        if changed:
+            repo.git("add", "-A", "--", *changed, cwd=top)
+        repo.git("commit", "-q", "--no-edit", cwd=top)
+        return
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
