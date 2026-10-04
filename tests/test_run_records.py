@@ -154,6 +154,12 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
         from conftest import ROOT, _install
         sdk = request.getfixturevalue('sdk_data')
         monkeypatch.setenv('XDG_DATA_HOME', str(sdk))
+        # Every Codex turn now requires project trust so Forge's hooks run, including cold reads.
+        home = repo.path.parent / 'reader-codex-home'
+        home.mkdir()
+        (home / 'config.toml').write_text(
+            f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', 'utf-8')
+        monkeypatch.setenv('CODEX_HOME', str(home))
         _install(repo.bin, 'codex-app-server',
                  (ROOT / 'tests' / 'stubs' / 'codex-app-server').read_text('utf-8'))
         require_worker_environment(repo.bin / 'codex-app-server')
