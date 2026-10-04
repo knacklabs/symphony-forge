@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import shutil
 import subprocess
@@ -18,7 +19,6 @@ def run_fast_test(repo, *, collect_only=False):
     command = shlex.join([Path(sys.executable).as_posix(), "-m", "pytest", "tests", "-q"]
                          + (["--collect-only"] if collect_only else []))
     repo.write("forge.toml", "test = " + json.dumps(command) + "\n")
-    repo.write("scripts/fast-test.py", (ROOT / "scripts/fast-test.py").read_text("utf-8"))
     review = ((ROOT / "src/forge/review.py").read_text("utf-8")
               if collect_only else "# Before\n")
     repo.write("src/forge/review.py", review)
@@ -30,7 +30,8 @@ def run_fast_test(repo, *, collect_only=False):
         repo.write("tests/test_changed.py", "def test_changed():\n    assert 2 + 2 == 4\n")
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Change review module")
-    return subprocess.run([sys.executable, "scripts/fast-test.py", base], cwd=repo.path,
+    return subprocess.run([sys.executable, "-m", "forge.fasttest", base], cwd=repo.path,
+                          env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
                           capture_output=True, text=True, timeout=120)
 
 
@@ -67,7 +68,8 @@ def test_2_review_change_selects_fewer_than_a_third_of_forges_test_files(repo):
 
     assert result.returncode == 0, result.stdout + result.stderr
     selected = result.stdout.splitlines()[0].removeprefix("Related tests: ").split(", ")
-    assert "tests/test_close.py" in selected  # Mentions forge.review through its command harness.
+    # forge.reviews is a harness method, not a reference to the forge.review module.
+    assert "tests/test_close.py" not in selected
     assert "tests/test_reviews_remove_their_temp_folders.py" in selected  # Filename match.
     assert "tests/test_doctor.py" not in selected
     assert 0 < len(selected) < len(list((ROOT / "tests").rglob("test_*.py"))) / 3
