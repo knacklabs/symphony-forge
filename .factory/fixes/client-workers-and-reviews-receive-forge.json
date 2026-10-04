@@ -12,7 +12,7 @@
     "findings": [],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T10:23:16+00:00",
