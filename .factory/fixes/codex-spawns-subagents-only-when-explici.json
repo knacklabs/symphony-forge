@@ -8,21 +8,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "2ca12ecec926c27b3f8130130875779055e7ca96147e42563f2b6ba266759065",
-    "commit": "c93c4428c0c433cb5ec5dbc68ad4b5395d459cbd",
+    "changed": "c07dd2c2b332dacbb10734e5add38d24d62f57a7a02d5af8c1870fc3747c413f",
+    "commit": "ca4b9045b830f68f6d063c13c38698121fe2d460",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The invitation is added only to the full brief. When an existing Codex or Claude session resumes after upgrading and syncing, `src/forge/worker.py:127-128` requests a continued brief, and lines 389-403 return before reading this template at line 407. That brief says the earlier brief still applies, but a session started before this release never received the invitation. Both hosts therefore retain the original no-delegation behavior for existing sessions. The new previous-adoption test starts a fresh item and switches hosts, so it does not cover this path. Include the invitation in continued briefs and cover resuming pre-release sessions for both hosts.",
-        "file": "src/forge/templates/brief.md",
-        "line": 8,
-        "priority": "P1",
-        "title": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T18:40:43+00:00",
@@ -30,6 +22,10 @@
     },
     {
       "at": "2026-10-04T21:17:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T22:36:22+00:00",
       "step": "review"
     }
   ],
