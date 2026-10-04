@@ -56,6 +56,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 511,
+      "text": "Not done: every review result has a fresh id",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -65,6 +76,28 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 124,
+      "text": "Not done: the item's round number on every timing record",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: worker questions on both worker paths\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 192,
+      "text": "Not done: worker questions on both worker paths",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
@@ -144,6 +177,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_run_records.py\tNot done: run-record coverage for previously adopted client repos\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 44,
+      "text": "Not done: run-record coverage for previously adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
       "kind": "bug",
       "path": "tests/test_upgrade_command.py",
@@ -195,6 +239,17 @@
       "text": "Validate fix branch names before reading their states",
       "from": "review",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tClassify cached test stages as skipped",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 258,
+      "text": "Classify cached test stages as skipped",
+      "from": "review",
+      "item": "FORGE-MOD-1/RUNS",
       "status": "open",
       "closed_by": null
     },

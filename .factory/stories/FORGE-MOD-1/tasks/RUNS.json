@@ -1,10 +1,63 @@
 {
   "branch": "task/FORGE-MOD-1-RUNS",
-  "status": "working",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/worker.py",
+    "tests/test_run_records.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6d815960d70dda0651c74ec3e0ff817b9fa05b30dd7122bfac36342abb540a9c",
+    "commit": "5626dfb64311ad0152bfdccc98e4ac5654abe11c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If Claude asks a question while leaving uncommitted changes, a successful commit nudge replaces that answer with its own text. `_question` then records no question, allowing work and close to proceed without an answer. The design route has the same overwrite at worker.py:185. Conversely, Codex ignores a successful nudge's answer at worker.py:208\u2013210, so a question first asked there is lost. Preserve pending questions across nudges and inspect both providers' nudge answers.",
+        "file": "src/forge/worker.py",
+        "line": 192,
+        "priority": "P1",
+        "title": "Not done: worker questions on both worker paths"
+      },
+      {
+        "body": "The turn-log count includes Codex's commit-nudge turn, although that turn finishes the same worker round. After a first round containing two turns, the next invocation computes round 3; this `max` preserves that value instead of advancing the persisted round from 1 to 2. The worker, test, review and CI timings consequently carry the wrong round. Use the persisted worker-round counter once available, and cover consecutive rounds containing a nudge.",
+        "file": "src/forge/worker.py",
+        "line": 124,
+        "priority": "P1",
+        "title": "Not done: the item's round number on every timing record"
+      },
+      {
+        "body": "Sign-off reviews never reach this writer: the sign-off branch returns at review.py:508 or refuses at lines 493\u2013507. Its real caller, records.py:286, invokes `review.signoff` directly, so close's failure-result recorder cannot cover it either. Clean, blocking and failed sign-off reviews therefore produce run events but no review-result occurrence with a fresh id. Record results for this supported review path as well.",
+        "file": "src/forge/review.py",
+        "line": 511,
+        "priority": "P1",
+        "title": "Not done: every review result has a fresh id"
+      },
+      {
+        "body": "The new producer tests use freshly configured repositories already pinned to the current release. None exercises these records after upgrading a client adopted on the previous release, as the repository's review rule explicitly requires. The existing previous-release scenario at tests/test_upgrade_command.py:477 checks upgrade output and synced files, but asserts none of the new timing, occurrence or question behavior. Add that client-upgrade case to the command-boundary producer coverage.",
+        "file": "tests/test_run_records.py",
+        "line": 44,
+        "priority": "P1",
+        "title": "Not done: run-record coverage for previously adopted client repos"
+      },
+      {
+        "body": "Both cache-hit returns at review.py:296 and :302 return `SKIPPED`, whose text also starts with a backtick. This classifier therefore records them as `passed`. For example, retrying close after tests passed but the review failed appends a near-zero passed test timing despite executing no tests. Distinguish execution from cache reuse explicitly so cached stages receive the skipped outcome.",
+        "file": "src/forge/review.py",
+        "line": 258,
+        "priority": "P2",
+        "title": "Classify cached test stages as skipped"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T07:05:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:54:03+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
