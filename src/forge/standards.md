@@ -211,6 +211,11 @@ default-stack conventions, which apply only to a repo on the default stack.
 
 ## Tests
 
+Windows checklist:
+- A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
+- Tests never assume a drive letter or a '/' separator.
+- File operations in tests use the repo's lock-safe helpers where it has them.
+
 - Documentation-only changes need no new behaviour test; check claims, commands and links.
 - Every Done-when item needs an end-to-end test through the real entry point when it changes
   runtime behaviour: Forge's own command; for client apps, the running API with a real database
