@@ -8,7 +8,7 @@
     "findings": [],
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-01T15:17:01+00:00",
