@@ -210,6 +210,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 84,
+      "text": "Preserve completion when sibling tasks merge concurrently",
+      "from": "review",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
       "kind": "edge",
       "path": "src/forge/nextstep.py",

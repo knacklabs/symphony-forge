@@ -8,21 +8,21 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "c8ec9f9ad4367838521784be0454f87a6400f131d5576684a538df263b9ece92",
-    "commit": "7a6bd79182f7988a43d96c1809f249a2309ffbba",
+    "changed": "08c300a0ecf02b81fb87ddf849b164030ff86a027744bc12fb26aa908f58a81c",
+    "commit": "35cc6483d4ea914a9e1e252ff3069893de0b323d",
     "dismissals": [],
     "findings": [
       {
-        "body": "`src/forge/land.py:81` calls `merge.merge(argparse.Namespace(item=item))`, without an `outcome` attribute. When `forge land` reaches a story's last task, this new access raises an uncaught `AttributeError` before `gh pr merge`, leaving the ready task unmerged. Supply the optional argument's default for this caller, or handle its absence in merge, and cover the last-task path through `forge land`.",
+        "body": "If a story's final two independent tasks merge concurrently, both commands can inspect an origin/default snapshot where the other task is still unmerged. Both then omit the completion record, even though GitHub subsequently merges both pull requests successfully. The fetch occurs in `src/forge/repo.py:174`, before the checks wait; this predicate has no synchronization with sibling merges. Afterwards, `src/forge/story.py:630\u2013643` finds every task merged but no completion marker, so the board and `forge next` still require `forge story done`. This affects both direct merge calls and `forge land` through `src/forge/land.py:81`. Coordinate sibling merges and refresh their merge state before deciding which merge records completion.",
         "file": "src/forge/merge.py",
-        "line": 86,
-        "priority": "P1",
-        "title": "[P1] Preserve the default outcome for forge land callers"
+        "line": 84,
+        "priority": "P2",
+        "title": "Preserve completion when sibling tasks merge concurrently"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:21:29+00:00",
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-10-04T08:46:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T09:48:59+00:00",
       "step": "review"
     }
   ],
