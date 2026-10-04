@@ -11,21 +11,29 @@
   "branch": "fix/forge-close-reviews-first-and-only-then",
   "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the review is clean and the checks are green. Review storage and the required PR check stay as they are. The tests workflow forge sync writes (and Forge's own) passes at once, without running the suite, when the only change since the parent commit is Forge's review record under .factory/ and the parent commit's tests passed; any other change runs the suite as today. New and existing repos: every repo gets the workflow change on its next forge sync after upgrading. One command-level test shows the push happens before the review and Ready needs both; one test shows the workflow's quick pass applies only to a records-only commit on a tested parent.",
   "flagged": [
-    "src/forge/templates/review-tests.py"
+    "src/forge/templates/review-tests.py",
+    "tests/test_review_record_reuses_parent_tests.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "5ac5d18fed26a3107ab1c7efb50a68a7cb4500dc3a9f08139ceb1f724467d373",
-    "commit": "8d424270c876801bc069f09359d4c2c077e653bb",
+    "changed": "5b097b36f68411a16f782727cbc599f086bf8e51c02cab36f5d1826ba4a2b677",
+    "commit": "e1f3eabdab5458fee576d5410b5358da322bfbfb",
     "dismissals": [],
     "findings": [
       {
-        "body": "The parent lookup hard-codes `event=pull_request`, excluding successful push runs. Forge's own workflow also runs on main pushes (`.github/workflows/forge-next.yml:7`). Consequently, a records-only commit whose parent passed that push workflow still runs the entire suite, contrary to the promised quick pass. The same restriction appears in `.forge/review-tests.py:39` and the generated template. Accept successful parent runs from the applicable tests events while retaining the SHA and workflow checks, and cover a parent tested by a push. GitHub documents that the [event filter restricts returned runs](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-workflow).",
+        "body": "The parent lookup now accepts every event, including `pull_request_target`. The generated workflow skips its tests job for that event (`src/forge/prcheck.py:53`), so a successful run proves only the PR check passed. GitHub's [checkout source](https://raw.githubusercontent.com/actions/checkout/f9e715a95fcd1f9253f77dd28f11e88d2d6460c7/src/unsafe-pr-checkout-helper.ts) confirms that these runs use the default-branch SHA as `head_sha`. Consequently, a records-only commit whose parent is that default-branch commit can skip the suite using a successful target-event run even when its parent has no passing tests. This is new evidence beyond the previous push-event exclusion: accepting push runs is appropriate, but accepting runs that skipped tests violates the tested-parent requirement. Restrict eligible runs to events that execute tests, or verify the tests jobs themselves. Apply the same correction to `.forge/review-tests.py:42` and cover a successful target-only parent run.",
         "file": "src/forge/templates/review-tests.py",
-        "line": 39,
+        "line": 42,
         "priority": "P1",
         "title": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the"
+      },
+      {
+        "body": "This assertion only checks that the reuse guard appears somewhere in the workflow. The test executes the decision script separately and never verifies that its output controls the suite step. Removing the suite step's `if` from the generator and either checked-in workflow would leave all these assertions passing because the setup-uv guard remains, while records-only commits would run the entire suite. `test_3_forge_matrix_uses_the_same_review_record_shortcut` has the same gap. Add a workflow-contract check that verifies the condition on the actual suite step in generated client workflows and Forge's own workflow, covering both reuse and normal execution.",
+        "file": "tests/test_review_record_reuses_parent_tests.py",
+        "line": 45,
+        "priority": "P1",
+        "title": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent"
       }
     ],
     "status": "blocked"
@@ -38,6 +46,10 @@
     },
     {
       "at": "2026-10-04T13:49:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T15:38:08+00:00",
       "step": "review"
     }
   ],
