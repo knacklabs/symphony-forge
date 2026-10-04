@@ -10,7 +10,7 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "forg
 
 @pytest.mark.parametrize("runner,count,minutes", [
     ("macos-latest", 4, 10),
-    ("windows-latest", 5, 20),
+    ("windows-latest", 8, 20),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes):
     workflow = WORKFLOW.read_text(encoding="utf-8")
