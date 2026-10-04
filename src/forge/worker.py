@@ -14,7 +14,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, repo, story, task
+from forge import codex, doctor, machine, repo, review, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -29,8 +29,8 @@ LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to test and commit them."
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. Run "
-                "the repo's test command{test} in the foreground and wait for it to finish; never "
-                "leave it running in the background. Then commit your work on this branch, and end "
+                "the change's related tests{test} in the foreground and wait for them to finish; never "
+                "leave them running in the background. Then commit your work on this branch, and end "
                 "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
@@ -136,7 +136,8 @@ def work(args: argparse.Namespace) -> None:
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         start, clock = repo.now(), time.monotonic()
-        nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
+        local = review.close_test(top, f"origin/{repo.default_branch(top)}") if config["test"] else ""
+        nudge = COMMIT_NUDGE.format(test=f" (`{local}`)" if local else "")
         outcome = "failed"
         try:
             if design and not on_codex:

@@ -394,7 +394,8 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+once, telling the worker to run the change's related tests (`fast_test`, else `test`) in the
+foreground, wait for them and commit. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
