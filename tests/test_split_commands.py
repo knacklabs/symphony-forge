@@ -312,7 +312,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           '  -h, --help            show this help message and exit\n'
           '  --dismiss N\n'
           '  --because FILE:LINE_REASON\n',
- 'merge': 'usage: forge merge [-h] item\n'
+ 'merge': 'usage: forge merge [-h] [--outcome OUTCOME] item\n'
           '\n'
           'Merge a ready item when this repo allows it\n'
           '\n'
@@ -320,7 +320,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           '  item\n'
           '\n'
           'options:\n'
-          '  -h, --help  show this help message and exit\n',
+          '  -h, --help         show this help message and exit\n'
+          '  --outcome OUTCOME  outcome for a story\'s last task; defaults to its title\n',
  'spec save': 'usage: forge spec save [-h] slug\n'
               '\n'
               'Save a spec as a draft\n'
