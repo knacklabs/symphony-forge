@@ -78,6 +78,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 110,
+      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/stubs/codex-app-server",
@@ -162,6 +173,17 @@
       "text": "Not done: upgrade coverage for a repo adopted on the previous release",
       "from": "blocking",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
+      "kind": "bug",
+      "path": "tests/test_worker_nudge_names_related_tests.py",
+      "line": 14,
+      "text": "Not done: Test related-test instructions in new and previously adopted client repos",
+      "from": "blocking",
+      "item": "worker-fast-tests",
       "status": "open",
       "closed_by": null
     },
