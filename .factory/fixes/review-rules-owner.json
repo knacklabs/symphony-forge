@@ -1,0 +1,31 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/review-rules-owner",
+  "done_when": "This repo's AGENTS.md Review rules say: a crash or interrupt window under a second, or a case a simple fail-closed rule already covers, is at most P2 unless it loses data or weakens security; a request for more test variations without a failing scenario is P2; and the new-and-existing rule refers to a repo adopted on an earlier release, not the release just before.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "25c2e80396b1491fc4c41b52328d8ff241e0b2ff2c50e6eb516292739868257f",
+    "commit": "a8c12455c461de4ba9b5b40d574ea6f652f8716b",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T09:54:05+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T09:55:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T14:05:41+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The reviewer blocks on rare crash windows and on requests for more test variations, which the owner rules out, so changes spend extra rounds being dismissed by hand"
+}
