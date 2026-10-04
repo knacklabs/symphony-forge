@@ -1,0 +1,14 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/when-forge-close-merges-the-default-bran",
+  "done_when": "When close's merge of the default branch conflicts only in files forge sync writes, close takes the default branch's copy of those files, re-runs sync, commits the merge and continues; a conflict in any other file still stops close as today. New and existing repos: works in any repo on this release, since it uses the repo's own sync output. One command-level test: two branches that both changed the skill template merge through close without stopping, and a conflict in a code file still stops it.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T07:20:49+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When forge close merges the default branch, the copies of the skill and guide that forge sync writes conflict on almost every busy day, and close stops until someone takes main's copy and re-runs sync by hand"
+}
