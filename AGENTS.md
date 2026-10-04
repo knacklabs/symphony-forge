@@ -112,3 +112,4 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
   sets it); don't set it in local runs.
 - A general process rule (how to plan, build, test, review, merge or release) added only to this
   repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
+
