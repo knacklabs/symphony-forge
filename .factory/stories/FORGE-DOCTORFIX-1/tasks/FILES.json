@@ -2,23 +2,16 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "e56134d33d711a2f1761db59acec2f467a960a11dc0778e30bc2ae38738ab193",
-    "commit": "3be658ada798cd41f3027668e820f40a03a654b3",
+    "changed": "062ca518d48c3764fbd3046a7fe36a305b1598306785347b6b54db9706b3dedd",
+    "commit": "7c7ab64f754c93265210e137715df6591c8c2f2d",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new exclusion fixes the earlier deletion defect, but neither test_doctor_fix_files.py nor the existing cleanup tests exercise fix/forge-files with a CLOSED or MERGED pull request. The existing CLOSED/MERGED cases in tests/test_doctor_fix.py:256\u2013274 use fix/done and expect deletion. Removing this exclusion would therefore restore the reported defect without failing the tests. Add real-command cases for both states that verify doctor's fix folder, branch and contents survive and no replacement fix starts.",
+        "body": "After the first doctor fix merges and its local branch and folder are removed, the next repair recreates `fix/forge-files` and the same fix record. New evidence relevant to the fixed-branch ruling is the unchanged caller contract: `src/forge/close.py:341\u2013346` selects any merged pull request with that branch name, and lines 73\u201377 return success immediately. Consequently, `forge close forge-files` reports the previous pull request as merged without reviewing or publishing the new repair. Likewise, `src/forge/board.py:76\u201391` and lines 227\u2013230 classify the reused record as finished. Retain the fixed-name rule, but make these callers distinguish the current repair from an earlier merged repair. Add a real-command repair \u2192 merge \u2192 cleanup \u2192 repair \u2192 close test; the retention tests do not exercise this lifecycle.",
         "file": "src/forge/doctor.py",
-        "line": 123,
+        "line": 220,
         "priority": "P1",
-        "title": "Not done: CLOSED and MERGED doctor-fix retention tests"
-      },
-      {
-        "body": "The latest worker changes add the finished-work retention exclusion without the required Functional check: paragraph. Earlier paragraphs cover file repairs and failed commits, but do not exercise the cleanup path with doctor's fix marked CLOSED or MERGED. Walk those cases through forge doctor --fix, verify that the folder and branch remain, and record the observed output and next step in the required paragraph.",
-        "file": "src/forge/doctor.py",
-        "line": 123,
-        "priority": "P1",
-        "title": "Not done: functional check"
+        "title": "Not done: Doctor brings Forge's files up to date through a fix"
       }
     ],
     "status": "blocked"
@@ -95,6 +88,10 @@
     },
     {
       "at": "2026-10-04T00:51:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T01:23:41+00:00",
       "step": "review"
     }
   ],
