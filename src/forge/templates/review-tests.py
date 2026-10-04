@@ -39,7 +39,9 @@ def reuse() -> bool:
                 f"?head_sha={parent}&per_page=100")
     runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
                                            ".workflow_runs[]", endpoint).splitlines()]
-    matching = [r for r in runs if r.get("head_sha") == parent]
+    # Target-event runs check the PR but skip tests, so their success proves nothing here.
+    matching = [r for r in runs if r.get("head_sha") == parent
+                and r.get("event") in {"push", "pull_request"}]
     latest = max(matching, key=lambda r: r["id"], default={})
     return latest.get("status") == "completed" and latest.get("conclusion") == "success"
 

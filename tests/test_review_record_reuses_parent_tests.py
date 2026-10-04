@@ -1,5 +1,6 @@
 """Generated workflows reuse a tested parent only for a Forge review-record commit."""
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -14,8 +15,21 @@ from test_setup import _fresh_client
 STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
+def suite_runs(workflow, reuse):
+    # Inspect the tests job's suite step, not a setup step with the same guard.
+    tests_job = re.split(r"^  [\w-]+:\n", workflow.split("\n  tests:\n", 1)[1],
+                         maxsplit=1, flags=re.M)[0]
+    steps = re.split(r"^      - ", tests_job, flags=re.M)[1:]
+    [suite] = [step for step in steps if step.startswith("run:")
+               and ".forge/review-tests.py" not in step]
+    condition = re.search(r"^        if: steps\.parent-tests\.outputs\.reuse != '([^']+)'$",
+                          suite, re.M)
+    assert condition, "The suite step must use the parent-tests output"
+    return reuse != condition[1]
+
+
 @pytest.mark.parametrize("client_kind", ["new", "previous", "source"])
-@pytest.mark.parametrize("case", ["review", "push", "code", "other-record", "contract", "red",
+@pytest.mark.parametrize("case", ["review", "push", "target-only", "code", "other-record", "contract", "red",
                                   "pending", "missing", "api-error", "newer-red"])
 def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tmp_path,
                                                                       monkeypatch, client_kind, case):
@@ -42,7 +56,8 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     workflow = (client / ".github/workflows/forge.yml").read_text()
     # This is the public workflow command and its guard, not an imported Forge helper.
     assert "python .forge/review-tests.py" in workflow
-    assert "if: steps.parent-tests.outputs.reuse != 'true'" in workflow
+    assert not suite_runs(workflow, "true")
+    assert suite_runs(workflow, "false")
     assert "actions: read" in workflow
     record = client / ".factory/fixes/reuse-tests.json"
     record.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +85,8 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     monkeypatch.setenv("GITHUB_REPOSITORY", "acme/shop")
     output = tmp_path / "output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
-    answer = {"id": 1, "head_sha": parent, "status": "completed", "conclusion": "success"}
+    answer = {"id": 1, "head_sha": parent, "status": "completed", "conclusion": "success",
+              "event": "pull_request_target" if case == "target-only" else "pull_request"}
     if case == "red":
         answer["conclusion"] = "failure"
     if case == "pending":
@@ -96,6 +112,8 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
 
     assert done.returncode == 0, done.stderr
     assert output.read_text().strip() == ("reuse=true" if case in ("review", "push") else "reuse=false")
+    assert suite_runs(workflow, output.read_text().strip().split("=", 1)[1]) == (
+        case not in ("review", "push"))
     if case not in ("code", "other-record", "contract"):
         [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
         assert f"actions/workflows/forge.yml/runs?head_sha={parent}" in call[-1]
@@ -104,5 +122,6 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
 def test_3_forge_matrix_uses_the_same_review_record_shortcut():
     workflow = (conftest.ROOT / ".github/workflows/forge-next.yml").read_text()
     assert "python .forge/review-tests.py" in workflow
-    assert "if: steps.parent-tests.outputs.reuse != 'true'" in workflow
+    assert not suite_runs(workflow, "true")
+    assert suite_runs(workflow, "false")
     assert "actions: read" in workflow
