@@ -3,12 +3,26 @@
   "base": "741f19f43ab61cb0f9f4ed2aa2207387eca4301b",
   "branch": "fix/release-125",
   "done_when": "Forge's version is 1.2.5 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them).",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5b23c9a9969fe65285f4374a70570258a8d51c1cb33b385f31e9628a031ea215",
+    "changed": "52c2756aa34e44b43d49437ad006f2f1b38f2f4aee8f78d6391af98d8fc3dfd1",
+    "commit": "be8a001ee3e3b91f2904f1dbd38fc9da2db5bbf8",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T19:46:05+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:56:19+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients and this repo need v1.2.5 for the speedups and review rules merged since v1.2.4",
