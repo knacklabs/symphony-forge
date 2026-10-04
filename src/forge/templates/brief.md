@@ -97,6 +97,8 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
+One command-level test per rule is enough.
+
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
