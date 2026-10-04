@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, close, codex, records, repo, review, story
+from forge import approval, board, close, codex, records, repo, review, spotted, story
 from forge.task import start_base
 
 COMMANDS = [
@@ -169,7 +169,7 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    lines = _due(top) + _refresh(top, trees) + (lines or _idle(top))
+    lines = _refresh(top, trees) + (lines or _idle(top))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
         if repo.is_prototype(top, cfg):
@@ -185,7 +185,35 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return lines, states
+    return _due(top) + _hotspots(top, trees) + lines, states
+
+
+def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
+    """Hotspots on the default branch, unless their fix already has a worktree."""
+    ref = story.landed_ref(top)
+    try:
+        items = spotted.read(top, ref)
+    except spotted.Unreadable as problem:
+        return [f"{spotted.PATH} on the default branch can't be read, so no hotspots are "
+                f"listed: {problem}."]
+    hotspots = spotted.hotspots(items)
+    if not hotspots:
+        return []
+    files = set(repo.git("ls-tree", "-r", "-z", "--name-only", ref, cwd=top).split("\0"))
+    whys = {(repo.read_state(branch.partition("/")[2], path) or {}).get("why")
+            for branch, path in trees.items()
+            if re.fullmatch(r"(?:fix|forge)/[a-z0-9][a-z0-9-]*", branch)}
+    lines = []
+    for hotspot in hotspots:
+        path, count = hotspot["path"], hotspot["count"]
+        why, done = spotted.fix_text(path, hotspot["texts"])
+        if path not in files or why in whys:
+            continue
+        reason = (f"{count} noted problems are open there." if hotspot["reason"] == "open"
+                  else f"{count} changes had the same kind of serious review finding there.")
+        lines += [f"{path} keeps breaking: {reason}",
+                  f'Next: forge fix start "{why}" --done "{done}"']
+    return lines
 
 
 def _needs_demo_address(top: Path) -> bool:
@@ -451,6 +479,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str]) -> list[str]:
     status = state.get("status") or "started"
+    if status == "hotspot":
+        stop = state["stop"]
+        return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
+                "it goes first.",
+                "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     ready = repo.ready_path(item, top)
     try:
         receipt = json.loads(ready.read_text(encoding="utf-8"))

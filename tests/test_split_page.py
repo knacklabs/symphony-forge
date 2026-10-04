@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _source_repo(repo):
     repo.git("checkout", "-q", "-b", "fix/command-page")
-    repo.write("forge.toml", 'version = "v1.2.3"\nrepo = "forge-source"\n')
+    repo.write("forge.toml", 'version = "v1.2.4"\nrepo = "forge-source"\n')
     return repo
 
 

@@ -9,7 +9,14 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-SPOTTED-1.md",
-  "status": "approved",
+  "finished": "2026-10-04T00:33:14+00:00",
+  "merged": {
+    "HOT": "2026-10-03T22:09:50+00:00",
+    "SPOT": "2026-10-02T23:52:11+00:00",
+    "STOP": "2026-10-04T00:33:14+00:00"
+  },
+  "outcome": "Workers and reviews note problems outside their change in one shared list that merges by itself; forge next names files where problems pile up with a ready fix to simplify them; a change that keeps failing review in one file stops once for that fix",
+  "status": "done",
   "steps": [
     {
       "at": "2026-10-01T02:26:33+00:00",
@@ -42,6 +49,10 @@
     {
       "at": "2026-10-01T07:51:00+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-10-04T00:33:38+00:00",
+      "step": "done"
     }
   ],
   "title": "Forge learns where code keeps breaking",

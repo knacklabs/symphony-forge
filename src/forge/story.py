@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, repo, worker
+from forge import codex, machine, repo, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -217,12 +217,15 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"], why)
+        with machine.agent_slot(top, "read"):
+            done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
+                                why)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
-        with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
+        # One read per item, nothing left running, and one of the machine's agent slots.
+        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read"):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -670,12 +673,25 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
                  resume: str | None, why: str) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
-    command = ["claude", "-p", *models, "--permission-mode", "plan"]
-    if resume:
+    exe = shutil.which("claude")
+    if exe is None:
+        repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
+
+    def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
         with repo.record_run(top, target, "read", family="claude",
                              model=models[models.index("--model") + 1] if models else None) as ran:
-            done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
-            ran["outcome"] = "completed" if done.returncode == 0 else "failed"
+            with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args],
+                                  cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                  errors="replace",
+                                  env={**os.environ, "FORGE_WORKER": "1"}) as reader:
+                machine.started(reader.pid)
+                out, err = reader.communicate(text)
+            ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
+        return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
+
+    if resume:
+        done = run("--resume", resume, text=prompt)
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -684,11 +700,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
-    with repo.record_run(top, target, "read", family="claude",
-                         model=models[models.index("--model") + 1] if models else None) as ran:
-        done = repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
-        ran["outcome"] = "completed" if done.returncode == 0 else "failed"
-        return done
+    return run("--session-id", session, text=fresh_prompt)
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:

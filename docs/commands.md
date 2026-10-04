@@ -6,6 +6,7 @@
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
 | `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
+| `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
@@ -35,4 +36,5 @@
 | `forge hook deny` | Before each shell command: blocks destructive commands, `--no-verify` and `gh pr merge` |
 | `forge hook pre-commit` | The git pre-commit rules |
 | `forge hook pre-push` | The git pre-push rules |
+| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |
 | `forge hook pr-check` | The required `forge-pr-check`, run in CI from the base branch |

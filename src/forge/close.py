@@ -12,6 +12,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -37,6 +38,9 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
+                "earlier round flagged too, so Forge stops sending the worker back.",
+                'forge fix start "{why}" --done "{done}", then forge close {item} once that fix merges'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -73,13 +77,25 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     _merge_default(top, item, branch, default)
+    for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
+                           f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
+        added, _, rest = record.partition("\t")
+        _, _, path = rest.partition("\t")
+        if added == "-" and path:
+            print(f"Test fixture {path} is binary; replace it with plain text files.",
+                  file=sys.stderr)
+            return 1
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     previous = state.get("review") or {}
     result = previous
-    fresh = result.get("changed") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
+    resuming = state.get("status") == "hotspot"
+    if resuming:
+        print(f"{item} carries on after the stop for {state['stop']['file']}.")
+    fresh = (not resuming and result.get("changed") ==
+             review.fingerprint("HEAD", item, top, state, f"origin/{default}"))
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -126,11 +142,31 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
+    stopped = None
+    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if not fresh:
+        flagged = set(state.get("flagged", []))
+        files = {finding["file"] for _, finding in serious}
+        if serious and round_number >= 3 and not state.get("stop"):
+            default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
+                                         f"origin/{default}", cwd=top).split("\0"))
+            candidates = sorted(file for file in files & flagged & default_files
+                                if spotted._path(file))
+            if candidates:
+                file = candidates[0]
+                stopped = {"file": file, "why": f"Simplify {file} before {item} carries on",
+                           "done": f"{file} is simpler and behaves as it did before"}
+                state["stop"] = stopped
+        state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
-        state.update(review=result, status="fixing" if serious else "waiting for checks")
-        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+        state.update(review=result, status="hotspot" if stopped else
+                     "fixing" if serious else "waiting for checks")
+        message = f"Review of {item}: {result['status']}"
+        if stopped:
+            message += f"; {stopped['file']} keeps breaking"
+        _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
@@ -149,6 +185,8 @@ def close(args: argparse.Namespace) -> int:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     if serious:
+        if stopped:
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -245,17 +283,23 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
-                          cwd=check).stdout
-        # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
-        hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=check)
-        stale = [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
+        stale = synced_changes(check)
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
         repo.git("branch", "-D", branch, cwd=top)
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def synced_changes(top: Path) -> list[str]:
+    """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
+    # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
+    status = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=top).stdout
+    # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
+    hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
+    return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
 def _push(top: Path, branch: str) -> None:

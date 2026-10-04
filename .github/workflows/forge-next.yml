@@ -12,20 +12,24 @@ permissions:
 
 jobs:
   tests:
+    env:
+      FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     strategy:
       fail-fast: false
       matrix:
-        # Windows runs the suite 2-3x slower than Linux, so it takes three runners, each a third of the tests,
-        # and twice the time limit.
+        # macOS and Windows need more runners as the suite grows; Windows also needs twice the time limit.
         include:
-          - {os: ubuntu-latest, group: 1, groups: 1, timeout: 10}
-          - {os: macos-latest, group: 1, groups: 3, timeout: 10}
-          - {os: macos-latest, group: 2, groups: 3, timeout: 10}
-          - {os: macos-latest, group: 3, groups: 3, timeout: 10}
-          - {os: windows-latest, group: 1, groups: 4, timeout: 20}
-          - {os: windows-latest, group: 2, groups: 4, timeout: 20}
-          - {os: windows-latest, group: 3, groups: 4, timeout: 20}
-          - {os: windows-latest, group: 4, groups: 4, timeout: 20}
+          - {os: ubuntu-latest, group: 1, groups: 2, timeout: 10}
+          - {os: ubuntu-latest, group: 2, groups: 2, timeout: 10}
+          - {os: macos-latest, group: 1, groups: 4, timeout: 10}
+          - {os: macos-latest, group: 2, groups: 4, timeout: 10}
+          - {os: macos-latest, group: 3, groups: 4, timeout: 10}
+          - {os: macos-latest, group: 4, groups: 4, timeout: 10}
+          - {os: windows-latest, group: 1, groups: 5, timeout: 20}
+          - {os: windows-latest, group: 2, groups: 5, timeout: 20}
+          - {os: windows-latest, group: 3, groups: 5, timeout: 20}
+          - {os: windows-latest, group: 4, groups: 5, timeout: 20}
+          - {os: windows-latest, group: 5, groups: 5, timeout: 20}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.timeout }}
