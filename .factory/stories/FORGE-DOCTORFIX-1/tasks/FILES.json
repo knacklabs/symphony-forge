@@ -2,13 +2,13 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "7080cf092bb96aa1f4a6b20c41150ee3a8a457893c556da262eff126db4ab2da",
-    "commit": "ac94a8702a9528e1ad9e20a158e083738ba52d96",
+    "changed": "7c3fda435540b3afdd7723fe47787ca0516b83ba301c3ef5fa82cf9ea9e2b6ea",
+    "commit": "d75cfa368c36fc2ad060e4dfae741ba8bd5c86e4",
     "dismissals": [],
     "findings": [],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T15:17:01+00:00",
@@ -88,6 +88,10 @@
     },
     {
       "at": "2026-10-04T02:02:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T03:11:00+00:00",
       "step": "review"
     }
   ],
