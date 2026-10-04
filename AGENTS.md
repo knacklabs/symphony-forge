@@ -77,12 +77,6 @@ change is dogfooded on Forge itself before clients get it.
   upgrade to the new release) each get, and its tests cover both, including an existing repo adopted
   on an earlier release. Report a change that covers only one side, or only Forge's own repo, as
   P1. A release's version bump changes no behaviour and needs no new upgrade test.
-- Prefer a blunt fail-closed rule to handling every case. A crash or interrupt window under a
-  second (for example Forge killed between starting a process and recording it), or a case that a
-  simple fail-closed rule in the change already covers, is at most P2, unless it loses data or
-  weakens security, which stays P1.
-- One command-level test per rule is enough. A request for more test variations is P2 unless it
-  names a concrete scenario the current tests would pass while the code is broken.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
