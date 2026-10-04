@@ -80,6 +80,11 @@ Extra edge-case tests, platform or hardening suggestions beyond what the item pr
 they never block the merge or start another round. So an edge case the Done-when doesn't ask for,
 where the item's purpose is already met, is a P2.
 
+A crash or interrupt window under a second, or a case a simple fail-closed rule in the change
+already covers, is at most P2 unless it loses data or weakens security, which stays P1.
+One command-level test per rule is enough. A request for more test variations is P2 unless it
+names a concrete scenario the current tests would pass while the code is broken.
+
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
   naming that task;
