@@ -440,10 +440,13 @@ def _attach(top: Path, item: str, branch: str) -> None:
 
 
 def _merged(top: Path, item: str) -> int:
-    """The item's pull request merged: name `forge story done` once the story's last one has."""
+    """A merged task needs no outcome step when its merge already recorded completion."""
     print(f"The pull request for {item} is merged.")
     key, _, name = item.partition("/")
     if name:
+        if story.completed(top, key, story.landed_ref(top)).get("status") == "done":
+            print("Next: forge next")
+            return 0
         tasks = review.rows(review.task(top, item)[1].get("Tasks", ""))
         # ponytail: the newest 1,000 merged pull requests; search by branch when a repo has more.
         merged = {pr.get("headRefName") for pr in json.loads(_gh(
