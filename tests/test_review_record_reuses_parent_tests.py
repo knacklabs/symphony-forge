@@ -15,7 +15,7 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
 @pytest.mark.parametrize("client_kind", ["new", "previous", "source"])
-@pytest.mark.parametrize("case", ["review", "code", "other-record", "contract", "red",
+@pytest.mark.parametrize("case", ["review", "push", "code", "other-record", "contract", "red",
                                   "pending", "missing", "api-error", "newer-red"])
 def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tmp_path,
                                                                       monkeypatch, client_kind, case):
@@ -81,12 +81,21 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                    stdout="\n".join(json.dumps(row) for row in rows),
                    exit=1 if case == "api-error" else 0)
+    if case == "push":
+        # GitHub's event filter excludes successful push runs. The same workflow
+        # and parent SHA must qualify whether tests ran on a push or a pull request.
+        answer["event"] = "push"
+        env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
+                       stdout=json.dumps(answer))
+        env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
+                       f"repos/acme/shop/actions/workflows/forge.yml/runs"
+                       f"?head_sha={parent}&event=pull_request&per_page=100", stdout="")
 
     done = subprocess.run([sys.executable, ".forge/review-tests.py"], cwd=client,
                           capture_output=True, text=True, timeout=30)
 
     assert done.returncode == 0, done.stderr
-    assert output.read_text().strip() == ("reuse=true" if case == "review" else "reuse=false")
+    assert output.read_text().strip() == ("reuse=true" if case in ("review", "push") else "reuse=false")
     if case not in ("code", "other-record", "contract"):
         [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
         assert f"actions/workflows/forge.yml/runs?head_sha={parent}" in call[-1]

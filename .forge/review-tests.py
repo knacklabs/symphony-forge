@@ -36,7 +36,7 @@ def reuse() -> bool:
             return False
     workflow = os.environ["GITHUB_WORKFLOW_REF"].split("@", 1)[0].rsplit("/", 1)[1]
     endpoint = (f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{quote(workflow)}/runs"
-                f"?head_sha={parent}&event=pull_request&per_page=100")
+                f"?head_sha={parent}&per_page=100")
     runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
                                            ".workflow_runs[]", endpoint).splitlines()]
     matching = [r for r in runs if r.get("head_sha") == parent]
