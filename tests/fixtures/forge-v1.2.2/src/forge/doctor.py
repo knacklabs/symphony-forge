@@ -158,7 +158,7 @@ def doctor(args: argparse.Namespace) -> int:
             rows.append((f"{problem} Installing it failed: {said}", install))
         else:
             rows.append((problem, REPAIR if repairs and not args.fix else install))
-    on_codex = cfg["workers"] != "claude"  # split runs Codex and Claude
+    on_codex = cfg["workers"] == "codex"
     # Under Claude Code the cold read runs on Codex, so the SDK must be ready there too, unless
     # Codex isn't installed: a Claude-only team.
     needs_sdk = on_codex or bool(os.environ.get("CLAUDECODE")
@@ -172,7 +172,7 @@ def doctor(args: argparse.Namespace) -> int:
             sdk_failed = str(refused).partition("\nNext: ")[0]
 
     # Codex workers run the Codex program bundled with the SDK, checked below, not one on PATH.
-    for tool in ("git", "gh", "uv") if cfg["workers"] == "codex" else ("git", "gh", "uv", "claude"):
+    for tool in ("git", "gh", "uv") if on_codex else ("git", "gh", "uv", "claude"):
         if not shutil.which(tool):
             rows.append((f"{tool} is not installed or not on PATH.", INSTALL[tool]))
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode:
@@ -203,25 +203,13 @@ def doctor(args: argparse.Namespace) -> int:
     # that folder. An explicitly configured hooks folder must still be checked.
     checks_hooks = (cfg["repo"] != "forge-source" or
                     repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
-    driver = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout.strip()
-    attributes = sync.read(Path(repo.git("rev-parse", "--path-format=absolute", "--git-path",
-                                         "info/attributes", cwd=top)))
-    merge_drift = driver != sync.MERGE_DRIVER or sync.merge_attributes(attributes) != attributes
-    hooks_drift = checks_hooks and any(sync.read(path) != text
-                                      for path, text in sync.shims(top, cfg).items())
-    if hooks_drift or merge_drift:
+    if checks_hooks and any(sync.read(path) != text for path, text in sync.shims(top, cfg).items()):
         if not args.fix:
-            rows.append(("The git hooks that check each commit and push aren't installed."
-                         if hooks_drift else "The roadmap and spotted-list merge rule doesn't "
-                         "match the installed Forge.", REPAIR))
+            rows.append(("The git hooks that check each commit and push aren't installed.", REPAIR))
         else:
             try:  # never committed, so this repair runs on the default branch too
-                if hooks_drift:
-                    sync.install_shims(top, cfg)
-                else:
-                    sync.install_merge_rules(top)
-                print("- Fixed: installed the git hooks that check each commit and push."
-                      if hooks_drift else "- Fixed: installed the roadmap and spotted-list merge rule.")
+                sync.install_shims(top, cfg)
+                print("- Fixed: installed the git hooks that check each commit and push.")
             except repo.Refused as refused:
                 problem, _, fix = str(refused).partition("\nNext: ")
                 rows.append((problem, fix))
@@ -331,12 +319,11 @@ def doctor(args: argparse.Namespace) -> int:
                     or any(name in dependencies for name in ("react", "react-dom", "vue", "svelte",
                                                              "@angular/core", "next", "vite")))
     if has_frontend:
-        ui = "claude" if cfg["workers"] == "split" else cfg["workers"]  # who builds the UI
         for skill in ("impeccable", "emil-design-eng"):
             if not any((folder / "skills" / skill / "SKILL.md").is_file()
-                       for folder in skills[ui]):
+                       for folder in skills[cfg["workers"]]):
                 rows.append((f"{skill} is required for UI work but isn't installed where the "
-                             f"{ui} worker reads skills.", INSTALL[skill]))
+                             f"{cfg['workers']} worker reads skills.", INSTALL[skill]))
 
     for line in codex.tidy(top):
         print(f"- {line}")
@@ -344,10 +331,6 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"- {problem}\n  Fix: {fix}")
     if plan_note:
         print(f"- Note: {plan_note}")
-    if cfg["fast_test"]:
-        print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
-              "the merge base with the default branch; the pull request's tests check still runs "
-              "the full test command.")
     if on_codex:
         # Codex also asks the user to approve each project hook, and no outside program sees that.
         print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see "
