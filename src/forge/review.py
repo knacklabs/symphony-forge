@@ -128,7 +128,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
                 reviewed_level: str | None = None, findings: list[Any] | None = None) -> str:
-    """What a clean review covers: changed product files, every file the review's findings cite
+    """What a clean review covers: the branch's diff in product files and files its findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
@@ -143,11 +143,13 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     # Close writes the spotted list after the review, so it never makes that review stale.
     changed.discard(spotted.PATH)
-    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-    blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
-             if (path := entry.partition("\t")[2]) in changed}
-    digest = hashlib.sha256("\0".join(
-        f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
+    # Base-only changes don't invalidate decisions about an unchanged branch diff. Include both
+    # sides of the raw diff: main absorbing work changes it even if HEAD doesn't. Raw entries
+    # include modes and full blob IDs without depending on local patch rendering preferences.
+    delta = repo.git("--literal-pathspecs", "diff", "--raw", "--no-abbrev", "--no-renames",
+                     "--no-color", "-z", ancestor, commit, "--", *sorted(changed),
+                     cwd=top) if changed else ""
+    digest = hashlib.sha256(delta.encode("utf-8"))
     key, _, name = item.partition("/")
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
