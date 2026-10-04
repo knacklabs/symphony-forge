@@ -555,7 +555,10 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
         time.sleep(0.05)
     else:
         work.kill()
-        pytest.fail(f"the turn never started: {work.communicate()[1]}")
+        # Forge's refusal reports only the symptom; its work log contains the driver exception.
+        # Keep it in CI output, since the temporary checkout is removed after this test fails.
+        error = work.communicate()[1]
+        pytest.fail(f"the turn never started: {error}\n{log.read_text(encoding='utf-8')}")
     saved = _saved(turns.with_suffix(".json"))
     _crash(work, saved)
     assert _lines(turns) == logged
