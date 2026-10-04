@@ -2,12 +2,40 @@
   "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
   "branch": "fix/forge-s-python-changed-test-picker-scrip",
   "done_when": "Forge ships a Python changed-test picker that any repo can name in fast_test (for example uv run python -m forge.fasttest {base}): it runs changed test files, test files named after a changed module, and test files that import or mention it by module path, runs the full test command when shared inputs (conftest.py, pyproject.toml, lock files) change, and limits pytest to half the machine's cores; Forge's own forge.toml uses it and scripts/fast-test.py is removed; the setup step proposes it for pytest repos. Audit item 5 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New repos: proposed at setup. Existing repos: available after upgrade; their forge.toml is never rewritten. One command-level test in a small pytest repo.",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "cedbda6752fe8ceadd1ab1ef9e4c742d9119d9ccad200e7818d51f77aa113a20",
+    "commit": "f65e0bd5f3b4ca1f14e7ef20afee486364542a22",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With `test = \"pytest checks\"` and `addopts = -n 16` in pytest.ini, an eight-core machine still starts 16 workers. The regex only changes forge.toml's command; `PYTEST_XDIST_AUTO_NUM_WORKERS` affects auto/logical counts, not numeric counts. Numeric settings in PYTEST_ADDOPTS and the valid command spelling `-n=16` also escape the cap, including during full-suite fallback. Enforce the limit on effective pytest options. This follows [pytest's configuration parsing](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/config/__init__.py) and [xdist's worker-count handling](https://raw.githubusercontent.com/pytest-dev/pytest-xdist/v3.8.0/src/xdist/plugin.py).",
+        "file": "src/forge/fasttest.py",
+        "line": 48,
+        "priority": "P2",
+        "title": "Cap worker counts supplied through pytest configuration"
+      },
+      {
+        "body": "If the full command is `pytest tests/test_one.py tests/test_two.py`, changing only test_one still executes test_two despite the generated `--ignore`. Shell-expanded commands such as `pytest tests/*.py` have the same problem. New evidence beyond the coordinator's ruling: [pytest 9.1.1's Dir.collect](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py) bypasses ignore checks for explicitly supplied files. Thus the printed selection can disagree with what runs, retaining whole-suite cost or failing on unrelated tests. Preserve the full command's setup while ensuring exclusions also apply to explicit file arguments.",
+        "file": "src/forge/fasttest.py",
+        "line": 82,
+        "priority": "P2",
+        "title": "Exclude unrelated tests explicitly named by the full command"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:23:46+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T11:43:30+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's Python changed-test picker (scripts/fast-test.py) does not ship, so Python client repos either run their whole suite at close or write their own",

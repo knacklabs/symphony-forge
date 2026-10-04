@@ -199,6 +199,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 48,
+      "text": "Cap worker counts supplied through pytest configuration",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 82,
+      "text": "Exclude unrelated tests explicitly named by the full command",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
