@@ -307,6 +307,17 @@
       "item": "after-forge-close-merges-the-latest-defa",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
