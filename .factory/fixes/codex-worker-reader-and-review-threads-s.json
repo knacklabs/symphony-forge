@@ -2,12 +2,25 @@
   "base": "3caadd6446a848c50bd81aadfe62dad4d9c0afbc",
   "branch": "fix/codex-worker-reader-and-review-threads-s",
   "done_when": "Every Codex thread Forge starts (worker, plan reader, ask and review) is given model_verbosity = low, model_reasoning_summary = none, and a developer instruction to write no progress commentary, only the final handoff and any question, in its thread config, whatever the repo's or the user's Codex config says; a repo's forge.toml can't turn them back up. New and existing repos: every repo gets it from the new release, with no setting to change. One command-level test: the thread start and resume requests a worker and a review send carry those settings.",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "03fb2b9a135a1295d99e445fd310530b3cb711ad40ca17190c2606fa4b3d9ad0",
+    "commit": "742640a2ce084616f95f3b359a9f6edf1ad44211",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T18:39:03+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T20:03:32+00:00",
+      "step": "review"
     }
   ],
   "why": "Codex worker, reader and review threads stream progress commentary and reasoning summaries nobody reads, wasting tokens; Forge only passes model and effort, so quietness depends on each repo's project config and each developer's own Codex settings",
