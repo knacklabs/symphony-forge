@@ -490,6 +490,8 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+When close merges the latest default branch, an unchanged branch diff keeps the last review and
+its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
