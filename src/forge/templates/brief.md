@@ -97,6 +97,8 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
+One command-level test per rule is enough.
+
 Windows checklist:
 - A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
 - Tests never assume a drive letter or a '/' separator.

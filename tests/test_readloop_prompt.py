@@ -100,12 +100,13 @@ def test_3_kept_findings_are_settled_not_argued(repo, gh, tmp_path):
 
 
 def test_4_the_reader_hunts_edge_cases(repo, gh, monkeypatch, sdk_data, tmp_path):  # noqa: F811
+    # Inputs and failures still matter; one test proves a rule that can cover several cases.
     first, _round = _parts()
     prompt = _flat(_first_round_prompt(repo, monkeypatch, sdk_data, tmp_path))
     for question in ("which inputs and states it must handle",
                      "Windows PowerShell and cmd, WSL, macOS, Linux CI",
                      "which failure and refusal paths it has",
-                     "which test, in which task's Tests cell, proves each case",
+                     "which test, in which task's Tests cell, proves each rule",
                      "`Unproven: item <n>: <case>`", "`Trap: <trap>: item <n>`"):
         assert question in first, question
         assert question in prompt, question

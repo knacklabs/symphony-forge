@@ -30,8 +30,8 @@
       "text": "Not done: Put 'Building Forge (this repo only)' outside the unchanged forge block",
       "from": "blocking",
       "item": "building-forge",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
       "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
