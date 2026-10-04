@@ -54,7 +54,20 @@ each item:
   "Done when" sections exactly, so a summary or a rewrite records nothing, and an edit below
   `## For the builders` needs no new approval. There is no other approval step.
 - Run long `forge work` runs in the background and keep watching them.
-- Put the rules every review of this repo must follow under `## Review rules`, outside the
+- Put the rules every review of this repo must follow under `## Building Forge (this repo only)
+
+Forge is a product for client repos, and this repo builds it with Forge's own process: every
+change is dogfooded on Forge itself before clients get it.
+
+- A rule, step or tool that makes planning, building, testing, reviewing, merging or releasing
+  better belongs in what Forge ships to every repo (`src/forge/templates`, `forge sync`,
+  `forge init`). Only what is about Forge's own code lives in this repo's files. Ask first: would a
+  client repo want this too?
+- Every change says what a new client repo and an existing client repo each get.
+- Forge's own principles and its own test policies (such as the real-Codex tests) live here, not in
+  the shared standards.
+
+## Review rules`, outside the
   forge:begin and forge:end lines. Forge's review reads them from the default branch.
 <!-- forge:end -->
 
@@ -97,3 +110,5 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 - Tests run the forge command and never import forge.
 - A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
   sets it); don't set it in local runs.
+- A general process rule (how to plan, build, test, review, merge or release) added only to this
+  repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
