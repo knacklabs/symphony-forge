@@ -32,9 +32,10 @@ def configure(env):
     repo = env.repo
     install_claude(repo)
     config = repo.path / 'forge.toml'
+    command = f'"{sys.executable}" -c "print(123)"'
     config.write_text(config.read_text('utf-8') +
                       'models.lite = { model = "sonnet", effort = "medium" }\n'
-                      f'test = "{sys.executable} -c \'print(123)\'"\n', 'utf-8')
+                      f'test = {json.dumps(command)}\n', 'utf-8')
     repo.git('add', 'forge.toml')
     repo.git('commit', '-q', '-m', 'Configure runs')
     repo.git('push', '-q', 'origin', 'main')
@@ -71,8 +72,9 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
             '"turn_started" in line for line in LOG.read_text("utf-8").splitlines()))'), 'utf-8')
         item = 'BOARD/PAGE'
         config = where / 'forge.toml'
+        command = f'"{sys.executable}" -c "print(123)"'
         env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
-                   + f'test = "{sys.executable} -c \'print(123)\'"\n'
+                   + f'test = {json.dumps(command)}\n'
                    + config.read_text('utf-8'))
     require_worker_environment(env.queue.parent / 'autoreview' / 'scripts' / 'autoreview')
     for number in (1, 2):
