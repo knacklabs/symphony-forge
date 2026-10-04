@@ -37,7 +37,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
-| "The story is finished" | `forge story done <KEY> "<outcome>"` |
+| "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
@@ -52,6 +52,13 @@ default (`merge = "human"`), or the agent runs `forge merge <item>` for `merge =
 Forge's own repo follows its setting throughout. Never run `gh pr merge`; the agent merges only
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
+
+When `forge merge` merges a story's last task, the same squash merge records the story as done.
+Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
+uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
+extra pull request, review or CI run is needed. Stories already marked done keep their outcome.
+Use `forge story done` only to correct an outcome later, on an existing work branch that carries
+the correction through its own pull request; the command opens no branch or pull request.
 
 Give each question one line of context and a header of 12 characters or less. Use 1-5 word options
 that say what happens, with the recommended one first for decisions. Use no IDs, paths or slugs in
@@ -389,11 +396,11 @@ so with the command that merges it into the story branch; run it, then carry on.
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
   one the disposition `keep` citing that line.
 
-**Learn the traps.** After `forge story done` opens the outcome fix, look back at the story's
+**Learn the traps.** Before closing the story's last task, look back at the story's
 review rounds. For each kind of finding the plan missed that cost two or more fix rounds or hit
 two or more tasks, add one trap line to the `## Known traps` section of the repo's AGENTS.md,
-outside Forge's block, in the outcome fix's worktree; create the section when it is missing.
-Commit it before closing the fix. Every cold read checks plans against that section.
+outside Forge's block, in the last task's worktree; create the section when it is missing.
+Commit it before closing the task. Every cold read checks plans against that section.
 Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or
 done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one
 trap line naming the file and the kind of problem that kept coming back.
