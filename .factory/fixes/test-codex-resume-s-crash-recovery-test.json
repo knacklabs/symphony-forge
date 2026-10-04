@@ -3,12 +3,13 @@
   "branch": "fix/test-codex-resume-s-crash-recovery-test",
   "done_when": "On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the Codex test stub or Forge's turn handling (read the failing log with gh api repos/knacklabs/symphony-forge/actions/jobs/111366127008/logs) is fixed, the test still proves the same recovery, and it passes in CI's Windows groups on this branch. New and existing repos: test-only or stub-only unless the cause is in Forge, in which case both get the fix through the release.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T05:12:17+00:00",
       "step": "start"
     }
   ],
-  "why": "test_codex_resume's crash-recovery test fails on Windows CI across several pull requests: the held turn ends with 'Codex never reported its end' before the test sees it start, blocking unrelated merges"
+  "why": "test_codex_resume's crash-recovery test fails on Windows CI across several pull requests: the held turn ends with 'Codex never reported its end' before the test sees it start, blocking unrelated merges",
+  "worker": "codex"
 }
