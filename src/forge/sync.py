@@ -373,8 +373,16 @@ def command_page() -> str:
     return "# Forge commands\n\n| Command | What it does |\n|---|---|\n" + "\n".join(rows) + "\n"
 
 
-def write(top: Path, cfg: dict[str, Any]) -> list[str]:
-    """Write the files that differ from what sync makes; returns them. Never on the default branch."""
+def differing(top: Path, wanted: dict[str, str]) -> list[str]:
+    """The files write would change: text that differs, or an empty file that is there ("" means
+    delete)."""
+    return [rel for rel, text in wanted.items()
+            if read(top / rel) != text or not text and (top / rel).exists()]
+
+
+def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) -> list[str]:
+    """Write the files that differ from what sync makes, except those in keep; returns them. Never
+    on the default branch."""
     # First, AGENTS.md and CLAUDE.md become regular files holding the text their link led to (none
     # when it dangles), so writing AGENTS.md or deleting CLAUDE.md never loses another file's lines.
     links = {rel: read(top / rel) for rel in ("AGENTS.md", "CLAUDE.md") if (top / rel).is_symlink()}
@@ -388,9 +396,7 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
         if text or rel == "AGENTS.md":
             write_file(top, rel, text)
     wanted = files(top, cfg)
-    # "" means delete, so an empty file that is there still counts as a change.
-    changed = [rel for rel, text in wanted.items()
-               if read(top / rel) != text or not text and (top / rel).exists()]
+    changed = [rel for rel in differing(top, wanted) if rel not in keep]
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)

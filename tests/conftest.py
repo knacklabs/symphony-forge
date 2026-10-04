@@ -260,8 +260,11 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
             monkeypatch.delenv(name)
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
     gitconfig = tmp_path / "gitconfig"
+    # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
+    # a helper removes a temporary clone; detached maintenance can still write its objects.
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
-                         "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",
+                         "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n"
+                         "[gc]\n\tautoDetach = false\n",
                          encoding="utf-8")
     # The cold read runs on the family that isn't coordinating, which Forge tells from the variable
     # each app sets. Tests run as if Codex coordinates, so a read runs on the stub claude.
