@@ -1,0 +1,14 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/client-workers-and-reviews-receive-forge",
+  "done_when": "Shipped standards and the worker brief carry only rules that apply to any repo: Forge's own principles and its real-Codex test policy move to Forge's AGENTS.md; the brief keeps one general rule that a test passing alone is flaky and stays unresolved; doctor checks git hooks in Forge's own repo like any other; the shipped standards' Tests section adds that tests own and clean up every process they start, even after a crash, and that only setup and cleanup file operations retry briefly on Windows file locks, never assertions. Audit items 3, 6, 7, 9 and 10 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New and existing repos: every repo gets the cleaned brief and standards on its next forge sync after upgrading; nothing in forge.toml changes. One test checks the synced standards and brief carry the general rules and no Forge-only ones.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T10:23:16+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Client workers and reviews receive Forge-only rules (Forge's 13 principles, a 'passes alone means machine load' excuse for real-Codex tests, a hook-check exemption for Forge's repo), while test practices Forge learned (owning spawned processes, bounded Windows lock retries) never reach clients"
+}
