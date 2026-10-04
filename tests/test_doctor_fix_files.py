@@ -195,6 +195,34 @@ def _codex_workers_under_claude_code_repair_both_hosts(repo, gh, tmp_path, monke
     assert _in(repo, client, "fix/forge-files") == sorted([HOOKS, SETTINGS, STATE.format("forge-files")])
 
 
+def _a_finished_doctor_fix_is_left_in_place(repo, gh, tmp_path, monkeypatch, state):
+    client = _client(repo, gh, tmp_path, monkeypatch)
+    _old_hosts(repo, client)
+    started = repo.forge("doctor", "--fix", cwd=client)
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in started.stdout
+    folder = _folder_of(repo, client, "fix/forge-files")
+    # A lockfile alone would qualify other finished worktrees for cleanup.
+    _set(folder, "uv.lock", "version = 2\n")
+    before = _status(repo, folder)
+    contents = {path.relative_to(folder): path.read_bytes()
+                for path in folder.rglob("*") if path.is_file()}
+    main = _status(repo, client)
+    trees = repo.git("worktree", "list", "--porcelain", cwd=client)
+    gh.respond("pr", "list", "--head", "fix/forge-files", stdout=json.dumps(
+        [{"headRefOid": before[0], "state": state}]))
+
+    done = repo.forge("doctor", "--fix", cwd=client)
+
+    assert folder.is_dir(), done.stdout + done.stderr
+    assert _fixes(repo, client) == ["fix/forge-files"]
+    assert _status(repo, folder) == before and _status(repo, client) == main
+    assert repo.git("worktree", "list", "--porcelain", cwd=client) == trees
+    assert {path.relative_to(folder): path.read_bytes()
+            for path in folder.rglob("*") if path.is_file()} == contents
+    assert _left_over("forge-files", folder) in done.stdout and done.returncode == 1, done.stdout
+    assert "- Fixed: removed" not in done.stdout and "- Fixed: wrote" not in done.stdout
+
+
 def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
     wanted = _wanted(repo, client, tmp_path)
@@ -747,6 +775,7 @@ def _cases(*cases) -> list:
     (_an_existing_app_adopted_on_v1_2_2_is_repaired, [None], ()),
     (_on_the_default_branch_one_fix_holds_both_hosts_files, [None], ()),
     (_codex_workers_under_claude_code_repair_both_hosts, [None], ()),
+    (_a_finished_doctor_fix_is_left_in_place, ["CLOSED", "MERGED"], ()),
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
     (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
