@@ -3,12 +3,13 @@
   "branch": "fix/forge-s-fast-test-command-selects-any-te",
   "done_when": "scripts/fast-test.py selects only: test files that changed, test files whose file name contains a changed module's name, and test files that mention forge/<module>.py or forge.<module>; it still runs the full command when conftest.py, pyproject.toml or uv.lock change; CI keeps running the full suite. A change to src/forge/review.py selects fewer than a third of the test files. One command-level test shows the selection for a change to review.py. New and existing repos: Forge's own script only; client repos are unchanged.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T02:58:08+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's fast test command selects any test file whose text contains a changed module's name, so a change to review.py or close.py still runs about 95% of the suite and closes take 20-40 minutes"
+  "why": "Forge's fast test command selects any test file whose text contains a changed module's name, so a change to review.py or close.py still runs about 95% of the suite and closes take 20-40 minutes",
+  "worker": "codex"
 }
