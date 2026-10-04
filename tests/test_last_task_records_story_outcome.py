@@ -38,6 +38,10 @@ if args[:2] == ["pr", "merge"]:
     message = args[args.index("--subject") + 1]
     if "--body" in args:
         message += "\\n\\n" + args[args.index("--body") + 1]
+    if "--body-file" in args:
+        source = args[args.index("--body-file") + 1]
+        message += "\\n\\n" + (sys.stdin.read() if source == "-"
+                                  else pathlib.Path(source).read_text(encoding="utf-8"))
     subprocess.run(["git", "commit", "-q", "-m", message], cwd=checkout, check=True)
     subprocess.run(["git", "push", "-q", "origin", "main"], cwd=checkout, check=True)
     (here / "github-merged").touch()

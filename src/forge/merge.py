@@ -73,6 +73,7 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["changed"], item=item)
         checks.wait(top, item, head, config["checks"])
         completion = []
+        body = None
         if "/" in item:
             key, tid = item.split("/")
             state = story.json_of(story.show(top, head, repo.state_path(key)))
@@ -84,10 +85,10 @@ def merge(args: argparse.Namespace) -> int:
                     and all(row["id"] == tid or story.merged_at(
                         top, f"origin/{default}", repo.state_path(f"{key}/{row['id']}")) for row in tasks)):
                 outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
-                completion = ["--body", (pr.get("body") or "") + "\n\nForge-story-done: "
-                              + json.dumps({"key": key, "outcome": outcome})]
+                body = (pr.get("body") or "") + "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
+                completion = ["--body-file", "-"]  # stdin survives Windows .cmd wrappers
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
-                        "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top)
+                        "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
         if not merged:
