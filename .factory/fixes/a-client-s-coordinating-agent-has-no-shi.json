@@ -3,12 +3,13 @@
   "branch": "fix/a-client-s-coordinating-agent-has-no-shi",
   "done_when": "The shipped Forge skill has a short section on keeping work moving: forge land for build, close, fix rounds and merge; on a conflicted merge, resolve team-owned files first, then run forge sync for Forge's own files, reconcile story docs, and stage only resolved paths; when task start refuses for overlapping work, keep other ready work moving and run forge next after each merge to start what was unblocked; close's conflict refusal points to that section. Audit items 2, 8 and 12 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New and existing repos: every repo gets it on its next forge sync after upgrading. One test checks the synced skill carries the section and close's refusal names it.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T10:23:31+00:00",
       "step": "start"
     }
   ],
-  "why": "A client's coordinating agent has no shipped guidance for what the Forge coordinator does with private scripts: recovering a conflicted merge, waiting for overlapping work then starting the next part, and which forge commands replace each loop"
+  "why": "A client's coordinating agent has no shipped guidance for what the Forge coordinator does with private scripts: recovering a conflicted merge, waiting for overlapping work then starting the next part, and which forge commands replace each loop",
+  "worker": "codex"
 }
