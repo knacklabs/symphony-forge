@@ -4,28 +4,29 @@
   "done_when": "Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base with the default branch, or the test command when the repo has no fast_test; the commit nudge names that same command; CI keeps running the full suite. New and existing repos: every repo gets the instruction from the new release's brief and its next forge sync; a repo without fast_test behaves as today. One command-level test: the commit nudge in a repo with fast_test names the fast command with the base filled in.",
   "flagged": [
     "src/forge/templates/brief.md",
+    "src/forge/worker.py",
     "tests/test_worker_nudge_names_related_tests.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "c2ccf364ef5dd0f50bc672bfc3497fd2a35266643c39da6bb0ed9e81851f5c90",
-    "commit": "16d8d330b078f7dd0620bde8bb47536ba8266dfc",
+    "changed": "fe28fecff28ebcc831ccc4aaa8425d395ee9ddb909d62214cffe6aec697ba370",
+    "commit": "74deb9b2a5e4328a26a233ab504e7ed84685d698",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new instruction does not replace all full-suite instructions workers receive. Both `.codex/skills/test-audit/SKILL.md:149` and `.claude/skills/test-audit/SKILL.md:149` still require running forge.toml's `test` command before stopping, while this paragraph requires workers changing tests to use that skill. `src/forge/review.py:44\u201348` ships that requirement to both hosts on sync. Existing conversations also bypass this updated paragraph: `src/forge/worker.py:388\u2013397` returns a continued prompt saying the earlier brief still applies. A conversation started before the upgrade therefore retains the old full-suite requirement; if the worker commits normally, it receives no updated commit nudge. Align the shipped test-audit guidance and send the current related-test instruction in continued rounds so new and existing workers receive the promised behavior.",
-        "file": "src/forge/templates/brief.md",
-        "line": 110,
+        "body": "The nudge now selects Forge's `fast_test`, but still tells the worker to test before committing. In this repository, `forge.toml:7` selects `scripts/fast-test.py`, whose lines 10\u201313 inspect only `git diff <base> HEAD`. On a first round where the worker leaves its source and tests uncommitted, that diff contains only Forge's bookkeeping commits, so lines 25\u201327 report no related tests and exit successfully. Later rounds likewise omit newly changed modules and tests. This affects both adapters' commit nudges and continued workers that test before committing. Make the configured selector include working-tree, staged and new files, or ensure changes are committed before running a selector that requires committed changes. The new evidence is the selector's committed-only contract; the coordinator's ruling about testing this repair round does not address it.",
+        "file": "src/forge/worker.py",
+        "line": 139,
         "priority": "P1",
-        "title": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base"
+        "title": "[P1] Make the fast command include uncommitted changes before testing"
       },
       {
-        "body": "The added test checks only the commit nudge in a manually configured `repo = \"forge-source\"` repository. It never initializes a client repo, upgrades or syncs a repo adopted on the previous release, or asserts the related-test instruction in the initial worker brief and synced guidance. Reverting the brief and skill changes would leave this test passing. Existing adoption and upgrade tests do not assert this new instruction either (for example, `tests/test_live_adopt.py:67` checks only that the skill exists, and `tests/test_upgrade_command.py:501\u2013504` checks upgrade guidance). Add independent assertions through the real commands for new and previously adopted client repos, as the repository's review rule requires.",
-        "file": "tests/test_worker_nudge_names_related_tests.py",
-        "line": 14,
-        "priority": "P1",
-        "title": "Not done: Test related-test instructions in new and previously adopted client repos"
+        "body": "The `config[\"test\"]` guard suppresses command selection when a repository defines `fast_test` but omits or empties `test`. This configuration is accepted: `src/forge/repo.py:136` defaults `test` to an empty string, and its validation at lines 301\u2013319 imposes no dependency between the two settings. Continued rounds correctly resolve `fast_test` through `review.close_test`, but the commit nudge then names no command. Resolve the local command unconditionally and retain the existing empty-result handling.",
+        "file": "src/forge/worker.py",
+        "line": 139,
+        "priority": "P2",
+        "title": "[P2] Select fast_test even when the full test command is empty"
       }
     ],
     "status": "blocked"
@@ -38,6 +39,10 @@
     },
     {
       "at": "2026-10-04T11:23:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T13:40:37+00:00",
       "step": "review"
     }
   ],
