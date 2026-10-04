@@ -1,5 +1,5 @@
 """When a worker's round ends with changes left uncommitted, forge work continues the same
-conversation once, telling the worker to run the change's related tests in the foreground, wait and commit;
+conversation once, telling the worker to commit first, run related tests and commit any fixes;
 only a worker that still leaves changes uncommitted gets the warning. Claude and Codex alike."""
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from test_worker import calls
 STORY = "workers-keep-ending-their-round-while-th"
 WARNING = "Warning: the worker ended its round with changes left uncommitted"
 NUDGE = ("in the foreground and wait for them to finish; never leave them running in the background. "
-         "Then commit your work on this branch")
+         "Then commit any fixes on this branch")
 
 
 def test_1_a_claude_worker_that_left_changes_uncommitted_is_asked_once_and_commits(

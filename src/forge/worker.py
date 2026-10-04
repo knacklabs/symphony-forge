@@ -26,11 +26,12 @@ TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
 SERIOUS = ("P0", "P1")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
-NUDGING = "The worker left changes uncommitted, so Forge asks it once to test and commit them."
+NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
-COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. Run "
+COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
+                "Commit your work on this branch first. Run "
                 "the change's related tests{test} in the foreground and wait for them to finish; never "
-                "leave them running in the background. Then commit your work on this branch, and end "
+                "leave them running in the background. Then commit any fixes on this branch, and end "
                 "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
@@ -136,7 +137,7 @@ def work(args: argparse.Namespace) -> None:
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         start, clock = repo.now(), time.monotonic()
-        local = review.close_test(top, f"origin/{repo.default_branch(top)}") if config["test"] else ""
+        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
         nudge = COMMIT_NUDGE.format(test=f" (`{local}`)" if local else "")
         outcome = "failed"
         try:
@@ -388,7 +389,9 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         local = review.close_test(top, f"origin/{repo.default_branch(top)}")
-        brief += (f"\nRun the change's related tests (`{local}`) before you stop. "
+        command = f" (`{local}`)" if local else ""
+        brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "
+                  "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"

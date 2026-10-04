@@ -108,8 +108,9 @@ proven by the check the item names. Name a new test file after the behaviour it 
 after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
 delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
 decides proves nothing. Use the test-audit skill whenever you write or change a test. Before you
-stop, run the change's related tests: forge.toml's `fast_test` with `{base}` as the merge base with
-the default branch, or its `test` command when it has no `fast_test`. CI runs the full suite.
+stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
+`{base}` as the merge base with the default branch, or its `test` command when it has no
+`fast_test`. Then commit any fixes. CI runs the full suite.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

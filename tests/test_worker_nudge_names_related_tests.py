@@ -14,6 +14,12 @@ from test_worker import calls, install_claude
 STORY = "every-worker-round-runs-the-repo-s-whole"
 
 
+def _commit_test_fixes(text):
+    text = text.lower()
+    assert text.index("commit your work") < text.index("run the change's related tests")
+    assert text.index("run the change's related tests") < text.index("commit any fixes")
+
+
 def _related_test_skills(client):
     for host in (".claude", ".codex"):
         skill = (client / host / "skills/test-audit/SKILL.md").read_text("utf-8")
@@ -22,6 +28,7 @@ def _related_test_skills(client):
         assert "`fast_test` with `{base}` as the merge base with the default branch" in validation
         assert "`test` command when it has no `fast_test`" in validation
         assert "Run forge.toml's `test` command before you stop." not in validation
+        _commit_test_fixes(validation)
 
 
 def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch):
@@ -45,6 +52,7 @@ def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch)
     assert built.returncode == 0, built.stdout + built.stderr
     nudged = calls(log)[1]
     assert f"Run the change's related tests (`pytest -q --since {base}`)" in nudged["brief"]
+    _commit_test_fixes(nudged["brief"])
 
     monkeypatch.delenv("STUB_CLAUDE_LEAVE")
     monkeypatch.delenv("STUB_CLAUDE_COMMIT_FROM")
@@ -53,6 +61,7 @@ def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch)
     continued = calls(log)[-1]
     assert "--resume" in continued["args"]
     assert f"Run the change's related tests (`pytest -q --since {base}`)" in continued["brief"]
+    _commit_test_fixes(continued["brief"])
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
@@ -97,3 +106,33 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     assert "run the change's related tests: forge.toml's `fast_test`" in brief
     assert "with `{base}` as the merge base with the default branch" in brief
     assert "`test` command when it has no `fast_test`" in brief
+    _commit_test_fixes(brief.split("Use the test-audit skill", 1)[1])
+
+
+@pytest.mark.parametrize("full,fast", [
+    ("", 'fast_test = "pytest -q --since {base}"\n'),
+    ('test = ""\n', 'fast_test = "pytest -q --since {base}"\n'),
+    ("", ""),
+], ids=["test-absent", "test-empty", "neither-command"])
+def test_3_the_commit_nudge_resolves_fast_test_without_a_full_test(repo, monkeypatch, full, fast):
+    log = install_claude(repo)
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
+                             'workers = "claude"\n' + full + fast +
+                             'models.lite = { model = "sonnet", effort = "medium" }\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-q", "-m", "Configure worker tests")
+    repo.git("push", "-q", "origin", "main")
+    base = repo.git("rev-parse", "HEAD")
+    started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
+    assert started.returncode == 0, started.stdout + started.stderr
+    monkeypatch.setenv("STUB_CLAUDE_LEAVE", "login.txt")
+    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "2")
+    built = repo.forge("work", FIX)
+    assert built.returncode == 0, built.stdout + built.stderr
+    brief = calls(log)[1]["brief"]
+    if fast:
+        assert f"Run the change's related tests (`pytest -q --since {base}`)" in brief
+    else:
+        assert "Run the change's related tests in the foreground" in brief
+        assert "(``)" not in brief

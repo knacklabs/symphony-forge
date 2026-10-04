@@ -394,13 +394,14 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to run the change's related tests (`fast_test`, else `test`) in the
-foreground, wait for them and commit. Only
+once, telling the worker to commit first, run the change's related tests (`fast_test`, else
+`test`) in the foreground, wait for them and commit any fixes. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
-Continued worker rounds repeat the current related-test command, replacing any earlier
-full-suite instruction. The synced test-audit skill follows the same rule; CI runs the full suite.
+Continued worker rounds repeat the current related-test command and the commit-first order,
+replacing any earlier full-suite instruction. The synced test-audit skill follows the same rule;
+CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers, readers and
