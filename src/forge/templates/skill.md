@@ -66,6 +66,27 @@ in their own terminal; it opens the change for them to merge.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
+## Laptop setup and after cloning
+
+The repeatable laptop installers are published for
+[Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
+and [Windows](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-windows.ps1).
+They install the tools Forge needs; follow their prompts to sign in to GitHub and your agent.
+
+After every clone, read the pinned `version` in `forge.toml` and install that release,
+even if the laptop installer installed a different one:
+`uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`
+(replace `<release>` with the pin, such as `v1.2.4`). Then run `forge sync` to install
+the local git hooks and refresh the generated files, followed by `forge doctor --fix`.
+Resolve any remaining Doctor rows before starting work. An existing repo gets these
+instructions and the updated CI workflow on its next `forge sync` after upgrading.
+
+## Migrate copied-in Forge
+
+Read the [migration playbook](migrate-skill.md) before running `forge migrate --dry-run`
+or `forge migrate`. It ships beside this skill and covers the human's agreement,
+preservation review, merge, cleanup and rollback. Follow it in order.
+
 ## Handoff
 
 `.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across
