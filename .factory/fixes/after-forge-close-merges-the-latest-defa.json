@@ -3,12 +3,13 @@
   "branch": "fix/after-forge-close-merges-the-latest-defa",
   "done_when": "When close's merge of the default branch leaves the branch's own changes (its diff against the merge base) unchanged, the last review and its dismissals still count, and --dismiss given in the same command applies to that review; any change to the branch's own diff still needs a new review. New and existing repos: same behaviour in any repo on this release. One command-level test: review, dismiss, main moves, close merges it and the dismissal still holds without a new review.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T07:21:09+00:00",
       "step": "start"
     }
   ],
-  "why": "After forge close merges the latest default branch, a review and the coordinator's dismissals stop counting even when the branch's own changes are unchanged, so a full review runs again and raises the same findings"
+  "why": "After forge close merges the latest default branch, a review and the coordinator's dismissals stop counting even when the branch's own changes are unchanged, so a full review runs again and raises the same findings",
+  "worker": "codex"
 }
