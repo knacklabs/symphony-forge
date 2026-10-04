@@ -6,21 +6,21 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "f8d4a6fe5b66f139d870110e48ab69f0ca2cd31afb08464a7cf5a7b2a4b61ec6",
-    "commit": "f9b17616e54f2b91fb490391153071e459b4f2a9",
+    "changed": "ad47a27128973fa46dd48d2cc53924fa19c1eb6f77a6b9f15cfca18ae841489a",
+    "commit": "e269ce01bb1debbe03d713a7a9a70f5fdf71f539",
     "dismissals": [],
     "findings": [
       {
-        "body": "This earlier finding remains open. When close runs from a Forge source worktree using its checkout's code, a conflict in `src/forge/*.py` leaves markers in the modules that `sync.files()` parses. Passing the clean default worktree does not redirect that scan: `src/forge/sync.py:317\u2013322` reads modules under `forge.__path__`. The resulting `SyntaxError` bypasses `merge --abort` and the normal conflict instructions, leaving the checkout in an active merge that subsequent Forge commands cannot parse. Classify these conflicts without parsing conflicted modules, or ensure inventory failures abort the merge and preserve the existing refusal behavior.",
+        "body": "The earlier finding remains open. When close runs using the conflicted Forge worktree's source, passing the clean default tree does not isolate the inventory scan: src/forge/sync.py:317\u2013322 reads and parses modules under forge.__path__. A conflict in src/forge/*.py therefore raises SyntaxError before merge --abort and the normal conflict instructions run. The checkout remains in an active merge, and subsequent Forge commands cannot parse it (src/forge/cli.py:37\u201343). Classify these conflicts before scanning live modules, or abort the merge when inventory construction fails.",
         "file": "src/forge/close.py",
-        "line": 266,
+        "line": 278,
         "priority": "P2",
         "title": "Abort source-code conflicts before scanning live Forge modules"
       },
       {
-        "body": "This earlier finding remains open. `src/forge/githooks.py:74` includes `CLAUDE.md` in sync's inventory only when it exists. After the default branch's sync deletes it, the inventory here omits it, so a worker modification produces a modify/delete conflict that close incorrectly treats as outside sync's output. The same omission affects staging at line 278: if the worker alone added `CLAUDE.md`, recovery for another generated conflict runs sync and deletes it, but excludes that deletion from staging, leaving obsolete content committed and a dirty checkout. Include sync-managed deletion paths even when absent from the default tree.",
+        "body": "The earlier finding remains open. src/forge/githooks.py:74 includes CLAUDE.md in sync's inventory only when it exists. If default-branch sync deleted it while the worker modified it, this inventory omits the modify/delete conflict and close incorrectly refuses recovery. The same omission affects staging at close.py:290: when only the worker added CLAUDE.md, recovery for another generated conflict runs sync and deletes it, but filters its deletion out of staging. The merge then retains obsolete content and leaves the checkout dirty. Include sync-managed deletion paths even when absent from the default tree.",
         "file": "src/forge/close.py",
-        "line": 266,
+        "line": 278,
         "priority": "P2",
         "title": "Include sync-managed deletions absent from the default tree"
       }
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-10-04T09:55:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T13:42:18+00:00",
       "step": "review"
     }
   ],
