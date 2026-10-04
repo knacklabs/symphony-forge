@@ -3,11 +3,31 @@
   "branch": "fix/test-codex-resume-s-crash-recovery-test",
   "done_when": "On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the Codex test stub or Forge's turn handling (read the failing log with gh api repos/knacklabs/symphony-forge/actions/jobs/111366127008/logs) is fixed, the test still proves the same recovery, and it passes in CI's Windows groups on this branch. New and existing repos: test-only or stub-only unless the cause is in Forge, in which case both get the fix through the release.",
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "5c44173e5a2451c441d42ce57337452f6706e636ecb921fc498d6624ec31637e",
+    "commit": "a824c9544b75093f67399be93b35be8ba1e0df23",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The completion criterion explicitly requires passing this branch's Windows CI groups. The head commit's validation notes state: \"Windows groups have not run on this branch.\" The supplied close run establishes four local passes, but does not satisfy that platform-specific check. The Windows groups already exist in `.github/workflows/forge-next.yml:28`, and line 42 runs the suite containing both affected test files. Run those groups on this branch and confirm that the crash-recovery test passes before marking the fix complete. This is an outstanding acceptance check, not a request to change Forge or weaken the recovery assertions.",
+        "file": "tests/test_codex_resume.py",
+        "line": 54,
+        "priority": "P1",
+        "title": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T05:12:17+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T05:35:37+00:00",
+      "step": "review"
     }
   ],
   "why": "test_codex_resume's crash-recovery test fails on Windows CI across several pull requests: the held turn ends with 'Codex never reported its end' before the test sees it start, blocking unrelated merges",
