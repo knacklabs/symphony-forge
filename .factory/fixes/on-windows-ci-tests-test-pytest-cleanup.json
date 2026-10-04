@@ -1,0 +1,14 @@
+{
+  "base": "990588b0565d340a32587133511523ab8ec3c148",
+  "branch": "fix/on-windows-ci-tests-test-pytest-cleanup",
+  "done_when": "That test passes on Windows CI: the cause in pytest's temporary-folder cleanup handling or the test (read job 111411041328's log with gh api repos/knacklabs/symphony-forge/actions/jobs/111411041328/logs) is fixed and the test still proves a locked file left in an old numbered folder is skipped, not an error. New and existing repos: Forge's own tests only.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T10:31:08+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows CI, tests/test_pytest_cleanup_skips_locked_files.py::test_4_pytest_cleanup_skips_files_that_stay_locked[old_numbered_folder] fails on every pull request, blocking unrelated merges"
+}
