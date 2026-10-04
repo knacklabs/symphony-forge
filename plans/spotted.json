@@ -351,6 +351,39 @@
       "item": "recording-that-a-story-is-done-opens-a-s",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 48,
+      "text": "Cap worker counts supplied through pytest configuration",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 82,
+      "text": "Exclude unrelated tests explicitly named by the full command",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 22,
+      "text": "Recognize source-prefixed paths and package-relative imports",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
