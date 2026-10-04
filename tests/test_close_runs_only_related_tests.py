@@ -19,7 +19,7 @@ def test_1_close_runs_only_changed_and_module_related_tests_unless_shared_inputs
         env, monkeypatch, shared_input):
     # Use this repo's commands and dependencies, with tiny real tests so closing cannot
     # accidentally recurse into the enclosing suite. Only review and GitHub are faked.
-    for rel in ("forge.toml", "pyproject.toml", "uv.lock", "scripts/fast-test.py"):
+    for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
         source = ROOT / rel
         if source.exists():
             env.repo.write(rel, source.read_text("utf-8"))
