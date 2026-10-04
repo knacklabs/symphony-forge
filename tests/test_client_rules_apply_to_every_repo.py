@@ -1,4 +1,5 @@
 """Clients receive general test rules; Forge has no special hook exemption."""
+import os
 import shutil
 import subprocess
 import sys
@@ -87,3 +88,22 @@ def test_2_doctor_checks_and_repairs_forge_source_hooks_without_an_exemption(rep
     assert HOOKS_FIXED in repaired.stdout, repaired.stdout + repaired.stderr
     assert HOOKS_ROW not in repo.forge("doctor").stdout
     assert _commit_refused(repo)
+
+
+def test_3_failed_git_commits_report_the_actual_reason(repo, tmp_path):
+    # The Ubuntu functional-check failure only showed Git's exit code. Exercise a real failed
+    # commit, so pytest must print the captured diagnostic without retrying or hiding failure.
+    (repo.path / ".git/index.lock").write_text("held\n", encoding="utf-8")
+    probe = tmp_path / "test_failed_commit.py"
+    probe.write_text(
+        "from pathlib import Path\nfrom conftest import Repo\n\n"
+        "def test_failed_commit():\n"
+        f"    repo = Repo(Path({str(repo.path)!r}), Path({str(repo.bin)!r}))\n"
+        "    repo.git('commit', '--allow-empty', '-m', 'Record a walkthrough')\n",
+        encoding="utf-8")
+    failed = subprocess.run([sys.executable, "-m", "pytest", str(probe), "-q", "--tb=short",
+                             "-p", "no:cacheprovider"], capture_output=True, text=True,
+                            env={**os.environ, "PYTHONPATH": str(ROOT / "tests")})
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert "index.lock" in failed.stdout, failed.stdout
+    assert "File exists" in failed.stdout, failed.stdout
