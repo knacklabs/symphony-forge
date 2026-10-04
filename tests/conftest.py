@@ -255,6 +255,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
         if name.startswith("GIT_"):
             monkeypatch.delenv(name)
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
+    monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
     gitconfig = tmp_path / "gitconfig"
     gitconfig.write_text("[user]\n\tname = Forge Test\n\temail = forge-test@example.com\n"
                          "[init]\n\tdefaultBranch = main\n[commit]\n\tgpgsign = false\n",

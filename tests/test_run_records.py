@@ -120,7 +120,7 @@ def _docs_only_close_records_skipped_tests(env):
     'reviewers_claude', 'reviewers_codex', 'failed_test', 'failed_review', 'failed_worker',
     'control_codex',
     'signoff_codex',
-] + [f'nudge_{turn}_{family}' for turn in ('initial', 'nudge', 'both')
+] + [f'nudge_{turn}_{family}' for turn in ('initial', 'nudge', 'both', 'failed')
      for family in ('claude', 'codex', 'design')])
 def test_3_run_and_question_occurrences(env, repo, monkeypatch, request, tmp_path, case):
     action, family = case.split('_', 1)
@@ -292,6 +292,10 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
             f'turns += 1\n            os.environ["STUB_SAY"] = "\\n\\n" + '
             f'({nudged!r} if "Your turn ended" in params["input"][0]["text"] else {initial!r})')
         monkeypatch.setenv('STUB_CODEX_COMMIT_FROM', '2')
+        if question_turn == 'failed':
+            source = source.replace('turns += 1',
+                'turns += 1\n            status = "failed" if "Your turn ended" in '
+                'params["input"][0]["text"] else "completed"')
     else:
         configure(env)
         if family == 'design':
@@ -311,10 +315,13 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
         source = stub.read_text('utf-8').replace('print("stub claude: built it")',
             f'print("\\n\\n" + ({nudged!r} if "Your turn ended" in brief else {initial!r}))')
         monkeypatch.setenv('STUB_CLAUDE_COMMIT_FROM', '2')
+        if question_turn == 'failed':
+            source = source.replace('sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))',
+                                    'sys.exit(3 if "Your turn ended" in brief else 0)')
     stub.write_text(source, 'utf-8')
     (where / 'pending.py').write_text('print(1)\n', 'utf-8')
     worked = repo.forge('work', item)
-    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert (worked.returncode == 0) == (question_turn != 'failed'), worked.stdout + worked.stderr
     assert 'asks it once' in worked.stdout
     assert repo.git('status', '--porcelain', cwd=where) == ''
     blocked = repo.forge('work', item)
@@ -326,6 +333,13 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
     assert len(questions) == 1
     assert questions[0]['question'] == '\n\n'.join(expected)
     UUID(questions[0]['id'])
+    pending = repo.path / '.git/forge/threads' / (
+        'task' if '/' in item else 'fix') / f'{item}.json'
+    saved = json.loads(pending.read_text('utf-8'))
+    assert saved['question_id'] == questions[0]['id']
+    closed = repo.forge('close', item)
+    assert closed.returncode != 0 and 'waiting for an answer' in closed.stderr
+    assert json.loads(pending.read_text('utf-8'))['question_id'] == saved['question_id']
 
 
 def _signoff_review_results_have_fresh_ids(repo, tmp_path, monkeypatch):

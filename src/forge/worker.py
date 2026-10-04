@@ -140,6 +140,7 @@ def work(args: argparse.Namespace) -> None:
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
         outcome = "failed"
+        answered = False
         final = ""
         nudged = ""
         try:
@@ -185,6 +186,7 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
+                    answered = True
                     nudged = _nudge_claude(item, top, ["--model", claude_model["model"],
                                               "--effort", claude_model["effort"]], nudge) or ""
                     outcome = "completed"
@@ -192,6 +194,7 @@ def work(args: argparse.Namespace) -> None:
             if not on_codex:
                 final = _claude(item, top, brief, fresh_brief, claude, session, thread,
                         None if fresh == "first turn" else fresh)
+                answered = True
                 nudged = _nudge_claude(item, top, claude, nudge) or ""
                 outcome = "completed"
                 return
@@ -204,6 +207,7 @@ def work(args: argparse.Namespace) -> None:
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
+            answered = outcome == "completed"
             final = (result.get("text") or "").strip()
             if outcome == "completed" and _uncommitted(top):
                 print(NUDGING, flush=True)
@@ -214,7 +218,7 @@ def work(args: argparse.Namespace) -> None:
                 else:
                     nudged = (again.get("text") or "").strip()
         finally:
-            if outcome == "completed":
+            if answered:
                 _question(top, item, kind, final, nudged)
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
