@@ -261,67 +261,57 @@ def close_test(top: Path, base: str) -> str:
 
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
-    """Record every test stage here, including docs-only and cached skips."""
-    item = (branch_item(repo.current_branch(top), top) or (repo.current_branch(top), {}))[0]
+    """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
+    branch = repo.current_branch(top)
+    item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
-    outcome = "failed"
+    outcome = "skipped"
     try:
-        failed, report = _test_run(top, command, base, item)
-        outcome = ("failed" if failed else "passed" if report.startswith(
-            f"`{command}` exited with status") else "skipped")
-        return failed, report
-    finally:
-        repo.record_timing(top, item, "test run", start, clock, outcome)
+        if not command:
+            return 0, "forge.toml names no test command, so close ran none."
+        changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                           cwd=top).split("\0")
+        if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
+               for path in changed if path):
+            said = DOCS_ONLY.format(command=command)
+            print(said, flush=True)
+            return 0, said
+        from forge import codex  # codex imports review indirectly
 
-
-def _test_run(top: Path, command: str, base: str, item: str) -> tuple[int, str]:
-    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
-    Returns its exit status and the report: the exit status, every line that mentions a skip with
-    the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
-    pytest also lists each skip's reason (-rs). Skipped, as status 0, when it already passed here on
-    the same committed files, or when the change touches only forge.toml, docs, plans, Markdown
-    or Forge's records; one run per machine at a time."""
-    if not command:
-        return 0, "forge.toml names no test command, so close ran none."
-    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                       cwd=top).split("\0")
-    if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
-           for path in changed if path):
-        said = DOCS_ONLY.format(command=command)
-        print(said, flush=True)
-        return 0, said
-    from forge import codex  # codex imports review indirectly
-
-    folder = machine._repos_file().parent
-    passed = passed_record(top, command)
-    skipped = SKIPPED.format(command=command)
-    if passed and passed.exists():
-        print(skipped, flush=True)
-        return 0, skipped
-    folder.mkdir(parents=True, exist_ok=True)
-    # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
-    with codex.in_line(folder / "test-runs", WAITING):
-        if passed and passed.exists():  # the close this one waited for passed the same files
+        folder = machine._repos_file().parent
+        passed = passed_record(top, command)
+        skipped = SKIPPED.format(command=command)
+        if passed and passed.exists():
             print(skipped, flush=True)
             return 0, skipped
-        env = {**os.environ, "FORGE_WORKER": "1",
-               "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-        with repo.record_run(top, item, "test") as ran:
-            done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                  encoding="utf-8", errors="replace")
-            ran["outcome"] = "passed" if done.returncode == 0 else "failed"
-        if done.returncode == 0 and passed:
-            passed.parent.mkdir(exist_ok=True)
-            passed.touch()
-    out = [line.rstrip() for line in done.stdout.splitlines()]
-    picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                     for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
-    lines = [out[i] for i in picked]
-    if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
-        lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
-    return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
-                      "forge close.", *lines])
+        # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
+        with codex.in_line(folder / "test-runs", WAITING):
+            if passed and passed.exists():  # the close this one waited for passed the same files
+                print(skipped, flush=True)
+                return 0, skipped
+            env = {**os.environ, "FORGE_WORKER": "1",
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+            with repo.record_run(top, item, "test") as ran:
+                done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                      encoding="utf-8", errors="replace")
+                outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
+            if done.returncode == 0 and passed:
+                passed.parent.mkdir(exist_ok=True)
+                passed.touch()
+        out = [line.rstrip() for line in done.stdout.splitlines()]
+        picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
+                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+        lines = [out[i] for i in picked]
+        if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
+            lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+        return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+                          "forge close.", *lines])
+    except BaseException:
+        outcome = "failed"
+        raise
+    finally:
+        repo.record_timing(top, item, "test run", start, clock, outcome)
 
 
 WAITING = lambda ahead: (  # noqa: E731

@@ -100,7 +100,8 @@ def work(args: argparse.Namespace) -> None:
         if question and note is None:
             refuse(REFUSALS["question"], item=item, question=question)
         if previous and last != family:  # a failed start leaves nothing of the other to resume
-            _forget(top, item)
+            codex._record(codex._item_file(top, item, ".json", kind), conversation=None,
+                          start=None, head=None, claude=None)
         thread, fresh = (codex.conversation(top, item, approval) if on_codex and later
                          and last == family else (None, "first turn"))
         # A Claude worker, design ones too, continues the session its item's last round ran in, in
@@ -167,11 +168,9 @@ def work(args: argparse.Namespace) -> None:
                         out.write(message + "\n")
                     ready(top, config, kind, True, design=True)
                     codex.recover(top, item)
-                    question = codex.record(top, item).get("question")
-                    if question and note is None:
-                        refuse(REFUSALS["question"], item=item, question=question)
                     if previous and last != "codex":
-                        _forget(top, item)
+                        codex._record(codex._item_file(top, item, ".json", kind), conversation=None,
+                                      start=None, head=None, claude=None)
                     thread, fresh = (codex.conversation(top, item, approval)
                                      if later and last == "codex" else
                                      (None, moved if previous else "first turn"))
@@ -217,7 +216,13 @@ def work(args: argparse.Namespace) -> None:
                     nudged = (again.get("text") or "").strip()
         finally:
             if final is not None:
-                _question(top, item, kind, final, nudged)
+                asked = "\n\n".join(dict.fromkeys(match[1] for answer in (final, nudged)
+                    if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
+                identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
+                codex._record(codex._item_file(top, item, ".json", kind),
+                              question=asked or None, question_id=identity)
+                if asked:
+                    print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
             repo.record_timing(top, item, "worker round", start, clock, outcome, chosen)
             if left := git("status", "--porcelain", "-uall", cwd=top).splitlines():
                 print("Warning: the worker ended its round with changes left uncommitted, so the review "
@@ -226,16 +231,6 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
-
-
-def _question(top: Path, item: str, kind: str, *answers: str) -> None:
-    asked = "\n\n".join(dict.fromkeys(match[1] for answer in answers
-        if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
-    identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
-    codex._record(codex._item_file(top, item, ".json", kind),
-                  question=asked or None, question_id=identity)
-    if asked:
-        print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
@@ -467,13 +462,6 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
-
-
-def _forget(top: Path, item: str) -> None:
-    """Clear every conversation recorded for the item, Codex's and Claude's, so the next turn on
-    either starts fresh with the whole brief."""
-    codex._record(codex._item_file(top, item, ".json", "Fix"), conversation=None, start=None,
-                  head=None, claude=None)
 
 
 def _run(item: str, top: Path, brief: str, models: list[str],
