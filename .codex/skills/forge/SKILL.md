@@ -488,12 +488,47 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+When close merges the latest default branch, an unchanged branch diff keeps the last review and
+its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
 re-run once per pushed head instead of costing a fix round. When GitHub has not started that
 re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
 round if the check is still red.
+
+## Keeping work moving
+
+Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
+otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
+loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
+Closing section above, then run it again. Run it in the background and keep watching it.
+
+Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
+`forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
+To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
+`forge work`, `forge read` and close reviews already queue agent runs across the machine;
+close serializes test runs separately, so no private slot loop is needed.
+
+If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
+
+1. Rerun the merge command close printed. Resolve team-owned content and `forge.toml` first.
+   Keep the team's notes outside Forge's blocks in shared files such as `AGENTS.md`; never take
+   one side of a whole shared file blindly. Resolve the structure of shared Markdown, JSON and
+   TOML files so sync can read them.
+2. With the pinned Forge installed, run `forge sync` to regenerate Forge's own files and blocks.
+   For merge-driver setup or drift, use `forge sync` or `forge doctor --fix`.
+3. Reconcile story docs with their current approval and cold-read evidence, preserving the
+   approved user-facing contract and both parts' builder changes. If that contract must change,
+   use the story amendment and approval flow; do not invent or overwrite approval evidence.
+4. Check the diff and remaining conflicts, stage only resolved paths with `git add <paths>`,
+   and commit once every conflict is resolved. Then rerun `forge close <item>` or
+   `forge land <item>`.
+
+Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
+keep other ready work moving while that work finishes. Run `forge next` after each merge to
+start what was unblocked. Retry a start only after its dependency or overlap clears; follow
+other refusals' next actions instead of repeatedly retrying them.
 
 ## Hotspots
 
