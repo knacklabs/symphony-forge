@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-04T12:23:44+00:00",
+      "because": "The worker found the committed review makes a new head; owner's goal is speed without dropping checks, so CI skips only re-testing unchanged code",
+      "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when both the review is clean and the checks are green; a failing check or a blocking finding stops it as today, and the pull request's review block is updated when the review finishes. New and existing repos: same behaviour in any repo on this release; nothing in forge.toml changes. One command-level test shows the push happens before the review starts and Ready needs both."
+    }
+  ],
   "base": "990588b0565d340a32587133511523ab8ec3c148",
   "branch": "fix/forge-close-reviews-first-and-only-then",
-  "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when both the review is clean and the checks are green; a failing check or a blocking finding stops it as today, and the pull request's review block is updated when the review finishes. New and existing repos: same behaviour in any repo on this release; nothing in forge.toml changes. One command-level test shows the push happens before the review starts and Ready needs both.",
+  "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the review is clean and the checks are green. Review storage and the required PR check stay as they are. The tests workflow forge sync writes (and Forge's own) passes at once, without running the suite, when the only change since the parent commit is Forge's review record under .factory/ and the parent commit's tests passed; any other change runs the suite as today. New and existing repos: every repo gets the workflow change on its next forge sync after upgrading. One command-level test shows the push happens before the review and Ready needs both; one test shows the workflow's quick pass applies only to a records-only commit on a tested parent.",
   "kind": "fix",
   "status": "working",
   "steps": [
