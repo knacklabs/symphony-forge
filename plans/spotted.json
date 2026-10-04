@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "from": "worker",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -177,6 +188,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/test_codex_turns_trust_forge_hooks.py",
@@ -254,6 +287,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Abort source-code conflicts before scanning live Forge modules",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -261,6 +305,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Include sync-managed deletions absent from the default tree",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
       "status": "open",
       "closed_by": null
     },
@@ -404,39 +459,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "from": "worker",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Abort source-code conflicts before scanning live Forge modules",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Include sync-managed deletions absent from the default tree",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
       "status": "open",
       "closed_by": null
     }
