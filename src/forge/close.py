@@ -263,7 +263,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
         base = Path(folder) / "default"
         repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
         try:
-            generated = set(sync.files(base, cfg))
+            generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
             if cfg.get("repo") == "forge-source":
                 generated.add("docs/commands.md")
         finally:

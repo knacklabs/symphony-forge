@@ -13,7 +13,7 @@ from test_setup import _fresh_client
 STORY = "when-forge-close-merges-the-default-bran"
 
 
-@pytest.mark.parametrize("kind", ["new", "adopted", "source", "code conflict"])
+@pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict"])
 def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_path):
     repo = env.repo
     config = (repo.path / "forge.toml").read_text()
@@ -28,9 +28,12 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
         shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
         repo.write("forge.toml", repo.git("show", "HEAD:forge.toml") + '\nrepo = "client"\n')
-    if kind == "source":
+    if kind.startswith("source"):
         shutil.copytree(conftest.ROOT / "src", repo.path / "src",
                         ignore=shutil.ignore_patterns("__pycache__"))
+        if kind == "source CRLF":
+            # Git keeps canonical LF blobs while checking Markdown out as CRLF, on every OS.
+            repo.write(".gitattributes", "*.md text eol=crlf\n")
         repo.write(".gitignore", "__pycache__/\n")
         for host in (".codex", ".claude"):
             shutil.copytree(conftest.ROOT / host / "skills", repo.path / host / "skills")
@@ -74,11 +77,18 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
     item, where = env.start_fix({skill: original.replace("# Forge", "# Worker Forge", 1),
                                  "AGENTS.md": guide.replace("Working here with Forge", "Worker guide", 1),
                                  "app.py": "print('worker')\n"})
-    if kind == "source":
+    if kind.startswith("source"):
         template = "src/forge/templates/skill.md"
+        if kind == "source CRLF":
+            assert b"\r\n" in (where / template).read_bytes()
         text = (where / template).read_text()
-        env.commit(where, template, text + "\nWorker guidance.\n")
-        env.commit(repo.path, template, "<!-- Default guidance -->\n" + text)
+        # write_text translates LF to CRLF on Windows. Keep these distant source edits LF;
+        # close must resolve the generated copies, and must never discard a template conflict.
+        for folder, content in ((where, text + "\nWorker guidance.\n"),
+                                (repo.path, "<!-- Default guidance -->\n" + text)):
+            (folder / template).write_bytes(content.encode("utf-8"))
+            repo.git("add", "--", template, cwd=folder)
+            repo.git("commit", "-q", "-m", "Update the skill template", cwd=folder)
     env.commit(repo.path, skill, original.replace("# Forge", "# Default Forge", 1))
     env.commit(repo.path, "AGENTS.md", "Default branch house rules.\n\n" +
                guide.replace("Working here with Forge", "Default guide", 1))
@@ -107,7 +117,7 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
     merge = repo.git("rev-list", "--merges", "-1", "HEAD", cwd=where)
     assert len(repo.git("rev-list", "--parents", "-1", merge, cwd=where).split()) == 3
     assert (where / skill).read_text() != original.replace("# Forge", "# Default Forge", 1)
-    if kind == "source":
+    if kind.startswith("source"):
         output = (where / skill).read_text()
         assert "Worker guidance." in output and "Default guidance" in output
     synced = repo.forge("sync", cwd=where)
