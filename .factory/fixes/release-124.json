@@ -1,0 +1,14 @@
+{
+  "base": "921d8f5fe72e3b63d40b2627d150256d55fc7dee",
+  "branch": "fix/release-124",
+  "done_when": "Forge's version is 1.2.4 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, the plugin marketplace if present, and the tests that pin them).",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T05:12:26+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.4 for Codex hook trust, the merge-rule repair and faster closes merged since v1.2.3"
+}
