@@ -1,10 +1,41 @@
 {
   "branch": "task/FORGE-MOD-1-VIEWS",
-  "status": "working",
+  "flagged": [
+    "src/forge/board.py",
+    "tests/test_machine_views.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "changed": "85fd5060fd835c8829db88c4dd1a78fa0e295761ceb47d4afaa20d24597c796f",
+    "commit": "d83c83c1edb3f92039bb106b94a30f6905425783",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When the last task is merged through `forge merge`, completion is recorded in a `Forge-story-done` squash-message trailer (`src/forge/merge.py:88`), while the story JSON can remain `approved`. This row uses that JSON without consulting `story.completed`, so the machine board keeps a finished story marked approved and reports that its outcome still needs recording. The text view already resolves completion through `story.completed` (`src/forge/nextstep.py:358`), as does the HTML board (`src/forge/board.py:344\u2013346`). Apply the same completion resolution here and cover the last-task merge through the JSON command.",
+        "file": "src/forge/board.py",
+        "line": 283,
+        "priority": "P1",
+        "title": "Not done: report each story\u2019s actual stage in the machine board"
+      },
+      {
+        "body": "All three new test functions use `setup(repo)`, whose default is `forge-source` and which writes the currently running version directly into `forge.toml` (`tests/test_story.py:67\u201371`). None exercises the machine views in a newly initialized or adopted client repo, or in an existing client repo adopted on an earlier release and upgraded. The later one-line switch to `repo = \"client\"` only checks an unknown worker model. Add command coverage for both client lifecycles, including the earlier-release case required by the repository\u2019s review rule.",
+        "file": "tests/test_machine_views.py",
+        "line": 48,
+        "priority": "P1",
+        "title": "Not done: machine-view tests for new and upgraded client repos"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T17:59:47+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:14:02+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"

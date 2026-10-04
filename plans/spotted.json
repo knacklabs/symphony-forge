@@ -45,6 +45,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 283,
+      "text": "Not done: report each story\u2019s actual stage in the machine board",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "from": "worker",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -221,6 +243,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 48,
+      "text": "Not done: machine-view tests for new and upgraded client repos",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
       "kind": "bug",
       "path": "tests/test_new_and_existing_repo_planning.py",
@@ -254,6 +287,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Abort source-code conflicts before scanning live Forge modules",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -261,6 +305,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Include sync-managed deletions absent from the default tree",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
       "status": "open",
       "closed_by": null
     },
@@ -375,6 +430,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_codex_record.py\tThe cleanup test failed once alone and crashed a parallel worker, then passed alone.",
+      "kind": "edge",
+      "path": "tests/test_codex_record.py",
+      "line": 412,
+      "text": "The cleanup test failed once alone and crashed a parallel worker, then passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
       "kind": "edge",
       "path": "tests/test_codex_record.py",
@@ -382,6 +448,17 @@
       "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
       "from": "worker",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
+      "kind": "edge",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The cleanup test failed in the full parallel run and passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -404,39 +481,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "from": "worker",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Abort source-code conflicts before scanning live Forge modules",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Include sync-managed deletions absent from the default tree",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
       "status": "open",
       "closed_by": null
     }
