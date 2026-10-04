@@ -1,5 +1,6 @@
 """Command-boundary proof for stage times and actionable run/question occurrences."""
 import json
+import os
 import sys
 from datetime import datetime
 from uuid import UUID
@@ -15,12 +16,20 @@ from test_story import DOC, new_story, setup
 STORY = "FORGE-MOD-1-RUNS"
 
 
+@pytest.fixture(autouse=True)
+def coordinating_worker_environment(monkeypatch):
+    # Close runs the suite as a worker; repo must clear this before launching Forge.
+    monkeypatch.setenv("FORGE_WORKER", "1")
+
+
 def records(repo, name):
     path = repo.path / '.git' / 'forge' / name
     return [json.loads(line) for line in path.read_text('utf-8').splitlines()]
 
 
 def require_worker_environment(path):
+    inherited = os.environ.get("FORGE_WORKER")
+    assert inherited != "1", "repo must isolate the launcher's environment"
     # Assert at the external process edge, before it can supply a result to Forge.
     source = path.read_text('utf-8')
     lines = source.splitlines(keepends=True)
