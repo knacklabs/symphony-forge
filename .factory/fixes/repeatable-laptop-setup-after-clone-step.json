@@ -6,13 +6,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "21d1affd4c15d705b65b82766b4802ed9335a05c4e5e459e917d83ab1ff79d8a",
-    "commit": "2ec23427fef09c0441631dee6466a7b96b2c34ef",
+    "changed": "7674d3640de1be0ebc7a247d90fdda9249d2f7de640c4f6e43b15cd52d3cb7f7",
+    "commit": "1f59b9c2a32125a6c51d446fa4984efac8888482",
     "dismissals": [],
     "findings": [],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:24:01+00:00",
@@ -24,6 +24,10 @@
     },
     {
       "at": "2026-10-04T12:16:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T14:07:50+00:00",
       "step": "review"
     }
   ],
