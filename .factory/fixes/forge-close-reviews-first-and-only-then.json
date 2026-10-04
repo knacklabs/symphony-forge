@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed it: one behaviour (review while CI runs, no re-test of unchanged code) across close, review, the workflow writer, Forge's workflow and the skill",
   "amendments": [
     {
       "at": "2026-10-04T12:23:44+00:00",
@@ -9,12 +10,35 @@
   "base": "990588b0565d340a32587133511523ab8ec3c148",
   "branch": "fix/forge-close-reviews-first-and-only-then",
   "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the review is clean and the checks are green. Review storage and the required PR check stay as they are. The tests workflow forge sync writes (and Forge's own) passes at once, without running the suite, when the only change since the parent commit is Forge's review record under .factory/ and the parent commit's tests passed; any other change runs the suite as today. New and existing repos: every repo gets the workflow change on its next forge sync after upgrading. One command-level test shows the push happens before the review and Ready needs both; one test shows the workflow's quick pass applies only to a records-only commit on a tested parent.",
+  "flagged": [
+    "src/forge/templates/review-tests.py"
+  ],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "5ac5d18fed26a3107ab1c7efb50a68a7cb4500dc3a9f08139ceb1f724467d373",
+    "commit": "8d424270c876801bc069f09359d4c2c077e653bb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The parent lookup hard-codes `event=pull_request`, excluding successful push runs. Forge's own workflow also runs on main pushes (`.github/workflows/forge-next.yml:7`). Consequently, a records-only commit whose parent passed that push workflow still runs the entire suite, contrary to the promised quick pass. The same restriction appears in `.forge/review-tests.py:39` and the generated template. Accept successful parent runs from the applicable tests events while retaining the SHA and workflow checks, and cover a parent tested by a push. GitHub documents that the [event filter restricts returned runs](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-workflow).",
+        "file": "src/forge/templates/review-tests.py",
+        "line": 39,
+        "priority": "P1",
+        "title": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T10:31:15+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T13:49:47+00:00",
+      "step": "review"
     }
   ],
   "why": "forge close reviews first and only then pushes and waits for CI, so every round waits for the review (4-30 minutes) and then for CI (10-15 minutes) one after the other",
