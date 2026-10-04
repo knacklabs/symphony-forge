@@ -202,13 +202,13 @@ tightening it needs no new approval. -->
    one box per running entry of the agent lane (worker, plan reader, reviewer: item in plain words,
    tool, model, effort, round, elapsed) and the test lane's box (item, progress bar, elapsed); a
    gates column listing each active item's gates (plan read passed, review clean/blocked with its
-   finding count, CI green/red/running with elapsed); a log band at the bottom with the last few
-   events, one line each with time (the same events EVENTS turns into prompts, plus run started and
-   ended); a legend of colours per tool and lane, each also marked with a symbol so it reads without
+   finding count, CI green/red/running with elapsed); no event log by default (owner: people want
+   outcomes and status, and ask for detail when they need it): pressing `l` shows the last events,
+   one line each with time, and `l` again hides them; a legend of colours per tool and lane, each also marked with a symbol so it reads without
    colour. Only facts Forge records: no probabilities, token counts or other figures Forge does not
    keep. Under 100 columns, or on Desktop where boxes don't fit, the tree becomes a list in the same
    order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
-   gates for a blocked review and a red check; log shows the last events newest last; list form at
+   gates for a blocked review and a red check; no log until `l` is pressed, then the last events newest last; list form at
    80 columns.
    MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
    stub PANE fills) and machine.ts with an empty `registerMachine(on, data, addTab)`; PANE owns the
