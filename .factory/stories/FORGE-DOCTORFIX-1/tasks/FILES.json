@@ -2,21 +2,13 @@
   "branch": "task/FORGE-DOCTORFIX-1-FILES",
   "review": {
     "blocking_level": "P1",
-    "changed": "062ca518d48c3764fbd3046a7fe36a305b1598306785347b6b54db9706b3dedd",
-    "commit": "7c7ab64f754c93265210e137715df6591c8c2f2d",
+    "changed": "7080cf092bb96aa1f4a6b20c41150ee3a8a457893c556da262eff126db4ab2da",
+    "commit": "ac94a8702a9528e1ad9e20a158e083738ba52d96",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "After the first doctor fix merges and its local branch and folder are removed, the next repair recreates `fix/forge-files` and the same fix record. New evidence relevant to the fixed-branch ruling is the unchanged caller contract: `src/forge/close.py:341\u2013346` selects any merged pull request with that branch name, and lines 73\u201377 return success immediately. Consequently, `forge close forge-files` reports the previous pull request as merged without reviewing or publishing the new repair. Likewise, `src/forge/board.py:76\u201391` and lines 227\u2013230 classify the reused record as finished. Retain the fixed-name rule, but make these callers distinguish the current repair from an earlier merged repair. Add a real-command repair \u2192 merge \u2192 cleanup \u2192 repair \u2192 close test; the retention tests do not exercise this lifecycle.",
-        "file": "src/forge/doctor.py",
-        "line": 220,
-        "priority": "P1",
-        "title": "Not done: Doctor brings Forge's files up to date through a fix"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-01T15:17:01+00:00",
@@ -92,6 +84,10 @@
     },
     {
       "at": "2026-10-04T01:23:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T02:02:28+00:00",
       "step": "review"
     }
   ],
