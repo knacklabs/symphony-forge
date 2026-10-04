@@ -14,17 +14,22 @@ from test_setup import _fresh_client, _version
 STORY = "FIX-CLIENT-SETUP-AND-MIGRATION"
 
 
-@pytest.mark.parametrize("case", ["new", "adopt", "previous adoption"])
+@pytest.mark.parametrize("case", ["new", "adopt", "adopt with alternate path spelling",
+                                  "previous adoption"])
 def test_1_init_and_sync_ship_setup_migration_and_advisory_pr_size(repo, gh, tmp_path, case):
     if case == "new":
         client, done = _fresh_client(repo, gh, tmp_path)
-    elif case == "adopt":
+    elif case.startswith("adopt"):
         done = repo.forge("init", "--test", "true", "--checks", "tests",
                           "--interfaces", "**/routes/**", "--approver", "Owner",
                           "--merger", "Owner")
-        client = next(Path(line.removeprefix("worktree ")) for line in
-                      repo.git("worktree", "list", "--porcelain").splitlines()
-                      if line.startswith("worktree ") and line != f"worktree {repo.path}")
+        if case == "adopt with alternate path spelling":
+            # Git and pathlib spell Windows separators differently; exercise an equivalent
+            # spelling on every platform without faking Git's worktree output.
+            repo.path = repo.path / ".." / repo.path.name
+        client = next(Path(block.splitlines()[0].removeprefix("worktree "))
+                      for block in repo.git("worktree", "list", "--porcelain").split("\n\n")
+                      if "branch refs/heads/fix/adopt-forge" in block.splitlines())
     else:
         # Real v1.2.2 adoption output, built from plain text, then upgraded and synced.
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
