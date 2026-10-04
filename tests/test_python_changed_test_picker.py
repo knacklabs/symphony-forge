@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from test_upgrade_command import (  # noqa: F401 (pytest fixtures)
     env, unsynced_up, _repo_adopted_on_the_previous_release,
 )
@@ -13,7 +15,11 @@ STORY = "FIX-FORGE-S-PYTHON-CHANGED-TEST-PICKER-SCRIP"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(repo):
+@pytest.mark.parametrize("cpu_count", [None, 2], ids=["machine-cores", "two-cores"])
+def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(repo, cpu_count):
+    if cpu_count is not None:
+        # Simulate the runner's hardware in the picker and real pytest subprocesses.
+        repo.write("src/sitecustomize.py", f"import os\nos.cpu_count = lambda: {cpu_count}\n")
     command = f'"{Path(sys.executable).as_posix()}" -m pytest checks -n auto'
     repo.write("forge.toml", "test = " + json.dumps(command) + "\n")
     repo.write("src/shop/prices.py", "PRICE = 1\n")
@@ -28,9 +34,11 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
         "unrelated": "# prices; shop.prices_other; from prices import PRICE",
     }.items():
         # Unrelated tests fail if the picker leaks them into the focused run.
-        body = ("import os\ndef test_selected():\n"
+        body = ("import os\ndef test_selected(request):\n"
                 "    assert os.environ['PYTEST_XDIST_AUTO_NUM_WORKERS'] == "
-                "str(max(1, (os.cpu_count() or 1) // 2))\n")
+                "str(max(1, (os.cpu_count() or 1) // 2))\n"
+                "    assert request.config.workerinput['workercount'] == "
+                "max(1, (os.cpu_count() or 1) // 2)\n")
         if name == "unrelated":
             body += "    assert os.environ.get('FULL_SUITE') == '1'\n"
         repo.write(f"checks/test_{name}.py", reference + "\n" + body)
@@ -54,7 +62,6 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
     selected = run()
     assert selected.returncode == 0, selected.stdout + selected.stderr
     assert "6 passed" in selected.stdout
-    assert f"{max(1, (os.cpu_count() or 1) // 2)} workers" in selected.stdout
     for shared in ("conftest.py", "pyproject.toml", "uv.lock", "poetry.lock"):
         repo.write(shared, "# shared input\n")
         repo.git("add", "-A")
