@@ -8,21 +8,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "05a68a1409f12126b5a8fa286747e7253ff40ed80269c309bd7e09a5017c8e43",
-    "commit": "8c238fecb2c8080fdfce175042c367ef7e8b7d0f",
+    "changed": "a45305dd89b79b19a5f16e33e8fe679dd6e9376f8a1778444158a21977cfc0e9",
+    "commit": "1e322f32037a54252c79fcb5b689b15d4b303b67",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The insertion splits the existing review-rule bullet at line 57, so `Building Forge (this repo only)` is embedded in that bullet rather than being a section heading. All the new building guidance is also inside the generated block, which ends at line 72. This violates both the required section placement and the requirement to leave the shared block unchanged. It also makes the guidance temporary: `src/forge/sync.py:149\u2013153` replaces that entire block from the unchanged adapter template. Restore the original shared-block text and add a standalone `## Building Forge (this repo only)` section after `<!-- forge:end -->`.",
-        "file": "AGENTS.md",
-        "line": 57,
-        "priority": "P1",
-        "title": "Not done: Put 'Building Forge (this repo only)' outside the unchanged forge block"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T16:06:02+00:00",
@@ -30,6 +22,10 @@
     },
     {
       "at": "2026-10-04T16:07:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T18:00:40+00:00",
       "step": "review"
     }
   ],
