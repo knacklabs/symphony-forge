@@ -2,16 +2,28 @@
 import json
 import os
 import shutil
+import sys
 
 import pytest
 
-from conftest import ROOT, _install
+from conftest import FORGE_SHIM, ROOT, _install
 from test_codex_worker import _sent, sdk_data  # noqa: F401
+from test_codex_resume import _resuming
+from test_fix_claude_workers_start_a_fresh_session_eve import FIX, _started
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
 STORY = "codex-spawns-subagents-only-when-explici"
+
+
+def _invitation(brief):
+    guidance = " ".join(brief.split())
+    for invitation in ("spawn the repo's subagent roles", "independent parts",
+                       "explorer to trace code paths", "tester to write tests while you build",
+                       "separate files edited in parallel", "at most 3 subagents at a time",
+                       "Do small tasks yourself"):
+        assert invitation in guidance
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
@@ -88,9 +100,63 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     for brief in (codex_brief, calls(claude_log)[0]["brief"]):
-        guidance = " ".join(brief.split())
-        for invitation in ("spawn the repo's subagent roles", "independent parts",
-                           "explorer to trace code paths", "tester to write tests while you build",
-                           "separate files edited in parallel", "at most 3 subagents at a time",
-                           "Do small tasks yourself"):
-            assert invitation in guidance
+        _invitation(brief)
+
+
+@pytest.mark.parametrize("host", ["codex", "claude"])
+def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
+        repo, gh, tmp_path, monkeypatch, sdk_data, host):
+    # Start the real command with the earlier release's prompt bytes. Keep today's host
+    # tracking, so the upgrade resumes rather than restarting for a separate record migration.
+    if host == "codex":
+        folder, log, _ = _resuming(repo, monkeypatch, sdk_data)
+        item = "BOARD/PAGE"
+        monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
+    else:
+        log = _started(repo)
+        item = FIX
+        folder = repo.path.parent / "repo-fix-fix-the-login-typo"
+    old_src = tmp_path / "pre-invitation"
+    shutil.copytree(ROOT / "src/forge", old_src / "forge",
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    # Plain-text brief from the fix's base release, before the delegation invitation.
+    shutil.copyfile(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
+                    old_src / "forge/templates/brief.md")
+    command = repo.bin / "forge"
+    current_command = command.read_text("utf-8")
+    _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old_src)))
+    try:
+        worked = repo.forge("work", item)
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+    finally:
+        command.write_text(current_command, encoding="utf-8")
+    if host == "codex":
+        first = _sent(log, "turn/start")[0]["threadId"]
+        old_brief = _sent(log, "turn/start")[0]["input"][0]["text"]
+        monkeypatch.delenv("STUB_CODEX_COMMIT")
+    else:
+        [started] = calls(log)
+        first = started["args"][started["args"].index("--session-id") + 1]
+        old_brief = started["brief"]
+    assert "spawn the repo's subagent roles" not in old_brief
+    before = (folder / "forge.toml").read_bytes()
+    synced = repo.forge("sync", cwd=folder)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert (folder / "forge.toml").read_bytes() == before
+    repo.git("add", "-A", cwd=folder)
+    repo.git("commit", "-q", "-m", "Sync upgraded instructions", cwd=folder)
+
+    worked = repo.forge("work", item)
+
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    if host == "codex":
+        assert len(_sent(log, "thread/start")) == 1
+        assert _sent(log, "thread/resume")[-1]["threadId"] == first
+        brief = _sent(log, "turn/start")[-1]["input"][0]["text"]
+    else:
+        [_, resumed] = calls(log)
+        assert resumed["args"][resumed["args"].index("--resume") + 1] == first
+        brief = resumed["brief"]
+    assert "The earlier brief in this conversation still applies." in brief
+    assert "# Worker brief" not in brief
+    _invitation(brief)
