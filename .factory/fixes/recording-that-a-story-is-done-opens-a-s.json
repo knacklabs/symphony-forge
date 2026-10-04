@@ -3,12 +3,13 @@
   "branch": "fix/recording-that-a-story-is-done-opens-a-s",
   "done_when": "When forge merge merges a story's last task, it writes the story's done record in that same merge, from an outcome given with --outcome or taken from the story's title, and forge story done is only needed to change that outcome later; no separate pull request. New and existing repos: same in any repo on this release; stories already marked done are untouched. One command-level test: merging the last task leaves the story done with no extra pull request.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T07:21:29+00:00",
       "step": "start"
     }
   ],
-  "why": "Recording that a story is done opens a separate fix and pull request just to write one record, costing a full review and CI run per story"
+  "why": "Recording that a story is done opens a separate fix and pull request just to write one record, costing a full review and CI run per story",
+  "worker": "codex"
 }
