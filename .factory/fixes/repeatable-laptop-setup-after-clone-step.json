@@ -2,12 +2,25 @@
   "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
   "branch": "fix/repeatable-laptop-setup-after-clone-step",
   "done_when": "Forge's skill tells the agent the setup and after-clone steps (install the pinned Forge, forge sync, forge doctor --fix) and where the Mac and Windows installers are published; the migration playbook ships with the package and the skill points to it before forge migrate; the CI workflow forge sync writes for clients adds an advisory step that reports lines added, removed and net in the run summary and never fails. Audit items 1, 4 and 11 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New repos get these at init; existing repos on their next forge sync after upgrading. One test checks the synced skill and the generated workflow carry them.",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "387d45e3b950aeb12333bb3bb767f8db3160011c95f111fa8406c42510fd1000",
+    "commit": "1f4865cf3851787ca28be269ec5af06a8548e559",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:24:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T12:00:19+00:00",
+      "step": "review"
     }
   ],
   "why": "Repeatable laptop setup, after-clone steps and the migration playbook live only in Forge's own scripts and docs, and only Forge's CI reports pull request size, so client repos lack them",
