@@ -361,12 +361,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
                     refused, text, untrusted = said["refused"], "", said
-                elif "read" in said:
-                    result["read"], text = said["read"], ""
-                elif "archived" in said:
-                    result["archived"], text = said["archived"], ""
-                elif "attached" in said:
-                    result["attached"], text = said["attached"], ""
+                elif control := next((key for key in ("read", "archived", "attached") if key in said), None):
+                    result[control], text = said[control], ""
                 elif "attachment_failed" in said:
                     text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
                 elif "project" in said:

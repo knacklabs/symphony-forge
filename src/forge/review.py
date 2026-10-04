@@ -492,12 +492,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     identity = repo.record_event(top, item, "review result", commit=head,
                                  outcome="blocked" if any(f["priority"] in
                                  (("P0",) if light else SERIOUS) for f in findings) else "clean")
-    return {"id": identity, "commit": head, "changed": fingerprint(head, item, top, state, base,
-                                                     "P0" if light else "P1", findings),
-            "branch_diff": fingerprint(head, item, top, state, base,
-                                       "P0" if light else "P1", findings, branch_diff=True),
-            "findings": findings,
-            "dismissals": [], "blocking_level": "P0" if light else "P1"}
+    return {"id": identity, "commit": head, "findings": findings,
+            "dismissals": [], "blocking_level": "P0" if light else "P1",
+            **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
+                                branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:

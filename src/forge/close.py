@@ -234,12 +234,10 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 def _worktree(item: str) -> Path:
     """The checkout on the item's own branch: the one its state names. An earlier item's state
     reaches later branches through the default branch, so the file alone proves nothing."""
-    for block in repo.git("worktree", "list", "--porcelain", cwd=repo.root()).split("\n\n"):
-        fields = dict(line.partition(" ")[::2] for line in block.splitlines())
-        branch = fields.get("branch", "").removeprefix("refs/heads/")
-        state = repo.read_state(item, Path(fields["worktree"])) if branch else None
+    for branch, tree in story.worktrees(repo.root()).items():
+        state = repo.read_state(item, tree)
         if state and state.get("branch") == branch:
-            return Path(fields["worktree"])
+            return tree
     repo.refuse(REFUSALS["not_started"], item=item)
 
 

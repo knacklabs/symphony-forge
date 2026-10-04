@@ -56,8 +56,11 @@ def work(args: argparse.Namespace) -> None:
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
-    top = _checkout(item, [f"task/{match['key']}-{match['task']}"] if match["task"]
-                    else [f"fix/{item}", f"forge/{item}"])
+    branches = [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"]
+    trees = story.worktrees(Path.cwd())
+    top = next((trees[branch] for branch in branches if branch in trees), None)
+    if top is None:
+        refuse(REFUSALS["no_checkout"], item=item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
@@ -301,15 +304,6 @@ def _changes(top: Path, start: str) -> str:
     return (f"\n## Since your last turn\n\nThe new commits:\n\n{commits}\n\nEvery change in "
             "the checkout since your last turn ended, new files included:\n\n"
             f"```diff\n{diff}```\n")
-
-
-def _checkout(item: str, branches: list[str]) -> Path:
-    """The worktree where the item's branch is checked out."""
-    found = story.worktrees(Path.cwd())
-    for branch in branches:
-        if branch in found:
-            return found[branch]
-    refuse(REFUSALS["no_checkout"], item=item)
 
 
 def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
