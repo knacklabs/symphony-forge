@@ -200,7 +200,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("missing tool", ("claude is not installed or not on PATH.",)),
     ("version mismatch", ("but this repo pins v0.0.1.",)),
     ("missing hook shims", ("The git hooks that check each commit and push aren't installed.",)),
-    ("forge's own repo without git hooks", ()),
+    ("forge's own repo without git hooks", ("The git hooks that check each commit and push aren't installed.",)),
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
@@ -330,8 +330,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
         assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
         assert "Everything else checks out" in done.stdout
-    elif case in ("impeccable in CLAUDE_CONFIG_DIR", "forge's own repo without git hooks"):
-        # Forge's own repo runs without the git hooks until the switch, so doctor doesn't ask.
+    elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
     else:

@@ -80,7 +80,9 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
             # Other doctor checks may report missing third-party tools; only this repair is owned.
             assert done.returncode in (0, 1), done.stdout + done.stderr
         if setup == "doctor source":
-            assert [path.read_bytes() if path.exists() else None for path in hooks] == before_hooks
+            # Forge-source now repairs the previous release's stale hooks like a client repo.
+            assert [path.read_bytes() if path.exists() else None for path in hooks] != before_hooks
+            assert "- Fixed: installed the git hooks that check each commit and push." in done.stdout
     repo.git("worktree", "remove", "--force", str(work), cwd=client)
     driver = repo.git("config", "--get", "merge.forge-roadmap.driver", cwd=client)
 
