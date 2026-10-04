@@ -387,6 +387,9 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
+        brief += (f"\nRun the change's related tests (`{local}`) before you stop. "
+                  "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:

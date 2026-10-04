@@ -146,7 +146,9 @@ Never edit source or tests while a test suite is running in the checkout.
    column; include the relevant `tests/` files when changing Forge itself.
 2. For source greps or plan assertions, run the executable contract owner;
    source inspection alone is not test evidence.
-3. Run forge.toml's `test` command before you stop.
+3. Before you stop, run the change's related tests: forge.toml's `fast_test` with
+   `{base}` as the merge base with the default branch, or its `test` command when
+   it has no `fast_test`. CI runs the full suite.
 4. `forge close <item>` owns the review and the checks. Do not reconstruct its
    review or check wait with ad hoc commands.
 5. After an audit batch, inspect the diff and report production/tooling changes

@@ -399,6 +399,9 @@ foreground, wait for them and commit. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
+Continued worker rounds repeat the current related-test command, replacing any earlier
+full-suite instruction. The synced test-audit skill follows the same rule; CI runs the full suite.
+
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers, readers and
 `forge ask` all refuse there until the human trusts it; `forge doctor` says how. A project hook that isn't Forge's and that Codex doesn't trust stops every Codex turn;
