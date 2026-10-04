@@ -51,7 +51,14 @@ def save(threads):
     """Through a temporary file and a rename: Forge may end this at any moment once a turn ends,
     and a half-written store would read as empty."""
     (HERE / "threads.tmp").write_text(json.dumps(threads), encoding="utf-8")
-    os.replace(HERE / "threads.tmp", STORE)
+    for wait in (0.05,) * 100 + (0,):  # Windows readers briefly block replacing the store
+        try:
+            os.replace(HERE / "threads.tmp", STORE)
+            return
+        except PermissionError:
+            if not wait:
+                raise
+            time.sleep(wait)
 
 
 def send(**message):
