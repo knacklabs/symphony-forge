@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -19,6 +30,17 @@
       "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "from": "worker",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
       "status": "open",
       "closed_by": null
     },
@@ -78,6 +100,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -87,6 +120,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 39,
+      "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
@@ -232,6 +276,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",
@@ -272,50 +327,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "from": "worker",
-      "item": "a-client-s-coordinating-agent-has-no-shi",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 152,
-      "text": "Preserve compatibility with the default-branch PR checker",
-      "from": "blocking",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 149,
-      "text": "Canonicalize raw diff ordering before hashing",
-      "from": "review",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 28,
-      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
-      "from": "blocking",
-      "item": "windows-eight",
       "status": "open",
       "closed_by": null
     }
