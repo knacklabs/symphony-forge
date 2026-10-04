@@ -10,11 +10,10 @@ import argparse
 import ast
 import importlib
 import json
-import os
 import pkgutil
 import re
-import subprocess
-import tempfile
+import shlex
+import sys
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -27,14 +26,7 @@ COMMANDS = [{
     "help": "Write the generated adapter files and git hooks for the pinned version",
     "args": [], "position": 20,
     "listing": "| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |",
-}, {
-    "words": "hook merge-roadmap", "run": "merge_hook", "changes_state": False,
-    "help": "Merge the roadmap or spotted list for git",
-    "args": [((name,), {}) for name in ("base", "ours", "theirs")], "position": 285,
-    "listing": "| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |",
 }]
-
-MERGE_DRIVER = "forge hook merge-roadmap %O %A %B"
 
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
@@ -111,9 +103,7 @@ shims = githooks.shims
 
 # Every story and fix adds to the roadmap, so git merges it with Forge's rule instead of by line.
 ROADMAP_RULE = "plans/roadmap.json merge=forge-roadmap"
-# The spotted list grows on every branch too, and merges by the same rule.
-SPOTTED_RULE = "plans/spotted.json merge=forge-roadmap"
-RANK = {"pending": 0, "done": 2, "superseded": 2}  # planning, started and the rest sit between
+RANK = {"pending": 0, "done": 2}  # planning, started and the rest sit between the two
 
 def install_line(version: str) -> str:
     """The command that installs the pinned Forge (the pin refusal's own Next line)."""
@@ -153,21 +143,18 @@ def _block(top: Path, rel: str, template: str) -> str:
     return text[:start] + block + text[end:]
 
 
-def _agents(top: Path) -> str:
-    """AGENTS.md with Forge's block, then CLAUDE.md's lines it doesn't have yet, so CLAUDE.md can go.
+def _claude(top: Path) -> str:
+    """CLAUDE.md without the Forge block an older Forge wrote; "" means delete it.
 
-    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md. CLAUDE.md's @AGENTS.md line
-    and an older Forge's block are dropped, never moved.
+    Claude Code reads AGENTS.md by itself when there is no CLAUDE.md. A CLAUDE.md with content of
+    the repo's own stays, and keeps an @AGENTS.md line, since Claude Code reads it instead.
     """
-    text = _block(top, "AGENTS.md", "adapters/AGENTS.md")
-    claude = read(top / "CLAUDE.md")
-    start, end = _span(claude, "CLAUDE.md")
-    rest = claude if start == -1 else claude[:start] + claude[end:]
-    have = {line.strip() for line in text.splitlines()} | {"@AGENTS.md"}
-    moved = "\n".join(line.rstrip() for line in rest.splitlines()
-                      if not line.strip() or line.strip() not in have)
-    moved = re.sub(r"\n{3,}", "\n\n", moved).strip("\n")
-    return f"{text.rstrip()}\n\n{moved}\n" if moved.strip() else text
+    text = read(top / "CLAUDE.md")
+    start, end = _span(text, "CLAUDE.md")
+    rest = (text if start == -1 else text[:start] + text[end:]).strip()
+    if rest in ("", "@AGENTS.md"):
+        return ""
+    return rest + "\n" if re.search(r"^@AGENTS\.md[ \t]*$", rest, re.M) else f"{rest}\n\n@AGENTS.md\n"
 
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
@@ -264,15 +251,11 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
-def merge_attributes(text: str) -> str:
-    missing = [rule for rule in (ROADMAP_RULE, SPOTTED_RULE) if rule not in text.splitlines()]
-    if missing:
-        text = (f"{text.rstrip()}\n" if text.strip() else "") + "".join(f"{rule}\n" for rule in missing)
-    return text
-
-
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg)}
+    text = read(top / ".gitattributes")
+    if ROADMAP_RULE not in text.splitlines():
+        text = f"{text.rstrip()}\n{ROADMAP_RULE}\n" if text.strip() else f"{ROADMAP_RULE}\n"
+    return {".gitattributes": text, LAUNCHER: launcher(cfg)}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
@@ -301,10 +284,6 @@ def merge_roadmap(base: str, ours: str, theirs: str) -> int:
     return 0
 
 
-def merge_hook(args: argparse.Namespace) -> int:
-    return merge_roadmap(args.base, args.ours, args.theirs)
-
-
 def _synced_text(source: str, packaged: str) -> str:
     """Read the checkout's copy in editable installs, or the bundled copy in built installs."""
     checked_in = SOURCE / source
@@ -329,32 +308,6 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     return wanted
 
 
-def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
-    """The paths whose content at head ("" for the index) is exactly what forge sync writes over
-    the base commit's files with this config, so a fix's size doesn't count them."""
-    def show(rev: str, path: str) -> bytes:
-        done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
-        return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
-
-    # A detached worktree is the base exactly, with no export rules applied. A hook's git
-    # variables (its index among them) must not reach it, nor may the repo's own hooks run.
-    plain = {key: value for key, value in os.environ.items()
-             if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX")}
-    git = ["git", "-c", f"core.hooksPath={os.devnull}"]
-    # ponytail: checks out the whole base once per oversized fix; list sync's inputs if it's slow.
-    with tempfile.TemporaryDirectory() as folder:
-        tmp = str(Path(folder) / "base")
-        subprocess.run([*git, "worktree", "add", "-q", "--detach", tmp, base], cwd=top, env=plain,
-                       capture_output=True, check=True)
-        try:
-            wanted = files(Path(tmp), cfg)
-        finally:
-            subprocess.run([*git, "worktree", "remove", "--force", tmp], cwd=top, env=plain,
-                           capture_output=True)
-    return {path for path in paths
-            if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
-
-
 def command_page() -> str:
     """The source repo's command list, in the order shown by Forge's declarations."""
     commands = []
@@ -375,22 +328,8 @@ def command_page() -> str:
 
 def write(top: Path, cfg: dict[str, Any]) -> list[str]:
     """Write the files that differ from what sync makes; returns them. Never on the default branch."""
-    # First, AGENTS.md and CLAUDE.md become regular files holding the text their link led to (none
-    # when it dangles), so writing AGENTS.md or deleting CLAUDE.md never loses another file's lines.
-    links = {rel: read(top / rel) for rel in ("AGENTS.md", "CLAUDE.md") if (top / rel).is_symlink()}
-    for rel in links:  # never copy a file from outside the repo into it
-        if not (top / rel).resolve().is_relative_to(top.resolve()):
-            repo.refuse(REFUSALS["outside"], path=rel)
-    if links:
-        repo._work_branch(top)
-    for rel, text in links.items():
-        (top / rel).unlink()
-        if text or rel == "AGENTS.md":
-            write_file(top, rel, text)
     wanted = files(top, cfg)
-    # "" means delete, so an empty file that is there still counts as a change.
-    changed = [rel for rel, text in wanted.items()
-               if read(top / rel) != text or not text and (top / rel).exists()]
+    changed = [rel for rel, text in wanted.items() if read(top / rel) != text]
     if changed:
         repo._work_branch(top)  # the shared rule: a born default branch or a detached HEAD refuses
         roles.refuse_foreign(top, changed)
@@ -399,7 +338,7 @@ def write(top: Path, cfg: dict[str, Any]) -> list[str]:
             write_file(top, rel, wanted[rel])
         else:
             (top / rel).unlink()
-    return changed + [rel for rel in links if rel not in changed]
+    return changed
 
 
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
@@ -423,20 +362,13 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             path.write_bytes(text.encode("utf-8"))
             changed = True
         path.chmod(0o755)
-    return install_merge_rules(top) or changed
-
-
-def install_merge_rules(top: Path) -> bool:
-    # Local attributes and config are shared by worktrees, including on an older default branch.
-    common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
-    current_attributes = read(common / "info/attributes")
-    attributes = merge_attributes(current_attributes)
-    changed = current_attributes != attributes
-    if changed:
-        write_file(common, "info/attributes", attributes)
+    # The roadmap's merge driver runs this Forge's own code with the Python running it now.
+    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
+            "from forge.sync import merge_roadmap; sys.exit(merge_roadmap(*sys.argv[1:]))")
+    driver = f"{shlex.quote(sys.executable)} -c {shlex.quote(code)} %O %A %B"
     current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
-    if current.strip() != MERGE_DRIVER:
-        repo.git("config", "merge.forge-roadmap.driver", MERGE_DRIVER, cwd=top)
+    if current.strip() != driver:
+        repo.git("config", "merge.forge-roadmap.driver", driver, cwd=top)
         changed = True
     return changed
 
