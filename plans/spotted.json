@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 190,
+      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "from": "worker",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tA hook refusal from forge ask prints forge ask ask as its retry command.",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -54,6 +65,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 86,
+      "text": "[P1] Preserve the default outcome for forge land callers",
+      "from": "blocking",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",

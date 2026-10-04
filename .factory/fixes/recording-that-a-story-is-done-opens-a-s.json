@@ -2,12 +2,35 @@
   "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
   "branch": "fix/recording-that-a-story-is-done-opens-a-s",
   "done_when": "When forge merge merges a story's last task, it writes the story's done record in that same merge, from an outcome given with --outcome or taken from the story's title, and forge story done is only needed to change that outcome later; no separate pull request. New and existing repos: same in any repo on this release; stories already marked done are untouched. One command-level test: merging the last task leaves the story done with no extra pull request.",
+  "flagged": [
+    "src/forge/merge.py"
+  ],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "c8ec9f9ad4367838521784be0454f87a6400f131d5576684a538df263b9ece92",
+    "commit": "7a6bd79182f7988a43d96c1809f249a2309ffbba",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "`src/forge/land.py:81` calls `merge.merge(argparse.Namespace(item=item))`, without an `outcome` attribute. When `forge land` reaches a story's last task, this new access raises an uncaught `AttributeError` before `gh pr merge`, leaving the ready task unmerged. Supply the optional argument's default for this caller, or handle its absence in merge, and cover the last-task path through `forge land`.",
+        "file": "src/forge/merge.py",
+        "line": 86,
+        "priority": "P1",
+        "title": "[P1] Preserve the default outcome for forge land callers"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T07:21:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:46:51+00:00",
+      "step": "review"
     }
   ],
   "why": "Recording that a story is done opens a separate fix and pull request just to write one record, costing a full review and CI run per story",
