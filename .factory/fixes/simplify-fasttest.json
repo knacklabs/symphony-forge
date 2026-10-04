@@ -3,12 +3,13 @@
   "branch": "fix/simplify-fasttest",
   "done_when": "src/forge/fasttest.py is simpler and none of these happen any more: Cap worker counts supplied through pytest configuration; Exclude unrelated tests explicitly named by the full command; Recognize source-prefixed paths and package-relative imports",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T19:26:08+00:00",
       "step": "start"
     }
   ],
-  "why": "Simplify src/forge/fasttest.py: problems keep turning up there"
+  "why": "Simplify src/forge/fasttest.py: problems keep turning up there",
+  "worker": "codex"
 }
