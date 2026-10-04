@@ -1,0 +1,54 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/forge-s-python-changed-test-picker-scrip",
+  "done_when": "Forge ships a Python changed-test picker that any repo can name in fast_test (for example uv run python -m forge.fasttest {base}): it runs changed test files, test files named after a changed module, and test files that import or mention it by module path, runs the full test command when shared inputs (conftest.py, pyproject.toml, lock files) change, and limits pytest to half the machine's cores; Forge's own forge.toml uses it and scripts/fast-test.py is removed; the setup step proposes it for pytest repos. Audit item 5 in /Users/ravikiranvemula/Workdir/forge-audit-2026-10-04.md. New repos: proposed at setup. Existing repos: available after upgrade; their forge.toml is never rewritten. One command-level test in a small pytest repo.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "a39d8448094b6c46d0443c2e750a7581bc331b3e2a0086fd7ac250a02a5443b7",
+    "commit": "dc267c629838809e06ccad2f23bef1be6845146a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The earlier P2 remains open. With `test = \"pytest checks\"` and `addopts = -n 16` in pytest.ini, an eight-core machine still starts 16 workers. Numeric counts in PYTEST_ADDOPTS and the command spelling `-n=16` also escape this regex, including during full-suite fallback. [pytest parses configuration and environment options separately](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/config/__init__.py), and [xdist consults the auto-worker hook only for auto/logical counts](https://raw.githubusercontent.com/pytest-dev/pytest-xdist/v3.8.0/src/xdist/plugin.py). Apply the cap to the effective pytest options.",
+        "file": "src/forge/fasttest.py",
+        "line": 48,
+        "priority": "P2",
+        "title": "Cap worker counts supplied through pytest configuration"
+      },
+      {
+        "body": "The earlier P2 remains open. For `pytest tests/test_one.py tests/test_two.py`, changing only test_one still runs test_two despite the generated ignore option; shell-expanded commands such as `pytest tests/*.py` have the same problem. Evidence beyond the coordinator's command-preservation ruling: [pytest's Dir.collect bypasses ignore checks for explicitly supplied files](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py). The printed selection therefore differs from execution and unrelated failures can stop close. Preserve the command's setup while enforcing selection for explicit file arguments too.",
+        "file": "src/forge/fasttest.py",
+        "line": 82,
+        "priority": "P2",
+        "title": "Exclude unrelated tests explicitly named by the full command"
+      },
+      {
+        "body": "Changing `src/shop/prices.py` produces the module `shop.prices`, but a test mentioning `src/shop/prices.py` is rejected because the path regex forbids the preceding slash. A concrete instance is tests/test_fast_test_selects_explicit_module_references.py:22, which reads `src/forge/review.py` but is not selected by that reference when review changes. Package-local tests using `from .prices import PRICE` are also missed because line 31 excludes every relative import. Without a filename match, these related tests are ignored or the picker returns success without running tests. Recognize repository-prefixed source paths and resolve relative imports against the test's package.",
+        "file": "src/forge/fasttest.py",
+        "line": 22,
+        "priority": "P2",
+        "title": "Recognize source-prefixed paths and package-relative imports"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T10:23:46+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T11:43:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T13:45:10+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's Python changed-test picker (scripts/fast-test.py) does not ship, so Python client repos either run their whole suite at close or write their own",
+  "worker": "codex"
+}
