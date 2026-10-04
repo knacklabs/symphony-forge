@@ -7,21 +7,28 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "changed": "70c2785a9afa0e1fab6100e3709d3224c88d1307c7f89bf6f25844467c5183ec",
-    "commit": "43869339470a32496032a44e8915710cd344d4d7",
+    "changed": "b74fa1e90c140dc697129968de42b0dc45a6c55d7b2bf5ae6002e5f12e15d484",
+    "commit": "5897a28fc893df125a52fb67b05b462fb6e0279b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous finding remains open. When a successful initial answer asks a question and leaves uncommitted changes, a failed commit nudge can prevent `_question` from running. Both Claude paths leave `outcome` as `failed` if the nudge raises (lines 188\u2013196), and Codex changes it to `failed` when the nudge returns an unsuccessful status (lines 212\u2013213). The initial question then receives neither a pending record nor an occurrence id. Subsequent work can proceed unanswered, and close.py:63\u201365 blocks only persisted questions. The nudge tests still cover successful nudges only. Preserve questions from successful answers independently of the nudge's outcome.",
+        "body": "These assertions do not isolate the launcher's environment. `review.py:316` sets FORGE_WORKER=1 on the outer close test run, `scripts/fast-test.py:38\u201339` preserves it, and `tests/conftest.py:159\u2013161` launches Forge with the inherited environment; its repo fixture does not clear the marker. Consequently, during the supplied close-run validation, removing the explicit environment assignments from worker, reader or reviewer launchers would still satisfy every injected assertion. Clear or replace FORGE_WORKER in the parent test environment before invoking Forge, so each provider case proves Forge supplies it.",
+        "file": "tests/test_run_records.py",
+        "line": 27,
+        "priority": "P1",
+        "title": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1"
+      },
+      {
+        "body": "The previous finding remains open. A successful initial answer can ask a question and leave uncommitted changes, but a failed commit nudge prevents `_question` from running. Both Claude paths leave `outcome` as failed when the nudge raises (lines 188\u2013196); Codex explicitly changes it to failed when the nudge returns an unsuccessful status (lines 212\u2013213). The initial question receives neither a pending record nor an occurrence id, allowing subsequent work or close to proceed unanswered: `close.py:64\u201366` blocks only persisted questions. Preserve questions from successful answers independently of the nudge outcome, across both Claude routes and Codex.",
         "file": "src/forge/worker.py",
         "line": 217,
         "priority": "P2",
         "title": "Preserve pending questions when a commit nudge fails"
       }
     ],
-    "status": "clean"
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T07:05:58+00:00",
@@ -41,6 +48,10 @@
     },
     {
       "at": "2026-10-04T12:09:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T12:44:25+00:00",
       "step": "review"
     }
   ],

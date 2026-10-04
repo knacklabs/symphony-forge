@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tA hook refusal from forge ask prints forge ask ask as its retry command.",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -63,6 +74,17 @@
       "text": "Not done: every review result has a fresh id",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
       "status": "open",
       "closed_by": null
     },
@@ -177,6 +199,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 27,
+      "text": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_run_records.py\tNot done: run-record coverage for previously adopted client repos\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "tests/test_run_records.py",
@@ -243,6 +276,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tClassify cached test stages as skipped",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -305,39 +349,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 152,
-      "text": "Preserve compatibility with the default-branch PR checker",
-      "from": "blocking",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 149,
-      "text": "Canonicalize raw diff ordering before hashing",
-      "from": "review",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "from": "worker",
-      "item": "a-client-s-coordinating-agent-has-no-shi",
       "status": "open",
       "closed_by": null
     }
