@@ -16,8 +16,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
    `forge work <KEY>/<TASK>`.
 4. `forge close <item>` closes it when the tests pass and the review finds no serious problem.
 5. The human merges unless the default branch's `forge.toml` has `merge = "agent"`.
-   Then, once close says Ready, the agent runs `forge merge <item>`. After the story's last merge,
-   `forge story done <KEY> "<outcome>"`.
+   Then, once close says Ready, the agent runs `forge merge <item>`. The story's last task merge
+   records it done, using `--outcome "<outcome>"` or its title. Use `forge story done` on an
+   existing work branch only to change that outcome later; it opens no separate pull request.
 
 ### The lanes
 

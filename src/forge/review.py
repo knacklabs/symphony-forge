@@ -127,7 +127,8 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
-                reviewed_level: str | None = None, findings: list[Any] | None = None) -> str:
+                reviewed_level: str | None = None, findings: list[Any] | None = None, *,
+                branch_diff: bool = False) -> str:
     """What a clean review covers: changed product files, every file the review's findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
@@ -143,11 +144,22 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
     # Close writes the spotted list after the review, so it never makes that review stale.
     changed.discard(spotted.PATH)
-    listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
-    blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
-             if (path := entry.partition("\t")[2]) in changed}
-    digest = hashlib.sha256("\0".join(
-        f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
+    if branch_diff:
+        # Close alone uses both sides of the diff to reuse a review after a base-only merge.
+        # Sort header/path pairs: diff.orderFile can reorder even raw Git output.
+        raw = (repo.git("--literal-pathspecs", "diff", "--raw", "--no-abbrev", "--no-renames",
+                        "--no-ext-diff", "--no-color", "-z", ancestor, commit, "--",
+                        *sorted(changed), cwd=top) if changed else "").split("\0")
+        entries = sorted(zip(raw[::2], raw[1::2]), key=lambda entry: entry[1])
+        digest = hashlib.sha256("\0".join(
+            f"{path}\0{entry}" for entry, path in entries).encode("utf-8"))
+    else:
+        # review.changed must retain the fingerprint used by the PR base's installed checker.
+        listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
+        blobs = {path: entry.partition("\t")[0].split()[-1] for entry in listing
+                 if (path := entry.partition("\t")[2]) in changed}
+        digest = hashlib.sha256("\0".join(
+            f"{path}\0{blobs.get(path, '')}" for path in sorted(changed)).encode("utf-8"))
     key, _, name = item.partition("/")
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
@@ -455,11 +467,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        for attempt in ((1,) if signoff_prompt else (1, 2)):
-            findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
-            if not reason:
-                break
-            print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
+        with machine.agent_slot(top, "review"):
+            for attempt in ((1,) if signoff_prompt else (1, 2)):
+                findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                if not reason:
+                    break
+                print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
@@ -482,6 +495,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
     return {"commit": head, "changed": fingerprint(head, item, top, state, base,
                                                      "P0" if light else "P1", findings),
+            "branch_diff": fingerprint(head, item, top, state, base,
+                                       "P0" if light else "P1", findings, branch_diff=True),
             "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
 
@@ -529,6 +544,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
+    machine.started(proc.pid)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
         line = line.replace(b"\0", b"")

@@ -1,4 +1,4 @@
-"""The v1.2.3 release installs as 1.2.3 and this repo pins it."""
+"""The v1.2.4 release installs as 1.2.4 and this repo pins it."""
 
 import tomllib
 from pathlib import Path
@@ -9,5 +9,5 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_1_forge_version_is_1_2_1_everywhere_it_is_recorded(repo):
-    assert repo.forge("--version").stdout.split()[-1] == "v1.2.3"
-    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.3"
+    assert repo.forge("--version").stdout.split()[-1] == "v1.2.4"
+    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.4"

@@ -1,0 +1,33 @@
+{
+  "base": "ee3ca47850f4a6b29c53c1a5220912a26c2ae8fd",
+  "branch": "fix/building-forge",
+  "done_when": "Forge's AGENTS.md has a 'Building Forge (this repo only)' section outside the forge block, stating that Forge is built with its own process for client repos, that general process rules go in what Forge ships and only Forge-code rules stay in this repo, and that every change covers new and existing client repos; its Review rules report a general process rule added only to Forge's own files as P1. The shared forge block is unchanged. New and existing client repos: unaffected (repo-owned section).",
+  "flagged": [
+    "AGENTS.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "a45305dd89b79b19a5f16e33e8fe679dd6e9376f8a1778444158a21977cfc0e9",
+    "commit": "1e322f32037a54252c79fcb5b689b15d4b303b67",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T16:06:02+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T16:07:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T18:00:40+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's AGENTS.md doesn't say what Forge is for or how to decide whether a rule belongs to every repo or only to Forge, so general rules keep landing only in Forge's own files"
+}

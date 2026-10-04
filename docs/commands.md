@@ -6,10 +6,11 @@
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
 | `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
+| `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
-| `forge story done <KEY> "<outcome>"` | Records a finished story's outcome sentence and dates |
+| `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
 | `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
@@ -18,7 +19,7 @@
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
 | `forge ask "<question>"` | Asks Codex a read-only question about the code without starting a fix (`--model` and `--effort` override `[models.lite]`) |
 | `forge close <item>` | Closes a task or fix by the close rule |
-| `forge merge <item>` | Merges a ready item when the default branch allows agent merges |
+| `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
 | `forge land <item>` | Builds, closes, runs fix rounds and merges a task or fix where the repo allows agent merges; run it in the background |
 | `forge spec save <slug>` | Saves a spec as a draft |
@@ -35,4 +36,5 @@
 | `forge hook deny` | Before each shell command: blocks destructive commands, `--no-verify` and `gh pr merge` |
 | `forge hook pre-commit` | The git pre-commit rules |
 | `forge hook pre-push` | The git pre-push rules |
+| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |
 | `forge hook pr-check` | The required `forge-pr-check`, run in CI from the base branch |

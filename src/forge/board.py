@@ -341,6 +341,9 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     stories = []
     for key in [*titles, *sorted((set(found) | set(tasks)) - set(titles))]:
         state, where = found.get(key, ({}, landed))
+        completed = story.completed(top, key, landed)
+        if state.get("status") != "done" and completed.get("status") == "done":
+            state = completed
         rows = task.rows(task.sections(_read(top, where, f"plans/{key}.md")))
         names = {cell.strip("` "): row.get("Name") or "" for cell, row in rows.items()}
         mine = tasks.get(key, {})

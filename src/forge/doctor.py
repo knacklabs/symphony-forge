@@ -199,17 +199,24 @@ def doctor(args: argparse.Namespace) -> int:
     # The installed Forge's templates make these files, whatever version the repo pins.
     rows += [(f"{rel} differs from what forge sync writes for the installed Forge v{__version__}.",
               "forge sync") for rel, text in wanted.items() if sync.read(top / rel) != text]
-    # Forge's own repo runs without the default hooks until the switch: every worktree shares
-    # that folder. An explicitly configured hooks folder must still be checked.
-    checks_hooks = (cfg["repo"] != "forge-source" or
-                    repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
-    if checks_hooks and any(sync.read(path) != text for path, text in sync.shims(top, cfg).items()):
+    driver = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout.strip()
+    attributes = sync.read(Path(repo.git("rev-parse", "--path-format=absolute", "--git-path",
+                                         "info/attributes", cwd=top)))
+    merge_drift = driver != sync.MERGE_DRIVER or sync.merge_attributes(attributes) != attributes
+    hooks_drift = any(sync.read(path) != text for path, text in sync.shims(top, cfg).items())
+    if hooks_drift or merge_drift:
         if not args.fix:
-            rows.append(("The git hooks that check each commit and push aren't installed.", REPAIR))
+            rows.append(("The git hooks that check each commit and push aren't installed."
+                         if hooks_drift else "The roadmap and spotted-list merge rule doesn't "
+                         "match the installed Forge.", REPAIR))
         else:
             try:  # never committed, so this repair runs on the default branch too
-                sync.install_shims(top, cfg)
-                print("- Fixed: installed the git hooks that check each commit and push.")
+                if hooks_drift:
+                    sync.install_shims(top, cfg)
+                else:
+                    sync.install_merge_rules(top)
+                print("- Fixed: installed the git hooks that check each commit and push."
+                      if hooks_drift else "- Fixed: installed the roadmap and spotted-list merge rule.")
             except repo.Refused as refused:
                 problem, _, fix = str(refused).partition("\nNext: ")
                 rows.append((problem, fix))

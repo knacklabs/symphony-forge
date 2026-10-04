@@ -1,0 +1,75 @@
+{
+  "allow_large": "Two code files plus tests, a decision record and synced skill copies; under the rule already on main (tests and sync output don't count) it is within the limit, but the installed release still counts them",
+  "base": "e8397b1347fcafaa2c3c109033b469c0214f85ad",
+  "branch": "fix/codex-hook-trust",
+  "done_when": "Before each Codex thread start or resume, Forge asks the app-server for the checkout's project hooks; each hook whose definition is exactly what forge sync writes for this repo is passed to the turn as trusted (its current hash in the thread config's hooks state), so the guard and the other Forge hooks run on every worker and reader turn; if any project hook is not trusted and differs from Forge's own, the turn stops with one plain line naming the hook and how to review it in Codex's /hooks, changing nothing. Decision 0102 records the owner's choice and supersedes decision 0082 for Forge's own hooks. Command-level tests with the stub app-server: Forge's own untrusted hooks are trusted and the turn starts with them; a modified or foreign untrusted hook stops the turn.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "847585d485ee8cc510206b70f637edb4816da340a1cbb836bc98bc2ee1b0ee4f",
+    "commit": "dd94800b6a18516b2734fea2d203cb8469ec1134",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous P2 gap remains. `src/forge/doctor.py:75\u201382` accepts a trusted main repository even when the checkout explicitly has `trust_level = \"untrusted\"`. [Codex 0.159.2\u2019s resolver](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/config/src/loader/mod.rs) gives the checkout decision precedence and disables its project-hook layer. Forge therefore admits worker, reader and `forge ask` turns while Codex omits the guard. `tests/stubs/codex-app-server:97\u2013100` repeats the permissive check, masking this case. Honor explicit checkout distrust before inheriting repository trust, update the stub, and cover conflicting trust entries through a Forge command.",
+        "file": "src/forge/codex.py",
+        "line": 251,
+        "priority": "P2",
+        "title": "Respect explicit worktree distrust before inheriting repository trust"
+      },
+      {
+        "body": "The previous P3 gap remains. A hook refusal from `forge ask` tells the user to run `forge ask ask`. `src/forge/ask.py:30` passes the internal item name `ask`, so following the instruction after reviewing the hook asks the literal question \u201cask\u201d instead of repeating the original question. Tell the user to rerun their original command or provide a question placeholder, and update `tests/test_codex_turns_trust_forge_hooks.py:318`, which asserts the incorrect guidance.",
+        "file": "src/forge/codex.py",
+        "line": 74,
+        "priority": "P3",
+        "title": "Give forge ask a retry instruction that preserves the question"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T08:38:35+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T13:12:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T20:18:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T01:00:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T05:46:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T15:52:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T17:21:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T20:10:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T22:15:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T22:58:12+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's Codex workers run with no Forge hooks at all, the destructive-command guard included: Codex silently skips project hooks that aren't trusted, and every change to a hook un-trusts it, so the guard has not protected Codex worker turns since the hook launcher changed",
+  "worker": "codex"
+}

@@ -13,9 +13,7 @@ import json
 import os
 import pkgutil
 import re
-import shlex
 import subprocess
-import sys
 import tempfile
 import tomllib
 from pathlib import Path
@@ -29,7 +27,14 @@ COMMANDS = [{
     "help": "Write the generated adapter files and git hooks for the pinned version",
     "args": [], "position": 20,
     "listing": "| `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |",
+}, {
+    "words": "hook merge-roadmap", "run": "merge_hook", "changes_state": False,
+    "help": "Merge the roadmap or spotted list for git",
+    "args": [((name,), {}) for name in ("base", "ours", "theirs")], "position": 285,
+    "listing": "| `forge hook merge-roadmap` | Git's merge rule for the roadmap and spotted list |",
 }]
+
+MERGE_DRIVER = "forge hook merge-roadmap %O %A %B"
 
 REFUSALS = {
     "outside": ("{path} leads outside this repo, so Forge won't write through it; remove that link.",
@@ -259,12 +264,15 @@ def _codex_config(top: Path) -> str:
     return merged
 
 
-def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    text = read(top / ".gitattributes")
+def merge_attributes(text: str) -> str:
     missing = [rule for rule in (ROADMAP_RULE, SPOTTED_RULE) if rule not in text.splitlines()]
     if missing:
         text = (f"{text.rstrip()}\n" if text.strip() else "") + "".join(f"{rule}\n" for rule in missing)
-    return {".gitattributes": text, LAUNCHER: launcher(cfg)}
+    return text
+
+
+def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+    return {".gitattributes": merge_attributes(read(top / ".gitattributes")), LAUNCHER: launcher(cfg)}
 
 
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
@@ -291,6 +299,10 @@ def merge_roadmap(base: str, ours: str, theirs: str) -> int:
         return 1
     Path(ours).write_bytes((json.dumps(merged, indent=2) + "\n").encode("utf-8"))
     return 0
+
+
+def merge_hook(args: argparse.Namespace) -> int:
+    return merge_roadmap(args.base, args.ours, args.theirs)
 
 
 def _synced_text(source: str, packaged: str) -> str:
@@ -411,13 +423,20 @@ def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
             path.write_bytes(text.encode("utf-8"))
             changed = True
         path.chmod(0o755)
-    # The roadmap's merge driver runs this Forge's own code with the Python running it now.
-    code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
-            "from forge.sync import merge_roadmap; sys.exit(merge_roadmap(*sys.argv[1:]))")
-    driver = f"{shlex.quote(sys.executable)} -c {shlex.quote(code)} %O %A %B"
+    return install_merge_rules(top) or changed
+
+
+def install_merge_rules(top: Path) -> bool:
+    # Local attributes and config are shared by worktrees, including on an older default branch.
+    common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
+    current_attributes = read(common / "info/attributes")
+    attributes = merge_attributes(current_attributes)
+    changed = current_attributes != attributes
+    if changed:
+        write_file(common, "info/attributes", attributes)
     current = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout
-    if current.strip() != driver:
-        repo.git("config", "merge.forge-roadmap.driver", driver, cwd=top)
+    if current.strip() != MERGE_DRIVER:
+        repo.git("config", "merge.forge-roadmap.driver", MERGE_DRIVER, cwd=top)
         changed = True
     return changed
 

@@ -14,7 +14,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, repo, story, task
+from forge import codex, doctor, machine, repo, review, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -26,19 +26,18 @@ TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
 SERIOUS = ("P0", "P1")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
-NUDGING = "The worker left changes uncommitted, so Forge asks it once to test and commit them."
+NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
-COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. Run "
-                "the repo's test command{test} in the foreground and wait for it to finish; never "
-                "leave it running in the background. Then commit your work on this branch, and end "
+COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
+                "Commit your work on this branch first. Run "
+                "the change's related tests{test} in the foreground and wait for them to finish; never "
+                "leave them running in the background. Then commit any fixes on this branch, and end "
                 "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
-    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
-                  "no Codex worker here.", "forge doctor"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
@@ -93,7 +92,8 @@ def work(args: argparse.Namespace) -> None:
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
-    with codex.hold(top, item, kind):
+    # The round then waits for one of the machine's agent slots.
+    with codex.hold(top, item, kind), machine.agent_slot(top, "work"):
         if on_codex:
             codex.recover(top, item)
             question = codex.record(top, item).get("question")
@@ -137,7 +137,8 @@ def work(args: argparse.Namespace) -> None:
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         start, clock = repo.now(), time.monotonic()
-        nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
+        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
+        nudge = COMMIT_NUDGE.format(test=f" (`{local}`)" if local else "")
         outcome = "failed"
         try:
             if design and not on_codex:
@@ -230,7 +231,7 @@ def work(args: argparse.Namespace) -> None:
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
           design: bool = False) -> list[str]:
     """Refuse unless this kind of work can start in the checkout: its [models] entry and, on Codex,
-    the SDK with the declining handler's place and, for a worker, the project's trust. Returns
+    the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
         # A worker always names its models; a cold read with no entry runs on Claude's own.
@@ -245,11 +246,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
-    if kind == "Grill":  # a read-only turn with approvals "never" can't write, so it needs no trust
-        return []
-    codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
-    if not doctor._codex_trusts(top, codex_config):
-        refuse(REFUSALS["untrusted"])
+    codex.require_trust(top)  # before the status commit, so a refusal changes nothing
     return []
 
 
@@ -391,6 +388,11 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
+        command = f" (`{local}`)" if local else ""
+        brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "
+                  "then commit any fixes before you stop. "
+                  "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:
@@ -496,6 +498,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     with log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace") as worker:
+        machine.started(worker.pid)
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()
