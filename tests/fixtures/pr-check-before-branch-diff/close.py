@@ -76,12 +76,6 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         return _merged(top, item)
 
-    previous = state.get("review") or {}
-    legacy_diff = None
-    if (previous and "branch_diff" not in previous and previous.get("changed") ==
-            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
-        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
-                                         f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
     for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
                            f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
@@ -95,18 +89,13 @@ def close(args: argparse.Namespace) -> int:
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
+    previous = state.get("review") or {}
     result = previous
     resuming = state.get("status") == "hotspot"
     if resuming:
         print(f"{item} carries on after the stop for {state['stop']['file']}.")
-    changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
-    branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
-                                     branch_diff=True)
-    fresh = not resuming and result.get("branch_diff", legacy_diff) == branch_diff
-    refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
-    if fresh:
-        result.update(changed=changed, branch_diff=branch_diff)
+    fresh = (not resuming and result.get("changed") ==
+             review.fingerprint("HEAD", item, top, state, f"origin/{default}"))
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -168,7 +157,7 @@ def close(args: argparse.Namespace) -> int:
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed:
+    if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious else "waiting for checks")
