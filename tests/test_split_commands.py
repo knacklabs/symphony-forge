@@ -13,6 +13,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # forge --help, each group and each command on main before COLLECTOR, with COLUMNS=80.
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
+# Machine views deliberately add --json to next and board (FORGE-MOD-1).
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,migrate,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -183,18 +184,20 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
             'options:\n'
             '  -h, --help  show this help message and exit\n'
             '  --dry-run   print the full plan and change nothing\n',
- 'next': 'usage: forge next [-h]\n'
+ 'next': 'usage: forge next [-h] [--json]\n'
          '\n'
          'Say where things stand and give the exact next command\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n',
- 'board': 'usage: forge board [-h] [--out PATH]\n'
+         '  -h, --help  show this help message and exit\n'
+         '  --json      Print the machine view\n',
+ 'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
           'Write and open the plain-English board page\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
+          '  --json      Print the machine view\n'
           '  --out PATH  write the page here instead of .git/forge/board.html\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'

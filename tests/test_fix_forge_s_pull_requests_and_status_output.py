@@ -79,11 +79,14 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
                "headRefName,state,title,body,mergedAt,url", stdout=json.dumps([{
                    "headRefName": "fix/tidy-up", "state": "OPEN", "title": "Tidy up",
                    "url": "https://github.com/acme/shop/pull/7"}]))
-    gh.respond("pr", "list", "--state", "all", "--limit", "25", "--json",
-               "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup",
-               stdout=json.dumps([{"headRefName": "fix/tidy-up",
-                                   "statusCheckRollup": [{"name": "tests", "conclusion": "SUCCESS",
-                                                          "completedAt": "2026-09-27T10:00:00Z"}]}]))
+    # Open checks now come from the cached GraphQL query (FORGE-MOD-1), rather than
+    # the old latest-25-of-all-states request. Links and ready-to-merge remain required.
+    gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
+        "pullRequests": {"nodes": [{"headRefName": "fix/tidy-up", "commits": {
+            "nodes": [{"commit": {"statusCheckRollup": {"contexts": {"nodes": [
+                {"__typename": "CheckRun", "databaseId": 7, "name": "tests",
+                 "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "completedAt": "2026-09-27T10:00:00Z"}]}}}}]}}]}}}}))
     gh.respond("pr", "list", "--state", "all", "--limit", "1000", "--json",
                "headRefName,state,title,body,mergedAt,files,statusCheckRollup", exit=1,
                stderr="GitHub timed out on the detailed bulk request")
@@ -95,6 +98,7 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
     assert len(calls) == 2
+    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
 
 def test_6_next_names_ready_pr_and_close_findings(repo, gh):

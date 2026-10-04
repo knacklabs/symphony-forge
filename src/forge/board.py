@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import re
 import shutil
 import statistics
@@ -21,12 +22,13 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import repo, story, task
+from forge import __version__, codex, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
     "help": "Write and open the plain-English board page",
-    "args": [(('--out',), {"metavar": "PATH", "help":
+    "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
+             (('--out',), {"metavar": "PATH", "help":
               "write the page here instead of .git/forge/board.html"})],
     "position": 60,
     "listing": "| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |",
@@ -48,6 +50,9 @@ Item = dict[str, Any]
 
 def board(args: Any) -> int:
     top = repo.root()
+    if args.json:
+        print(json.dumps(machine_board(top)))
+        return 0
     stories, fixes, prs = _gather(top)
     out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -56,6 +61,231 @@ def board(args: Any) -> int:
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(out.resolve().as_uri())
     return 0
+
+
+def repo_root(top: Path) -> str:
+    """The main worktree identifies a repo across all of its worktrees."""
+    listing = repo.git("worktree", "list", "--porcelain", cwd=top)
+    return str(Path(listing.splitlines()[0].removeprefix("worktree ")).resolve())
+
+
+# The explicit query retains GitHub's own occurrence ids; gh pr list's default rollup does not.
+CHECKS_QUERY = """query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes { number headRefName headRefOid title url isDraft
+        commits(last: 1) { nodes { commit { statusCheckRollup {
+          contexts(first: 100) { pageInfo { hasNextPage } nodes {
+            __typename
+            ... on CheckRun { databaseId name status conclusion completedAt }
+            ... on StatusContext { id context state createdAt }
+          } }
+        } } } }
+      }
+    }
+  }
+}"""
+
+
+def _machine_prs(top: Path) -> list[Item]:
+    """One request for the newest 25 open PRs, cached across command invocations for 60s."""
+    cache = repo.forge_dir(top) / "checks-cache.json"
+    now = _when(repo.now())
+    try:
+        saved = json.loads(cache.read_text(encoding="utf-8"))
+        at = _when(saved.get("fetched_at"))
+        if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
+            return saved["prs"]
+    except (OSError, ValueError, AttributeError):
+        pass
+    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                    "-f", f"query={CHECKS_QUERY}", cwd=top) if shutil.which("gh") else None
+    try:
+        response = json.loads(done.stdout) if done and done.returncode == 0 else {}
+        prs = response["data"]["repository"]["pullRequests"]["nodes"]
+        if response.get("errors") or not isinstance(prs, list) or not all(isinstance(p, dict) for p in prs):
+            return []
+    except (ValueError, KeyError, TypeError):
+        return []  # An expired answer must not hide a failed check while GitHub is unreachable.
+    temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
+    try:
+        temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
+        os.replace(temp, cache)
+    except OSError:
+        pass  # A read-only/full Git directory must not prevent a view.
+    finally:
+        temp.unlink(missing_ok=True)
+    return prs
+
+
+def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
+    if not pr:
+        return "unknown", []
+    try:
+        contexts = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]
+        nodes = contexts["nodes"]
+        if not isinstance(nodes, list):
+            return "unknown", []
+    except (KeyError, TypeError, IndexError):
+        return "unknown", []
+    statuses, events, names = [], [], []
+    for check in nodes:
+        if not isinstance(check, dict):
+            continue
+        name = check.get("name") or check.get("context") or "Check"
+        names.append(name)
+        value = check.get("conclusion") or check.get("state")
+        failed = value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE")
+        statuses.append("fail" if failed else "pass" if value in ("SUCCESS", "NEUTRAL", "SKIPPED")
+                        else "running" if value in ("PENDING", "EXPECTED") or check.get("status") in
+                        ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED") else "unknown")
+        if failed:
+            identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
+                        if check.get("databaseId") is not None and check.get("completedAt")
+                        else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
+            if identity:
+                events.append({"id": identity, "kind": "checks_failed", "title": f"{name} failed"})
+    missing = any(not any(n == want or n.startswith(want + " (") for n in names) for want in required)
+    status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
+              "unknown" if not statuses or "unknown" in statuses or missing or
+              contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
+    return status, events
+
+
+def _rollup(pr: Item) -> list[Item]:
+    try:
+        nodes = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+        return [n for n in nodes if isinstance(n, dict)] if isinstance(nodes, list) else []
+    except (KeyError, TypeError, IndexError):
+        return []
+
+
+def machine_board(top: Path) -> Item:
+    """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
+    from forge import nextstep
+
+    trees = story.worktrees(top)
+    landed = story.landed_ref(top)
+    best: dict[str, tuple[Item, Path | str]] = {}
+    merged = set()
+    for rel, state, where in _copies(top, landed):
+        if where == landed:
+            merged.add(rel)
+        if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
+            best[rel] = state, where
+    prs = _machine_prs(top)
+    by_branch = {p.get("headRefName"): p for p in prs}
+    # Older open PRs keep their number, but deliberately have unknown checks.
+    older = nextstep._prs(top, "open", "number,headRefName,url,isDraft")
+    for pr in older:
+        by_branch.setdefault(pr["headRefName"], pr)
+    mapped_prs = {branch: {**pr, "statusCheckRollup": _rollup(pr)} for branch, pr in by_branch.items()}
+    timings = []
+    path = repo.forge_dir(top) / "timings.jsonl"
+    for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
+        try:
+            value = json.loads(line)
+            if isinstance(value, dict):
+                timings.append(value)
+        except ValueError:
+            continue
+
+    def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
+        if kind != "story" and repo.state_path(item) in merged:
+            state = {**state, "status": "merged"}
+        branch = state.get("branch") or (f"task/{item.replace('/', '-')}" if kind == "task"
+                                         else f"{kind}/{item}")
+        tree = trees.get(branch)
+        cfg = nextstep._report_config(tree or top, {})
+        pr = by_branch.get(branch)
+        checks, events = _checks(pr, cfg["checks"])
+        lines = (nextstep._item(item, title, state, top, tree, mapped_prs, {}) if kind != "story"
+                 else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
+                                      title, trees, set(), mapped_prs, {})[0])
+        if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
+            lines = [f"{title} is finished."]
+        dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
+                     if isinstance(d, dict)}
+        findings = [f.get("title") or "Untitled finding" for n, f in
+                    enumerate((state.get("review") or {}).get("findings", []), 1)
+                    if isinstance(f, dict) and n not in dismissed]
+        worker = None
+        lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
+        if lock.is_file() and codex._alive(codex._json(lock)) is not False:
+            family = state.get("worker")
+            role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
+            if family == "codex" and kind != "story":
+                turns = codex._item_file(top, item, ".log", "Build")
+                for line in turns.read_text(encoding="utf-8").splitlines() if turns.is_file() else []:
+                    try:
+                        turn = json.loads(line)
+                        if isinstance(turn, dict) and turn.get("kind") in ("Build", "Fix", "Lite"):
+                            role = turn["kind"].lower()
+                    except ValueError:
+                        continue
+            try:
+                models = ({} if family not in ("codex", "claude") else
+                          repo.models(cfg, role, family) if kind == "story" else
+                          repo.worker_models(cfg, role, family))
+                if kind == "task":
+                    key, tid = item.split("/")
+                    spec = task.rows(task.sections(_read(top, where, f"plans/{key}.md"))).get(tid) or {}
+                    if family in ("codex", "claude") and repo.user_facing(cfg, spec):
+                        models = repo.design_models(cfg, family)
+                elif (family in ("codex", "claude") and kind == "fix"
+                      and state.get("allow_large") == "Prototype before sign-off"
+                      and repo.is_prototype(tree or top, cfg)):
+                    models = repo.design_models(cfg, family)
+                model = models.get("model")
+            except repo.Refused:
+                model = None
+            worker = {"kind": "read" if kind == "story" else "build", "model": model,
+                      "started_at": state.get("run_started_at")}
+        round_number = state.get("round")
+        stages = []
+        for name, step in (("Build", "worker round"), ("Tests", "test"), ("Review", "review"),
+                           ("CI", "CI wait"), ("Merge", "merge")):
+            records = [r for r in timings if round_number is not None and r.get("item") == item
+                       and r.get("round") == round_number and r.get("step") == step]
+            outcome = records[-1].get("outcome") if records else None
+            status = {"completed": "pass", "clean": "pass", "failed": "fail", "blocked": "fail"}.get(outcome, outcome)
+            stages.append({"name": name, "status": status,
+                           "started_at": records[0].get("start") if records else None,
+                           "ended_at": records[-1].get("end") if records else None,
+                           "seconds": sum(r.get("seconds") or 0 for r in records)
+                           if any(r.get("seconds") is not None for r in records) else None})
+        return {"id": item, "kind": kind, "title": title, "stage": state.get("status") or "unknown",
+                "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks},
+                "findings": {"count": len(findings), "titles": findings}, "round": round_number,
+                "total_seconds": sum(r.get("seconds") or 0 for r in timings
+                                     if r.get("item") == item and r.get("round") is not None)
+                                 if round_number is not None else None,
+                "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
+                "children": []}
+
+    items, children = {}, {}
+    for rel, (state, where) in best.items():
+        match = STATE.fullmatch(rel)
+        if match["fix"]:
+            if state.get("kind") != "story-done":
+                name = match["fix"]
+                items[name] = row(name, "fix", state.get("why") or "A small fix", state, where)
+        elif match["task"]:
+            key, tid = match["key"], match["task"]
+            names = task.rows(task.sections(_read(top, where, f"plans/{key}.md")))
+            title = (names.get(tid) or {}).get("Name") or "A part with no name yet"
+            children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))
+        else:
+            key = match["key"]
+            text = _read(top, where, f"plans/{key}.md")
+            title = state.get("title") or next((s.removeprefix("# ") for s in text.splitlines()
+                                                if s.startswith("# ")), "A story with no title yet")
+            items[key] = row(key, "story", title, state, where)
+    for key, parts in children.items():
+        if key not in items:
+            items[key] = row(key, "story", "A story with missing state", {}, landed)
+        items[key]["children"] = parts
+    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values())}
 
 
 def numbers_line(top: Path, checks: list[str]) -> str:
@@ -160,7 +390,7 @@ def _prs(top: Path) -> list[Item] | None:
         prs = None
     if not isinstance(prs, list) or not all(isinstance(pr, dict) for pr in prs):
         return None
-    recent = repo.run("gh", "pr", "list", "--state", "all", "--limit", "25", "--json",
+    recent = repo.run("gh", "pr", "list", "--state", "merged", "--limit", "25", "--json",
                       "headRefName,state,title,body,mergedAt,url,files,statusCheckRollup", cwd=top)
     try:
         details = json.loads(recent.stdout) if recent.returncode == 0 else []
@@ -168,7 +398,10 @@ def _prs(top: Path) -> list[Item] | None:
         details = []
     by_branch = {pr["headRefName"]: pr for pr in details if isinstance(pr, dict)
                  and isinstance(pr.get("headRefName"), str)}
-    return [{**pr, **by_branch.get(pr.get("headRefName"), {})} for pr in prs]
+    opened = {p["headRefName"]: p for p in _machine_prs(top)}
+    return [{**pr, **by_branch.get(pr.get("headRefName"), {}),
+             **({"statusCheckRollup": _rollup(opened.get(pr.get("headRefName")) or {})}
+                if pr.get("state") == "OPEN" else {})} for pr in prs]
 
 
 def _read(top: Path, where: Path | str, rel: str) -> str:

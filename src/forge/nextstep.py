@@ -17,14 +17,14 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, close, codex, records, repo, review, story
+from forge import __version__, approval, board, close, codex, records, repo, review, story
 from forge.task import start_base
 
 COMMANDS = [
     {
         "words": "next", "run": "next_step", "changes_state": False,
         "help": "Say where things stand and give the exact next command",
-        "args": [], "position": 50,
+        "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"})], "position": 50,
         "listing": "| `forge next` | Says where things stand and gives the exact next command |",
     },
     {
@@ -113,8 +113,44 @@ def open_must_answer_topics(top: Path) -> list[str]:
 
 
 def next_step(args: Any) -> int:
-    print("\n".join(_report(repo.root())[0]))
+    top = repo.root()
+    lines = _report(top)[0]
+    print(json.dumps({"version": __version__, "repo_root": board.repo_root(top),
+                      "next": machine_next(lines)}) if args.json else "\n".join(lines))
     return 0
+
+
+def machine_next(lines: list[str]) -> dict[str, str | None]:
+    """Only the first Next line can be offered as a runnable step."""
+    line = next((line for line in lines if line.startswith("Next: ")), None)
+    command = line.removeprefix("Next: ") if line else ""
+    try:
+        words = shlex.split(command, comments=True)
+    except ValueError:
+        words = []
+    # Treat shell operators outside quotes as syntax, but allow quoted titles containing them.
+    lexer = shlex.shlex(command, posix=False, punctuation_chars=";&|<>`$()")
+    lexer.whitespace_split = True
+    try:
+        syntax = list(lexer)
+    except ValueError:
+        syntax = [";"]
+    unsafe = any(token and all(c in ";&|<>`$()" for c in token) for token in syntax)
+    runnable = (len(words) >= 2 and words[0] == "forge" and not unsafe
+                and not any(token in ("then", "or") for token in syntax)
+                and not re.search(r"<[^>]*>|\$\(|`|[\r\n]", command))
+    if runnable:
+        from forge.cli import _parser
+        try:
+            _parser().parse_args(words[1:])
+        except repo.Refused:
+            runnable = False
+    # A trailing shell comment explains the worker; it is not part of the command.
+    if runnable:
+        command = shlex.join(words) if "#" in command else command
+    return {"command": command if runnable else None,
+            "line": next((text for text in lines if not text.startswith("Next: ")),
+                         "Nothing in progress.")}
 
 
 def context_hook(args: Any) -> int:
