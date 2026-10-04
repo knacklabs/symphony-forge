@@ -197,7 +197,20 @@ tightening it needs no new approval. -->
    repos (one on a Forge without views) each show the right pane line; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
    with npm to run `claude plugin test` and `validate`.
 
-6. Machine tab. MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
+6. Machine tab. Drawn as an agent tree (owner chose 2026-10-04, after a Claude Code agent-tree
+   design): the coordinating session at the top (tool, model, effort, "plans + decides"); under it
+   one box per running entry of the agent lane (worker, plan reader, reviewer: item in plain words,
+   tool, model, effort, round, elapsed) and the test lane's box (item, progress bar, elapsed); a
+   gates column listing each active item's gates (plan read passed, review clean/blocked with its
+   finding count, CI green/red/running with elapsed); a log band at the bottom with the last few
+   events, one line each with time (the same events EVENTS turns into prompts, plus run started and
+   ended); a legend of colours per tool and lane, each also marked with a symbol so it reads without
+   colour. Only facts Forge records: no probabilities, token counts or other figures Forge does not
+   keep. Under 100 columns, or on Desktop where boxes don't fit, the tree becomes a list in the same
+   order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
+   gates for a blocked review and a red check; log shows the last events newest last; list form at
+   80 columns.
+   MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
    stub PANE fills) and machine.ts with an empty `registerMachine(on, data, addTab)`; PANE owns the
    tabs and the whole strip. MACHINE adds only the tab, the spinner line and the keys. Data: `forge lanes
    --json` (FORGE-LANES-1), which lists only repos on this release. Rows per lane in queue order:
