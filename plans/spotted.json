@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 190,
+      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "from": "worker",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tA hook refusal from forge ask prints forge ask ask as its retry command.",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -54,6 +65,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 86,
+      "text": "[P1] Preserve the default outcome for forge land callers",
+      "from": "blocking",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
@@ -188,6 +210,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 84,
+      "text": "Preserve completion when sibling tasks merge concurrently",
+      "from": "review",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
@@ -239,6 +272,50 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
       "status": "open",
       "closed_by": null
     }

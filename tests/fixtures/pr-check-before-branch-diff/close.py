@@ -24,8 +24,7 @@ REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "git -C {path} merge origin/{default}, follow Keeping work moving in "
-                 ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
+                 "git -C {path} merge origin/{default}, fix the conflicts and commit, "
                  "then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
@@ -77,12 +76,6 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         return _merged(top, item)
 
-    previous = state.get("review") or {}
-    legacy_diff = None
-    if (previous and "branch_diff" not in previous and previous.get("changed") ==
-            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
-        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
-                                         f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
     for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
                            f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
@@ -96,18 +89,13 @@ def close(args: argparse.Namespace) -> int:
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
+    previous = state.get("review") or {}
     result = previous
     resuming = state.get("status") == "hotspot"
     if resuming:
         print(f"{item} carries on after the stop for {state['stop']['file']}.")
-    changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
-    branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
-                                     branch_diff=True)
-    fresh = not resuming and result.get("branch_diff", legacy_diff) == branch_diff
-    refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
-    if fresh:
-        result.update(changed=changed, branch_diff=branch_diff)
+    fresh = (not resuming and result.get("changed") ==
+             review.fingerprint("HEAD", item, top, state, f"origin/{default}"))
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -169,7 +157,7 @@ def close(args: argparse.Namespace) -> int:
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed:
+    if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious else "waiting for checks")
@@ -440,13 +428,10 @@ def _attach(top: Path, item: str, branch: str) -> None:
 
 
 def _merged(top: Path, item: str) -> int:
-    """A merged task needs no outcome step when its merge already recorded completion."""
+    """The item's pull request merged: name `forge story done` once the story's last one has."""
     print(f"The pull request for {item} is merged.")
     key, _, name = item.partition("/")
     if name:
-        if story.completed(top, key, story.landed_ref(top)).get("status") == "done":
-            print("Next: forge next")
-            return 0
         tasks = review.rows(review.task(top, item)[1].get("Tasks", ""))
         # ponytail: the newest 1,000 merged pull requests; search by branch when a repo has more.
         merged = {pr.get("headRefName") for pr in json.loads(_gh(

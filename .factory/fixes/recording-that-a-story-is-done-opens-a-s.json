@@ -1,0 +1,46 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/recording-that-a-story-is-done-opens-a-s",
+  "done_when": "When forge merge merges a story's last task, it writes the story's done record in that same merge, from an outcome given with --outcome or taken from the story's title, and forge story done is only needed to change that outcome later; no separate pull request. New and existing repos: same in any repo on this release; stories already marked done are untouched. One command-level test: merging the last task leaves the story done with no extra pull request.",
+  "flagged": [
+    "src/forge/merge.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "b287fd44d81a8fbba2f6619b63add087b1a9460753ddc710789e50a13b152da6",
+    "commit": "75843d90efc0c709fc76f2e61b02f530a4186f74",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The earlier concurrency gap remains open. Two independent final tasks can both evaluate this predicate before either merge reaches their fetched origin/default snapshot, so neither includes the completion marker. The fetch in src/forge/repo.py:174 precedes checks.wait, and there is no refresh or coordination before this decision. Both PRs can then merge successfully, but story.completed (src/forge/story.py:630\u2013643) finds no marker and leaves the story unfinished. This also affects forge land through src/forge/land.py:81. Coordinate sibling merges and refresh their landed state before deciding which merge records completion.",
+        "file": "src/forge/merge.py",
+        "line": 85,
+        "priority": "P2",
+        "title": "Preserve completion when sibling tasks merge concurrently"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T07:21:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:46:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T09:48:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T12:12:08+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Recording that a story is done opens a separate fix and pull request just to write one record, costing a full review and CI run per story",
+  "worker": "codex"
+}
