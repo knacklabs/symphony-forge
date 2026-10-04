@@ -3,12 +3,13 @@
   "branch": "fix/forge-close-reviews-first-and-only-then",
   "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when both the review is clean and the checks are green; a failing check or a blocking finding stops it as today, and the pull request's review block is updated when the review finishes. New and existing repos: same behaviour in any repo on this release; nothing in forge.toml changes. One command-level test shows the push happens before the review starts and Ready needs both.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-04T10:31:15+00:00",
       "step": "start"
     }
   ],
-  "why": "forge close reviews first and only then pushes and waits for CI, so every round waits for the review (4-30 minutes) and then for CI (10-15 minutes) one after the other"
+  "why": "forge close reviews first and only then pushes and waits for CI, so every round waits for the review (4-30 minutes) and then for CI (10-15 minutes) one after the other",
+  "worker": "codex"
 }
