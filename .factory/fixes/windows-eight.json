@@ -1,0 +1,14 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/windows-eight",
+  "done_when": "Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T10:28:25+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Windows CI's slowest test group takes about 11 minutes, the longest wait on every pull request"
+}
