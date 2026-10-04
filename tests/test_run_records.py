@@ -179,6 +179,7 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
     if family == 'claude':
         require_worker_environment(repo.bin / 'claude')
     else:
+        import os
         from conftest import ROOT, _install
         sdk = request.getfixturevalue('sdk_data')
         monkeypatch.setenv('XDG_DATA_HOME', str(sdk))
@@ -191,7 +192,8 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
         _install(repo.bin, 'codex-app-server',
                  (ROOT / 'tests' / 'stubs' / 'codex-app-server').read_text('utf-8'))
         require_worker_environment(repo.bin / 'codex-app-server')
-        monkeypatch.setenv('CODEX_BIN', str(repo.bin / 'codex-app-server'))
+        program = repo.bin / ('codex-app-server.cmd' if os.name == 'nt' else 'codex-app-server')
+        monkeypatch.setenv('CODEX_BIN', str(program))
         monkeypatch.delenv('CODEX_THREAD_ID')
         monkeypatch.setenv('CLAUDECODE', '1')
         config = where / 'forge.toml'
