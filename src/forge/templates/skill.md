@@ -73,6 +73,27 @@ in their own terminal; it opens the change for them to merge.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
+## Laptop setup and after cloning
+
+The repeatable laptop installers are published for
+[Mac](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-mac.sh)
+and [Windows](https://raw.githubusercontent.com/knacklabs/symphony-forge/main/scripts/install-windows.ps1).
+They install the tools Forge needs; follow their prompts to sign in to GitHub and your agent.
+
+After every clone, read the pinned `version` in `forge.toml` and install that release,
+even if the laptop installer installed a different one:
+`uv tool install git+https://github.com/knacklabs/symphony-forge@<release>`
+(replace `<release>` with the pin, such as `v1.2.4`). Then run `forge sync` to install
+the local git hooks and refresh the generated files, followed by `forge doctor --fix`.
+Resolve any remaining Doctor rows before starting work. An existing repo gets these
+instructions and the updated CI workflow on its next `forge sync` after upgrading.
+
+## Migrate copied-in Forge
+
+Read the [migration playbook](migrate-skill.md) before running `forge migrate --dry-run`
+or `forge migrate`. It ships beside this skill and covers the human's agreement,
+preservation review, merge, cleanup and rollback. Follow it in order.
+
 ## Handoff
 
 `.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across
@@ -405,9 +426,14 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to run the test command in the foreground, wait for it and commit. Only
+once, telling the worker to commit first, run the change's related tests (`fast_test`, else
+`test`) in the foreground, wait for them and commit any fixes. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
+
+Continued worker rounds repeat the current related-test command and the commit-first order,
+replacing any earlier full-suite instruction. The synced test-audit skill follows the same rule;
+CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers, readers and
@@ -477,7 +503,9 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
-Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+Close merges the default branch before it tests or reviews. If only files `forge sync` writes
+conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
+any other file stops close for the worker to resolve. When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set

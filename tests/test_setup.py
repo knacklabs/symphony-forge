@@ -29,6 +29,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.js
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
+          ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
@@ -199,7 +200,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("missing tool", ("claude is not installed or not on PATH.",)),
     ("version mismatch", ("but this repo pins v0.0.1.",)),
     ("missing hook shims", ("The git hooks that check each commit and push aren't installed.",)),
-    ("forge's own repo without git hooks", ()),
+    ("forge's own repo without git hooks", ("The git hooks that check each commit and push aren't installed.",)),
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     # Old contract: an edit not committed yet was a drift row with the fix forge sync. New: doctor
@@ -335,8 +336,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
         assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
         assert "Everything else checks out" in done.stdout
-    elif case in ("impeccable in CLAUDE_CONFIG_DIR", "forge's own repo without git hooks"):
-        # Forge's own repo runs without the git hooks until the switch, so doctor doesn't ask.
+    elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
     else:

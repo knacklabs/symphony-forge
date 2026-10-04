@@ -275,14 +275,11 @@ def doctor(args: argparse.Namespace) -> int:
         rows.append((f"doctor couldn't compare the synced files with what forge sync writes: "
                      f"{problem}", fix))
         wanted, compared = {}, ""
-    checks_hooks = (cfg["repo"] != "forge-source" or
-                    repo.run("git", "config", "--get", "core.hooksPath", cwd=top).returncode == 0)
     driver = repo.run("git", "config", "--get", "merge.forge-roadmap.driver", cwd=top).stdout.strip()
     attributes = sync.read(Path(repo.git("rev-parse", "--path-format=absolute", "--git-path",
                                          "info/attributes", cwd=top)))
     merge_drift = driver != sync.MERGE_DRIVER or sync.merge_attributes(attributes) != attributes
-    hooks_drift = checks_hooks and any(sync.read(path) != text
-                                      for path, text in sync.shims(top, cfg).items())
+    hooks_drift = any(sync.read(path) != text for path, text in sync.shims(top, cfg).items())
     if hooks_drift or merge_drift:
         if not args.fix:
             rows.append(("The git hooks that check each commit and push aren't installed."

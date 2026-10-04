@@ -58,6 +58,19 @@ each item:
   forge:begin and forge:end lines. Forge's review reads them from the default branch.
 <!-- forge:end -->
 
+## Building Forge (this repo only)
+
+Forge is a product for client repos, and this repo builds it with Forge's own process: every
+change is dogfooded on Forge itself before clients get it.
+
+- A rule, step or tool that makes planning, building, testing, reviewing, merging or releasing
+  better belongs in what Forge ships to every repo (`src/forge/templates`, `forge sync`,
+  `forge init`). Only what is about Forge's own code lives in this repo's files. Ask first: would a
+  client repo want this too?
+- Every change says what a new client repo and an existing client repo each get.
+- Forge's own principles and its own test policies (such as the real-Codex tests) live here, not in
+  the shared standards.
+
 ## Review rules
 
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
@@ -73,3 +86,30 @@ each item:
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
+
+### Forge's 13 principles
+
+These govern Forge itself. Each has a check: an acceptance criterion, a CI check or a review instruction.
+
+1. Every artifact serves a client-visible change or is cut. Check: every story doc starts with "What changes for you".
+2. One home per fact: history in git, review and tests in the PR, current state in `.factory`. Check: no command writes a fact git or GitHub already holds.
+3. Gates check outcomes, never rituals: refuse only on real problems — a red test, a P0/P1 finding, a missing approval, or input Forge cannot act on (a malformed doc, the wrong version, a branch outside the lanes). Check: every refusal names the real problem and the next action.
+4. Fail loud, early, once: enforce at the command or commit, never silently. Check: a behaviour test for every refusal message.
+5. No rule without a test; no test without a rule. Check: the suite maps one test to one rule and tests no internal record format.
+6. Forge shrinks over time: every story removes at least as much process as it adds. Check: no module over 1,200 lines, a fixed ceiling on `forge` commands, refactor ratchet in CI.
+7. Adapt to third parties, never mirror them (Autoreview, Codex, Claude, GitHub): read only used fields, tolerate new ones, pin versions. Check: one boundary contract test per external tool.
+8. The agent does the work; the human decides (approve a story, choose between options, merge). Check: human touches per story are counted; target three or fewer.
+9. Same result from any agent: logic in `forge` commands and git, thin host adapters. Check: the same behaviour tests run through both adapters.
+10. Slow is a bug: close in minutes, CI under 5 minutes. Check: time per step is recorded and shown on the board; over-budget steps get fixes.
+11. Plain English wherever a human looks: no IDs, hashes or jargon on the board, in PR summaries or in questions. Check: reviewed on board and PR text.
+12. Reversible by default: every change and every migration is one PR; rollback is a revert. Check: no command changes a client repo outside a branch and PR.
+13. Measure the factory: task cycle time, human touches per story, share of PRs fixing Forge instead of the product. Check: these three are the rebuild's success measure.
+
+### Tests for Forge
+
+- Tests run the forge command and never import forge.
+- A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
+  sets it); don't set it in local runs.
+- A general process rule (how to plan, build, test, review, merge or release) added only to this
+  repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
+
