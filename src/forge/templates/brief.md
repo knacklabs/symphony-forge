@@ -97,6 +97,11 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
+Windows checklist:
+- A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
+- Tests never assume a drive letter or a '/' separator.
+- File operations in tests use the repo's lock-safe helpers where it has them.
+
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
