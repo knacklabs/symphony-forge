@@ -1,0 +1,28 @@
+{
+  "base": "0b3ecce5c8c6a44d244da688ecc98f6c7f813a21",
+  "branch": "fix/tests-test-close-test-runs-wait-in-line",
+  "done_when": "Those tests pass reliably on every CI platform: they wait for the waiting closes to announce their places instead of relying on timing, and still prove first-come order and that a dead waiter leaves no place; if the cause is in Forge's queue itself, the queue is fixed and every repo gets it on upgrade. One command-level check runs them 20 times in parallel and all pass.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d588d0fa94de941d97ed32c47b0437814f78fadd844c106c122829000d9b85d5",
+    "commit": "e616f54c2f4654a8fcd07468482820a1cd750e2f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T13:36:46+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T14:51:50+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "tests/test_close_test_runs_wait_in_line.py tests 1 and 2 (waiting places for close test runs) fail at random on CI, three different pull requests so far, blocking unrelated merges",
+  "worker": "codex"
+}

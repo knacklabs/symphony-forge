@@ -29,6 +29,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.js
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
+          ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
