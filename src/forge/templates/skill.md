@@ -466,7 +466,9 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
-Close merges the default branch before it tests or reviews, so a conflict stops it first. When the
+Close merges the default branch before it tests or reviews. If only files `forge sync` writes
+conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
+any other file stops close for the worker to resolve. When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
