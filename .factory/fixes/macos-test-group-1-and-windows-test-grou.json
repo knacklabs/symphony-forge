@@ -1,0 +1,14 @@
+{
+  "base": "c1d84000d7ba55123d8abb07720b20d8c813ab14",
+  "branch": "fix/macos-test-group-1-and-windows-test-grou",
+  "done_when": "The CI workflow runs macOS in 4 groups (10-minute limit each) and Windows in 5 groups (20-minute limit each), and the workflow tests that check the matrix pass with the new counts. New and existing repos: this is Forge's own CI only; client repos' generated workflow is unchanged.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-04T02:14:44+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "macOS test group 1 and Windows test group 1 keep hitting their CI time limits on different pull requests as the suite grows, cancelling runs at random"
+}
