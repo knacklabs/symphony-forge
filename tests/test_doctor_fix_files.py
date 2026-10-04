@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from conftest import _install
+from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
 STORY = "FORGE-DOCTORFIX-1"
@@ -26,6 +27,57 @@ SETTINGS, HOOKS, SKILL = ".claude/settings.json", ".codex/hooks.json", ".claude/
 OLD = '{"hooks": {}}\n'
 HAND_FIX = "move your change out of this file, since forge sync rewrites it, then forge doctor --fix"
 STATE = ".factory/fixes/{}.json"
+
+
+@pytest.fixture(autouse=True)
+def doctor_time(monkeypatch):
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:00:00+00:00")
+
+
+def _a_later_doctor_repair_gets_its_own_close_review(env, monkeypatch):
+    repo, client = env.repo, env.repo.path
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:00:00+00:00")
+    first = repo.forge("doctor", "--fix")
+    assert "- Fixed: wrote" in first.stdout, first.stdout + first.stderr
+    old_branch = _fixes(repo, client)[0]
+    old_name = old_branch.removeprefix("fix/")
+    old_folder = _folder_of(repo, client, old_branch)
+    closed = repo.forge("close", old_name)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    repo.git("merge", "-q", "--ff-only", old_branch)
+    # A human merge updates the bare test origin; the worker's default-branch push hook refuses it.
+    repo.git("-c", f"core.hooksPath={env.tmp / 'no-hooks'}", "push", "-q", "origin", "main")
+    old_head = repo.git("rev-parse", old_branch)
+    env.gh.respond("pr", "list", "--head", old_branch, stdout=json.dumps(
+        [{"number": 7, "state": "MERGED", "headRefOid": old_head, "body": "", "isDraft": False}]))
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:01:00+00:00")
+
+    cleaned = repo.forge("doctor", "--fix")
+
+    assert not old_folder.exists() and _fixes(repo, client) == [], cleaned.stdout
+    assert f"- Fixed: removed {old_folder}, whose pull request is merged." in cleaned.stdout
+    _old_hosts(repo, client)
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:00:00+00:00")
+    same_minute = repo.forge("doctor", "--fix")
+    assert "run forge doctor --fix again in the next minute" in same_minute.stdout
+    assert _fixes(repo, client) == []
+    monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:02:00+00:00")
+    repaired = repo.forge("doctor", "--fix")
+    name, branch = "forge-files-20261004-0902", "fix/forge-files-20261004-0902"
+    assert old_name == "forge-files-20261004-0900"
+    assert _fixes(repo, client) == [branch], repaired.stdout
+    assert _row(f"Doctor's fix {name} holds Forge's files and isn't merged yet.",
+                f"forge close {name}") in repaired.stdout
+
+    new_head = repo.git("rev-parse", branch)
+    reviewed = repo.forge("close", name)
+
+    assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
+    assert len(env.review_calls()) == 2
+    assert env.review_calls()[-1]["head"] == new_head != old_head
+    assert len(env.gh_calls("pr", "create")) == 2
+    created = env.gh_calls("pr", "create")[-1]
+    assert created[created.index("--head") + 1] == branch
 
 
 def _row(problem: str, fix: str = "forge doctor --fix") -> str:
@@ -155,21 +207,21 @@ def _on_the_default_branch_one_fix_holds_both_hosts_files(repo, gh, tmp_path, mo
     assert _fixes(repo, client) == []  # without --fix, nothing starts
 
     done = repo.forge("doctor", "--fix", cwd=client)
-    fix_row = _row("Doctor's fix forge-files holds Forge's files and isn't merged yet.",
-                   "forge close forge-files")
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
+    fix_row = _row("Doctor's fix forge-files-20261004-0900 holds Forge's files and isn't merged yet.",
+                   "forge close forge-files-20261004-0900")
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0900.\n" in done.stdout, done.stdout
     assert fix_row in done.stdout and done.returncode == 1
     assert _drift(SETTINGS, version) not in done.stdout
     # The default branch has no new commit and its files stay; the fix holds both hosts' files.
     assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).split() == [head, head]
     assert (client / SETTINGS).read_text(encoding="utf-8") == OLD
-    assert _fixes(repo, client) == ["fix/forge-files"]
-    assert _in(repo, client, "fix/forge-files") == sorted([HOOKS, SETTINGS, STATE.format("forge-files")])
+    assert _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
+    assert _in(repo, client, "fix/forge-files-20261004-0900") == sorted([HOOKS, SETTINGS, STATE.format("forge-files-20261004-0900")])
     for rel in (SETTINGS, HOOKS):
-        assert repo.git("show", f"fix/forge-files:{rel}", cwd=client) == wanted[rel].strip()
-    subjects = repo.git("log", "--format=%s", "origin/main..fix/forge-files", cwd=client)
+        assert repo.git("show", f"fix/forge-files-20261004-0900:{rel}", cwd=client) == wanted[rel].strip()
+    subjects = repo.git("log", "--format=%s", "origin/main..fix/forge-files-20261004-0900", cwd=client)
     assert subjects.splitlines() == [WHY, f"Start the fix: {WHY}"]
-    record = json.loads(repo.git("show", f"fix/forge-files:{STATE.format('forge-files')}",
+    record = json.loads(repo.git("show", f"fix/forge-files-20261004-0900:{STATE.format('forge-files-20261004-0900')}",
                                  cwd=client))
     assert record["why"] == WHY and record["kind"] == "fix"
     assert record["done_when"] == "The files match what forge sync writes for the pinned Forge"
@@ -177,12 +229,12 @@ def _on_the_default_branch_one_fix_holds_both_hosts_files(repo, gh, tmp_path, mo
                                      "change; Forge Test allowed it by running forge doctor --fix.")
 
     # A second run starts nothing and commits nothing, and gives the fix's one step.
-    fix_head = repo.git("rev-parse", "fix/forge-files", cwd=client)
+    fix_head = repo.git("rev-parse", "fix/forge-files-20261004-0900", cwd=client)
     again = repo.forge("doctor", "--fix", cwd=client)
-    assert (_left_over("forge-files", _folder_of(repo, client, "fix/forge-files")) in again.stdout
+    assert (_left_over("forge-files-20261004-0900", _folder_of(repo, client, "fix/forge-files-20261004-0900")) in again.stdout
             and "- Fixed: wrote" not in again.stdout), again.stdout
-    assert _fixes(repo, client) == ["fix/forge-files"]
-    assert repo.git("rev-parse", "fix/forge-files", "HEAD", cwd=client).split() == [fix_head, head]
+    assert _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
+    assert repo.git("rev-parse", "fix/forge-files-20261004-0900", "HEAD", cwd=client).split() == [fix_head, head]
 
 
 def _codex_workers_under_claude_code_repair_both_hosts(repo, gh, tmp_path, monkeypatch, _):
@@ -191,16 +243,16 @@ def _codex_workers_under_claude_code_repair_both_hosts(repo, gh, tmp_path, monke
     monkeypatch.delenv("CODEX_THREAD_ID")
     monkeypatch.setenv("CLAUDECODE", "1")
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
-    assert _in(repo, client, "fix/forge-files") == sorted([HOOKS, SETTINGS, STATE.format("forge-files")])
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0900.\n" in done.stdout, done.stdout
+    assert _in(repo, client, "fix/forge-files-20261004-0900") == sorted([HOOKS, SETTINGS, STATE.format("forge-files-20261004-0900")])
 
 
-def _a_finished_doctor_fix_is_left_in_place(repo, gh, tmp_path, monkeypatch, state):
+def _doctor_fix_cleanup_follows_its_pull_request(repo, gh, tmp_path, monkeypatch, state):
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
     started = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in started.stdout
-    folder = _folder_of(repo, client, "fix/forge-files")
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0900.\n" in started.stdout
+    folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     # A lockfile alone would qualify other finished worktrees for cleanup.
     _set(folder, "uv.lock", "version = 2\n")
     before = _status(repo, folder)
@@ -208,18 +260,27 @@ def _a_finished_doctor_fix_is_left_in_place(repo, gh, tmp_path, monkeypatch, sta
                 for path in folder.rglob("*") if path.is_file()}
     main = _status(repo, client)
     trees = repo.git("worktree", "list", "--porcelain", cwd=client)
-    gh.respond("pr", "list", "--head", "fix/forge-files", stdout=json.dumps(
+    gh.respond("pr", "list", "--head", "fix/forge-files-20261004-0900", stdout=json.dumps(
         [{"headRefOid": before[0], "state": state}]))
 
+    if state == "CLOSED":
+        monkeypatch.setenv("FORGE_NOW", "2026-10-04T09:01:00+00:00")
     done = repo.forge("doctor", "--fix", cwd=client)
+    if state == "CLOSED":
+        assert not folder.exists(), done.stdout
+        assert _fixes(repo, client) == ["fix/forge-files-20261004-0901"]
+        assert f"- Fixed: removed {folder}, whose pull request is closed." in done.stdout
+        assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0901." in done.stdout
+        assert _status(repo, client) == main
+        return
 
     assert folder.is_dir(), done.stdout + done.stderr
-    assert _fixes(repo, client) == ["fix/forge-files"]
+    assert _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
     assert _status(repo, folder) == before and _status(repo, client) == main
     assert repo.git("worktree", "list", "--porcelain", cwd=client) == trees
     assert {path.relative_to(folder): path.read_bytes()
             for path in folder.rglob("*") if path.is_file()} == contents
-    assert _left_over("forge-files", folder) in done.stdout and done.returncode == 1, done.stdout
+    assert _left_over("forge-files-20261004-0900", folder) in done.stdout and done.returncode == 1, done.stdout
     assert "- Fixed: removed" not in done.stdout and "- Fixed: wrote" not in done.stdout
 
 
@@ -280,19 +341,19 @@ def _a_failed_pin_install_writes_nothing(repo, gh, tmp_path, monkeypatch, _):
 
 
 def _a_fix_already_named_forge_files_is_left_alone(repo, gh, tmp_path, monkeypatch, _):
-    # The fixed branch name now identifies doctor's fix, regardless of its record or why.
+    # The dated doctor branch identifies its open fix, regardless of its record or why.
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
-    started = repo.forge("fix", "start", "Something else", "--done", "x", "--slug", "forge-files",
+    started = repo.forge("fix", "start", "Something else", "--done", "x", "--slug", "forge-files-20261004-0900",
                          cwd=client)
     assert started.returncode == 0, started.stderr
-    folder = _folder_of(repo, client, "fix/forge-files")
+    folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     before = _status(repo, folder)
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert _left_over("forge-files", folder) in done.stdout, done.stdout
-    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files"]
+    assert _left_over("forge-files-20261004-0900", folder) in done.stdout, done.stdout
+    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
     assert _status(repo, folder) == before
-    assert _in(repo, client, "fix/forge-files") == [STATE.format("forge-files")]  # left alone
+    assert _in(repo, client, "fix/forge-files-20261004-0900") == [STATE.format("forge-files-20261004-0900")]  # left alone
 
 
 def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude):
@@ -301,8 +362,8 @@ def _a_file_sync_wants_empty_is_removed(repo, gh, tmp_path, monkeypatch, claude)
     _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, "CLAUDE.md", claude),
           forge=True)
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 1 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
-    assert repo.git("diff", "--name-status", "origin/main...fix/forge-files", "--", "CLAUDE.md",
+    assert "- Fixed: wrote 1 of Forge's files in fix forge-files-20261004-0900.\n" in done.stdout, done.stdout
+    assert repo.git("diff", "--name-status", "origin/main...fix/forge-files-20261004-0900", "--", "CLAUDE.md",
                     cwd=client) == "D\tCLAUDE.md"
     assert (client / "CLAUDE.md").is_file()  # the default branch keeps it until the fix merges
 
@@ -322,14 +383,13 @@ def _left_over(name: str, path: Path | None) -> str:
                 f"fix/{name}, then forge doctor --fix")
 
 
-# Was: a stale doctor fix got a row and a new fix, forge-files-2, beside it. Now doctor keeps at
-# most one fix of its own: a stale one gets one plain step and nothing new starts.
+# A stale open doctor fix gets one plain step, with no replacement beside it.
 def _a_stale_doctor_fix_gets_one_step_and_nothing_new_starts(repo, gh, tmp_path, monkeypatch,
                                                            change):
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
-    assert "fix forge-files." in repo.forge("doctor", "--fix", cwd=client).stdout
-    old = _folder_of(repo, client, "fix/forge-files")
+    assert "fix forge-files-20261004-0900." in repo.forge("doctor", "--fix", cwd=client).stdout
+    old = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     spaced = old.with_name(old.name + " with spaces")
     repo.git("worktree", "move", str(old), str(spaced), cwd=client)
     old = spaced
@@ -345,9 +405,9 @@ def _a_stale_doctor_fix_gets_one_step_and_nothing_new_starts(repo, gh, tmp_path,
     before = _status(repo, old)
 
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert _left_over("forge-files", old) in done.stdout, done.stdout
+    assert _left_over("forge-files-20261004-0900", old) in done.stdout, done.stdout
     assert _status(repo, old) == before  # nothing changed there
-    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files"]
+    assert "- Fixed: wrote" not in done.stdout and _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
 
 
 def _nothing_differing_leaves_no_fix_behind(repo, gh, tmp_path, monkeypatch, _):
@@ -397,10 +457,10 @@ def _a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row(repo, gh, tmp_
     _old_hosts(repo, client)
     _land(repo, client, "Tweak the skill", lambda folder: _set(folder, SKILL, "Our skill\n"))
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote 2 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
-    assert "Doctor's fix forge-files holds Forge's files and isn't merged yet." in done.stdout
+    assert "- Fixed: wrote 2 of Forge's files in fix forge-files-20261004-0900.\n" in done.stdout, done.stdout
+    assert "Doctor's fix forge-files-20261004-0900 holds Forge's files and isn't merged yet." in done.stdout
     assert _held(SKILL, "was changed by hand (Tweak the skill)") in done.stdout
-    assert SKILL not in _in(repo, client, "fix/forge-files")
+    assert SKILL not in _in(repo, client, "fix/forge-files-20261004-0900")
 
 
 def _refusing_hook(client: Path, commit: str) -> Path:
@@ -410,7 +470,7 @@ def _refusing_hook(client: Path, commit: str) -> Path:
                                text=True, check=True).stdout.strip())
     _executable(hook, "#!/bin/sh\n"
                       f"git diff --cached --name-only | grep -qx "
-                      f"'{STATE.format('forge-files') if commit == 'record' else SETTINGS}' || exit 0\n"
+                      f"'{STATE.format('forge-files-20261004-0900') if commit == 'record' else SETTINGS}' || exit 0\n"
                       "echo 'Work still in progress.' > notes.txt\n"
                       "echo 'our check refuses this commit' >&2\nexit 1\n")
     return hook
@@ -422,23 +482,23 @@ def _a_commit_a_git_hook_refuses_leaves_the_fix(repo, gh, tmp_path, monkeypatch,
     client = _client(repo, gh, tmp_path, monkeypatch)
     head = _old_hosts(repo, client)
     _refusing_hook(client, commit)
-    folder = client.parent / f"{client.name}-fix-forge-files"
+    folder = client.parent / f"{client.name}-fix-forge-files-20261004-0900"
 
     done = repo.forge("doctor", "--fix", cwd=client)
-    problem = ("Doctor couldn't bring Forge's files up to date in fix forge-files: our check "
+    problem = ("Doctor couldn't bring Forge's files up to date in fix forge-files-20261004-0900: our check "
                "refuses this commit")
-    step = _left_over("forge-files", folder).split("\n  Fix: ", 1)[1].strip()
+    step = _left_over("forge-files-20261004-0900", folder).split("\n  Fix: ", 1)[1].strip()
     assert _row(problem, step) in done.stdout, done.stdout
-    assert folder.exists() and _fixes(repo, client) == ["fix/forge-files"]
+    assert folder.exists() and _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
     assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
     assert repo.git("rev-parse", "HEAD", "origin/main", cwd=client).splitlines() == [head, head]
-    assert "Doctor's fix forge-files holds" not in done.stdout and done.returncode == 1
+    assert "Doctor's fix forge-files-20261004-0900 holds" not in done.stdout and done.returncode == 1
     # Even the failed record commit must be recognized on the next run, without a second fix.
     before = _status(repo, folder)
     folders = repo.git("worktree", "list", cwd=client)
     again = repo.forge("doctor", "--fix", cwd=client)
-    assert _left_over("forge-files", folder) in again.stdout, again.stdout
-    assert "- Fixed: wrote" not in again.stdout and _fixes(repo, client) == ["fix/forge-files"]
+    assert _left_over("forge-files-20261004-0900", folder) in again.stdout, again.stdout
+    assert "- Fixed: wrote" not in again.stdout and _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
     assert _status(repo, folder) == before
     assert repo.git("worktree", "list", cwd=client) == folders
     assert (folder / "notes.txt").read_text(encoding="utf-8") == "Work still in progress.\n"
@@ -452,11 +512,11 @@ def _a_file_the_system_wont_write(repo, gh, tmp_path, monkeypatch, _):
         _set(folder, SETTINGS, OLD), _set(folder, HOOKS, None),
         _set(folder, f"{HOOKS}/inside", "x\n")), forge=True)
     done = repo.forge("doctor", "--fix", cwd=client)
-    failed_folder = client.parent / (client.name + "-fix-forge-files")
-    step = _left_over("forge-files", failed_folder).split("\n  Fix: ", 1)[1].strip()
-    assert _row("Doctor couldn't bring Forge's files up to date in fix forge-files: [Errno 21] "
+    failed_folder = client.parent / (client.name + "-fix-forge-files-20261004-0900")
+    step = _left_over("forge-files-20261004-0900", failed_folder).split("\n  Fix: ", 1)[1].strip()
+    assert _row("Doctor couldn't bring Forge's files up to date in fix forge-files-20261004-0900: [Errno 21] "
                 f"Is a directory: '{failed_folder / HOOKS}'", step) in done.stdout, done.stdout
-    assert failed_folder.is_dir() and _fixes(repo, client) == ["fix/forge-files"]
+    assert failed_folder.is_dir() and _fixes(repo, client) == ["fix/forge-files-20261004-0900"]
 
     # In place: the settings are written, the read-only hooks file isn't, and stays a row.
     _land(repo, client, "Upgrade Forge", lambda folder: (
@@ -587,11 +647,11 @@ def _a_skill_changed_on_the_default_branch_is_held_back_unless_forge_changed_it(
     done = repo.forge("doctor", "--fix", cwd=client)
     if held:  # another forge.toml line may make other files differ, which a fix holds
         assert row in done.stdout, done.stdout
-        assert not _fixes(repo, client) or SKILL not in _in(repo, client, "fix/forge-files")
+        assert not _fixes(repo, client) or SKILL not in _in(repo, client, "fix/forge-files-20261004-0900")
     else:
-        assert "- Fixed: wrote 1 of Forge's files in fix forge-files.\n" in done.stdout, done.stdout
+        assert "- Fixed: wrote 1 of Forge's files in fix forge-files-20261004-0900.\n" in done.stdout, done.stdout
         assert "changed by hand" not in done.stdout
-        assert SKILL in _in(repo, client, "fix/forge-files")
+        assert SKILL in _in(repo, client, "fix/forge-files-20261004-0900")
 
 
 def _a_local_commit_that_moves_the_pin_on_a_fix_branch_is_held_back(repo, gh, tmp_path,
@@ -656,8 +716,8 @@ def _in_forges_own_repo_history_holds_nothing_back(repo, gh, tmp_path, monkeypat
     _land(repo, client, "Tweak the skill", lambda folder: _set(folder, SKILL, "Our skill\n"))
     done = repo.forge("doctor", "--fix", cwd=client)
     assert "changed by hand" not in done.stdout, done.stdout
-    assert "Forge's files in fix forge-files.\n" in done.stdout
-    assert SKILL in _in(repo, client, "fix/forge-files")
+    assert "Forge's files in fix forge-files-20261004-0900.\n" in done.stdout
+    assert SKILL in _in(repo, client, "fix/forge-files-20261004-0900")
 
 
 def _ui_client(repo, gh, tmp_path, monkeypatch, workers="claude") -> Path:
@@ -743,17 +803,17 @@ def _an_existing_app_adopted_on_v1_2_2_is_repaired(repo, gh, tmp_path, monkeypat
     before = repo.forge("doctor", cwd=client)
     assert "differs from what forge sync writes" in before.stdout, before.stdout
     done = repo.forge("doctor", "--fix", cwd=client)
-    assert "- Fixed: wrote " in done.stdout and "in fix forge-files." in done.stdout, done.stdout
-    assert _row("Doctor's fix forge-files holds Forge's files and isn't merged yet.",
-                "forge close forge-files") in done.stdout, done.stdout
+    assert "- Fixed: wrote " in done.stdout and "in fix forge-files-20261004-0900." in done.stdout, done.stdout
+    assert _row("Doctor's fix forge-files-20261004-0900 holds Forge's files and isn't merged yet.",
+                "forge close forge-files-20261004-0900") in done.stdout, done.stdout
     assert _held(SKILL, "was changed by hand (Keep our skill instructions)") in done.stdout
     assert repo.git("rev-parse", "HEAD", "origin/main").splitlines() == [head, head]
-    folder = _folder_of(repo, client, "fix/forge-files")
+    folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     for checkout in (client, folder):
         assert (checkout / SKILL).read_text(encoding="utf-8") == "Ours.\n"
         assert (checkout / "README.md").read_text(encoding="utf-8") == application
         assert "Keep our application." in (checkout / "AGENTS.md").read_text(encoding="utf-8")
-    assert SKILL not in _in(repo, client, "fix/forge-files")
+    assert SKILL not in _in(repo, client, "fix/forge-files-20261004-0900")
     # Compare at the user's real sync boundary: only the protected hand edit still differs.
     checked = repo.forge("doctor", cwd=folder)
     assert "differs from what forge sync writes" not in checked.stdout, checked.stdout
@@ -772,10 +832,11 @@ def _cases(*cases) -> list:
 
 
 @pytest.mark.parametrize("case, value", _cases(
+    (_a_later_doctor_repair_gets_its_own_close_review, [None], ()),
     (_an_existing_app_adopted_on_v1_2_2_is_repaired, [None], ()),
     (_on_the_default_branch_one_fix_holds_both_hosts_files, [None], ()),
     (_codex_workers_under_claude_code_repair_both_hosts, [None], ()),
-    (_a_finished_doctor_fix_is_left_in_place, ["CLOSED", "MERGED"], ()),
+    (_doctor_fix_cleanup_follows_its_pull_request, ["OPEN", "CLOSED"], ()),
     (_on_a_fix_branch_the_files_are_written_in_place, [None], ()),
     (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
@@ -795,8 +856,11 @@ def _cases(*cases) -> list:
     (_the_default_branch_moved_to_another_pin, [None], ()),
     (_a_detached_head_changes_nothing, [None], ())))
 def test_4_doctor_brings_forges_files_up_to_date_through_a_fix(repo, gh, tmp_path, monkeypatch,
-                                                              case, value):
-    case(repo, gh, tmp_path, monkeypatch, value)
+                                                              case, value, request):
+    if case is _a_later_doctor_repair_gets_its_own_close_review:
+        case(request.getfixturevalue("env"), monkeypatch)
+    else:
+        case(repo, gh, tmp_path, monkeypatch, value)
 
 
 @pytest.mark.parametrize("case, value", _cases(

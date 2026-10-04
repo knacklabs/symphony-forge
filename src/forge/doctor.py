@@ -110,17 +110,41 @@ def _kept(line: str) -> bool:
                                   and Path(entry).name in CACHES)
 
 
+def _files_fix_finished(top: Path, branch: str) -> bool:
+    """Only GitHub's merged or closed state permits replacing a dated doctor fix."""
+    if not shutil.which("gh"):
+        return False
+    done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", "--json", "state",
+                    cwd=top)
+    try:
+        prs = json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        prs = None
+    return isinstance(prs, list) and any(isinstance(pr, dict) and
+            pr.get("state") in ("MERGED", "CLOSED") for pr in prs)
+
+
+def _open_files_fix(top: Path) -> str:
+    """A dated doctor branch counts even when its first record commit failed."""
+    for branch in repo.git("for-each-ref", "--format=%(refname:short)",
+                           "refs/heads/fix/forge-files-*", cwd=top).splitlines():
+        if not _files_fix_finished(top, branch):
+            return branch
+    return ""
+
+
 def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
     """(folder, branch, "merged" or "closed") for each worktree whose work is finished: GitHub
     has a merged or closed pull request at its branch's head and none open, and the folder holds
     nothing else."""
     if not shutil.which("gh"):
         return []
+    open_fix = _open_files_fix(top)
     found = []
     for branch, path in story.worktrees(top).items():
-        # Doctor never removes its own fix; forge merge tidies it once its pull request merges.
+        # Only the open doctor fix is protected from finished-work cleanup.
         if (not branch.startswith(("story/", "task/", "fix/", "forge/"))
-                or branch == "fix/forge-files" or path.resolve() in (main, top.resolve())
+                or branch == open_fix or path.resolve() in (main, top.resolve())
                 or (path / ".gitmodules").exists()):
             continue
         done = repo.run("gh", "pr", "list", "--head", branch, "--state", "all", "--limit", "100",
@@ -217,11 +241,8 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
     """On the default branch, freshly fetched: Forge's files go into doctor's own fix, never onto
     the branch."""
     ref, default = story.landed_ref(top), repo.default_branch(top)
-    name, branch = "forge-files", "fix/forge-files"
-    # The fixed branch name counts even when its first record commit failed.
-    if repo.run("git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}", cwd=top
-                ).returncode == 0:
-        return [_unfinished(name, branch, story.worktrees(top).get(branch))]
+    if branch := _open_files_fix(top):
+        return [_unfinished(branch.removeprefix("fix/"), branch, story.worktrees(top).get(branch))]
     free, held, _ = _split(top, top, cfg, wanted, ref)
     # A clean checkout at the fetched default commit supplies exactly the fix's inputs.
     heads = repo.git("rev-parse", "HEAD", ref, cwd=top).splitlines()
@@ -232,6 +253,13 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
                  f"to origin/{default}, then {REPAIR}"), *_rows(free), *held]
     if not free:
         return held
+    name = "forge-files-" + repo.now()[:16].replace("-", "").replace(":", "").replace("T", "-")
+    branch = f"fix/{name}"
+    if (_files_fix_finished(top, branch) or story.show(top, ref, repo.state_path(name)) is not None
+            or repo.run("git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}",
+                        cwd=top).returncode == 0):
+        return [(f"Doctor already used fix {name}, so doctor started no new one.",
+                 f"run {REPAIR} again in the next minute"), *_rows(free), *held]
     who = repo.git("var", "GIT_AUTHOR_IDENT", cwd=top).split("<")[0].strip()
     state = {"kind": "fix", "why": WHY, "done_when": DONE, "base": repo.git("rev-parse", ref, cwd=top),
              "allow_large": "Doctor brings every file forge sync writes up to date in one change; "
