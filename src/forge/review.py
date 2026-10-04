@@ -255,7 +255,8 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     outcome = "failed"
     try:
         failed, report = _test_run(top, command, base)
-        outcome = "failed" if failed else "passed" if report.startswith("`") else "skipped"
+        outcome = ("failed" if failed else "passed" if report.startswith(
+            f"`{command}` exited with status") else "skipped")
         return failed, report
     finally:
         repo.record_timing(top, item, "test run", start, clock, outcome)
@@ -489,6 +490,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
+            serious = [f for f in findings if f["priority"] in SERIOUS]
+            repo.record_event(top, item, "review result", commit=head,
+                outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
+                or selected.get("effort") != "high" else "blocked" if serious else "clean")
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
@@ -496,7 +501,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 repo.refuse(("The sign-off review did not confirm GPT-6.1 Sol at high effort: "
                              "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            serious = [f for f in findings if f["priority"] in SERIOUS]
             if serious:
                 repo.refuse(("Customer sign-off review found a blocking issue: "
                              + "; ".join(f["title"] for f in serious) + ".",

@@ -115,13 +115,15 @@ def work(args: argparse.Namespace) -> None:
             fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
-        turns = codex._item_file(top, item, ".log", kind)
-        round_number = 1 + len({(entry["conversation"], entry["turn"])
-                                for line in turns.read_text(encoding="utf-8").splitlines()
-                                if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
-        if session:
+        if "round" in state:
+            round_number = state["round"] + 1
+        elif session:
             round_number = session["rounds"] + 1
-        round_number = max(round_number, state.get("round", 0) + 1)
+        else:
+            turns = codex._item_file(top, item, ".log", kind)
+            round_number = 1 + len({(entry["conversation"], entry["turn"])
+                                    for line in turns.read_text(encoding="utf-8").splitlines()
+                                    if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
                                 continued=bool(thread))
         fresh_brief = None
@@ -139,6 +141,7 @@ def work(args: argparse.Namespace) -> None:
         nudge = COMMIT_NUDGE.format(test=f" (`{config['test']}`)" if config["test"] else "")
         outcome = "failed"
         final = ""
+        nudged = ""
         try:
             if design and not on_codex:
                 before = story._snapshot(top)  # pyright: ignore[reportPrivateUsage]
@@ -182,14 +185,14 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
-                    final = _nudge_claude(item, top, ["--model", claude_model["model"],
-                                              "--effort", claude_model["effort"]], nudge) or final
+                    nudged = _nudge_claude(item, top, ["--model", claude_model["model"],
+                                              "--effort", claude_model["effort"]], nudge) or ""
                     outcome = "completed"
                     return
             if not on_codex:
                 final = _claude(item, top, brief, fresh_brief, claude, session, thread,
                         None if fresh == "first turn" else fresh)
-                final = _nudge_claude(item, top, claude, nudge) or final
+                nudged = _nudge_claude(item, top, claude, nudge) or ""
                 outcome = "completed"
                 return
             name = f"{match['key']} · {subject}" if match["task"] else f"Fix · {subject}"
@@ -201,16 +204,18 @@ def work(args: argparse.Namespace) -> None:
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
+            final = (result.get("text") or "").strip()
             if outcome == "completed" and _uncommitted(top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
                                   result["conversation"], "", approval, design=design)
                 if again["status"] != "completed":
                     result, outcome = again, "failed"
-            final = (result.get("text") or "").strip()
+                else:
+                    nudged = (again.get("text") or "").strip()
         finally:
             if outcome == "completed":
-                _question(top, item, kind, final)
+                _question(top, item, kind, final, nudged)
             repo.record_timing(top, item, "worker round", start, clock, outcome,
                                repo.design_models(config, "codex" if on_codex else "claude")
                                if design else repo.worker_models(config, kind.lower(),
@@ -224,13 +229,14 @@ def work(args: argparse.Namespace) -> None:
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
 
 
-def _question(top: Path, item: str, kind: str, final: str) -> None:
-    asked = re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", final.strip(), re.S)
-    identity = repo.record_event(top, item, "worker question", question=asked[1]) if asked else None
+def _question(top: Path, item: str, kind: str, *answers: str) -> None:
+    asked = "\n\n".join(dict.fromkeys(match[1] for answer in answers
+        if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
+    identity = repo.record_event(top, item, "worker question", question=asked) if asked else None
     codex._record(codex._item_file(top, item, ".json", kind),
-                  question=asked[1] if asked else None, question_id=identity)
+                  question=asked or None, question_id=identity)
     if asked:
-        print(f"{asked[1]}\nNext: forge work {item} --note \"<answer>\"")
+        print(f"{asked}\nNext: forge work {item} --note \"<answer>\"")
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
