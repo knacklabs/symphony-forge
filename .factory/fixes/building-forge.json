@@ -2,12 +2,35 @@
   "base": "ee3ca47850f4a6b29c53c1a5220912a26c2ae8fd",
   "branch": "fix/building-forge",
   "done_when": "Forge's AGENTS.md has a 'Building Forge (this repo only)' section outside the forge block, stating that Forge is built with its own process for client repos, that general process rules go in what Forge ships and only Forge-code rules stay in this repo, and that every change covers new and existing client repos; its Review rules report a general process rule added only to Forge's own files as P1. The shared forge block is unchanged. New and existing client repos: unaffected (repo-owned section).",
+  "flagged": [
+    "AGENTS.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "05a68a1409f12126b5a8fa286747e7253ff40ed80269c309bd7e09a5017c8e43",
+    "commit": "8c238fecb2c8080fdfce175042c367ef7e8b7d0f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The insertion splits the existing review-rule bullet at line 57, so `Building Forge (this repo only)` is embedded in that bullet rather than being a section heading. All the new building guidance is also inside the generated block, which ends at line 72. This violates both the required section placement and the requirement to leave the shared block unchanged. It also makes the guidance temporary: `src/forge/sync.py:149\u2013153` replaces that entire block from the unchanged adapter template. Restore the original shared-block text and add a standalone `## Building Forge (this repo only)` section after `<!-- forge:end -->`.",
+        "file": "AGENTS.md",
+        "line": 57,
+        "priority": "P1",
+        "title": "Not done: Put 'Building Forge (this repo only)' outside the unchanged forge block"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T16:06:02+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-04T16:07:29+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's AGENTS.md doesn't say what Forge is for or how to decide whether a rule belongs to every repo or only to Forge, so general rules keep landing only in Forge's own files"
