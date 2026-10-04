@@ -21,7 +21,7 @@
     ],
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-04T07:05:58+00:00",
