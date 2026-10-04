@@ -36,7 +36,9 @@ def record_run(request):
     (pathlib.Path({str(log)!r}) / request.node.name).write_text(json.dumps(workers))
 ''')
     env.repo.write("src/probe_module.py", "VALUE = 1\n")
-    env.repo.write("tests/test_related.py", "from probe_module import VALUE\n"
+    # Relatedness now comes from the filename or a qualified Forge reference,
+    # rather than any bare module name appearing in the test's body.
+    env.repo.write("tests/test_probe_module_related.py", "from probe_module import VALUE\n"
                    "def test_related():\n    assert VALUE >= 1\n")
     env.repo.write("tests/test_changed.py", "def test_changed():\n    assert 2 + 2 == 4\n")
     env.repo.write("tests/test_unrelated.py", "def test_unrelated():\n    assert 3 + 3 == 6\n")
