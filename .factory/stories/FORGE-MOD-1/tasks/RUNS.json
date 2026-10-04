@@ -7,12 +7,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "changed": "23c62e261169315bffd52cb91f9e32fe82970146c71b2d5aabd586ed7f0de269",
-    "commit": "4f060716c2007f3b53f3bec61bee6c30077e0bba",
+    "changed": "e10b61b1f4f15652526e3431ba10042acb015127cce113d5e1ffd005aea8913f",
+    "commit": "602b635b5ab20b65787499c24c4e70468c2887a2",
     "dismissals": [],
     "findings": [
       {
-        "body": "If the initial worker answer succeeds, asks a question and leaves uncommitted changes, a failing commit nudge prevents `_question` from running. Claude's normal and design paths leave `outcome` as `failed` when the nudge raises; Codex explicitly changes it to `failed`. The initial question is therefore neither persisted nor assigned an occurrence id. Subsequent work can proceed unanswered, and close.py:63\u201365 only blocks questions that were persisted. This adds a failure-path case beyond the previous successful-nudge finding; the new nudge tests exercise only successful nudges. Preserve questions from successful answers independently of the nudge's outcome.",
+        "body": "The previous finding remains open. If the initial answer succeeds, asks a question and leaves uncommitted changes, a failing commit nudge prevents `_question` from running. Claude's normal and design paths leave `outcome` as `failed` when the nudge raises (worker.py:188\u2013196); Codex explicitly changes it to `failed` (212\u2013213). The initial question gets neither a pending record nor an occurrence id, so subsequent work can proceed unanswered; close.py:63\u201365 blocks only persisted questions. The nudge tests cover successful nudges only. Preserve questions from successful answers independently of the nudge's outcome.",
         "file": "src/forge/worker.py",
         "line": 217,
         "priority": "P2",
@@ -21,7 +21,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:05:58+00:00",
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-04T09:53:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T10:25:21+00:00",
       "step": "review"
     }
   ],
