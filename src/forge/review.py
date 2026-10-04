@@ -69,6 +69,9 @@ argv = sys.argv[1:]
 for i in range(len(argv) - 1):
     if argv[i] in ("-C", "--cd"):
         argv[i + 1] = {tree!r}
+if "exec" in argv:
+    i = argv.index("exec")
+    argv[i:i] = {quiet!r}
 sys.exit(subprocess.call([{real!r}, *argv]))
 ''',
     "claude": '''\
@@ -606,7 +609,9 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     # helper's --ignore-user-config; port it when a Windows review can't run its read-only shell.
     folder.mkdir()
     script = folder / f"{engine}_in_tree.py"
-    script.write_text(LAUNCHER[engine].format(tree=str(tree), real=real), encoding="utf-8")
+    from forge.codex import QUIET
+    quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
+    script.write_text(LAUNCHER[engine].format(tree=str(tree), real=real, quiet=quiet), encoding="utf-8")
     if os.name == "nt":
         launcher = folder / f"{engine}.cmd"
         launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")

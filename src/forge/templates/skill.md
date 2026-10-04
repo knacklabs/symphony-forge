@@ -411,6 +411,12 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
+summaries, and a developer instruction to write no progress commentary, only the final handoff
+and any question. Forge sets these for each thread, including resumed threads; neither
+`forge.toml` nor user or project Codex settings can turn them up. New and upgraded repos get
+this automatically, with no setting to change.
+
 When one sentence would help a worker finish its next round, give it with
 `forge work <item> --note "<text>"`. The note appears under "From the coordinator" in that
 round's brief and is recorded with the turn. Give it again if a later round needs it; a note
