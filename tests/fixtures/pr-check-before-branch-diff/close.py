@@ -18,14 +18,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, spotted, story, sync
+from forge import __version__, checks, codex, init, repo, review, spotted, story
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "git -C {path} merge origin/{default}, follow Keeping work moving in "
-                 ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
+                 "git -C {path} merge origin/{default}, fix the conflicts and commit, "
                  "then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
@@ -77,12 +76,6 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         return _merged(top, item)
 
-    previous = state.get("review") or {}
-    legacy_diff = None
-    if (previous and "branch_diff" not in previous and previous.get("changed") ==
-            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
-        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
-                                         f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
     for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
                            f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
@@ -96,18 +89,13 @@ def close(args: argparse.Namespace) -> int:
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
+    previous = state.get("review") or {}
     result = previous
     resuming = state.get("status") == "hotspot"
     if resuming:
         print(f"{item} carries on after the stop for {state['stop']['file']}.")
-    changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
-    branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
-                                     branch_diff=True)
-    fresh = not resuming and result.get("branch_diff", legacy_diff) == branch_diff
-    refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
-    if fresh:
-        result.update(changed=changed, branch_diff=branch_diff)
+    fresh = (not resuming and result.get("changed") ==
+             review.fingerprint("HEAD", item, top, state, f"origin/{default}"))
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -169,7 +157,7 @@ def close(args: argparse.Namespace) -> int:
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed:
+    if not fresh or dismissals:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious else "waiting for checks")
@@ -261,7 +249,6 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
-    cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
@@ -270,28 +257,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if not files:
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
-    # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
-    with tempfile.TemporaryDirectory() as folder:
-        base = Path(folder) / "default"
-        repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
-        try:
-            generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
-            if cfg.get("repo") == "forge-source":
-                generated.add("docs/commands.md")
-        finally:
-            repo.git("worktree", "remove", "-f", str(base), cwd=top)
-    if set(files) <= generated:
-        repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
-                 *files, cwd=top)
-        done = repo.run("forge", "sync", cwd=top)
-        if done.returncode:
-            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
-                                                done.stderr)
-        changed = [path for path in synced_changes(top) if path in generated]
-        if changed:
-            repo.git("add", "-A", "--", *changed, cwd=top)
-        repo.git("commit", "-q", "--no-edit", cwd=top)
-        return
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
