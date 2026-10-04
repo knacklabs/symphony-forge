@@ -83,6 +83,11 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     _program(program, f"echo codex-cli {PIN}")
     hooks = _stub_forge(tmp_path, monkeypatch)
     _workers(client, "codex")
+    # Default-branch file repairs now require a clean checkout at origin/main. Land the
+    # worker setting so this SDK test still isolates SDK and trust problems.
+    repo.git("add", "forge.toml", cwd=client)
+    repo.git("commit", "-q", "-m", "Use Codex workers", cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
 
     def trust(level: str) -> None:
         (codex_home / "config.toml").write_text(
@@ -174,6 +179,9 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     shutil.rmtree(env)
     (codex_home / "config.toml").unlink()
     _workers(client, "claude")
+    repo.git("add", "forge.toml", cwd=client)
+    repo.git("commit", "-q", "-m", "Use Claude workers", cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
     _install(repo.bin, "claude", "#!/bin/sh\n")
     claude = repo.forge("doctor", "--fix", cwd=client)
     assert claude.returncode == 0, claude.stdout + claude.stderr
