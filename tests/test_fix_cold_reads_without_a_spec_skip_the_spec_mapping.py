@@ -24,6 +24,6 @@ def test_1_a_story_without_a_spec_gets_the_conditional_mapping(repo):
     assert "A story with no linked confirmed spec is not a finding." in first
     assert ("When a confirmed spec is included above, each \"Done when\" item must also map to the "
             "spec's behaviour or success measure; with no confirmed spec, skip that mapping.") in first
-    # The original checks the tightening cut are back.
+    # Missing specs still keep platform and proof checks; proof now belongs to rules, not every case.
     assert "Windows PowerShell and cmd, WSL, macOS, Linux CI" in first
-    assert "Is every edge case pinned down and proven?" in first
+    assert 'Are the rules that meet each "Done when" item pinned down and proven?' in first
