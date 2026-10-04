@@ -14,6 +14,8 @@ import subprocess
 import sys
 import time
 import tomllib
+import uuid
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NoReturn
@@ -69,7 +71,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
     return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                          text=True, encoding="utf-8", errors="replace")
+                          text=True, encoding="utf-8", errors="replace",
+                          env={**os.environ, "FORGE_WORKER": "1"})
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
@@ -115,7 +118,8 @@ def work_log(top: Path, item: str) -> Path:
 def record_timing(top: Path, item: str, step: str, start: str, clock: float,
                   outcome: str, model: dict[str, str] | None = None) -> None:
     """Append a best-effort timing in the shared, uncommitted Git directory."""
-    line = {"item": item, "step": step, "start": start,
+    line = {"item": item, "round": (read_state(item, top) or {}).get("round", 0),
+            "step": step, "start": start,
             "seconds": round(time.monotonic() - clock, 3), "outcome": outcome}
     if model:
         line.update({key: model[key] for key in ("model", "effort") if key in model})
@@ -124,6 +128,27 @@ def record_timing(top: Path, item: str, step: str, start: str, clock: float,
             out.write(json.dumps(line) + "\n")
     except OSError:
         pass  # Timing is diagnostic; a full or unwritable Git directory must not fail the command.
+
+
+def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
+    """Write an occurrence once; consumers use its random id, never its text or timestamp."""
+    identity = str(uuid.uuid4())
+    line = {"id": identity, "item": item, "event": event, "at": now(),
+            "round": (read_state(item, top) or {}).get("round", 0), **fields}
+    with (forge_dir(top) / "events.jsonl").open("a", encoding="utf-8") as out:
+        out.write(json.dumps(line) + "\n")
+    return identity
+
+
+@contextmanager
+def record_run(top: Path, item: str, kind: str, **fields: Any):
+    """Keep starts and ends even for a run entirely between two board refreshes."""
+    identity = record_event(top, item, "run start", kind=kind, **fields)
+    result = {"outcome": "failed"}
+    try:
+        yield result
+    finally:
+        record_event(top, item, "run end", run_id=identity, kind=kind, **result)
 
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------

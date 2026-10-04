@@ -287,10 +287,14 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    with log.open("a", encoding="utf-8") as out, subprocess.Popen(
+    activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
+                else repo.record_run(checkout, item, command, family="codex",
+                                     model=request["config"].get("model")))
+    with activity as ran, \
+            log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", **GROUP) as driver:
+            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
@@ -422,6 +426,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     stuck = True  # thirty seconds on, a member still runs: don't claim it ended
                 if stuck:
                     repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
+            ran["outcome"] = result.get("status") or "failed"
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
                     pid=driver.pid if refused == "driver" else server)

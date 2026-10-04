@@ -249,6 +249,28 @@ def close_test(top: Path, base: str) -> str:
 
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
+    """Record every test stage here, including docs-only and cached skips."""
+    item = _test_item(top, repo.current_branch(top))
+    start, clock = repo.now(), time.monotonic()
+    outcome = "failed"
+    try:
+        failed, report = _test_run(top, command, base)
+        outcome = "failed" if failed else "passed" if report.startswith("`") else "skipped"
+        return failed, report
+    finally:
+        repo.record_timing(top, item, "test run", start, clock, outcome)
+
+
+def _test_item(top: Path, branch: str) -> str:
+    """Find the task from its state: both story and task names can contain hyphens."""
+    if branch.startswith("task/"):
+        for path in (top / ".factory" / "stories").glob("*/tasks/*.json"):
+            if json.loads(path.read_text(encoding="utf-8")).get("branch") == branch:
+                return f"{path.parent.parent.name}/{path.stem}"
+    return branch.removeprefix("fix/").removeprefix("forge/")
+
+
+def _test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
     Returns its exit status and the report: the exit status, every line that mentions a skip with
     the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
@@ -278,11 +300,14 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
         if passed and passed.exists():  # the close this one waited for passed the same files
             print(skipped, flush=True)
             return 0, skipped
-        env = {**os.environ,
+        env = {**os.environ, "FORGE_WORKER": "1",
                "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-        done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                              encoding="utf-8", errors="replace")
+        branch = repo.current_branch(top)
+        with repo.record_run(top, _test_item(top, branch), "test") as ran:
+            done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                  encoding="utf-8", errors="replace")
+            ran["outcome"] = "passed" if done.returncode == 0 else "failed"
         if done.returncode == 0 and passed:
             passed.parent.mkdir(exist_ok=True)
             passed.touch()
@@ -456,7 +481,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
         for attempt in ((1,) if signoff_prompt else (1, 2)):
-            findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+            with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
+                findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                ran["outcome"] = "failed" if reason else "completed"
             if not reason:
                 break
             print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
@@ -480,7 +507,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    return {"commit": head, "changed": fingerprint(head, item, top, state, base,
+    identity = repo.record_event(top, item, "review result", commit=head,
+                                 outcome="blocked" if any(f["priority"] in
+                                 (("P0",) if light else SERIOUS) for f in findings) else "clean")
+    return {"id": identity, "commit": head, "changed": fingerprint(head, item, top, state, base,
                                                      "P0" if light else "P1", findings),
             "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1"}
@@ -528,7 +558,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
         line = line.replace(b"\0", b"")

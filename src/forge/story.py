@@ -672,7 +672,10 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
     command = ["claude", "-p", *models, "--permission-mode", "plan"]
     if resume:
-        done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
+        with repo.record_run(top, target, "read", family="claude",
+                             model=models[models.index("--model") + 1] if models else None) as ran:
+            done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
+            ran["outcome"] = "completed" if done.returncode == 0 else "failed"
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -681,7 +684,11 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
-    return repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
+    with repo.record_run(top, target, "read", family="claude",
+                         model=models[models.index("--model") + 1] if models else None) as ran:
+        done = repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
+        ran["outcome"] = "completed" if done.returncode == 0 else "failed"
+        return done
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:

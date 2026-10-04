@@ -110,6 +110,8 @@ def close(args: argparse.Namespace) -> int:
                                     if (finding["file"], finding["title"]) in dismissed]
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
+            if outcome == "failed":
+                repo.record_event(top, item, "review result", outcome=outcome)
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
     elif (command := review.close_test(top, f"origin/{default}")) and (
