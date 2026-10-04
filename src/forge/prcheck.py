@@ -81,6 +81,15 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+      - name: Report pull request size
+        if: always()
+        continue-on-error: true
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          stats=$(git diff --numstat "$BASE_SHA...$HEAD_SHA")
+          echo "$stats" | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\\n", a - d, a, d}' >> "$GITHUB_STEP_SUMMARY"
 """
 
 # A client's check runs the Forge release its default branch pins. A pull request that changes
