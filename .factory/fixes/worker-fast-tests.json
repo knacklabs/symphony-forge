@@ -41,5 +41,6 @@
       "step": "review"
     }
   ],
-  "why": "Every worker round runs the repo's whole test suite on the developer's machine before finishing, about 15-20 minutes of each 30-minute round, though CI runs the same full suite again"
+  "why": "Every worker round runs the repo's whole test suite on the developer's machine before finishing, about 15-20 minutes of each 30-minute round, though CI runs the same full suite again",
+  "worker": "codex"
 }
