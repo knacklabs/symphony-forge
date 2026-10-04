@@ -18,7 +18,10 @@ if not any(Path(name).name in {"conftest.py", "pyproject.toml", "uv.lock"}
                if name.endswith(".py") and not name.startswith("tests/")}
     selected = sorted(path.as_posix() for path in Path("tests").rglob("test_*.py")
                       if path.as_posix() in changed
-                      or any(name in path.read_text("utf-8") for name in modules))
+                      or any(name in path.name
+                             or f"forge/{name}.py" in path.read_text("utf-8")
+                             or f"forge.{name}" in path.read_text("utf-8")
+                             for name in modules))
     if not selected:
         print("No changed or module-related test files to run.")
         sys.exit(0)
