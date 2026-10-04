@@ -265,6 +265,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/worker.py\tPreserve pending questions when a commit nudge fails",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 217,
+      "text": "Preserve pending questions when a commit nudge fails",
+      "from": "review",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
       "kind": "edge",
       "path": "tests/test_codex_record.py",
