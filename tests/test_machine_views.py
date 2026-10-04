@@ -5,6 +5,7 @@ Only GitHub is faked; commands read real repositories and their owned state fixt
 """
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -12,6 +13,9 @@ import pytest
 
 from test_story import setup, worktree
 from test_task import story
+from conftest import ROOT
+from test_close import GREEN, STORY_DOC, env  # noqa: F401
+from test_last_task_records_story_outcome import github_merge
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
@@ -225,3 +229,78 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     calls = [c for c in gh.calls() if c[:2] == ["api", "graphql"]]
     assert len(calls) == initial_calls + 5
     assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+def test_4_client_machine_views_follow_the_last_task_merge(env, history):
+    # The HTML completion test cannot detect an approved JSON row after a squash merge.
+    # Exercise both shipped client lifecycles, including real earlier-release adoption output.
+    repo = env.repo
+    if history == "new":
+        client, remote = env.tmp / "new-client", env.tmp / "new-client.git"
+        repo.git("init", "-q", "--bare", "-b", "main", str(remote))
+        repo.git("init", "-q", "-b", "main", str(client))
+        repo.git("remote", "add", "origin", str(remote), cwd=client)
+        env.gh.respond("api", stdout="{}")
+        initialized = repo.forge("init", cwd=client)
+        assert initialized.returncode == 0, initialized.stderr
+        checkout = env.tmp / "new-checkout"
+        repo.git("clone", "-q", str(remote), str(checkout))
+    else:
+        repo.git("switch", "-qc", "fix/upgrade-client")
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Adopt Forge v1.2.2")
+        env.commit(repo.path, ".factory/fixes/upgrade-client.json", json.dumps({
+            "kind": "fix", "branch": "fix/upgrade-client", "why": "Upgrade Forge",
+            "done_when": "The client uses this release", "status": "started"}))
+        config = repo.path / "forge.toml"
+        original = config.read_text("utf-8")
+        assert 'version = "v1.2.2"' in original
+        assert "## Machine views" not in (repo.path / ".claude/skills/forge/SKILL.md").read_text("utf-8")
+        version = repo.forge("--version").stdout.split()[-1]
+        config.write_text(original.replace('"v1.2.2"', json.dumps(version)), encoding="utf-8")
+        synced = repo.forge("sync")
+        assert synced.returncode == 0, synced.stderr
+        repo.git("add", "-A")
+        repo.git("commit", "-qm", "Upgrade Forge and sync")
+        checkout = env.tmp / "upgraded-checkout"
+        remote = repo.git("remote", "get-url", "origin")
+        repo.git("clone", "-q", "--branch", "fix/upgrade-client", str(repo.path), str(checkout))
+        repo.git("remote", "set-url", "origin", remote, cwd=checkout)
+        repo.git("switch", "-qc", "main", cwd=checkout)
+        repo.git("push", "-q", "origin", "main", cwd=checkout)
+        repo.git("fetch", "-q", "origin", cwd=checkout)
+        repo.git("remote", "set-head", "origin", "main", cwd=checkout)
+    repo.path = checkout
+    for host in (".claude", ".codex"):
+        assert "## Machine views" in (checkout / host / "skills/forge/SKILL.md").read_text("utf-8")
+    assert 'repo = "client"' in (checkout / "forge.toml").read_text("utf-8")
+    # Keep the shipped client files; select the test harness's third-party review configuration.
+    version = repo.forge("--version").stdout.split()[-1]
+    env.commit(checkout, "forge.toml", f'version = "{version}"\nrepo = "client"\n'
+               'workers = "claude"\nmerge = "agent"\nchecks = ["tests", "forge-pr-check"]\n'
+               'models.build = { model = "opus", effort = "high" }\n')
+    repo.git("push", "-q", "origin", "main")
+    doc = "\n".join(line for line in STORY_DOC.splitlines() if not line.startswith("| T2 |"))
+    item, where = env.start_approved_task(doc)
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")
+    assert row["stage"] == "approved"
+    assert row["children"][0]["next"]["command"] == "forge work SHOP/T1"
+    assert view(repo, "next")["next"]["command"] == "forge work SHOP/T1"
+    env.open_pr("")
+    env.checks(GREEN)
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stderr
+    github_merge(env, "task/SHOP-T1")
+    merged = repo.forge("merge", item)
+    assert merged.returncode == 0, merged.stderr
+    # Completion is in the merge trailer; the saved story state deliberately remains approved.
+    assert json.loads(repo.git("show", "origin/main:.factory/stories/SHOP/story.json"))["status"] == "approved"
+    assert "Forge-story-done: " in repo.git("log", "-1", "--format=%B", "origin/main")
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")
+    assert row["stage"] == "done"
+    assert row["children"][0]["stage"] == "merged"
+    assert row["next"] == {"command": None, "line": "Shoppers can save a basket is finished."}
+    assert "record the outcome" not in view(repo, "next")["next"]["line"]

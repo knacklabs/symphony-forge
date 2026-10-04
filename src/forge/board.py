@@ -277,6 +277,9 @@ def machine_board(top: Path) -> Item:
             children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))
         else:
             key = match["key"]
+            completed = story.completed(top, key, landed)
+            if state.get("status") != "done" and completed.get("status") == "done":
+                state = completed
             text = _read(top, where, f"plans/{key}.md")
             title = state.get("title") or next((s.removeprefix("# ") for s in text.splitlines()
                                                 if s.startswith("# ")), "A story with no title yet")

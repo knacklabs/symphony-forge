@@ -107,6 +107,9 @@ Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`, and its own `next`.
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
+The last task's merged outcome marks its story done, even when the saved story
+state still says approved. New clients get these views and this guide at init;
+existing clients get them after upgrading Forge and running sync.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
 started_at, ended_at and seconds for the current round from Forge's timing records;
