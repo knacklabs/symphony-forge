@@ -97,18 +97,26 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
+Windows checklist:
+- A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
+- Tests never assume a drive letter or a '/' separator.
+- File operations in tests use the repo's lock-safe helpers where it has them.
+
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder.
 
-A real-Codex or process-cleanup test that fails locally but passes when run alone is machine load from parallel workers: commit, say so in your handoff, and let CI judge it; don't stop for it.
+A test that fails in the suite but passes alone is flaky; its failure stays unresolved.
+Report both results without guessing the cause.
 
 For each Done-when item you cover that changes runtime behaviour, write one end-to-end test at the
 boundary the user touches, named for the item; a settings, docs, deletion or test-only item is
 proven by the check the item names. Name a new test file after the behaviour it proves, never
 after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
 delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
-decides proves nothing. Use the test-audit skill whenever you write or change a test. Run the
-repo's test command before you stop.
+decides proves nothing. Use the test-audit skill whenever you write or change a test. Before you
+stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
+`{base}` as the merge base with the default branch, or its `test` command when it has no
+`fast_test`. Then commit any fixes. CI runs the full suite.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
@@ -124,9 +132,6 @@ When changing a user-facing flow, add or update its Playwright test, including a
 touches for the first time.
 
 Add every test your task's Tests column names, even when the change is documentation only.
-In a repo whose tests run Forge (forge-source), a test runs the forge command and never imports forge.
-A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow sets
-it); don't set it in your runs.
 
 <!-- if user-facing -->
 ## Functional check

@@ -20,6 +20,7 @@ SOURCES = {
     **{f"{host}/{rel}": source for host in (".claude", ".codex") for rel, source in {
         "skills/forge/SKILL.md": "src/forge/templates/skill.md",
         "skills/forge/standards.md": "src/forge/standards.md",
+        "skills/forge/migrate-skill.md": "src/forge/templates/migrate-skill.md",
         "skills/forge/fde.md": ".codex/skills/forge/fde.md",
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
         "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
