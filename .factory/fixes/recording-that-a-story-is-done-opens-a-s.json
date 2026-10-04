@@ -8,21 +8,21 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "08c300a0ecf02b81fb87ddf849b164030ff86a027744bc12fb26aa908f58a81c",
-    "commit": "35cc6483d4ea914a9e1e252ff3069893de0b323d",
+    "changed": "b287fd44d81a8fbba2f6619b63add087b1a9460753ddc710789e50a13b152da6",
+    "commit": "75843d90efc0c709fc76f2e61b02f530a4186f74",
     "dismissals": [],
     "findings": [
       {
-        "body": "If a story's final two independent tasks merge concurrently, both commands can inspect an origin/default snapshot where the other task is still unmerged. Both then omit the completion record, even though GitHub subsequently merges both pull requests successfully. The fetch occurs in `src/forge/repo.py:174`, before the checks wait; this predicate has no synchronization with sibling merges. Afterwards, `src/forge/story.py:630\u2013643` finds every task merged but no completion marker, so the board and `forge next` still require `forge story done`. This affects both direct merge calls and `forge land` through `src/forge/land.py:81`. Coordinate sibling merges and refresh their merge state before deciding which merge records completion.",
+        "body": "The earlier concurrency gap remains open. Two independent final tasks can both evaluate this predicate before either merge reaches their fetched origin/default snapshot, so neither includes the completion marker. The fetch in src/forge/repo.py:174 precedes checks.wait, and there is no refresh or coordination before this decision. Both PRs can then merge successfully, but story.completed (src/forge/story.py:630\u2013643) finds no marker and leaves the story unfinished. This also affects forge land through src/forge/land.py:81. Coordinate sibling merges and refresh their landed state before deciding which merge records completion.",
         "file": "src/forge/merge.py",
-        "line": 84,
+        "line": 85,
         "priority": "P2",
         "title": "Preserve completion when sibling tasks merge concurrently"
       }
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:21:29+00:00",
@@ -34,6 +34,10 @@
     },
     {
       "at": "2026-10-04T09:48:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T12:12:08+00:00",
       "step": "review"
     }
   ],
