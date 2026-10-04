@@ -301,17 +301,11 @@ def done(args: Any) -> int:
         repo.refuse(REFUSALS["not_finished"], key=key,
                     problem=f"{', '.join(waiting)} not merged yet" if waiting else "it has no tasks")
     state = json_of(show(top, ref, repo.state_path(key)))
-    title, slug = state.get("title") or key, f"{key.lower()}-done"
-    path = add_worktree(top, f"fix/{slug}", ref)
+    title = state.get("title") or key
     state.update(status="done", outcome=args.outcome, merged=dates, finished=max(dates.values()))
-    fix = {"kind": "story-done", "why": f"Record that {title} is finished, and what it achieved.",
-           "done_when": "The board shows the story as finished, with its outcome.", "outcome": args.outcome,
-           "branch": f"fix/{slug}", "base": repo.git("rev-parse", ref, cwd=top), "status": "started",
-           "touches": 0}
-    changed = [repo.write_state(key, repo.add_step(state, "done"), path),
-               repo.write_state(slug, repo.add_step(fix, "start"), path)]
-    repo.commit_state(f"Record the outcome of {title}", *changed, top=path)
-    print(f"Opened the fix that records the outcome of {title} in {path}.\nNext: forge close {slug}")
+    changed = repo.write_state(key, repo.add_step(state, "done"), top)
+    repo.commit_state(f"Record the outcome of {title}", changed, top=top)
+    print(f"Recorded the outcome of {title} on this work branch.\nNext: forge next")
     return 0
 
 
@@ -623,6 +617,32 @@ def merged_at(top: Path, ref: str, path: str) -> str:
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
 
 
+def completed(top: Path, key: str, ref: str) -> dict[str, Any]:
+    """Read completion from the last task's squash message; older saved outcomes win."""
+    state = json_of(show(top, ref, repo.state_path(key)))
+    if state.get("status") == "done":
+        return state
+    text = show(top, ref, f"plans/{key}.md") or ""
+    try:
+        tasks = parse(text)["tasks"]
+    except ValueError:
+        return state
+    dates = {row["id"]: merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")) for row in tasks}
+    if not dates or not all(dates.values()):
+        return state
+    # The file's first appearance identifies its merge, even after later edits to task state.
+    for tid in dates:
+        message = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
+                           ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top)
+        for line in reversed(message.splitlines()):
+            if line.startswith("Forge-story-done: "):
+                record = json_of(line.removeprefix("Forge-story-done: "))
+                if record.get("key") == key and isinstance(record.get("outcome"), str):
+                    return {**state, "status": "done", "outcome": record["outcome"],
+                            "merged": dates, "finished": max(dates.values())}
+    return state
+
+
 def json_of(text: str | None) -> dict[str, Any]:
     """A JSON object read from git, or {} when it's missing or unreadable."""
     try:
@@ -835,7 +855,7 @@ COMMANDS = [
     {"words": "story done", "run": "done", "changes_state": True,
      "help": "Record a finished story's outcome sentence and dates",
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
-     "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
+     "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
      "help": "Run a round of the cold read of a story doc or spec",
      "args": [(('target',), {"help": "a story key or a spec slug"})],

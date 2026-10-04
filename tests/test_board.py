@@ -129,9 +129,13 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     merge("fix/upgrade-forge", "16T15:00")
     merge("task/SHOP-SHARE", "18T11:00")
 
-    # The outcome, recorded by the real command; its state then lives only on a remote branch.
+    # An existing legacy outcome branch remains readable after its worktree is removed.
+    # story done now corrects the outcome in this branch rather than creating another one.
+    work("fix/shop-done", ".factory/fixes/shop-done.json", "main", [("start", "18T11:30")],
+         kind="story-done", why="Correct the outcome", done_when="The board describes baskets")
     monkeypatch.setenv("FORGE_NOW", "2026-09-18T12:00:00+00:00")
-    done = repo.forge("story", "done", "SHOP", "Shoppers keep their basket between visits.")
+    done = repo.forge("story", "done", "SHOP", "Shoppers keep their basket between visits.",
+                      cwd=worktree(repo, "fix/shop-done"))
     assert done.returncode == 0, done.stderr
     repo.git("push", "-q", "origin", "fix/shop-done")
     repo.git("worktree", "remove", "--force", str(worktree(repo, "fix/shop-done")))
