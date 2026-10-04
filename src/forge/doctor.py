@@ -446,6 +446,7 @@ def doctor(args: argparse.Namespace) -> int:
         # With a bare PATH, as Codex may run them: each hook must find forge on its own.
         env = {**os.environ, "PATH": BARE_PATH} if os.name != "nt" else None  # Windows has no /usr/bin
         bare = f" when run with PATH={BARE_PATH}" if env else ""
+        checked: dict[tuple[str, str], subprocess.CompletedProcess[str]] = {}
         for rel in sync.HOSTS:
             # Only a command exactly as forge sync writes it ever runs. Any other one makes the
             # file differ from sync's, so it is already a drift row above, and it never runs.
@@ -453,11 +454,17 @@ def doctor(args: argparse.Namespace) -> int:
             for event, command in _forge_hooks(sync.read(top / rel)):
                 if (event, command) not in generated:
                     continue
-                payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event,
-                           **SAMPLES.get(event, {})}
-                done = subprocess.run([shutil.which("sh") or "sh", "-c", command], cwd=top,
-                                      input=json.dumps(payload), capture_output=True, text=True,
-                                      encoding="utf-8", errors="replace", env=env)
+                # Both hosts share commands and payloads; probing the same pair again starts
+                # Forge again for no new evidence. Each host still gets its own failure row.
+                key = (event, command)
+                if key not in checked:
+                    payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event,
+                               **SAMPLES.get(event, {})}
+                    checked[key] = subprocess.run(
+                        [shutil.which("sh") or "sh", "-c", command], cwd=top,
+                        input=json.dumps(payload), capture_output=True, text=True,
+                        encoding="utf-8", errors="replace", env=env)
+                done = checked[key]
                 if done.returncode:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     # Forge's own Next line when forge ran and refused; else it couldn't launch.

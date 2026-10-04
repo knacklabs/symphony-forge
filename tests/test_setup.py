@@ -324,12 +324,11 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
 
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
-        # Each host hook command ran, with a payload.
+        # Identical hook commands and payloads shared by the hosts need one probe, not two.
         calls = log.read_text(encoding="utf-8")
-        # Each host now probes the handoff hook as well as the three earlier hooks.
         for hook in ("context", "handoff", "deny", "approval"):
-            assert calls.count(f"hook {hook}\n") == 2, calls
-        assert calls.count('"hook_event_name"') == 8
+            assert calls.count(f"hook {hook}\n") == 1, calls
+        assert calls.count('"hook_event_name"') == 4
     elif case == "codex doesn't trust the project":
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
@@ -344,6 +343,9 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert done.returncode == 1
         for row in rows:
             assert row in done.stdout, done.stdout
+        if case == "host hook fails":
+            # One failed probe still reports both host files above.
+            assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
         assert "\n  Fix: " in done.stdout
         assert done.stderr.startswith("forge doctor found ") and done.stderr.endswith(
             " problem(s); each row above gives its fix.\nNext: forge doctor\n"), done.stderr
