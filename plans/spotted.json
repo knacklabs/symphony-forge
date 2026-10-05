@@ -353,6 +353,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/core.test.ts\tNot done: elapsed time advances between refreshes\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/core.test.ts",
+      "line": 39,
+      "text": "Not done: elapsed time advances between refreshes",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/forge.ts\tAccept unknown worker start times from the board contract\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/forge.ts",
+      "line": 27,
+      "text": "Accept unknown worker start times from the board contract",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 33,
+      "text": "Not done: /forge returns the summary of detail 2",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 59,
+      "text": "Preserve merge-result testing when running the full suite",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -404,6 +448,17 @@
       "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 39,
+      "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
       "status": "open",
       "closed_by": null
     },
@@ -492,6 +547,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C check times out on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
       "status": "open",
       "closed_by": null
     },
@@ -628,6 +694,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "tests/test_review_record_reuses_parent_tests.py",
+      "line": 45,
+      "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe interrupted review times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
       "kind": "bug",
       "path": "tests/test_reviews_remove_their_temp_folders.py",
@@ -657,6 +745,17 @@
       "text": "Not done: run-record coverage for previously adopted client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
       "status": "open",
       "closed_by": null
     },
@@ -991,6 +1090,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
+      "kind": "edge",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 41,
+      "text": "Allow review commits to remove stale test-failure output",
+      "from": "review",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
       "kind": "edge",
       "path": "src/forge/templates/skill.md",
@@ -1068,6 +1178,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_codex_turns_trust_forge_hooks.py\tAn isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_codex_turns_trust_forge_hooks.py",
+      "line": 302,
+      "text": "An isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -1108,94 +1229,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
-      "kind": "bug",
-      "path": "src/forge/prcheck.py",
-      "line": 59,
-      "text": "Preserve merge-result testing when running the full suite",
-      "from": "blocking",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
-      "kind": "bug",
-      "path": "src/forge/templates/review-tests.py",
-      "line": 39,
-      "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
-      "from": "blocking",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
-      "kind": "bug",
-      "path": "tests/test_contracts.py",
-      "line": 534,
-      "text": "The doctor Ctrl-C check times out on both this branch and origin/main.",
-      "from": "worker",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
-      "kind": "bug",
-      "path": "tests/test_review_record_reuses_parent_tests.py",
-      "line": 45,
-      "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
-      "from": "blocking",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe interrupted review times out and leaves processes on both this branch and origin/main.",
-      "kind": "bug",
-      "path": "tests/test_reviews_remove_their_temp_folders.py",
-      "line": 77,
-      "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
-      "from": "worker",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
-      "kind": "bug",
-      "path": "tests/test_steer_question.py",
-      "line": 120,
-      "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
-      "from": "worker",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
-      "kind": "edge",
-      "path": "src/forge/templates/review-tests.py",
-      "line": 41,
-      "text": "Allow review commits to remove stale test-failure output",
-      "from": "review",
-      "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_codex_turns_trust_forge_hooks.py\tAn isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
-      "kind": "edge",
-      "path": "tests/test_codex_turns_trust_forge_hooks.py",
-      "line": 302,
-      "text": "An isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
-      "from": "worker",
-      "item": "forge-close-reviews-first-and-only-then",
       "status": "open",
       "closed_by": null
     }

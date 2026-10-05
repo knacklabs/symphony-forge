@@ -1,10 +1,50 @@
 {
   "branch": "task/FORGE-MOD-1-CORE",
-  "status": "working",
+  "flagged": [
+    "src/forge/mod/hooks/core.test.ts",
+    "src/forge/mod/hooks/forge.ts",
+    "src/forge/mod/hooks/summary.ts"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d202362a2dfb1114bebb545ea8d0a29390180742831a42839a59f21ab4d10bb0",
+    "changed": "bee0ef5a47c03e81d7c323f070f372ccf6f1f9fa146945a6d08f61b46f566abc",
+    "commit": "2aa1b71d8bb57d0c46729ead90579c06198ba9e0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The real producer emits a running worker with `started_at: null` when its start was not recorded (`src/forge/board.py:249\u2013250`), and the existing command test explicitly verifies that output (`tests/test_machine_views.py:281`). This validator rejects that legitimate row, causing the entire refresh to fail and leaving every story, check and finding absent or stale. Allow a null start time in the worker type and validator, and render its elapsed time as unknown.",
+        "file": "src/forge/mod/hooks/forge.ts",
+        "line": 27,
+        "priority": "P1",
+        "title": "Accept unknown worker start times from the board contract"
+      },
+      {
+        "body": "The shared formatter omits required information that CORE owns. It always prints agent/test counts even without lane data, where detail 2 requires the next command alone, and prints `next.line` without exposing an available `next.command`. At line 27, a completed stage with `seconds` also loses its outcome: failed and successful Tests stages both become `Tests 5s`. These omissions affect the headless `/forge` reply already shipped here, independently of the pane and strip rendering deferred by the coordinator. Preserve stage outcomes and format the next command and no-lanes state as specified; cover those outputs through `/forge`.",
+        "file": "src/forge/mod/hooks/summary.ts",
+        "line": 33,
+        "priority": "P1",
+        "title": "Not done: /forge returns the summary of detail 2"
+      },
+      {
+        "body": "The elapsed-time assertion occurs after advancing exactly 10 seconds, which also runs the next scheduled refresh. It therefore passes if `/forge` incorrectly computes elapsed time from `data.refreshedAt` instead of the current clock. The packaged tests do not assert worker elapsed time either. Add the required entry-point check before the next tick\u2014for example, advance five seconds, verify that no refresh ran, and assert that `/forge` reports five additional seconds.",
+        "file": "src/forge/mod/hooks/core.test.ts",
+        "line": 39,
+        "priority": "P1",
+        "title": "Not done: elapsed time advances between refreshes"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T12:37:08+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T14:30:47+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
