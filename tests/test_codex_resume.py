@@ -263,6 +263,15 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     assert "big.txt" in text and "web/new.py" in text and "README.md" in text
     (folder / "big.txt").unlink()
 
+
+@pytest.mark.parametrize("reason", ["no-record", "missing-rollout", "moved", "rewritten"])
+def test_7_unresumable_conversations_start_fresh(repo, monkeypatch, sdk_data, reason):
+    # These are independent refusal paths. Running all four after the context checks above
+    # exceeded Windows' per-test budget; each now starts from the same completed first turn.
+    folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
+    monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
+    assert repo.forge("work", "BOARD/PAGE").returncode == 0
+    monkeypatch.delenv("STUB_CODEX_COMMIT")
     # Forge starts fresh, and says why, when it can't continue the conversation.
     record = turns.with_suffix(".json")
     store = repo.bin / "threads.json"
@@ -282,29 +291,31 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
         tried = len(_sent(calls, "thread/resume")) - resumed
         assert tried == (1 if why.startswith("Codex couldn't") else 0), why
 
-    # It isn't recorded here.
-    record.unlink()
-    fresh("Forge has no record of its conversation on this machine")
-    # Codex can't resume it.
-    conversation = _saved(record)["conversation"]
-    threads = json.loads(store.read_text(encoding="utf-8"))
-    del threads[conversation]
-    store.write_text(json.dumps(threads), encoding="utf-8")
-    fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
-    # It was started in another checkout.
-    moved = folder.with_name("moved-BOARD-PAGE")
-    repo.git("worktree", "move", str(folder), str(moved))
-    fresh(f"its conversation was started in another checkout, {folder}")
-    # Its history was rewritten underneath it.
-    repo.git("commit", "-q", "--amend", "-m", "Reworded", cwd=moved)
-    fresh("the branch's history was rewritten under its conversation")
+    if reason == "no-record":
+        record.unlink()
+        fresh("Forge has no record of its conversation on this machine")
+    elif reason == "missing-rollout":
+        conversation = _saved(record)["conversation"]
+        threads = json.loads(store.read_text(encoding="utf-8"))
+        del threads[conversation]
+        store.write_text(json.dumps(threads), encoding="utf-8")
+        fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
+    elif reason == "moved":
+        moved = folder.with_name("moved-BOARD-PAGE")
+        repo.git("worktree", "move", str(folder), str(moved))
+        fresh(f"its conversation was started in another checkout, {folder}")
+    else:
+        repo.git("commit", "-q", "--amend", "-m", "Reworded", cwd=folder)
+        fresh("the branch's history was rewritten under its conversation")
     # With none of those, the next call continues the conversation again.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns)[-1]["continued"] is True
 
+    if reason != "rewritten":
+        return
     # The history is rewritten again and the new conversation's first turn crashes: nothing
     # rewrote that conversation's own history, so the next call continues it.
-    repo.git("commit", "-q", "--amend", "-m", "Reworded again", cwd=moved)
+    repo.git("commit", "-q", "--amend", "-m", "Reworded again", cwd=folder)
     work, saved = _holding(repo, turns)
     _crash(work, saved)
     held = _lines(turns)[-1]
