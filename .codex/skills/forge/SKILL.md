@@ -411,6 +411,12 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
+summaries, and a developer instruction to write no progress commentary, only the final handoff
+and any question. Forge sets these for each thread, including resumed threads; neither
+`forge.toml` nor user or project Codex settings can turn them up. New and upgraded repos get
+this automatically, with no setting to change.
+
 When one sentence would help a worker finish its next round, give it with
 `forge work <item> --note "<text>"`. The note appears under "From the coordinator" in that
 round's brief and is recorded with the turn. Give it again if a later round needs it; a note
@@ -515,9 +521,11 @@ instead of `test`; the `tests` check keeps running the full `test`.
 For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
 Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
-mentioning its module path, such as `shop/prices.py` or `shop.prices`. It supports root packages
-and the `src/` layout, and pytest's `test_*.py` and `*_test.py` filenames. It keeps the full
-`test` command's setup and options, caps pytest-xdist at half the machine's cores, and runs the
+mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
+imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
+filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
+the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
+when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings.
