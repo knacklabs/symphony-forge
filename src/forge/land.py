@@ -30,6 +30,7 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
+    close.check_stop(item, state)
     step = argparse.Namespace(item=item, dismiss=None, because=None)  # for close and work alike
     rounds = waits = 0
     try:

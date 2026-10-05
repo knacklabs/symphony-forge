@@ -39,8 +39,15 @@ REFUSALS = {
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
-                "earlier round flagged too, so Forge stops sending the worker back.",
-                'forge fix start "{why}" --done "{done}", then forge close {item} once that fix merges'),
+                "earlier round flagged too, so Forge stops sending the worker back. Ask the human "
+                "to narrow the part, split it, or accept the remaining findings.",
+                'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
+                   "--reason and no finding dismissals.",
+                   'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "stale_choice": ("The code or scope changed since the stopped review, so those findings "
+                     "cannot be accepted for this version.",
+                     'forge close {item} --resolve <narrow|split> --reason "<human\'s choice>"'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -60,10 +67,37 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 def close(args: argparse.Namespace) -> int:
     item = args.item
     top = _worktree(item)
+    state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    if choice or reason is not None:
+        if (not choice or not reason or not reason.strip() or
+                not state.get("stop") or state["stop"].get("choice") or
+                args.dismiss or args.because):
+            repo.refuse(REFUSALS["bad_choice"], item=item)
+        result = state["review"]
+        if choice == "accept":
+            default = repo.default_branch(top)
+            repo.git("fetch", "-q", "origin", default, cwd=top)
+            if any(result.get(key) != review.fingerprint(
+                    "HEAD", item, top, state, f"origin/{default}", branch_diff=key == "branch_diff")
+                   for key in ("changed", "branch_diff")):
+                repo.refuse(REFUSALS["stale_choice"], item=item)
+            result["dismissals"].extend(
+                {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
+                 "accepted": True}
+                for number, _ in review.blocking(result))
+            result["status"] = "clean"
+        state["stop"].update(choice=choice, reason=reason.strip())
+        state["status"] = "waiting for checks" if choice == "accept" else "fixing"
+        _save(top, item, state, f"Record the human's review loop choice: {choice}")
+        print("Recorded the human's choice. " + (
+            f"Next: forge close {item}" if choice == "accept" else
+            f"{choice.capitalize()} the part as agreed, then forge work {item}."))
+        return 0
+    check_stop(item, state)
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
-    state, cfg = repo.read_state(item, top) or {}, repo.config(top)
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
@@ -96,13 +130,12 @@ def close(args: argparse.Namespace) -> int:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
-    resuming = state.get("status") == "hotspot"
-    if resuming:
-        print(f"{item} carries on after the stop for {state['stop']['file']}.")
     changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
                                      branch_diff=True)
-    fresh = not resuming and result.get("branch_diff", legacy_diff) == branch_diff
+    fresh = result.get("branch_diff", legacy_diff) == branch_diff
+    if any(d.get("accepted") for d in result.get("dismissals", [])):
+        fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
                            result.get("branch_diff") != branch_diff)
     if fresh:
@@ -129,6 +162,8 @@ def close(args: argparse.Namespace) -> int:
                                 light=light, tested=tested)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
+                if dismissal.get("accepted"):
+                    continue  # Acceptance covers this review, not later code or scope.
                 number = dismissal["finding"]
                 if not 1 <= number <= len(previous["findings"]):
                     continue
@@ -168,8 +203,7 @@ def close(args: argparse.Namespace) -> int:
                                 if spotted._path(file))
             if candidates:
                 file = candidates[0]
-                stopped = {"file": file, "why": f"Simplify {file} before {item} carries on",
-                           "done": f"{file} is simpler and behaves as it did before"}
+                stopped = {"file": file}
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
@@ -226,6 +260,14 @@ def close(args: argparse.Namespace) -> int:
     else:
         print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
+
+
+def check_stop(item: str, state: dict[str, Any]) -> None:
+    """The recorded choice, not a worker's status update, releases a review loop stop."""
+    if state.get("stop") and not state["stop"].get("choice"):
+        repo.refuse(REFUSALS["hotspot"], item=item,
+                    round=sum(step["step"] == "review" for step in state.get("steps", [])),
+                    **state["stop"])
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
@@ -492,7 +534,9 @@ COMMANDS = [{
     "words": "close", "run": "close", "changes_state": True,
     "help": "Close a task or fix by the close rule",
     "args": [(('item',), {}), (('--dismiss',), {"type": int, "action": "append", "metavar": "N"}),
-             (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"})],
+             (('--because',), {"action": "append", "metavar": "FILE:LINE_REASON"}),
+             (('--resolve',), {"choices": ["narrow", "split", "accept"]}),
+             (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
     "listing": "| `forge close <item>` | Closes a task or fix by the close rule |",
 }]
