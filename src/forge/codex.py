@@ -58,6 +58,9 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
+# Every Forge-owned thread stays quiet, regardless of user or project Codex settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
 # leaves out included: the driver trusts a hook only when its whole definition is one of these.
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
@@ -145,7 +148,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     """The kind's models from forge.toml, as the Codex settings its conversation starts with; a
     worker's (Build, Fix, Lite) fall back to Forge's default when forge.toml has none for Codex.
 
-    Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
+    Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
               else repo.models(cfg, "lite" if kind == "Ask" else kind.lower(), "codex"))
@@ -298,6 +301,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         request["config"]["model"] = model
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
+    request["config"].update(QUIET)
     log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
            repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))

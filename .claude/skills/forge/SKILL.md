@@ -38,7 +38,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
-| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
+| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
@@ -296,7 +296,11 @@ Adopting changes no app code.
 8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
    with the test tool's built-in changed-only option and `{base}` (for example
    `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
-   `forge.toml` through a fix. Forge writes no `fast_test` by itself.
+   `forge.toml` through a fix. For pytest repos, propose
+   `uv run python -m forge.fasttest {base}`: Forge ships this picker, which keeps the repo's
+   full `test` command and narrows pytest to changed and module-related test files. Use the
+   repo's Python runner with Forge installed; keep lint and other checks in `test`.
+   Forge writes no `fast_test` by itself.
 
 On a live app, every story and fix also follows these:
 
@@ -508,10 +512,15 @@ When the pull request's `tests` check runs the full suite, recommend a fast clos
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
 instead of `test`; the `tests` check keeps running the full `test`.
-Forge's own repo uses `scripts/fast-test.py`: changed test files, tests whose filenames contain a
-changed Python module name, and tests mentioning `forge/<module>.py` or `forge.<module>`, with
-at most half the machine's cores. This script does not ship to client repos. Changes to `conftest.py`,
-`pyproject.toml` or `uv.lock` run the full test command instead.
+For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
+Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
+test files, tests whose filenames contain a changed Python module name, and tests importing or
+mentioning its module path, such as `shop/prices.py` or `shop.prices`. It supports root packages
+and the `src/` layout, and pytest's `test_*.py` and `*_test.py` filenames. It keeps the full
+`test` command's setup and options, caps pytest-xdist at half the machine's cores, and runs the
+full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+New pytest repos get this proposal at setup; existing repos get the picker and guidance after
+upgrade. Upgrade never rewrites their `test` or `fast_test` settings.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run

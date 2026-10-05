@@ -22,6 +22,11 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
+Prefer one blunt fail-closed rule with one test over listing every case. Do not raise crash or
+interrupt windows under a second unless they lose data or weaken security. A case the rule
+already covers needs no separate test; ask for more test variations only when you name a
+concrete scenario the current tests would pass while the code is broken.
+
 Check:
 
 1. Can every part be built without asking? Name each gap and contradiction. Name every function,
@@ -45,13 +50,14 @@ Check:
    - Flag any one-way step (deleting data, a destructive migration, a new vendor) that isn't
      listed under Risks.
    - Never propose dropping validation, security, data-loss protection or accessibility.
-3. Is every edge case pinned down and proven? For each "Done when" item, ask:
+3. Are the rules that meet each "Done when" item pinned down and proven? Ask:
    - which inputs and states it must handle: empty, missing, malformed, already done, half done;
    - which platforms and shells it meets: Windows PowerShell and cmd, WSL, macOS, Linux CI;
    - which failure and refusal paths it has, and what the user sees on each;
-   - which test, in which task's Tests cell, proves each case.
-   A case the doc says doesn't apply, with a reason, needs no test. Report each case with no test
-   that proves it as `Unproven: item <n>: <case>`.
+   - which test, in which task's Tests cell, proves each rule.
+   A case the doc says doesn't apply, with a reason, needs no test. Report a case no rule or test
+   covers as `Unproven: item <n>: <case>`, naming a scenario the current tests would pass while the
+   code is broken.
 4. Does any item hit a known trap? Report each as `Trap: <trap>: item <n>`. Forge's general traps:
    - Windows line endings and shells: CRLF text, PowerShell and cmd quoting, `\` paths;
    - no network in CI;
@@ -102,7 +108,7 @@ Check:
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks:
-   each "Done when" item's edge cases and the test that proves each, shared names no earlier task
+   each "Done when" item's rules and the test that proves each, shared names no earlier task
    pins, task size, and Forge's general traps and this repository's own known traps:
 
 $traps

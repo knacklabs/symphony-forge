@@ -38,7 +38,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
-| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair |
+| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
@@ -411,6 +411,12 @@ trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
 
+Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
+summaries, and a developer instruction to write no progress commentary, only the final handoff
+and any question. Forge sets these for each thread, including resumed threads; neither
+`forge.toml` nor user or project Codex settings can turn them up. New and upgraded repos get
+this automatically, with no setting to change.
+
 When one sentence would help a worker finish its next round, give it with
 `forge work <item> --note "<text>"`. The note appears under "From the coordinator" in that
 round's brief and is recorded with the turn. Give it again if a later round needs it; a note
@@ -515,9 +521,11 @@ instead of `test`; the `tests` check keeps running the full `test`.
 For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
 Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
-mentioning its module path, such as `shop/prices.py` or `shop.prices`. It supports root packages
-and the `src/` layout, and pytest's `test_*.py` and `*_test.py` filenames. It keeps the full
-`test` command's setup and options, caps pytest-xdist at half the machine's cores, and runs the
+mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
+imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
+filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
+the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
+when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings.
