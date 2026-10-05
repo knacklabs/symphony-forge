@@ -24,14 +24,19 @@ export function summary(data: Data, now: number): string[] {
   const waitingTests = items.filter(i => i.stage === 'waiting for tests').length
   const active = items.filter(i => i.worker || i.stages?.some(s => s.status === 'running'))
   const times = active.slice(0, 2).map(i => {
-    const stages = (i.stages ?? []).map(s => `${s.name} ${s.status === 'running' && s.started_at ? seconds(elapsed(s.started_at, now)) : s.seconds != null ? seconds(s.seconds) : s.status ?? 'unknown'}`)
+    const stages = (i.stages ?? []).map(s => {
+      if (s.status == null) return s.name
+      if (s.status === 'skipped') return `${s.name} –`
+      const symbol = s.status === 'pass' ? '✓' : s.status === 'fail' ? '✗' : s.status === 'running' ? '●' : s.status
+      const time = s.status === 'running' ? (s.started_at ? seconds(elapsed(s.started_at, now)) : 'unknown') : s.seconds != null ? seconds(s.seconds) : 'unknown'
+      return `${s.name} ${symbol} ${time}`
+    })
     const live = (i.stages ?? []).filter(s => s.status === 'running' && s.started_at).reduce((n, s) => n + elapsed(s.started_at!, now), 0)
     const total = i.total_seconds == null ? 'unknown' : seconds(i.total_seconds + live)
-    return `${i.title}: ${stages.join(' · ')} · round ${i.round ?? 'unknown'} · total ${total}`
+    return `${i.title}: ${stages.join(' → ')} · round ${i.round ?? 'unknown'} · total ${total}`
   })
   return [
-    `Agents: ${agents} running, ${waitingAgents} waiting · Tests: ${tests} running, ${waitingTests} waiting`,
-    data.next?.next.line ?? 'Loading Forge…',
+    `${data.lanes ? `Agents: ${agents} running, ${waitingAgents} waiting · Tests: ${tests} running, ${waitingTests} waiting · ` : ''}${data.next?.next.command ? `1: ${data.next.next.command}` : data.next?.next.line ?? 'Loading Forge…'}`,
     ...(times.length ? [`${times.join(' | ')}${active.length > 2 ? ` · +${active.length - 2} more` : ''}`] : []),
   ]
 }
@@ -42,7 +47,7 @@ export function text(data: Data, now: number): string {
   const items = data.board?.items ?? []
   if (data.board && !items.length) lines.push('Nothing in progress.')
   function write(i: Item, indent: string) {
-    const worker = i.worker ? ` · ${i.worker.kind} ${i.worker.model ?? 'unknown'} ${seconds(elapsed(i.worker.started_at, now))}` : ''
+    const worker = i.worker ? ` · ${i.worker.kind} ${i.worker.model ?? 'unknown'} ${i.worker.started_at ? seconds(elapsed(i.worker.started_at, now)) : 'unknown'}` : ''
     const pr = i.pr?.number != null ? ` · PR #${i.pr.number}: ${i.pr.checks}` : ''
     lines.push(`${indent}${i.title} · ${i.stage ?? 'unknown'}${worker}${pr} · ${i.findings?.count ?? 0} open findings`)
     for (const title of i.findings?.titles ?? []) lines.push(`${indent}  ${title}`)

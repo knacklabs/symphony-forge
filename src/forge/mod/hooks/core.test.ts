@@ -31,16 +31,53 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   })
   await $.session.start(started)
   const first = await $.command.run(command)
-  expect(first.text).toContain('Close the guide.')
+  expect(first.text?.split('\n')[0]).toBe('1: forge close guide')
   expect(first.text).toContain('Polish the guide · building')
   expect(first.text).toContain('build opus 0s')
   expect(first.text).toContain('PR #7: pass')
   expect(first.text).toContain('Clarify setup')
   expect(calls.length).toBe(3)
-  await clock.advance(10000)
+  await clock.advance(5000)
+  expect(calls.length).toBe(3)
+  expect((await $.command.run(command)).text).toContain('build opus 5s')
+  await clock.advance(5000)
   expect(calls.length).toBe(6)
   expect((await $.command.run(command)).text).toContain('build opus 10s')
   expect(opened[0]).toEqual({ id: 'forge', title: 'Forge', focus: true })
+})
+
+test('1: /forge accepts unknown worker starts and preserves next commands and stage outcomes', async ($, on) => {
+  const clock = mock.clock(on)
+  let runnable = true
+  on('session.start', () => ({ cwd: '/repo' }))
+  on('command.register', () => ({ value: { command: 'forge' } }))
+  on('ui.invalidate', () => ({ value: undefined }))
+  on('ui.open', () => ({ value: undefined }))
+  on('process.run', (_$, e) => {
+    const value = e.argv[1] === 'board' ? { ...board, items: [{
+      ...row, worker: { ...row.worker, started_at: null },
+      stages: [
+        { name: 'Build', status: 'pass', seconds: 4 },
+        { name: 'Tests', status: 'fail', seconds: 5 },
+        { name: 'Review', status: 'running', started_at: row.worker.started_at },
+        { name: 'CI', status: null },
+        { name: 'Merge', status: 'skipped' },
+      ],
+    }] } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: runnable ? following.next.command : null } } : { version: '1.2.5', agents: [], tests: [] }
+    return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
+  })
+  await $.session.start(started)
+  const reply = (await $.command.run(command)).text
+  expect(reply).not.toContain("Couldn't refresh:")
+  expect(reply).toContain('build opus unknown')
+  expect(reply).toContain('1: forge close guide')
+  expect(reply).toContain('Build ✓ 4s')
+  expect(reply).toContain('Tests ✗ 5s')
+  expect(reply).toContain('Review ● 0s')
+  expect(reply).toContain('CI → Merge –')
+  runnable = false
+  await clock.advance(10000)
+  expect((await $.command.run(command)).text).toContain('Close the guide.')
 })
 
 test('1: failed and malformed refreshes preserve rows and retry on the next tick', async ($, on) => {
