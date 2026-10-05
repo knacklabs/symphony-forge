@@ -1,12 +1,17 @@
-"""Run a pytest repo's changed and module-related tests: python -m forge.fasttest BASE."""
+"""Pick related tests in Forge; run pytest in the client's own environment."""
 import ast
-import json
+import configparser
 import os
 import re
+import shlex
 import subprocess
-import sys
 import tomllib
 from pathlib import Path
+
+COMMANDS = [{"words": "fasttest", "run": "fasttest", "changes_state": False,
+             "args": [(("base",), {})], "position": 35,
+             "help": "run a pytest repo's changed and module-related tests",
+             "listing": "`forge fasttest <base>` | Run related pytest tests with the repo's test command."}]
 
 
 def git_files(*args: str) -> list[str]:
@@ -19,15 +24,48 @@ def module_parts(path: Path) -> list[str]:
     return parts[1:] if parts[0] == "src" else parts
 
 
-def pytest_load_initial_conftests(early_config, parser, args):
-    # Let pytest parse every source of options before imposing our machine limit.
-    if hasattr(early_config.option, "numprocesses"):
-        limit = int(os.environ["PYTEST_XDIST_AUTO_NUM_WORKERS"])
-        args.append("--maxprocesses=" + str(min(limit, early_config.option.maxprocesses or limit)))
-    excluded = json.loads(os.environ.get("FORGE_FASTTEST_EXCLUDED", "[]"))
+def pytest_options() -> str:
+    options = os.environ.get("PYTEST_ADDOPTS", "")
+    for name, section in (("pytest.ini", "pytest"), (".pytest.ini", "pytest"),
+                          ("tox.ini", "pytest"), ("setup.cfg", "tool:pytest")):
+        config = configparser.ConfigParser(interpolation=None)
+        config.read(name, encoding="utf-8")
+        options += " " + config.get(section, "addopts", fallback="")
+    if Path("pyproject.toml").is_file():
+        options += " " + str(tomllib.loads(Path("pyproject.toml").read_text("utf-8"))
+                             .get("tool", {}).get("pytest", {}).get("ini_options", {})
+                             .get("addopts", ""))
+    return options
+
+
+def narrow_command(command: str, excluded: list[str], workers: str) -> str:
+    # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
-    args[:] = [arg for arg in args if Path(arg.split("::", 1)[0]).resolve() not in paths]
-    args.extend("--ignore=" + path for path in excluded)
+    tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
+    replacements = []
+    for token in tokens:
+        value = token.group().strip("\"'")
+        if Path(value.split("::", 1)[0]).resolve() in paths:
+            replacements.append((token.start(), token.end(), ""))
+    options = ["--ignore=" + path for path in excluded]
+    if re.search(r"(?:^|\s)(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))",
+                 command + " " + pytest_options()):
+        options.append("--maxprocesses=" + workers)
+    # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
+    additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
+    found = False
+    for index, token in enumerate(tokens):
+        if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}:
+            end = next((part.start() for part in tokens[index + 1:]
+                        if part.group()[0] in ";&|<>"), len(command))
+            replacements.append((end, end, " " + additions + " "))
+            found = True
+    if not found:
+        # A test launcher must forward its arguments to pytest, just as for a full run.
+        command += " " + additions
+    for start, end, value in sorted(replacements, reverse=True):
+        command = command[:start] + value + command[end:]
+    return command
 
 
 def mentions(file: Path, module: str) -> bool:
@@ -54,18 +92,13 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: python -m forge.fasttest BASE", file=sys.stderr)
-        return 1
-    changed = git_files("diff", "--no-renames", "--name-only", sys.argv[1], "HEAD")
+def fasttest(args) -> int:
+    changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     environment = dict(os.environ)
     workers = str(max(1, (os.cpu_count() or 1) // 2))
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
-    environment["PYTEST_PLUGINS"] = ",".join(filter(None, [
-        environment.get("PYTEST_PLUGINS"), "forge.fasttest"]))
-    environment.pop("FORGE_FASTTEST_EXCLUDED", None)
+    excluded = []
     if any(Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile"}
            or Path(name).name.endswith(".lock")
            or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)
@@ -95,11 +128,7 @@ def main() -> int:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        environment["FORGE_FASTTEST_EXCLUDED"] = json.dumps(
-            [path.as_posix() for path in tests if path.as_posix() not in selected])
+        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
         print("Related tests: " + ", ".join(selected), flush=True)
-    return subprocess.run(command, shell=True, env=environment).returncode
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    return subprocess.run(narrow_command(command, excluded, workers), shell=True,
+                          env=environment).returncode

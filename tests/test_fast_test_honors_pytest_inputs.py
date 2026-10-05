@@ -23,7 +23,7 @@ def run_picker(repo, command, *, shared=False):
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change client")
     return subprocess.run(
-        [sys.executable, "-m", "forge.fasttest", base], cwd=repo.path,
+        [sys.executable, str(repo.bin / "forge"), "fasttest", base], cwd=repo.path,
         env={**os.environ, "PYTHONPATH": os.pathsep.join(
             [str(ROOT / "src"), str(repo.path / "src")])},
         text=True, capture_output=True, timeout=120)
@@ -39,11 +39,12 @@ def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared
     if configuration == "pytest.ini":
         repo.write("pytest.ini", "[pytest]\naddopts = -n 2\n")
     else:
-        # A real launcher supplies the client's environment portably on Windows too.
+        # With no plugin, a launcher forwards pytest options from the command.
+        # It may still replace PYTEST_ADDOPTS; the command-line cap wins.
         repo.write("run_tests.py", "import os, subprocess, sys\n"
                    "os.environ['PYTEST_ADDOPTS'] = '-n 2'\n"
-                   "sys.exit(subprocess.call([sys.executable, '-m', 'pytest', 'tests', '-q']))\n")
-        command = f'"{Path(sys.executable).as_posix()}" run_tests.py'
+                   "sys.exit(subprocess.call([sys.executable, '-m', 'pytest', 'tests', '-q', *sys.argv[1:]]))\n")
+        command = f'"{Path(sys.executable).as_posix()}" run_tests.py -n 2'
     result = run_picker(repo, command, shared=shared)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "1 passed" in result.stdout

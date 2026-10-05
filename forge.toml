@@ -4,7 +4,7 @@ repo = "forge-source"
 workers = "codex"
 merge = "agent"
 test = "uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
-fast_test = "uv run --python 3.11 python -m forge.fasttest {base}"
+fast_test = "forge fasttest {base}"
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
