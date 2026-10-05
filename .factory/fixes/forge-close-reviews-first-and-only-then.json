@@ -18,11 +18,19 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d6cb4feb2d317d96996c225006b5647bcc26d057f3bc40be98cc8bb2e2ced418",
-    "changed": "d594fb3c38b974ae9aa3721239a5bfcafb38fd99f131c77bedf298bc90c77443",
-    "commit": "bf793c607093964fdce839a0b722da82384aee80",
+    "branch_diff": "a6c630b767240f4deb0a1dc3f260d5676740914a0cb80f9abb63690db3532ecd",
+    "changed": "7c1934c4484182d7b5c254f915b547b74aceaecc3675e7a7296b64788b5338c0",
+    "commit": "e7c5b75af63b6ef830b0d3ecf005dc3fd395b10d",
     "dismissals": [],
-    "findings": [],
+    "findings": [
+      {
+        "body": "After a local test failure, close saves a `tests` field in the item's record. The worker preserves it when saving state (`src/forge/worker.py:121\u2013143`). On the successful retry, close removes that field at `src/forge/close.py:120`, but commits the removal only with the review result, after the initial push. Even when that pushed parent's CI succeeds, this comparison rejects the final review-only commit because `tests` is outside the bookkeeping set, unnecessarily running the full suite again. Permit this cleanup, or persist it before the initial push. Apply the fix to both this template and `.forge/review-tests.py`.",
+        "file": "src/forge/templates/review-tests.py",
+        "line": 41,
+        "priority": "P2",
+        "title": "Allow review commits to remove stale test-failure output"
+      }
+    ],
     "status": "clean"
   },
   "status": "waiting for checks",
@@ -81,6 +89,10 @@
     },
     {
       "at": "2026-10-05T10:48:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:17:54+00:00",
       "step": "review"
     }
   ],

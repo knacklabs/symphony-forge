@@ -397,6 +397,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_doctor_fix_files.py\tNot done: repairs in an existing repo adopted on the previous release\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "tests/test_doctor_fix_files.py",
@@ -452,6 +463,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
+      "kind": "bug",
+      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
+      "line": 60,
+      "text": "Not done: New and previously adopted clients run the proposed picker through close",
+      "from": "blocking",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "tests/test_review_record_reuses_parent_tests.py",
@@ -470,6 +492,17 @@
       "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -503,6 +536,17 @@
       "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -617,6 +661,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated paths supplied through pytest addopts",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 59,
+      "text": "Exclude unrelated paths supplied through pytest addopts",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -650,6 +705,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tRead worker options only from pytest's selected configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 38,
+      "text": "Read worker options only from pytest's selected configuration",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize pytest invocations before adding pytest arguments",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 73,
+      "text": "Recognize pytest invocations before adding pytest arguments",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -659,6 +736,17 @@
       "item": "forge-s-python-changed-test-picker-scrip",
       "status": "done",
       "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tSupport pytest versions before 8.2 when narrowing tests",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 156,
+      "text": "Support pytest versions before 8.2 when narrowing tests",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
@@ -712,6 +800,28 @@
       "text": "Classify cached test stages as skipped",
       "from": "review",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
+      "kind": "edge",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 41,
+      "text": "Allow review commits to remove stale test-failure output",
+      "from": "review",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 300,
+      "text": "Remove the project-install instruction from setup guidance",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
       "status": "open",
       "closed_by": null
     },
@@ -800,105 +910,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_contracts.py",
-      "line": 534,
-      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_reviews_remove_their_temp_folders.py",
-      "line": 77,
-      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_steer_question.py",
-      "line": 120,
-      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
-      "kind": "bug",
-      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
-      "line": 60,
-      "text": "Not done: New and previously adopted clients run the proposed picker through close",
-      "from": "blocking",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated paths supplied through pytest addopts",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 59,
-      "text": "Exclude unrelated paths supplied through pytest addopts",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tRead worker options only from pytest's selected configuration",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 38,
-      "text": "Read worker options only from pytest's selected configuration",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tRecognize pytest invocations before adding pytest arguments",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 73,
-      "text": "Recognize pytest invocations before adding pytest arguments",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tSupport pytest versions before 8.2 when narrowing tests",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 156,
-      "text": "Support pytest versions before 8.2 when narrowing tests",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
-      "kind": "edge",
-      "path": "src/forge/templates/skill.md",
-      "line": 300,
-      "text": "Remove the project-install instruction from setup guidance",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
       "status": "open",
       "closed_by": null
     }
