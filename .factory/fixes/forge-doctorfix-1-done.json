@@ -7,6 +7,7 @@
   "outcome": "forge doctor --fix repairs what it can in one run: installs the pinned Forge, restores git hooks and the Codex SDK, removes finished work's folders, and brings Forge's files up to date through its own dated fix, never on the default branch and never over hand edits",
   "review": {
     "blocking_level": "P1",
+    "branch_diff": "fa44080ff0573d5366026eb531c351f31dd78219cca61d61755a0de1a09bfa5f",
     "changed": "fa44080ff0573d5366026eb531c351f31dd78219cca61d61755a0de1a09bfa5f",
     "commit": "5e37bce727162272365360522cf37a2bc8bb800d",
     "dismissals": [],
