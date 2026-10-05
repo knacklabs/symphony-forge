@@ -22,11 +22,12 @@ jobs:
           - {os: ubuntu-latest, group: 1, groups: 3}
           - {os: ubuntu-latest, group: 2, groups: 3}
           - {os: ubuntu-latest, group: 3, groups: 3}
-          - {os: macos-latest, group: 1, groups: 5}
-          - {os: macos-latest, group: 2, groups: 5}
-          - {os: macos-latest, group: 3, groups: 5}
-          - {os: macos-latest, group: 4, groups: 5}
-          - {os: macos-latest, group: 5, groups: 5}
+          - {os: macos-latest, group: 1, groups: 6}
+          - {os: macos-latest, group: 2, groups: 6}
+          - {os: macos-latest, group: 3, groups: 6}
+          - {os: macos-latest, group: 4, groups: 6}
+          - {os: macos-latest, group: 5, groups: 6}
+          - {os: macos-latest, group: 6, groups: 6}
           - {os: windows-latest, group: 1, groups: 8}
           - {os: windows-latest, group: 2, groups: 8}
           - {os: windows-latest, group: 3, groups: 8}
