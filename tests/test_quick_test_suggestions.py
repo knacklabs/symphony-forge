@@ -13,6 +13,7 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 from test_close import env  # noqa: F401
 
 STORY = "FIX-REPOS-WITHOUT-A-QUICK-TEST-SETTING-DON-T"
+pytestmark = pytest.mark.usefixtures("isolated_codex_home")
 
 # Command-boundary cases protect runner selection, setup preservation and advice-only
 # behavior. Existing setup coverage only checks the skill, not command output.
