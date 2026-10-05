@@ -533,8 +533,9 @@ For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own r
 shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
 mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
-imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
-filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
+imports. It also selects tests naming any changed file's repository-relative path, including
+docs, shipped guides and workflows. It supports root packages and the `src/` layout, and pytest's
+`test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
