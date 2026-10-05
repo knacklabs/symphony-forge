@@ -167,6 +167,8 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
+    if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
+        parts.append(proof)
     current_level = blocking_level(top, item, state, base, commit)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
@@ -211,7 +213,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
-              "test_run": tested}
+              "test_run": tested,
+              "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -225,13 +228,13 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
             moving_parts=moving_parts(doc_text))
-        chosen = ["task", "rules"]
+        chosen = ["task", "proof-list", "rules"]
         if row.get("user-facing", "").lower() in ("yes", "true"):
             chosen.insert(1, "functional-check")
             values["functional_check"] = functional_check(top, base) or (
                 "None: the worker's last commit message has no `Functional check:` paragraph.")
     else:
-        chosen = ["fix", "rules"]
+        chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
@@ -353,12 +356,17 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
     empty commit counts); an older commit's check never counts. Git holds it; Forge copies it,
     never stores it."""
+    return commit_paragraph(top, base, "Functional check:", head)
+
+
+def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> str:
+    """Copy a labelled paragraph from the latest worker commit, never an older round's proof."""
     for sha in repo.git("rev-list", "--no-merges", f"{base}..{head}", cwd=top).split():
         files = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, cwd=top).split()
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^Functional check:.*", repo.git("show", "-s", "--format=%B", sha,
-                                                            cwd=top), re.M | re.S)
+        found = re.search(r"^" + re.escape(label) + r".*", repo.git(
+            "show", "-s", "--format=%B", sha, cwd=top), re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
