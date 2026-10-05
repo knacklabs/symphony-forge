@@ -390,6 +390,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         local = review.close_test(top, f"origin/{repo.default_branch(top)}")
         command = f" (`{local}`)" if local else ""
         brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "
@@ -477,8 +478,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-            env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker:
-        machine.agent_started(worker.pid)
+            env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker, \
+            machine.agent_process(worker):
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()

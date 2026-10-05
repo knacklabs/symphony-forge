@@ -190,6 +190,12 @@ def view(repo, command, cwd=None):
     return json.loads(result.stdout)
 
 
+def snapshot(board):
+    # Repository state remains identical across worktrees/cache reads. OS measurements
+    # now refresh on every call; their transport contract belongs to test_lanes_view.
+    return {key: value for key, value in board.items() if key != "machine"}
+
+
 def state(path, **values):
     data = json.loads(path.read_text("utf-8"))
     path.write_text(json.dumps({**data, **values}), encoding="utf-8")
@@ -264,7 +270,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
         assert child["worker"] == {"kind": "build", "model": "gpt-6.1-sol", "started_at": None}
     assert child["round"] is None
     assert all(s["started_at"] is None for s in child["stages"])
-    assert view(repo, "board", folder) == result  # common repo root and cache across worktrees
+    assert snapshot(view(repo, "board", folder)) == snapshot(result)  # common repo root/cache
     if os.name != "nt":
         # The model follows the actual round kind recorded by the Codex command boundary.
         repo.write(".git/forge/threads/task/BOARD/PAGE.log", json.dumps(
@@ -449,7 +455,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
     contract(result, fixture["next"])
     contract(view(repo, "board"), fixture["board"])
     contract(waiting_row, fixture["board"]["items"][1])
-    assert view(repo, "board", folder) == view(repo, "board", waiting)
+    assert snapshot(view(repo, "board", folder)) == snapshot(view(repo, "board", waiting))
     assert [s["name"] for s in row["stages"]] == [s["name"] for s in fixture["board"]["items"][0]["stages"]]
 
 
@@ -484,7 +490,7 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     prs[0] = pull(30, "fix/first", "FAILURE")
     github(gh, prs)
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:00:59+00:00")
-    assert view(repo, "board") == first
+    assert snapshot(view(repo, "board")) == snapshot(first)
     # The HTML board uses the same cache; it must not refresh the open checks early.
     html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))
     assert html.returncode == 0, html.stderr

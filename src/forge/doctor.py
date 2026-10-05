@@ -174,9 +174,6 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
     return rows
 
 def doctor(args: argparse.Namespace) -> int:
-    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
-    budget = machine.half_cores()
-    print(f"This machine: {cores} cores, so {budget} agents at once and test runs on {budget} cores.")
     top = repo.root()
     cfg = repo.config(top)
     install = sync.install_line(cfg["version"])
@@ -316,7 +313,11 @@ def doctor(args: argparse.Namespace) -> int:
               f"trust this one yet.\n  Fix: {trust}")
     if rows:
         if compared: print(compared)
-        repo.refuse(REFUSALS["problems"], count=len(rows))
-    print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
-    print(compared)
+    else:
+        print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
+        print(compared)
+    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
+    budget = machine.half_cores()
+    print(f"This machine: {cores} cores, so {budget} agents at once and test runs on {budget} cores.")
+    if rows: repo.refuse(REFUSALS["problems"], count=len(rows))
     return 0

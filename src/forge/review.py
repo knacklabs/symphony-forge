@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import codex, machine, repo, spotted
+from forge import machine, repo, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -549,25 +549,26 @@ def signoff(top: Path, answers: str) -> str:
 def _attempt(argv: list[str], cwd: Path, out: Path,
              selected: dict[str, str], strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
+    from forge import codex  # importing it here avoids sync's hook-import cycle
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
                             **codex.GROUP)
-    machine.agent_started(proc.pid)
-    last = ""
-    for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
-        line = line.replace(b"\0", b"")
-        sys.stderr.buffer.write(line)
-        sys.stderr.flush()
-        last = line.decode("utf-8", "replace").strip() or last
-        if last.startswith("model: ") and "model" not in selected:
-            selected["model"] = last.removeprefix("model: ")
-        elif last.startswith("thinking: ") and "effort" not in selected:
-            selected["effort"] = last.removeprefix("thinking: ")
-        elif match := re.fullmatch(
-                r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
-            selected["model"] = match[1]
-    code = proc.wait()
+    with proc, machine.agent_process(proc):
+        last = ""
+        for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
+            line = line.replace(b"\0", b"")
+            sys.stderr.buffer.write(line)
+            sys.stderr.flush()
+            last = line.decode("utf-8", "replace").strip() or last
+            if last.startswith("model: ") and "model" not in selected:
+                selected["model"] = last.removeprefix("model: ")
+            elif last.startswith("thinking: ") and "effort" not in selected:
+                selected["effort"] = last.removeprefix("thinking: ")
+            elif match := re.fullmatch(
+                    r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
+                selected["model"] = match[1]
+        code = proc.wait()
     try:
         # Decode first: JSON represents null characters as escaped text.
         report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {

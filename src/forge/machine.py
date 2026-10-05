@@ -7,6 +7,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
+from subprocess import Popen
 from typing import Any
 
 from forge import repo
@@ -62,7 +63,7 @@ def remember(top: Path) -> None:
         pass
 
 
-def join(kind: str, repo: Path, item: str, model: str | None, effort: str | None) -> dict[str, Any]:
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
     """Join either machine-wide lane and wait for admission, first come, first served."""
     from forge import codex, repo as repository  # codex imports machine
 
@@ -97,10 +98,16 @@ def join(kind: str, repo: Path, item: str, model: str | None, effort: str | None
         raise
 
 
-def started(entry: dict[str, Any], pid: int) -> None:
+def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
     """The actual command holds the place even if its Forge parent is killed."""
     from forge import codex
 
+    # The live default-branch PR checker still calls started(pid) and agent_slot(top, kind).
+    if pid is None:
+        assert isinstance(entry, int)
+        agent_started(entry)
+        return
+    assert isinstance(entry, dict)
     process = codex.identity(pid) or {"pid": pid}
     with _queue() as runs:
         for run in runs:
@@ -128,7 +135,7 @@ def entries() -> list[dict[str, Any]]:
 
 
 @contextlib.contextmanager
-def agent_slot(top: Path, kind: str, item: str, model: str | None = None,
+def agent_slot(top: Path, kind: str, item: str | None = None, model: str | None = None,
                effort: str | None = None) -> Iterator[dict[str, Any]]:
     """A single command has one active agent entry, shared by its model launches."""
     global _agent_entry
@@ -144,6 +151,20 @@ def agent_started(pid: int) -> None:
     """Register a model launch inside the current work/read/review admission."""
     if _agent_entry is not None:
         started(_agent_entry, pid)
+
+
+@contextlib.contextmanager
+def agent_process(process: Popen[Any]) -> Iterator[None]:
+    """A model's separate process group must still end when its caller is interrupted."""
+    from forge import codex
+    try:
+        agent_started(process.pid)
+        yield
+    except BaseException:
+        if process.poll() is None:
+            codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+            process.wait()
+        raise
 
 
 def view() -> dict[str, Any]:

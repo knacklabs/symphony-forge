@@ -708,8 +708,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, text=True, encoding="utf-8",
                                   errors="replace",
-                                  env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader:
-                machine.agent_started(reader.pid)
+                                  env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader, \
+                    machine.agent_process(reader):
                 out, err = reader.communicate(text)
             ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
         return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)

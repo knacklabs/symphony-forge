@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import repo
+from forge import machine, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -115,7 +115,7 @@ def test(args) -> int:
     changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     environment = dict(os.environ)
-    workers = str(max(1, (os.cpu_count() or 1) // 2))
+    workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     excluded = []
     if any(Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile"}

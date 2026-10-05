@@ -5,6 +5,9 @@ Real workers produce the queue; only the model executable is held open.
 import json
 import os
 import shutil
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -30,7 +33,7 @@ def lanes(repo):
 @pytest.mark.parametrize("cores,agents,adopted", [(6, 3, False), (None, 1, True)])
 def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_path, cores, agents, adopted, person):
     repo = env.repo
-    machine_cores(repo, cores)
+    machine_cores(repo, cores, system_count=64)
     version = repo.forge("--version").stdout.split()[-1]
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
@@ -54,6 +57,20 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         assert "forge board --json" in guide and "forge stop --id <id>" in guide
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Sync the client guidance", cwd=folder)
+    # A process's usable cores can differ from the host total. The pytest picker must
+    # forward the same budget that doctor and the agent lane use, not recompute the host half.
+    base = repo.git("rev-parse", "HEAD", cwd=folder)
+    code = "import os; print('Test budget: ' + os.environ['PYTEST_XDIST_AUTO_NUM_WORKERS'])"
+    argv = [sys.executable, "-c", code]
+    command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
+    lines = config.splitlines()
+    config = "test = " + json.dumps(command) + "\n" + "\n".join(
+        line for line in lines if line.partition("=")[0].strip() != "test") + "\n"
+    env.commit(folder, "forge.toml", config, "Report the test runner budget")
+    env.commit(folder, "conftest.py", "# Shared test setup\n", "Change shared test setup")
+    tested = repo.forge("test", "--pytest", base, cwd=folder)
+    assert tested.returncode == 0, tested.stderr
+    assert f"Test budget: {agents}\n" in tested.stdout
     other = _other_repo(tmp_path, repo.bin)
     other.write("forge.toml", (other.path / "forge.toml").read_text("utf-8") + 'workers = "claude"\n')
     other.git("add", "forge.toml")
