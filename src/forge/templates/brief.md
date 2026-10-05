@@ -198,6 +198,13 @@ conventions apply only to a repo on the default stack.
 
 ## When you finish
 
+Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
+cover and every detail next to the test or check that proves it, or marked `missing`. Include the
+test's file and case name, or the named check and its result. Keep the whole list current in every
+round, not only the entries you changed. Forge copies it into the pull request and gives it to
+the reviewer. The first review checks every entry and reports every missing case it finds in
+that one round.
+
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.

@@ -563,6 +563,13 @@ Mark generated files such as migration snapshots `linguist-generated` in `.gitat
 reviews show them only as counts of changed lines.
 
 Read the worker's final handoff and resolve its stated blockers before `forge close`.
+Before close, the worker puts a `Proof list:` paragraph in its last commit message: each Done-when
+item you cover and every detail next to the test or check that proves it, or marked `missing`.
+Name the test's file and case, or the check and its result. Forge copies the list into the pull
+request and the review prompt. The first review checks the whole list, not a sample: Check every
+entry against the code and its named proof, including every Done-when detail. Compare it with the
+covered items so omitted entries cannot hide gaps; report every missing case in that one round,
+even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder. Close refuses added binary files under
 `tests/` before the review, naming the file to replace.
