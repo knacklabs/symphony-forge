@@ -3,12 +3,13 @@
   "branch": "fix/the-quick-test-run-skips-tests-that-read",
   "done_when": "forge test --pytest also selects every test file that names a changed file's path (for example docs/commands.md, the shipped guide, a workflow file), besides tests that import changed code; a command test shows a docs-only change selecting the test that reads that doc; new client repos get it from init and existing ones from upgrade, with a command test for each",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T08:21:20+00:00",
       "step": "start"
     }
   ],
-  "why": "The quick test run skips tests that read changed docs, guides or workflows, so CI goes red on them after every such change"
+  "why": "The quick test run skips tests that read changed docs, guides or workflows, so CI goes red on them after every such change",
+  "worker": "codex"
 }
