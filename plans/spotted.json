@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tExpire human acceptance in subsequent review instructions\tthe-review-loop-stop-pauses-only-one-clo",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 85,
+      "text": "Expire human acceptance in subsequent review instructions",
+      "from": "blocking",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",

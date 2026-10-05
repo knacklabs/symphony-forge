@@ -2,18 +2,28 @@
   "base": "15281ddd0bf30db521c6ebe2ec7fb2dc0ae319e8",
   "branch": "fix/the-review-loop-stop-pauses-only-one-clo",
   "done_when": "When today's review loop stop fires (third blocked review in a file flagged before), close and forge land stay stopped on that item until the human's choice is recorded with one command the stop message names: narrow the part, split it, or accept the remaining findings; forge next shows the three choices in plain words; skill.md tells the coordinator to ask the human and never re-run close past it; new client repos get it from init and existing ones from sync on upgrade, with a command test for each",
-  "flagged": [],
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c18146675b3af62fc42a0acc6731a68c3c0f9b4b38f793b15cbdd6000812331b",
-    "changed": "52498e1ecdabc59f14406a24bf601c874c09469528ebf23603faad8d2fa2b2e6",
-    "commit": "367624433c8bd6dbfc921b73bbdc38d576aeb154",
+    "branch_diff": "c1f5104845446e536b2af4797935fe5ff67db79f1ef1c09c507c450e125b5fae",
+    "changed": "7bb643f3bb598e162b43c2e984af73534abc8aca8581eb10406659e6fd81fb58",
+    "commit": "ca28b37739f85c0e0ab2c7f36426954906584b72",
     "dismissals": [],
-    "findings": [],
-    "status": "clean"
+    "findings": [
+      {
+        "body": "After acceptance, change another product file while leaving an accepted defect intact. Close requests a new review, but still sends the acceptance as a binding dismissal: `review.py:215` supplies both `_previous` and `_rulings`; lines 329\u2013332 include accepted dismissals, and lines 342\u2013348 recover them from historical commits. `templates/review.md:173\u2013174` then instructs the reviewer not to raise dismissed findings without new evidence. Skipping accepted dismissals after the reviewer returns cannot undo that instruction. This is new evidence against the ruling's intended version-limited acceptance: an unchanged defect remains protected by the old acceptance after its covered version expires. Expire acceptance in both prompt sections and add a command test checking the subsequent review instructions; the current canned reviewer responses do not detect this.",
+        "file": "src/forge/close.py",
+        "line": 85,
+        "priority": "P1",
+        "title": "Expire human acceptance in subsequent review instructions"
+      }
+    ],
+    "status": "blocked"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
@@ -33,6 +43,10 @@
     },
     {
       "at": "2026-10-05T10:53:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:25:04+00:00",
       "step": "review"
     }
   ],
