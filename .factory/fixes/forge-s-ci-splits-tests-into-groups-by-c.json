@@ -9,22 +9,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d7fa012aa58a6bc5f00c94b584e416e520288f6b298222eedb532c5fc7ab8551",
-    "changed": "2eb9ed8b6b55cec9374b9d584ce63b614e3e6113a584608b8669b27e232790ec",
-    "commit": "8333bfea36554b6fa3ed8085e3e0ed75dbf9a5e0",
+    "branch_diff": "94d7e593aa63cc91654e980a06a846a268cd6c3f17d597be955f51ea02c58e02",
+    "changed": "796a0745c5ac8138033389aed17ced6a9556e6534c82e28bbffaff7936c249f6",
+    "commit": "77d1cca2d0bb23db89af1d0bb1514325d5a88c97",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The required performance check remains unfinished. The latest handoff commit, ab01ef7a, explicitly states that wall times including setup are still missing for the corrected three/six/eight matrix. The measured older matrix exceeded the target on Ubuntu group 2 (459 seconds) and macOS group 1 (436 seconds). The successful local close run and collection estimates do not establish platform job wall times. Complete the corrected matrix run and verify every Ubuntu/macOS group finishes within 420 seconds and every Windows group within 840 seconds. The coordinator's rulings retain the current group counts pending measurements; this finding requires the outstanding check, not another speculative count increase.",
-        "file": "README.md",
-        "line": 165,
-        "priority": "P1",
-        "title": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T10:15:13+00:00",
@@ -36,6 +28,10 @@
     },
     {
       "at": "2026-10-05T14:37:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T15:16:51+00:00",
       "step": "review"
     }
   ],
