@@ -9,15 +9,59 @@
   "base": "679846b9b7bed159b831b6bad7253c642ba4241f",
   "branch": "fix/the-shipped-python-test-picker-uv-run-py",
   "done_when": "A 'forge fasttest <base>' command works in any pytest repo without installing Forge into the project: Forge picks the changed test files, test files named after a changed module, and test files importing or mentioning it, then runs the repo's own test command from forge.toml narrowed to those files in the repo's environment, runs the full test command when conftest.py, pyproject.toml or a lock file changed, and caps pytest at half the machine's cores; no pytest plugin. Forge's own forge.toml and the skill use 'forge fasttest {base}'; doctor reports a fast_test that still says 'python -m forge.fasttest' with the one-line replacement. Command-level tests cover both kinds of client: a new client (forge init in a plain pytest repo, Forge not installed in its environment) whose proposed fast_test runs only the related tests at close; and an existing client adopted on an earlier release whose forge.toml carries the old 'python -m forge.fasttest' line, where doctor names the replacement, forge.toml is not rewritten, and after the owner's one-line change close runs only the related tests.",
+  "flagged": [
+    "tests/test_pytest_picker_runs_in_the_clients_environment.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e01ff7428c43a585c5f40ec1324f6868796c86d8bc68896c851771bd03c8ff4",
+    "changed": "1a237cc58a4c0f92cdb8be61f7e92e87896397f69995a2f215a75821c6a5ea7c",
+    "commit": "0d6ba661d6d9376ddeae9e559235be3bafbeb129",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required client lifecycle tests are missing. This test constructs forge.toml directly and invokes the picker, without forge init, a proposed fast_test, or forge close. The setup test only checks generated guidance. The existing-client test in tests/test_python_changed_test_picker.py checks upgrade guidance and `test --help`; its adoption helper (tests/test_upgrade_command.py:477\u2013500) uses a fixture without the legacy fast_test. The standalone doctor test never checks preservation or runs close after the owner's replacement. Add command-level coverage for both requested lifecycles, proving related tests actually run through close without Forge installed in the client's environment. The supplied passing suite does not establish these explicit Done-when requirements.",
+        "file": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
+        "line": 60,
+        "priority": "P1",
+        "title": "Not done: New and previously adopted clients run the proposed picker through close"
+      },
+      {
+        "body": "Every token named `pytest` is treated as a pytest invocation, including a package argument. With unrelated tests excluded, `python -m pip install pytest && python -m pytest tests` receives `--ignore=...` on the pip installation as well as pytest, breaking otherwise valid setup. The fallback at line 80 also appends arguments to the last shell command: `python run_tests.py && ruff check .` sends them to Ruff rather than the argument-forwarding launcher. Identify the actual pytest or launcher command before inserting options, preserving the other shell commands.",
+        "file": "src/forge/fasttest.py",
+        "line": 73,
+        "priority": "P2",
+        "title": "Recognize pytest invocations before adding pytest arguments"
+      },
+      {
+        "body": "This loop combines addopts from every existing configuration file, including defaults when `-c` explicitly selects another file. [Pytest selects one configuration rather than merging their settings](https://docs.pytest.org/en/stable/reference/customize.html). For example, an active pytest.ini without xdist settings and an inactive tox.ini containing `addopts = -n auto` cause Forge to inject `--maxprocesses` even when the client's active environment has no xdist installed. The ordinary test command works, but the picker fails with an unrecognized argument. Follow pytest's configuration selection before deriving its worker options.",
+        "file": "src/forge/fasttest.py",
+        "line": 38,
+        "priority": "P2",
+        "title": "Read worker options only from pytest's selected configuration"
+      },
+      {
+        "body": "Unrelated explicit paths are removed only from the forge.toml command string. If pytest.ini addopts or PYTEST_ADDOPTS names `tests/test_unrelated.py::test_unrelated`, that path remains an explicit collection target despite the appended `--ignore`. [Pytest's collector bypasses ignore checks for explicitly supplied paths](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py). Consequently, the picker prints only related tests but still collects and runs the unrelated test, potentially failing close. Apply exclusion to explicit targets from these option sources as well as command-line tokens.",
+        "file": "src/forge/fasttest.py",
+        "line": 59,
+        "priority": "P2",
+        "title": "Exclude unrelated paths supplied through pytest addopts"
+      }
+    ],
+    "status": "blocked"
+  },
   "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T04:52:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T06:36:02+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`forge test --pytest 5bde3613d72a5102bd95dad27ac8c94068ce0024` exited with status 1 on the machine running forge close.\nforge: argument {init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}: invalid choice: 'test' (choose from 'init', 'sync', 'doctor', 'migrate', 'upgrade', 'next', 'board', 'story', 'read', 'task', 'fix', 'work', 'ask', 'close', 'merge', 'land', 'spec', 'decision', 'roadmap', 'hook').\nNext: forge --help",
   "why": "The shipped Python test picker (uv run python -m forge.fasttest) fails in client repos with 'No module named forge', because Forge is a separate tool, not a dependency of the client's project; it only works in Forge's own repo",
   "worker": "codex"
 }
