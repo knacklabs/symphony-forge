@@ -35,8 +35,11 @@ def land(args: argparse.Namespace) -> int:
     try:
         merged = _merged(top, branch)
         status = state.get("status", "started")
+        start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",
+                         repo.state_path(item), cwd=top)
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                status == "started" or status == "working" and
+                status == "started" and repo.git("rev-parse", "HEAD", cwd=top) == start or
+                status == "working" and
                 repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working"):
             say(f"Building {item}.")
             worker.work(step)

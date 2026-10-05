@@ -560,6 +560,149 @@
       "item": "simplify-fasttest",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: CLOSED and MERGED doctor-fix retention tests\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 123,
+      "text": "Not done: CLOSED and MERGED doctor-fix retention tests",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Doctor brings Forge's files up to date through a fix\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 220,
+      "text": "Not done: Doctor brings Forge's files up to date through a fix",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 226,
+      "text": "Not done: doctor keeps at most one fix of its own",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor never removes its own fix\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 394,
+      "text": "Not done: doctor never removes its own fix",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: failed commits clean up the new fix and show the reason\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 264,
+      "text": "Not done: failed commits clean up the new fix and show the reason",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 123,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: no empty doctor fix is created\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 233,
+      "text": "Not done: no empty doctor fix is created",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 510,
+      "text": "Not done: the UI skills check covers both hosts",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tOnly remove a fix created by this doctor run\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 272,
+      "text": "Only remove a fix created by this doctor run",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_doctor_fix_files.py\tNot done: repairs in an existing repo adopted on the previous release\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "tests/test_doctor_fix_files.py",
+      "line": 79,
+      "text": "Not done: repairs in an existing repo adopted on the previous release",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tQuote the worktree path in the removal step",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 229,
+      "text": "Quote the worktree path in the removal step",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tReport cleanup failures when discarding a new fix",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 285,
+      "text": "Report cleanup failures when discarding a new fix",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 414,
+      "text": "Both checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "from": "worker",
+      "item": "client-repos-never-learn-that-a-newer-fo",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

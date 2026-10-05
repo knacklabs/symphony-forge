@@ -1,0 +1,16 @@
+"""The v1.2.5 release installs as 1.2.5, this repo pins it, and the install steps fetch it."""
+
+import tomllib
+from pathlib import Path
+
+
+STORY = "FIX-RELEASE-125"
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_1_forge_version_is_1_2_5_everywhere_it_is_recorded(repo):
+    assert repo.forge("--version").stdout.split()[-1] == "v1.2.5"
+    assert tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["version"] == "v1.2.5"
+    assert "FORGE_VERSION=1.2.5\n" in (ROOT / "scripts/install-mac.sh").read_text(encoding="utf-8")
+    assert "$ForgeVersion = '1.2.5'" in (ROOT / "scripts/install-windows.ps1").read_text(encoding="utf-8")
+    assert "symphony-forge@v1.2.5\"" in (ROOT / "README.md").read_text(encoding="utf-8")

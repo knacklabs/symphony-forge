@@ -71,7 +71,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     return {
         "AGENTS.md": sync._agents(top),
-        **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() else {}),
+        **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() or (top / "CLAUDE.md").is_symlink()
+           else {}),  # a dangling link counts too
         **{rel: sync._hooks(top, rel, events, ALLOW.get(rel, [])) for rel, events in HOSTS.items()},
         ".codex/config.toml": sync._codex_config(top),
     }
