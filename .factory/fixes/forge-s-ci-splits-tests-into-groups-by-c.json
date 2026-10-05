@@ -1,0 +1,40 @@
+{
+  "base": "15661c43375705e51fbda9753a286761a08bbe88",
+  "branch": "fix/forge-s-ci-splits-tests-into-groups-by-c",
+  "done_when": "Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a plain way to refresh it), so no group of the last run takes more than 70% of its time limit; this is Forge's own CI only, so new and existing client repos get nothing",
+  "flagged": [
+    "README.md",
+    "tests/test_ci_job_budgets.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "94d7e593aa63cc91654e980a06a846a268cd6c3f17d597be955f51ea02c58e02",
+    "changed": "796a0745c5ac8138033389aed17ced6a9556e6534c82e28bbffaff7936c249f6",
+    "commit": "77d1cca2d0bb23db89af1d0bb1514325d5a88c97",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T10:15:13+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-05T11:00:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T14:37:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T15:16:51+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's CI splits tests into groups by count with no recorded test times, so the first macOS and Windows groups keep hitting their time limits and cancelled jobs send items back to workers",
+  "worker": "codex"
+}
