@@ -299,7 +299,8 @@ Adopting changes no app code.
    `forge.toml` through a fix. For pytest repos, propose
    `forge test --pytest {base}`: Forge runs this picker outside the project, keeping the repo's
    full `test` command and narrows pytest to changed and module-related test files. Use the
-   repo's Python runner with Forge installed; keep lint and other checks in `test`.
+   repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
+   checks in `test`.
    Forge writes no `fast_test` by itself.
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
    `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
@@ -552,8 +553,9 @@ when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
-`python -m forge.fasttest` setting with its one-line replacement. Forge needs no pytest plugin
-or installation in the project. Test launchers must forward pytest arguments and expose xdist
+`python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation
+in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
+before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
 Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,

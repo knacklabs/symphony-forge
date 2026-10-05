@@ -1,6 +1,7 @@
 """Pick related tests in Forge; run pytest in the client's own environment."""
 import ast
 import configparser
+import json
 import os
 import re
 import shlex
@@ -52,7 +53,7 @@ def pytest_options(arguments: list[str]) -> str:
     return options
 
 
-def narrow_command(command: str, excluded: list[str], workers: str, selection: str) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -61,7 +62,7 @@ def narrow_command(command: str, excluded: list[str], workers: str, selection: s
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = [selection] if excluded else []
+    options = ["-p", "_forge_pytest_selection"] if excluded else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
@@ -158,10 +159,14 @@ def test(args) -> int:
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
         print("Related tests: " + ", ".join(selected), flush=True)
-    # Pytest's argument file keeps exclusions off cmd.exe's limited command line.
+    # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
     with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
-        selection = Path(folder) / "selection.txt"
-        selection.write_text("".join("--ignore=" + path + "\n" for path in excluded), "utf-8")
-        return subprocess.run(narrow_command(command, excluded, workers,
-                                              "@" + selection.as_posix()), shell=True,
+        if excluded:
+            selection = Path(folder) / "_forge_pytest_selection.py"
+            selection.write_text("def pytest_configure(config):\n"
+                                 "    config.option.ignore = (config.option.ignore or []) + "
+                                 + json.dumps(excluded) + "\n", "utf-8")
+            environment["PYTHONPATH"] = os.pathsep.join(
+                [folder, environment.get("PYTHONPATH", "")])
+        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
                               env=environment).returncode
