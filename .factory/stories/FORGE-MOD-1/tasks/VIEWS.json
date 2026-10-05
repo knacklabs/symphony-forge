@@ -6,29 +6,22 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "648bd293808d2c62ed2578b258f3c559c0ca26d4c83cb2773bec8261c867b381",
-    "changed": "8b21fe7391edd56b1f3b356e17559507e0087ca2d4eaaa5039ab5e4478ecb351",
-    "commit": "7acff0047bdb3778ce2bf12c90e076a3e4b52e8b",
+    "branch_diff": "c20c5151b1c1ed71463ac9ecfb44023156cd5739c4ccab90509879dfd684f0b3",
+    "changed": "f8e7e47ba61b9c073ad4f0eaefbffc8212ca48053b0eccb646cc238897e6cbef",
+    "commit": "fa68c401292a51dfbe3bb2e8513a14bcb0ad04c9",
     "dismissals": [],
     "findings": [
       {
-        "body": "This fallback promotes both task children and fixes using `_green_at`, which checks only configured names (board.py:528\u2013539). With required checks successful but another check failed or running, the row therefore reports `stage: ready` alongside `pr.checks: fail/running`; close's actual gate rejects those results (checks.py:35\u201350). It also restores readiness after a new branch commit invalidates the receipt: the queried `headRefOid` is never compared with the branch head, so even a freshly fetched green result for the previous pushed commit makes the new local commit appear ready. These are additional cases beyond the previous successful-required-check repair. The regression at tests/test_machine_views.py:414\u2013418 supplies no successful GraphQL rollup and misses this bypass. Require a complete passing result for the current head, and keep the item's next-step explanation consistent.",
-        "file": "src/forge/board.py",
-        "line": 267,
-        "priority": "P1",
-        "title": "Not done: derive readiness from the current head's complete check result"
-      },
-      {
-        "body": "The previously reported issue remains: `release_notice` prepends the newer-release announcement (upgrade.py:168\u2013188), and `machine_next` selects the first non-Next line. Consequently, `forge next --json` returns the release announcement as `next.line`, hiding the actual waiting or human-only merge state when `next.command` is null. Build the machine next object from `_report`'s lines and keep any release notice separate.",
+        "body": "The previously reported issue remains. When a newer release exists, `upgrade.release_notice` prepends its announcement (src/forge/upgrade.py:186\u2013187), and `machine_next` selects the first non-Next line. Consequently, `forge next --json` returns the release announcement as `next.line`, hiding the actual waiting or human-only merge state when `next.command` is null. Build the machine next object from `_report`'s lines and keep release notices separate.",
         "file": "src/forge/nextstep.py",
-        "line": 119,
+        "line": 117,
         "priority": "P2",
         "title": "Keep release notices from replacing next.line"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T17:59:47+00:00",
@@ -52,6 +45,10 @@
     },
     {
       "at": "2026-10-05T06:01:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:32:26+00:00",
       "step": "review"
     }
   ],
