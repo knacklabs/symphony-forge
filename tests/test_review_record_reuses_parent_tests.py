@@ -103,9 +103,6 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         answer["event"] = "push"
         env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                        stdout=json.dumps(answer))
-        env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
-                       f"repos/acme/shop/actions/workflows/forge.yml/runs"
-                       f"?head_sha={parent}&event=pull_request&per_page=100", stdout="")
 
     done = subprocess.run([sys.executable, ".forge/review-tests.py"], cwd=client,
                           capture_output=True, text=True, timeout=30)
@@ -116,7 +113,11 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         case not in ("review", "push"))
     if case not in ("code", "other-record", "contract"):
         [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
-        assert f"actions/workflows/forge.yml/runs?head_sha={parent}" in call[-1]
+        assert "repos/acme/shop/actions/workflows/forge.yml/runs" in call
+        assert call[call.index("--method") + 1] == "GET"
+        assert f"head_sha={parent}" in call and "per_page=100" in call
+        # Separate query fields survive Windows .cmd shims; an event filter would hide pushes.
+        assert not any("&" in arg or "event=" in arg for arg in call)
 
 
 def test_3_forge_matrix_uses_the_same_review_record_shortcut():

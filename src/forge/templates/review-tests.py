@@ -2,13 +2,16 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from urllib.parse import quote
 
 
 def run(*args: str) -> str:
-    return subprocess.run(args, check=True, capture_output=True, text=True).stdout.strip()
+    # Resolve PATH first, including the .cmd shims used on Windows.
+    return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
+                          capture_output=True, text=True).stdout.strip()
 
 
 def reuse() -> bool:
@@ -35,10 +38,10 @@ def reuse() -> bool:
                 != {k: v for k, v in after.items() if k not in bookkeeping}):
             return False
     workflow = os.environ["GITHUB_WORKFLOW_REF"].split("@", 1)[0].rsplit("/", 1)[1]
-    endpoint = (f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{quote(workflow)}/runs"
-                f"?head_sha={parent}&per_page=100")
+    endpoint = f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/workflows/{quote(workflow)}/runs"
     runs = [json.loads(line) for line in run("gh", "api", "--paginate", "--jq",
-                                           ".workflow_runs[]", endpoint).splitlines()]
+                                           ".workflow_runs[]", endpoint, "--method", "GET",
+                                           "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
     # Target-event runs check the PR but skip tests, so their success proves nothing here.
     matching = [r for r in runs if r.get("head_sha") == parent
                 and r.get("event") in {"push", "pull_request"}]
