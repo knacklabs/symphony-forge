@@ -2,6 +2,7 @@
 STORY = "the-review-loop-stop-pauses-only-one-clo"
 
 import shutil
+import re
 from pathlib import Path
 
 import pytest
@@ -147,6 +148,46 @@ def test_3_acceptance_refuses_code_changed_since_the_stopped_review(env):
     )
     assert env.close(item).returncode == 1
     assert saved(where, item)["status"] == "hotspot"
+
+
+@pytest.mark.parametrize("phase", ["before-accept", "close", "land"])
+@pytest.mark.parametrize("old,new", [
+    ("`app.py`", "`app.py`, `other.py`"),
+    ("`tests/test_app.py`", "`tests/test_basket.py`"),
+    ("A shopper can save a basket.", "A shopper can save two baskets."),
+])
+def test_6_live_story_scope_changes_expire_task_acceptance(env, phase, old, new):
+    # The reviewer reads the story branch, even when the task's own commit stays unchanged.
+    item, where = stopped(env, "task")
+    reason = "Human accepts this version"
+    if phase != "before-accept":
+        accepted = env.close(item, "--resolve", "accept", "--reason", reason)
+        assert accepted.returncode == 0, accepted.stderr
+        assert env.close(item).returncode == 0
+    story_tree = Path(re.search(r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/SHOP$",
+                               env.repo.git("worktree", "list", "--porcelain"), re.M)[1])
+    doc = (story_tree / "plans/SHOP.md").read_text("utf-8")
+    assert old in doc
+    env.commit(story_tree, "plans/SHOP.md", doc.replace(old, new), "Change the task requirements")
+    before = len(env.review_calls())
+    if phase == "before-accept":
+        refused = env.close(item, "--resolve", "accept", "--reason", reason)
+        assert refused.returncode == 1
+        assert "code or scope changed since the stopped review" in refused.stderr
+        assert len(env.review_calls()) == before
+        assert env.repo.forge("land", item).returncode == 1
+    else:
+        env.reviews(CLEAN)
+        if phase == "land":
+            env.gh.respond("pr", "view", "task/SHOP-T1", "--json", "url",
+                           stdout='{"url": "https://github.com/acme/shop/pull/7"}')
+        reviewed = env.repo.forge(phase, item)
+        assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
+        assert len(env.review_calls()) == before + 1
+        for value in new.split(", "):
+            assert value.replace("`", "") in env.prompt().replace("`", "")
+        assert reason not in env.prompt()
+        assert "Human accepted the remaining finding" not in env.prompt()
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-sync"])

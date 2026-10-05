@@ -164,6 +164,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         items = json.loads(roadmap.stdout).get("items", []) if roadmap.returncode == 0 else []
         entry = next((value for value in items if value.get("key") == key), {})
         parts = [text, json.dumps(entry, sort_keys=True)]
+        if branch_diff:
+            # Close's reuse key covers the same live story document as the review prompt.
+            parts.append(task(top, item)[0])
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))

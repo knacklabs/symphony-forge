@@ -79,8 +79,9 @@ def close(args: argparse.Namespace) -> int:
         if choice == "accept":
             default = repo.default_branch(top)
             repo.git("fetch", "-q", "origin", default, cwd=top)
-            if result["changed"] != review.fingerprint("HEAD", item, top, state,
-                                                       f"origin/{default}"):
+            if any(result.get(key) != review.fingerprint(
+                    "HEAD", item, top, state, f"origin/{default}", branch_diff=key == "branch_diff")
+                   for key in ("changed", "branch_diff")):
                 repo.refuse(REFUSALS["stale_choice"], item=item)
             result["dismissals"].extend(
                 {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
