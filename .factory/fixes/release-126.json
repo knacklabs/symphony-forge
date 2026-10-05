@@ -9,20 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3d24d8adca33323aec80b2c65b7aa32b9ae32d5eaf67c3fcc57077f3eea4a1c8",
-    "changed": "efcba2c735303b4f5a7d3dc3f9ce40e40b0f78c20726dc29d5141fb9bc45161f",
-    "commit": "df644a9a66618d585157f5d3fc31648f84c9c14e",
+    "branch_diff": "1a6abfdb041774baa0547ccf59f6ca41c990f860c13e8e05fa4972e2074a4e20",
+    "changed": "51bec82c7107c65e7097249604b02087e46658f055e7ff6ec84e9c2d3e80dd67",
+    "commit": "45c2c65ec77ffd03368ca7a4b2285372ac8e25e9",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied proof list is missing, and the latest commit contains no complete mapping from Done-when details to named proofs. Add the required list covering the package version, repository pin, both installers, README install steps, sync output, and tests that pin the release. The passing suite and release regression test do not replace this explicitly required handoff.",
+        "body": "The supplied proof list is still missing. The latest worker commit lacks a `Proof list:` paragraph; the earlier handoff uses `Proof list for every Done-when detail`, which also does not match the label read by `src/forge/review.py:368\u2013376`. Put a correctly labelled list in the latest worker commit, mapping the package version, repository pin, both installers, README install steps, sync output and release-pinning tests to their named proofs. The passing suite does not replace this required handoff.",
         "file": "tests/test_release_version.py",
         "line": 11,
         "priority": "P1",
         "title": "Not done: proof list"
       }
     ],
-    "id": "3c18f5ce-88bc-44f1-932d-6609a930040e",
+    "id": "7fb88117-258b-4856-b1ba-f9fd82647a5d",
     "status": "blocked"
   },
   "round": 2,
@@ -34,6 +34,10 @@
     },
     {
       "at": "2026-10-05T18:10:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T23:16:17+00:00",
       "step": "review"
     }
   ],
