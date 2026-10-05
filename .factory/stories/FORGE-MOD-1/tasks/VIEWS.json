@@ -6,27 +6,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a1d862d3c3db1fc17469f5deea98ae171d186176218364e32e8e2949e6f46c2f",
-    "changed": "31f7d639893468fdc8fda57c18a94e84a2a803c98969621b1501bb2d2f4961fc",
-    "commit": "4cfd18da5db3d3bdeaba91ebc28e61b49b892ce9",
+    "branch_diff": "d1ba08806bf35fa732e2b9b3d9773e7729544333cd04090fbf6a8b1b6c6b420e",
+    "changed": "c6e44106f21548bd69c5e0a110df530041196148c56d30f1292c9fb7d616f8e9",
+    "commit": "f013c538b8b1829338b2056adb4683aa15488397",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previous finding remains open. `_item_readiness` applies failed PR checks without comparing `headRefOid` with the local branch head. After a local repair commit, failures from the previous push still make both task and fix rows recommend `forge work` instead of `forge close`. Both machine views use this helper. Keep displaying the PR checks, but apply their failure to local readiness only when they describe the current head.",
+        "body": "This previous finding remains open. Failed checks override readiness without comparing the PR's headRefOid with the local branch head. After a repair commit, failures from the previous push therefore make both task and fix rows recommend forge work instead of forge close. Both machine views use this helper. Keep displaying those checks, but apply their failure to local readiness only when they describe the current head.",
         "file": "src/forge/nextstep.py",
         "line": 530,
         "priority": "P2",
         "title": "Ignore previous-head failures when deriving the local next step"
       },
       {
-        "body": "This previous finding remains open. The machine board fetches only open PRs and passes an empty merged-PR set to the story lookup. Task and fix rows recognize merges only from landed state, which `src/forge/story.py:583\u2013588` reads from the last fetched default branch. Immediately after a GitHub merge, rows can therefore retain their previous stage and merge command. The text view already obtains merged branches at `src/forge/nextstep.py:189` and applies them to fixes and tasks. Use that evidence consistently in the machine board.",
+        "body": "This previous finding remains open. The machine board fetches only open PRs and passes an empty merged-PR set to the story lookup. Its task and fix rows consequently recognize merges only from landed state. src/forge/story.py:583\u2013588 confirms that landed_ref uses the last fetched default branch. Immediately after a GitHub merge, the board can retain the old stage and merge command, while forge next already recognizes the merge through src/forge/nextstep.py:189 and 208\u2013209. Apply that merged-PR evidence consistently to board rows and their next steps.",
         "file": "src/forge/board.py",
         "line": 209,
         "priority": "P2",
         "title": "Recognize GitHub merges before the default branch is fetched"
       },
       {
-        "body": "This previous finding remains open. `live` contains only runs without an end record, so a subsequent attempt replaces the stage's start with its own timestamp. Claude and Codex commit nudges launch additional runs in the same round at `src/forge/worker.py:193\u2013199` and `212\u2013219`; review retries do likewise at `src/forge/review.py:473\u2013478`. Build and Review timers consequently reset during another attempt and jump back when aggregate timing is recorded. Anchor each stage to its first recorded start in the current round while retaining the active worker's own start.",
+        "body": "This previous finding remains open. The live list contains only runs without an end record, so another attempt replaces the stage's start with its own timestamp. Claude and Codex commit nudges launch additional runs within one round at src/forge/worker.py:193\u2013199 and 212\u2013219; review retries do likewise at src/forge/review.py:473\u2013478. Build and Review timers therefore reset during another attempt and jump back when aggregate timing is recorded. Anchor the stage to its first recorded start in the current round while retaining the active worker's own start.",
         "file": "src/forge/board.py",
         "line": 283,
         "priority": "P2",
@@ -95,6 +95,10 @@
     },
     {
       "at": "2026-10-05T11:51:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:16:12+00:00",
       "step": "review"
     }
   ],
