@@ -304,7 +304,10 @@ Adopting changes no app code.
    When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
    `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
    repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
-   and `--passWithNoTests`. Mixed repos get one part per kind. Go, Rust, Java, .NET
+   and `--passWithNoTests`. Mixed repos get one part per kind. The Python picker skips
+   the JavaScript test runners and their installation steps, including when shared Python
+   inputs require all Python tests. `npm exec` gets `--` before its runner so npm forwards
+   the changed-file flags. Go, Rust, Java, .NET
    and Ruby get no suggestion. Check the suggestion against the repo's setup before
    agreeing to it; other shell flows need the agent to adapt the command.
 

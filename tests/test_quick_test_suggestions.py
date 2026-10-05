@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import subprocess
+import sys
 import tomllib
+from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 from test_close import env  # noqa: F401
@@ -26,6 +30,10 @@ CASES = [
         "pnpm install --frozen-lockfile && pnpm exec jest --changedSince {base} --passWithNoTests"),
     ("npm-jest", "npm ci && npm run unit", {"scripts": {"unit": "jest --runInBand"}},
         "npm ci && npm run unit -- --changedSince {base} --passWithNoTests"),
+    ("npm-exec-vitest", "npm ci && npm exec vitest run", {},
+        "npm ci && npm exec -- vitest run --changed {base} --passWithNoTests"),
+    ("npm-exec-jest", "npm ci && npm exec jest", {},
+        "npm ci && npm exec -- jest --changedSince {base} --passWithNoTests"),
     ("yarn-vitest", "yarn install --immutable && yarn unit", {"scripts": {"unit": "vitest run"}},
         "yarn install --immutable && yarn unit --changed {base} --passWithNoTests"),
     ("mixed", "uv run pytest && npm ci && npx --no-install vitest run", {"devDependencies": {"vitest": "1"}},
@@ -72,6 +80,61 @@ def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, kind, c
         assert "`forge doctor` and `forge upgrade` print one suggested" in skill
         assert "Mixed repos get one part per kind." in skill
         assert "Go, Rust, Java, .NET and Ruby get no suggestion." in skill
+
+
+@pytest.mark.parametrize("entry", ["doctor", "upgrade"])
+@pytest.mark.parametrize("runner,flag", [("vitest", "--changed"), ("jest", "--changedSince")])
+@pytest.mark.parametrize("shared", [False, True], ids=["related-python", "shared-python-input"])
+@pytest.mark.parametrize("invocation", ["exec", "script"])
+def test_4_running_the_mixed_suggestion_runs_each_test_kind_once(unsynced_up, entry, runner, flag, shared, invocation):
+    up = unsynced_up
+    repo = up.repo
+    # Real pytest proves selection and execution. npm is a third-party boundary stub;
+    # it records arguments without deciding whether Forge picked the right runners.
+    _install(repo.bin, "npm", f'''#!{sys.executable}
+import json, pathlib, sys
+path = pathlib.Path("node-calls.jsonl")
+with path.open("a", encoding="utf-8") as out:
+    out.write(json.dumps(sys.argv[1:]) + "\\n")
+''')
+    node = f"npm exec {runner}" if invocation == "exec" else "npm test"
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && npm ci && {node}'
+    _inputs(repo.path, "mixed", command, {"scripts": {"test": runner}})
+    repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
+               '    with Path("python-ran.txt").open("a", encoding="utf-8") as out:\n'
+               '        out.write("ran")\n')
+    if not shared:
+        repo.write("tests/test_unrelated.py", "raise AssertionError('unrelated collected')\n")
+    else:
+        repo.write("tests/test_unrelated.py", 'from pathlib import Path\ndef test_other_python():\n'
+                   '    Path("other-python-ran.txt").write_text("ran", encoding="utf-8")\n')
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Set up mixed tests")
+    repo.git("push", "-q", "origin", "main")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write("conftest.py" if shared else "tests/test_related.py",
+               "# Shared input\n" if shared else
+               (repo.path / "tests/test_related.py").read_text("utf-8") + "# Changed test\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Change Python tests")
+    repo.git("push", "-q", "origin", "main")
+    if entry == "upgrade":
+        (repo.bin / "uv-install-fails").touch()
+        advised = up.run(RELEASE)
+    else:
+        advised = repo.forge("doctor")
+    lines = [line for line in advised.stdout.splitlines() if line.startswith("fast_test =")]
+    assert len(lines) == 1, advised.stdout + advised.stderr
+    quick = tomllib.loads(lines[0])["fast_test"].replace("{base}", base)
+    done = subprocess.run(quick, cwd=repo.path, shell=True, capture_output=True, text=True,
+                          env={**os.environ, "PYTHONPATH": str(ROOT / "src")}, timeout=60)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert (repo.path / "python-ran.txt").read_text("utf-8") == "ran"
+    if shared:
+        assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
+    calls = [json.loads(line) for line in (repo.path / "node-calls.jsonl").read_text("utf-8").splitlines()]
+    launch = ["exec", "--", runner] if invocation == "exec" else ["test", "--"]
+    assert calls == [["ci"], [*launch, flag, base, "--passWithNoTests"]]
 
 
 @pytest.mark.parametrize("kind,command,package,expected", CASES, ids=[case[0] for case in CASES])
