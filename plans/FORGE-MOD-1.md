@@ -23,10 +23,10 @@
   its progress; who waits next in each lane; and the machine's load. While Claude works the
   spinner line says where your work is in line. Pressing `o` opens a run's live output; pressing
   `s` stops a run after you confirm.
-- On Claude Code Desktop, in VS Code and on a phone through Remote Control, the same pane draws
-  richer: each item's stages as a timeline you can hover for times, the Machine tab's agents as a
-  drawn tree, lists as tables, and real buttons. On a phone it leads with the summary and the
-  Approve button. Where nothing can draw, `/forge` prints the same summary as text.
+- On Claude Code Desktop and in VS Code the same pane draws richer: each item's stages as a
+  timeline you can hover for times, the Machine tab's agents as a drawn tree, lists as tables, and
+  real buttons. The Claude mobile app doesn't show plugin panes, so on a phone (and wherever
+  nothing can draw) `/forge` replies with the full status as text.
 - When work needs the agent (a review found problems, checks failed, a pull request is ready to
   merge, a worker asked a question, or a run finished), Forge tells the session and the agent acts
   on it straight away. Progress such as a run starting or checks running only updates the pane.
@@ -51,12 +51,12 @@ all four.
 
 ## Done when
 
-1. **In Claude Code, a Forge pane shows each story and fix with its stage, each running worker and how long it has run, each pull request's checks, and open findings, and it updates by itself; on Desktop, in VS Code and on a phone it also draws each item's stages as a timeline and uses native buttons.**
+1. **In Claude Code, a Forge pane shows each story and fix with its stage, each running worker and how long it has run, each pull request's checks, and open findings, and it updates by itself; on Desktop and in VS Code it also draws each item's stages as a timeline and uses native buttons, and on a phone `/forge` replies with the full status as text.**
 2. **The strip above the prompt always shows a summary of running and waiting agents and tests, Forge's next step, and up to two active items with each stage's time and the total, and pressing 1 on an empty prompt runs the next step.**
 3. **When a review finds problems, checks fail, a pull request is ready to merge, a worker asks a question or a run finishes, the session starts a turn that names each such change and its next step; progress only updates the pane.**
 4. **Pressing Approve on a waiting story opens Claude Code's own plan-approval prompt with the story's exact text from its file, and approving there records the same approval Plan Mode does; if Claude Code doesn't allow this, the button is left out and Plan Mode stays the way to approve.**
 5. **`forge sync` turns the mod on from Forge's latest release, it works in every repo whatever Forge version that repo pins, and Codex and sessions without the mod work as today.**
-6. **The Machine tab shows every agent and test run on the machine from repos on this release, with model, time, test progress and who waits next, plus the machine's load; a run's output opens with one key, a run stops only after a person confirms, on Desktop, in VS Code and on a phone the agents show as a drawn tree, and where nothing can draw `/forge` prints the summary as text.**
+6. **The Machine tab shows every agent and test run on the machine from repos on this release, with model, time, test progress and who waits next, plus the machine's load; a run's output opens with one key, a run stops only after a person confirms, on Desktop and in VS Code the agents show as a drawn tree, and where nothing can draw `/forge` prints the summary as text.**
 7. **For every item the pane shows whether it is running, queued (with its place in line) or idle and since when (stalled after a day); for each running worker its tool, model, effort, round, elapsed time and current step; each stage's time and test progress; for a red check the failing job and whether it timed out; and findings with their severity and dismissed count.**
 
 ## New and existing repos
@@ -215,12 +215,12 @@ tightening it needs no new approval. -->
    outcomes and status, and ask for detail when they need it): pressing `l` shows the last events,
    one line each with time, and `l` again hides them; a legend of colours per tool and lane, each also marked with a symbol so it reads without
    colour. Only facts Forge records: no probabilities, token counts or other figures Forge does not
-   keep. On Desktop, VS Code and mobile (`e.surface`) the tree is one `Svg` drawing (interactive,
+   keep. On Desktop and VS Code (`e.surface`) the tree is one `Svg` drawing (interactive,
    `<title>` tooltips with model, round and elapsed; colours plus symbols; `alt` text listing the
    same facts), the keys become native Buttons. In the terminal under 100 columns the tree becomes a
    list in the same order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
    gates for a blocked review and a red check; no log until `l` is pressed, then the last events newest last; list form at
-   80 columns; the same fixture on `desktop` and `mobile` draws an Svg whose alt text names each run.
+   80 columns; the same fixture on `desktop` draws an Svg whose alt text names each run.
    MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
    stub PANE fills) and machine.ts with an empty `registerMachine(on, data, addTab)`; PANE owns the
    tabs and the whole strip. MACHINE adds only the tab, the spinner line and the keys. Data: `forge lanes
@@ -279,9 +279,10 @@ New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns o
   Terminal draws text as in details 1-2. Desktop and VS Code add, per item, a stage timeline as one
   `Svg` (a segment per stage, coloured by outcome with a symbol, `<title>` hover with its time;
   `alt` lists the same), Markdown tables for the item lists, and native Buttons for every key
-  action. Mobile has no Input or Select: it leads with the summary lines and the Approve button,
-  then the items as Markdown. The strip (AbovePrompt) stays text on every surface. Every pane and
-  Machine tab test loops over `['terminal', 'desktop', 'mobile']` (the plugin test kit's `mount`
+  action. The mobile app places no panes (its viewport reports `isFullscreen: false` and
+  `$.ui.open` stays unplaced): there `/forge`'s reply is the full status as text (detail 1's fields
+  and detail 7's, one item per two lines), the same text the headless reply gives. The strip (AbovePrompt) stays text on every surface. Every pane and
+  Machine tab test loops over `['terminal', 'desktop']`, and one test checks `/forge`'s text reply (the plugin test kit's `mount`
   with `surface`), asserting facts, never paint.
 - Mods docs: code.claude.com/docs/en/plugins/mods/overview, /reference, /interface (v2.1.287+).
   Render sites `Pane`, `AbovePrompt`; `$.clock.every`, `$.process.run`, `$.prompt.submit`,
