@@ -1,0 +1,111 @@
+{
+  "branch": "task/FORGE-MOD-1-VIEWS",
+  "flagged": [
+    "src/forge/board.py",
+    "tests/test_machine_views.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d1ba08806bf35fa732e2b9b3d9773e7729544333cd04090fbf6a8b1b6c6b420e",
+    "changed": "c6e44106f21548bd69c5e0a110df530041196148c56d30f1292c9fb7d616f8e9",
+    "commit": "f013c538b8b1829338b2056adb4683aa15488397",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "This previous finding remains open. Failed checks override readiness without comparing the PR's headRefOid with the local branch head. After a repair commit, failures from the previous push therefore make both task and fix rows recommend forge work instead of forge close. Both machine views use this helper. Keep displaying those checks, but apply their failure to local readiness only when they describe the current head.",
+        "file": "src/forge/nextstep.py",
+        "line": 530,
+        "priority": "P2",
+        "title": "Ignore previous-head failures when deriving the local next step"
+      },
+      {
+        "body": "This previous finding remains open. The machine board fetches only open PRs and passes an empty merged-PR set to the story lookup. Its task and fix rows consequently recognize merges only from landed state. src/forge/story.py:583\u2013588 confirms that landed_ref uses the last fetched default branch. Immediately after a GitHub merge, the board can retain the old stage and merge command, while forge next already recognizes the merge through src/forge/nextstep.py:189 and 208\u2013209. Apply that merged-PR evidence consistently to board rows and their next steps.",
+        "file": "src/forge/board.py",
+        "line": 209,
+        "priority": "P2",
+        "title": "Recognize GitHub merges before the default branch is fetched"
+      },
+      {
+        "body": "This previous finding remains open. The live list contains only runs without an end record, so another attempt replaces the stage's start with its own timestamp. Claude and Codex commit nudges launch additional runs within one round at src/forge/worker.py:193\u2013199 and 212\u2013219; review retries do likewise at src/forge/review.py:473\u2013478. Build and Review timers therefore reset during another attempt and jump back when aggregate timing is recorded. Anchor the stage to its first recorded start in the current round while retaining the active worker's own start.",
+        "file": "src/forge/board.py",
+        "line": 283,
+        "priority": "P2",
+        "title": "Preserve the live stage's start across attempts in one round"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T17:59:47+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:14:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T03:38:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T04:28:51+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T05:37:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:01:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:32:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:04:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:40:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T08:22:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T08:52:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:28:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:53:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T10:44:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:51:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:16:12+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "done": "src/forge/board.py is simpler and behaves as it did before",
+    "file": "src/forge/board.py",
+    "why": "Simplify src/forge/board.py before FORGE-MOD-1/VIEWS carries on"
+  },
+  "worker": "codex"
+}

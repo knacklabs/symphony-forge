@@ -197,7 +197,20 @@ tightening it needs no new approval. -->
    repos (one on a Forge without views) each show the right pane line; `claude plugin validate --strict` passes. CI installs a pinned Claude Code
    with npm to run `claude plugin test` and `validate`.
 
-6. Machine tab. MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
+6. Machine tab. Drawn as an agent tree (owner chose 2026-10-04, after a Claude Code agent-tree
+   design): the coordinating session at the top (tool, model, effort, "plans + decides"); under it
+   one box per running entry of the agent lane (worker, plan reader, reviewer: item in plain words,
+   tool, model, effort, round, elapsed) and the test lane's box (item, progress bar, elapsed); a
+   gates column listing each active item's gates (plan read passed, review clean/blocked with its
+   finding count, CI green/red/running with elapsed); no event log by default (owner: people want
+   outcomes and status, and ask for detail when they need it): pressing `l` shows the last events,
+   one line each with time, and `l` again hides them; a legend of colours per tool and lane, each also marked with a symbol so it reads without
+   colour. Only facts Forge records: no probabilities, token counts or other figures Forge does not
+   keep. Under 100 columns, or on Desktop where boxes don't fit, the tree becomes a list in the same
+   order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
+   gates for a blocked review and a red check; no log until `l` is pressed, then the last events newest last; list form at
+   80 columns.
+   MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
    stub PANE fills) and machine.ts with an empty `registerMachine(on, data, addTab)`; PANE owns the
    tabs and the whole strip. MACHINE adds only the tab, the spinner line and the keys. Data: `forge lanes
    --json` (FORGE-LANES-1), which lists only repos on this release. Rows per lane in queue order:
@@ -222,7 +235,7 @@ tightening it needs no new approval. -->
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | RUNS | Run and question records | Records with ids for run start and end, review results and worker questions on both worker paths, the item's round number on every timing record and a timing record for each test run, written inside review.test_run so close's run and the lanes story's `forge test` both record it, and `FORGE_WORKER=1` for every process Forge starts | 2, 3 | src/forge/repo.py, src/forge/worker.py, src/forge/close.py, src/forge/codex.py, src/forge/review.py | tests/test_run_records.py | | no |
-| VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide's machine views section, the per-item `stages` and the 60-second GitHub checks cache | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, tests/fixtures/board.json | tests/test_machine_views.py | RUNS | no |
+| VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide's machine views section, the per-item `stages` and the 60-second GitHub checks cache | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, tests/fixtures/board.json | tests/test_machine_views.py | | no |
 | CORE | Plugin core | The plugin skeleton, the `forge` calls and the one refresh schedule, the too-old line, the summary formatter in summary.ts that both `/forge`'s text and the strip use, and the seams: `data` is `{ board, next, lanes, error, refreshedAt }` with `onUpdate(fn)`; register.ts calls `registerPane(on, data)`, `registerEvents(on, data)`, `registerApproval(on, data)` and `registerMachine(on, data, addTab)`, and pane.ts exports `addTab`, all created here as stubs with one test crossing them | 1, 6 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/summary.ts, src/forge/mod/hooks/core.test.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/machine.ts, pyproject.toml, src/forge/templates/skill.md | src/forge/mod/hooks/core.test.ts, tests/test_mod_plugin.py | VIEWS | no |
 | PANE | Pane and summary strip | The pane and its `addTab`, the summary strip in every layout and its hotkey, filling `registerPane` | 1, 2 | src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/pane.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/pane.test.ts | CORE | yes |
 | EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/skill.md, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | CORE | yes |
@@ -233,6 +246,10 @@ tightening it needs no new approval. -->
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
 ## Notes
+
+- VIEWS no longer waits for RUNS (owner wants the visible parts sooner): until RUNS merges, the
+  run fields in the machine views (run start and end, round, occurrence ids) are null, and the mod
+  shows elapsed time only for what it can compute; RUNS fills them in when it lands.
 
 - Mods docs: code.claude.com/docs/en/plugins/mods/overview, /reference, /interface (v2.1.287+).
   Render sites `Pane`, `AbovePrompt`; `$.clock.every`, `$.process.run`, `$.prompt.submit`,
