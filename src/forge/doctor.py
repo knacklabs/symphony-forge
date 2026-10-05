@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, codex, init, repo, review, story, sync, task
+from forge import __version__, codex, init, machine, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
@@ -174,6 +174,9 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
     return rows
 
 def doctor(args: argparse.Namespace) -> int:
+    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
+    budget = machine.half_cores()
+    print(f"This machine: {cores} cores, so {budget} agents at once and test runs on {budget} cores.")
     top = repo.root()
     cfg = repo.config(top)
     install = sync.install_line(cfg["version"])

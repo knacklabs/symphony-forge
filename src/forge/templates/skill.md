@@ -96,6 +96,21 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 ## Machine views
 
+Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
+plan reads and close reviews share a first-come line and say their place while waiting. The test
+lane has one place; tests use the same half-core budget. `forge doctor` shows the split.
+
+`forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
+alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
+`model`, `effort`, `joined_at`, `started_at`, `process`, `output_path` and `progress`.
+Waiting entries have no start time. Test output and progress are null until the test runner sets
+them. The process includes its pid and start identity; a reused pid cannot hold an old place.
+
+Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that item's entries in
+both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
+Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
+before its place is freed. An unverifiable identity refuses without terminating anything.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
 other readers. The usual commands still print text or open the HTML board. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main

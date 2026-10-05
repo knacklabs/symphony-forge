@@ -107,12 +107,18 @@ tightening it needs no new approval. -->
    cores.` The guide (docs/guide.md and the skill) explains the two lanes in a short section.
    Test: with the shim reporting 6 cores, doctor says 3 and 3; with no count found it says 1 and 1.
 
-   Machine view (for the Claude Code mod, FORGE-MOD-1): `forge lanes --json` prints both lanes
+   Machine view (for the Claude Code mod, FORGE-MOD-1): `forge board --json` includes both lanes
    for the whole machine: for each lane its size and, in queue order, every entry with kind (work,
    read, review, test), repo root and name, item, model and effort, started time (null while
    waiting), output file path, and for a running test the runner's progress as `done`/`total`
    when the runner prints it (pytest's `[ NN%]` and xdist counts), else null. Machine load and
-   memory come from the OS. AGENTS delivers the view with agent entries and its schema; TESTS adds
+   memory come from the OS. The board has `lanes.agents` and `lanes.tests`, each with `size` and
+   `entries`; `machine.load` is the OS's three load averages (null where unavailable), and
+   `machine.memory` has `total_bytes` and `available_bytes` (null where unavailable). Entries use
+   `id`, `kind`, `repo_root`, `repo_name`, `item`, `model`, `effort`, `joined_at`, `started_at`,
+   `process`, `output_path` and `progress`. The recorded Forge parent holds an agent admission
+   between model calls in the same round; after a test starts, only its test command holds it.
+   There is no separate lanes command. AGENTS delivers the view with agent entries and its schema; TESTS adds
    the test entry's progress and output fields. `forge stop --id <entry id>` ends exactly that lane
    entry (the mod uses this); `forge stop [--repo <root>] <item>` ends every entry of that item in
    that repo, in both lanes (a worker and its own `forge test`). A running entry's process is
@@ -132,7 +138,7 @@ tightening it needs no new approval. -->
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
-| AGENTS | Agent lane by cores | `machine.half_cores()`, the agent queue sized by it, doctor's split line, the guide's lanes section, `forge lanes --json` with agent entries, `forge stop <item>` | 1, 4, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/cli.py, src/forge/templates/skill.md, docs/guide.md, tests/conftest.py | tests/test_lanes_agents.py, tests/test_lanes_view.py | | no |
+| AGENTS | Agent lane by cores | `machine.half_cores()`, the agent queue sized by it, doctor's split line, the guide's lanes section, `forge board --json` with lane ids and agent entries, person-only `forge stop <item>` and `forge stop --id <id>` (command ceiling 22, decision 0105) | 1, 4, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/cli.py, src/forge/templates/skill.md, docs/guide.md, tests/conftest.py | tests/test_lanes_agents.py, tests/test_lanes_view.py | | no |
 | TESTS | One test lane for workers and close | `forge test`, the core-limit variables in every test run, the test entry's process record, test progress and output path in the lane entry, the brief's line and commit nudge, the test-audit skill's run step, the upgrade test | 2, 3, 5 | src/forge/review.py, src/forge/worker.py, .claude/skills/test-audit/SKILL.md, .codex/skills/test-audit/SKILL.md, src/forge/templates/brief.md, src/forge/templates/skill.md | tests/test_lanes_tests.py, tests/test_lanes_upgrade.py | AGENTS | no |
 | CI | Slow tests in CI only | Container tests gated on `FORGE_CONTAINERS=1`, set by the CI workflow | 3 | tests/test_proto_deploy.py, .github/workflows/forge-next.yml, .github/workflows/codex-smoke.yml | tests/test_lanes_ci.py | | no |
 

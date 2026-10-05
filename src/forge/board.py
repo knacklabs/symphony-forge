@@ -23,7 +23,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import __version__, approval, codex, repo, story, task
+from forge import __version__, approval, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -338,7 +338,8 @@ def machine_board(top: Path) -> Item:
         if key not in items:
             items[key] = row(key, "story", "A story with missing state", {}, landed)
         items[key]["children"] = parts
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values())}
+    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
+            "lanes": machine.view(), "machine": machine.load()}
 
 
 def numbers_line(top: Path, checks: list[str]) -> str:

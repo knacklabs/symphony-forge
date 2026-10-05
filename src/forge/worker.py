@@ -96,7 +96,8 @@ def work(args: argparse.Namespace) -> None:
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
     # The round then waits for one of the machine's agent slots.
-    with codex.hold(top, item, kind), machine.agent_slot(top, "work"):
+    with codex.hold(top, item, kind), machine.agent_slot(top, "work", item,
+            chosen.get("model"), chosen.get("effort")):
         if on_codex:
             codex.recover(top, item)
         question = codex.record(top, item).get("question")
@@ -476,8 +477,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-            env={**os.environ, "FORGE_WORKER": "1"}) as worker:
-        machine.started(worker.pid)
+            env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker:
+        machine.agent_started(worker.pid)
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker.stdin.write(brief)
         worker.stdin.close()

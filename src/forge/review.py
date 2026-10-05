@@ -21,7 +21,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo, spotted
+from forge import codex, machine, repo, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -469,7 +469,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot(top, "review"):
+        with machine.agent_slot(top, "review", item, **chosen):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
                     findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
@@ -551,8 +551,9 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
-    machine.started(proc.pid)
+                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
+                            **codex.GROUP)
+    machine.agent_started(proc.pid)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
         line = line.replace(b"\0", b"")

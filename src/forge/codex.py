@@ -325,7 +325,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
             errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
-        machine.started(driver.pid)
+        machine.agent_started(driver.pid)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
