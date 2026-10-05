@@ -18,22 +18,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "27ef9fd614cfe76d4efed4940504a29b60d960f40e18f25b621816593335c99b",
-    "changed": "10c8bdb7b852c44d482f2ccab722f44ac4c612fc915861a368df698c2fc5a6f9",
-    "commit": "9df78bc3eb13b5138086ba3f1edbee09fbf6c7c4",
+    "branch_diff": "30d1f2eafe982db51c6f7df41236b445d70d56a0937f7d93f4d61b26d8a47899",
+    "changed": "9228ba04ee20b87978750f032207d23299f839d51e7daa492efaba5eb970d44f",
+    "commit": "314ea0785a5e3df4d444f7f0c3fb0b91cef607a5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The explicit head checkout changes ordinary CI from testing the PR merged into its base to testing the branch alone. This also affects `.github/workflows/forge.yml:22` and `.github/workflows/forge-next.yml:43`. If the default branch advances during review with a non-conflicting but incompatible change, the final suite can pass against the old base while the actual merge fails. This can reach merge: `src/forge/init.py:242` leaves strict up-to-date protection disabled by default, and `src/forge/merge.py:74` checks only the recorded head. GitHub documents the [default merge checkout versus explicit head checkout](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows). Inspect the branch head for the records-only shortcut, but retain merge-result testing for full-suite runs; reused results must also cover the same base. Otherwise, the promised \u201cany other change runs the suite as today\u201d behavior is weakened.",
-        "file": "src/forge/prcheck.py",
-        "line": 59,
-        "priority": "P1",
-        "title": "Preserve merge-result testing when running the full suite"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:31:15+00:00",
@@ -57,6 +49,10 @@
     },
     {
       "at": "2026-10-05T04:50:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T05:27:38+00:00",
       "step": "review"
     }
   ],
