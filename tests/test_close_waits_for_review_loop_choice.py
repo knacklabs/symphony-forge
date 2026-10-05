@@ -21,7 +21,12 @@ def stopped(env, kind="fix"):
     seed(env, "src/a.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     result = rounds(env, item, where, ["src/a.py"] * 3)
-    assert "Forge stops sending the worker back" in result.stderr
+    assert result.stderr.splitlines()[-2:] == [
+        f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
+        "round flagged too, so Forge stops sending the worker back. Ask the human "
+        "to narrow the part, split it, or accept the remaining findings.",
+        f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
+    ]
     return item, where
 
 
@@ -55,7 +60,11 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
     before = len(env.review_calls())
     no_reason = env.close(item, "--resolve", choice)
     assert no_reason.returncode == 1
-    assert "human's choice" in no_reason.stderr
+    assert no_reason.stderr == (
+        "Record the human's choice only on a stopped review loop, with a non-empty "
+        "--reason and no finding dismissals.\n"
+        f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"\n'
+    )
     reason = "The human chose this after reading the remaining findings"
     result = env.close(item, "--resolve", choice, "--reason", reason)
     assert result.returncode == 0, result.stderr
@@ -98,7 +107,11 @@ def test_3_acceptance_refuses_code_changed_since_the_stopped_review(env):
     env.commit(where, "app.py", "print('unreviewed')\n")
     result = env.close(item, "--resolve", "accept", "--reason", "Human accepts")
     assert result.returncode == 1
-    assert "changed since" in result.stderr
+    assert result.stderr == (
+        "The code or scope changed since the stopped review, so those findings "
+        "cannot be accepted for this version.\n"
+        f'Next: forge close {item} --resolve <narrow|split> --reason "<human\'s choice>"\n'
+    )
     assert env.close(item).returncode == 1
     assert saved(where, item)["status"] == "hotspot"
 
