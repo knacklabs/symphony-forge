@@ -15,34 +15,41 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4ce2c14388656920625257f0b3820d497d0a9dc56aa6cdcac284fb89687923cb",
-    "changed": "453575452ac3bc232b44151ad83b95f5bac2b36f2983a55fab8a2699d6c8fbed",
-    "commit": "5c62bf2a90912e7cbf9bbfd2bf98415a1127c64f",
+    "branch_diff": "8c91031a81cfbc5d45605db6ccfedd3c9ddaa969bdfca39dde04a9b4a0f4df0c",
+    "changed": "927913d4bcb85df986a45b3c4eea09145001cd4b5169a8fe15d6fb7df3768ff4",
+    "commit": "9126be9b62b3c69cd68b1dea519230d0974f0fa5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported command-rewriting defect remains. For `python -m pip install pytest && python -m pytest tests`, both `pytest` tokens receive `--ignore` arguments, so pip fails before the tests run. The fallback at line 80 also appends pytest arguments to Ruff in `python run_tests.py && ruff check .`, even when the launcher forwards arguments correctly. Identify the actual pytest invocation or launcher before modifying its arguments, preserving the other shell commands.",
+        "body": "The previously reported defect remains: `python -m pip install pytest && python -m pytest tests` matches both `pytest` tokens and receives picker arguments on the pip invocation, causing setup to fail. The fallback at line 81 also appends pytest arguments to Ruff in `python run_tests.py && ruff check .`, even when the launcher forwards arguments as required by the ruling. Locate the actual pytest invocation or launcher and preserve the other shell commands.",
         "file": "src/forge/fasttest.py",
-        "line": 73,
+        "line": 74,
         "priority": "P2",
         "title": "Recognize pytest invocations before adding pytest arguments"
       },
       {
-        "body": "This still merges addopts from every configuration candidate, including defaults when `-c` selects another file. An active pytest.ini without xdist settings and an inactive tox.ini containing `addopts = -n auto` cause Forge to inject `--maxprocesses`; without xdist installed, the otherwise valid test command fails with an unrecognized argument. [Pytest selects one configuration rather than merging candidates](https://docs.pytest.org/en/stable/reference/customize.html). Derive worker settings only from the configuration pytest actually selects.",
+        "body": "The previously reported defect remains: this loop combines every configuration candidate, including defaults when `-c` selects another file. With an active pytest.ini containing no xdist options and an inactive tox.ini containing `addopts = -n auto`, Forge injects `--maxprocesses` into a valid command; without xdist installed, pytest rejects it. [Pytest selects one configuration file and never merges candidates](https://docs.pytest.org/en/stable/reference/customize.html). Inspect only the configuration selected for that invocation.",
         "file": "src/forge/fasttest.py",
-        "line": 38,
+        "line": 39,
         "priority": "P2",
         "title": "Read worker options only from pytest's selected configuration"
       },
       {
-        "body": "Explicit unrelated targets are removed only from the forge.toml command string. A target such as `tests/test_unrelated.py::test_unrelated` supplied through configuration addopts or PYTEST_ADDOPTS remains present despite the appended `--ignore`. [Pytest bypasses ignore checks for explicitly supplied paths](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py), so the picker can print only related files while still running unrelated tests. Filter explicit targets from both option sources while preserving their other settings.",
+        "body": "The previously reported defect remains: explicit unrelated targets are removed only from the command string. `tests/test_unrelated.py::test_unrelated` in configuration addopts or PYTEST_ADDOPTS survives the appended ignore arguments. [Pytest bypasses ignore checks for explicitly supplied files](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py), so unrelated tests still run despite the printed selection. Filter explicit excluded targets from both option sources while preserving their other settings.",
         "file": "src/forge/fasttest.py",
         "line": 64,
         "priority": "P2",
         "title": "Exclude unrelated paths supplied through pytest addopts"
       },
       {
-        "body": "The updated setup paragraph still instructs the agent to use \u201cthe repo's Python runner with Forge installed\u201d at line 302. The same instruction remains in both checked-in Forge skills. This contradicts the fix's installation-free client setup and can direct agents to add Forge to the client's environment unnecessarily. Clarify that the project runner belongs in the full test command and that the picker runs through the separately installed Forge tool.",
+        "body": "Whenever unrelated files exist, the picker now passes `@selection.txt` to the client's pytest. [Argument-file support was introduced in pytest 8.2](https://docs.pytest.org/en/stable/how-to/usage.html#read-arguments-from-file). A client pinned to pytest 7.x or 8.1 therefore interprets this as a collection path and exits with a file-not-found error instead of running related tests. Preserve a narrowing path supported by those versions; the new tests exercise only the repository's installed pytest.",
+        "file": "src/forge/fasttest.py",
+        "line": 156,
+        "priority": "P2",
+        "title": "Support pytest versions before 8.2 when narrowing tests"
+      },
+      {
+        "body": "The previously reported contradiction remains. Immediately after advertising the external picker, line 302 instructs agents to use \u201cthe repo's Python runner with Forge installed.\u201d The same instruction appears at line 302 in both .codex/skills/forge/SKILL.md and .claude/skills/forge/SKILL.md. This can direct new clients to install Forge into their project unnecessarily. Clarify that the project runner belongs in `test`, while the separately installed Forge tool runs the picker.",
         "file": "src/forge/templates/skill.md",
         "line": 300,
         "priority": "P2",
@@ -51,7 +58,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T04:52:56+00:00",
@@ -63,6 +70,10 @@
     },
     {
       "at": "2026-10-05T07:00:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:37:58+00:00",
       "step": "review"
     }
   ],
