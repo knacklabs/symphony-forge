@@ -3,12 +3,37 @@
   "base": "adcb321c8af1eb69b419acbd3bf4954adac12410",
   "branch": "fix/release-126",
   "done_when": "Forge's version is 1.2.6 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, sync output and the tests that pin them).",
+  "flagged": [
+    "tests/test_release_version.py"
+  ],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3d24d8adca33323aec80b2c65b7aa32b9ae32d5eaf67c3fcc57077f3eea4a1c8",
+    "changed": "efcba2c735303b4f5a7d3dc3f9ce40e40b0f78c20726dc29d5141fb9bc45161f",
+    "commit": "df644a9a66618d585157f5d3fc31648f84c9c14e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The supplied proof list is missing, and the latest commit contains no complete mapping from Done-when details to named proofs. Add the required list covering the package version, repository pin, both installers, README install steps, sync output, and tests that pin the release. The passing suite and release regression test do not replace this explicitly required handoff.",
+        "file": "tests/test_release_version.py",
+        "line": 11,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "3c18f5ce-88bc-44f1-932d-6609a930040e",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T16:10:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T18:10:05+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients and this repo need v1.2.6 for the fewer-review-rounds, faster-close and machine-view changes merged since v1.2.5",
