@@ -143,11 +143,15 @@ def test(args) -> int:
                 parts.pop()
             if parts:
                 modules.add(".".join(parts))
-        selected = sorted(path.as_posix() for path in tests
-                          if path.as_posix() in changed
-                          or any(module.rsplit(".", 1)[-1] in path.name
-                                 or mentions(path, module)
-                                 for module in modules))
+        selected = []
+        for path in tests:
+            text = path.read_text("utf-8")
+            if (path.as_posix() in changed
+                    or any(name in text for name in changed if name)
+                    or any(module.rsplit(".", 1)[-1] in path.name
+                           or mentions(path, module) for module in modules)):
+                selected.append(path.as_posix())
+        selected.sort()
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
