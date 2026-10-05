@@ -1,0 +1,14 @@
+{
+  "base": "ef770cd9e49ed10ead9d951a69a85a39b340f911",
+  "branch": "fix/repos-without-a-quick-test-setting-don-t",
+  "done_when": "forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {base}; vitest or jest repos get their runner on changed files with --passWithNoTests using the repo's own install and runner; mixed repos get one part per kind; Go, Rust, Java, .NET and Ruby repos get no line; skill.md says so; new and existing client repos each have a command test",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-05T08:21:50+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Repos without a quick test setting don't learn which quick test command fits them"
+}
