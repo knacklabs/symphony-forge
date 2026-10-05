@@ -3,35 +3,29 @@
   "flagged": [
     "src/forge/mod/hooks/core.test.ts",
     "src/forge/mod/hooks/forge.ts",
-    "src/forge/mod/hooks/summary.ts"
+    "src/forge/mod/hooks/summary.ts",
+    "tests/test_mod_plugin.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d202362a2dfb1114bebb545ea8d0a29390180742831a42839a59f21ab4d10bb0",
-    "changed": "bee0ef5a47c03e81d7c323f070f372ccf6f1f9fa146945a6d08f61b46f566abc",
-    "commit": "2aa1b71d8bb57d0c46729ead90579c06198ba9e0",
+    "branch_diff": "677ec48fee916169674257c598b447de94baaf33d61677f7b3ce2eeb4c3b9642",
+    "changed": "6161aa87e04ea397c5979e17469107d68187ebbb414dffc45019cb4e4d5fbe09",
+    "commit": "af2b4262f6e686f26865671dc6f0eacf249f2ef6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The real producer emits a running worker with `started_at: null` when its start was not recorded (`src/forge/board.py:249\u2013250`), and the existing command test explicitly verifies that output (`tests/test_machine_views.py:281`). This validator rejects that legitimate row, causing the entire refresh to fail and leaving every story, check and finding absent or stale. Allow a null start time in the worker type and validator, and render its elapsed time as unknown.",
-        "file": "src/forge/mod/hooks/forge.ts",
-        "line": 27,
+        "body": "The standard requires \u201cTypeScript in strict mode.\u201d The new hooks have no TypeScript configuration or strict compiler check. This invocation runs them using Node's type stripping, which performs no type checking and ignores tsconfig files ([Node documentation](https://nodejs.org/api/typescript.html#type-stripping)). The repository test command at forge.toml:6 likewise runs only pytest. Add strict type checking against Claude Code's declarations to the required checks; executing the hooks successfully does not enforce this standard.",
+        "file": "tests/test_mod_plugin.py",
+        "line": 38,
         "priority": "P1",
-        "title": "Accept unknown worker start times from the board contract"
+        "title": "Standard: TypeScript in strict mode"
       },
       {
-        "body": "The shared formatter omits required information that CORE owns. It always prints agent/test counts even without lane data, where detail 2 requires the next command alone, and prints `next.line` without exposing an available `next.command`. At line 27, a completed stage with `seconds` also loses its outcome: failed and successful Tests stages both become `Tests 5s`. These omissions affect the headless `/forge` reply already shipped here, independently of the pane and strip rendering deferred by the coordinator. Preserve stage outcomes and format the next command and no-lanes state as specified; cover those outputs through `/forge`.",
-        "file": "src/forge/mod/hooks/summary.ts",
-        "line": 33,
-        "priority": "P1",
-        "title": "Not done: /forge returns the summary of detail 2"
-      },
-      {
-        "body": "The elapsed-time assertion occurs after advancing exactly 10 seconds, which also runs the next scheduled refresh. It therefore passes if `/forge` incorrectly computes elapsed time from `data.refreshedAt` instead of the current clock. The packaged tests do not assert worker elapsed time either. Add the required entry-point check before the next tick\u2014for example, advance five seconds, verify that no refresh ran, and assert that `/forge` reports five additional seconds.",
+        "body": "The improved between-refresh elapsed assertion, unknown worker start case and stage-outcome assertions exist in core.test.ts, but the repository suite never invokes this file. forge.toml:6 runs pytest, and test_mod_plugin.py imports the production hooks through its Node harness instead. Consequently, the supplied green close run does not exercise these new regression assertions. SHIP owns the native plugin test job (plans/FORGE-MOD-1.md:243), so ensure that task runs core.test.ts with `claude plugin test` and propagates failures. This is deferred advice because the Tasks table assigns that execution check to SHIP.",
         "file": "src/forge/mod/hooks/core.test.ts",
-        "line": 39,
-        "priority": "P1",
-        "title": "Not done: elapsed time advances between refreshes"
+        "line": 40,
+        "priority": "P2",
+        "title": "Later: SHIP must run the native CORE regression tests"
       }
     ],
     "status": "blocked"
@@ -44,6 +38,10 @@
     },
     {
       "at": "2026-10-05T14:30:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T15:49:36+00:00",
       "step": "review"
     }
   ],

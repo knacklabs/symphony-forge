@@ -672,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "tests/test_mod_plugin.py",
+      "line": 38,
+      "text": "Standard: TypeScript in strict mode",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
       "kind": "bug",
       "path": "tests/test_new_and_existing_repo_planning.py",
