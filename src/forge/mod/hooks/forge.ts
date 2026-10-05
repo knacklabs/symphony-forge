@@ -71,11 +71,11 @@ export function createCore() {
       const refreshedAt = await now()
       data.board = board as Board
       data.next = next as Next
-      data.lanes = lanes
+      data.lanes = lanes ?? null
       data.refreshedAt = refreshedAt
       data.error = null
     } catch (error) {
-      data.error = String(error instanceof Error ? error.message : error).split(/\r?\n/)[0]
+      data.error = String(error instanceof Error ? error.message : error).split(/\r?\n/)[0] ?? ''
     } finally {
       running = false
       // All reads complete before the snapshot is published.

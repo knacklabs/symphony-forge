@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
+from urllib.request import urlopen
 
 import pytest
 
@@ -39,6 +40,21 @@ def node_run(folder, text):
                             capture_output=True, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
     return json.loads(result.stdout)
+
+
+def test_mod_hooks_pass_strict_typescript_against_claude_declarations(packaged_mod):
+    # Claude's published declarations are pinned independently of the hooks.
+    declarations = packaged_mod / ".claude-plugin/types"
+    declarations.mkdir(parents=True)
+    with urlopen("https://raw.githubusercontent.com/anthropics/claude-code/"
+                 "684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts",
+                 timeout=30) as response:
+        (declarations / "claude-code.d.ts").write_bytes(response.read())
+    result = subprocess.run(
+        [shutil.which("npx") or "npx", "-y", "-p", "typescript@5.9.3", "tsc", "-p", str(packaged_mod)],
+        capture_output=True, text=True, timeout=90,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def packaged_mod_refreshes_real_checks_and_returns_headless_text(env, packaged_mod, tmp_path):
