@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import machine, repo
+from forge import machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
@@ -114,6 +114,11 @@ def test(args) -> int:
         repo.refuse(REFUSALS["picker"])
     changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
+    parts = quicktest.test_parts(Path.cwd(), command)
+    mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
+    if mixed:
+        command = " && ".join(part for kind, part, _ in parts
+                              if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
@@ -122,7 +127,8 @@ def test(args) -> int:
            or Path(name).name.endswith(".lock")
            or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)
            for name in changed):
-        print("Shared test inputs changed; running the full test command.", flush=True)
+        print("Shared test inputs changed; running " +
+              ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
         tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
                                                 "--exclude-standard")

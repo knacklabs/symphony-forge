@@ -373,6 +373,17 @@ Adopting changes no app code.
    repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
    checks in `test`.
    Forge writes no `fast_test` by itself.
+   When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
+   `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
+   repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
+   and `--passWithNoTests`. Mixed repos get one part per kind. The Python picker skips
+   the JavaScript test runners, checks and installation steps, including when shared Python
+   inputs require all Python tests; the suggested Node part installs first and runs its checks
+   once. Forge's generated optional-package wrapper is kept around the Node suggestion.
+   `npm exec` keeps its own options before `--` and its runner after it so npm forwards
+   the changed-file flags. Go, Rust, Java, .NET
+   and Ruby get no suggestion. Check the suggestion against the repo's setup before
+   agreeing to it; other shell flows need the agent to adapt the command.
 
 On a live app, every story and fix also follows these:
 
