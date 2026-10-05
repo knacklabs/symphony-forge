@@ -30,14 +30,25 @@ def run_picker(repo, command, *, shared=False):
 
 
 @pytest.mark.parametrize("shared", [False, True], ids=["related", "full-fallback"])
-@pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS"])
-def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration):
-    repo.write("src/sitecustomize.py", "import os\nos.cpu_count = lambda: 2\n")
+@pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS", "launcher",
+                                            "pyproject.toml", "pytest.toml", "smaller-cap"])
+def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration, monkeypatch):
+    cores = 4 if configuration == "smaller-cap" else 2
+    repo.write("src/sitecustomize.py", f"import os\nos.cpu_count = lambda: {cores}\n")
     repo.write("tests/test_prices.py", "def test_count(request):\n"
                "    assert request.config.workerinput['workercount'] == 1\n")
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
     if configuration == "pytest.ini":
         repo.write("pytest.ini", "[pytest]\naddopts = -n 2\n")
+    elif configuration == "PYTEST_ADDOPTS":
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-n 2")
+    elif configuration == "pyproject.toml":
+        repo.write("pyproject.toml", '[tool.pytest.ini_options]\naddopts = ["-n", "2"]\n')
+    elif configuration == "pytest.toml":
+        repo.write("pytest.toml", '[pytest]\naddopts = ["-n", "2"]\n')
+    elif configuration == "smaller-cap":
+        # Keep the repo's stricter cap while imposing Forge's machine ceiling.
+        repo.write("pytest.ini", "[pytest]\naddopts = -n 4 --maxprocesses=1\n")
     else:
         # With no plugin, a launcher forwards pytest options from the command.
         # It may still replace PYTEST_ADDOPTS; the command-line cap wins.

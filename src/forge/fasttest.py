@@ -31,10 +31,12 @@ def pytest_options() -> str:
         config = configparser.ConfigParser(interpolation=None)
         config.read(name, encoding="utf-8")
         options += " " + config.get(section, "addopts", fallback="")
-    if Path("pyproject.toml").is_file():
-        options += " " + str(tomllib.loads(Path("pyproject.toml").read_text("utf-8"))
-                             .get("tool", {}).get("pytest", {}).get("ini_options", {})
-                             .get("addopts", ""))
+    for name in ("pyproject.toml", "pytest.toml", ".pytest.toml"):
+        if Path(name).is_file():
+            config = tomllib.loads(Path(name).read_text("utf-8"))
+            section = config.get("tool", {}).get("pytest", {}) if name == "pyproject.toml" else config.get("pytest", {})
+            value = section.get("ini_options", section).get("addopts", "")
+            options += " " + (" ".join(value) if isinstance(value, list) else value)
     return options
 
 
@@ -48,9 +50,11 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
     options = ["--ignore=" + path for path in excluded]
-    if re.search(r"(?:^|\s)(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))",
-                 command + " " + pytest_options()):
-        options.append("--maxprocesses=" + workers)
+    configured = command + " " + pytest_options()
+    if re.search(r"(?:^|\s)(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))", configured):
+        caps = [int(cap) for cap in re.findall(r'''(?:^|\s)["']?--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
+                if int(cap) > 0]
+        options.append("--maxprocesses=" + str(min([int(workers), *caps])))
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
     found = False
