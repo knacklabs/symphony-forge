@@ -185,8 +185,11 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,statusCheckRollup,isDraft")
+    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,isDraft")
            if isinstance(pr.get("url"), str)} if trees else {}
+    if trees:
+        prs.update({pr["headRefName"]: pr for pr in board._machine_prs(top)
+                    if isinstance(pr.get("headRefName"), str)})
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
@@ -570,8 +573,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = (_report_config(path or top, refusals)["checks"]
               if pr and status == "waiting for checks" else [])
-    ready = status == "ready" or (status == "waiting for checks" and checks
-                                  and board._green_at(pr, checks) and not pr.get("isDraft"))
+    ready = status == "ready" or (status == "waiting for checks"
+                                  and board._checks_ready(top, state.get("branch", ""), pr, checks))
     if status == "ready" and not pr.get("url") and state.get("branch") and shutil.which("gh"):
         # The bulk list missed it (GitHub can time out on it); ask for this branch's link alone.
         view = repo.run("gh", "pr", "view", state["branch"], "--json", "url", "--jq", ".url", cwd=top)

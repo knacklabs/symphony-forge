@@ -148,6 +148,7 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     assert made.returncode == 0, made.stderr
     state(worktree(repo, "fix/polish") / ".factory/fixes/polish.json", status="waiting for checks")
     pr = pull(1, "fix/polish")
+    pr["headRefOid"] = repo.git("rev-parse", "fix/polish")
     fixture = json.loads(FIXTURE.read_text("utf-8"))["github"]
     check = ({**fixture["commit_status"], "context": "forge-pr-check", "state": "SUCCESS"}
              if context == "commit status" else
@@ -155,6 +156,7 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
               "startedAt": "2026-10-04T10:00:00Z"})
     pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"] = [check]
     task_pr = {**pr, "number": 2, "headRefName": "task/BOARD-PAGE",
+               "headRefOid": repo.git("rev-parse", "task/BOARD-PAGE"),
                "url": "https://github.com/a/b/pull/2"}
     github(gh, [pr, task_pr])
     gh.respond("pr", "list", "--state", "all", stdout=json.dumps([{**pr, "state": "OPEN"}]))
@@ -172,15 +174,31 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
     assert "startedAt" in " ".join(query)
     assert "\n" not in query[-1], "Windows .cmd shims must receive the whole query on one line"
-    # Passing checks do not make a draft ready; missing checks do not either.
-    for draft, nodes in ((True, [check]), (False, [])):
+    # The whole result must pass on this head, including checks not named in config.
+    optional = {**fixture["check_run"], "name": "optional preview"}
+    for draft, nodes, more, stale in (
+            (True, [check], False, False), (False, [], False, False),
+            (False, [check, optional], False, False),
+            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": None}], False, False),
+            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": "SUCCESS"}], False, False),
+            (False, [check], True, False), (False, [check], False, True)):
         pr["isDraft"] = task_pr["isDraft"] = draft
-        pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"] = nodes
+        contexts = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
+        contexts["nodes"] = nodes
+        contexts["pageInfo"]["hasNextPage"] = more
+        if stale:
+            # A fresh fetch still describes the previous push after a local commit.
+            for folder in (worktree(repo, "fix/polish"), task_folder):
+                repo.git("commit", "--allow-empty", "-qm", "Change the branch head", cwd=folder)
         github(gh, [pr, task_pr])
         state(repo.path / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
         rows = {r["id"]: r for r in view(repo, "board")["items"]}
         assert rows["polish"]["stage"] == "waiting for checks"
         assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
+        for row in (rows["polish"], rows["BOARD"]["children"][0]):
+            assert "ready to merge" not in row["next"]["line"]
+            assert "checks passed" not in row["next"]["line"]
+        assert "ready to merge" not in view(repo, "next")["next"]["line"]
 
 
 def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
@@ -412,6 +430,11 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     assert row["stage"] == "ready"
     assert row["next"]["command"] == f"forge merge {fix}"
     # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
+    pr = pull(1, f"fix/{fix}")
+    pr["headRefOid"] = repo.git("rev-parse", f"fix/{fix}")
+    contexts = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
+    contexts["nodes"].append({**contexts["nodes"][0], "name": "tests"})
+    github(env.gh, [pr])
     env.commit(fix_tree, "readme.md", "Welcome back.\n")
     row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
     assert row["stage"] == "waiting for checks"
@@ -420,6 +443,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     remote = repo.git("remote", "get-url", "origin")
     gh = env.gh
     gh.respond("api", "graphql", exit=1, stderr="offline")
+    state(checkout / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
     for merged_fix in (False, True):
         if merged_fix:
             # Retain the merged worktree to cover its permission-dependent cleanup instruction.

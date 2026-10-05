@@ -135,7 +135,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
             continue
         name = check.get("name") or check.get("context") or "Check"
         names.append(name)
-        value = check.get("conclusion") or check.get("state")
+        value = (check.get("conclusion") if check.get("status") == "COMPLETED" else None) or check.get("state")
         failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
                   or value in ("NEUTRAL", "SKIPPED") and
                   any(name == want or name.startswith(want + " (") for want in required))
@@ -153,6 +153,14 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
     return status, events
+
+
+def _checks_ready(top: Path, branch: str, pr: Item | None, required: list[str]) -> bool:
+    """Only a complete passing result for the local branch head can replace a close receipt."""
+    return bool(pr and not pr.get("isDraft") and _checks(pr, required)[0] == "pass"
+                and pr.get("headRefOid") and branch
+                and repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
+                == pr["headRefOid"])
 
 
 def _rollup(pr: Item) -> list[Item]:
@@ -183,7 +191,6 @@ def machine_board(top: Path) -> Item:
     older = nextstep._prs(top, "open", "number,headRefName,url,isDraft")
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    mapped_prs = {branch: {**pr, "statusCheckRollup": _rollup(pr)} for branch, pr in by_branch.items()}
     timings = []
     path = repo.forge_dir(top) / "timings.jsonl"
     for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
@@ -204,9 +211,9 @@ def machine_board(top: Path) -> Item:
         pr = by_branch.get(branch)
         checks, events = _checks(pr, cfg["checks"])
         try:
-            lines = (nextstep._item(item, title, state, top, tree, mapped_prs, {}) if kind != "story"
+            lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
                      else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
-                                          title, trees, set(), mapped_prs, {})[0])
+                                          title, trees, set(), by_branch, {})[0])
         except (repo.Refused, subprocess.CalledProcessError):
             lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
@@ -263,8 +270,7 @@ def machine_board(top: Path) -> Item:
                            if any(r.get("seconds") is not None for r in records) else None})
         stage = (nextstep._item_readiness(item, state, top)[0]
                  if kind != "story" else state.get("status")) or "unknown"
-        if (stage == "waiting for checks" and cfg["checks"] and not (pr or {}).get("isDraft")
-                and _green_at(mapped_prs.get(branch), cfg["checks"])):
+        if stage == "waiting for checks" and _checks_ready(top, branch, pr, cfg["checks"]):
             stage = "ready"
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)

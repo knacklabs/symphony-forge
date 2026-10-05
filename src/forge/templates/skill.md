@@ -114,9 +114,11 @@ state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
 Close's clean-review receipt marks tasks and fixes ready while it matches the
 branch's current commit. Tasks and fixes waiting for checks also show ready when
-their required checks pass on a non-draft pull request, even if close stopped waiting
-before writing its receipt. If the next step cannot be checked, the row stays visible
-with no runnable command; check the connection and run `forge next` again.
+the complete check result passes on a non-draft pull request's current local branch
+commit, even if close stopped waiting before writing its receipt. Failed or running
+checks, an incomplete result or checks for an earlier push cannot restore readiness.
+The item's next step uses the same evidence. If the next step cannot be checked,
+the row stays visible with no runnable command; check the connection and run `forge next` again.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
 started_at, ended_at and seconds for the current round from Forge's timing records;
