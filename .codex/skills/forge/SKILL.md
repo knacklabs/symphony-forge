@@ -94,6 +94,51 @@ Read the [migration playbook](migrate-skill.md) before running `forge migrate --
 or `forge migrate`. It ships beside this skill and covers the human's agreement,
 preservation review, merge, cleanup and rollback. Follow it in order.
 
+## Machine views
+
+`forge board --json` and `forge next --json` print JSON for the Claude Code mod and
+other readers. The usual commands still print text or open the HTML board. Both views
+include `version` (the running Forge release) and `repo_root` (the resolved main
+worktree path, shared by the repo's worktrees).
+
+The board's `items` has one row per story and fix, with tasks in the story's `children`.
+Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
+`started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
+`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`, and its own `next`.
+An empty board has an empty items list. Missing state shows unknown. No run start,
+end, round or occurrence id is invented when its producer has not recorded one.
+The last task's merged outcome marks its story done, even when the saved story
+state still says approved. New clients get these views and this guide at init;
+existing clients get them after upgrading Forge and running sync.
+Close's clean-review receipt marks tasks and fixes ready while it matches the
+branch's current commit. If the next step cannot be checked, the row stays visible
+with no runnable command; check the connection and run `forge next` again.
+
+Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
+started_at, ended_at and seconds for the current round from Forge's timing records;
+unrecorded values are null. Total_seconds adds recorded stage durations across rounds;
+live elapsed time comes from timestamps. Worker-owned tests belong to Build; close's tests and
+`forge test` belong to Tests. A skipped test has status skipped. RUNS supplies the
+round and run records; until it lands these values remain null.
+
+The newest 25 open pull requests get checks in one GitHub request, cached for 60
+seconds in the shared Git directory. Older pull requests and unreachable GitHub
+show unknown checks. Required checks, including matrix variants, must succeed;
+skipped or neutral required checks show fail, while optional ones count as passed.
+A failed check occurrence keeps GitHub's own identity:
+`check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
+completion is a new occurrence. Each occurrence has id, kind and plain title;
+run, review and question occurrences await RUNS' recorded ids.
+
+Both views' `next` contains `command` and `line`. Command is the first Next line
+only when it is one runnable Forge command without a placeholder or alternative;
+otherwise it is null. Line carries the plain current state from the text report.
+Use each board row's next step for that item, never another
+item's step. Machine views do not grant approval or permission to merge.
+
+The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
+in `tests/test_machine_views.py` checks both views against it.
+
 ## Handoff
 
 `.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across

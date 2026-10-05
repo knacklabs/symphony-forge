@@ -1,0 +1,62 @@
+{
+  "github": {
+    "recorded_from": ["GitHub GraphQL knacklabs/symphony-forge open pull requests", "GitHub GraphQL rails/rails open pull requests"],
+    "check_run": {"__typename": "CheckRun", "databaseId": 111371488290, "name": "forge-pr-check", "status": "COMPLETED", "conclusion": "FAILURE", "completedAt": "2026-10-04T05:41:48Z"},
+    "commit_status": {"__typename": "StatusContext", "id": "SC_kwDNIULPAAAADOrMkdw", "context": "buildkite/docs-preview", "state": "FAILURE", "createdAt": "2026-10-02T19:32:15Z"}
+  },
+  "next": {
+    "version": "1.2.3",
+    "repo_root": "/example/repo",
+    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it."}
+  },
+  "board": {
+    "version": "1.2.3",
+    "repo_root": "/example/repo",
+    "items": [
+      {
+        "id": "polish",
+        "kind": "fix",
+        "title": "Polish the guide",
+        "stage": "ready",
+        "approval": null,
+        "worker": null,
+        "pr": {"number": null, "checks": "unknown"},
+        "findings": {"count": 0, "titles": []},
+        "round": null,
+        "total_seconds": null,
+        "stages": [
+          {"name": "Build", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Tests", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Review", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "CI", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Merge", "status": null, "started_at": null, "ended_at": null, "seconds": null}
+        ],
+        "occurrences": [],
+        "next": {"command": null, "line": "Polish the guide is ready and waiting for someone to merge it."},
+        "children": []
+      },
+      {
+        "id": "WAIT",
+        "kind": "story",
+        "title": "Board shows each story in plain English",
+        "stage": "planning",
+        "approval": {"doc": "/example/repo-WAIT/plans/WAIT.md"},
+        "worker": null,
+        "pr": {"number": null, "checks": "unknown"},
+        "findings": {"count": 0, "titles": []},
+        "round": null,
+        "total_seconds": null,
+        "stages": [
+          {"name": "Build", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Tests", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Review", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "CI", "status": null, "started_at": null, "ended_at": null, "seconds": null},
+          {"name": "Merge", "status": null, "started_at": null, "ended_at": null, "seconds": null}
+        ],
+        "occurrences": [],
+        "next": {"command": "forge read WAIT", "line": "Planning Board shows each story in plain English: plans/WAIT.read.md is missing."},
+        "children": []
+      }
+    ]
+  }
+}
