@@ -196,14 +196,20 @@ teams on Claude Code, Codex or both.
      the differing files that item 5 doesn't hold back, and commits exactly those paths with the
      fix's `why` as the subject. It prints `- Fixed: wrote <n> of Forge's files in fix <name>.`
      and the current fix's row.
-   - When nothing differs there, doctor removes the new fix's folder and branch, and prints no
-     line.
+   - Doctor makes its fix only when the checkout has no uncommitted changes and is at
+     `origin/<default>`; otherwise a row says to commit or discard the changes first, and nothing
+     is made. Each doctor fix is named `forge-files-<YYYYMMDD-HHMM>` when made, so a repair after an
+     earlier one merged is a new item with its own pull request. Doctor keeps at most one open:
+     an existing branch named `fix/forge-files-*` without a merged or closed pull request is its
+     fix, whether or not its record was committed, and doctor makes no other.
+   - Doctor works out what differs before it makes the fix, so it never makes a fix with nothing
+     in it. Doctor never removes its own fix's folder or branch, whatever happens (simpler, and no
+     uncommitted work can be lost; owner rule for areas that keep breaking).
    - When writing or committing fails (sync refusing a link that leads outside the repo, a file
-     the system won't write, or a commit a git hook refuses), doctor removes the new fix's folder
-     and branch (`git worktree remove --force`, then `git branch -D`), and a row gives the reason,
-     with the Fix `forge doctor --fix`. The next run starts over. When that removal fails too (a
-     locked folder, a file in use), the row also names the folder, and the next run finds it stale
-     and starts a new fix.
+     the system won't write, or a commit a git hook refuses), doctor leaves the fix's folder as it
+     is, and a row gives the reason with one step: finish it with `forge close <fix>` in that
+     folder, or remove it with `git worktree remove --force "<path>"` and `git branch -D <branch>`,
+     then run `forge doctor --fix` again.
    - Nothing is written or committed on the default branch. A file held back keeps its own row.
 
    **On any other branch:** doctor writes or removes the files in place and doesn't commit them,
