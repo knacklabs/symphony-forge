@@ -45,6 +45,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 273,
+      "text": "Include the waiting story's approval document in board JSON",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: GitHub-unreachable board rows with unknown checks\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -72,6 +83,17 @@
       "path": "src/forge/board.py",
       "line": 260,
       "text": "Not done: report ready tasks and fixes at their current stage",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report the current stage when checks become green\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 265,
+      "text": "Not done: report the current stage when checks become green",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
@@ -628,6 +650,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/nextstep.py\tKeep release notices from replacing next.line",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 119,
+      "text": "Keep release notices from replacing next.line",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
@@ -727,17 +760,6 @@
       "closed_by": null
     },
     {
-      "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
-      "kind": "improve",
-      "path": "src/forge/codex.py",
-      "line": 74,
-      "text": "Give forge ask a retry instruction that preserves the question",
-      "from": "review",
-      "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -745,6 +767,17 @@
       "text": "Both checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
       "from": "worker",
       "item": "client-repos-never-learn-that-a-newer-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
+      "kind": "improve",
+      "path": "src/forge/codex.py",
+      "line": 74,
+      "text": "Give forge ask a retry instruction that preserves the question",
+      "from": "review",
+      "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
     }
