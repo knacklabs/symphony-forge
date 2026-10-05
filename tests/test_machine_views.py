@@ -107,9 +107,10 @@ def test_1_board_shows_recorded_live_agent_metadata(env, kind):
     assert next(r for r in view(repo, "board")["items"] if r["id"] == item)["worker"] is None
 
 
-def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env):
+@pytest.mark.parametrize("priority", ["P1", "P2", "P3"])
+def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priority):
     from test_run_records import configure, records
-    from test_close import blocked, finding, CLEAN
+    from test_close import blocked, finding, report, CLEAN
     repo = configure(env)
     item, folder = env.start_fix()
     stub = repo.bin / "claude"
@@ -127,11 +128,15 @@ def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env):
     assert ends and all(e["id"] in occurrences for e in ends)
     stub.write_text(source, "utf-8")
     assert repo.forge("work", item, "--note", "Yes").returncode == 0
-    env.reviews(blocked(finding("P1", "Parser drops input")))
-    assert env.close(item).returncode != 0
+    problem = finding(priority, "Parser drops input")
+    env.reviews(blocked(problem) if priority == "P1" else {"exit": 0, "report": report(problem)})
+    assert (env.close(item).returncode != 0) == (priority == "P1")
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
     result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
     assert result["id"] in {o["id"] for o in row["occurrences"]}
+    previous_review = result["id"]
+    assert row["findings"]["count"] == 1
+    assert row["stage"] == ("fixing" if priority == "P1" else "ready")
     assert asked["id"] not in {o["id"] for o in row["occurrences"]}
     env.commit(folder, "app.py", "print('repaired')\n")
     env.reviews(CLEAN)
@@ -141,11 +146,45 @@ def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env):
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
     result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
     ready = next(o for o in row["occurrences"] if o["kind"] == "ready_to_merge")
+    assert previous_review not in {o["id"] for o in row["occurrences"]}
     assert ready["id"] == result["id"] + ":" + repo.git("rev-parse", "HEAD", cwd=folder)
     # Successful close under human ownership advertises readiness with no runnable merge.
     following = view(repo, "next")["next"]
     assert following["command"] is None
     assert "ready to merge" in following["line"]
+
+
+def test_2_next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
+    from test_task import DOC
+    setup(repo, keys=("BOARD",))
+    doc = "\n".join(line for line in DOC.splitlines()
+                    if not line.startswith("| ") or line.startswith("| PAGE |") or line.startswith("| ID |"))
+    story(repo, doc=doc, approved=doc)
+    repo.git("merge", "-q", "--ff-only", "story/BOARD")
+    repo.git("push", "-q", "origin", "main")
+    started = repo.forge("task", "start", "BOARD/PAGE")
+    assert started.returncode == 0, started.stderr
+    folder = worktree(repo, "task/BOARD-PAGE")
+    # A human's historical merge lacks the outcome trailer now written by forge merge.
+    repo.git("merge", "-q", "--squash", "task/BOARD-PAGE")
+    repo.git("commit", "-qm", "Merge the board task without an outcome")
+    repo.git("push", "-q", "origin", "main")
+    repo.git("worktree", "remove", str(folder))
+    made = repo.forge("fix", "start", "Polish the guide", "--done", "Reads clearly", "--slug", "polish")
+    assert made.returncode == 0, made.stderr
+    github(gh, [])
+    plain = repo.forge("next")
+    assert plain.returncode == 0, plain.stderr
+    steps = [line for line in plain.stdout.splitlines() if line.startswith("Next: ")]
+    assert steps[0] == 'Next: forge story done BOARD "<outcome sentence>"'
+    assert "Next: forge work polish" in steps[1:]
+    following = view(repo, "next")["next"]
+    assert following["command"] is None
+    assert "record its outcome" in following["line"]
+    rows = {r["id"]: r for r in view(repo, "board")["items"]}
+    assert rows["BOARD"]["next"]["command"] is None
+    assert "record its outcome" in rows["BOARD"]["next"]["line"]
+    assert rows["polish"]["next"]["command"] == "forge work polish"
 
 
 def view(repo, command, cwd=None):
@@ -533,6 +572,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     assert worked.returncode == 0, worked.stderr
     env.open_pr("")
     env.checks(GREEN)
+    from test_close import finding, report, CLEAN
+    env.reviews({"exit": 0, "report": report(finding("P2", "Use clearer basket copy"))})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     # Close leaves saved state waiting for checks; the reviewed-head receipt makes it ready.
@@ -541,11 +582,13 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     assert child["next"]["command"] == "forge merge SHOP/T1"
     assert any(o["kind"] == "run_finished" for o in child["occurrences"])
     assert any(o["kind"] == "ready_to_merge" for o in child["occurrences"])
+    assert any(o["kind"] == "review_findings" for o in child["occurrences"])
     stages = {s["name"]: s for s in child["stages"]}
     assert stages["Build"]["status"] == "pass"
     assert stages["Tests"]["status"] == "skipped"
     assert stages["Review"]["status"] == "pass"
     assert stages["Review"]["ended_at"] is not None
+    env.reviews(CLEAN)
     fix, fix_tree = env.start_fix(changes={"readme.md": "Welcome.\n"})
     closed = env.close(fix)
     assert closed.returncode == 0, closed.stderr

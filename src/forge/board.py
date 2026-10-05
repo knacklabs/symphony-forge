@@ -293,7 +293,7 @@ def machine_board(top: Path) -> Item:
             elif event_kind == "worker question" and event.get("id") == pending:
                 occurrence_kind, message = "worker_question", event.get("question")
             elif (event_kind == "review result" and event == latest_review
-                  and (event.get("outcome") == "failed" or event.get("outcome") == "blocked" and findings)):
+                  and (event.get("outcome") == "failed" or findings)):
                 occurrence_kind, message = "review_findings", "Review found problems" if findings else "Review failed"
             else:
                 continue

@@ -135,8 +135,9 @@ skipped or neutral required checks show fail, while optional ones count as passe
 A failed check occurrence keeps GitHub's own identity:
 `check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
 completion is a new occurrence. Each occurrence has id, kind and plain title;
-run completions, open review problems and unanswered worker questions retain the ids
-in Forge's event records. Readiness uses the clean review's id plus the current head
+run completions, undismissed review findings (including advisory findings) and unanswered
+worker questions retain the ids in Forge's event records. Advisory occurrences do not
+change the merge gate. Readiness uses the clean review's id plus the current head
 commit. Runs that start and finish between board refreshes still appear as completions.
 
 Both views' `next` contains `command` and `line`. Command is the first Next line
