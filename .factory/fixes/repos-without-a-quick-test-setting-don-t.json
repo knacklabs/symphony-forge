@@ -8,20 +8,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f40c3ea67e6279720a809b80fb150b996dd10cddda68b83333740ffb4758e536",
-    "changed": "afd7380532bb63bbd5a4b70b83fe8e6c0bc654c0484c41f1aa6584c9336228f1",
-    "commit": "05fef38a593a4a288196dc7063f4eddfd8cc3bbe",
+    "branch_diff": "87f1546e887d4f7806c4592d5af4ef3c0beaeaeb724d13f0ba1274923296a3f4",
+    "changed": "a1c8de6410a576f364e83b0dd31a57f18fcebd852bac0eec3371929d05bf3339",
+    "commit": "8d9a67ad384541f02be78602baa2d6e73271e432",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported direct-executable case remains: `uv run pytest && npm ci && ./node_modules/.bin/eslint . && npm test`, where npm test runs Vitest or Jest. Direct ESLint receives an empty kind here. The Python picker therefore retains it while removing npm installation and the Node runner (src/forge/fasttest.py:120\u2013121), then executes it at line 171. When Python tests are selected or shared inputs change, the suggestion fails without installed Node dependencies; with dependencies present, ESLint runs twice. This direct-executable evidence goes beyond the coordinator's isolation ruling. Classify direct local Node checks consistently so both doctor and upgrade suggestions run them once after installation.",
+        "body": "The previous direct-executable finding remains open. For `uv run pytest && npm ci && ./node_modules/.bin/eslint . && npm test`, with npm test invoking Vitest or Jest, direct ESLint receives an empty kind. The Python picker retains it while removing npm installation and the Node runner (src/forge/fasttest.py:120\u2013121), then executes it at line 171. When Python tests are selected or shared inputs change, the suggested command fails before reaching installation if dependencies are absent; otherwise ESLint runs twice. Direct local checks such as `./node_modules/.bin/tsc` have the same problem. This direct-executable case goes beyond the coordinator's isolation ruling. Classify these checks consistently so both doctor and upgrade suggestions execute them once after installation.",
         "file": "src/forge/quicktest.py",
         "line": 50,
         "priority": "P2",
         "title": "Keep installation before direct Node checks in mixed suggestions"
       },
       {
-        "body": "The previously reported trailing-option case remains: `npm exec jest --workspace=web` becomes `npm exec -- jest --workspace=web --changedSince {base} --passWithNoTests`. Inserting `--` before the runner converts npm's workspace selection into a runner argument, losing the intended execution context. The same defect affects Vitest and other trailing npm configuration options through both doctor and upgrade. [npm's exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec) confirms that npm parses options following positional arguments until `--`. This is the trailing-option evidence beyond the earlier leading-option repair; preserve those npm options before the inserted separator.",
+        "body": "The previous trailing-option finding remains open. `npm exec jest --workspace=web` becomes `npm exec -- jest --workspace=web --changedSince {base} --passWithNoTests`. Moving the separator before the runner turns npm's workspace selection into a runner argument, losing the intended execution context. Vitest and other trailing npm configuration options are affected through both doctor and upgrade. [npm's documented contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec) confirms that npm parses options after positional arguments until `--`. This trailing-option case goes beyond the earlier leading-option repair. Preserve npm's configuration options before the inserted separator.",
         "file": "src/forge/quicktest.py",
         "line": 85,
         "priority": "P2",
@@ -58,6 +58,10 @@
     },
     {
       "at": "2026-10-05T12:08:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T13:59:03+00:00",
       "step": "review"
     }
   ],
