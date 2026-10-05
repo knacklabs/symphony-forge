@@ -80,10 +80,16 @@ def test_1_next_announces_new_releases_with_a_shared_daily_cache(repo, gh, tmp_p
         '    import threading\n    threading.Event().wait(4)\n'
         '    sys.stdout.write(\'{"tagName":"v99.10.0"}\')\n'
         '    sys.exit(0)'), encoding="utf-8")
+    # Bound the added release-check delay, not all of next's git and command startup.
+    # In particular, Windows needs several seconds even when the release is cached.
+    started = time.monotonic()
+    cached = repo.forge("next", cwd=client)
+    cached_seconds = time.monotonic() - started
+    assert cached.returncode == 0, cached.stderr
     monkeypatch.setenv("FORGE_NOW", "2030-01-07T10:00:00+00:00")
     started = time.monotonic()
     timed_out = repo.forge("next", cwd=client)
-    assert time.monotonic() - started < 6
+    assert time.monotonic() - started - cached_seconds < 5
     assert timed_out.returncode == 0, timed_out.stderr
     assert " is out (you pin " not in timed_out.stdout + timed_out.stderr
 
