@@ -540,7 +540,9 @@ updates the pull request's review block when the review finishes. Ready still ne
 review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
 commit changes Forge's review record and its accompanying state under `.factory/`. Any other
-change or missing passing parent result runs the suite.
+change or missing passing parent result runs the suite on the pull request merged into its
+current base. Reuse also requires the parent to include that base; a parent pull request run
+must have tested that same base. A changed base or missing proof runs the suite again.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is

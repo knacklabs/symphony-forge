@@ -28,8 +28,16 @@ def suite_runs(workflow, reuse):
     return reuse != condition[1]
 
 
+def merge_checkout(workflow):
+    tests_job = workflow.split("\n  tests:\n", 1)[1].split("\n  net-lines:", 1)[0]
+    checkout = tests_job.split("- uses: actions/checkout@", 1)[1].split("\n      - ", 1)[0]
+    assert "ref:" not in checkout, "Full tests must keep GitHub's merge-result checkout"
+    assert "HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}" in tests_job
+    assert "BASE_SHA: ${{ github.event.pull_request.base.sha }}" in tests_job
+
+
 @pytest.mark.parametrize("client_kind", ["new", "previous", "source"])
-@pytest.mark.parametrize("case", ["review", "push", "target-only", "code", "other-record", "contract", "red",
+@pytest.mark.parametrize("case", ["review", "push", "base-advanced", "wrong-tested-base", "target-only", "code", "other-record", "contract", "red",
                                   "pending", "missing", "api-error", "newer-red"])
 def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tmp_path,
                                                                       monkeypatch, client_kind, case):
@@ -59,16 +67,21 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     assert not suite_runs(workflow, "true")
     assert suite_runs(workflow, "false")
     assert "actions: read" in workflow
+    merge_checkout(workflow)
     record = client / ".factory/fixes/reuse-tests.json"
     record.parent.mkdir(parents=True, exist_ok=True)
     state = {"branch": "fix/reuse-tests", "kind": "fix", "why": "Keep tests fast",
              "done_when": "Review overlaps CI", "status": "working"}
     record.write_text(json.dumps(state))
+    (client / "base-value").write_text("compatible\n")
+    (client / "check-merge.py").write_text(
+        'from pathlib import Path\nassert Path("base-value").read_text() == "compatible\\n"\n')
     env.repo.git("add", "-A", cwd=client)
     committed = subprocess.run(["git", "commit", "-q", "-m", "Work ready for review"],
                                cwd=client, capture_output=True, text=True)
     assert committed.returncode == 0, committed.stderr
     parent = env.repo.git("rev-parse", "HEAD", cwd=client)
+    base = env.repo.git("rev-parse", "HEAD^", cwd=client)
     state.update(review={"status": "clean", "commit": parent, "findings": [], "dismissals": []},
                  status="waiting for checks", steps=[{"step": "review"}], flagged=[])
     if case == "contract":
@@ -80,13 +93,32 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         (client / ".factory/unrelated.json").write_text('{}')
     env.repo.git("add", "-A", cwd=client)
     env.repo.git("commit", "-q", "-m", "Review is clean", cwd=client)
+    head = env.repo.git("rev-parse", "HEAD", cwd=client)
+    monkeypatch.setenv("HEAD_SHA", head)
+    tested_base = base
+    if case == "base-advanced":
+        # A non-conflicting base change can still break the merged application. The old
+        # head checkout and parent-only proof miss this; run from the real merge instead.
+        env.repo.git("checkout", "-q", "-B", "fix/reuse-tests", parent, cwd=client)
+        (client / "base-value").write_text("incompatible\n")
+        env.repo.git("add", "base-value", cwd=client)
+        env.repo.git("commit", "-q", "-m", "Advance the base", cwd=client)
+        base = env.repo.git("rev-parse", "HEAD", cwd=client)
+    if case != "push":
+        env.repo.git("checkout", "-q", "--detach", base, cwd=client)
+        env.repo.git("merge", "-q", "--no-ff", "-m", "GitHub merge result", head, cwd=client)
+    monkeypatch.setenv("BASE_SHA", base if case != "push" else "")
+    checkout = env.repo.git("rev-parse", "HEAD", cwd=client)
     workflow_ref = "acme/shop/.github/workflows/forge.yml@refs/heads/main"
     monkeypatch.setenv("GITHUB_WORKFLOW_REF", workflow_ref)
     monkeypatch.setenv("GITHUB_REPOSITORY", "acme/shop")
     output = tmp_path / "output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     answer = {"id": 1, "head_sha": parent, "status": "completed", "conclusion": "success",
-              "event": "pull_request_target" if case == "target-only" else "pull_request"}
+              "event": "pull_request_target" if case == "target-only" else "pull_request",
+              "pull_requests": [{"head": {"sha": parent}, "base": {"sha": tested_base}}]}
+    if case == "wrong-tested-base":
+        answer["pull_requests"][0]["base"]["sha"] = parent
     if case == "red":
         answer["conclusion"] = "failure"
     if case == "pending":
@@ -97,7 +129,7 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                    stdout="\n".join(json.dumps(row) for row in rows),
                    exit=1 if case == "api-error" else 0)
-    if case == "push":
+    if case in ("push", "base-advanced"):
         # GitHub's event filter excludes successful push runs. The same workflow
         # and parent SHA must qualify whether tests ran on a push or a pull request.
         answer["event"] = "push"
@@ -108,10 +140,15 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
                           capture_output=True, text=True, timeout=30)
 
     assert done.returncode == 0, done.stderr
+    assert env.repo.git("rev-parse", "HEAD", cwd=client) == checkout
     assert output.read_text().strip() == ("reuse=true" if case in ("review", "push") else "reuse=false")
     assert suite_runs(workflow, output.read_text().strip().split("=", 1)[1]) == (
         case not in ("review", "push"))
-    if case not in ("code", "other-record", "contract"):
+    if case == "base-advanced":
+        suite = subprocess.run([sys.executable, "check-merge.py"], cwd=client,
+                               capture_output=True, text=True, timeout=30)
+        assert suite.returncode == 1 and "AssertionError" in suite.stderr
+    if case not in ("code", "other-record", "contract", "base-advanced"):
         [call] = [c for c in env.gh_calls("api") if ".workflow_runs[]" in c]
         assert "repos/acme/shop/actions/workflows/forge.yml/runs" in call
         assert call[call.index("--method") + 1] == "GET"
@@ -126,3 +163,4 @@ def test_3_forge_matrix_uses_the_same_review_record_shortcut():
     assert not suite_runs(workflow, "true")
     assert suite_runs(workflow, "false")
     assert "actions: read" in workflow
+    merge_checkout(workflow)

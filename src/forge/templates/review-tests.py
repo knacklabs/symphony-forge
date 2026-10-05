@@ -15,10 +15,15 @@ def run(*args: str) -> str:
 
 
 def reuse() -> bool:
-    parents = run("git", "rev-list", "--parents", "-n", "1", "HEAD").split()
+    parents = run("git", "rev-list", "--parents", "-n", "1", os.environ["HEAD_SHA"]).split()
     if len(parents) != 2:
         return False
     head, parent = parents
+    base = os.environ.get("BASE_SHA")
+    # A push tests the branch itself. Reuse it for a PR only if its parent already
+    # incorporates the current base; otherwise the merge result needs its own suite.
+    if base:
+        run("git", "merge-base", "--is-ancestor", base, parent)
     paths = run("git", "diff", "--name-only", "--no-renames", parent, head).splitlines()
     if not paths:
         return False
@@ -44,7 +49,10 @@ def reuse() -> bool:
                                            "-f", f"head_sha={parent}", "-f", "per_page=100").splitlines()]
     # Target-event runs check the PR but skip tests, so their success proves nothing here.
     matching = [r for r in runs if r.get("head_sha") == parent
-                and r.get("event") in {"push", "pull_request"}]
+                and (r.get("event") == "push" or r.get("event") == "pull_request"
+                     and base and any(pr.get("base", {}).get("sha") == base
+                                      and pr.get("head", {}).get("sha") == parent
+                                      for pr in r.get("pull_requests", [])))]
     latest = max(matching, key=lambda r: r["id"], default={})
     return latest.get("status") == "completed" and latest.get("conclusion") == "success"
 

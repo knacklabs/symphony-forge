@@ -56,11 +56,12 @@ jobs:
 <tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
+          fetch-depth: 0
       - id: parent-tests
         env:
           GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
