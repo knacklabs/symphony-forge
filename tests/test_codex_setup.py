@@ -83,6 +83,11 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     _program(program, f"echo codex-cli {PIN}")
     hooks = _stub_forge(tmp_path, monkeypatch)
     _workers(client, "codex")
+    # Default-branch file repairs now require a clean checkout at origin/main. Land the
+    # worker setting so this SDK test still isolates SDK and trust problems.
+    repo.git("add", "forge.toml", cwd=client)
+    repo.git("commit", "-q", "-m", "Use Codex workers", cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
 
     def trust(level: str) -> None:
         (codex_home / "config.toml").write_text(
@@ -103,10 +108,10 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
                 UNTRUSTED, APPROVE):
         assert row in first.stdout, first.stdout
     assert not env.exists()
-    # The two new PreCompact hooks join the six existing host hooks in doctor's probe.
+    # Both hosts share four command/payload pairs, including PreCompact; each is probed once.
     calls = hooks.read_text(encoding="utf-8")
-    assert calls.count('"hook_event_name"') == 8
-    assert calls.count("hook handoff\n") == 2
+    assert calls.count('"hook_event_name"') == 4
+    assert calls.count("hook handoff\n") == 1
     monkeypatch.setenv("PATH", path)
     _install(repo.bin, "uv", UV_STUB.format(python=sys.executable, pin=PIN, program=str(program)))
 
@@ -163,7 +168,7 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     head = repo.git("rev-parse", "HEAD", cwd=worktree)
     refused = repo.forge("work", "SHOP/CART", cwd=worktree)
     assert refused.stderr == ("Codex doesn't trust this project, so it would skip Forge's hooks; "
-                              "Forge starts no Codex worker here.\nNext: forge doctor\n")
+                              "Forge starts no Codex turn here.\nNext: forge doctor\n")
     assert repo.git("rev-parse", "HEAD", cwd=worktree) == head
     trust("trusted")
     in_worktree = repo.forge("doctor", cwd=worktree)
@@ -174,6 +179,9 @@ def test_11_codex_doctor(repo, gh, tmp_path, monkeypatch):
     shutil.rmtree(env)
     (codex_home / "config.toml").unlink()
     _workers(client, "claude")
+    repo.git("add", "forge.toml", cwd=client)
+    repo.git("commit", "-q", "-m", "Use Claude workers", cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
     _install(repo.bin, "claude", "#!/bin/sh\n")
     claude = repo.forge("doctor", "--fix", cwd=client)
     assert claude.returncode == 0, claude.stdout + claude.stderr

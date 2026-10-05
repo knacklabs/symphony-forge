@@ -1,0 +1,28 @@
+{
+  "base": "ee3ca47850f4a6b29c53c1a5220912a26c2ae8fd",
+  "branch": "fix/workers-build-on-macos-or-linux-so-windo",
+  "done_when": "The worker brief and the shipped test standards carry a short Windows checklist: a path written into a file or compared as text goes through json.dumps or as_posix; tests never assume a drive letter or a '/' separator; file operations in tests use the repo's lock-safe helpers where it has them. New and existing repos: every repo gets it from the new release's brief and on its next forge sync; nothing in forge.toml changes. One test checks the synced brief and standards carry the checklist.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "6a13531848f082328cd68a8b6b325e9dfa770745c2a7c105f0879bd85dc3d516",
+    "commit": "c6d2fdc910395b3f219ff241ac0437e6e0c572c9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T16:06:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T16:21:26+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers build on macOS or Linux, so Windows-only mistakes (a path written into a TOML or JSON file without escaping its backslashes, a test assuming a drive or a '/' separator) surface only in CI, each costing a full extra round",
+  "worker": "codex"
+}

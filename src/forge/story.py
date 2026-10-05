@@ -38,7 +38,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, repo, worker
+from forge import codex, machine, repo, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -93,6 +93,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         ".codex/skills/forge/SKILL.md": skill,
         **{f"{host}/skills/forge/standards.md":
            (TEMPLATES.parent / "standards.md").read_text(encoding="utf-8")
+           for host in (".claude", ".codex")},
+        **{f"{host}/skills/forge/migrate-skill.md":
+           (TEMPLATES / "migrate-skill.md").read_text(encoding="utf-8")
            for host in (".claude", ".codex")},
         **{f"{host}/skills/forge/fde.md":
            sync._synced_text(".codex/skills/forge/fde.md", "fde.md")
@@ -217,12 +220,15 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"], why)
+        with machine.agent_slot(top, "read"):
+            done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
+                                why)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
-        with codex.hold(top, target, "Grill"):  # one read per item, and nothing left running
+        # One read per item, nothing left running, and one of the machine's agent slots.
+        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read"):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -298,17 +304,11 @@ def done(args: Any) -> int:
         repo.refuse(REFUSALS["not_finished"], key=key,
                     problem=f"{', '.join(waiting)} not merged yet" if waiting else "it has no tasks")
     state = json_of(show(top, ref, repo.state_path(key)))
-    title, slug = state.get("title") or key, f"{key.lower()}-done"
-    path = add_worktree(top, f"fix/{slug}", ref)
+    title = state.get("title") or key
     state.update(status="done", outcome=args.outcome, merged=dates, finished=max(dates.values()))
-    fix = {"kind": "story-done", "why": f"Record that {title} is finished, and what it achieved.",
-           "done_when": "The board shows the story as finished, with its outcome.", "outcome": args.outcome,
-           "branch": f"fix/{slug}", "base": repo.git("rev-parse", ref, cwd=top), "status": "started",
-           "touches": 0}
-    changed = [repo.write_state(key, repo.add_step(state, "done"), path),
-               repo.write_state(slug, repo.add_step(fix, "start"), path)]
-    repo.commit_state(f"Record the outcome of {title}", *changed, top=path)
-    print(f"Opened the fix that records the outcome of {title} in {path}.\nNext: forge close {slug}")
+    changed = repo.write_state(key, repo.add_step(state, "done"), top)
+    repo.commit_state(f"Record the outcome of {title}", changed, top=top)
+    print(f"Recorded the outcome of {title} on this work branch.\nNext: forge next")
     return 0
 
 
@@ -620,6 +620,32 @@ def merged_at(top: Path, ref: str, path: str) -> str:
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
 
 
+def completed(top: Path, key: str, ref: str) -> dict[str, Any]:
+    """Read completion from the last task's squash message; older saved outcomes win."""
+    state = json_of(show(top, ref, repo.state_path(key)))
+    if state.get("status") == "done":
+        return state
+    text = show(top, ref, f"plans/{key}.md") or ""
+    try:
+        tasks = parse(text)["tasks"]
+    except ValueError:
+        return state
+    dates = {row["id"]: merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")) for row in tasks}
+    if not dates or not all(dates.values()):
+        return state
+    # The file's first appearance identifies its merge, even after later edits to task state.
+    for tid in dates:
+        message = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
+                           ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top)
+        for line in reversed(message.splitlines()):
+            if line.startswith("Forge-story-done: "):
+                record = json_of(line.removeprefix("Forge-story-done: "))
+                if record.get("key") == key and isinstance(record.get("outcome"), str):
+                    return {**state, "status": "done", "outcome": record["outcome"],
+                            "merged": dates, "finished": max(dates.values())}
+    return state
+
+
 def json_of(text: str | None) -> dict[str, Any]:
     """A JSON object read from git, or {} when it's missing or unreadable."""
     try:
@@ -670,9 +696,25 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
                  resume: str | None, why: str) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
-    command = ["claude", "-p", *models, "--permission-mode", "plan"]
+    exe = shutil.which("claude")
+    if exe is None:
+        repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
+
+    def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
+        with repo.record_run(top, target, "read", family="claude",
+                             model=models[models.index("--model") + 1] if models else None) as ran:
+            with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args],
+                                  cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                  errors="replace",
+                                  env={**os.environ, "FORGE_WORKER": "1"}) as reader:
+                machine.started(reader.pid)
+                out, err = reader.communicate(text)
+            ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
+        return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
+
     if resume:
-        done = repo.run(*command, "--resume", resume, cwd=top, input=prompt)
+        done = run("--resume", resume, text=prompt)
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -681,7 +723,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
-    return repo.run(*command, "--session-id", session, cwd=top, input=fresh_prompt)
+    return run("--session-id", session, text=fresh_prompt)
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:
@@ -821,7 +863,7 @@ COMMANDS = [
     {"words": "story done", "run": "done", "changes_state": True,
      "help": "Record a finished story's outcome sentence and dates",
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
-     "listing": '| `forge story done <KEY> "<outcome>"` | Records a finished story\'s outcome sentence and dates |'},
+     "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
      "help": "Run a round of the cold read of a story doc or spec",
      "args": [(('target',), {"help": "a story key or a spec slug"})],

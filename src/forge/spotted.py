@@ -76,10 +76,48 @@ def _parse(raw: bytes) -> list[dict[str, Any]]:
     return items
 
 
-def read(top: Path) -> list[dict[str, Any]]:
-    """The checkout's list; no file is an empty one. Anything else is Unreadable."""
+def read(top: Path, ref: str | None = None) -> list[dict[str, Any]]:
+    """The checkout's or a commit's list; no file is empty. Anything else is Unreadable."""
+    if ref is not None:
+        shown = subprocess.run(["git", "show", f"{ref}:{PATH}"], cwd=top, capture_output=True)
+        return _parse(shown.stdout) if shown.returncode == 0 else []
     path = top / PATH
     return _parse(path.read_bytes()) if path.is_file() else []
+
+
+def hotspots(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Files with repeated open advice or the same serious finding across changes."""
+    paths: dict[str, list[dict[str, Any]]] = {}
+    for entry in sorted(items, key=lambda entry: entry["key"]):
+        if entry["status"] == "open":
+            paths.setdefault(entry["path"], []).append(entry)
+    found = []
+    for path, entries in sorted(paths.items()):
+        count = sum(entry["from"] in ("worker", "review") for entry in entries)
+        blocking = max((len({entry["item"] for entry in entries
+                             if entry["from"] == "blocking" and entry["kind"] == kind})
+                        for kind in KINDS), default=0)
+        if count >= 3 or blocking >= 2:
+            found.append({"path": path, "reason": "open" if count >= 3 else "blocking",
+                          "count": count if count >= 3 else blocking,
+                          "texts": [entry["text"] for entry in entries]})
+    return found
+
+
+def fix_text(path: str, texts: list[str]) -> tuple[str, str]:
+    """Plain fix text safe inside double quotes in POSIX, PowerShell and cmd."""
+    cleaned = [" ".join(re.sub(r"[^A-Za-z0-9 .,:;/_-]", " ", text).split())
+               for text in texts[:5]]
+    done = f"{path} is simpler and none of these happen any more: " + "; ".join(cleaned)
+    if len(texts) > 5:
+        done += f"; and {len(texts) - 5} more"
+    return f"Simplify {path}: problems keep turning up there", done
+
+
+def names(done_when: str, path: str) -> bool:
+    """A named file, without matching part of a longer path."""
+    return re.search(r"(?<![A-Za-z0-9_./-])" + re.escape(path) + r"(?![A-Za-z0-9_./-])",
+                     done_when) is not None
 
 
 def write(top: Path, items: list[dict[str, Any]]) -> None:
@@ -121,6 +159,12 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
     tree = set(repo.git("ls-tree", "-r", "-z", "--name-only", "--full-tree", "HEAD",
                         cwd=top).split("\0"))
     changed = False
+    if "/" not in item:
+        for entry in items:
+            if (entry["status"] == "open" and entry["item"] != item
+                    and names(state.get("done_when", ""), entry["path"])):
+                entry.update(status="done", closed_by=item)
+                changed = True
 
     def add(kind: str, path: str, line: Any, text: str, source: str) -> None:
         nonlocal changed

@@ -76,14 +76,20 @@ if "app-server" in done.stdout:
 sys.stdout.write(done.stdout)
 sys.exit(done.returncode)
 """
-# On PYTHONPATH, every Python loads it: the two minutes Codex gets to start pass in a second.
-FAST = """import threading
+# On PYTHONPATH: expire the startup timer only once the test has seen the stalled server on record.
+FAST = """import os, pathlib, threading, time
 
 start = threading.Timer.__init__
 
 
-def fast(self, interval, *args, **kwargs):
-    start(self, min(interval, 1), *args, **kwargs)
+def fast(self, interval, function, *args, **kwargs):
+    if function.__name__ != "late":
+        return start(self, interval, function, *args, **kwargs)
+    def expire():
+        while not pathlib.Path(os.environ["STUB_CODEX_EXPIRE"]).exists():
+            time.sleep(0.05)
+        function()
+    start(self, 0, expire, *args, **kwargs)
 
 
 threading.Timer.__init__ = fast
@@ -116,8 +122,9 @@ def _up(pid: int) -> bool:
 
 
 def _down(pid: int) -> bool:
-    """Whether the process has gone, or goes within ten seconds: stopping takes a moment."""
-    for _ in range(100):
+    """Wait for process exit, allowing a busy machine a minute to deliver the signal."""
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
         if not _up(pid):
             return True
         time.sleep(0.1)
@@ -141,7 +148,8 @@ def _held(repo, calls: Path, record: Path, status: str, *args: str,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     finally:
         signal.signal(signal.SIGINT, interrupt)
-    for _ in range(600):
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
         try:  # the stub may be halfway through a line
             said = _stub(calls)
         except ValueError:
@@ -164,7 +172,8 @@ def _freeze(pid: int) -> None:
     every process it started."""
     if os.name != "nt":
         os.kill(pid, signal.SIGSTOP)
-        for _ in range(200):
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
             state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True,
                                    text=True).stdout.strip()
             if state.startswith("T"):
@@ -329,7 +338,8 @@ def _exec_driver_is_stopped(repo) -> None:
         record.write_text(json.dumps({"driver": {"pid": proc.pid, "started": " ".join(ps("lstart").split()),
                                                  "command": ps("command")}}), encoding="utf-8")
         flag.touch()
-        for _ in range(200):
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
             if "sleep 30" in ps("command"):
                 break
             time.sleep(0.05)
@@ -343,6 +353,8 @@ def _exec_driver_is_stopped(repo) -> None:
         proc.wait()
 
 
+# ponytail: four kill-and-wait scenarios; under a full parallel run they need more than the 150 s default.
+@pytest.mark.timeout(600)
 def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     threads = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD"
@@ -361,7 +373,7 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
         work, saved, stub = _held(repo, calls, record, "stall")
         _freeze(saved["driver"]["pid"])
         work.send_signal(signal.SIGINT)
-        work.communicate(timeout=30)
+        work.communicate(timeout=60)
         assert not lock.exists() and _down(stub) and _down(saved["driver"]["pid"])
 
     # While forge work runs, doctor says so and leaves it alone. An error: the driver dies, and
@@ -372,7 +384,7 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
             "Codex process alone.\n") in repo.forge("doctor").stdout
     assert _up(stub) and _up(owner)
     os.kill(saved["driver"]["pid"], KILL)
-    assert "Codex never reported its end" in work.communicate(timeout=30)[1]
+    assert "Codex never reported its end" in work.communicate(timeout=60)[1]
     assert _down(stub)
 
     # A crash that leaves the driver unable to act (stopped, here) leaves its process group and a
@@ -401,9 +413,11 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
     work, saved, stub = _held(repo, calls, record, "stall")
     _freeze(work.pid)
     os.kill(saved["driver"]["pid"], KILL)
+    # SIGKILL only asks: wait for the driver to die before closing Forge's stdin pipe to it,
+    # or its watcher can still end the app-server before the kill reaches it under load.
+    assert _down(saved["driver"]["pid"])
     work.kill()
     work.communicate()
-    assert _down(saved["driver"]["pid"])
     if os.name != "nt":
         # While Forge can't identify that app-server, it counts as running: forge work refuses and
         # keeps it on record, and doctor says so and leaves it alone.
@@ -439,17 +453,20 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path):
         assert _down(stub) and _down(saved["driver"]["pid"])
         monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
 
-    # Codex that never starts gets two minutes (a second here); then the driver ends its group,
-    # and forge work refuses with the log's path.
+    # Codex that never starts gets two minutes; expire that timer after the stalled server is
+    # on record, so load cannot make it fire before there is a process to check was stopped.
     (tmp_path / "fast").mkdir()
     (tmp_path / "fast" / "sitecustomize.py").write_text(FAST, encoding="utf-8")
     monkeypatch.setenv("PYTHONPATH", str(tmp_path / "fast"))
-    monkeypatch.setenv("STUB_CODEX_STATUS", "stall")
-    late = repo.forge("work", "BOARD/PAGE")
+    expire = tmp_path / "expire"
+    monkeypatch.setenv("STUB_CODEX_EXPIRE", str(expire))
+    late, saved, stub = _held(repo, calls, record, "stall")
+    expire.touch()
+    _, error = late.communicate(timeout=60)
     log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
-    assert late.stderr == (f"Codex didn't start within two minutes, so Forge stopped it; its log "
+    assert error == (f"Codex didn't start within two minutes, so Forge stopped it; its log "
                            f"is {log}.\nNext: forge work BOARD/PAGE\n")
-    assert _down([call["pid"] for call in _stub(calls) if "pid" in call][-1])
+    assert _down(stub) and _down(saved["driver"]["pid"])
 
     if os.name != "nt":  # exec is POSIX
         _exec_driver_is_stopped(repo)

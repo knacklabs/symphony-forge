@@ -1,0 +1,59 @@
+{
+  "base": "5e99b7c93fe57137080441d74cf46136ddb55baf",
+  "branch": "fix/when-forge-close-merges-the-default-bran",
+  "done_when": "When close's merge of the default branch conflicts only in files forge sync writes, close takes the default branch's copy of those files, re-runs sync, commits the merge and continues; a conflict in any other file still stops close as today. New and existing repos: works in any repo on this release, since it uses the repo's own sync output. One command-level test: two branches that both changed the skill template merge through close without stopping, and a conflict in a code file still stops it.",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "071acde1399f16e2e38946b3cd11107d2397f3a90268065cf1dd931850685956",
+    "commit": "4d93021e7385b6f9379ee5d5d4db9cf5a9daf246",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The prior finding remains open. In a Forge source checkout, a conflict in src/forge/*.py leaves conflict markers in the running package. Although this call supplies a clean default-branch worktree, src/forge/sync.py:317\u2013322 scans forge.__path__ and parses the live modules, raising SyntaxError before merge --abort and the normal conflict instructions execute. The checkout remains in an active merge, and subsequent Forge commands also fail because src/forge/cli.py:37\u201343 parses those files. Classify source conflicts before constructing the inventory, or ensure inventory failures abort the merge.",
+        "file": "src/forge/close.py",
+        "line": 278,
+        "priority": "P2",
+        "title": "Abort source-code conflicts before scanning live Forge modules"
+      },
+      {
+        "body": "The prior finding remains open in conflict classification and staging. src/forge/githooks.py:74 includes CLAUDE.md in sync's inventory only when it exists in the supplied tree. If default-branch sync deleted it while the worker modified it, the inventory omits that modify/delete conflict and close refuses recovery. If only the worker added CLAUDE.md and another generated file conflicts, sync deletes CLAUDE.md (src/forge/sync.py:390\u2013401), but this filter excludes its deletion from staging. The merge retains the obsolete file and leaves an unstaged deletion. Include sync-managed deletion paths even when absent from the default tree.",
+        "file": "src/forge/close.py",
+        "line": 290,
+        "priority": "P2",
+        "title": "Include sync-managed deletions absent from the default tree"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T07:20:49+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T08:44:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T09:55:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T13:42:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T15:28:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T15:55:28+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "When forge close merges the default branch, the copies of the skill and guide that forge sync writes conflict on almost every busy day, and close stops until someone takes main's copy and re-runs sync by hand",
+  "worker": "codex"
+}

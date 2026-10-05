@@ -1,10 +1,10 @@
-"""Worker briefs carry the two test rules that prevent failed fix rounds."""
+"""Worker briefs require the task's named tests, even for documentation."""
 from test_worker import calls, install_claude
 
 STORY = "FIX-WORKER-BRIEF-RULES"
 
 
-def test_1_worker_brief_does_not_exempt_docs_and_runs_forge(repo):
+def test_1_worker_brief_does_not_exempt_docs(repo):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n'
@@ -20,5 +20,6 @@ def test_1_worker_brief_does_not_exempt_docs_and_runs_forge(repo):
     brief = calls(log)[-1]["brief"]
     # The old brief exempted documentation changes; the task's Tests column now wins.
     assert "A change to documentation only needs no test." not in brief
-    assert ("In a repo whose tests run Forge (forge-source), a test runs the forge command "
-            "and never imports forge.") in brief
+    # Forge-source's command-only test policy now belongs to its own AGENTS.md; clients receive
+    # the general requirement to add every test named in the task, even for documentation.
+    assert "Add every test your task's Tests column names, even when the change is documentation only." in brief

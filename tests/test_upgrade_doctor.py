@@ -9,6 +9,7 @@ import re
 
 import pytest
 
+from test_doctor_fix_files import _land, _set
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
 INSTALL = "uv tool install git+https://github.com/knacklabs/symphony-forge@{pin}"
@@ -37,11 +38,15 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
     installed = "v" + _version(repo).removeprefix("v")
     toml = client / "forge.toml"
     pinned = "v0.0.1" if case.startswith("old pin") else installed
-    toml.write_text(re.sub(r'version = ".*"', f'version = "{pinned}"',
-                           toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
     drift = case.endswith("drifted")
-    if drift:
-        (client / ".claude/skills/remote-approval/SKILL.md").write_text("old\n", encoding="utf-8")
+    if drift:  # an older Forge's file on the default branch; a change by hand would be held back
+        _land(repo, client, "Upgrade Forge", lambda folder: _set(
+            folder, ".claude/skills/remote-approval/SKILL.md", "old\n"), forge=True)
+    # Land before the local pin edit: Windows writes CRLF, so the helper's remote pin commits
+    # can change forge.toml's bytes even when the final version is unchanged.
+    toml.write_text(re.sub(r'version = ".*"', f'version = "{pinned}"',
+                           toml.read_text(encoding="utf-8"), count=1), encoding="utf-8",
+                    newline="\r\n")
     if case == "can't compare":  # a broken Forge block stops forge sync working out its files
         (client / "AGENTS.md").write_text("<!-- forge:end -->\nOurs.\n<!-- forge:begin -->\n",
                                           encoding="utf-8")
@@ -81,6 +86,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         assert "differs from what forge sync writes" not in done.stdout, done.stdout
         return
     assert _compared(installed, pinned) in done.stdout, done.stdout
+    # Old contract: the drift row's fix was forge sync. New: doctor --fix repairs it.
     row = (f".claude/skills/remote-approval/SKILL.md differs from what forge sync writes for "
-           f"the installed Forge {installed}.")
+           f"the installed Forge {installed}.\n  Fix: forge doctor --fix\n")
     assert (row in done.stdout) == drift, done.stdout
