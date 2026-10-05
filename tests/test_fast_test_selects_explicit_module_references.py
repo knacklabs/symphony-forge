@@ -30,7 +30,7 @@ def run_fast_test(repo, *, collect_only=False):
         repo.write("tests/test_changed.py", "def test_changed():\n    assert 2 + 2 == 4\n")
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Change review module")
-    return subprocess.run([sys.executable, str(repo.bin / "forge"), "fasttest", base], cwd=repo.path,
+    return subprocess.run([sys.executable, str(repo.bin / "forge"), "test", "--pytest", base], cwd=repo.path,
                           env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
                           capture_output=True, text=True, timeout=120)
 

@@ -23,7 +23,7 @@ def run_picker(repo, command, *, shared=False):
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change client")
     return subprocess.run(
-        [sys.executable, str(repo.bin / "forge"), "fasttest", base], cwd=repo.path,
+        [sys.executable, str(repo.bin / "forge"), "test", "--pytest", base], cwd=repo.path,
         env={**os.environ, "PYTHONPATH": os.pathsep.join(
             [str(ROOT / "src"), str(repo.path / "src")])},
         text=True, capture_output=True, timeout=120)

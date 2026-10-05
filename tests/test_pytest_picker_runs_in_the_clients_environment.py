@@ -11,7 +11,7 @@ import pytest
 STORY = "FIX-THE-SHIPPED-PYTHON-TEST-PICKER-UV-RUN-PY"
 
 
-def test_1_fasttest_runs_related_tests_and_shared_inputs_in_a_plain_pytest_environment(repo, monkeypatch):
+def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_environment(repo, monkeypatch):
     # Give the client pytest's pure-Python dependencies, with no Forge package.
     client = repo.path / ".venv"
     venv.EnvBuilder(with_pip=False, symlinks=os.name != "nt").create(client)
@@ -53,7 +53,7 @@ def test_1_fasttest_runs_related_tests_and_shared_inputs_in_a_plain_pytest_envir
     changed.write_text(changed.read_text("utf-8") + "\n# Changed test\n", "utf-8")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change module and test")
-    result = repo.forge("fasttest", base)
+    result = repo.forge("test", "--pytest", base)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "4 passed" in result.stdout
     assert (repo.path / "setup-ran").exists()
@@ -62,7 +62,7 @@ def test_1_fasttest_runs_related_tests_and_shared_inputs_in_a_plain_pytest_envir
         repo.write(shared, "# shared input\n")
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Change shared input")
-        result = repo.forge("fasttest", base)
+        result = repo.forge("test", "--pytest", base)
         assert result.returncode == 0, result.stdout + result.stderr
         assert "5 passed" in result.stdout
         assert "Shared test inputs changed" in result.stdout
@@ -72,5 +72,12 @@ def test_1_fasttest_runs_related_tests_and_shared_inputs_in_a_plain_pytest_envir
 def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
     repo.write("forge.toml", 'version = "v1.2.5"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
     result = repo.forge("doctor")
-    assert 'fast_test = "forge fasttest {base}"' in result.stdout
+    assert 'fast_test = "forge test --pytest {base}"' in result.stdout
     assert "python -m forge.fasttest" in result.stdout
+
+
+def test_3_bare_test_names_the_picker_option_in_one_line(repo):
+    result = repo.forge("test")
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr.splitlines() == ["Run forge test --pytest <base> to pick related pytest tests."]

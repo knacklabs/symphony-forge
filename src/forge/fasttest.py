@@ -8,10 +8,14 @@ import subprocess
 import tomllib
 from pathlib import Path
 
-COMMANDS = [{"words": "fasttest", "run": "fasttest", "changes_state": False,
-             "args": [(("base",), {})], "position": 35,
+from forge import repo
+
+COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
+             "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
              "help": "run a pytest repo's changed and module-related tests",
-             "listing": "`forge fasttest <base>` | Run related pytest tests with the repo's test command."}]
+             "listing": "`forge test --pytest <base>` | Run related pytest tests with the repo's test command."}]
+
+REFUSALS = {"picker": ("Run forge test --pytest <base> to pick related pytest tests.", "")}
 
 
 def git_files(*args: str) -> list[str]:
@@ -103,7 +107,9 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
-def fasttest(args) -> int:
+def test(args) -> int:
+    if args.base is None:
+        repo.refuse(REFUSALS["picker"])
     changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     environment = dict(os.environ)

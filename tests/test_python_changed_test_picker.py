@@ -55,7 +55,7 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
             [str(ROOT / "src"), str(repo.path / "src")])}
         if full:
             environment["FULL_SUITE"] = "1"
-        return subprocess.run([sys.executable, str(repo.bin / "forge"), "fasttest", base],
+        return subprocess.run([sys.executable, str(repo.bin / "forge"), "test", "--pytest", base],
                               cwd=repo.path, env=environment, capture_output=True,
                               text=True, timeout=120)
 
@@ -78,10 +78,10 @@ def test_2_previously_adopted_clients_get_the_picker_guidance_after_upgrade(unsy
     _repo_adopted_on_the_previous_release(unsynced_up)
     # Exercise the release's installed tool, rather than the client's Python.
     command = subprocess.run([sys.executable, str(unsynced_up.tmp / "uvbin/forge"),
-                              "fasttest", "--help"], cwd=unsynced_up.repo.path,
+                              "test", "--help"], cwd=unsynced_up.repo.path,
                              capture_output=True, text=True, timeout=60)
     assert command.returncode == 0, command.stdout + command.stderr
-    assert "forge fasttest" in command.stdout
+    assert "forge test" in command.stdout and "--pytest" in command.stdout
     for host in (".claude", ".codex"):
         skill = unsynced_up.show(f"{host}/skills/forge/SKILL.md")
-        assert "forge fasttest {base}" in skill
+        assert "forge test --pytest {base}" in skill
