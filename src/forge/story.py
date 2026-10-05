@@ -701,11 +701,16 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
         repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
 
     def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
-        with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args], cwd=top,
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                              text=True, encoding="utf-8", errors="replace") as reader:
-            machine.started(reader.pid)
-            out, err = reader.communicate(text)
+        with repo.record_run(top, target, "read", family="claude",
+                             model=models[models.index("--model") + 1] if models else None) as ran:
+            with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args],
+                                  cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                  errors="replace",
+                                  env={**os.environ, "FORGE_WORKER": "1"}) as reader:
+                machine.started(reader.pid)
+                out, err = reader.communicate(text)
+            ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
         return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
 
     if resume:

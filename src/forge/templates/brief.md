@@ -20,6 +20,8 @@ $delegation
   existing test it breaks; name each such file and why in your handoff.
 - When finishing needs a choice this item does not settle, end your final message with a
   paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
+  Forge records that question on both Codex and Claude and pauses work and close until the
+  coordinator answers with `forge work <item> --note "<answer>"`.
 
 <!-- if coordinator -->
 ## From the coordinator
