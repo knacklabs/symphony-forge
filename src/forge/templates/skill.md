@@ -564,6 +564,14 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
+Close pushes and opens the pull request before a new review, so CI runs alongside it, then
+updates the pull request's review block when the review finishes. Ready still needs a clean
+review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
+the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
+commit changes Forge's review record and its accompanying state under `.factory/`. Any other
+change or missing passing parent result runs the suite on the pull request merged into its
+current base. Reuse also requires the parent to include that base; a parent pull request run
+must have tested that same base. A changed base or missing proof runs the suite again.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is

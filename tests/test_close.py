@@ -628,7 +628,9 @@ def test_27_title_and_summary(env, kind, title, summary):
     assert env.close(item).returncode == 0
     [create] = env.gh_calls("pr", "create")
     assert create[create.index("--title") + 1] == title
-    assert "--draft" not in create  # a clean review opens ready for review
+    # Close now opens a draft before review, then makes it ready after both gates pass.
+    assert "--draft" in create
+    assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"]]
     assert body(create).splitlines()[1] == f"Done when: {summary}"
 
     # Someone adds a line under Forge's block; the next round replaces only the block.
@@ -636,7 +638,8 @@ def test_27_title_and_summary(env, kind, title, summary):
     env.open_pr(edited)
     env.commit(where, "app.py", "print('tidied')\n")
     assert env.close(item).returncode == 0
-    [edit] = env.gh_calls("pr", "edit")
+    assert len(env.gh_calls("pr", "edit")) == 3  # first result, then running and finished review
+    edit = env.gh_calls("pr", "edit")[-1]  # running review, then its finished block
     assert "--title" not in edit
     begin, end = "<!-- forge:begin -->", "<!-- forge:end -->"
     assert body(edit).split(begin)[0] == edited.split(begin)[0]
