@@ -248,10 +248,6 @@ New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns o
 
 ## Notes
 
-- VIEWS no longer waits for RUNS (owner wants the visible parts sooner): until RUNS merges, the
-  run fields in the machine views (run start and end, round, occurrence ids) are null, and the mod
-  shows elapsed time only for what it can compute; RUNS fills them in when it lands.
-
 - Mods docs: code.claude.com/docs/en/plugins/mods/overview, /reference, /interface (v2.1.287+).
   Render sites `Pane`, `AbovePrompt`; `$.clock.every`, `$.process.run`, `$.prompt.submit`,
   `$.store`, `$.session.surfaces`, `$.session.repo`, `$.session.id`.
