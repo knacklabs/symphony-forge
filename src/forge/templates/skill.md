@@ -112,12 +112,12 @@ end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
-Close's clean-review receipt marks tasks and fixes ready while it matches the
-branch's current commit. Tasks and fixes waiting for checks also show ready when
-the complete check result passes on a non-draft pull request's current local branch
-commit, even if close stopped waiting before writing its receipt. Failed or running
-checks, an incomplete result or checks for an earlier push cannot restore readiness.
-The item's next step uses the same evidence. If the next step cannot be checked,
+Tasks and fixes are ready only while close's clean-review receipt matches the
+branch's current commit and the pull request's checks are not failing. A failed
+rerun shows `checks failed` with `forge work` as its next step, even after a successful
+close. A running rerun or unavailable checks retain a matching receipt's readiness;
+green checks alone cannot grant it. The item's next step uses the same evidence.
+If the next step cannot be checked,
 the row stays visible with no runnable command; check the connection and run `forge next` again.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
@@ -139,6 +139,7 @@ run, review and question occurrences await RUNS' recorded ids.
 Both views' `next` contains `command` and `line`. Command is the first Next line
 only when it is one runnable Forge command without a placeholder or alternative;
 otherwise it is null. Line carries the plain current state from the text report.
+Release notices appear in the text output and never replace the machine view's state line.
 Use each board row's next step for that item, never another
 item's step. Machine views do not grant approval or permission to merge.
 

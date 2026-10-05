@@ -51,7 +51,7 @@ def github(gh, prs):
 @pytest.mark.parametrize("context", [None, "commit status", "check start"])
 def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, context):
     if context is not None:
-        _successful_checks_make_json_and_html_boards_ready(repo, gh, context)
+        _successful_checks_do_not_replace_close_receipts(repo, gh, context)
         return
     setup(repo)
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() +
@@ -132,9 +132,9 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, context):
     assert child["next"]["command"] is None
 
 
-def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
-    # The raw GraphQL rollup replaced gh's exported timestamps. Both board consumers
-    # must retain readiness, including a successful CheckRun without a completion time.
+def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
+    # Green checks formerly granted machine readiness without close's receipt. The
+    # coordinator now requires that receipt; check data and the historical HTML dates stay intact.
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
     repo.git("add", "forge.toml")
@@ -163,9 +163,9 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     rows = {r["id"]: r for r in view(repo, "board")["items"]}
     row = rows["polish"]
     assert row["pr"]["checks"] == "pass"
-    assert row["stage"] == "ready"
-    assert rows["BOARD"]["children"][0]["stage"] == "ready"
-    assert row["next"] == {"command": None, "line": "Polish the guide is ready to merge: https://github.com/a/b/pull/1"}
+    assert row["stage"] == "waiting for checks"
+    assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
+    assert row["next"] == {"command": "forge close polish", "line": "Polish the guide is waiting for its checks."}
     page = repo.path / ".git/forge/ready-board.html"
     result = repo.forge("board", "--out", str(page))
     assert result.returncode == 0, result.stderr
@@ -174,14 +174,16 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
     assert "startedAt" in " ".join(query)
     assert "\n" not in query[-1], "Windows .cmd shims must receive the whole query on one line"
-    # The whole result must pass on this head, including checks not named in config.
+    # Failures need work, while other results still need close's receipt.
     optional = {**fixture["check_run"], "name": "optional preview"}
-    for draft, nodes, more, stale in (
-            (True, [check], False, False), (False, [], False, False),
-            (False, [check, optional], False, False),
-            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": None}], False, False),
-            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": "SUCCESS"}], False, False),
-            (False, [check], True, False), (False, [check], False, True)):
+    for draft, nodes, more, stale, expected in (
+            (True, [check], False, False, "waiting for checks"),
+            (False, [], False, False, "waiting for checks"),
+            (False, [check, optional], False, False, "checks failed"),
+            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": None}], False, False, "waiting for checks"),
+            (False, [check, {**optional, "status": "IN_PROGRESS", "conclusion": "SUCCESS"}], False, False, "waiting for checks"),
+            (False, [check], True, False, "waiting for checks"),
+            (False, [check], False, True, "waiting for checks")):
         pr["isDraft"] = task_pr["isDraft"] = draft
         contexts = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
         contexts["nodes"] = nodes
@@ -193,8 +195,8 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
         github(gh, [pr, task_pr])
         state(repo.path / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
         rows = {r["id"]: r for r in view(repo, "board")["items"]}
-        assert rows["polish"]["stage"] == "waiting for checks"
-        assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
+        assert rows["polish"]["stage"] == expected
+        assert rows["BOARD"]["children"][0]["stage"] == expected
         for row in (rows["polish"], rows["BOARD"]["children"][0]):
             assert "ready to merge" not in row["next"]["line"]
             assert "checks passed" not in row["next"]["line"]
@@ -225,7 +227,7 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
 
 @pytest.mark.parametrize("status,merge,command", [
     ("started", "human", "forge work polish"),
-    ("ready", "human", None), ("ready", "agent", "forge merge polish"),
+    ("ready", "human", "forge close polish"), ("ready", "agent", "forge close polish"),
     ("reviewing", "human", None), ("", "human", "forge work polish")])
 def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, command):
     setup(repo, keys=())
@@ -238,13 +240,18 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
     folder = worktree(repo, "fix/polish")
     state(folder / ".factory/fixes/polish.json", status=status)
     github(gh, [])
+    gh.respond("release", "view", stdout=json.dumps({"tagName": "v99.10.0"}))
     plain = repo.forge("next").stdout
     result = view(repo, "next")
+    assert "Forge v99.10.0 is out" in plain
+    assert result["next"]["line"].startswith("The fix polish ")
     assert result["next"]["command"] == command
     assert result["next"]["line"] in plain.splitlines()
     assert not result["next"]["line"].startswith("Next: ")
     row = view(repo, "board")["items"][0]
-    assert row["stage"] == (status or "unknown")
+    # A saved ready label alone no longer grants readiness; the real close receipts
+    # and owner-specific merge steps are exercised by the client lifecycle contract.
+    assert row["stage"] == ("waiting for checks" if status == "ready" else status or "unknown")
     assert row["next"]["command"] == command
     story(repo, key="WAIT", approved=None)
     repo.git("worktree", "add", str(repo.path.parent / "repo-WAIT"), "story/WAIT")
@@ -429,6 +436,28 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
     assert row["stage"] == "ready"
     assert row["next"]["command"] == f"forge merge {fix}"
+    # A same-head rerun can invalidate the receipt's merge advice. A running rerun
+    # retains readiness until it fails, per the coordinator's receipt-and-no-failure rule.
+    prs = [pull(1, "task/SHOP-T1"), pull(2, f"fix/{fix}")]
+    for pr in prs:
+        pr["headRefOid"] = repo.git("rev-parse", pr["headRefName"])
+        nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+        nodes.append({**nodes[0], "name": "tests"})
+    for conclusion in (None, "FAILURE", "SUCCESS"):
+        for pr in prs:
+            check = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"][0]
+            check.update(conclusion=conclusion, status="IN_PROGRESS" if conclusion is None else "COMPLETED")
+        github(env.gh, prs)
+        cache = checkout / ".git/forge/checks-cache.json"
+        if cache.exists():
+            state(cache, fetched_at="2000-01-01T00:00:00+00:00")
+        rows = {r["id"]: r for r in view(repo, "board")["items"]}
+        for current, result in ((item, rows["SHOP"]["children"][0]), (fix, rows[fix])):
+            assert result["stage"] == ("checks failed" if conclusion == "FAILURE" else "ready")
+            assert result["next"]["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {current}"
+        following = view(repo, "next")["next"]
+        assert following["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {item}"
+        assert ("checks failed" in following["line"]) == (conclusion == "FAILURE")
     # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
     pr = pull(1, f"fix/{fix}")
     pr["headRefOid"] = repo.git("rev-parse", f"fix/{fix}")

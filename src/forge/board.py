@@ -155,14 +155,6 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
     return status, events
 
 
-def _checks_ready(top: Path, branch: str, pr: Item | None, required: list[str]) -> bool:
-    """Only a complete passing result for the local branch head can replace a close receipt."""
-    return bool(pr and not pr.get("isDraft") and _checks(pr, required)[0] == "pass"
-                and pr.get("headRefOid") and branch
-                and repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
-                == pr["headRefOid"])
-
-
 def _rollup(pr: Item) -> list[Item]:
     try:
         nodes = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
@@ -268,10 +260,8 @@ def machine_board(top: Path) -> Item:
                            "ended_at": records[-1].get("end") if records else None,
                            "seconds": sum(r.get("seconds") or 0 for r in records)
                            if any(r.get("seconds") is not None for r in records) else None})
-        stage = (nextstep._item_readiness(item, state, top)[0]
+        stage = (nextstep._item_readiness(item, state, top, checks)[0]
                  if kind != "story" else state.get("status")) or "unknown"
-        if stage == "waiting for checks" and _checks_ready(top, branch, pr, cfg["checks"]):
-            stage = "ready"
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)
         return {"id": item, "kind": kind, "title": title, "stage": stage,

@@ -173,8 +173,10 @@ def _prototype_run(env, _):
             "commits": {"nodes": [{"commit": {"statusCheckRollup": {"contexts": {
                 "nodes": rollup, "pageInfo": {"hasNextPage": False}}}}}]}}]}}}}))
     shown = next_lines()
-    assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
-    assert f"Next: forge close {FIX}" not in shown
+    # Green checks alone formerly advertised a merge; the coordinator now requires
+    # close's receipt. The owner-only merge advice appears after enable finishes below.
+    assert f"The fix {FIX} is waiting for its checks.\nNext: forge close {FIX}" in shown
+    assert "ready to merge" not in shown
 
     # Ready: the whole output names only the owner's merge.
     env.open_pr("")
