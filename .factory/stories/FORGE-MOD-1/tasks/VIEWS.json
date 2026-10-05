@@ -6,27 +6,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "edeb4d181f36b73248e623ff248b662e0ecc617c64e9b6afe3e9532d6edfffd9",
-    "changed": "8931a1fed91d401aafeff8fdbb037192fe174f05e4cabfa18b99a533c39fcd16",
-    "commit": "87aee195afaebe8e51d567aa1bd03b67d898ffef",
+    "branch_diff": "2f39d919bb433aee3667513feba86336b56403bd2f4d1cb531552cb297ff19e6",
+    "changed": "96ec9390df319f1fb1933ededfc51098ae819c56befdea669c9fb3ad402645c7",
+    "commit": "037dc2e2a3bc75191e8b506177c388542053ccee",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previous finding remains open. A failed check overrides the saved status without comparing the response's headRefOid with the local branch head. After a repair commit, tasks and fixes can therefore still show checks failed and advertise forge work instead of forge close, in both board and next output. Preserve the PR's check display, but apply the failure to local readiness only when it describes the current head.",
+        "body": "The previous finding remains open. The GitHub query retrieves headRefOid, but this failure override never compares it with the local branch head. After a repair commit, a cached or freshly fetched failure for the previous push still makes tasks and fixes show checks failed and recommend forge work instead of forge close in both machine views. Keep displaying the PR's checks, but apply their failure to local readiness only when they describe the current head.",
         "file": "src/forge/nextstep.py",
         "line": 530,
         "priority": "P2",
         "title": "Ignore previous-head failures when deriving the local next step"
       },
       {
-        "body": "This previous finding remains open. The machine board queries only open PRs and passes an empty merged-PR set to the story calculation. A task or fix merged on GitHub can consequently retain its old stage and merge advice until origin/main is fetched. The unchanged next-step implementation already obtains merged branches at src/forge/nextstep.py:189 and uses them at lines 506\u2013516. Share that evidence with machine task/fix stages and story next steps.",
+        "body": "The previous finding remains open. The machine board fetches only open PRs and passes an empty merged-PR set here. Tasks and fixes merged on GitHub therefore retain their previous stage and merge advice until origin/main is fetched; story next steps also overlook those merges. The existing next-step implementation obtains merged branches at src/forge/nextstep.py:189 and applies them to fixes at lines 208\u2013209 and tasks at lines 506\u2013516. Use that evidence consistently in the machine board.",
         "file": "src/forge/board.py",
         "line": 209,
         "priority": "P2",
         "title": "Recognize GitHub merges before the default branch is fetched"
       },
       {
-        "body": "The live stage uses only the currently active run's start, resetting its timer when another attempt starts in the same round. Both Claude and Codex commit nudges launch a second run (src/forge/worker.py:193\u2013199 and 212\u2013219); review retries do likewise (src/forge/review.py:464\u2013470). Earlier starts remain recorded but are excluded from live here. Build and Review therefore lose elapsed time during the second attempt, then jump to the full duration when timing is recorded. Anchor the stage clock to its first recorded start in the current round while retaining the active worker's own start.",
+        "body": "The previous finding remains open. The live stage includes only runs without an end record, so a second attempt replaces the first attempt's start and resets its timer. Claude and Codex commit nudges launch another run within the same round at src/forge/worker.py:193\u2013199 and 212\u2013219; review retries do likewise at src/forge/review.py:464\u2013470. Build and Review lose elapsed time during that attempt, then jump back when the full timing is recorded. Anchor the stage to its first recorded start in the current round while retaining the active worker's own start.",
         "file": "src/forge/board.py",
         "line": 283,
         "priority": "P2",
@@ -35,7 +35,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T17:59:47+00:00",
@@ -79,6 +79,10 @@
     },
     {
       "at": "2026-10-05T08:52:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:28:25+00:00",
       "step": "review"
     }
   ],
