@@ -36,7 +36,7 @@ def node_run(folder, text):
         pytest.skip("The mod's TypeScript boundary check needs Node 22.18+; Claude's native tests need Claude 2.1.287+.")
     script = folder / "host.mjs"
     script.write_text(text, encoding="utf-8")
-    result = subprocess.run([node, str(script)], cwd=folder, text=True,
+    result = subprocess.run([node, str(script)], cwd=folder, encoding="utf-8",
                             capture_output=True, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
     return json.loads(result.stdout)
