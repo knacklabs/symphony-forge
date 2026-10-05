@@ -385,7 +385,9 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
              pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
     """Open the pull request, or replace only Forge's block in its body. While the review is
     blocked, the pull request is a draft."""
-    block = _block(result, review.functional_check(top, f"origin/{default}"))
+    check = review.functional_check(top, f"origin/{default}")
+    proof = review.commit_paragraph(top, f"origin/{default}", "Proof list:")
+    block = _block(result, "\n\n".join(part for part in (check, proof) if part))
     draft = result["status"] == "blocked"
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
