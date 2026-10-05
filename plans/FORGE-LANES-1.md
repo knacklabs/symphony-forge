@@ -50,6 +50,8 @@ Risks: none
 
 ## For the builders
 
+`forge test --pytest <base>` already exists as the picker; bare `forge test` runs fast_test in the lane, and a `forge test --pytest` started inside that run does not take the lane again.
+
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 

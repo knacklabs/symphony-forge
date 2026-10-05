@@ -15,9 +15,10 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Git's list merger used a Python snippet; its PATH command now appears as merge-roadmap.
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
+# The approved test command adds the pytest picker after doctor.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -28,13 +29,14 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
      '                        the pinned version\n'
      '    doctor              Check tools, versions, hooks, adapter drift and the\n'
      '                        named CI checks\n'
+     "    test                run a pytest repo's changed and module-related tests\n"
      '    migrate             Move a client from the copied-in Forge to v1 in one\n'
      '                        pull request\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'

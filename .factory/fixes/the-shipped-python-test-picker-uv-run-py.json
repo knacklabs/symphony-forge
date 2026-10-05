@@ -1,0 +1,86 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-05T04:55:08+00:00",
+      "because": "Owner: every feature is proven for new and existing clients",
+      "done_when": "A 'forge fasttest <base>' command works in any pytest repo without installing Forge into the project: Forge picks the changed test files, test files named after a changed module, and test files importing or mentioning it, then runs the repo's own test command from forge.toml narrowed to those files in the repo's environment, runs the full test command when conftest.py, pyproject.toml or a lock file changed, and caps pytest at half the machine's cores; no pytest plugin. Forge's own forge.toml and the skill use 'forge fasttest {base}'; doctor reports a fast_test that still says 'python -m forge.fasttest' with the one-line replacement. New repos: setup proposes it for pytest repos. Existing repos: get the command on upgrade; their forge.toml is never rewritten. One command-level test in a plain pytest repo without Forge installed in its environment."
+    }
+  ],
+  "base": "679846b9b7bed159b831b6bad7253c642ba4241f",
+  "branch": "fix/the-shipped-python-test-picker-uv-run-py",
+  "done_when": "A 'forge fasttest <base>' command works in any pytest repo without installing Forge into the project: Forge picks the changed test files, test files named after a changed module, and test files importing or mentioning it, then runs the repo's own test command from forge.toml narrowed to those files in the repo's environment, runs the full test command when conftest.py, pyproject.toml or a lock file changed, and caps pytest at half the machine's cores; no pytest plugin. Forge's own forge.toml and the skill use 'forge fasttest {base}'; doctor reports a fast_test that still says 'python -m forge.fasttest' with the one-line replacement. Command-level tests cover both kinds of client: a new client (forge init in a plain pytest repo, Forge not installed in its environment) whose proposed fast_test runs only the related tests at close; and an existing client adopted on an earlier release whose forge.toml carries the old 'python -m forge.fasttest' line, where doctor names the replacement, forge.toml is not rewritten, and after the owner's one-line change close runs only the related tests.",
+  "flagged": [
+    "tests/test_pytest_picker_runs_in_the_clients_environment.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f51e87ceb06f224349d85c6703f16e765ade40b46541351acd061bbdd855aaf2",
+    "changed": "33ef532f2975cd2fcf4782754770755acfa36ef39f504a4abcb46e5f642f4c28",
+    "commit": "25eedc564ad0cf0b9daef1f8790ad9048a94fd52",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported defect remains. In `python -m pip install pytest && python -m pytest tests`, both `pytest` tokens match, so Forge adds selection and worker arguments to pip and breaks setup. The fallback also appends pytest arguments to Ruff in `python run_tests.py && ruff check .`, even when the launcher forwards arguments as required by the ruling. Identify the pytest invocation or launcher and preserve the other shell commands.",
+        "file": "src/forge/fasttest.py",
+        "line": 74,
+        "priority": "P2",
+        "title": "Recognize pytest invocations before adding pytest arguments"
+      },
+      {
+        "body": "The previously reported defect remains: this loop combines all configuration candidates, including defaults when `-c` selects another file. An active pytest.ini without xdist options and an inactive tox.ini containing `addopts = -n auto` cause Forge to inject `--maxprocesses`; without xdist installed, the valid test command then fails. [Pytest selects one configuration file and does not merge candidates](https://docs.pytest.org/en/stable/reference/customize.html). Read only the configuration selected for the invocation.",
+        "file": "src/forge/fasttest.py",
+        "line": 39,
+        "priority": "P2",
+        "title": "Read worker options only from pytest's selected configuration"
+      },
+      {
+        "body": "The previously reported defect remains. Explicit excluded targets are removed only from the command string. A target such as `tests/test_unrelated.py::test_unrelated` in configuration addopts or PYTEST_ADDOPTS survives the appended ignores. [Pytest bypasses ignore checks for explicitly supplied files](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py), so unrelated tests still run despite Forge's printed selection. Filter excluded targets from both option sources while retaining their other settings.",
+        "file": "src/forge/fasttest.py",
+        "line": 64,
+        "priority": "P2",
+        "title": "Exclude unrelated paths supplied through pytest addopts"
+      },
+      {
+        "body": "The previously reported defect remains: whenever unrelated files exist, Forge passes an `@selection.txt` argument to the client's pytest. [Argument-file support was introduced in pytest 8.2](https://docs.pytest.org/en/stable/how-to/usage.html#read-arguments-from-file). Clients pinned to pytest 7.x or 8.1 interpret this as a collection path and fail instead of running related tests. Preserve a narrowing path supported by those versions.",
+        "file": "src/forge/fasttest.py",
+        "line": 156,
+        "priority": "P2",
+        "title": "Support pytest versions before 8.2 when narrowing tests"
+      },
+      {
+        "body": "The previously reported contradiction remains. Immediately after proposing the external picker, src/forge/templates/skill.md:302 instructs agents to use \u201cthe repo's Python runner with Forge installed.\u201d Both .codex/skills/forge/SKILL.md:302 and .claude/skills/forge/SKILL.md:302 repeat it. This directs client setup toward the project installation this fix removes. Clarify in all three places that the project runner belongs in `test`, while the separately installed Forge tool runs the picker.",
+        "file": "src/forge/templates/skill.md",
+        "line": 300,
+        "priority": "P2",
+        "title": "Remove the project-install instruction from setup guidance"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T04:52:56+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-05T06:36:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:00:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:37:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:53:18+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The shipped Python test picker (uv run python -m forge.fasttest) fails in client repos with 'No module named forge', because Forge is a separate tool, not a dependency of the client's project; it only works in Forge's own repo",
+  "worker": "codex"
+}

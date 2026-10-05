@@ -280,6 +280,9 @@ def doctor(args: argparse.Namespace) -> int:
         if protected != set(cfg["checks"]): add("forge.toml checks differ from branch protection's required checks: "
                          f"Forge names {', '.join(sorted(cfg['checks'])) or 'none'}; protection "
                          f"requires {', '.join(sorted(protected)) or 'none'}.", "ask your agent to reconcile checks in forge.toml with branch protection")
+    if "python -m forge.fasttest" in cfg["fast_test"]:
+        add("fast_test still runs python -m forge.fasttest in the client's environment.",
+            'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
     elif "tests" in cfg["checks"] and f"run: {json.dumps(cfg['test'])}" not in sync.read( top / sync.WORKFLOW_PATH):
         add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
