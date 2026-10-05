@@ -31,7 +31,8 @@ def run_picker(repo, command, *, shared=False):
 
 @pytest.mark.parametrize("shared", [False, True], ids=["related", "full-fallback"])
 @pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS", "launcher",
-                                            "pyproject.toml", "pytest.toml", "smaller-cap"])
+                                            "pyproject.toml", "pytest.toml", "smaller-cap",
+                                            "explicit-config", "shell-environment"])
 def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration, monkeypatch):
     cores = 4 if configuration == "smaller-cap" else 2
     repo.write("src/sitecustomize.py", f"import os\nos.cpu_count = lambda: {cores}\n")
@@ -49,6 +50,12 @@ def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared
     elif configuration == "smaller-cap":
         # Keep the repo's stricter cap while imposing Forge's machine ceiling.
         repo.write("pytest.ini", "[pytest]\naddopts = -n 4 --maxprocesses=1\n")
+    elif configuration == "explicit-config":
+        repo.write("config with spaces.ini", "[pytest]\naddopts = -n 2\n")
+        command += ' -c "config with spaces.ini"'
+    elif configuration == "shell-environment":
+        command = ('set "PYTEST_ADDOPTS=-n 2" && ' if os.name == "nt"
+                   else 'PYTEST_ADDOPTS="-n 2" ') + command
     else:
         # With no plugin, a launcher forwards pytest options from the command.
         # It may still replace PYTEST_ADDOPTS; the command-line cap wins.

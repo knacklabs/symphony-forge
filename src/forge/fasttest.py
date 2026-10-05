@@ -24,19 +24,26 @@ def module_parts(path: Path) -> list[str]:
     return parts[1:] if parts[0] == "src" else parts
 
 
-def pytest_options() -> str:
+def pytest_options(arguments: list[str]) -> str:
     options = os.environ.get("PYTEST_ADDOPTS", "")
-    for name, section in (("pytest.ini", "pytest"), (".pytest.ini", "pytest"),
-                          ("tox.ini", "pytest"), ("setup.cfg", "tool:pytest")):
-        config = configparser.ConfigParser(interpolation=None)
-        config.read(name, encoding="utf-8")
-        options += " " + config.get(section, "addopts", fallback="")
-    for name in ("pyproject.toml", "pytest.toml", ".pytest.toml"):
-        if Path(name).is_file():
+    names = ["pytest.ini", ".pytest.ini", "tox.ini", "setup.cfg",
+             "pyproject.toml", "pytest.toml", ".pytest.toml"]
+    names += [arguments[index + 1] for index, value in enumerate(arguments[:-1])
+              if value in {"-c", "--config-file"}]
+    names += [value.split("=", 1)[1] for value in arguments if value.startswith("--config-file=")]
+    for name in names:
+        if not Path(name).is_file():
+            continue
+        if Path(name).suffix == ".toml":
             config = tomllib.loads(Path(name).read_text("utf-8"))
-            section = config.get("tool", {}).get("pytest", {}) if name == "pyproject.toml" else config.get("pytest", {})
+            section = config.get("tool", {}).get("pytest", {}) if Path(name).name == "pyproject.toml" else config.get("pytest", {})
             value = section.get("ini_options", section).get("addopts", "")
             options += " " + (" ".join(value) if isinstance(value, list) else value)
+        else:
+            config = configparser.ConfigParser(interpolation=None)
+            config.read(name, encoding="utf-8")
+            section = "tool:pytest" if Path(name).suffix == ".cfg" else "pytest"
+            options += " " + config.get(section, "addopts", fallback="")
     return options
 
 
@@ -50,9 +57,9 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
     options = ["--ignore=" + path for path in excluded]
-    configured = command + " " + pytest_options()
-    if re.search(r"(?:^|\s)(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))", configured):
-        caps = [int(cap) for cap in re.findall(r'''(?:^|\s)["']?--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
+    configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
+    if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
+        caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
                 if int(cap) > 0]
         options.append("--maxprocesses=" + str(min([int(workers), *caps])))
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
