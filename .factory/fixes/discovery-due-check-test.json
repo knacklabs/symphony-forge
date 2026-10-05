@@ -1,0 +1,14 @@
+{
+  "base": "5713562e7b50cb0e41c5af01c197b5fe7fd04f32",
+  "branch": "fix/discovery-due-check-test",
+  "done_when": "tests/test_discovery.py has one command test where a project with nothing on its roadmap also has a spec whose success check is due, and forge next lists the due success check before the discovery prompt; new and earlier-adopted client repos both pass it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-05T23:38:35+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "No test shows that forge next lists a due success check before the discovery prompt; DISCOVER shipped without that crossing test"
+}
