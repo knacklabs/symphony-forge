@@ -199,6 +199,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 138,
+      "text": "Expire acceptance when the story branch changes the task's scope",
+      "from": "blocking",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tExpire human acceptance in subsequent review instructions\tthe-review-loop-stop-pauses-only-one-clo",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 85,
+      "text": "Expire human acceptance in subsequent review instructions",
+      "from": "blocking",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1134,6 +1156,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane metadata when the selected model changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 478,
+      "text": "Refresh lane metadata when the selected model changes",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tRefresh lane model metadata after defaults or fallback selection",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -1295,28 +1328,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 138,
-      "text": "Expire acceptance when the story branch changes the task's scope",
-      "from": "blocking",
-      "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tExpire human acceptance in subsequent review instructions\tthe-review-loop-stop-pauses-only-one-clo",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 85,
-      "text": "Expire human acceptance in subsequent review instructions",
-      "from": "blocking",
-      "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
     },

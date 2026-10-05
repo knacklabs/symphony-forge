@@ -7,50 +7,36 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "44dbe18b4ff6bb73d1606ab9165dfb3d922e37d87b2912e6b8c6ffe193698a64",
-    "changed": "d9462a902b0c389b5446e109248617756584745da962b6801ab66020295b6333",
-    "commit": "281236a2aacc43e7b6f46b43ee31a6af5dff1dde",
+    "branch_diff": "f3ef2ad603ea337b4a1d3edb34c28582e5ad4d051c1e485d142f10828ca1cdb0",
+    "changed": "2884929385cc6d4e5bacf9bb5806db1704978436351024957bbd45fe783706b1",
+    "commit": "693070721806c95b2e5642f3e3d20409fa9e1cee",
     "dismissals": [],
     "findings": [
       {
-        "body": "On POSIX, stop confirms only that the recorded group leader ended. The called helper returns immediately when that leader dies (`src/forge/codex.py:620\u2013622`), even if another group member survives SIGTERM. A Claude worker or review with such a child can therefore leave it running while this code removes the entry and admits the next run. Confirm and terminate the whole group before releasing admission, and exercise this through the stop command. The current stop tests launch childless held agents, so they cannot detect this gap.",
-        "file": "src/forge/machine.py",
-        "line": 234,
-        "priority": "P1",
-        "title": "Not done: forge stop ends the running process tree before freeing its place"
-      },
-      {
-        "body": "The added lane and stop checks all use the held Claude executable; none exercises a Codex worker through these commands. This misses the repository requirement that the same behaviour tests run through both adapters. For example, removing the registration at `src/forge/codex.py:328` would leave Codex entries without a started time and let stop remove their admission without stopping the model, while these tests still pass. Parameterize the existing command-level contracts to cover both adapters.",
-        "file": "tests/test_lanes_agents.py",
-        "line": 29,
-        "priority": "P1",
-        "title": "Not done: agent admission, machine view and stop are tested through both adapters"
-      },
-      {
-        "body": "The previous compatibility gap remains on POSIX. The retained checker launches Autoreview without group options (`tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533`) and uses the compatible started(pid) signature. Stop then calls killpg(child_pid) through `src/forge/codex.py:615\u2013616`, although that child does not lead a group; termination fails and its place remains held. The signature ruling preserves the call but does not solve this launch mismatch. The existing-queue test migrates a newly grouped child, so it does not exercise an actual older launch.",
+        "body": "The retained PR checker launches Autoreview without process-group options (`tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533`) and calls the compatible `started(pid)` signature. This stop path nevertheless calls `killpg(child_pid)` through `src/forge/codex.py:624\u2013625`. That child does not lead a group, so it remains alive and stop refuses without freeing its place. The signature ruling preserves the caller but leaves this launch mismatch unresolved. The existing-queue test migrates a newly grouped process, so it does not exercise the older launch.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "The lane still snapshots chosen only at admission. Autoreview's reported defaults and unavailable-model fallback update selected (`src/forge/review.py:564\u2013570`) without updating the entry, so the board can show null or an unavailable model for a running review. The same stale snapshot occurs when a split design worker switches from Claude to Codex (`src/forge/worker.py:167\u2013191`). Update the active entry when either caller changes its model and effort.",
+        "body": "The lane snapshots `chosen` at admission, but Autoreview's reported defaults and unavailable-model fallback update only `selected` (`src/forge/review.py:570\u2013576`). A running review therefore continues showing null or the unavailable model in board JSON. The same stale snapshot occurs when a split design worker switches to Codex (`src/forge/worker.py:167\u2013191`). Update the active entry's model and effort when either caller changes its selection.",
         "file": "src/forge/review.py",
-        "line": 472,
+        "line": 478,
         "priority": "P2",
-        "title": "Refresh lane model metadata after defaults or fallback selection"
+        "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual test launches still bypass this entry queue: `src/forge/fasttest.py:165\u2013166` launches directly, and close uses the separate ticket queue at `src/forge/review.py:276\u2013285`. Consequently, the board cannot expose their output/progress, and stop cannot cancel tests or stop an item's worker and test together. The Tasks table assigns this integration and its command-level checks to TESTS, so this remains deferred P2 advice rather than an AGENTS blocker.",
+        "body": "Actual test launches still bypass this shared entry queue: `src/forge/fasttest.py:165\u2013166` launches directly, while close uses the separate ticket queue at `src/forge/review.py:279\u2013288`. Consequently, board JSON cannot expose their output/progress, and stop cannot cancel tests or stop an item's worker and test together. `plans/FORGE-LANES-1.md:142` assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -62,6 +48,10 @@
     },
     {
       "at": "2026-10-05T16:14:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T17:53:25+00:00",
       "step": "review"
     }
   ],
