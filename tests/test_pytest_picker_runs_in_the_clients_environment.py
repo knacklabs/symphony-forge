@@ -169,6 +169,27 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     assert sorted(receipt.read_text("utf-8").splitlines()) == ["import", "prices"]
 
 
+def test_7_large_pytest_repos_keep_the_shell_command_below_windows_limit(repo):
+    # cmd.exe refuses commands over 8191 characters before pytest can even start.
+    repo.write("forge.toml", "test = " + json.dumps(
+        f'"{Path(sys.executable).as_posix()}" -m pytest tests -q') + "\n")
+    for index in range(200):
+        repo.write(f"tests/test_unrelated_{index:03}_with_a_long_descriptive_filename.py",
+                   "def test_unrelated():\n    assert False\n")
+    repo.write("tests/test_changed.py", "import sys\ndef test_shell_limit():\n"
+               "    assert len(' '.join(sys.orig_argv)) < 8191\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Set up large pytest repo")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write("tests/test_changed.py", "import sys\ndef test_shell_limit():\n"
+               "    assert len(' '.join(sys.orig_argv)) < 8191\n# Changed test\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Change selected test")
+    result = repo.forge("test", "--pytest", base)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1 passed" in result.stdout
+
+
 def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replaces_it_and_closes(
         unsynced_up, tmp_path, monkeypatch):
     up, repo = unsynced_up, unsynced_up.repo

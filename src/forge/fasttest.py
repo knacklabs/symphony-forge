@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from forge import repo
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
              "help": "run a pytest repo's changed and module-related tests",
-             "listing": "`forge test --pytest <base>` | Run related pytest tests with the repo's test command."}]
+             "listing": "| `forge test --pytest <base>` | Run related pytest tests with the repo's test command. |"}]
 
 REFUSALS = {"picker": ("Run forge test --pytest <base> to pick related pytest tests.", "")}
 
@@ -51,7 +52,7 @@ def pytest_options(arguments: list[str]) -> str:
     return options
 
 
-def narrow_command(command: str, excluded: list[str], workers: str) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str, selection: str) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -60,7 +61,7 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
         value = token.group().strip("\"'")
         if Path(value.split("::", 1)[0]).resolve() in paths:
             replacements.append((token.start(), token.end(), ""))
-    options = ["--ignore=" + path for path in excluded]
+    options = [selection] if excluded else []
     configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
     if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
         caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
@@ -147,5 +148,10 @@ def test(args) -> int:
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
         print("Related tests: " + ", ".join(selected), flush=True)
-    return subprocess.run(narrow_command(command, excluded, workers), shell=True,
-                          env=environment).returncode
+    # Pytest's argument file keeps exclusions off cmd.exe's limited command line.
+    with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
+        selection = Path(folder) / "selection.txt"
+        selection.write_text("".join("--ignore=" + path + "\n" for path in excluded), "utf-8")
+        return subprocess.run(narrow_command(command, excluded, workers,
+                                              "@" + selection.as_posix()), shell=True,
+                              env=environment).returncode
