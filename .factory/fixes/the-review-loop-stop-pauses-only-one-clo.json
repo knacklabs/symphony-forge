@@ -1,0 +1,68 @@
+{
+  "base": "15281ddd0bf30db521c6ebe2ec7fb2dc0ae319e8",
+  "branch": "fix/the-review-loop-stop-pauses-only-one-clo",
+  "done_when": "When today's review loop stop fires (third blocked review in a file flagged before), close and forge land stay stopped on that item until the human's choice is recorded with one command the stop message names: narrow the part, split it, or accept the remaining findings; forge next shows the three choices in plain words; skill.md tells the coordinator to ask the human and never re-run close past it; new client repos get it from init and existing ones from sync on upgrade, with a command test for each",
+  "flagged": [
+    "src/forge/close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7c862eaab3d05670feb3c097e01da0dee6150ccbabc7bbbd007647f1a14e3913",
+    "changed": "bd95517498c3c4e13776ea9abf915619aa76d162ad3a1d18f51856775adf5027",
+    "commit": "4a82efd3c8d2742489f0826487018cde0df91a74",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T07:59:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-05T08:43:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:10:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:35:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T10:53:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:25:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:51:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:02:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:32:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T14:01:23+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "done": "src/forge/close.py is simpler and behaves as it did before",
+    "file": "src/forge/close.py",
+    "why": "Simplify src/forge/close.py before the-review-loop-stop-pauses-only-one-clo carries on"
+  },
+  "why": "The review loop stop pauses only one close, so a coordinator's next close carries on and a part can loop through 8 blocked reviews",
+  "worker": "codex"
+}
