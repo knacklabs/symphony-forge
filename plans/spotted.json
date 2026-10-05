@@ -45,11 +45,33 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: GitHub-unreachable board rows with unknown checks\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 205,
+      "text": "Not done: GitHub-unreachable board rows with unknown checks",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
       "line": 283,
       "text": "Not done: report each story\u2019s actual stage in the machine board",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report ready tasks and fixes at their current stage\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 260,
+      "text": "Not done: report ready tasks and fixes at their current stage",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
@@ -437,6 +459,17 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tClassify stale completed checks as failed",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 138,
+      "text": "Classify stale completed checks as failed",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },

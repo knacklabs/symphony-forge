@@ -6,35 +6,35 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "changed": "d2233356e9b5d8be57dcfe62bca441f42f01d332461b5c0d7506433278f3d46e",
-    "commit": "3d5c8702c44867ce4805c6034e69d6602e59a0a7",
+    "changed": "0a39ba6788ef9280e3c30f7ad656f984ebc821e3fa29599e54ebe83f7f1a5c14",
+    "commit": "0219f315af3eed39e79b1a9df90be9511a322fd2",
     "dismissals": [],
     "findings": [
       {
-        "body": "The raw StatusContext nodes retain `createdAt`, but `_green_at` reads only `completedAt` or `startedAt` (src/forge/board.py:515\u2013524). GitHub CLI previously mapped a status's creation time to `startedAt` in its [JSON exporter](https://raw.githubusercontent.com/cli/cli/trunk/api/export_pr.go). For an item waiting for checks whose required checks are successful commit statuses, the JSON board therefore reports checks `pass` while its next step remains `forge close <item>` instead of the merge instruction. The HTML board also stops recognizing that PR as ready because it now consumes this same rollup. Normalize StatusContext timestamps for these consumers and preserve the CheckRun start-time fallback.",
+        "body": "A ready item causes this call to enter `nextstep._item`, which calls `repo.merge_setting` (src/forge/nextstep.py:550\u2013552). That fetches the default branch from origin (src/forge/repo.py:171\u2013178). When GitHub is unreachable, the fetch raises and the entire board command fails instead of returning retained rows with unknown checks. Merged items with retained worktrees take the same path at nextstep.py:532\u2013533. Keep the view available when this permission lookup fails, using a null next command if necessary. The current offline test fails only the gh request while leaving its local Git remote reachable.",
         "file": "src/forge/board.py",
-        "line": 158,
+        "line": 205,
         "priority": "P1",
-        "title": "Preserve commit-status timestamps when adapting the GraphQL rollup"
+        "title": "Not done: GitHub-unreachable board rows with unknown checks"
       },
       {
-        "body": "Detail 1 explicitly assigns VIEWS a command test containing all four together, including GitHub-unreachable behavior. This test creates a story and running task worker but no fix; the fix assertions in tests 2 and 3 use separate repositories without a story. The client lifecycle test selects only the story row and does not assert a running worker. Consequently, the suite would still pass if story presence suppressed fix rows. Extend the command scenario to assert both root rows, the running worker, PR checks, and retained rows with unknown checks when GitHub is unreachable.",
-        "file": "tests/test_machine_views.py",
-        "line": 51,
+        "body": "After a successful `forge close`, the saved status remains `waiting for checks` (src/forge/close.py:174\u2013179); readiness is written to the shared ready receipt at close.py:214\u2013218. The next-step code recognizes that receipt and derives `ready` (src/forge/nextstep.py:538\u2013543), but this field returns the unchanged saved status. Consequently, both task children and fix rows continue reporting the checks-waiting stage even while their next command is `forge merge`. Derive the exposed stage from the same validated readiness evidence. The lifecycle test currently goes directly from close to merge without checking this intermediate board state.",
+        "file": "src/forge/board.py",
+        "line": 260,
         "priority": "P1",
-        "title": "Not done: board command coverage with a story, fix, running worker and open pull request"
+        "title": "Not done: report ready tasks and fixes at their current stage"
       },
       {
-        "body": "This marks every SKIPPED or NEUTRAL check as passed, even when its name matches a required check. Forge's existing gate treats both conclusions as failed for named checks (src/forge/checks.py:35\u201338 and 68\u201370), including matrix variants. The machine board can therefore show checks `pass` with no failure occurrence while `forge close` refuses the same PR. Apply the required-name rule when classifying these conclusions; optional skipped or neutral checks can remain passed.",
+        "body": "GitHub supports the terminal conclusion `STALE` ([CheckConclusionState](https://docs.github.com/en/graphql/reference/checks#checkconclusionstate)), but this failure list omits it. A completed stale check therefore becomes `unknown` and produces no failure occurrence, although Forge's existing gate classifies it as red (src/forge/checks.py:68\u201370). Include this supported unsuccessful conclusion so the board and occurrence stream agree with the merge gate.",
         "file": "src/forge/board.py",
-        "line": 139,
+        "line": 138,
         "priority": "P2",
-        "title": "Keep skipped required checks from appearing green"
+        "title": "Classify stale completed checks as failed"
       }
     ],
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-04T17:59:47+00:00",
@@ -47,7 +47,16 @@
     {
       "at": "2026-10-05T03:38:11+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-05T04:28:51+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "done": "src/forge/board.py is simpler and behaves as it did before",
+    "file": "src/forge/board.py",
+    "why": "Simplify src/forge/board.py before FORGE-MOD-1/VIEWS carries on"
+  },
   "worker": "codex"
 }
