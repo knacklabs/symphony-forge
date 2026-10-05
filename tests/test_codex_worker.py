@@ -29,8 +29,11 @@ ACCEPT = {"decision": "accept"}
 KNOWN, UNKNOWN = "item/commandExecution/requestApproval", "item/stubFuture/requestSomething"
 SOL = {"model": "gpt-6-sol", "effort": "medium", "subagents": "gpt-6-luna", "subagent_effort": "max"}
 MODELS = {"build": SOL, "fix": SOL, "lite": {"model": "gpt-6-sol", "effort": "low"}}
+# The output policy is now mandatory alongside each kind's model settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # What [models.build] becomes on the new conversation: Codex's own names for those settings.
-BUILD = {"model": "gpt-6-sol", "model_reasoning_effort": "medium",
+BUILD = {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "medium",
          "agents.default_subagent_model": "gpt-6-luna",
          "agents.default_subagent_reasoning_effort": "max"}
 MODELS_REFUSAL = ("forge.toml's [models] table is not usable: {}.\n"
@@ -323,7 +326,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     toml.write_text(_toml(version, "codex", {"build": nova, "fix": nova}), encoding="utf-8")
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
-    config = {"model": "gpt-6-nova", "model_reasoning_effort": "high"}
+    config = {**QUIET, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
     assert _sent(calls, "thread/start")[-1]["config"] == config
     assert f"stub codex: built it with {json.dumps(config, sort_keys=True)}" in again.stdout
     assert "gpt-6-nova" not in (repo.path / "forge.toml").read_text(encoding="utf-8")
@@ -331,7 +334,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     # A fix uses the lite kind.
     assert repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in").returncode == 0
     assert repo.forge("work", "fix-the-login-typo").returncode == 0
-    assert _sent(calls, "thread/start")[-1]["config"] == {"model": "gpt-6-sol",
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "model": "gpt-6-sol",
                                                           "model_reasoning_effort": "low"}
 
     # Claude workers take the kind's model and effort, and refuse subagents.
