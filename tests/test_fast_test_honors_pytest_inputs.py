@@ -23,27 +23,46 @@ def run_picker(repo, command, *, shared=False):
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Change client")
     return subprocess.run(
-        [sys.executable, "-m", "forge.fasttest", base], cwd=repo.path,
+        [sys.executable, str(repo.bin / "forge"), "test", "--pytest", base], cwd=repo.path,
         env={**os.environ, "PYTHONPATH": os.pathsep.join(
             [str(ROOT / "src"), str(repo.path / "src")])},
         text=True, capture_output=True, timeout=120)
 
 
 @pytest.mark.parametrize("shared", [False, True], ids=["related", "full-fallback"])
-@pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS"])
-def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration):
-    repo.write("src/sitecustomize.py", "import os\nos.cpu_count = lambda: 2\n")
+@pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS", "launcher",
+                                            "pyproject.toml", "pytest.toml", "smaller-cap",
+                                            "explicit-config", "shell-environment"])
+def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration, monkeypatch):
+    cores = 4 if configuration == "smaller-cap" else 2
+    repo.write("src/sitecustomize.py", f"import os\nos.cpu_count = lambda: {cores}\n")
     repo.write("tests/test_prices.py", "def test_count(request):\n"
                "    assert request.config.workerinput['workercount'] == 1\n")
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
     if configuration == "pytest.ini":
         repo.write("pytest.ini", "[pytest]\naddopts = -n 2\n")
+    elif configuration == "PYTEST_ADDOPTS":
+        monkeypatch.setenv("PYTEST_ADDOPTS", "-n 2")
+    elif configuration == "pyproject.toml":
+        repo.write("pyproject.toml", '[tool.pytest.ini_options]\naddopts = ["-n", "2"]\n')
+    elif configuration == "pytest.toml":
+        repo.write("pytest.toml", '[pytest]\naddopts = ["-n", "2"]\n')
+    elif configuration == "smaller-cap":
+        # Keep the repo's stricter cap while imposing Forge's machine ceiling.
+        repo.write("pytest.ini", "[pytest]\naddopts = -n 4 --maxprocesses=1\n")
+    elif configuration == "explicit-config":
+        repo.write("config with spaces.ini", "[pytest]\naddopts = -n 2\n")
+        command += ' -c "config with spaces.ini"'
+    elif configuration == "shell-environment":
+        command = ('set "PYTEST_ADDOPTS=-n 2" && ' if os.name == "nt"
+                   else 'PYTEST_ADDOPTS="-n 2" ') + command
     else:
-        # A real launcher supplies the client's environment portably on Windows too.
+        # With no plugin, a launcher forwards pytest options from the command.
+        # It may still replace PYTEST_ADDOPTS; the command-line cap wins.
         repo.write("run_tests.py", "import os, subprocess, sys\n"
                    "os.environ['PYTEST_ADDOPTS'] = '-n 2'\n"
-                   "sys.exit(subprocess.call([sys.executable, '-m', 'pytest', 'tests', '-q']))\n")
-        command = f'"{Path(sys.executable).as_posix()}" run_tests.py'
+                   "sys.exit(subprocess.call([sys.executable, '-m', 'pytest', 'tests', '-q', *sys.argv[1:]]))\n")
+        command = f'"{Path(sys.executable).as_posix()}" run_tests.py -n 2'
     result = run_picker(repo, command, shared=shared)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "1 passed" in result.stdout

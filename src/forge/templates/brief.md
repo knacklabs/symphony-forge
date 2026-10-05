@@ -122,6 +122,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
 `{base}` as the merge base with the default branch, or its `test` command when it has no
 `fast_test`. Then commit any fixes. CI runs the full suite.
+For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
+test command without installing Forge in the project. Bare `forge test` currently refuses and
+names `--pytest`; the approved test-lane story will give bare `forge test` its lane behavior.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
