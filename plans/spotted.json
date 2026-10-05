@@ -846,6 +846,94 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 59,
+      "text": "Preserve merge-result testing when running the full suite",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 39,
+      "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C check times out on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "tests/test_review_record_reuses_parent_tests.py",
+      "line": 45,
+      "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe interrupted review times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
+      "kind": "edge",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 41,
+      "text": "Allow review commits to remove stale test-failure output",
+      "from": "review",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_turns_trust_forge_hooks.py\tAn isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_codex_turns_trust_forge_hooks.py",
+      "line": 302,
+      "text": "An isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

@@ -299,7 +299,8 @@ Adopting changes no app code.
    `forge.toml` through a fix. For pytest repos, propose
    `forge test --pytest {base}`: Forge runs this picker outside the project, keeping the repo's
    full `test` command and narrows pytest to changed and module-related test files. Use the
-   repo's Python runner with Forge installed; keep lint and other checks in `test`.
+   repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
+   checks in `test`.
    Forge writes no `fast_test` by itself.
 
 On a live app, every story and fix also follows these:
@@ -541,8 +542,9 @@ when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
-`python -m forge.fasttest` setting with its one-line replacement. Forge needs no pytest plugin
-or installation in the project. Test launchers must forward pytest arguments and expose xdist
+`python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation
+in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
+before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
 Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
@@ -551,6 +553,14 @@ before anything else. If the code proves the finding wrong, dismiss it with
 `forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
+Close pushes and opens the pull request before a new review, so CI runs alongside it, then
+updates the pull request's review block when the review finishes. Ready still needs a clean
+review and green checks on the final pushed head. After upgrading, run `forge sync` to receive
+the tests workflow's quick pass: it reuses a successful parent tests workflow only when the
+commit changes Forge's review record and its accompanying state under `.factory/`. Any other
+change or missing passing parent result runs the suite on the pull request merged into its
+current base. Reuse also requires the parent to include that base; a parent pull request run
+must have tested that same base. A changed base or missing proof runs the suite again.
 When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
