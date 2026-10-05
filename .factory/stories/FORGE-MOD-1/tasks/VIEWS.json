@@ -6,29 +6,36 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bc5360dc976098f2b970453441da30bd9c684060e6083363936d37ffaa10746f",
-    "changed": "61cdf37cec0d054147063e00ef6f52c2a8a77e6b377a311d3be4d764ea6e160b",
-    "commit": "c8cc25a750b8592578e0324a3147cedafcd604e6",
+    "branch_diff": "30253bd3db19eaaf637e04d6b1539f6d3e256d6b68eccc5edd95b99f50a53be6",
+    "changed": "f14e4dd8f3d747ef999b0a3fe72f3a25fb52fe67daab9427f93f6a0aeb1fb22b",
+    "commit": "03e366e062c8110270e4a86cca090a5f606b7df6",
     "dismissals": [],
     "findings": [
       {
-        "body": "After close writes a clean receipt, rerunning a check on the same commit and failing it leaves this row at `stage: \"ready\"`, even after the checks cache expires and `pr.checks` becomes `fail`. `_item_readiness` trusts the matching receipt without considering the fresh check result, and `_item` also continues advertising the merge step (src/forge/nextstep.py:576\u2013588). This is new evidence beyond the ruling about retaining receipt-based readiness when GitHub is unavailable: here GitHub supplies a known failure. Reconcile readiness and the item's next step with known failed or running checks, while preserving the ruled unavailable-data fallback, and cover this scenario through the commands.",
+        "body": "The row's occurrences contain only GitHub check failures. Review findings, worker questions, run completions and readiness never produce occurrences here. New evidence beyond the RUNS deferral is that the current checkout already contains those producers: src/forge/repo.py:134\u2013152 writes events.jsonl with fresh ids, src/forge/worker.py:224 records questions, and src/forge/review.py:495 records review results. Consequently, even a run starting and ending between refreshes remains invisible to the EVENTS consumer. Read those records, expose the applicable occurrences per item, and derive readiness identity from the review id plus head commit. Add command coverage that exercises the real producers; the current occurrence tests cover only GitHub.",
         "file": "src/forge/board.py",
-        "line": 271,
+        "line": 274,
         "priority": "P1",
-        "title": "Not done: report readiness when checks fail after a successful close"
+        "title": "Not done: expose each item's recorded actionable occurrences"
       },
       {
-        "body": "The previously reported gap remains. `upgrade.release_notice` returns its announcement before the state report (src/forge/upgrade.py:186\u2013187), and `machine_next` selects the first non-Next line. When an upgrade exists, a waiting item or human-only merge therefore gets the release announcement as `next.line`, hiding its actual state. Build the machine next object from `_report`'s lines and keep the release notice separate.",
-        "file": "src/forge/nextstep.py",
-        "line": 117,
-        "priority": "P2",
-        "title": "Keep release notices from replacing next.line"
-      },
-      {
-        "body": "The machine board recognizes merged tasks and fixes only from state files already present on the fetched default branch. Both PR lookups contain only open PRs, and story next-step calculation receives an empty merged-PR set here. After a human merges on GitHub, but before a fetch, the board consequently retains the old stage and merge/close instruction. The text next report already handles this through its merged-PR lookup (src/forge/nextstep.py:187\u2013188). Reuse that evidence for task and fix stages and story next-step calculation so the machine command does not depend on a subsequent fetch to recognize the merge.",
+        "body": "The consumer does not match the RUNS records now present in this checkout. Tests selects step \"test\", but src/forge/review.py:299 writes \"test run\", so actual passed, failed and docs-only skipped tests all produce an empty Tests stage. Also, ended_at reads an \"end\" field that src/forge/repo.py:122\u2013124 never writes, and worker.started_at reads an unproduced state field at board.py:249. Live stages therefore have no timer until their completed timing is appended. Actual run timestamps and worker models are available in events.jsonl (repo.py:137\u2013152, worker.py:474\u2013475 and story.py:704\u2013705), including readers whose state has no worker family. Consume the existing producer contracts. The synthetic records in tests/test_machine_views.py:283\u2013291 use the wrong step and invented end/running fields, so they pass while these promised behaviors are broken.",
         "file": "src/forge/board.py",
-        "line": 216,
+        "line": 252,
+        "priority": "P1",
+        "title": "Not done: expose recorded worker metadata and current-round stages"
+      },
+      {
+        "body": "The required JSON command test for a merge only a human may perform is absent. This \"ready\", \"human\" case supplies no close receipt and expects forge close, so it exercises waiting rather than a genuinely ready human-owned PR. The successful-close lifecycle test configures merge=\"agent\" exclusively. A regression advertising forge merge for an ordinary human-owned ready PR would therefore pass these JSON tests. Close an item under human merge ownership, provide its PR, and assert through forge next --json that command is null while line describes readiness.",
+        "file": "tests/test_machine_views.py",
+        "line": 230,
+        "priority": "P1",
+        "title": "Not done: command test for a human-only merge returning null"
+      },
+      {
+        "body": "This previously reported gap remains. Machine-board merge detection uses state files on the fetched default branch, both PR lookups request only open PRs, and the story calculation receives an empty merged-PR set here. After a human merges on GitHub but before a fetch, task and fix rows retain their previous stages and merge/close instructions. The text report already obtains merged branches in src/forge/nextstep.py:189. Reuse that evidence for machine task/fix stages and story next-step calculation.",
+        "file": "src/forge/board.py",
+        "line": 208,
         "priority": "P2",
         "title": "Recognize GitHub merges before the default branch is fetched"
       }
@@ -67,6 +74,10 @@
     },
     {
       "at": "2026-10-05T07:04:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:40:32+00:00",
       "step": "review"
     }
   ],

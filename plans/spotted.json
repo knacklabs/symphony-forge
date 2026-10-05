@@ -78,6 +78,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose each item's recorded actionable occurrences\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 274,
+      "text": "Not done: expose each item's recorded actionable occurrences",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose recorded worker metadata and current-round stages\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 252,
+      "text": "Not done: expose recorded worker metadata and current-round stages",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -309,6 +331,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 511,
+      "text": "Not done: every review result has a fresh id",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -349,6 +382,28 @@
       "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 124,
+      "text": "Not done: the item's round number on every timing record",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: worker questions on both worker paths\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 192,
+      "text": "Not done: worker questions on both worker paths",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
       "status": "open",
       "closed_by": null
     },
@@ -485,6 +540,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tNot done: command test for a human-only merge returning null\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 230,
+      "text": "Not done: command test for a human-only merge returning null",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "tests/test_machine_views.py",
@@ -503,6 +569,28 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 27,
+      "text": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_run_records.py\tNot done: run-record coverage for previously adopted client repos\tFORGE-MOD-1/RUNS",
+      "kind": "bug",
+      "path": "tests/test_run_records.py",
+      "line": 44,
+      "text": "Not done: run-record coverage for previously adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/RUNS",
       "status": "open",
       "closed_by": null
     },
@@ -727,6 +815,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\tRecord run ends only after the child has stopped",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 152,
+      "text": "Record run ends only after the child has stopped",
+      "from": "review",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -738,6 +837,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tClassify cached test stages as skipped",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 258,
+      "text": "Classify cached test stages as skipped",
+      "from": "review",
+      "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",
@@ -745,6 +855,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tPreserve pending questions when a commit nudge fails",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 217,
+      "text": "Preserve pending questions when a commit nudge fails",
+      "from": "review",
+      "item": "FORGE-MOD-1/RUNS",
       "status": "open",
       "closed_by": null
     },
@@ -833,94 +954,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 511,
-      "text": "Not done: every review result has a fresh id",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 124,
-      "text": "Not done: the item's round number on every timing record",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tNot done: worker questions on both worker paths\tFORGE-MOD-1/RUNS",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 192,
-      "text": "Not done: worker questions on both worker paths",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
-      "kind": "bug",
-      "path": "tests/test_run_records.py",
-      "line": 27,
-      "text": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_run_records.py\tNot done: run-record coverage for previously adopted client repos\tFORGE-MOD-1/RUNS",
-      "kind": "bug",
-      "path": "tests/test_run_records.py",
-      "line": 44,
-      "text": "Not done: run-record coverage for previously adopted client repos",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\tRecord run ends only after the child has stopped",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 152,
-      "text": "Record run ends only after the child has stopped",
-      "from": "review",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tClassify cached test stages as skipped",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 258,
-      "text": "Classify cached test stages as skipped",
-      "from": "review",
-      "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/worker.py\tPreserve pending questions when a commit nudge fails",
-      "kind": "edge",
-      "path": "src/forge/worker.py",
-      "line": 217,
-      "text": "Preserve pending questions when a commit nudge fails",
-      "from": "review",
-      "item": "FORGE-MOD-1/RUNS",
       "status": "open",
       "closed_by": null
     }
