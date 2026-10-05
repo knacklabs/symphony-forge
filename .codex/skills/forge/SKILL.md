@@ -110,6 +110,9 @@ end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
+Close's clean-review receipt marks tasks and fixes ready while it matches the
+branch's current commit. If the next step cannot be checked, the row stays visible
+with no runnable command; check the connection and run `forge next` again.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
 started_at, ended_at and seconds for the current round from Forge's timing records;
@@ -352,6 +355,10 @@ On a live app, every story and fix also follows these:
 - No production credentials on this machine; never ask for them.
 
 ## Upgrade Forge
+
+When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
+Never upgrade without the owner's agreement. The check runs at most once per UTC day,
+shares its cache across worktrees, and stays silent when GitHub cannot be reached.
 
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.

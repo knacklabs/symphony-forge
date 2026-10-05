@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import statistics
+import subprocess
 import sys
 import webbrowser
 from datetime import datetime, timedelta, timezone
@@ -99,7 +100,7 @@ def _machine_prs(top: Path) -> list[Item]:
     except (OSError, ValueError, AttributeError):
         pass
     done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
-                    "-f", f"query={CHECKS_QUERY}", cwd=top) if shutil.which("gh") else None
+                    "-f", f"query={' '.join(CHECKS_QUERY.split())}", cwd=top) if shutil.which("gh") else None
     try:
         response = json.loads(done.stdout) if done and done.returncode == 0 else {}
         prs = response["data"]["repository"]["pullRequests"]["nodes"]
@@ -135,7 +136,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
         name = check.get("name") or check.get("context") or "Check"
         names.append(name)
         value = check.get("conclusion") or check.get("state")
-        failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE")
+        failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
                   or value in ("NEUTRAL", "SKIPPED") and
                   any(name == want or name.startswith(want + " (") for want in required))
         statuses.append("fail" if failed else "pass" if value in ("SUCCESS", "NEUTRAL", "SKIPPED")
@@ -202,9 +203,12 @@ def machine_board(top: Path) -> Item:
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
         checks, events = _checks(pr, cfg["checks"])
-        lines = (nextstep._item(item, title, state, top, tree, mapped_prs, {}) if kind != "story"
-                 else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
-                                      title, trees, set(), mapped_prs, {})[0])
+        try:
+            lines = (nextstep._item(item, title, state, top, tree, mapped_prs, {}) if kind != "story"
+                     else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
+                                          title, trees, set(), mapped_prs, {})[0])
+        except (repo.Refused, subprocess.CalledProcessError):
+            lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
             lines = [f"{title} is finished."]
         dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
@@ -257,7 +261,9 @@ def machine_board(top: Path) -> Item:
                            "ended_at": records[-1].get("end") if records else None,
                            "seconds": sum(r.get("seconds") or 0 for r in records)
                            if any(r.get("seconds") is not None for r in records) else None})
-        return {"id": item, "kind": kind, "title": title, "stage": state.get("status") or "unknown",
+        return {"id": item, "kind": kind, "title": title,
+                "stage": (nextstep._item_readiness(item, state, top)[0]
+                          if kind != "story" else state.get("status")) or "unknown",
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks},
                 "findings": {"count": len(findings), "titles": findings}, "round": round_number,
                 "total_seconds": sum(r.get("seconds") or 0 for r in timings

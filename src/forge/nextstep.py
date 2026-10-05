@@ -511,22 +511,32 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
+def _item_readiness(item: str, state: dict[str, Any], top: Path) -> tuple[str | None, dict[str, Any]]:
+    """Resolve the current stage from close's receipt for this branch's reviewed head."""
+    try:
+        receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        receipt = {}
+    if not isinstance(receipt, dict):
+        receipt = {}
+    status, branch = state.get("status"), state.get("branch")
+    if (status not in ("merged", "done", "hotspot") and branch and receipt.get("review") == "clean"
+            and repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
+            == receipt.get("commit")):
+        status = "ready"
+    return status, receipt
+
+
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str]) -> list[str]:
-    status = state.get("status") or "started"
+    status, receipt = _item_readiness(item, state, top)
+    status = status or "started"
     if status == "hotspot":
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
                 "it goes first.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
-    ready = repo.ready_path(item, top)
-    try:
-        receipt = json.loads(ready.read_text(encoding="utf-8"))
-    except (OSError, ValueError, UnicodeDecodeError):
-        receipt = {}
-    if not isinstance(receipt, dict):
-        receipt = {}
     if receipt.get("tidied") is True:
         return []
     if status == "merged" and path:
@@ -535,12 +545,6 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
                 f"Next: git worktree remove {shlex.quote(str(path))}"]
-    if ready.is_file():
-        branch = state.get("branch")
-        if (branch and receipt.get("review") == "clean" and
-                repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
-                == receipt.get("commit")):
-            status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")

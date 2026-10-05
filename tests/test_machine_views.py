@@ -161,6 +161,7 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     # The GitHub request must ask for the fallback; a canned response cannot prove that.
     query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
     assert "startedAt" in " ".join(query)
+    assert "\n" not in query[-1], "Windows .cmd shims must receive the whole query on one line"
 
 
 def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
@@ -179,9 +180,10 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     nodes.append({**nodes[0], "databaseId": 111371488291, "name": name, "conclusion": conclusion})
     github(gh, [pr])
     row = view(repo, "board")["items"][0]
-    assert row["pr"]["checks"] == ("fail" if required else "pass")
+    failed = required or conclusion == "STALE"
+    assert row["pr"]["checks"] == ("fail" if failed else "pass")
     assert row["occurrences"] == ([{"id": "check-run:111371488291:2026-10-04T10:00:00Z",
-                                    "kind": "checks_failed", "title": f"{name} failed"}] if required else [])
+                                    "kind": "checks_failed", "title": f"{name} failed"}] if failed else [])
 
 
 @pytest.mark.parametrize("status,merge,command", [
@@ -247,7 +249,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
 
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
-    (c, r) for c in ("SKIPPED", "NEUTRAL") for r in (True, False)])
+    (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch,
                                                              conclusion, required):
     if conclusion is not None:
@@ -370,6 +372,40 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     env.checks(GREEN)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
+    # Close leaves saved state waiting for checks; the reviewed-head receipt makes it ready.
+    child = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")["children"][0]
+    assert child["stage"] == "ready"
+    assert child["next"]["command"] == "forge merge SHOP/T1"
+    fix, fix_tree = env.start_fix(changes={"readme.md": "Welcome.\n"})
+    closed = env.close(fix)
+    assert closed.returncode == 0, closed.stderr
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
+    assert row["stage"] == "ready"
+    assert row["next"]["command"] == f"forge merge {fix}"
+    # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
+    env.commit(fix_tree, "readme.md", "Welcome back.\n")
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
+    assert row["stage"] == "waiting for checks"
+    assert row["next"]["command"] == f"forge close {fix}"
+    assert env.close(fix).returncode == 0
+    remote = repo.git("remote", "get-url", "origin")
+    gh = env.gh
+    gh.respond("api", "graphql", exit=1, stderr="offline")
+    for merged_fix in (False, True):
+        if merged_fix:
+            # Retain the merged worktree to cover its permission-dependent cleanup instruction.
+            repo.git("merge", "--squash", "fix/tidy-readme")
+            repo.git("commit", "-qm", "Accept the fix")
+            repo.git("push", "-q", "origin", "main")
+        repo.git("remote", "set-url", "origin", str(env.tmp / "unreachable.git"))
+        offline = {r["id"]: r for r in view(repo, "board")["items"]}
+        assert offline["SHOP"]["children"][0]["stage"] == "ready"
+        assert offline["SHOP"]["children"][0]["pr"]["checks"] == "unknown"
+        assert offline["SHOP"]["children"][0]["next"]["command"] is None
+        assert offline[fix]["stage"] == ("merged" if merged_fix else "ready")
+        assert offline[fix]["pr"]["checks"] == "unknown"
+        assert offline[fix]["next"]["command"] is None
+        repo.git("remote", "set-url", "origin", remote)
     github_merge(env, "task/SHOP-T1")
     merged = repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
