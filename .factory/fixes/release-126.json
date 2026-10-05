@@ -4,12 +4,13 @@
   "branch": "fix/release-126",
   "done_when": "Forge's version is 1.2.6 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, sync output and the tests that pin them).",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T16:10:37+00:00",
       "step": "start"
     }
   ],
-  "why": "Clients and this repo need v1.2.6 for the fewer-review-rounds, faster-close and machine-view changes merged since v1.2.5"
+  "why": "Clients and this repo need v1.2.6 for the fewer-review-rounds, faster-close and machine-view changes merged since v1.2.5",
+  "worker": "codex"
 }
