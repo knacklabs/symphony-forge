@@ -301,6 +301,12 @@ Adopting changes no app code.
    full `test` command and narrows pytest to changed and module-related test files. Use the
    repo's Python runner with Forge installed; keep lint and other checks in `test`.
    Forge writes no `fast_test` by itself.
+   When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
+   `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
+   repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
+   and `--passWithNoTests`. Mixed repos get one part per kind. Go, Rust, Java, .NET
+   and Ruby get no suggestion. Check the suggestion against the repo's setup before
+   agreeing to it; other shell flows need the agent to adapt the command.
 
 On a live app, every story and fix also follows these:
 
