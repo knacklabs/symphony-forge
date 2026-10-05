@@ -104,14 +104,18 @@ worktree path, shared by the repo's worktrees).
 The board's `items` has one row per story and fix, with tasks in the story's `children`.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
-`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`, and its own `next`.
+`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
+`approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
+absolute path to its document in its own worktree; other rows have null approval.
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
 Close's clean-review receipt marks tasks and fixes ready while it matches the
-branch's current commit. If the next step cannot be checked, the row stays visible
+branch's current commit. Tasks and fixes waiting for checks also show ready when
+their required checks pass on a non-draft pull request, even if close stopped waiting
+before writing its receipt. If the next step cannot be checked, the row stays visible
 with no runnable command; check the connection and run `forge next` again.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,

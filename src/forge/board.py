@@ -23,7 +23,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import __version__, codex, repo, story, task
+from forge import __version__, approval, codex, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -261,9 +261,15 @@ def machine_board(top: Path) -> Item:
                            "ended_at": records[-1].get("end") if records else None,
                            "seconds": sum(r.get("seconds") or 0 for r in records)
                            if any(r.get("seconds") is not None for r in records) else None})
-        return {"id": item, "kind": kind, "title": title,
-                "stage": (nextstep._item_readiness(item, state, top)[0]
-                          if kind != "story" else state.get("status")) or "unknown",
+        stage = (nextstep._item_readiness(item, state, top)[0]
+                 if kind != "story" else state.get("status")) or "unknown"
+        if (stage == "waiting for checks" and cfg["checks"] and not (pr or {}).get("isDraft")
+                and _green_at(mapped_prs.get(branch), cfg["checks"])):
+            stage = "ready"
+        doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
+               and approval.waiting_digest(item, tree) else None)
+        return {"id": item, "kind": kind, "title": title, "stage": stage,
+                "approval": {"doc": doc.resolve().as_posix()} if doc else None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks},
                 "findings": {"count": len(findings), "titles": findings}, "round": round_number,
                 "total_seconds": sum(r.get("seconds") or 0 for r in timings

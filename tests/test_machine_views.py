@@ -88,6 +88,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, context):
     assert rows["polish"]["pr"] == {"number": 2, "checks": "pass"}
     item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
+    assert item["approval"] is None
     child = item["children"][0]
     assert child["title"] == "The page"
     assert child["stage"] == "working"
@@ -139,6 +140,10 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     repo.git("add", "forge.toml")
     repo.git("commit", "-qm", "Choose required check")
     repo.git("push", "-q", "origin", "main")
+    story(repo)
+    assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0
+    task_folder = worktree(repo, "task/BOARD-PAGE")
+    state(task_folder / ".factory/stories/BOARD/tasks/PAGE.json", status="waiting for checks")
     made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
     assert made.returncode == 0, made.stderr
     state(worktree(repo, "fix/polish") / ".factory/fixes/polish.json", status="waiting for checks")
@@ -149,10 +154,15 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
              {**fixture["check_run"], "conclusion": "SUCCESS", "completedAt": None,
               "startedAt": "2026-10-04T10:00:00Z"})
     pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"] = [check]
-    github(gh, [pr])
+    task_pr = {**pr, "number": 2, "headRefName": "task/BOARD-PAGE",
+               "url": "https://github.com/a/b/pull/2"}
+    github(gh, [pr, task_pr])
     gh.respond("pr", "list", "--state", "all", stdout=json.dumps([{**pr, "state": "OPEN"}]))
-    row = view(repo, "board")["items"][0]
+    rows = {r["id"]: r for r in view(repo, "board")["items"]}
+    row = rows["polish"]
     assert row["pr"]["checks"] == "pass"
+    assert row["stage"] == "ready"
+    assert rows["BOARD"]["children"][0]["stage"] == "ready"
     assert row["next"] == {"command": None, "line": "Polish the guide is ready to merge: https://github.com/a/b/pull/1"}
     page = repo.path / ".git/forge/ready-board.html"
     result = repo.forge("board", "--out", str(page))
@@ -162,6 +172,15 @@ def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
     assert "startedAt" in " ".join(query)
     assert "\n" not in query[-1], "Windows .cmd shims must receive the whole query on one line"
+    # Passing checks do not make a draft ready; missing checks do not either.
+    for draft, nodes in ((True, [check]), (False, [])):
+        pr["isDraft"] = task_pr["isDraft"] = draft
+        pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"] = nodes
+        github(gh, [pr, task_pr])
+        state(repo.path / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
+        rows = {r["id"]: r for r in view(repo, "board")["items"]}
+        assert rows["polish"]["stage"] == "waiting for checks"
+        assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
 
 
 def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
@@ -209,6 +228,14 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
     row = view(repo, "board")["items"][0]
     assert row["stage"] == (status or "unknown")
     assert row["next"]["command"] == command
+    story(repo, key="WAIT", approved=None)
+    repo.git("worktree", "add", str(repo.path.parent / "repo-WAIT"), "story/WAIT")
+    waiting = worktree(repo, "story/WAIT")
+    # The session checkout has no copy: the consumer must read the story's own worktree.
+    assert not (repo.path / "plans/WAIT.md").exists()
+    waiting_row = next(r for r in view(repo, "board")["items"] if r["id"] == "WAIT")
+    assert waiting_row["approval"] == {"doc": (waiting / "plans/WAIT.md").resolve().as_posix()}
+    assert row["approval"] is None
     # Shared mod fixture checks transport types and required fields, not private records.
     fixture = json.loads(FIXTURE.read_text("utf-8"))
     def contract(actual, example):
@@ -225,6 +252,8 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
             assert isinstance(actual, type(example))
     contract(result, fixture["next"])
     contract(view(repo, "board"), fixture["board"])
+    contract(waiting_row, fixture["board"]["items"][1])
+    assert view(repo, "board", folder) == view(repo, "board", waiting)
     assert [s["name"] for s in row["stages"]] == [s["name"] for s in fixture["board"]["items"][0]["stages"]]
     if status == "started":
         # RUNS' future producer contract: current round only, real durations, skipped docs tests.
@@ -238,7 +267,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
              "start": None, "end": None, "outcome": "skipped"},
             {"item": "polish", "round": 2, "step": "review", "seconds": None,
              "start": "2026-10-04T10:01:00Z", "end": None, "outcome": "running"}]))
-        row = view(repo, "board")["items"][0]
+        row = next(r for r in view(repo, "board")["items"] if r["id"] == "polish")
         assert row["round"] == 2
         assert row["stages"][0] == {"name": "Build", "status": "pass", "seconds": 10,
                                      "started_at": "2026-10-04T10:00:00Z", "ended_at": "2026-10-04T10:00:10Z"}
