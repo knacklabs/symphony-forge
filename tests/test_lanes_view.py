@@ -119,6 +119,14 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
     machine_cores(repo, 2)
     item, name = make_work(repo, "First typo")
     hold_agents(env)
+    # The recorded process is the model child, not the Forge parent. A fresh reply
+    # from that pid proves it survived each stop attempt, even while its parent lives.
+    child = repo.bin / "claude"
+    child.write_text(child.read_text("utf-8").replace("    time.sleep(0.05)",
+        '    challenge = here / "challenge"\n'
+        '    if challenge.exists():\n'
+        '        (here / "reply").write_text(str(os.getpid()) + ":" + challenge.read_text())\n'
+        '    time.sleep(0.05)'), "utf-8")
     process, _ = start(repo.path, tmp_path, repo, "work", item)
     try:
         _until(lambda: (repo.bin / f"started-{name}").exists(), "running worker")
@@ -130,6 +138,14 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
             queue.write_text(json.dumps([{"forge": old["forge"], "agent": old["process"],
                 "repo": repo.path.as_posix(), "kind": "work"}]), "utf-8")
         row = lanes(repo)["agents"]["entries"][0]
+        assert row["process"]["pid"] != process.pid
+
+        def child_survives(challenge):
+            (repo.bin / "challenge").write_text(challenge, "utf-8")
+            reply = repo.bin / "reply"
+            _until(lambda: reply.exists() and reply.read_text("utf-8") ==
+                   f'{row["process"]["pid"]}:{challenge}', "the recorded model child's reply")
+
         assert lanes(repo)["agents"]["entries"][0]["id"] == row["id"]
         for arguments in ((), (item, "--id", row["id"]), ("--id", row["id"], "--repo", str(repo.path))):
             refused = repo.forge("stop", *arguments)
@@ -147,10 +163,12 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
         refused = repo.forge("stop", "--id", row["id"])
         assert refused.returncode != 0 and "cannot verify" in refused.stderr
         assert process.poll() is None
+        child_survives("unverified")
         # Reused pid: the recorded start differs. Never terminate its new owner.
         identity["started"] = "not this process's start"
         queue.write_text(json.dumps(saved), "utf-8")
         assert repo.forge("stop", "--id", row["id"]).returncode == 0
         assert process.poll() is None
+        child_survives("reused")
     finally:
         finish(repo, [process])
