@@ -7,28 +7,22 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "changed": "b74fa1e90c140dc697129968de42b0dc45a6c55d7b2bf5ae6002e5f12e15d484",
-    "commit": "5897a28fc893df125a52fb67b05b462fb6e0279b",
+    "branch_diff": "09ca385f374892ecc148ba8a5b3a7bc8e618d41835fd52900a2650339ea66a10",
+    "changed": "4cdb9fac1a933824c2f1defb17586b3c0ff477def55c82fff51161701621398a",
+    "commit": "588d71d89927111f6098d318e72aee7ba6902066",
     "dismissals": [],
     "findings": [
       {
-        "body": "These assertions do not isolate the launcher's environment. `review.py:316` sets FORGE_WORKER=1 on the outer close test run, `scripts/fast-test.py:38\u201339` preserves it, and `tests/conftest.py:159\u2013161` launches Forge with the inherited environment; its repo fixture does not clear the marker. Consequently, during the supplied close-run validation, removing the explicit environment assignments from worker, reader or reviewer launchers would still satisfy every injected assertion. Clear or replace FORGE_WORKER in the parent test environment before invoking Forge, so each provider case proves Forge supplies it.",
-        "file": "tests/test_run_records.py",
-        "line": 27,
-        "priority": "P1",
-        "title": "Not done: prove every worker, reader and reviewer gets FORGE_WORKER=1"
-      },
-      {
-        "body": "The previous finding remains open. A successful initial answer can ask a question and leave uncommitted changes, but a failed commit nudge prevents `_question` from running. Both Claude paths leave `outcome` as failed when the nudge raises (lines 188\u2013196); Codex explicitly changes it to failed when the nudge returns an unsuccessful status (lines 212\u2013213). The initial question receives neither a pending record nor an occurrence id, allowing subsequent work or close to proceed unanswered: `close.py:64\u201366` blocks only persisted questions. Preserve questions from successful answers independently of the nudge outcome, across both Claude routes and Codex.",
-        "file": "src/forge/worker.py",
-        "line": 217,
+        "body": "If SIGINT reaches Forge alone while an agent is running, this finally block writes a `run end` even though the agent can remain alive. The review path wraps `_attempt`, whose output loop and wait have no interruption cleanup (`src/forge/review.py:545\u2013566`). Both Claude paths have the same problem (`src/forge/worker.py:472\u2013488`, `src/forge/story.py:704\u2013713`): [CPython's Popen context manager](https://github.com/python/cpython/blob/v3.11.11/Lib/subprocess.py#L993-L1018) waits only briefly on KeyboardInterrupt and does not terminate the child. Consequently, consumers receive a completion occurrence for a running agent, and its eventual exit produces no further occurrence. Terminate and reap these children before recording the end, or retain the run until its actual exit is observed.",
+        "file": "src/forge/repo.py",
+        "line": 152,
         "priority": "P2",
-        "title": "Preserve pending questions when a commit nudge fails"
+        "title": "Record run ends only after the child has stopped"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T07:05:58+00:00",
@@ -53,8 +47,11 @@
     {
       "at": "2026-10-04T12:44:25+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:25:50+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --python 3.11 python -m forge.fasttest c9be979a7f3260eddf1b45515448468c329cdf59` exited with status 1 on the machine running forge close.\n.....................................................................    [100%]\n=================================== FAILURES ===================================\n___________________________ test_5_forge_stays_small ___________________________\n[gw0] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-FORGE-MOD-1-RUNS/.venv/bin/python\n\nrepo = <conftest.Repo object at 0x10b618090>\n\n    def test_5_forge_stays_small(repo):\n        ceiling = tomllib.loads((ROOT / \"pyproject.toml\").read_text(encoding=\"utf-8\"))[\"tool\"][\"forge\"][\n            \"line_ceiling\"]\n        files = (ROOT / \"src\" / \"forge\").rglob(\"*.py\")\n        lines = {p.relative_to(ROOT).as_posix(): p.read_bytes().count(b\"\\n\") for p in files}\n        too_long = {path: n for path, n in lines.items() if n > 1200}\n        assert not too_long, f\"modules over 1,200 lines: {too_long}\"\n>       assert sum(lines.values()) <= ceiling, (\n            f\"src/forge/ has {sum(lines.values())} lines, over the {ceiling} ceiling in pyproject.toml\")\nE       AssertionError: src/forge/ has 10014 lines, over the 10000 ceiling in pyproject.toml\nE       assert 10014 <= 10000\nE        +  where 10014 = sum(dict_values([459, 165, 505, 874, 321, 265, 401, 193, 491, 777, 109, 47, 105, 92, 515, 208, 4, 617, 194, 120, 124, 14, 167, 530, 271, 261, 97, 334, 563, 671, 360, 160]))\nE        +    where dict_values([459, 165, 505, 874, 321, 265, 401, 193, 491, 777, 109, 47, 105, 92, 515, 208, 4, 617, 194, 120, 124, 14, 167, 530, 271, 261, 97, 334, 563, 671, 360, 160]) = <built-in method values of dict object at 0x10b4f7840>()\nE        +      where <built-in method values of dict object at 0x10b4f7840> = {'src/forge/sync.py': 459, 'src/forge/githooks.py': 165, 'src/forge/worker.py': 505, 'src/forge/story.py': 874, ...}.values\n\ntests/test_rules.py:67: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 927 passed, 5 skipped in 844.83s (0:14:04)",
   "worker": "codex"
 }
