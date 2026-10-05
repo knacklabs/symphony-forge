@@ -545,10 +545,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
-    if status == "hotspot":
+    if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
-        return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
-                "it goes first.",
+        return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
+                "narrow the part, split it, or accept the remaining findings.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []

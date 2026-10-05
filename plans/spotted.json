@@ -1242,6 +1242,72 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tExpire acceptance when the story branch changes the task's scope\tthe-review-loop-stop-pauses-only-one-clo",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 138,
+      "text": "Expire acceptance when the story branch changes the task's scope",
+      "from": "blocking",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tExpire human acceptance in subsequent review instructions\tthe-review-loop-stop-pauses-only-one-clo",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 85,
+      "text": "Expire human acceptance in subsequent review instructions",
+      "from": "blocking",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/fasttest.py\tThe picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
+      "kind": "improve",
+      "path": "src/forge/fasttest.py",
+      "line": 133,
+      "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
+      "from": "worker",
+      "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: Verify every CI group finishes within 70% of its time limit\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Verify every CI group finishes within 70% of its time limit",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 14,
+      "text": "Not done: A suite test proves CI consumes the committed test durations",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

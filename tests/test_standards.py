@@ -89,7 +89,8 @@ def test_36_client_apps_simple(repo, tmp_path):
     # The separate command page names every command exposed by help, and nothing else.
     table: set[str] = set()
     for name in re.search(r"\{([^}]+)\}", repo.forge("--help").stdout)[1].split(","):
-        subs = re.search(r"\{([^}]+)\}", repo.forge(name, "--help").stdout)
+        # Only the commands section lists subcommands; option choices are not commands.
+        subs = re.search(r"(?m)^commands:\n\s+\{([^}]+)\}", repo.forge(name, "--help").stdout)
         table |= {f"{name} {sub}" for sub in subs[1].split(",")} if subs else {name}
     groups = {command.split()[0] for command in table if " " in command}
     named_on_page = {f"{first} {second}" if first in groups else first
