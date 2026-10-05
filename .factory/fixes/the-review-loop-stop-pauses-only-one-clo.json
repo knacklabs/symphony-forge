@@ -8,22 +8,22 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c1f5104845446e536b2af4797935fe5ff67db79f1ef1c09c507c450e125b5fae",
-    "changed": "7bb643f3bb598e162b43c2e984af73534abc8aca8581eb10406659e6fd81fb58",
-    "commit": "ca28b37739f85c0e0ab2c7f36426954906584b72",
+    "branch_diff": "704681318cded95aa1db604c61e1c0977daa92f3369a39d91533ce2b0dae09e3",
+    "changed": "a6207dbe2a0af85c07cc1ac5804132ff2d46ec6178e478e6fa31db3788c44ccd",
+    "commit": "e680df5a574a80ce94d2a683774b16edf76fe2f2",
     "dismissals": [],
     "findings": [
       {
-        "body": "After acceptance, change another product file while leaving an accepted defect intact. Close requests a new review, but still sends the acceptance as a binding dismissal: `review.py:215` supplies both `_previous` and `_rulings`; lines 329\u2013332 include accepted dismissals, and lines 342\u2013348 recover them from historical commits. `templates/review.md:173\u2013174` then instructs the reviewer not to raise dismissed findings without new evidence. Skipping accepted dismissals after the reviewer returns cannot undo that instruction. This is new evidence against the ruling's intended version-limited acceptance: an unchanged defect remains protected by the old acceptance after its covered version expires. Expire acceptance in both prompt sections and add a command test checking the subsequent review instructions; the current canned reviewer responses do not detect this.",
+        "body": "New evidence beyond the previous expiry finding: `review.task()` reads the live story branch's document (`src/forge/review.py:110\u2013115`), but `fingerprint()` hashes the document from the task commit (`src/forge/review.py:160\u2013166`). After accepting a task's stopped review, changing its Scope or Tests row on `story/<key>` leaves both acceptance fingerprints unchanged. Close and land can therefore reuse the accepted review and prepare the task for merge without reviewing its new requirements, contrary to the ruling that acceptance covers only the reviewed scope. The same omission affects the initial `--resolve accept` guard at close.py:82. Compare the effective scope used by the reviewer in both guards and add a command regression test that edits the story branch after acceptance; the current acceptance tests exercise fixes only.",
         "file": "src/forge/close.py",
-        "line": 85,
+        "line": 138,
         "priority": "P1",
-        "title": "Expire human acceptance in subsequent review instructions"
+        "title": "Expire acceptance when the story branch changes the task's scope"
       }
     ],
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
@@ -48,8 +48,17 @@
     {
       "at": "2026-10-05T11:25:04+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:51:13+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "done": "src/forge/close.py is simpler and behaves as it did before",
+    "file": "src/forge/close.py",
+    "why": "Simplify src/forge/close.py before the-review-loop-stop-pauses-only-one-clo carries on"
+  },
   "why": "The review loop stop pauses only one close, so a coordinator's next close carries on and a part can loop through 8 blocked reviews",
   "worker": "codex"
 }
