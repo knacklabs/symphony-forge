@@ -24,8 +24,7 @@ STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
 
 
-@pytest.mark.parametrize("tests", ["passed", "failed", "skipped"])
-def test_2_board_consumes_current_round_times_from_real_runs(env, tests):
+def _board_consumes_current_round_times_from_real_runs(env, tests):
     from test_run_records import configure
     repo = configure(env)
     item, folder = env.start_fix(changes={"README.md": "Hello\n"} if tests == "skipped" else None)
@@ -52,8 +51,7 @@ def test_2_board_consumes_current_round_times_from_real_runs(env, tests):
     assert row["total_seconds"] > stages["Build"]["seconds"]
 
 
-@pytest.mark.parametrize("kind", ["worker", "read"])
-def test_1_board_shows_recorded_live_agent_metadata(env, kind):
+def _board_shows_recorded_live_agent_metadata(env, kind):
     from test_run_records import configure
     from test_story import new_story, DOC
     repo = env.repo
@@ -107,8 +105,7 @@ def test_1_board_shows_recorded_live_agent_metadata(env, kind):
     assert next(r for r in view(repo, "board")["items"] if r["id"] == item)["worker"] is None
 
 
-@pytest.mark.parametrize("priority", ["P1", "P2", "P3"])
-def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priority):
+def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priority):
     from test_run_records import configure, records
     from test_close import blocked, finding, report, CLEAN
     repo = configure(env)
@@ -154,7 +151,7 @@ def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env, 
     assert "ready to merge" in following["line"]
 
 
-def test_2_next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
+def _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh):
     from test_task import DOC
     setup(repo, keys=("BOARD",))
     doc = "\n".join(line for line in DOC.splitlines()
@@ -214,8 +211,11 @@ def github(gh, prs):
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
 
-@pytest.mark.parametrize("context", [None, "commit status", "check start"])
-def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, context):
+@pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read"])
+def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, context):
+    if context in ("live worker", "live read"):
+        _board_shows_recorded_live_agent_metadata(request.getfixturevalue("env"), context.split()[1])
+        return
     if context is not None:
         _successful_checks_do_not_replace_close_receipts(repo, gh, context)
         return
@@ -394,8 +394,16 @@ def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
 @pytest.mark.parametrize("status,merge,command", [
     ("started", "human", "forge work polish"),
     ("ready", "human", "forge close polish"), ("ready", "agent", "forge close polish"),
-    ("reviewing", "human", None), ("", "human", "forge work polish")])
-def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, command):
+    ("reviewing", "human", None), ("", "human", "forge work polish"),
+    ("stages passed", "human", None), ("stages failed", "human", None),
+    ("stages skipped", "human", None), ("placeholder", "human", None)])
+def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merge, command):
+    if status.startswith("stages "):
+        _board_consumes_current_round_times_from_real_runs(request.getfixturevalue("env"), status.split()[1])
+        return
+    if status == "placeholder":
+        _next_rejects_the_first_placeholder_before_a_later_runnable_step(repo, gh)
+        return
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + f'merge = "{merge}"\n')
     repo.git("add", "forge.toml")
@@ -446,9 +454,14 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
 
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
+    (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
-def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch,
+def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):
+    if conclusion and conclusion.startswith("review "):
+        _board_exposes_produced_questions_reviews_run_ends_and_readiness(
+            request.getfixturevalue("env"), conclusion.split()[1])
+        return
     if conclusion is not None:
         _skipped_checks_fail_only_when_required(repo, gh, conclusion, required)
         return
