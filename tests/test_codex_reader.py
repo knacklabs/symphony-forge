@@ -14,7 +14,7 @@ from pathlib import Path
 
 from conftest import _install
 from test_codex_record import _crash, _down, _held
-from test_codex_worker import MODELS_REFUSAL, NOW, ROOT, _lines, _sent, _stub, _toml
+from test_codex_worker import MODELS_REFUSAL, NOW, QUIET, ROOT, _lines, _sent, _stub, _toml
 from test_codex_worker import sdk_data  # noqa: F401  (a fixture)
 from test_setup import _fresh_client
 from test_story import DOC, new_story, setup
@@ -35,10 +35,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    # Codex trusts no project here: a read-only turn with approvals "never" can't write, so a read
-    # needs no trust.
     (tmp_path / "codex-home").mkdir()
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
+    # Codex runs project hooks, Forge's guard among them, only in a project it trusts.
+    ((tmp_path / "codex-home") / "config.toml").write_text(
+        f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     stub, claude = repo.bin / "codex-app-server.jsonl", repo.bin / "claude-calls.jsonl"
     version = repo.forge("--version").stdout.split()[-1]
     shop = new_story(repo, "SHOP")
@@ -102,7 +103,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
     assert len(starts) == len(turns) == 3
     assert all((start["sandbox"], start["approvalPolicy"]) == ("read-only", "never")
-               and start["config"] == {"model": "gpt-6-sol", "model_reasoning_effort": "high"}
+               and start["config"] == {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)
     assert all((turn["sandboxPolicy"]["type"], turn["approvalPolicy"]) == ("readOnly", "never")
                for turn in turns)
@@ -113,8 +114,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
     assert data.decode("utf-8") in turns[-1]["input"][0]["text"]
     for fact in (f"read_hash: {blob}", "reader: codex (gpt-6-sol)", f"read_at: {NOW}",
-                 '1. stub codex: built it with {"model": "gpt-6-sol", "model_reasoning_effort": '
-                 '"high"}'):
+                 '1. stub codex: built it with ' + json.dumps(
+                     {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}, sort_keys=True)):
         assert fact in written, written
     assert json.loads(state.read_text("utf-8"))["status"] == "read"
     turn_log = repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.log"

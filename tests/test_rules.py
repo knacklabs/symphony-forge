@@ -69,7 +69,8 @@ def test_5_forge_stays_small(repo):
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    assert len(commands) <= 20, f"{len(commands)} commands: {commands}"
+    # Decision 0104 adds one shared test command for the picker and the test lane.
+    assert len(commands) <= 21, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
@@ -126,5 +127,5 @@ def test_31_speed():
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]
     # The suite's five-minute cap was replaced by ten when passing Ubuntu runs hit the limit.
     assert timeouts and max(timeouts) <= 10, f"job timeouts over ten minutes: {timeouts}"
-    windows = re.findall(r"os: windows-latest, group: (\d), groups: (\d)", workflow)
-    assert sorted(windows) == [("1", "4"), ("2", "4"), ("3", "4"), ("4", "4")], f"Windows isn't in groups 1-4 of 4: {windows}"
+    # Complete platform group sequences and effective budgets have one owner:
+    # test_ci_job_budgets.py.

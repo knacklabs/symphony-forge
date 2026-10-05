@@ -29,6 +29,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.js
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
+          ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
           *(f"{host}/skills/test-audit/{name}" for host in (".claude", ".codex")
             for name in ("SKILL.md", "NOTICE.md")), *ROLE_FILES}
 # The old first commit had only Forge docs and config; it now includes deploy files.
@@ -199,13 +200,18 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("missing tool", ("claude is not installed or not on PATH.",)),
     ("version mismatch", ("but this repo pins v0.0.1.",)),
     ("missing hook shims", ("The git hooks that check each commit and push aren't installed.",)),
-    ("forge's own repo without git hooks", ()),
+    ("forge's own repo without git hooks", ("The git hooks that check each commit and push aren't installed.",)),
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
-    ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
+    # Old contract: an edit not committed yet was a drift row with the fix forge sync. New: doctor
+    # holds it back, since forge doctor --fix never overwrites a change made by hand.
+    ("adapter drift", (".codex/config.toml has changes not committed yet, so doctor won't "
+                       "overwrite it.",)),
     ("remote-approval skill drift",
-     (".claude/skills/remote-approval/SKILL.md differs from what forge sync writes",)),
-    ("tampered hook command", (".claude/settings.json differs from what forge sync writes",)),
+     (".claude/skills/remote-approval/SKILL.md has changes not committed yet, so doctor won't "
+      "overwrite it.",)),
+    ("tampered hook command", (".claude/settings.json has changes not committed yet, so doctor "
+                               "won't overwrite it.",)),
     ("no checks or test", (
         "forge.toml names no checks, so close has nothing to wait for.\n"
         "  Fix: ask your agent to set checks in forge.toml\n",
@@ -246,10 +252,12 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
               "impeccable only in the repo's .agents": client / ".agents",
               "impeccable in CLAUDE_CONFIG_DIR": claude_config}.get(case, home / ".claude")
     if skills:
-        for name in ("impeccable", "emil-design-eng"):
-            skill = skills / "skills" / name / "SKILL.md"
-            skill.parent.mkdir(parents=True, exist_ok=True)
-            skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
+        # Doctor also checks the Codex folders when codex is installed on this machine.
+        for folder in {skills, *([codex_home] if case == "impeccable in CLAUDE_CONFIG_DIR" else [])}:
+            for name in ("impeccable", "emil-design-eng"):
+                skill = folder / "skills" / name / "SKILL.md"
+                skill.parent.mkdir(parents=True, exist_ok=True)
+                skill.write_text(f"---\nname: {name}\n---\n", encoding="utf-8")
     else:
         emil = home / ".claude" / "skills" / "emil-design-eng" / "SKILL.md"
         emil.parent.mkdir(parents=True)
@@ -317,26 +325,27 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
 
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
-        # Each host hook command ran, with a payload.
+        # Identical hook commands and payloads shared by the hosts need one probe, not two.
         calls = log.read_text(encoding="utf-8")
-        # Each host now probes the handoff hook as well as the three earlier hooks.
         for hook in ("context", "handoff", "deny", "approval"):
-            assert calls.count(f"hook {hook}\n") == 2, calls
-        assert calls.count('"hook_event_name"') == 8
+            assert calls.count(f"hook {hook}\n") == 1, calls
+        assert calls.count('"hook_event_name"') == 4
     elif case == "codex doesn't trust the project":
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr
         assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
         assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
         assert "Everything else checks out" in done.stdout
-    elif case in ("impeccable in CLAUDE_CONFIG_DIR", "forge's own repo without git hooks"):
-        # Forge's own repo runs without the git hooks until the switch, so doctor doesn't ask.
+    elif case == "impeccable in CLAUDE_CONFIG_DIR":
         assert done.returncode == 0, done.stdout + done.stderr
         assert done.stdout.startswith("Everything checks out"), done.stdout
     else:
         assert done.returncode == 1
         for row in rows:
             assert row in done.stdout, done.stdout
+        if case == "host hook fails":
+            # One failed probe still reports both host files above.
+            assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
         assert "\n  Fix: " in done.stdout
         assert done.stderr.startswith("forge doctor found ") and done.stderr.endswith(
             " problem(s); each row above gives its fix.\nNext: forge doctor\n"), done.stderr

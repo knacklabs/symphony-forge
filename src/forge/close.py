@@ -12,18 +12,20 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, spotted, story
+from forge import __version__, checks, codex, init, repo, review, spotted, story, sync
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
     "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "git -C {path} merge origin/{default}, fix the conflicts and commit, "
+                 "git -C {path} merge origin/{default}, follow Keeping work moving in "
+                 ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
                  "then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
@@ -37,6 +39,9 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
+    "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
+                "earlier round flagged too, so Forge stops sending the worker back.",
+                'forge fix start "{why}" --done "{done}", then forge close {item} once that fix merges'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -72,14 +77,37 @@ def close(args: argparse.Namespace) -> int:
         _attach(top, item, branch)
         return _merged(top, item)
 
+    previous = state.get("review") or {}
+    legacy_diff = None
+    if (previous and "branch_diff" not in previous and previous.get("changed") ==
+            review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
+        legacy_diff = review.fingerprint(previous["commit"], item, top, state,
+                                         f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
+                           f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
+        added, _, rest = record.partition("\t")
+        _, _, path = rest.partition("\t")
+        if added == "-" and path:
+            print(f"Test fixture {path} is binary; replace it with plain text files.",
+                  file=sys.stderr)
+            return 1
     spotted.check(top, item)
     if not migrating:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
-    previous = state.get("review") or {}
     result = previous
-    fresh = result.get("changed") == review.fingerprint("HEAD", item, top, state, f"origin/{default}")
+    resuming = state.get("status") == "hotspot"
+    if resuming:
+        print(f"{item} carries on after the stop for {state['stop']['file']}.")
+    changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
+    branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
+                                     branch_diff=True)
+    fresh = not resuming and result.get("branch_diff", legacy_diff) == branch_diff
+    refreshed = fresh and (result.get("changed") != changed or
+                           result.get("branch_diff") != branch_diff)
+    if fresh:
+        result.update(changed=changed, branch_diff=branch_diff)
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -110,6 +138,8 @@ def close(args: argparse.Namespace) -> int:
                                     if (finding["file"], finding["title"]) in dismissed]
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
+            if outcome == "failed":
+                repo.record_event(top, item, "review result", outcome=outcome)
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
     elif (command := review.close_test(top, f"origin/{default}")) and (
@@ -124,11 +154,31 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
+    stopped = None
+    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if not fresh:
+        flagged = set(state.get("flagged", []))
+        files = {finding["file"] for _, finding in serious}
+        if serious and round_number >= 3 and not state.get("stop"):
+            default_files = set(repo.git("ls-tree", "-r", "-z", "--name-only",
+                                         f"origin/{default}", cwd=top).split("\0"))
+            candidates = sorted(file for file in files & flagged & default_files
+                                if spotted._path(file))
+            if candidates:
+                file = candidates[0]
+                stopped = {"file": file, "why": f"Simplify {file} before {item} carries on",
+                           "done": f"{file} is simpler and behaves as it did before"}
+                state["stop"] = stopped
+        state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals:
+    if not fresh or dismissals or refreshed:
         result["status"] = "blocked" if serious else "clean"
-        state.update(review=result, status="fixing" if serious else "waiting for checks")
-        _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
+        state.update(review=result, status="hotspot" if stopped else
+                     "fixing" if serious else "waiting for checks")
+        message = f"Review of {item}: {result['status']}"
+        if stopped:
+            message += f"; {stopped['file']} keeps breaking"
+        _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
@@ -147,6 +197,8 @@ def close(args: argparse.Namespace) -> int:
             print(f"{number}. {finding['priority']} {finding['title']} "
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     if serious:
+        if stopped:
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number, **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
@@ -182,12 +234,10 @@ def merger(top: Path, state: dict[str, Any]) -> str:
 def _worktree(item: str) -> Path:
     """The checkout on the item's own branch: the one its state names. An earlier item's state
     reaches later branches through the default branch, so the file alone proves nothing."""
-    for block in repo.git("worktree", "list", "--porcelain", cwd=repo.root()).split("\n\n"):
-        fields = dict(line.partition(" ")[::2] for line in block.splitlines())
-        branch = fields.get("branch", "").removeprefix("refs/heads/")
-        state = repo.read_state(item, Path(fields["worktree"])) if branch else None
+    for branch, tree in story.worktrees(repo.root()).items():
+        state = repo.read_state(item, tree)
         if state and state.get("branch") == branch:
-            return Path(fields["worktree"])
+            return tree
     repo.refuse(REFUSALS["not_started"], item=item)
 
 
@@ -211,6 +261,7 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
+    cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
@@ -219,6 +270,28 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if not files:
         raise subprocess.CalledProcessError(done.returncode, ["git", "merge"], done.stdout,
                                             done.stderr)
+    # Read sync's inventory from a clean tree: conflicted adapters may not even parse.
+    with tempfile.TemporaryDirectory() as folder:
+        base = Path(folder) / "default"
+        repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
+        try:
+            generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+            if cfg.get("repo") == "forge-source":
+                generated.add("docs/commands.md")
+        finally:
+            repo.git("worktree", "remove", "-f", str(base), cwd=top)
+    if set(files) <= generated:
+        repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
+                 *files, cwd=top)
+        done = repo.run("forge", "sync", cwd=top)
+        if done.returncode:
+            raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
+                                                done.stderr)
+        changed = [path for path in synced_changes(top) if path in generated]
+        if changed:
+            repo.git("add", "-A", "--", *changed, cwd=top)
+        repo.git("commit", "-q", "--no-edit", cwd=top)
+        return
     repo.git("merge", "--abort", cwd=top)
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
@@ -243,17 +316,23 @@ def _synced(top: Path, item: str) -> None:
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
-        status = repo.run("git", "status", "--porcelain", "-z", "--untracked-files=all",
-                          cwd=check).stdout
-        # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
-        hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=check)
-        stale = [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
+        stale = synced_changes(check)
     finally:
         repo.git("worktree", "remove", "-f", str(check), cwd=top)
         repo.git("branch", "-D", branch, cwd=top)
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def synced_changes(top: Path) -> list[str]:
+    """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
+    # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
+    status = repo.run("git", "status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=top).stdout
+    # sync's new hook shims are never committed, even when the hooks folder is in the checkout (husky).
+    hooks = repo.git("rev-parse", "--git-path", "hooks/", cwd=top)
+    return [entry[3:] for entry in status.split("\0") if entry and not entry.startswith(f"?? {hooks}")]
 
 
 def _push(top: Path, branch: str) -> None:
@@ -384,10 +463,13 @@ def _attach(top: Path, item: str, branch: str) -> None:
 
 
 def _merged(top: Path, item: str) -> int:
-    """The item's pull request merged: name `forge story done` once the story's last one has."""
+    """A merged task needs no outcome step when its merge already recorded completion."""
     print(f"The pull request for {item} is merged.")
     key, _, name = item.partition("/")
     if name:
+        if story.completed(top, key, story.landed_ref(top)).get("status") == "done":
+            print("Next: forge next")
+            return 0
         tasks = review.rows(review.task(top, item)[1].get("Tasks", ""))
         # ponytail: the newest 1,000 merged pull requests; search by branch when a repo has more.
         merged = {pr.get("headRefName") for pr in json.loads(_gh(

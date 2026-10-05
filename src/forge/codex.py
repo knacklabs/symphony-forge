@@ -20,7 +20,7 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-from forge import repo, sync
+from forge import machine, repo, sync
 
 if os.name == "nt":
     import msvcrt
@@ -58,9 +58,24 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
+# Every Forge-owned thread stays quiet, regardless of user or project Codex settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
+# Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
+# leaves out included: the driver trusts a hook only when its whole definition is one of these.
+FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
+                "handlerType": "command", "command": sync.command(hook), "async": False,
+                "timeoutSec": 600, "statusMessage": None, "additionalContextLimit": None}
+               for event, (matcher, hook) in sync.HOSTS[".codex/hooks.json"].items()]
 
 REFUSALS = {
     "install": ("uv {step} failed while installing the Codex SDK: {said}", "forge doctor --fix"),
+    "untrusted": ("Codex doesn't trust this project, so it would skip Forge's hooks; Forge starts "
+                  "no Codex turn here.", "forge doctor"),
+    # One line: the review in Codex's /hooks is the next step, so the refusal has no Next line.
+    "hook": ("Codex doesn't trust the project's {hook} in {path} and it isn't Forge's, so Forge "
+             "started no Codex turn; review it in Codex's /hooks, then run forge {command} {item} "
+             "again.", ""),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
@@ -133,7 +148,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     """The kind's models from forge.toml, as the Codex settings its conversation starts with; a
     worker's (Build, Fix, Lite) fall back to Forge's default when forge.toml has none for Codex.
 
-    Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
+    Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
               else repo.models(cfg, "lite" if kind == "Ask" else kind.lower(), "codex"))
@@ -231,6 +246,15 @@ def recover(checkout: Path, item: str) -> None:
           "as lost.", flush=True)
 
 
+def require_trust(top: Path) -> None:
+    """Refuse unless the user's Codex config trusts the checkout or its main repo: in a project it
+    doesn't trust, Codex lists and runs no project hook, Forge's own included."""
+    from forge import doctor  # doctor imports codex
+    config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    if not doctor._codex_trusts(top, config):  # pyright: ignore[reportPrivateUsage]
+        repo.refuse(REFUSALS["untrusted"])
+
+
 def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: str,
         thread: str | None = None, fresh: str = "first turn", approval: str | None = None,
         read: bool = False, note: str | None = None, echo: bool = True,
@@ -257,16 +281,21 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     the conversation and turn ids, and the status, final text and token usage Codex reported;
     status, text and usage are None when it reported no end.
     """
+    if not (read or archive_thread or attach_request):  # every turn: work, read and ask
+        require_trust(checkout)
     root = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir",
                          cwd=checkout)).resolve().parent
     config = repo.config(checkout)
     chosen = (repo.design_models(config, "codex") if design else None)
     request = {"cwd": str(checkout), "root": str(root), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": ({} if archive_thread or attach_request else
-                          {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
+                          {**settings(config, kind),
+                           **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
-               "ephemeral": kind == "Ask"}
+               "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+    if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
+        request["config"]["features.multi_agent"] = True
     if attach_request is not None:
         request.update(attach=True, **attach_request)
     if fresh_prompt is not None:
@@ -275,6 +304,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         request["config"]["model"] = model
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
+    request["config"].update(QUIET)
     log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
            repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
@@ -283,14 +313,19 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     continued: dict[str, Any] = {}
     result: dict[str, Any] = {"conversation": None, "turn": None, "status": None, "text": None,
                               "usage": None}
-    refused, server = "", None
+    refused, server, untrusted = "", None, {}
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    with log.open("a", encoding="utf-8") as out, subprocess.Popen(
+    activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
+                else repo.record_run(checkout, item, command, family="codex",
+                                     model=request["config"].get("model")))
+    with activity as ran, \
+            log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", **GROUP) as driver:
+            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
+        machine.started(driver.pid)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
 
@@ -332,13 +367,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     recorded()
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
-                    refused, text = said["refused"], ""
-                elif "read" in said:
-                    result["read"], text = said["read"], ""
-                elif "archived" in said:
-                    result["archived"], text = said["archived"], ""
-                elif "attached" in said:
-                    result["attached"], text = said["attached"], ""
+                    refused, text, untrusted = said["refused"], "", said
+                elif control := next((key for key in ("read", "archived", "attached") if key in said), None):
+                    result[control], text = said[control], ""
                 elif "attachment_failed" in said:
                     text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
                 elif "project" in said:
@@ -422,9 +453,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     stuck = True  # thirty seconds on, a member still runs: don't claim it ended
                 if stuck:
                     repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
+            ran["outcome"] = result.get("status") or "failed"
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
-                    pid=driver.pid if refused == "driver" else server)
+                    pid=driver.pid if refused == "driver" else server,
+                    hook=untrusted.get("hook"), path=untrusted.get("path"))
     return result
 
 

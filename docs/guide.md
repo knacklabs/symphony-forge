@@ -90,9 +90,12 @@ In a client repo, finish the prototype review and customer sign-off above before
    those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
-   the same time.
-6. Merge each ready pull request as described below. After the last one, record the outcome with
-   `forge story done <KEY> "<outcome>"`.
+   the same time, but one machine runs at most 2 Forge agents at once (work rounds, plan reads and
+   close reviews, across all its repos): the rest wait in line, first come, first served, and print
+   their place when they start waiting and each time it changes; a run that dies frees its place
+   once its agent ends.
+6. Merge each ready pull request as described below. `forge merge` records the story done in its
+   last task's merge, using `--outcome "<outcome>"` or the story's title.
 
 Only the human approves a story and chooses between options. The agent does the rest, including
 merging when the repo allows agent merges.
@@ -197,6 +200,13 @@ worktree. It leaves a worktree with uncommitted changes in place and says so. Fo
 item's recorded Codex conversations; Codex can restore archived chats. The agent merges only
 through `forge merge <item>`; the hook still refuses a raw `gh pr merge` command. When agent
 merging is off, a human merges the ready pull request.
+
+The story's last task records its completion in the same squash merge. Pass
+`forge merge <KEY>/<TASK> --outcome "<outcome>"` to say what it achieved, or omit the option to
+use its title. This keeps the reviewed commit unchanged and needs no extra pull request or CI
+run. The board and `forge next` read the outcome from git. Existing done records stay unchanged.
+To correct an outcome later, run `forge story done <KEY> "<outcome>"` on an existing work branch;
+the correction ships with that branch's pull request, and the command opens no separate one.
 
 ## Upgrading a repo
 

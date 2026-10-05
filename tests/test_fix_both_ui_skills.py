@@ -83,6 +83,11 @@ def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, 
     skills = home / ".claude" / "skills"
     (skills / "impeccable").mkdir(parents=True)
     (skills / "impeccable" / "SKILL.md").write_text("impeccable\n", "utf-8")
+    # Doctor also checks where Codex reads skills when codex is installed on this machine; this
+    # test is about the Claude worker's folder, so Codex has both skills.
+    for name in ("impeccable", "emil-design-eng"):
+        (codex_home / "skills" / name).mkdir(parents=True)
+        (codex_home / "skills" / name / "SKILL.md").write_text(f"{name}\n", "utf-8")
     # Doctor checks UI skills only when the client has a frontend.
     (client / "web").mkdir()
     (client / "web" / "package.json").write_text('{"name":"web"}\n', encoding="utf-8")

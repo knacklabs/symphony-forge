@@ -1,0 +1,55 @@
+{
+  "allow_large": "Over the limit only by test files, which the owner ruled do not count; the counting fix is merged but not yet released",
+  "amendments": [
+    {
+      "at": "2026-10-02T14:40:19+00:00",
+      "because": "Simplify a repeatedly reviewed area: per-process tracking kept drawing new cases; retries cover the failures actually seen on CI",
+      "done_when": "Tests that start processes (Codex stubs, workers, git) end them and wait for them to exit before the test returns, through one shared fixture, so pytest can always delete the test's temporary folder on Windows; a test that still leaves a process holding a file fails naming it. The Windows CI groups pass three runs in a row on the fix's pull request without a PermissionError."
+    }
+  ],
+  "base": "3ff38aaacce3d22620e0f2d83a6fe237847e79ab",
+  "branch": "fix/windows-ci-jobs-keep-failing-with-permis",
+  "done_when": "On Windows, the test helpers that read, write or delete files under a test's temporary folder retry a PermissionError for up to five seconds before failing, and pytest's cleanup of temporary folders skips files Windows still has locked instead of erroring, so a process that is a moment late to exit no longer fails an unrelated test. No process tracking. A command-level test simulates a locked file on Windows (or a helper that raises PermissionError twice) and shows the read succeeds.",
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "d38c084e3539f2d802e02a8dd15efc469cec16beea3853ca4346f3e94e894489",
+    "commit": "2cdca4e46f03c19184a1820cbd5a97f5cb0fcb39",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-02T11:51:41+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-02T14:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-02T19:20:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T00:42:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T05:23:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T11:28:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-03T15:14:21+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Windows CI jobs keep failing with PermissionError while pytest cleans a test's temporary folder (test_chatview_words test_4, test_codex_resume test_9 and others on unrelated pull requests), because a process the test started still holds files there",
+  "worker": "codex"
+}

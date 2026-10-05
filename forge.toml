@@ -1,9 +1,10 @@
 # Forge's settings. Your coding agent keeps this file: ask it to change a setting or upgrade Forge.
-version = "v1.2.3"
+version = "v1.2.5"
 repo = "forge-source"
 workers = "codex"
 merge = "agent"
 test = "uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
+fast_test = "uv run --python 3.11 forge test --pytest {base}"
 checks = ["tests", "forge-pr-check"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 

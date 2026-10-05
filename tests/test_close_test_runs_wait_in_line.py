@@ -14,13 +14,13 @@ from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 STORY = "FIX-ABOUT-TWENTY-CLOSES-SHARE-THE-MACHINE-S"
 
 # The repo's test command: it logs each run's start and end, and ends when the test releases this
-# checkout's run (or after 60 seconds).
+# checkout's run. A time limit must never advance the line before the waiters announce their
+# places; pytest's timeout bounds a broken test instead.
 SUITE = '''import os, pathlib, time
 tmp, name = pathlib.Path({tmp!r}), os.path.basename(os.getcwd())
 with (tmp / "runs.log").open("a") as log:
     log.write("start " + name + "\\n")
-deadline = time.monotonic() + 60
-while not (tmp / ("release-" + name)).exists() and time.monotonic() < deadline:
+while not (tmp / ("release-" + name)).exists():
     time.sleep(0.05)
 with (tmp / "runs.log").open("a") as log:
     log.write("end\\n")
@@ -61,7 +61,7 @@ class Close:
     """A forge close running in the background, and what it has printed so far."""
 
     def __init__(self, env, name: str):
-        self.process: subprocess.Popen[str] = _close(env, _fix(env, name))
+        self.process: subprocess.Popen[str] = _close(env, name)
         self.said = ""
 
     def until(self, line: str) -> None:
@@ -86,6 +86,9 @@ THREE = "Waiting for 3 other closes' test runs on this machine."
 
 def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env):
     log = _with_test_command(env)
+    # Prepare the worktrees before holding the line; their setup is not part of queue arrival.
+    for name in ("held", "first", "second", "third"):
+        _fix(env, name)
     held = Close(env, "held")
     _running(env, log, "start fix-held")
     first = Close(env, "first")
@@ -115,6 +118,8 @@ def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(en
 
 def test_2_a_close_that_dies_while_waiting_leaves_no_place(env):
     log = _with_test_command(env)
+    for name in ("held", "dies", "lives"):
+        _fix(env, name)
     held = Close(env, "held")
     _running(env, log, "start fix-held")
     dies = Close(env, "dies")
