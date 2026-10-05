@@ -9,24 +9,17 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b00e0d9be2134088fb5a447ae3ca05e09e1fedee76dd2e98c469edb203bde438",
-    "changed": "aba289ed8d4e994a93e25bcc98001ab64fc68503ea4bfdb86926cc41f3af9cf3",
-    "commit": "b8948884bd994d735d35a4fea9f89f98bf038879",
+    "branch_diff": "d7fa012aa58a6bc5f00c94b584e416e520288f6b298222eedb532c5fc7ab8551",
+    "changed": "2eb9ed8b6b55cec9374b9d584ce63b614e3e6113a584608b8669b27e232790ec",
+    "commit": "8333bfea36554b6fa3ed8085e3e0ed75dbf9a5e0",
     "dismissals": [],
     "findings": [
       {
-        "body": "The required functional check remains unfinished: commit cbb218d58df0460e432036f3a11f2b02552ed971 explicitly says actual runner wall times still need the coordinator's CI run. This README instruction describes a future check; the successful local close run does not measure the platform matrix or setup time. Complete the latest CI run and verify every Ubuntu/macOS group finishes within seven minutes and every Windows group within fourteen minutes. This does not challenge the approved fifth macOS group; it checks whether that change achieves the promised outcome.",
+        "body": "The required performance check remains unfinished. The latest handoff commit, ab01ef7a, explicitly states that wall times including setup are still missing for the corrected three/six/eight matrix. The measured older matrix exceeded the target on Ubuntu group 2 (459 seconds) and macOS group 1 (436 seconds). The successful local close run and collection estimates do not establish platform job wall times. Complete the corrected matrix run and verify every Ubuntu/macOS group finishes within 420 seconds and every Windows group within 840 seconds. The coordinator's rulings retain the current group counts pending measurements; this finding requires the outstanding check, not another speculative count increase.",
         "file": "README.md",
         "line": 165,
         "priority": "P1",
-        "title": "Not done: Verify every CI group finishes within 70% of its time limit"
-      },
-      {
-        "body": "The only changed test checks group counts and timeout configuration. Its assertions at tests/test_ci_job_budgets.py:24\u201339 still pass if `.test_durations` is removed or the workflow points to a nonexistent duration file, restoring count-based splitting. [pytest-split 0.11.0](https://raw.githubusercontent.com/jerry-git/pytest-split/0.11.0/src/pytest_split/plugin.py) silently accepts a missing file and falls back to equal test weights. No repository test protects the recorded-time behavior; the commit's one-off collection checks do not run in the suite. Extend the CI contract test to detect an absent or unused timing file and demonstrate that the configured grouping consumes recorded durations.",
-        "file": "tests/test_ci_job_budgets.py",
-        "line": 14,
-        "priority": "P1",
-        "title": "Not done: A suite test proves CI consumes the committed test durations"
+        "title": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save"
       }
     ],
     "status": "blocked"
@@ -39,6 +32,10 @@
     },
     {
       "at": "2026-10-05T11:00:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T14:37:05+00:00",
       "step": "review"
     }
   ],
