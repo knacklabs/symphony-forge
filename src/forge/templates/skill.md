@@ -94,6 +94,62 @@ Read the [migration playbook](migrate-skill.md) before running `forge migrate --
 or `forge migrate`. It ships beside this skill and covers the human's agreement,
 preservation review, merge, cleanup and rollback. Follow it in order.
 
+## Machine views
+
+`forge board --json` and `forge next --json` print JSON for the Claude Code mod and
+other readers. The usual commands still print text or open the HTML board. Both views
+include `version` (the running Forge release) and `repo_root` (the resolved main
+worktree path, shared by the repo's worktrees).
+
+The board's `items` has one row per story and fix, with tasks in the story's `children`.
+Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
+`started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
+`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
+`approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
+absolute path to its document in its own worktree; other rows have null approval.
+An empty board has an empty items list. Missing state shows unknown. No run start,
+end, round or occurrence id is invented when its producer has not recorded one.
+The last task's merged outcome marks its story done, even when the saved story
+state still says approved. New clients get these views and this guide at init;
+existing clients get them after upgrading Forge and running sync.
+Tasks and fixes are ready only while close's clean-review receipt matches the
+branch's current commit and the pull request's checks are not failing. A failed
+rerun shows `checks failed` with `forge work` as its next step, even after a successful
+close. A running rerun or unavailable checks retain a matching receipt's readiness;
+green checks alone cannot grant it. The item's next step uses the same evidence.
+If the next step cannot be checked,
+the row stays visible with no runnable command; check the connection and run `forge next` again.
+
+Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
+started_at, ended_at and seconds for the current round from Forge's timing records;
+unrecorded values are null. Total_seconds adds recorded stage durations across rounds;
+live elapsed time comes from timestamps. Worker-owned tests belong to Build; close's tests and
+`forge test` belong to Tests. A skipped test has status skipped. Run starts and ends
+provide live worker and reader metadata; completed timing durations supply stage end
+times. Values remain null where the producer has not recorded them.
+
+The newest 25 open pull requests get checks in one GitHub request, cached for 60
+seconds in the shared Git directory. Older pull requests and unreachable GitHub
+show unknown checks. Required checks, including matrix variants, must succeed;
+skipped or neutral required checks show fail, while optional ones count as passed.
+A failed check occurrence keeps GitHub's own identity:
+`check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
+completion is a new occurrence. Each occurrence has id, kind and plain title;
+run completions, undismissed review findings (including advisory findings) and unanswered
+worker questions retain the ids in Forge's event records. Advisory occurrences do not
+change the merge gate. Readiness uses the clean review's id plus the current head
+commit. Runs that start and finish between board refreshes still appear as completions.
+
+Both views' `next` contains `command` and `line`. Command is the first Next line
+only when it is one runnable Forge command without a placeholder or alternative;
+otherwise it is null. Line carries the plain current state from the text report.
+Release notices appear in the text output and never replace the machine view's state line.
+Use each board row's next step for that item, never another
+item's step. Machine views do not grant approval or permission to merge.
+
+The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
+in `tests/test_machine_views.py` checks both views against it.
+
 ## Handoff
 
 `.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across
