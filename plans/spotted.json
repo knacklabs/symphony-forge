@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 28,
+      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
+      "from": "blocking",
+      "item": "windows-eight",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -8,6 +19,50 @@
       "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
       "from": "blocking",
       "item": "ubuntu-two",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
+      "kind": "bug",
+      "path": "AGENTS.md",
+      "line": 57,
+      "text": "Not done: Put 'Building Forge (this repo only)' outside the unchanged forge block",
+      "from": "blocking",
+      "item": "building-forge",
+      "status": "done",
+      "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
+    },
+    {
+      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "kind": "bug",
+      "path": "docs/guide.md",
+      "line": 190,
+      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
+      "from": "worker",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
+      "from": "worker",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 27,
+      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
+      "from": "worker",
+      "item": "a-client-s-coordinating-agent-has-no-shi",
       "status": "open",
       "closed_by": null
     },
@@ -155,6 +210,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 86,
+      "text": "[P1] Preserve the default outcome for forge land callers",
+      "from": "blocking",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 152,
+      "text": "Preserve compatibility with the default-branch PR checker",
+      "from": "blocking",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tPrevent review execution before its ownership is durably recorded\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -164,6 +241,28 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 110,
+      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P1] Make the fast command include uncommitted changes before testing",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/stubs/codex-app-server\tNot done: Hook-trust command tests model Codex's worktree hook source\tcodex-hook-trust",
@@ -184,6 +283,28 @@
       "text": "The process-cleanup test exceeds its timeout on the default branch too.",
       "from": "worker",
       "item": "windows-ci-jobs-keep-failing-with-permis",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
       "status": "open",
       "closed_by": null
     },
@@ -221,6 +342,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\ttests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py\tNot done: Upgrade a client adopted on v1.2.3 to v1.2.4\trelease-124",
+      "kind": "bug",
+      "path": "tests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py",
+      "line": 12,
+      "text": "Not done: Upgrade a client adopted on v1.2.3 to v1.2.4",
+      "from": "blocking",
+      "item": "release-124",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
       "key": "bug\ttests/test_hotspots.py\tNot done: test_4_only_a_fix_closes_its_named_files_entries\tFORGE-SPOTTED-1/HOT",
       "kind": "bug",
       "path": "tests/test_hotspots.py",
@@ -254,6 +386,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
+      "kind": "bug",
+      "path": "tests/test_worker_nudge_names_related_tests.py",
+      "line": 14,
+      "text": "Not done: Test related-test instructions in new and previously adopted client repos",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Abort source-code conflicts before scanning live Forge modules",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -261,6 +415,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 266,
+      "text": "Include sync-managed deletions absent from the default tree",
+      "from": "review",
+      "item": "when-forge-close-merges-the-default-bran",
       "status": "open",
       "closed_by": null
     },
@@ -309,6 +474,72 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 48,
+      "text": "Cap worker counts supplied through pytest configuration",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "done",
+      "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 82,
+      "text": "Exclude unrelated tests explicitly named by the full command",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "done",
+      "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 26,
+      "text": "Honor an existing worker limit below the machine cap",
+      "from": "review",
+      "item": "simplify-fasttest",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 29,
+      "text": "Preserve option values when removing explicit test paths",
+      "from": "review",
+      "item": "simplify-fasttest",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 22,
+      "text": "Recognize source-prefixed paths and package-relative imports",
+      "from": "review",
+      "item": "forge-s-python-changed-test-picker-scrip",
+      "status": "done",
+      "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 84,
+      "text": "Preserve completion when sibling tasks merge concurrently",
+      "from": "review",
+      "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tValidate fix branch names before reading their states",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
@@ -320,6 +551,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 149,
+      "text": "Canonicalize raw diff ordering before hashing",
+      "from": "review",
+      "item": "after-forge-close-merges-the-latest-defa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",
@@ -327,6 +569,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\t[P2] Select fast_test even when the full test command is empty",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 139,
+      "text": "[P2] Select fast_test even when the full test command is empty",
+      "from": "review",
+      "item": "worker-fast-tests",
       "status": "open",
       "closed_by": null
     },
@@ -353,6 +606,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 414,
+      "text": "Both checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "from": "worker",
+      "item": "client-repos-never-learn-that-a-newer-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -360,259 +624,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 28,
-      "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
-      "from": "blocking",
-      "item": "windows-eight",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
-      "kind": "bug",
-      "path": "docs/guide.md",
-      "line": 190,
-      "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
-      "from": "worker",
-      "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The printed merge retry command leaves the worktree path unquoted, so paths containing spaces cannot be pasted as commands.",
-      "from": "worker",
-      "item": "a-client-s-coordinating-agent-has-no-shi",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 86,
-      "text": "[P1] Preserve the default outcome for forge land callers",
-      "from": "blocking",
-      "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 152,
-      "text": "Preserve compatibility with the default-branch PR checker",
-      "from": "blocking",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py\tNot done: Upgrade a client adopted on v1.2.3 to v1.2.4\trelease-124",
-      "kind": "bug",
-      "path": "tests/test_fix_clients_need_v1_2_1_for_the_upgrade_hook.py",
-      "line": 12,
-      "text": "Not done: Upgrade a client adopted on v1.2.3 to v1.2.4",
-      "from": "blocking",
-      "item": "release-124",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 48,
-      "text": "Cap worker counts supplied through pytest configuration",
-      "from": "review",
-      "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "done",
-      "closed_by": "simplify-fasttest"
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 82,
-      "text": "Exclude unrelated tests explicitly named by the full command",
-      "from": "review",
-      "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "done",
-      "closed_by": "simplify-fasttest"
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 22,
-      "text": "Recognize source-prefixed paths and package-relative imports",
-      "from": "review",
-      "item": "forge-s-python-changed-test-picker-scrip",
-      "status": "done",
-      "closed_by": "simplify-fasttest"
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 84,
-      "text": "Preserve completion when sibling tasks merge concurrently",
-      "from": "review",
-      "item": "recording-that-a-story-is-done-opens-a-s",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 149,
-      "text": "Canonicalize raw diff ordering before hashing",
-      "from": "review",
-      "item": "after-forge-close-merges-the-latest-defa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
-      "kind": "bug",
-      "path": "AGENTS.md",
-      "line": 57,
-      "text": "Not done: Put 'Building Forge (this repo only)' outside the unchanged forge block",
-      "from": "blocking",
-      "item": "building-forge",
-      "status": "done",
-      "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 27,
-      "text": "The manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
-      "from": "worker",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 110,
-      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
-      "from": "blocking",
-      "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\t[P1] Make the fast command include uncommitted changes before testing\tworker-fast-tests",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 139,
-      "text": "[P1] Make the fast command include uncommitted changes before testing",
-      "from": "blocking",
-      "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 54,
-      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably",
-      "from": "blocking",
-      "item": "test-codex-resume-s-crash-recovery-test",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b\ttest-codex-resume-s-crash-recovery-test",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 54,
-      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b",
-      "from": "blocking",
-      "item": "test-codex-resume-s-crash-recovery-test",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_worker_nudge_names_related_tests.py\tNot done: Test related-test instructions in new and previously adopted client repos\tworker-fast-tests",
-      "kind": "bug",
-      "path": "tests/test_worker_nudge_names_related_tests.py",
-      "line": 14,
-      "text": "Not done: Test related-test instructions in new and previously adopted client repos",
-      "from": "blocking",
-      "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Abort source-code conflicts before scanning live Forge modules",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tInclude sync-managed deletions absent from the default tree",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 266,
-      "text": "Include sync-managed deletions absent from the default tree",
-      "from": "review",
-      "item": "when-forge-close-merges-the-default-bran",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/worker.py\t[P2] Select fast_test even when the full test command is empty",
-      "kind": "edge",
-      "path": "src/forge/worker.py",
-      "line": 139,
-      "text": "[P2] Select fast_test even when the full test command is empty",
-      "from": "review",
-      "item": "worker-fast-tests",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 26,
-      "text": "Honor an existing worker limit below the machine cap",
-      "from": "review",
-      "item": "simplify-fasttest",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 29,
-      "text": "Preserve option values when removing explicit test paths",
-      "from": "review",
-      "item": "simplify-fasttest",
       "status": "open",
       "closed_by": null
     }
