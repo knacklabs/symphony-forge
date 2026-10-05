@@ -450,10 +450,14 @@ def test_8_changed_approval_waits_for_a_new_one(repo, monkeypatch, sdk_data):
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head and len(_stub(calls)) == said
 
 
-def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data):
+# Each recovery rule owns a timeout budget; serial SDK starts must not share one.
+@pytest.mark.parametrize("case", ["reported_end", "missing_turn", "unlogged_turn",
+                                 "missing_conversation"])
+def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_data, case):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     store = repo.bin / "threads.json"
     lock = turns.with_suffix(".lock")
+    log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
 
     def report(turn: str, status: str | None) -> None:
         """Make Codex report this status for the turn, or no such turn at all."""
@@ -464,130 +468,137 @@ def test_9_crash_recovery_reads_the_conversation_back(repo, monkeypatch, sdk_dat
             threads["thr-stub-1"]["turns"][turn] = status
         store.write_text(json.dumps(threads), encoding="utf-8")
 
-    # forge work crashes mid-turn, leaving its Codex processes and no end line.
-    work, saved = _holding(repo, turns)
-    stub = saved["app_server"]["pid"]
-    _crash(work, saved)
-    assert lock.exists() and "status" not in _lines(turns)[-1]
-    held = _lines(turns)[-1]
+    if case != "reported_end":
+        built = repo.forge("work", "BOARD/PAGE")
+        assert built.returncode == 0, built.stdout + built.stderr
 
-    # The next forge work stops the leftover processes, then reads the conversation back. Codex
-    # goes away before it says how the turn ended, so forge work refuses before it records any
-    # status: it can't tell whether the turn still runs.
-    head = repo.git("rev-parse", "HEAD", cwd=folder)
-    monkeypatch.setenv("STUB_CODEX_STATUS", "vanish")
-    unread = repo.forge("work", "BOARD/PAGE")
-    monkeypatch.delenv("STUB_CODEX_STATUS")
-    log = repo.path / ".git" / "forge" / "work-BOARD-PAGE.log"
-    assert unread.stderr == ("Codex didn't say how the last turn of BOARD/PAGE ended, so Forge "
-                             f"starts no second one; its log is {log}.\n"
-                             "Next: forge work BOARD/PAGE\n")
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
-    assert _down(stub) and _down(saved["driver"]["pid"])
+    if case != "unlogged_turn":
+        # forge work crashes mid-turn, leaving its Codex processes and no end line.
+        work, saved = _holding(repo, turns)
+        stub = saved["app_server"]["pid"]
+        _crash(work, saved)
+        assert lock.exists() and "status" not in _lines(turns)[-1]
+        held = _lines(turns)[-1]
 
-    # Codex fails the read for another reason than a missing conversation: that proves nothing
-    # about the turn, so forge work refuses the same way instead of logging it lost.
-    monkeypatch.setenv("STUB_CODEX_STATUS", "error")
-    failed = repo.forge("work", "BOARD/PAGE")
-    monkeypatch.delenv("STUB_CODEX_STATUS")
-    assert failed.stderr == unread.stderr
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+    if case == 'reported_end':
+        # The next forge work stops the leftover processes, then reads the conversation back. Codex
+        # goes away before it says how the turn ended, so forge work refuses before it records any
+        # status: it can't tell whether the turn still runs.
+        head = repo.git("rev-parse", "HEAD", cwd=folder)
+        monkeypatch.setenv("STUB_CODEX_STATUS", "vanish")
+        unread = repo.forge("work", "BOARD/PAGE")
+        monkeypatch.delenv("STUB_CODEX_STATUS")
+        assert unread.stderr == ("Codex didn't say how the last turn of BOARD/PAGE ended, so Forge "
+                                 f"starts no second one; its log is {log}.\n"
+                                 "Next: forge work BOARD/PAGE\n")
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+        assert _down(stub) and _down(saved["driver"]["pid"])
 
-    # Nor is a failed history read, though its message names the conversation.
-    monkeypatch.setenv("STUB_CODEX_STATUS", "unmaterialized")
-    unloaded = repo.forge("work", "BOARD/PAGE")
-    monkeypatch.delenv("STUB_CODEX_STATUS")
-    assert unloaded.stderr == unread.stderr
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+        # Codex fails the read for another reason than a missing conversation: that proves nothing
+        # about the turn, so forge work refuses the same way instead of logging it lost.
+        monkeypatch.setenv("STUB_CODEX_STATUS", "error")
+        failed = repo.forge("work", "BOARD/PAGE")
+        monkeypatch.delenv("STUB_CODEX_STATUS")
+        assert failed.stderr == unread.stderr
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
 
-    # Codex still says the turn is running: forge work refuses again, so two turns never run.
-    running = repo.forge("work", "BOARD/PAGE")
-    assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
-                              "starts no second one.\nNext: wait for it to end in the Codex app, "
-                              "then forge work BOARD/PAGE\n")
-    assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 4
-    assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
-    assert not lock.exists() and len(_sent(calls, "turn/start")) == 1
+        # Nor is a failed history read, though its message names the conversation.
+        monkeypatch.setenv("STUB_CODEX_STATUS", "unmaterialized")
+        unloaded = repo.forge("work", "BOARD/PAGE")
+        monkeypatch.delenv("STUB_CODEX_STATUS")
+        assert unloaded.stderr == unread.stderr
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
 
-    # Once Codex reports the turn's end, it is logged with that status, and the work goes on in
-    # the same conversation.
-    report(held["turn"], "interrupted")
-    recovered = repo.forge("work", "BOARD/PAGE")
-    assert recovered.returncode == 0, recovered.stdout + recovered.stderr
-    lines = _lines(turns)
-    assert lines[-3] == {**held, "continued": False, "fresh_start": "first turn",
-                         "status": "interrupted", "ended": NOW, "input_tokens": None,
-                         "cached_input_tokens": None, "output_tokens": None}
-    assert lines[-1]["status"] == "completed" and lines[-1]["continued"] is True
-    assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-1"]
+        # Codex still says the turn is running: forge work refuses again, so two turns never run.
+        running = repo.forge("work", "BOARD/PAGE")
+        assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
+                                  "starts no second one.\nNext: wait for it to end in the Codex app, "
+                                  "then forge work BOARD/PAGE\n")
+        assert [read["threadId"] for read in _sent(calls, "thread/read")] == ["thr-stub-1"] * 4
+        assert repo.git("rev-parse", "HEAD", cwd=folder) == head and _lines(turns)[-1] == held
+        assert not lock.exists() and len(_sent(calls, "turn/start")) == 1
 
-    # A crashed turn Codex reports no status for is logged as lost, never as finished.
-    work, saved = _holding(repo, turns)
-    _crash(work, saved)
-    held = _lines(turns)[-1]
-    report(held["turn"], None)
-    assert repo.forge("work", "BOARD/PAGE").returncode == 0
-    assert _down(saved["app_server"]["pid"])
-    lines = _lines(turns)
-    assert lines[-3] == {**held, "continued": True, "fresh_start": None, "status": "lost",
-                         "ended": NOW, "input_tokens": None, "cached_input_tokens": None,
-                         "output_tokens": None}
+        # Once Codex reports the turn's end, it is logged with that status, and the work goes on in
+        # the same conversation.
+        report(held["turn"], "interrupted")
+        recovered = repo.forge("work", "BOARD/PAGE")
+        assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+        lines = _lines(turns)
+        assert lines[-3] == {**held, "continued": False, "fresh_start": "first turn",
+                             "status": "interrupted", "ended": NOW, "input_tokens": None,
+                             "cached_input_tokens": None, "output_tokens": None}
+        assert lines[-1]["status"] == "completed" and lines[-1]["continued"] is True
+        assert [call["threadId"] for call in _sent(calls, "thread/resume")] == ["thr-stub-1"]
 
-    # forge work crashes after Codex started a turn but before Forge logged its "started" line.
-    # The next one still reads the conversation back and refuses while Codex says that turn runs.
-    conversation = _saved(turns.with_suffix(".json"))["conversation"]
-    before = len(_sent(calls, "turn/start"))
-    logged = _lines(turns)
+        return
 
-    def unseen() -> list[str]:
-        """The turns Codex says still run."""
+    if case == 'missing_turn':
+        # A crashed turn Codex reports no status for is logged as lost, never as finished.
+        report(held["turn"], None)
+        assert repo.forge("work", "BOARD/PAGE").returncode == 0
+        assert _down(saved["app_server"]["pid"])
+        lines = _lines(turns)
+        assert lines[-3] == {**held, "continued": True, "fresh_start": None, "status": "lost",
+                             "ended": NOW, "input_tokens": None, "cached_input_tokens": None,
+                             "output_tokens": None}
+
+        return
+
+    if case == 'unlogged_turn':
+        # forge work crashes after Codex started a turn but before Forge logged its "started" line.
+        # The next one still reads the conversation back and refuses while Codex says that turn runs.
+        conversation = _saved(turns.with_suffix(".json"))["conversation"]
+        before = len(_sent(calls, "turn/start"))
+        logged = _lines(turns)
+
+        def unseen() -> list[str]:
+            """The turns Codex says still run."""
+            threads = json.loads(store.read_text(encoding="utf-8"))
+            return [turn for turn, status in threads[conversation]["turns"].items()
+                    if status == "inProgress"]
+
+        work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
+                                cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "starting"},
+                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            if unseen():
+                break
+            time.sleep(0.05)
+        else:
+            work.kill()
+            # Forge's refusal reports only the symptom; its work log contains the driver exception.
+            # Keep it in CI output, since the temporary checkout is removed after this test fails.
+            error = work.communicate()[1]
+            pytest.fail(f"the turn never started: {error}\n{log.read_text(encoding='utf-8')}")
+        saved = _saved(turns.with_suffix(".json"))
+        _crash(work, saved)
+        assert _lines(turns) == logged
+        running = repo.forge("work", "BOARD/PAGE")
+        assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
+                                  "starts no second one.\nNext: wait for it to end in the Codex app, "
+                                  "then forge work BOARD/PAGE\n")
+        assert len(_sent(calls, "turn/start")) == before + 1 and _lines(turns) == logged
+        assert _down(saved["app_server"]["pid"])
+
+        # Once Codex reports that turn's end, it is logged with that status and the work goes on.
+        [held] = unseen()
         threads = json.loads(store.read_text(encoding="utf-8"))
-        return [turn for turn, status in threads[conversation]["turns"].items()
-                if status == "inProgress"]
+        threads[conversation]["turns"][held] = "interrupted"
+        store.write_text(json.dumps(threads), encoding="utf-8")
+        recovered = repo.forge("work", "BOARD/PAGE")
+        assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+        lines = _lines(turns)
+        assert lines[-3] == {"conversation": conversation, "turn": held, "kind": "Fix",
+                             "started": None, "continued": True, "fresh_start": None,
+                             "status": "interrupted", "ended": NOW, "input_tokens": None,
+                             "cached_input_tokens": None, "output_tokens": None}
+        assert (lines[-1]["conversation"], lines[-1]["status"]) == (conversation, "completed")
 
-    work = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE"],
-                            cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "starting"},
-                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    deadline = time.monotonic() + 60
-    while time.monotonic() < deadline:
-        if unseen():
-            break
-        time.sleep(0.05)
-    else:
-        work.kill()
-        # Forge's refusal reports only the symptom; its work log contains the driver exception.
-        # Keep it in CI output, since the temporary checkout is removed after this test fails.
-        error = work.communicate()[1]
-        pytest.fail(f"the turn never started: {error}\n{log.read_text(encoding='utf-8')}")
-    saved = _saved(turns.with_suffix(".json"))
-    _crash(work, saved)
-    assert _lines(turns) == logged
-    running = repo.forge("work", "BOARD/PAGE")
-    assert running.stderr == ("Codex says the last turn of BOARD/PAGE is still running, so Forge "
-                              "starts no second one.\nNext: wait for it to end in the Codex app, "
-                              "then forge work BOARD/PAGE\n")
-    assert len(_sent(calls, "turn/start")) == before + 1 and _lines(turns) == logged
-    assert _down(saved["app_server"]["pid"])
-
-    # Once Codex reports that turn's end, it is logged with that status and the work goes on.
-    [held] = unseen()
-    threads = json.loads(store.read_text(encoding="utf-8"))
-    threads[conversation]["turns"][held] = "interrupted"
-    store.write_text(json.dumps(threads), encoding="utf-8")
-    recovered = repo.forge("work", "BOARD/PAGE")
-    assert recovered.returncode == 0, recovered.stdout + recovered.stderr
-    lines = _lines(turns)
-    assert lines[-3] == {"conversation": conversation, "turn": held, "kind": "Fix",
-                         "started": None, "continued": True, "fresh_start": None,
-                         "status": "interrupted", "ended": NOW, "input_tokens": None,
-                         "cached_input_tokens": None, "output_tokens": None}
-    assert (lines[-1]["conversation"], lines[-1]["status"]) == (conversation, "completed")
+        return
 
     # A crashed turn whose whole conversation Codex no longer has is logged as lost too, and the
     # work starts a new conversation, saying why.
-    work, saved = _holding(repo, turns)
-    _crash(work, saved)
-    held = _lines(turns)[-1]
     threads = json.loads(store.read_text(encoding="utf-8"))
     del threads[held["conversation"]]
     store.write_text(json.dumps(threads), encoding="utf-8")
