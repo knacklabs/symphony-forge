@@ -681,9 +681,14 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
-When close stops an item because a file keeps breaking, start the fix it prints without
-asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
-after that fix merges.
+When close stops an item because a file keeps breaking, run no more `forge work` on that item.
+Ask the human to narrow the part, split it, or accept the remaining findings.
+Never re-run close or land past this stop until their choice is recorded.
+After their answer, record it with
+`forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Narrow or split the part as agreed before building again. Accept records the remaining findings
+as accepted for the reviewed code and scope; close still requires green checks. Changed code or
+scope needs another review.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

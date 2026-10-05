@@ -164,6 +164,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         items = json.loads(roadmap.stdout).get("items", []) if roadmap.returncode == 0 else []
         entry = next((value for value in items if value.get("key") == key), {})
         parts = [text, json.dumps(entry, sort_keys=True)]
+        if branch_diff:
+            # Close's reuse key covers the same live story document as the review prompt.
+            parts.append(task(top, item)[0])
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
@@ -326,7 +329,8 @@ def passed_record(top: Path, command: str) -> Path | None:
 
 def _previous(result: dict[str, Any]) -> str:
     findings = result.get("findings", [])
-    dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])
+                  if not d.get("accepted")}
     return "\n".join(
         f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
         f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
@@ -334,8 +338,8 @@ def _previous(result: dict[str, Any]) -> str:
 
 
 def _rulings(top: Path, item: str, base: str) -> str:
-    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
-    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
+    """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
+    their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
     log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
     found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
     path = repo.state_path(item)
@@ -343,6 +347,8 @@ def _rulings(top: Path, item: str, base: str) -> str:
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         for dismissal in result.get("dismissals", []):
+            if dismissal.get("accepted"):
+                continue  # Human acceptance expires before a subsequent review.
             finding = result["findings"][dismissal["finding"] - 1]
             line = (f"{finding['title']} ({finding['file']}): dismissed because "
                     f"{dismissal['because']}")
