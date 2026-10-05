@@ -10,11 +10,11 @@
     "blocking_level": "P1",
     "branch_diff": "704681318cded95aa1db604c61e1c0977daa92f3369a39d91533ce2b0dae09e3",
     "changed": "a6207dbe2a0af85c07cc1ac5804132ff2d46ec6178e478e6fa31db3788c44ccd",
-    "commit": "e680df5a574a80ce94d2a683774b16edf76fe2f2",
+    "commit": "9c8d7fc6ea906e0c2c6f7fbb3b7381d97cd03e3a",
     "dismissals": [],
     "findings": [
       {
-        "body": "New evidence beyond the previous expiry finding: `review.task()` reads the live story branch's document (`src/forge/review.py:110\u2013115`), but `fingerprint()` hashes the document from the task commit (`src/forge/review.py:160\u2013166`). After accepting a task's stopped review, changing its Scope or Tests row on `story/<key>` leaves both acceptance fingerprints unchanged. Close and land can therefore reuse the accepted review and prepare the task for merge without reviewing its new requirements, contrary to the ruling that acceptance covers only the reviewed scope. The same omission affects the initial `--resolve accept` guard at close.py:82. Compare the effective scope used by the reviewer in both guards and add a command regression test that edits the story branch after acceptance; the current acceptance tests exercise fixes only.",
+        "body": "The previously reported gap remains open. `review.task()` reads the live `story/<key>` document (src/forge/review.py:110\u2013115), while `fingerprint()` hashes the document at the task commit (review.py:160\u2013166). Editing the task's Scope, Tests, or covered requirements on the story branch therefore leaves both acceptance fingerprints unchanged. The initial `--resolve accept` guard at close.py:82 permits acceptance against changed requirements, and this reuse guard lets subsequent close and land skip another review. This violates the ruling that acceptance covers only the reviewed code and scope. Compare the effective document used by the reviewer in both guards and add a command regression test that edits the story branch; the acceptance tests currently exercise fixes only.",
         "file": "src/forge/close.py",
         "line": 138,
         "priority": "P1",
@@ -23,7 +23,7 @@
     ],
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
@@ -51,6 +51,10 @@
     },
     {
       "at": "2026-10-05T11:51:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:02:26+00:00",
       "step": "review"
     }
   ],
