@@ -89,6 +89,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: report readiness when checks fail after a successful close\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 271,
+      "text": "Not done: report readiness when checks fail after a successful close",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: report ready tasks and fixes at their current stage\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -320,6 +331,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 8,
+      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
+      "from": "blocking",
+      "item": "codex-spawns-subagents-only-when-explici",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -523,6 +545,17 @@
       "path": "src/forge/board.py",
       "line": 139,
       "text": "Keep skipped required checks from appearing green",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tRecognize GitHub merges before the default branch is fetched",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 216,
+      "text": "Recognize GitHub merges before the default branch is fetched",
       "from": "review",
       "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
@@ -800,17 +833,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
-      "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 8,
-      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
-      "from": "blocking",
-      "item": "codex-spawns-subagents-only-when-explici",
       "status": "open",
       "closed_by": null
     }

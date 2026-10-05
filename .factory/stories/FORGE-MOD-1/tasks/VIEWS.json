@@ -6,20 +6,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c20c5151b1c1ed71463ac9ecfb44023156cd5739c4ccab90509879dfd684f0b3",
-    "changed": "f8e7e47ba61b9c073ad4f0eaefbffc8212ca48053b0eccb646cc238897e6cbef",
-    "commit": "fa68c401292a51dfbe3bb2e8513a14bcb0ad04c9",
+    "branch_diff": "bc5360dc976098f2b970453441da30bd9c684060e6083363936d37ffaa10746f",
+    "changed": "61cdf37cec0d054147063e00ef6f52c2a8a77e6b377a311d3be4d764ea6e160b",
+    "commit": "c8cc25a750b8592578e0324a3147cedafcd604e6",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported issue remains. When a newer release exists, `upgrade.release_notice` prepends its announcement (src/forge/upgrade.py:186\u2013187), and `machine_next` selects the first non-Next line. Consequently, `forge next --json` returns the release announcement as `next.line`, hiding the actual waiting or human-only merge state when `next.command` is null. Build the machine next object from `_report`'s lines and keep release notices separate.",
+        "body": "After close writes a clean receipt, rerunning a check on the same commit and failing it leaves this row at `stage: \"ready\"`, even after the checks cache expires and `pr.checks` becomes `fail`. `_item_readiness` trusts the matching receipt without considering the fresh check result, and `_item` also continues advertising the merge step (src/forge/nextstep.py:576\u2013588). This is new evidence beyond the ruling about retaining receipt-based readiness when GitHub is unavailable: here GitHub supplies a known failure. Reconcile readiness and the item's next step with known failed or running checks, while preserving the ruled unavailable-data fallback, and cover this scenario through the commands.",
+        "file": "src/forge/board.py",
+        "line": 271,
+        "priority": "P1",
+        "title": "Not done: report readiness when checks fail after a successful close"
+      },
+      {
+        "body": "The previously reported gap remains. `upgrade.release_notice` returns its announcement before the state report (src/forge/upgrade.py:186\u2013187), and `machine_next` selects the first non-Next line. When an upgrade exists, a waiting item or human-only merge therefore gets the release announcement as `next.line`, hiding its actual state. Build the machine next object from `_report`'s lines and keep the release notice separate.",
         "file": "src/forge/nextstep.py",
         "line": 117,
         "priority": "P2",
         "title": "Keep release notices from replacing next.line"
+      },
+      {
+        "body": "The machine board recognizes merged tasks and fixes only from state files already present on the fetched default branch. Both PR lookups contain only open PRs, and story next-step calculation receives an empty merged-PR set here. After a human merges on GitHub, but before a fetch, the board consequently retains the old stage and merge/close instruction. The text next report already handles this through its merged-PR lookup (src/forge/nextstep.py:187\u2013188). Reuse that evidence for task and fix stages and story next-step calculation so the machine command does not depend on a subsequent fetch to recognize the merge.",
+        "file": "src/forge/board.py",
+        "line": 216,
+        "priority": "P2",
+        "title": "Recognize GitHub merges before the default branch is fetched"
       }
     ],
-    "status": "clean"
+    "status": "blocked"
   },
   "status": "fixing",
   "steps": [
@@ -49,6 +63,10 @@
     },
     {
       "at": "2026-10-05T06:32:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:04:23+00:00",
       "step": "review"
     }
   ],
