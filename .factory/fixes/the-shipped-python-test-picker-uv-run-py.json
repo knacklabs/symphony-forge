@@ -3,12 +3,13 @@
   "branch": "fix/the-shipped-python-test-picker-uv-run-py",
   "done_when": "A 'forge fasttest <base>' command works in any pytest repo without installing Forge into the project: Forge picks the changed test files, test files named after a changed module, and test files importing or mentioning it, then runs the repo's own test command from forge.toml narrowed to those files in the repo's environment, runs the full test command when conftest.py, pyproject.toml or a lock file changed, and caps pytest at half the machine's cores; no pytest plugin. Forge's own forge.toml and the skill use 'forge fasttest {base}'; doctor reports a fast_test that still says 'python -m forge.fasttest' with the one-line replacement. New repos: setup proposes it for pytest repos. Existing repos: get the command on upgrade; their forge.toml is never rewritten. One command-level test in a plain pytest repo without Forge installed in its environment.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T04:52:56+00:00",
       "step": "start"
     }
   ],
-  "why": "The shipped Python test picker (uv run python -m forge.fasttest) fails in client repos with 'No module named forge', because Forge is a separate tool, not a dependency of the client's project; it only works in Forge's own repo"
+  "why": "The shipped Python test picker (uv run python -m forge.fasttest) fails in client repos with 'No module named forge', because Forge is a separate tool, not a dependency of the client's project; it only works in Forge's own repo",
+  "worker": "codex"
 }
