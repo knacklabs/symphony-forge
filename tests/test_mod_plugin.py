@@ -42,7 +42,7 @@ def node_run(folder, text):
     return json.loads(result.stdout)
 
 
-def test_mod_hooks_pass_strict_typescript_against_claude_declarations(packaged_mod):
+def strict_typescript_against_claude_declarations(packaged_mod):
     # Claude's published declarations are pinned independently of the hooks.
     declarations = packaged_mod / ".claude-plugin/types"
     declarations.mkdir(parents=True)
@@ -154,6 +154,7 @@ async function fire(name, event, api) {
 
 
 def test_6_feature_registrars_share_one_snapshot_and_machine_gets_the_tab_host(packaged_mod, tmp_path):
+    strict_typescript_against_claude_declarations(packaged_mod)
     plugin = tmp_path / "plugin"
     shutil.copytree(packaged_mod, plugin)
     # These fixtures stand in for the four sibling task consumers. They subscribe
