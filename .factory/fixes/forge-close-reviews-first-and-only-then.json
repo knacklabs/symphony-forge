@@ -17,28 +17,13 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "changed": "5b097b36f68411a16f782727cbc599f086bf8e51c02cab36f5d1826ba4a2b677",
-    "commit": "e1f3eabdab5458fee576d5410b5358da322bfbfb",
+    "changed": "454de883c0d6722da27b517d16abb23a4029e70283f5a53cfca9ca22d63eee50",
+    "commit": "4661f1e9900af44e162c1657d7e08ae6af172ca7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The parent lookup now accepts every event, including `pull_request_target`. The generated workflow skips its tests job for that event (`src/forge/prcheck.py:53`), so a successful run proves only the PR check passed. GitHub's [checkout source](https://raw.githubusercontent.com/actions/checkout/f9e715a95fcd1f9253f77dd28f11e88d2d6460c7/src/unsafe-pr-checkout-helper.ts) confirms that these runs use the default-branch SHA as `head_sha`. Consequently, a records-only commit whose parent is that default-branch commit can skip the suite using a successful target-event run even when its parent has no passing tests. This is new evidence beyond the previous push-event exclusion: accepting push runs is appropriate, but accepting runs that skipped tests violates the tested-parent requirement. Restrict eligible runs to events that execute tests, or verify the tests jobs themselves. Apply the same correction to `.forge/review-tests.py:42` and cover a successful target-only parent run.",
-        "file": "src/forge/templates/review-tests.py",
-        "line": 42,
-        "priority": "P1",
-        "title": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the"
-      },
-      {
-        "body": "This assertion only checks that the reuse guard appears somewhere in the workflow. The test executes the decision script separately and never verifies that its output controls the suite step. Removing the suite step's `if` from the generator and either checked-in workflow would leave all these assertions passing because the setup-uv guard remains, while records-only commits would run the entire suite. `test_3_forge_matrix_uses_the_same_review_record_shortcut` has the same gap. Add a workflow-contract check that verifies the condition on the actual suite step in generated client workflows and Forge's own workflow, covering both reuse and normal execution.",
-        "file": "tests/test_review_record_reuses_parent_tests.py",
-        "line": 45,
-        "priority": "P1",
-        "title": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T10:31:15+00:00",
@@ -50,6 +35,10 @@
     },
     {
       "at": "2026-10-04T15:38:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T03:40:15+00:00",
       "step": "review"
     }
   ],
