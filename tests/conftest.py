@@ -27,7 +27,8 @@ REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
-import sys
+import signal, sys
+signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
@@ -259,6 +260,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
         if name.startswith("GIT_"):
             monkeypatch.delenv(name)
     monkeypatch.delenv("CLAUDECODE", raising=False)  # set when tests run under Claude Code
+    monkeypatch.delenv("FORGE_WORKER", raising=False)  # each launcher must set its own marker
     gitconfig = tmp_path / "gitconfig"
     # Wait for automatic GC and maintenance (which uses gc.autoDetach as its fallback) before
     # a helper removes a temporary clone; detached maintenance can still write its objects.
