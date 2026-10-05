@@ -183,15 +183,16 @@ def machine_board(top: Path) -> Item:
     older = nextstep._prs(top, "open", "number,headRefName,url,isDraft")
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    timings = []
-    path = repo.forge_dir(top) / "timings.jsonl"
-    for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-        try:
-            value = json.loads(line)
-            if isinstance(value, dict):
-                timings.append(value)
-        except ValueError:
-            continue
+    timings, recorded = [], []
+    for name, rows in (("timings", timings), ("events", recorded)):
+        path = repo.forge_dir(top) / f"{name}.jsonl"
+        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
+            try:
+                value = json.loads(line)
+                if isinstance(value, dict):
+                    rows.append(value)
+            except ValueError:
+                continue
 
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind != "story" and repo.state_path(item) in merged:
@@ -246,22 +247,60 @@ def machine_board(top: Path) -> Item:
             except repo.Refused:
                 model = None
             worker = {"kind": "read" if kind == "story" else "build", "model": model,
-                      "started_at": state.get("run_started_at")}
-        round_number = state.get("round")
+                      "started_at": None}
+        activity = [e for e in recorded if e.get("item") == item]
+        ended = {e.get("run_id") for e in activity if e.get("event") == "run end"}
+        active = [e for e in activity if e.get("event") == "run start" and e.get("id") not in ended]
+        agents = [e for e in active if e.get("kind") in ("work", "worker", "read", "review")
+                  and ("round" not in state or e.get("round") == state["round"])]
+        if agents:
+            agent = agents[-1]
+            worker = {"kind": {"work": "build", "worker": "build"}.get(agent["kind"], agent["kind"]),
+                      "model": agent.get("model"), "started_at": agent.get("at")}
+        item_timings = [r for r in timings if r.get("item") == item]
+        round_number = state.get("round", (activity or item_timings or [{}])[-1].get("round"))
         stages = []
-        for name, step in (("Build", "worker round"), ("Tests", "test"), ("Review", "review"),
-                           ("CI", "CI wait"), ("Merge", "merge")):
+        for name, step, kinds in (("Build", "worker round", ("work", "worker")),
+                                  ("Tests", "test run", ("test",)), ("Review", "review", ("review",)),
+                                  ("CI", "CI wait", ()), ("Merge", "merge", ())):
             records = [r for r in timings if round_number is not None and r.get("item") == item
                        and r.get("round") == round_number and r.get("step") == step]
+            live = [e for e in active if e.get("round") == round_number and e.get("kind") in kinds]
             outcome = records[-1].get("outcome") if records else None
-            status = {"completed": "pass", "clean": "pass", "failed": "fail", "blocked": "fail"}.get(outcome, outcome)
+            status = {"completed": "pass", "clean": "pass", "passed": "pass",
+                      "failed": "fail", "blocked": "fail"}.get(outcome, outcome)
+            end = (_when(records[-1].get("start")) if records else None)
+            if end is not None and records[-1].get("seconds") is not None:
+                end += timedelta(seconds=records[-1]["seconds"])
+            else:
+                end = None
             stages.append({"name": name, "status": status,
                            "started_at": records[0].get("start") if records else None,
-                           "ended_at": records[-1].get("end") if records else None,
+                           "ended_at": end.isoformat() if end else None,
                            "seconds": sum(r.get("seconds") or 0 for r in records)
                            if any(r.get("seconds") is not None for r in records) else None})
-        stage = (nextstep._item_readiness(item, state, top, checks)[0]
-                 if kind != "story" else state.get("status")) or "unknown"
+            if live:
+                stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
+        stage, receipt = (nextstep._item_readiness(item, state, top, checks)
+                          if kind != "story" else (state.get("status"), {}))
+        stage = stage or "unknown"
+        pending = codex.record(top, item).get("question_id")
+        latest_review = next((e for e in reversed(activity) if e.get("event") == "review result"), {})
+        for event in activity:
+            event_kind = event.get("event")
+            if event_kind == "run end":
+                occurrence_kind, message = "run_finished", f"{event.get('kind', 'Run').capitalize()} finished"
+            elif event_kind == "worker question" and event.get("id") == pending:
+                occurrence_kind, message = "worker_question", event.get("question")
+            elif (event_kind == "review result" and event == latest_review
+                  and (event.get("outcome") == "failed" or event.get("outcome") == "blocked" and findings)):
+                occurrence_kind, message = "review_findings", "Review found problems" if findings else "Review failed"
+            else:
+                continue
+            events.append({"id": event["id"], "kind": occurrence_kind, "title": message})
+        if kind != "story" and stage == "ready" and (identity := (state.get("review") or {}).get("id")):
+            events.append({"id": identity + ":" + receipt["commit"], "kind": "ready_to_merge",
+                           "title": "Ready to merge"})
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)
         return {"id": item, "kind": kind, "title": title, "stage": stage,

@@ -124,8 +124,9 @@ Stages are Build, Tests, Review, CI and Merge, in that order. Each carries statu
 started_at, ended_at and seconds for the current round from Forge's timing records;
 unrecorded values are null. Total_seconds adds recorded stage durations across rounds;
 live elapsed time comes from timestamps. Worker-owned tests belong to Build; close's tests and
-`forge test` belong to Tests. A skipped test has status skipped. RUNS supplies the
-round and run records; until it lands these values remain null.
+`forge test` belong to Tests. A skipped test has status skipped. Run starts and ends
+provide live worker and reader metadata; completed timing durations supply stage end
+times. Values remain null where the producer has not recorded them.
 
 The newest 25 open pull requests get checks in one GitHub request, cached for 60
 seconds in the shared Git directory. Older pull requests and unreachable GitHub
@@ -134,7 +135,9 @@ skipped or neutral required checks show fail, while optional ones count as passe
 A failed check occurrence keeps GitHub's own identity:
 `check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
 completion is a new occurrence. Each occurrence has id, kind and plain title;
-run, review and question occurrences await RUNS' recorded ids.
+run completions, open review problems and unanswered worker questions retain the ids
+in Forge's event records. Readiness uses the clean review's id plus the current head
+commit. Runs that start and finish between board refreshes still appear as completions.
 
 Both views' `next` contains `command` and `line`. Command is the first Next line
 only when it is one runnable Forge command without a placeholder or alternative;

@@ -6,7 +6,10 @@ Only GitHub is faked; commands read real repositories and their owned state fixt
 import json
 import os
 import shutil
+import socket
 import subprocess
+import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -19,6 +22,130 @@ from test_last_task_records_story_outcome import github_merge
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
+
+
+@pytest.mark.parametrize("tests", ["passed", "failed", "skipped"])
+def test_2_board_consumes_current_round_times_from_real_runs(env, tests):
+    from test_run_records import configure
+    repo = configure(env)
+    item, folder = env.start_fix(changes={"README.md": "Hello\n"} if tests == "skipped" else None)
+    for number in (1, 2):
+        if number == 2:
+            second_start = datetime.now().astimezone()
+        worked = repo.forge("work", item)
+        assert worked.returncode == 0, worked.stderr
+    if tests == "failed":
+        config = folder / "forge.toml"
+        env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
+            "print(123)", "raise SystemExit(1)"))
+    closed = env.close(item)
+    assert (closed.returncode == 0) == (tests != "failed"), closed.stderr
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+    assert row["round"] == 2
+    stages = {s["name"]: s for s in row["stages"]}
+    assert stages["Build"]["status"] == "pass"
+    assert datetime.fromisoformat(stages["Build"]["started_at"]) >= second_start.replace(microsecond=0)
+    assert stages["Tests"]["status"] == {"passed": "pass", "failed": "fail", "skipped": "skipped"}[tests]
+    for stage in (stages["Build"], stages["Tests"]):
+        assert stage["seconds"] >= 0
+        assert datetime.fromisoformat(stage["ended_at"]) >= datetime.fromisoformat(stage["started_at"])
+    assert row["total_seconds"] > stages["Build"]["seconds"]
+
+
+@pytest.mark.parametrize("kind", ["worker", "read"])
+def test_1_board_shows_recorded_live_agent_metadata(env, kind):
+    from test_run_records import configure
+    from test_story import new_story, DOC
+    repo = env.repo
+    if kind == "worker":
+        configure(env)
+        item, _ = env.start_fix()
+        command, model = "work", "sonnet"
+        marker = 'print("stub claude: built it")'
+    else:
+        setup(repo)
+        folder = new_story(repo, "SHOP")
+        (folder / "plans/SHOP.md").write_text(DOC, "utf-8")
+        item, command, model = "SHOP", "read", "opus"
+        marker = 'said = here / "claude-says.md"'
+    # Only the external agent waits; the real launcher has already recorded its start.
+    listener = socket.socket()
+    listener.bind(("127.0.0.1", 0))
+    listener.listen()
+    listener.settimeout(30)
+    stub = repo.bin / "claude"
+    source = stub.read_text("utf-8")
+    stub.write_text(source.replace(marker,
+        'import socket\n'
+        f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n'
+        + marker), "utf-8")
+    process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), command, item],
+        cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        connection, _ = listener.accept()
+        row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+        assert row["worker"]["kind"] == ("build" if kind == "worker" else "read")
+        assert row["worker"]["model"] == model
+        datetime.fromisoformat(row["worker"]["started_at"])
+        if kind == "worker":
+            stage = row["stages"][0]
+            assert stage["status"] == "running"
+            assert stage["started_at"] == row["worker"]["started_at"]
+            assert stage["ended_at"] is None
+    finally:
+        if "connection" in locals():
+            connection.sendall(b"1")
+            connection.close()
+        listener.close()
+        try:
+            output, error = process.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            raise
+    assert process.returncode == 0, output + error
+    assert next(r for r in view(repo, "board")["items"] if r["id"] == item)["worker"] is None
+
+
+def test_3_board_exposes_produced_questions_reviews_run_ends_and_readiness(env):
+    from test_run_records import configure, records
+    from test_close import blocked, finding, CLEAN
+    repo = configure(env)
+    item, folder = env.start_fix()
+    stub = repo.bin / "claude"
+    source = stub.read_text("utf-8")
+    question = "Question: May I reuse the parser?"
+    stub.write_text(source.replace('print("stub claude: built it")',
+                                   f'print("\\n\\n" + {question!r})'), "utf-8")
+    assert repo.forge("work", item).returncode == 0
+    events = records(repo, "events.jsonl")
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+    occurrences = {o["id"]: o for o in row["occurrences"]}
+    asked = next(e for e in events if e["event"] == "worker question")
+    assert occurrences[asked["id"]]["title"] == question
+    ends = [e for e in events if e["event"] == "run end"]
+    assert ends and all(e["id"] in occurrences for e in ends)
+    stub.write_text(source, "utf-8")
+    assert repo.forge("work", item, "--note", "Yes").returncode == 0
+    env.reviews(blocked(finding("P1", "Parser drops input")))
+    assert env.close(item).returncode != 0
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+    result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
+    assert result["id"] in {o["id"] for o in row["occurrences"]}
+    assert asked["id"] not in {o["id"] for o in row["occurrences"]}
+    env.commit(folder, "app.py", "print('repaired')\n")
+    env.reviews(CLEAN)
+    assert env.close(item).returncode == 0
+    env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([{
+        "headRefName": f"fix/{item}", "url": "https://github.com/acme/shop/pull/7"}]))
+    row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+    result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
+    ready = next(o for o in row["occurrences"] if o["kind"] == "ready_to_merge")
+    assert ready["id"] == result["id"] + ":" + repo.git("rev-parse", "HEAD", cwd=folder)
+    # Successful close under human ownership advertises readiness with no runnable merge.
+    following = view(repo, "next")["next"]
+    assert following["command"] is None
+    assert "ready to merge" in following["line"]
 
 
 def view(repo, command, cwd=None):
@@ -277,26 +404,6 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
     contract(waiting_row, fixture["board"]["items"][1])
     assert view(repo, "board", folder) == view(repo, "board", waiting)
     assert [s["name"] for s in row["stages"]] == [s["name"] for s in fixture["board"]["items"][0]["stages"]]
-    if status == "started":
-        # RUNS' future producer contract: current round only, real durations, skipped docs tests.
-        state(folder / ".factory/fixes/polish.json", round=2)
-        repo.write(".git/forge/timings.jsonl", "\n".join(json.dumps(r) for r in [
-            {"item": "polish", "round": 1, "step": "worker round", "seconds": 90,
-             "start": "2026-10-04T09:00:00Z", "end": "2026-10-04T09:01:30Z", "outcome": "completed"},
-            {"item": "polish", "round": 2, "step": "worker round", "seconds": 10,
-             "start": "2026-10-04T10:00:00Z", "end": "2026-10-04T10:00:10Z", "outcome": "completed"},
-            {"item": "polish", "round": 2, "step": "test", "seconds": 0,
-             "start": None, "end": None, "outcome": "skipped"},
-            {"item": "polish", "round": 2, "step": "review", "seconds": None,
-             "start": "2026-10-04T10:01:00Z", "end": None, "outcome": "running"}]))
-        row = next(r for r in view(repo, "board")["items"] if r["id"] == "polish")
-        assert row["round"] == 2
-        assert row["stages"][0] == {"name": "Build", "status": "pass", "seconds": 10,
-                                     "started_at": "2026-10-04T10:00:00Z", "ended_at": "2026-10-04T10:00:10Z"}
-        assert row["stages"][1]["status"] == "skipped"
-        assert row["stages"][2] == {"name": "Review", "status": "running", "seconds": None,
-                                     "started_at": "2026-10-04T10:01:00Z", "ended_at": None}
-        assert row["total_seconds"] == 100
 
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
