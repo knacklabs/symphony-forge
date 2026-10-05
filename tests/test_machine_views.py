@@ -48,7 +48,11 @@ def github(gh, prs):
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
 
-def test_1_board_shows_stories_workers_checks_and_findings(repo, gh):
+@pytest.mark.parametrize("context", [None, "commit status", "check start"])
+def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, context):
+    if context is not None:
+        _successful_checks_make_json_and_html_boards_ready(repo, gh, context)
+        return
     setup(repo)
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() +
                'models.build = { model = "gpt-6.1-sol", effort = "medium" }\n'
@@ -127,8 +131,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh):
     assert child["next"]["command"] is None
 
 
-@pytest.mark.parametrize("context", ["commit status", "check start"])
-def test_1_successful_checks_make_json_and_html_boards_ready(repo, gh, context):
+def _successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     # The raw GraphQL rollup replaced gh's exported timestamps. Both board consumers
     # must retain readiness, including a successful CheckRun without a completion time.
     setup(repo, keys=())
@@ -160,8 +163,7 @@ def test_1_successful_checks_make_json_and_html_boards_ready(repo, gh, context):
     assert "startedAt" in " ".join(query)
 
 
-@pytest.mark.parametrize("conclusion,required", [(c, r) for c in ("SKIPPED", "NEUTRAL") for r in (True, False)])
-def test_3_skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
+def _skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
     # Match the existing check gate, including required matrix variants; optional skips
     # must remain harmless. Existing occurrence coverage exercises FAILURE only.
     setup(repo, keys=())
@@ -244,7 +246,13 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
         assert row["total_seconds"] == 100
 
 
-def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch):
+@pytest.mark.parametrize("conclusion,required", [(None, None)] + [
+    (c, r) for c in ("SKIPPED", "NEUTRAL") for r in (True, False)])
+def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch,
+                                                             conclusion, required):
+    if conclusion is not None:
+        _skipped_checks_fail_only_when_required(repo, gh, conclusion, required)
+        return
     setup(repo, keys=())
     assert view(repo, "board")["items"] == []
     initial_calls = len([c for c in gh.calls() if c[:2] == ["api", "graphql"]])
