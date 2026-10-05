@@ -311,6 +311,10 @@ On a live app, every story and fix also follows these:
 
 ## Upgrade Forge
 
+When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
+Never upgrade without the owner's agreement. The check runs at most once per UTC day,
+shares its cache across worktrees, and stays silent when GitHub cannot be reached.
+
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
 
@@ -410,6 +414,12 @@ done; each file with three or more, or one a task was stopped on (its state's `s
 trap line naming the file and the kind of problem that kept coming back.
 
 ## Steering a Codex worker
+
+Every Codex worker, plan reader, ask and review runs with low model verbosity, no reasoning
+summaries, and a developer instruction to write no progress commentary, only the final handoff
+and any question. Forge sets these for each thread, including resumed threads; neither
+`forge.toml` nor user or project Codex settings can turn them up. New and upgraded repos get
+this automatically, with no setting to change.
 
 When one sentence would help a worker finish its next round, give it with
 `forge work <item> --note "<text>"`. The note appears under "From the coordinator" in that
@@ -542,6 +552,8 @@ Use `forge land <item>` for build, close, fix rounds and merge where agent merge
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
 loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
+If the branch already has commits after the item's start, land goes straight to close. Close
+still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.

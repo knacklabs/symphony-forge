@@ -1,0 +1,34 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the install scripts, sync output and the tests that pin them",
+  "base": "741f19f43ab61cb0f9f4ed2aa2207387eca4301b",
+  "branch": "fix/release-125",
+  "done_when": "Forge's version is 1.2.5 everywhere it is recorded (the package version, this repo's forge.toml pin, the install scripts and README install steps, and the tests that pin them).",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "13d80fb2fbe057068dc0331aec9f8908344f8eff2ce423a3192267557888aa11",
+    "changed": "8ac829e658b60644c25e4169498e6aa3b21088a385cc5f4970a229b53001af26",
+    "commit": "b39dd39809a403ddffd449dc157b0be9602dc0b9",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T19:46:05+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:56:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T02:55:37+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.5 for the speedups and review rules merged since v1.2.4",
+  "worker": "codex"
+}

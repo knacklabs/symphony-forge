@@ -11,7 +11,7 @@ from pathlib import Path
 import shutil
 
 from test_close import ROOT, env  # noqa: F401  (env is a fixture)
-from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401  (sdk_data is a fixture)
+from test_codex_worker import QUIET, _codex_repo, _lines, _sent, sdk_data  # noqa: F401  (sdk_data is a fixture)
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_worker import calls as claude_calls, install_claude
 
@@ -43,7 +43,7 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
     build = f"[models.build.codex]\n{NOVA}\n[models.build.claude]\n{OPUS}"
 
     _work(repo, folder, "codex", build)
-    assert _sent(calls, "thread/start")[-1]["config"] == {"features.multi_agent": True,
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
     _work(repo, folder, "claude", build)
@@ -55,7 +55,7 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
     _work(repo, folder, "codex", f"[models.build]\n{NOVA}")
-    assert _sent(calls, "thread/start")[-1]["config"] == {"features.multi_agent": True,
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
                                                           "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
     _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
@@ -74,7 +74,7 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     assert [line["kind"] for line in _lines(repo.path / ".git" / "forge" / "threads" / "task"
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
     assert _sent(calls, "thread/start")[-1]["config"] == {
-        "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
     assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
@@ -91,9 +91,10 @@ def test_5_forge_ask_takes_the_codex_entry_of_the_lite_kind(repo, monkeypatch, s
         return _sent(calls, "thread/start")[-1].get("config")
 
     assert ask(f"[models.lite.codex]\n{NOVA}\n[models.lite.claude]\n{OPUS}") == {
-        "model": "gpt-6-nova", "model_reasoning_effort": "high"}
-    assert not ask(f"[models.lite.claude]\n{OPUS}")
-    assert not ask(f"[models.lite]\n{OPUS}")
+        **QUIET, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
+    # No Codex model entry still means no model override, but output is always quiet.
+    assert ask(f"[models.lite.claude]\n{OPUS}") == QUIET
+    assert ask(f"[models.lite]\n{OPUS}") == QUIET
 
 
 def test_4_the_review_takes_its_engine_s_entry(env, tmp_path, monkeypatch):
