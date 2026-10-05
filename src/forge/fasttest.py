@@ -117,7 +117,7 @@ def test(args) -> int:
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
         command = " && ".join(part for kind, part, _ in parts
-                              if kind not in ("vitest", "jest", "node-install"))
+                              if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
     workers = str(max(1, (os.cpu_count() or 1) // 2))
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers

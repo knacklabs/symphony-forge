@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install
+from conftest import ROOT, FORGE_SHIM, _install
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 from test_close import env  # noqa: F401
@@ -34,6 +34,12 @@ CASES = [
         "npm ci && npm exec -- vitest run --changed {base} --passWithNoTests"),
     ("npm-exec-jest", "npm ci && npm exec jest", {},
         "npm ci && npm exec -- jest --changedSince {base} --passWithNoTests"),
+    ("npm-exec-package", "npm ci && npm exec --package=vitest --workspace=web vitest run", {},
+        "npm ci && npm exec --package=vitest --workspace=web -- vitest run --changed {base} --passWithNoTests"),
+    ("npm-exec-workspace", "npm ci && npm exec --package jest -w web jest", {},
+        "npm ci && npm exec --package jest -w web -- jest --changedSince {base} --passWithNoTests"),
+    ("npm-exec-cache", "npm ci && npm exec --cache 'cache folder' --workspace vitest jest", {},
+        "npm ci && npm exec --cache 'cache folder' --workspace vitest -- jest --changedSince {base} --passWithNoTests"),
     ("yarn-vitest", "yarn install --immutable && yarn unit", {"scripts": {"unit": "vitest run"}},
         "yarn install --immutable && yarn unit --changed {base} --passWithNoTests"),
     ("mixed", "uv run pytest && npm ci && npx --no-install vitest run", {"devDependencies": {"vitest": "1"}},
@@ -98,7 +104,7 @@ with path.open("a", encoding="utf-8") as out:
     out.write(json.dumps(sys.argv[1:]) + "\\n")
 ''')
     node = f"npm exec {runner}" if invocation == "exec" else "npm test"
-    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && npm ci && {node}'
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q && npm ci && npm run lint && {node}'
     _inputs(repo.path, "mixed", command, {"scripts": {"test": runner}})
     repo.write("tests/test_related.py", 'from pathlib import Path\ndef test_related():\n'
                '    with Path("python-ran.txt").open("a", encoding="utf-8") as out:\n'
@@ -134,7 +140,42 @@ with path.open("a", encoding="utf-8") as out:
         assert (repo.path / "other-python-ran.txt").read_text("utf-8") == "ran"
     calls = [json.loads(line) for line in (repo.path / "node-calls.jsonl").read_text("utf-8").splitlines()]
     launch = ["exec", "--", runner] if invocation == "exec" else ["test", "--"]
-    assert calls == [["ci"], [*launch, flag, base, "--passWithNoTests"]]
+    assert calls == [["ci"], ["run", "lint"], [*launch, flag, base, "--passWithNoTests"]]
+
+
+@pytest.mark.parametrize("generation", ["new", "previous-release"])
+@pytest.mark.parametrize("runner,flag", [("vitest", "--changed"), ("jest", "--changedSince")])
+def test_5_generated_node_settings_get_advice_without_replacing_the_test_command(unsynced_up, generation, runner, flag):
+    up = unsynced_up
+    repo = up.repo
+    client = _new_repo(repo, up.env.gh, up.tmp)
+    (client / "package.json").write_text(json.dumps({"scripts": {"test": runner}}), "utf-8")
+    if generation == "previous-release":
+        old = up.tmp / "previous-release"
+        shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
+        (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
+        _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=str(old / "src")))
+        made = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "init"],
+                              cwd=client, capture_output=True, text=True, timeout=60)
+    else:
+        made = repo.forge("init", cwd=client)
+    assert made.returncode == 0, made.stdout + made.stderr
+    settings = client / "forge.toml"
+    before = settings.read_bytes()
+    assert tomllib.loads(before.decode("utf-8"))["test"] == "[ ! -f package.json ] || (npm ci && npm test)"
+    expected = f"[ ! -f package.json ] || (npm ci && npm test -- {flag} {{base}} --passWithNoTests)"
+    checked = repo.forge("doctor", cwd=client)
+    # Make the app manifest available in the upgrade worktree. Forge's generated settings
+    # are never edited: this is the command a real new/previous-release client received.
+    repo.git("add", "package.json", cwd=client)
+    repo.git("-c", f"core.hooksPath={up.tmp / 'no-hooks'}", "commit", "-qm", "Add client tests", cwd=client)
+    repo.git("-c", f"core.hooksPath={up.tmp / 'no-hooks'}", "push", "-q", "origin", "main", cwd=client)
+    (repo.bin / "uv-install-fails").touch()
+    upgraded = repo.forge("upgrade", RELEASE, cwd=client)
+    assert "Installing Forge" in upgraded.stderr, upgraded.stdout + upgraded.stderr
+    _advice(upgraded, expected)
+    _advice(checked, expected)
+    assert settings.read_bytes() == before
 
 
 @pytest.mark.parametrize("kind,command,package,expected", CASES, ids=[case[0] for case in CASES])
