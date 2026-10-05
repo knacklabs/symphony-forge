@@ -12,7 +12,6 @@ import zipfile
 import pytest
 
 from conftest import ROOT
-from test_machine_views import github, pull
 from test_close import env  # noqa: F401
 
 STORY = "FORGE-MOD-1"
@@ -42,7 +41,8 @@ def node_run(folder, text):
     return json.loads(result.stdout)
 
 
-def test_1_packaged_mod_refreshes_real_checks_and_returns_headless_text(env, packaged_mod, tmp_path):
+def packaged_mod_refreshes_real_checks_and_returns_headless_text(env, packaged_mod, tmp_path):
+    from test_machine_views import github, pull
     repo = env.repo
     item, _ = env.start_fix()
     green = pull(7, f"fix/{item}", "SUCCESS")
@@ -181,7 +181,7 @@ console.log(JSON.stringify(answers));
     assert answer["machine"]["tab"] == "machine tab"
 
 
-def test_1_refresh_failures_timeout_and_overlap_keep_the_last_snapshot(packaged_mod, tmp_path):
+def refresh_failures_timeout_and_overlap_keep_the_last_snapshot(packaged_mod, tmp_path):
     fixture = json.loads((ROOT / "tests/fixtures/board.json").read_text("utf-8"))
     answer = node_run(tmp_path, HOST + f"""
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
@@ -208,6 +208,7 @@ const api = {{
     const value = structuredClone(fixture[command]);
     if (command === 'board' && mode === 'empty') value.items = [];
     if (command === 'board' && mode === 'missing') value.items = [{{title: 'Lost state'}}];
+    if (command === 'board' && mode === 'bad-time') value.items[0].stages[0].started_at = 'not a timestamp';
     return {{exitCode: 0, stdout: JSON.stringify(value), stderr: ''}};
   }} }},
 }};
@@ -216,7 +217,7 @@ await fire('session.start', {{cwd: '/repo with spaces'}}, api);
 async function text() {{ return (await fire('command.run', {{command: 'forge'}}, api)).text; }}
 async function tick() {{ now += 10000; timers[0](); await new Promise(resolve => setImmediate(resolve)); }}
 texts.push(await text());
-for (const nextMode of ['failed', 'bad-board', 'bad-lanes', 'good']) {{
+for (const nextMode of ['failed', 'bad-board', 'bad-time', 'bad-lanes', 'good']) {{
   mode = nextMode; await tick(); texts.push(await text());
 }}
 mode = 'slow';
@@ -235,14 +236,14 @@ for (const nextMode of ['empty', 'missing', 'old']) {{
 console.log(JSON.stringify(texts));
 """)
     assert "Polish the guide" in answer[0]
-    for text, error in zip(answer[1:4], ["offline", "Malformed forge board output", "Malformed forge lanes output"]):
+    for text, error in zip(answer[1:5], ["offline", "Malformed forge board output", "Malformed forge board output", "Malformed forge lanes output"]):
         assert "Polish the guide" in text
         assert f"Couldn't refresh: {error}" in text
         assert "second line" not in text
-    assert "Couldn't refresh:" not in answer[4]
-    assert "Polish the guide" in answer[5]
-    assert "Couldn't refresh: Refresh took over 20 seconds" in answer[5]
-    assert "Couldn't refresh:" not in answer[6]
-    assert "Nothing in progress." in answer[7]
-    assert "Lost state · unknown" in answer[8]
-    assert answer[9] == "Upgrade Forge in this repo to use the board."
+    assert "Couldn't refresh:" not in answer[5]
+    assert "Polish the guide" in answer[6]
+    assert "Couldn't refresh: Refresh took over 20 seconds" in answer[6]
+    assert "Couldn't refresh:" not in answer[7]
+    assert "Nothing in progress." in answer[8]
+    assert "Lost state · unknown" in answer[9]
+    assert answer[10] == "Upgrade Forge in this repo to use the board."

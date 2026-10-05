@@ -101,14 +101,17 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
   const clock = mock.clock(on)
   let slow = false
   let boards = 0
+  let published: (() => void) | undefined
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
-  on('ui.invalidate', () => ({ value: undefined }))
+  on('ui.invalidate', () => { published?.(); return { value: undefined } })
   on('ui.open', () => ({ value: undefined }))
   on('process.run', async (_$, e) => {
     if (e.argv[1] === 'board') boards++
     if (slow) {
-      await clock.sleep(e.init?.timeoutMs ?? 30000)
+      // Expire just after the deadline, avoiding an unspecified ordering
+      // between a timeout and the refresh tick at exactly the same instant.
+      await clock.sleep((e.init?.timeoutMs ?? 30000) + 1)
       return { deny: 'Refresh took over 20 seconds' }
     }
     const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next' ? following : { version: '1.2.5', agents: [], tests: [] }
@@ -116,16 +119,24 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
   })
   await $.session.start(started)
   slow = true
-  // Do not await the tick whose external process is deliberately held open.
-  const tick = clock.advance(10000)
-  await clock.settle()
+  // Advancing the host clock is sequential; the process itself stays pending.
+  await clock.advance(10000)
   await clock.advance(10000)
   expect(boards).toBe(2)
+  const expired = new Promise<void>(resolve => { published = resolve })
   await clock.advance(10001)
-  await tick
-  expect((await $.command.run(command)).text).toContain("Couldn't refresh: Refresh took over 20 seconds")
-  expect((await $.command.run(command)).text).toContain('Polish the guide')
+  await clock.settle()
+  await expired
+  // The host prefixes rejected calls with the plugin and API name.
+  const timedOut = (await $.command.run(command)).text
+  expect(timedOut).toContain("Couldn't refresh:")
+  expect(timedOut).toContain('Refresh took over 20 seconds')
+  expect(timedOut).toContain('Polish the guide')
   slow = false
+  const repaired = new Promise<void>(resolve => { published = resolve })
   await clock.advance(10000)
+  await clock.settle()
+  await repaired
   expect(boards).toBe(3)
+  expect((await $.command.run(command)).text).not.toContain("Couldn't refresh:")
 })

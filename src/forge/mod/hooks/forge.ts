@@ -20,14 +20,15 @@ export type Data = {
 export const TOO_OLD = 'Upgrade Forge in this repo to use the board.'
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const nullable = (v: unknown, kind: string) => v == null || typeof v === kind
+const timestamp = (v: unknown) => v == null || (typeof v === 'string' && Number.isFinite(Date.parse(v)))
 
 function item(v: unknown): v is Item {
   if (!object(v) || typeof v.title !== 'string' || !nullable(v.stage, 'string')) return false
-  if (v.worker != null && (!object(v.worker) || typeof v.worker.kind !== 'string' || !nullable(v.worker.model, 'string') || typeof v.worker.started_at !== 'string' || !Number.isFinite(Date.parse(v.worker.started_at)))) return false
+  if (v.worker != null && (!object(v.worker) || typeof v.worker.kind !== 'string' || !nullable(v.worker.model, 'string') || typeof v.worker.started_at !== 'string' || !timestamp(v.worker.started_at))) return false
   if (v.pr != null && (!object(v.pr) || !nullable(v.pr.number, 'number') || !['pass', 'fail', 'running', 'unknown'].includes(String(v.pr.checks)))) return false
   if (v.findings != null && (!object(v.findings) || typeof v.findings.count !== 'number' || !Array.isArray(v.findings.titles) || !v.findings.titles.every(t => typeof t === 'string'))) return false
   if (!nullable(v.round, 'number') || !nullable(v.total_seconds, 'number')) return false
-  if (v.stages != null && (!Array.isArray(v.stages) || !v.stages.every(s => object(s) && typeof s.name === 'string' && nullable(s.status, 'string') && nullable(s.started_at, 'string') && nullable(s.ended_at, 'string') && nullable(s.seconds, 'number')))) return false
+  if (v.stages != null && (!Array.isArray(v.stages) || !v.stages.every(s => object(s) && typeof s.name === 'string' && nullable(s.status, 'string') && timestamp(s.started_at) && timestamp(s.ended_at) && nullable(s.seconds, 'number')))) return false
   return v.children == null || (Array.isArray(v.children) && v.children.every(item))
 }
 
