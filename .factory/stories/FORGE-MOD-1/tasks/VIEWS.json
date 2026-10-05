@@ -6,27 +6,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "757bce0795b0754c44d1384900daf3b7000998947f9782e19233205b3d480f93",
-    "changed": "f7138dbb542b657f50fdfdb1c119e2d3e1631e05ad6515e5bc1374f7c774d65f",
-    "commit": "26c5e41698b01252a043093998cf2d14bf1c77f9",
+    "branch_diff": "648bd293808d2c62ed2578b258f3c559c0ca26d4c83cb2773bec8261c867b381",
+    "changed": "8b21fe7391edd56b1f3b356e17559507e0087ca2d4eaaa5039ab5e4478ecb351",
+    "commit": "7acff0047bdb3778ce2bf12c90e076a3e4b52e8b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The receipt-based repair still misses tasks and fixes whose checks pass after close stopped waiting. Close saves `waiting for checks` before waiting, and writes the ready receipt only after success (src/forge/close.py:174\u2013218). Without that receipt, this field remains `waiting for checks` even when the fetched checks pass and `_item` reports ready to merge under human-merge policy (src/forge/nextstep.py:578\u2013595). This is new evidence beyond the previously reviewed successful-close case: tests/test_machine_views.py:151\u2013158 already exercises readiness without a receipt, but never asserts the stage. Derive the displayed stage from that validated check evidence too, for both task children and fixes.",
+        "body": "This fallback promotes both task children and fixes using `_green_at`, which checks only configured names (board.py:528\u2013539). With required checks successful but another check failed or running, the row therefore reports `stage: ready` alongside `pr.checks: fail/running`; close's actual gate rejects those results (checks.py:35\u201350). It also restores readiness after a new branch commit invalidates the receipt: the queried `headRefOid` is never compared with the branch head, so even a freshly fetched green result for the previous pushed commit makes the new local commit appear ready. These are additional cases beyond the previous successful-required-check repair. The regression at tests/test_machine_views.py:414\u2013418 supplies no successful GraphQL rollup and misses this bypass. Require a complete passing result for the current head, and keep the item's next-step explanation consistent.",
         "file": "src/forge/board.py",
-        "line": 265,
+        "line": 267,
         "priority": "P1",
-        "title": "Not done: report the current stage when checks become green"
+        "title": "Not done: derive readiness from the current head's complete check result"
       },
       {
-        "body": "VIEWS explicitly owns the JSON fields from details 1\u20134, including `approval.doc`, but every returned row omits approval data. A waiting story therefore supplies no absolute path to its document in its own worktree, which the APPROVE consumer is required to read instead of the session checkout's copy. The existing worktree mapping and approval.waiting_digest (src/forge/approval.py:84\u201390) provide the necessary evidence without depending on the later approval-button implementation. Add the field and cover a waiting story in the shared command contract; the current fixture contains only a fix and cannot detect this omission.",
-        "file": "src/forge/board.py",
-        "line": 273,
-        "priority": "P1",
-        "title": "Include the waiting story's approval document in board JSON"
-      },
-      {
-        "body": "When a newer release exists, release_notice prepends `Forge \u2026 is out \u2026` (src/forge/upgrade.py:168\u2013188). Passing those combined lines to machine_next makes `next.line` that notice, because it selects the first non-Next line, while `next.command` still belongs to the actual item. For a waiting item or human-only merge with a null command, the machine view consequently loses the state explaining what it is waiting for. Build the machine next object from `_report`'s lines and preserve the release notice separately if needed.",
+        "body": "The previously reported issue remains: `release_notice` prepends the newer-release announcement (upgrade.py:168\u2013188), and `machine_next` selects the first non-Next line. Consequently, `forge next --json` returns the release announcement as `next.line`, hiding the actual waiting or human-only merge state when `next.command` is null. Build the machine next object from `_report`'s lines and keep any release notice separate.",
         "file": "src/forge/nextstep.py",
         "line": 119,
         "priority": "P2",
@@ -55,6 +48,10 @@
     },
     {
       "at": "2026-10-05T05:37:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:01:10+00:00",
       "step": "review"
     }
   ],

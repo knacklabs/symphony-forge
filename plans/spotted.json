@@ -67,6 +67,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: derive readiness from the current head's complete check result\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 267,
+      "text": "Not done: derive readiness from the current head's complete check result",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -382,6 +393,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor interrupt check times out locally on this branch and on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor interrupt check times out locally on this branch and on the default branch.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
