@@ -77,7 +77,7 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
         commits(last: 1) { nodes { commit { statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
-            ... on CheckRun { databaseId name status conclusion completedAt }
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt }
             ... on StatusContext { id context state createdAt }
           } }
         } } } }
@@ -135,7 +135,9 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
         name = check.get("name") or check.get("context") or "Check"
         names.append(name)
         value = check.get("conclusion") or check.get("state")
-        failed = value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE")
+        failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE")
+                  or value in ("NEUTRAL", "SKIPPED") and
+                  any(name == want or name.startswith(want + " (") for want in required))
         statuses.append("fail" if failed else "pass" if value in ("SUCCESS", "NEUTRAL", "SKIPPED")
                         else "running" if value in ("PENDING", "EXPECTED") or check.get("status") in
                         ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED") else "unknown")
@@ -155,7 +157,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
 def _rollup(pr: Item) -> list[Item]:
     try:
         nodes = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
-        return [n for n in nodes if isinstance(n, dict)] if isinstance(nodes, list) else []
+        return [{**n, "startedAt": n.get("createdAt")} if n.get("__typename") == "StatusContext" else n
+                for n in nodes if isinstance(n, dict)] if isinstance(nodes, list) else []
     except (KeyError, TypeError, IndexError):
         return []
 

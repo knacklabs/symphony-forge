@@ -120,7 +120,9 @@ round and run records; until it lands these values remain null.
 
 The newest 25 open pull requests get checks in one GitHub request, cached for 60
 seconds in the shared Git directory. Older pull requests and unreachable GitHub
-show unknown checks. A failed check occurrence keeps GitHub's own identity:
+show unknown checks. Required checks, including matrix variants, must succeed;
+skipped or neutral required checks show fail, while optional ones count as passed.
+A failed check occurrence keeps GitHub's own identity:
 `check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
 completion is a new occurrence. Each occurrence has id, kind and plain title;
 run, review and question occurrences await RUNS' recorded ids.

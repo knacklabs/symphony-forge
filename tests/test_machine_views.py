@@ -61,6 +61,8 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh):
     assert repo.forge("task", "start", "BOARD/PAGE").returncode == 0
     folder = worktree(repo, "task/BOARD-PAGE")
     assert view(repo, "next")["next"]["command"] == "forge work BOARD/PAGE"
+    made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
+    assert made.returncode == 0, made.stderr
     file = folder / ".factory/stories/BOARD/tasks/PAGE.json"
     state(file, status="working", worker="codex", review={"findings": [
         {"priority": "P1", "title": "Missing empty state"},
@@ -71,11 +73,16 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh):
                                   capture_output=True, text=True, check=True).stdout.split(None, 5)
         lock = repo.write(".git/forge/threads/task/BOARD/PAGE.lock", json.dumps(
             {"pid": os.getpid(), "started": " ".join(identity[:5]), "command": identity[5].strip()}))
-    github(gh, [pull(1, "task/BOARD-PAGE")])
+    github(gh, [pull(1, "task/BOARD-PAGE"), pull(2, "fix/polish")])
     result = view(repo, "board")
     assert result["version"] == repo.forge("--version").stdout.strip().split()[-1].lstrip("v")
     assert result["repo_root"] == str(repo.path.resolve())
-    item = result["items"][0]
+    rows = {r["id"]: r for r in result["items"]}
+    assert set(rows) == {"BOARD", "polish"}
+    assert rows["polish"]["title"] == "Polish the guide"
+    assert rows["polish"]["kind"] == "fix"
+    assert rows["polish"]["pr"] == {"number": 2, "checks": "pass"}
+    item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
     child = item["children"][0]
     assert child["title"] == "The page"
@@ -91,26 +98,88 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh):
         # The model follows the actual round kind recorded by the Codex command boundary.
         repo.write(".git/forge/threads/task/BOARD/PAGE.log", json.dumps(
             {"kind": "Fix", "conversation": "worker", "turn": "second-round"}) + "\n")
-        assert view(repo, "board")["items"][0]["children"][0]["worker"]["model"] == "gpt-6-luna"
+        assert next(r for r in view(repo, "board")["items"] if r["id"] == "BOARD")["children"][0]["worker"]["model"] == "gpt-6-luna"
         # A client design worker with unrecorded family must show an unknown model.
         config = folder / "forge.toml"
         config.write_text(config.read_text().replace('repo = "forge-source"', 'repo = "client"'))
         state(file, worker=None)
-        assert view(repo, "board")["items"][0]["children"][0]["worker"]["model"] is None
-        lock.unlink()
+        assert next(r for r in view(repo, "board")["items"] if r["id"] == "BOARD")["children"][0]["worker"]["model"] is None
     gh.respond("api", "graphql", exit=1, stderr="offline")
     # Expire without sleeping or changing production time machinery.
     cache = repo.path / ".git/forge/checks-cache.json"
     state(cache, fetched_at="2000-01-01T00:00:00+00:00")
-    assert view(repo, "board")["items"][0]["children"][0]["pr"]["checks"] == "unknown"
+    offline = {r["id"]: r for r in view(repo, "board")["items"]}
+    assert set(offline) == {"BOARD", "polish"}
+    assert offline["BOARD"]["children"][0]["pr"]["checks"] == "unknown"
+    assert offline["polish"]["pr"]["checks"] == "unknown"
+    assert offline["BOARD"]["title"] == item["title"]
+    assert offline["polish"]["title"] == rows["polish"]["title"]
+    if os.name != "nt":
+        assert offline["BOARD"]["children"][0]["worker"] is not None
+        lock.unlink()
     # A landed task is finished, even though the committed state still says working.
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Finish the task", cwd=folder)
     repo.git("merge", "--no-ff", "-m", "Accept the task", "task/BOARD-PAGE")
     repo.git("push", "-q", "origin", "main")
-    child = view(repo, "board")["items"][0]["children"][0]
+    child = next(r for r in view(repo, "board")["items"] if r["id"] == "BOARD")["children"][0]
     assert child["stage"] == "merged"
     assert child["next"]["command"] is None
+
+
+@pytest.mark.parametrize("context", ["commit status", "check start"])
+def test_1_successful_checks_make_json_and_html_boards_ready(repo, gh, context):
+    # The raw GraphQL rollup replaced gh's exported timestamps. Both board consumers
+    # must retain readiness, including a successful CheckRun without a completion time.
+    setup(repo, keys=())
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Choose required check")
+    repo.git("push", "-q", "origin", "main")
+    made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
+    assert made.returncode == 0, made.stderr
+    state(worktree(repo, "fix/polish") / ".factory/fixes/polish.json", status="waiting for checks")
+    pr = pull(1, "fix/polish")
+    fixture = json.loads(FIXTURE.read_text("utf-8"))["github"]
+    check = ({**fixture["commit_status"], "context": "forge-pr-check", "state": "SUCCESS"}
+             if context == "commit status" else
+             {**fixture["check_run"], "conclusion": "SUCCESS", "completedAt": None,
+              "startedAt": "2026-10-04T10:00:00Z"})
+    pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"] = [check]
+    github(gh, [pr])
+    gh.respond("pr", "list", "--state", "all", stdout=json.dumps([{**pr, "state": "OPEN"}]))
+    row = view(repo, "board")["items"][0]
+    assert row["pr"]["checks"] == "pass"
+    assert row["next"] == {"command": None, "line": "Polish the guide is ready to merge: https://github.com/a/b/pull/1"}
+    page = repo.path / ".git/forge/ready-board.html"
+    result = repo.forge("board", "--out", str(page))
+    assert result.returncode == 0, result.stderr
+    assert "Ready to merge" in page.read_text("utf-8")
+    # The GitHub request must ask for the fallback; a canned response cannot prove that.
+    query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
+    assert "startedAt" in " ".join(query)
+
+
+@pytest.mark.parametrize("conclusion,required", [(c, r) for c in ("SKIPPED", "NEUTRAL") for r in (True, False)])
+def test_3_skipped_checks_fail_only_when_required(repo, gh, conclusion, required):
+    # Match the existing check gate, including required matrix variants; optional skips
+    # must remain harmless. Existing occurrence coverage exercises FAILURE only.
+    setup(repo, keys=())
+    repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Choose required check")
+    repo.git("push", "-q", "origin", "main")
+    made = repo.forge("fix", "start", "Polish the guide", "--done", "The guide reads clearly", "--slug", "polish")
+    assert made.returncode == 0, made.stderr
+    pr = pull(1, "fix/polish")
+    nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+    name = "forge-pr-check (macos)" if required else "optional preview"
+    nodes.append({**nodes[0], "databaseId": 111371488291, "name": name, "conclusion": conclusion})
+    github(gh, [pr])
+    row = view(repo, "board")["items"][0]
+    assert row["pr"]["checks"] == ("fail" if required else "pass")
+    assert row["occurrences"] == ([{"id": "check-run:111371488291:2026-10-04T10:00:00Z",
+                                    "kind": "checks_failed", "title": f"{name} failed"}] if required else [])
 
 
 @pytest.mark.parametrize("status,merge,command", [
