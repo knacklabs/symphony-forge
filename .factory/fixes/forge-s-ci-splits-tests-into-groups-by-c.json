@@ -2,12 +2,44 @@
   "base": "15661c43375705e51fbda9753a286761a08bbe88",
   "branch": "fix/forge-s-ci-splits-tests-into-groups-by-c",
   "done_when": "Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a plain way to refresh it), so no group of the last run takes more than 70% of its time limit; this is Forge's own CI only, so new and existing client repos get nothing",
+  "flagged": [
+    "README.md",
+    "tests/test_ci_job_budgets.py"
+  ],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b00e0d9be2134088fb5a447ae3ca05e09e1fedee76dd2e98c469edb203bde438",
+    "changed": "aba289ed8d4e994a93e25bcc98001ab64fc68503ea4bfdb86926cc41f3af9cf3",
+    "commit": "b8948884bd994d735d35a4fea9f89f98bf038879",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The required functional check remains unfinished: commit cbb218d58df0460e432036f3a11f2b02552ed971 explicitly says actual runner wall times still need the coordinator's CI run. This README instruction describes a future check; the successful local close run does not measure the platform matrix or setup time. Complete the latest CI run and verify every Ubuntu/macOS group finishes within seven minutes and every Windows group within fourteen minutes. This does not challenge the approved fifth macOS group; it checks whether that change achieves the promised outcome.",
+        "file": "README.md",
+        "line": 165,
+        "priority": "P1",
+        "title": "Not done: Verify every CI group finishes within 70% of its time limit"
+      },
+      {
+        "body": "The only changed test checks group counts and timeout configuration. Its assertions at tests/test_ci_job_budgets.py:24\u201339 still pass if `.test_durations` is removed or the workflow points to a nonexistent duration file, restoring count-based splitting. [pytest-split 0.11.0](https://raw.githubusercontent.com/jerry-git/pytest-split/0.11.0/src/pytest_split/plugin.py) silently accepts a missing file and falls back to equal test weights. No repository test protects the recorded-time behavior; the commit's one-off collection checks do not run in the suite. Extend the CI contract test to detect an absent or unused timing file and demonstrate that the configured grouping consumes recorded durations.",
+        "file": "tests/test_ci_job_budgets.py",
+        "line": 14,
+        "priority": "P1",
+        "title": "Not done: A suite test proves CI consumes the committed test durations"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T10:15:13+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T11:00:07+00:00",
+      "step": "review"
     }
   ],
   "why": "Forge's CI splits tests into groups by count with no recorded test times, so the first macOS and Windows groups keep hitting their time limits and cancelled jobs send items back to workers",

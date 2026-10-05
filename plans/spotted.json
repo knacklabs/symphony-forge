@@ -34,6 +34,17 @@
       "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
+      "key": "bug\tREADME.md\tNot done: Verify every CI group finishes within 70% of its time limit\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Verify every CI group finishes within 70% of its time limit",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "kind": "bug",
       "path": "docs/guide.md",
@@ -320,6 +331,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 14,
+      "text": "Not done: A suite test proves CI consumes the committed test durations",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
       "kind": "bug",
       "path": "tests/test_codex_record.py",
@@ -360,6 +382,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -430,6 +463,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "tests/test_run_records.py",
@@ -448,6 +492,17 @@
       "text": "Not done: run-record coverage for previously adopted client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -789,39 +844,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_contracts.py",
-      "line": 534,
-      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_reviews_remove_their_temp_folders.py",
-      "line": 77,
-      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_steer_question.py",
-      "line": 120,
-      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     }
