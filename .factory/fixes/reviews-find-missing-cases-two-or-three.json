@@ -2,12 +2,26 @@
   "base": "15281ddd0bf30db521c6ebe2ec7fb2dc0ae319e8",
   "branch": "fix/reviews-find-missing-cases-two-or-three",
   "done_when": "Before close, the worker brief asks for a proof list in the pull request: each Done-when item and its details next to the test that proves it, or marked missing; the first review checks every entry on that list and reports every missing case it finds in that one round; skill.md and brief.md say so; new client repos get it from init and existing ones from sync on upgrade, with a command test for each",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cd5089330949470d2d17643bbb44d5675f5956d3fbdc7582b8cf36f8db3a5dfb",
+    "changed": "721532a4e0cbb0240b2f97614acf51e5dbcc72ae518d386d691f05ab07b514c5",
+    "commit": "64ae9ce2fecb7e7e9a28958ab2f055f89d21939e",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T07:58:49+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T08:22:32+00:00",
+      "step": "review"
     }
   ],
   "why": "Reviews find missing cases two or three at a time, so one part needs many review rounds (machine views took 8)",
