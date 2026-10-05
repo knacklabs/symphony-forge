@@ -702,7 +702,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
 
     def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
         with repo.record_run(top, target, "read", family="claude",
-                             model=models[models.index("--model") + 1] if models else None) as ran:
+                             model=models[models.index("--model") + 1] if models else None,
+                             effort=models[models.index("--effort") + 1] if "--effort" in models else None) as ran:
             with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args],
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, text=True, encoding="utf-8",

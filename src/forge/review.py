@@ -283,9 +283,40 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
             with repo.record_run(top, item, "test") as ran:
-                done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                with subprocess.Popen(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                      encoding="utf-8", errors="replace")
+                                      encoding="utf-8", errors="replace") as process:
+                    output, total, completed, finished = [], None, 0, set()
+                    for line in process.stdout:
+                        output.append(line)
+                        found = re.search(r"collected (\d+) items|\[(\d+) items\]", line)
+                        if found:
+                            total = int(found[1] or found[2])
+                            completed = 0
+                            finished.clear()
+                        marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
+                        result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
+                        if not result and re.search(r"\[\s*\d+%\]", line):
+                            result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
+                        tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
+                        if tap and tap[2]:
+                            total = int(tap[2])
+                        if result:
+                            finished.add(result[1])  # teardown errors repeat the same test's id
+                            completed = len(finished)
+                        elif tap and tap[1]:
+                            completed = int(tap[1])
+                        elif marks:
+                            # A quiet error can be setup or a second report for teardown.
+                            # Keep done unknown until a percentage gives an exact count.
+                            completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
+                            if completed is None and total is not None:
+                                percent = int(re.search(r"(\d+)%", line)[1])
+                                lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
+                                completed = lower if lower == upper else None
+                        if found or marks or result or tap:
+                            repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
+                    done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
             if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)

@@ -241,9 +241,10 @@ def close(args: argparse.Namespace) -> int:
     start, clock = repo.now(), time.monotonic()
     outcome = "failed"
     try:
-        checks.wait(top, item, head, [name for name in cfg["checks"]
-                                      if not (migrating and name == "forge-pr-check")])
-        outcome = "passed"
+        with repo.record_run(top, item, "ci") as ran:
+            checks.wait(top, item, head, [name for name in cfg["checks"]
+                                          if not (migrating and name == "forge-pr-check")])
+            outcome = ran["outcome"] = "passed"
     finally:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft

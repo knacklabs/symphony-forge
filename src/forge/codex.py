@@ -319,7 +319,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
                 else repo.record_run(checkout, item, command, family="codex",
-                                     model=request["config"].get("model")))
+                                     model=request["config"].get("model"),
+                                     effort=request["config"].get("model_reasoning_effort")))
     with activity as ran, \
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
@@ -425,6 +426,13 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex ended the turn: {said['status']}"
                     text += f" ({said['error']})" if said.get("error") else ""
                 else:
+                    if said.get("event") in ("item/started", "item/completed") and ran.get("run_id"):
+                        tool = (said.get("params") or {}).get("item") or {}
+                        if tool.get("type") in ("commandExecution", "fileChange"):
+                            inputs = tool if tool["type"] == "commandExecution" else {
+                                "path": ", ".join(c.get("path", "") for c in tool.get("changes", []))}
+                            repo.record_progress(checkout, item, ran["run_id"],
+                                                 step=repo.worker_step(tool["type"], inputs))
                     text = _event(said)
                 if text:
                     if echo:

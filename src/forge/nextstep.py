@@ -117,8 +117,8 @@ def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
     lines = _report(top)[0]
-    print(json.dumps({"version": __version__, "repo_root": board.repo_root(top),
-                      "next": machine_next(lines)}) if args.json else "\n".join(notice + lines))
+    print(json.dumps({**board.machine_board(top), "next": machine_next(lines)})
+          if args.json else "\n".join(notice + lines))
     return 0
 
 

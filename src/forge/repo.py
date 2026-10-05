@@ -136,20 +136,59 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    with (forge_dir(top) / "events.jsonl").open("a", encoding="utf-8") as out:
+    from forge import codex
+    path = forge_dir(top) / "events.jsonl"
+    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
         out.write(json.dumps(line) + "\n")
     return identity
+
+
+def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
+    """Coalesce a run's live updates into at most one record per ten seconds."""
+    from forge import codex
+    path = forge_dir(top) / "events.jsonl"
+    with codex._one_at_a_time(path.with_suffix(".lock")):
+        rows = path.read_text(encoding="utf-8").splitlines()
+        parsed = [json.loads(row) for row in rows]
+        previous = next((n for n in range(len(rows) - 1, -1, -1)
+                         if parsed[n].get("run_id") == run_id and
+                         parsed[n].get("event") == "progress"), None)
+        start = next(row for row in parsed if row.get("id") == run_id)
+        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
+        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
+                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
+        if previous is not None:
+            old = parsed[previous]
+            line = {**old, **line}
+            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
+                rows[previous] = json.dumps({**line, "id": old["id"]})
+            else:
+                rows.append(json.dumps({**line, "recorded_at": now()}))
+        else:
+            rows.append(json.dumps({**line, "recorded_at": now()}))
+        temp = path.with_suffix(".new")
+        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        os.replace(temp, path)
+
+
+def worker_step(name: str, inputs: dict[str, Any]) -> str:
+    """Describe only the tool's action, never its output or message contents."""
+    command = inputs.get("command")
+    if isinstance(command, str):
+        return "committing" if re.search(r"\bgit\s+commit\b", command) else "running " + " ".join(command.split())
+    path = inputs.get("file_path") or inputs.get("path")
+    return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + str(path) if path else "using " + name
 
 
 @contextmanager
 def record_run(top: Path, item: str, kind: str, **fields: Any):
     """Keep starts and ends even for a run entirely between two board refreshes."""
     identity = record_event(top, item, "run start", kind=kind, **fields)
-    result = {"outcome": "failed"}
+    result = {"outcome": "failed", "run_id": identity}
     try:
         yield result
     finally:
-        record_event(top, item, "run end", run_id=identity, kind=kind, **result)
+        record_event(top, item, "run end", kind=kind, **result)
 
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------

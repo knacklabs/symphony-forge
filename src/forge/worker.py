@@ -469,10 +469,12 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
+               "--output-format", "stream-json", "--verbose",
                "--add-dir", str(CONVENTIONS), *(session or [])]
-    lines = []
+    lines, final_result = [], None
     with repo.record_run(top, item, "worker", family="claude",
-                         model=models[models.index("--model") + 1]) as ran, \
+                         model=models[models.index("--model") + 1],
+                         effort=models[models.index("--effort") + 1]) as ran, \
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
@@ -482,14 +484,31 @@ def _run(item: str, top: Path, brief: str, models: list[str],
         worker.stdin.write(brief)
         worker.stdin.close()
         for line in worker.stdout:
-            print(line, end="", flush=True)
-            out.write(line)
-            lines.append(line)
+            try:
+                event = json.loads(line)
+            except ValueError:
+                event = None
+            if isinstance(event, dict):
+                for tool in (event.get("message") or {}).get("content", []):
+                    if isinstance(tool, dict) and tool.get("type") == "tool_use":
+                        repo.record_progress(top, item, ran["run_id"],
+                                             step=repo.worker_step(tool.get("name", "tool"), tool.get("input") or {}))
+                if event.get("type") == "result":
+                    final_result = str(event.get("result", ""))
+                line = (str(event.get("result", "")) + "\n" if event.get("type") == "result" else
+                        "".join(c.get("text", "") + "\n" for c in
+                                (event.get("message") or {}).get("content", [])
+                                if isinstance(c, dict) and c.get("type") == "text"))
+            if line:
+                if not isinstance(event, dict) or event.get("type") == "result":
+                    print(line, end="", flush=True)
+                out.write(line)
+                lines.append(line)
         worker.wait()
         ran["outcome"] = "completed" if worker.returncode == 0 else "failed"
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-    return "".join(lines)
+    return final_result if final_result is not None else "".join(lines)
 
 
 COMMANDS = [{
