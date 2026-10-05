@@ -3,12 +3,13 @@
   "branch": "fix/forge-s-ci-splits-tests-into-groups-by-c",
   "done_when": "Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a plain way to refresh it), so no group of the last run takes more than 70% of its time limit; this is Forge's own CI only, so new and existing client repos get nothing",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T10:15:13+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's CI splits tests into groups by count with no recorded test times, so the first macOS and Windows groups keep hitting their time limits and cancelled jobs send items back to workers"
+  "why": "Forge's CI splits tests into groups by count with no recorded test times, so the first macOS and Windows groups keep hitting their time limits and cancelled jobs send items back to workers",
+  "worker": "codex"
 }
