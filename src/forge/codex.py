@@ -604,7 +604,16 @@ def _stop_leftover(record: Path) -> tuple[bool, int | None]:
     return stopped, unknown
 
 
-def _stop(recorded: dict[str, Any], group: bool) -> None:
+def _group_alive(pid: int) -> bool | None:
+    """A group is ended only when every non-zombie member has ended, not just its leader."""
+    listed = repo.run("ps", "-axo", "pgid=,stat=")
+    if listed.returncode:
+        return None
+    return any(int(fields[0]) == pid and not fields[1].startswith("Z")
+               for line in listed.stdout.splitlines() if len(fields := line.split()) == 2)
+
+
+def _stop(recorded: dict[str, Any], group: bool) -> bool:
     """Stop a process, with its process group when `group`, and wait until it has gone: SIGTERM,
     then SIGKILL five seconds on. On Windows taskkill ends it and everything it started."""
     pid = recorded["pid"]
@@ -618,9 +627,10 @@ def _stop(recorded: dict[str, Any], group: bool) -> None:
             else:
                 os.kill(pid, sig)
         for _ in range(50):
-            if _alive(recorded) is False:
-                return
+            if (_group_alive(pid) if group and os.name != "nt" else _alive(recorded)) is False:
+                return True
             time.sleep(0.1)
+    return False
 
 
 @contextlib.contextmanager

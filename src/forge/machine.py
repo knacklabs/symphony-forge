@@ -230,8 +230,8 @@ def stop(args: Any) -> int:
                 raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.")
         for run in selected:
             if (run.get("agent") or run["started_at"]) and codex._alive(run["process"]) is True:
-                codex._stop(run["process"], run["process"] != run.get("forge"))
-                if codex._alive(run["process"]) is not False:
+                ended = codex._stop(run["process"], run["process"] != run.get("forge"))
+                if not ended or codex._alive(run["process"]) is not False:
                     raise repo.Refused("Forge could not confirm the run stopped; its place is still held.")
             runs.remove(run)
     print("Stopped the run." if selected else "There is nothing to stop.")

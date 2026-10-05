@@ -15,7 +15,8 @@ import pytest
 from conftest import ROOT, machine_cores
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
-from test_lanes_agents import finish, hold_agents, make_work, start, person  # noqa: F401
+from test_lanes_agents import alive, finish, hold_agents, make_work, start, person, lane_adapter  # noqa: F401
+from test_codex_worker import sdk_data  # noqa: F401
 from test_story import worktree
 
 STORY = "FORGE-LANES-1"
@@ -31,7 +32,7 @@ def lanes(repo):
 
 
 @pytest.mark.parametrize("cores,agents,adopted", [(6, 3, False), (None, 1, True)])
-def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_path, cores, agents, adopted, person):
+def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_path, cores, agents, adopted, person, lane_adapter):
     repo = env.repo
     machine_cores(repo, cores, system_count=64)
     version = repo.forge("--version").stdout.split()[-1]
@@ -40,7 +41,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Adopt on the earlier release")
         config = (repo.path / "forge.toml").read_text("utf-8").replace(
-            'version = "v1.2.2"', f'version = "{version}"').replace('workers = "codex"', 'workers = "claude"')
+            'version = "v1.2.2"', f'version = "{version}"').replace('workers = "codex"', f'workers = "{lane_adapter}"')
     else:
         config = (repo.path / "forge.toml").read_text("utf-8") + 'repo = "client"\n'
     env.commit(repo.path, "forge.toml", config, "Use the current release")
@@ -72,13 +73,32 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     assert tested.returncode == 0, tested.stderr
     assert f"Test budget: {agents}\n" in tested.stdout
     other = _other_repo(tmp_path, repo.bin)
-    other.write("forge.toml", (other.path / "forge.toml").read_text("utf-8") + 'workers = "claude"\n')
+    other.write("forge.toml", (other.path / "forge.toml").read_text("utf-8") + f'workers = "{lane_adapter}"\n')
     other.git("add", "forge.toml")
     other.git("commit", "-qm", "Use Claude for workers")
     other.git("push", "-q", "origin", "main")
     waiting = [make_work(other, f"Other typo {n}") for n in range(agents)]
     hold_agents(env)
+    # A real descendant ignores SIGTERM. The next agent must not inherit its load
+    # after the recorded group leader has exited.
+    tree = repo.bin / "tree-helper.py"
+    tree.write_text('import os, pathlib, signal, time\n'
+        'here = pathlib.Path(__file__).resolve().parent\n'
+        'if os.name != "nt": signal.signal(signal.SIGTERM, signal.SIG_IGN)\n'
+        '(here / "tree-pid").write_text(str(os.getpid()))\n'
+        'while not (here / "go-all").exists(): time.sleep(0.05)\n', "utf-8")
+    for executable in ("claude", "codex-app-server"):
+        path = repo.bin / executable
+        source = path.read_text("utf-8")
+        indent = "" if executable == "claude" else "            "
+        marker = indent + '(here / f"started-'
+        spawn = (indent + 'if name.endswith("first-typo"):\n' + indent + '    import subprocess\n'
+                 + indent + '    subprocess.Popen([sys.executable, str(here / "tree-helper.py")],\n'
+                 + indent + '        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n')
+        source = source.replace(marker, spawn + marker)
+        path.write_text(source, "utf-8")
     processes = []
+    descendant = None
     try:
         for where, item in [(repo.path, first), *[(other.path, item) for item, _ in waiting]]:
             process, _ = start(where, tmp_path / f"run-{len(processes)}", repo, "work", item)
@@ -99,8 +119,12 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
             assert row["joined_at"] and row["process"]["pid"]
             assert row["output_path"] is None and row["progress"] is None
         assert rows[-1]["started_at"] is None and rows[0]["started_at"]
+        _until(lambda: (repo.bin / "tree-pid").exists(), "the model's descendant")
+        descendant = int((repo.bin / "tree-pid").read_text("utf-8"))
+        assert alive(descendant)
         stopped = repo.forge("stop", "--id", rows[0]["id"])
         assert stopped.returncode == 0, stopped.stderr
+        assert not alive(descendant), "stop freed admission while a group member still ran"
         _until(lambda: (repo.bin / f"started-{waiting[-1][1]}").exists(), "freed place")
         assert all(r["id"] != rows[0]["id"] for r in lanes(repo)["agents"]["entries"])
         stopped = repo.forge("stop", "--repo", str(other.path), waiting[-1][0])
@@ -110,11 +134,13 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         assert repo.forge("stop", "missing-item").returncode == 0
     finally:
         finish(repo, processes)
+        if descendant is not None:
+            _until(lambda: not alive(descendant), "the descendant to end")
     assert lanes(repo)["agents"]["entries"] == []
 
 
 @pytest.mark.parametrize("older_queue", [False, True], ids=["current-queue", "existing-queue"])
-def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(env, tmp_path, monkeypatch, person, older_queue):
+def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(env, tmp_path, monkeypatch, person, older_queue, lane_adapter):
     repo = env.repo
     machine_cores(repo, 2)
     item, name = make_work(repo, "First typo")
@@ -141,6 +167,9 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
         assert row["process"]["pid"] != process.pid
 
         def child_survives(challenge):
+            if lane_adapter == "codex":
+                assert alive(row["process"]["pid"]), "the recorded Codex driver was terminated"
+                return
             (repo.bin / "challenge").write_text(challenge, "utf-8")
             reply = repo.bin / "reply"
             _until(lambda: reply.exists() and reply.read_text("utf-8") ==
