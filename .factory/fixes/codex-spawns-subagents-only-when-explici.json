@@ -1,0 +1,39 @@
+{
+  "base": "3caadd6446a848c50bd81aadfe62dad4d9c0afbc",
+  "branch": "fix/codex-spawns-subagents-only-when-explici",
+  "done_when": "The worker brief (both tools) explicitly invites the worker to spawn the repo's subagent roles when the work splits into independent parts (an explorer to trace code paths, a tester to write tests while it builds, separate files edited in parallel), at most 3 at a time, and to do small tasks itself; Codex workers' thread config keeps multi_agent on and uses forge.toml's subagent model and effort. New and existing repos: every repo gets it from the new release and its next forge sync; nothing in forge.toml changes. One command-level test: the brief sent to a Codex worker and a Claude worker carries the invitation, and the Codex thread config enables multi-agent.",
+  "flagged": [
+    "src/forge/templates/brief.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8216ff936b43466d05d9c11c8ed6b52aa9bef5bc50002808fcf7880be6812d63",
+    "changed": "66a6590d46d5bae8a8e22af06f9239742d6fd86c8c798aa055fdda66d7d3f6f8",
+    "commit": "788c5cad9698e1b3bbcc058d46e9ec58962d2c8f",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T18:40:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:17:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T22:36:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T05:38:56+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Codex spawns subagents only when explicitly asked, and Forge's worker brief never asks, so no Forge worker ever delegates: the repo's subagent roles and the subagent models in forge.toml go unused",
+  "worker": "codex"
+}
