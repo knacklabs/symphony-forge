@@ -8,24 +8,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6c6cf226a6ef23840520a251e71aac0fe7b8d2cdcda7fc072350ed2f62d74d5d",
-    "changed": "eda3d96b02e9eebfda61ce5f41a51938a457d7048ada6c37ab0e97736bfad0bb",
-    "commit": "751edefb0449a3e18f874cace21ebb0621eb0f8a",
+    "branch_diff": "827b1de64b6ac6186f5fc8a106fa8748de2811bcdb07fa16d81e2fb673a2319b",
+    "changed": "e4189bcd700b279a2c4e6e2cfbb4e7e01b529260fce93fd177b2c94357dd837e",
+    "commit": "2c5bb749b5a4c4001ea9d57c617f76c03d973a96",
     "dismissals": [],
     "findings": [
       {
-        "body": "For the mixed command covered by the new tests, the recommendation runs `forge test --pytest {base}` followed by a filtered Vitest command. However, `src/forge/fasttest.py:115` reads the entire configured `test` command, and lines 155\u2013157 execute that pipeline after narrowing only pytest. Whenever related Python tests are selected, this runs the full JavaScript suite first, then runs JavaScript again through the appended filtered command. Python/Jest combinations have the same problem, through both doctor and upgrade. Ensure the Python part does not execute the other test kinds. The current mixed tests assert the printed string and therefore pass despite this defect.",
+        "body": "Forge's generated Node test command receives no suggestion. src/forge/init.py:59 and :120 use `[ ! -f package.json ] || (npm ci && npm test)`; the v1.2.2 fixture uses the same command. Splitting it here leaves `npm test)` as the final part, so neither a Vitest nor Jest package script is recognized. Both doctor and upgrade consequently print no fast_test line for these new and previously adopted clients. The new tests miss this because tests/test_quick_test_suggestions.py:56\u201358 replaces the generated test command before checking advice. Support Forge's generated wrapper and cover it through the command entry points.",
         "file": "src/forge/quicktest.py",
-        "line": 40,
+        "line": 16,
         "priority": "P1",
-        "title": "Not done: mixed repos get one part per kind"
+        "title": "Not done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {"
       },
       {
-        "body": "For `test = \"npm ci && npm exec vitest run\"`, this appends the filters without an argument separator. npm parses the added switches itself instead of forwarding `--changed` and `--passWithNoTests` to Vitest; the same issue affects `npm exec jest` and `--changedSince`. Thus a valid existing runner receives an unsuitable quick-test command. Preserve the invocation while inserting `--` when needed for npm exec, as described in the [npm exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec). Both doctor and upgrade use this path.",
-        "file": "src/forge/quicktest.py",
-        "line": 48,
+        "body": "For `uv run pytest && npm ci && npm run lint && npm test`, with a Vitest or Jest test script, the Python picker removes npm ci and npm test but retains npm run lint. The recommendation starts with this picker, so on a clean checkout lint executes before dependencies are installed and the command fails before reaching the recommended npm ci. On an installed checkout, lint runs twice. This is additional evidence beyond the isolation ruling: non-test Node checks remain dependent on the installation being removed. Preserve their setup and execute retained checks once when composing the mixed recommendation.",
+        "file": "src/forge/fasttest.py",
+        "line": 120,
         "priority": "P2",
-        "title": "Forward the added filters through npm exec's argument separator"
+        "title": "Keep installation before retained Node checks in mixed commands"
+      },
+      {
+        "body": "The separator repair breaks invocations that already supply npm options. For example, `npm exec --package=vitest vitest run` becomes `npm exec -- --package=vitest vitest run --changed {base} --passWithNoTests`. npm now treats --package=vitest as positional command input, so the runner cannot launch. Jest and workspace options have the same problem through both suggestion callers. This extends the previous npm finding with an option-bearing invocation the repair does not cover. Keep npm options before the separator and insert it immediately before the runner, as required by the [npm exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/).",
+        "file": "src/forge/quicktest.py",
+        "line": 62,
+        "priority": "P2",
+        "title": "Insert npm exec's separator after its existing options"
       }
     ],
     "status": "blocked"
@@ -38,6 +45,10 @@
     },
     {
       "at": "2026-10-05T08:52:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:13:56+00:00",
       "step": "review"
     }
   ],
