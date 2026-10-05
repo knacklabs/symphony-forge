@@ -10,7 +10,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, codex, init, repo, review, story, sync, task
+from forge import __version__, codex, init, quicktest, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
@@ -306,6 +306,7 @@ def doctor(args: argparse.Namespace) -> int:
     for line in codex.tidy(top): print(f"- {line}")
     for problem, fix in rows: print(f"- {problem}\n  Fix: {fix}")
     if plan_note: print(f"- Note: {plan_note}")
+    quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
               "the merge base with the default branch; the pull request's tests check still runs " "the full test command.")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")

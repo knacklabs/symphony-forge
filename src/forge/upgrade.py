@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from forge import close, repo, story, task
+from forge import close, quicktest, repo, story, task
 
 COMMANDS = [{
     "words": "upgrade", "run": "upgrade", "changes_state": False,
@@ -122,6 +122,7 @@ def upgrade(args: argparse.Namespace) -> int:
     if edited != text:
         toml.write_bytes(edited.encode("utf-8"))
     print(f'Set version = "{release}" in the fix\'s forge.toml.', flush=True)
+    quicktest.suggest(path, repo.config(path))
 
     # 3 and 4. The release installed, and the forge on PATH is it.
     if _on_path()[0] == release:
