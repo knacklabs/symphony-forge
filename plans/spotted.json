@@ -681,6 +681,17 @@
       "item": "codex-hook-trust",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 414,
+      "text": "Both checked-in Forge skills lag the shipped template's worker verbosity and fast-test guidance.",
+      "from": "worker",
+      "item": "client-repos-never-learn-that-a-newer-fo",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
