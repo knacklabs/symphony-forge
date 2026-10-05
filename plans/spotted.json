@@ -617,6 +617,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 300,
+      "text": "Remove the project-install instruction from setup guidance",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",

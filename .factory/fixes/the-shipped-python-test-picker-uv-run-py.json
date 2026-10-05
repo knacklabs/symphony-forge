@@ -15,43 +15,43 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e01ff7428c43a585c5f40ec1324f6868796c86d8bc68896c851771bd03c8ff4",
-    "changed": "1a237cc58a4c0f92cdb8be61f7e92e87896397f69995a2f215a75821c6a5ea7c",
-    "commit": "0d6ba661d6d9376ddeae9e559235be3bafbeb129",
+    "branch_diff": "4ce2c14388656920625257f0b3820d497d0a9dc56aa6cdcac284fb89687923cb",
+    "changed": "453575452ac3bc232b44151ad83b95f5bac2b36f2983a55fab8a2699d6c8fbed",
+    "commit": "5c62bf2a90912e7cbf9bbfd2bf98415a1127c64f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The required client lifecycle tests are missing. This test constructs forge.toml directly and invokes the picker, without forge init, a proposed fast_test, or forge close. The setup test only checks generated guidance. The existing-client test in tests/test_python_changed_test_picker.py checks upgrade guidance and `test --help`; its adoption helper (tests/test_upgrade_command.py:477\u2013500) uses a fixture without the legacy fast_test. The standalone doctor test never checks preservation or runs close after the owner's replacement. Add command-level coverage for both requested lifecycles, proving related tests actually run through close without Forge installed in the client's environment. The supplied passing suite does not establish these explicit Done-when requirements.",
-        "file": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
-        "line": 60,
-        "priority": "P1",
-        "title": "Not done: New and previously adopted clients run the proposed picker through close"
-      },
-      {
-        "body": "Every token named `pytest` is treated as a pytest invocation, including a package argument. With unrelated tests excluded, `python -m pip install pytest && python -m pytest tests` receives `--ignore=...` on the pip installation as well as pytest, breaking otherwise valid setup. The fallback at line 80 also appends arguments to the last shell command: `python run_tests.py && ruff check .` sends them to Ruff rather than the argument-forwarding launcher. Identify the actual pytest or launcher command before inserting options, preserving the other shell commands.",
+        "body": "The previously reported command-rewriting defect remains. For `python -m pip install pytest && python -m pytest tests`, both `pytest` tokens receive `--ignore` arguments, so pip fails before the tests run. The fallback at line 80 also appends pytest arguments to Ruff in `python run_tests.py && ruff check .`, even when the launcher forwards arguments correctly. Identify the actual pytest invocation or launcher before modifying its arguments, preserving the other shell commands.",
         "file": "src/forge/fasttest.py",
         "line": 73,
         "priority": "P2",
         "title": "Recognize pytest invocations before adding pytest arguments"
       },
       {
-        "body": "This loop combines addopts from every existing configuration file, including defaults when `-c` explicitly selects another file. [Pytest selects one configuration rather than merging their settings](https://docs.pytest.org/en/stable/reference/customize.html). For example, an active pytest.ini without xdist settings and an inactive tox.ini containing `addopts = -n auto` cause Forge to inject `--maxprocesses` even when the client's active environment has no xdist installed. The ordinary test command works, but the picker fails with an unrecognized argument. Follow pytest's configuration selection before deriving its worker options.",
+        "body": "This still merges addopts from every configuration candidate, including defaults when `-c` selects another file. An active pytest.ini without xdist settings and an inactive tox.ini containing `addopts = -n auto` cause Forge to inject `--maxprocesses`; without xdist installed, the otherwise valid test command fails with an unrecognized argument. [Pytest selects one configuration rather than merging candidates](https://docs.pytest.org/en/stable/reference/customize.html). Derive worker settings only from the configuration pytest actually selects.",
         "file": "src/forge/fasttest.py",
         "line": 38,
         "priority": "P2",
         "title": "Read worker options only from pytest's selected configuration"
       },
       {
-        "body": "Unrelated explicit paths are removed only from the forge.toml command string. If pytest.ini addopts or PYTEST_ADDOPTS names `tests/test_unrelated.py::test_unrelated`, that path remains an explicit collection target despite the appended `--ignore`. [Pytest's collector bypasses ignore checks for explicitly supplied paths](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py). Consequently, the picker prints only related tests but still collects and runs the unrelated test, potentially failing close. Apply exclusion to explicit targets from these option sources as well as command-line tokens.",
+        "body": "Explicit unrelated targets are removed only from the forge.toml command string. A target such as `tests/test_unrelated.py::test_unrelated` supplied through configuration addopts or PYTEST_ADDOPTS remains present despite the appended `--ignore`. [Pytest bypasses ignore checks for explicitly supplied paths](https://raw.githubusercontent.com/pytest-dev/pytest/9.1.1/src/_pytest/main.py), so the picker can print only related files while still running unrelated tests. Filter explicit targets from both option sources while preserving their other settings.",
         "file": "src/forge/fasttest.py",
-        "line": 59,
+        "line": 64,
         "priority": "P2",
         "title": "Exclude unrelated paths supplied through pytest addopts"
+      },
+      {
+        "body": "The updated setup paragraph still instructs the agent to use \u201cthe repo's Python runner with Forge installed\u201d at line 302. The same instruction remains in both checked-in Forge skills. This contradicts the fix's installation-free client setup and can direct agents to add Forge to the client's environment unnecessarily. Clarify that the project runner belongs in the full test command and that the picker runs through the separately installed Forge tool.",
+        "file": "src/forge/templates/skill.md",
+        "line": 300,
+        "priority": "P2",
+        "title": "Remove the project-install instruction from setup guidance"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T04:52:56+00:00",
@@ -59,6 +59,10 @@
     },
     {
       "at": "2026-10-05T06:36:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:00:26+00:00",
       "step": "review"
     }
   ],
