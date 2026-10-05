@@ -2,12 +2,26 @@
   "base": "15281ddd0bf30db521c6ebe2ec7fb2dc0ae319e8",
   "branch": "fix/the-review-loop-stop-pauses-only-one-clo",
   "done_when": "When today's review loop stop fires (third blocked review in a file flagged before), close and forge land stay stopped on that item until the human's choice is recorded with one command the stop message names: narrow the part, split it, or accept the remaining findings; forge next shows the three choices in plain words; skill.md tells the coordinator to ask the human and never re-run close past it; new client repos get it from init and existing ones from sync on upgrade, with a command test for each",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3dad471e623c7b400b35c631d9132a45e270684b6964587333fa149bb0bd7729",
+    "changed": "8279b1999f00bf7bcf45a7d4e9df7c5a367bcb4ec7eb93d2723d7bf45b74a199",
+    "commit": "49bad0ab2fd9c40b3fec588063ce2107285086e4",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T08:43:34+00:00",
+      "step": "review"
     }
   ],
   "why": "The review loop stop pauses only one close, so a coordinator's next close carries on and a part can loop through 8 blocked reviews",
