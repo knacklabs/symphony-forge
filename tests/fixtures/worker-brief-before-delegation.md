@@ -5,7 +5,6 @@ $summary
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
-$delegation
 - Edit files only inside this checkout.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
@@ -98,8 +97,6 @@ such test and why it changed in your handoff, and never weaken a test to hide a 
 <!-- end -->
 ## Tests first
 
-One command-level test per rule is enough.
-
 Windows checklist:
 - A path written into a file or compared as text goes through `json.dumps` or `as_posix`.
 - Tests never assume a drive letter or a '/' separator.
@@ -120,9 +117,6 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
 `{base}` as the merge base with the default branch, or its `test` command when it has no
 `fast_test`. Then commit any fixes. CI runs the full suite.
-For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
-test command without installing Forge in the project. Bare `forge test` currently refuses and
-names `--pytest`; the approved test-lane story will give bare `forge test` its lane behavior.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

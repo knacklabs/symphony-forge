@@ -342,7 +342,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
-    values: dict[str, str] = {}
+    values: dict[str, str] = {
+        "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
         on.add("coordinator")
         values["coordinator"] = note
@@ -388,6 +389,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             f"### {name}\n\n```\n{tail}\n```" for name, tail in failing) or "None."
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
+        brief += "\n" + values["delegation"] + "\n"
         local = review.close_test(top, f"origin/{repo.default_branch(top)}")
         command = f" (`{local}`)" if local else ""
         brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "

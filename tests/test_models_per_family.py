@@ -43,7 +43,8 @@ def test_1_a_per_family_table_gives_each_family_its_own_entry(repo, monkeypatch,
     build = f"[models.build.codex]\n{NOVA}\n[models.build.claude]\n{OPUS}"
 
     _work(repo, folder, "codex", build)
-    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "model": "gpt-6-nova",
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
+                                                          "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
     _work(repo, folder, "claude", build)
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
@@ -54,7 +55,8 @@ def test_2_a_single_entry_is_used_by_its_own_family(repo, monkeypatch, sdk_data)
     claude = install_claude(repo)
 
     _work(repo, folder, "codex", f"[models.build]\n{NOVA}")
-    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "model": "gpt-6-nova",
+    assert _sent(calls, "thread/start")[-1]["config"] == {**QUIET, "features.multi_agent": True,
+                                                          "model": "gpt-6-nova",
                                                           "model_reasoning_effort": "high"}
     _work(repo, folder, "claude", f"[models.build]\n{OPUS}")
     assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "low"]
@@ -72,7 +74,7 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     assert [line["kind"] for line in _lines(repo.path / ".git" / "forge" / "threads" / "task"
                                             / "BOARD" / "PAGE.log")] == ["Build", "Build"]
     assert _sent(calls, "thread/start")[-1]["config"] == {
-        **QUIET, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
     _work(repo, folder, "claude", f"[models.build]\n{NOVA}")
     args = claude_calls(claude)[-1]["args"]
     assert args[:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "medium"]
