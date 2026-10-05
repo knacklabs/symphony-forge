@@ -4,9 +4,13 @@ import os
 import subprocess
 import shutil
 import venv
+import sys
+import tomllib
 from pathlib import Path
 
 import pytest
+
+from conftest import FORGE_SHIM, ROOT, _install
 
 STORY = "FIX-THE-SHIPPED-PYTHON-TEST-PICKER-UV-RUN-PY"
 
@@ -81,3 +85,27 @@ def test_3_bare_test_names_the_picker_option_in_one_line(repo):
     assert result.returncode == 1
     assert result.stdout == ""
     assert result.stderr.splitlines() == ["Run forge test --pytest <base> to pick related pytest tests."]
+
+
+def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp_path, monkeypatch):
+    # Reproduce close's cold PATH with the real earlier release, not a fake refusal.
+    old = tmp_path / "release"
+    shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2/src/forge", old / "forge")
+    (old / "forge/cli-py.txt").rename(old / "forge/cli.py")
+    metadata = old / "symphony_forge-1.2.2.dist-info"
+    metadata.mkdir()
+    (metadata / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: symphony-forge\nVersion: 1.2.2\n", "utf-8")
+    (metadata / "direct_url.json").write_text(json.dumps({
+        "url": "https://github.com/knacklabs/symphony-forge",
+        "vcs_info": {"vcs": "git"}}), "utf-8")
+    cold = tmp_path / "cold-tool"
+    cold.mkdir()
+    _install(cold, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old)))
+    monkeypatch.setenv("PATH", str(cold) + os.pathsep + os.environ["PATH"])
+    command = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))["fast_test"]
+    command = command.replace("{base}", repo.git("rev-parse", "HEAD", cwd=ROOT))
+    result = subprocess.run(command, shell=True, cwd=ROOT, capture_output=True,
+                            text=True, timeout=120)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "No changed or module-related test files to run." in result.stdout
