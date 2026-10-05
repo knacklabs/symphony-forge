@@ -10,7 +10,8 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 
 @pytest.mark.parametrize("runner,count,minutes", [
     ("ubuntu-latest", 2, 10),
-    ("macos-latest", 4, 10),
+    # Four groups averaged over seven minutes in the last successful CI run.
+    ("macos-latest", 5, 10),
     ("windows-latest", 8, 20),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes):
