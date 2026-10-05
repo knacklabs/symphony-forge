@@ -1,0 +1,14 @@
+{
+  "base": "a10633d0ea75882d5505289c13e7e8b06a73ea41",
+  "branch": "fix/cap-11000",
+  "done_when": "pyproject.toml's line_ceiling is 11000, decision 0103 records the owner's choice (raise to 11,000 while the hotspot simplify fixes each cut lines) and marks 0101 superseded, and the rules test that checks the cap passes.",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-05T02:03:39+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's Python is at its 10,000-line cap and every remaining feature (the CPU split, the Claude Code mod) needs room, so features stop on the cap"
+}
