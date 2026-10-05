@@ -9,6 +9,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 from forge import close, repo, story, task
@@ -164,11 +165,40 @@ def upgrade(args: argparse.Namespace) -> int:
     return repo.run_release(release, ["close", name], path)
 
 
-def _newest(top: Path) -> str:
+def release_notice(top: Path) -> list[str]:
+    """Best-effort daily release check, shared by all of this repo's worktrees."""
+    try:
+        pinned = repo.config(top)["version"]
+        cache = repo.forge_dir(top) / f"release-{repo.now()[:10]}.json"
+        try:
+            # Exclusive creation claims today's check before contacting GitHub. A failed or
+            # interrupted check stays claimed, so other worktrees never retry it today.
+            claimed = cache.open("x", encoding="utf-8")
+        except FileExistsError:
+            tag = json.loads(cache.read_text(encoding="utf-8"))
+        else:
+            with claimed:
+                try:
+                    tag = _newest(top, timeout=3)
+                except (repo.Refused, OSError, subprocess.TimeoutExpired):
+                    tag = None
+                json.dump(tag, claimed)
+        if isinstance(tag, str) and RELEASE.fullmatch(tag) and _numbers(tag) > _numbers(pinned):
+            return [f"Forge {tag} is out (you pin {pinned}): forge upgrade {tag}"]
+    except (repo.Refused, OSError, ValueError):
+        # No cache access or an in-flight writer: this optional notice must not block next.
+        pass
+    return []
+
+
+def _newest(top: Path, timeout: float | None = None) -> str:
     """The newest release's tag, as GitHub has it."""
-    if shutil.which("gh") is None:
+    gh = shutil.which("gh")
+    if gh is None:
         repo.refuse(REFUSALS["no_newest"], reason="gh is not installed")
-    done = repo.run("gh", "release", "view", "--repo", SOURCE, "--json", "tagName", cwd=top)
+    done = subprocess.run([gh, "release", "view", "--repo", SOURCE, "--json", "tagName"],
+                          cwd=top, input="", capture_output=True, text=True, encoding="utf-8",
+                          errors="replace", timeout=timeout)
     try:
         tag = json.loads(done.stdout).get("tagName") if done.returncode == 0 else None
     except (ValueError, AttributeError):

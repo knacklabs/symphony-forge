@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story
+from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
 from forge.task import start_base
 
 COMMANDS = [
@@ -114,7 +114,7 @@ def open_must_answer_topics(top: Path) -> list[str]:
 
 def next_step(args: Any) -> int:
     top = repo.root()
-    lines = _report(top)[0]
+    lines = upgrade.release_notice(top) + _report(top)[0]
     print(json.dumps({"version": __version__, "repo_root": board.repo_root(top),
                       "next": machine_next(lines)}) if args.json else "\n".join(lines))
     return 0

@@ -353,6 +353,10 @@ On a live app, every story and fix also follows these:
 
 ## Upgrade Forge
 
+When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
+Never upgrade without the owner's agreement. The check runs at most once per UTC day,
+shares its cache across worktrees, and stays silent when GitHub cannot be reached.
+
 An upgrade is one fix. Its pull request carries the new version and every file Forge keeps in the
 repo, rewritten by that version. One command does all of it.
 
