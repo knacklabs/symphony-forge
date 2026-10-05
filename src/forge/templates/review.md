@@ -65,6 +65,18 @@ This repo lists no interface paths. Report any change to an interface (an API ro
 schema or migration, a command table or a config schema) as a P1 finding titled
 `Promote: <the interface>`: a change like that needs a story, not a fix.
 
+<!-- proof-list -->
+## Proof list
+The worker's latest commit supplies this list, which Forge copies into the pull request:
+
+$proof_list
+
+On the first review, check the whole list, not a sample. Check every entry against the code and
+its named proof, including every Done-when detail; compare it with the covered items above so an
+omitted item or detail cannot hide a gap. Report every missing case you find in this first round,
+even when another finding already blocks. A missing list or entry is a P1 `Not done: proof list`;
+judge missing or hollow proof by the test-audit rules below. Repeat this full check on later rounds.
+
 <!-- rules -->
 ## Tests on the close run
 forge close ran the repo's test command before this review, outside your sandbox:
