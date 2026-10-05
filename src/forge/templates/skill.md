@@ -554,6 +554,8 @@ Use `forge land <item>` for build, close, fix rounds and merge where agent merge
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
 loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
+If the branch already has commits after the item's start, land goes straight to close. Close
+still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
