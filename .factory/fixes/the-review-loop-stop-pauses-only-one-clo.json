@@ -8,22 +8,14 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "704681318cded95aa1db604c61e1c0977daa92f3369a39d91533ce2b0dae09e3",
-    "changed": "a6207dbe2a0af85c07cc1ac5804132ff2d46ec6178e478e6fa31db3788c44ccd",
-    "commit": "9c8d7fc6ea906e0c2c6f7fbb3b7381d97cd03e3a",
+    "branch_diff": "7f39396abd142b8bb0e8d742b407db8b225a3f351171efde16b4b6f0d05e429f",
+    "changed": "9361236b4c66dd9f52116e12004669467af5d23723fb9af79adfa03f861a4c10",
+    "commit": "35bd5e84afc6284ab32bd3533e8cb3d2f17d352c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The previously reported gap remains open. `review.task()` reads the live `story/<key>` document (src/forge/review.py:110\u2013115), while `fingerprint()` hashes the document at the task commit (review.py:160\u2013166). Editing the task's Scope, Tests, or covered requirements on the story branch therefore leaves both acceptance fingerprints unchanged. The initial `--resolve accept` guard at close.py:82 permits acceptance against changed requirements, and this reuse guard lets subsequent close and land skip another review. This violates the ruling that acceptance covers only the reviewed code and scope. Compare the effective document used by the reviewer in both guards and add a command regression test that edits the story branch; the acceptance tests currently exercise fixes only.",
-        "file": "src/forge/close.py",
-        "line": 138,
-        "priority": "P1",
-        "title": "Expire acceptance when the story branch changes the task's scope"
-      }
-    ],
-    "status": "blocked"
+    "findings": [],
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
@@ -55,6 +47,10 @@
     },
     {
       "at": "2026-10-05T12:02:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:32:39+00:00",
       "step": "review"
     }
   ],
