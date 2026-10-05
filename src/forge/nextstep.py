@@ -17,14 +17,14 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import approval, board, close, codex, records, repo, review, spotted, story, upgrade
+from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
 from forge.task import start_base
 
 COMMANDS = [
     {
         "words": "next", "run": "next_step", "changes_state": False,
         "help": "Say where things stand and give the exact next command",
-        "args": [], "position": 50,
+        "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"})], "position": 50,
         "listing": "| `forge next` | Says where things stand and gives the exact next command |",
     },
     {
@@ -52,6 +52,7 @@ STATUS = {
     "reviewing": ("{label} is being reviewed.", "wait for the review, then forge close {item}"),
     "fixing": ("Close stopped on {label}: {reason}.", "forge work {item}"),
     "waiting for checks": ("{label} is waiting for its checks.", "forge close {item}"),
+    "checks failed": ("{label}'s checks failed.", "forge work {item}"),
     "ready": ("{label} is ready and waiting for someone to merge it.",
               "merge its pull request, then forge next"),
 }
@@ -114,8 +115,44 @@ def open_must_answer_topics(top: Path) -> list[str]:
 
 def next_step(args: Any) -> int:
     top = repo.root()
-    print("\n".join(upgrade.release_notice(top) + _report(top)[0]))
+    notice = upgrade.release_notice(top)
+    lines = _report(top)[0]
+    print(json.dumps({"version": __version__, "repo_root": board.repo_root(top),
+                      "next": machine_next(lines)}) if args.json else "\n".join(notice + lines))
     return 0
+
+
+def machine_next(lines: list[str]) -> dict[str, str | None]:
+    """Only the first Next line can be offered as a runnable step."""
+    line = next((line for line in lines if line.startswith("Next: ")), None)
+    command = line.removeprefix("Next: ") if line else ""
+    try:
+        words = shlex.split(command, comments=True)
+    except ValueError:
+        words = []
+    # Treat shell operators outside quotes as syntax, but allow quoted titles containing them.
+    lexer = shlex.shlex(command, posix=False, punctuation_chars=";&|<>`$()")
+    lexer.whitespace_split = True
+    try:
+        syntax = list(lexer)
+    except ValueError:
+        syntax = [";"]
+    unsafe = any(token and all(c in ";&|<>`$()" for c in token) for token in syntax)
+    runnable = (len(words) >= 2 and words[0] == "forge" and not unsafe
+                and not any(token in ("then", "or") for token in syntax)
+                and not re.search(r"<[^>]*>|\$\(|`|[\r\n]", command))
+    if runnable:
+        from forge.cli import _parser
+        try:
+            _parser().parse_args(words[1:])
+        except repo.Refused:
+            runnable = False
+    # A trailing shell comment explains the worker; it is not part of the command.
+    if runnable:
+        command = shlex.join(words) if "#" in command else command
+    return {"command": command if runnable else None,
+            "line": next((text for text in lines if not text.startswith("Next: ")),
+                         "Nothing in progress.")}
 
 
 def context_hook(args: Any) -> int:
@@ -150,8 +187,11 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     refusals: dict[Path, str] = {}
     trees = story.worktrees(top)
     merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
-    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,statusCheckRollup,isDraft")
+    prs = {pr["headRefName"]: pr for pr in _prs(top, "open", "headRefName,url,isDraft")
            if isinstance(pr.get("url"), str)} if trees else {}
+    if trees:
+        prs.update({pr["headRefName"]: pr for pr in board._machine_prs(top)
+                    if isinstance(pr.get("headRefName"), str)})
     for key, (path, state, text) in sorted(_stories(top).items()):
         if state.get("status") == "done":
             continue
@@ -476,22 +516,40 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
     return {**state, "status": "merged"} if branch in merged_prs else state
 
 
+def _item_readiness(item: str, state: dict[str, Any], top: Path,
+                    checks: str = "unknown") -> tuple[str | None, dict[str, Any]]:
+    """A matching close receipt grants readiness unless the current checks failed."""
+    try:
+        receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        receipt = {}
+    if not isinstance(receipt, dict):
+        receipt = {}
+    status, branch = state.get("status"), state.get("branch")
+    if status not in ("merged", "done", "hotspot"):
+        if checks == "fail":
+            status = "checks failed"
+        elif (branch and receipt.get("review") == "clean"
+              and repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
+              == receipt.get("commit")):
+            status = "ready"
+        elif status == "ready":
+            status = "waiting for checks"
+    return status, receipt
+
+
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str]) -> list[str]:
-    status = state.get("status") or "started"
+    pr = (prs or {}).get(state.get("branch", "")) or {}
+    checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
+    status, receipt = _item_readiness(item, state, top, checks)
+    status = status or "started"
     if status == "hotspot":
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
                 "it goes first.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
-    ready = repo.ready_path(item, top)
-    try:
-        receipt = json.loads(ready.read_text(encoding="utf-8"))
-    except (OSError, ValueError, UnicodeDecodeError):
-        receipt = {}
-    if not isinstance(receipt, dict):
-        receipt = {}
     if receipt.get("tidied") is True:
         return []
     if status == "merged" and path:
@@ -500,12 +558,6 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                     f"Next: forge merge {item}"]
         return [f"{label} is merged; clean up its worktree.",
                 f"Next: git worktree remove {shlex.quote(str(path))}"]
-    if ready.is_file():
-        branch = state.get("branch")
-        if (branch and receipt.get("review") == "clean" and
-                repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
-                == receipt.get("commit")):
-            status = "ready"
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
@@ -528,19 +580,11 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                     review.blocking(state.get("review") or {}) if isinstance(f, dict)]
         if findings:
             values["reason"] = "; ".join(findings)
-    pr = (prs or {}).get(state.get("branch", "")) or {}
-    checks = (_report_config(path or top, refusals)["checks"]
-              if pr and status == "waiting for checks" else [])
-    ready = status == "ready" or (status == "waiting for checks" and checks
-                                  and board._green_at(pr, checks) and not pr.get("isDraft"))
     if status == "ready" and not pr.get("url") and state.get("branch") and shutil.which("gh"):
         # The bulk list missed it (GitHub can time out on it); ask for this branch's link alone.
         view = repo.run("gh", "pr", "view", state["branch"], "--json", "url", "--jq", ".url", cwd=top)
         pr = {"url": view.stdout.strip()} if view.returncode == 0 and view.stdout.strip() else pr
-    if ready and (url := pr.get("url")):
-        if status == "waiting for checks" and not switch and repo.merge_setting(top) == "agent":
-            return [f"{label}'s checks passed; finish preparing its automatic merge.",
-                    f"Next: forge close {item}"]
+    if status == "ready" and (url := pr.get("url")):
         next_step = (step.format(**values) if step == "forge merge {item}"
                      else f"merge {url}, then forge next")
         return [f"{label} is ready to merge: {url}", f"Next: {next_step}"]

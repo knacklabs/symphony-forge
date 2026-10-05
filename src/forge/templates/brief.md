@@ -122,6 +122,9 @@ decides proves nothing. Use the test-audit skill whenever you write or change a 
 stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
 `{base}` as the merge base with the default branch, or its `test` command when it has no
 `fast_test`. Then commit any fixes. CI runs the full suite.
+For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
+test command without installing Forge in the project. Bare `forge test` currently refuses and
+names `--pytest`; the approved test-lane story will give bare `forge test` its lane behavior.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
@@ -194,6 +197,13 @@ Where the repo's own rules (its AGENTS.md House rules and conventions) differ, t
 conventions apply only to a repo on the default stack.
 
 ## When you finish
+
+Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
+cover and every detail next to the test or check that proves it, or marked `missing`. Include the
+test's file and case name, or the named check and its result. Keep the whole list current in every
+round, not only the entries you changed. Forge copies it into the pull request and gives it to
+the reviewer. The first review checks every entry and reports every missing case it finds in
+that one round.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover

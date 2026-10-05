@@ -14,10 +14,12 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
 # Git's list merger used a Python snippet; its PATH command now appears as merge-roadmap.
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
+# Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
+# The approved test command adds the pytest picker after doctor.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -28,13 +30,14 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
      '                        the pinned version\n'
      '    doctor              Check tools, versions, hooks, adapter drift and the\n'
      '                        named CI checks\n'
+     "    test                run a pytest repo's changed and module-related tests\n"
      '    migrate             Move a client from the copied-in Forge to v1 in one\n'
      '                        pull request\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'
@@ -198,18 +201,20 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
             '\n'
             'options:\n'
             '  -h, --help  show this help message and exit\n',
- 'next': 'usage: forge next [-h]\n'
+ 'next': 'usage: forge next [-h] [--json]\n'
          '\n'
          'Say where things stand and give the exact next command\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n',
- 'board': 'usage: forge board [-h] [--out PATH]\n'
+         '  -h, --help  show this help message and exit\n'
+         '  --json      Print the machine view\n',
+ 'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
           'Write and open the plain-English board page\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
+          '  --json      Print the machine view\n'
           '  --out PATH  write the page here instead of .git/forge/board.html\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'

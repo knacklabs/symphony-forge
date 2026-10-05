@@ -8,8 +8,8 @@
       "text": "Not done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.",
       "from": "blocking",
       "item": "windows-eight",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "simplify-ci-workflow"
     },
     {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass\tubuntu-two",
@@ -19,8 +19,8 @@
       "text": "Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix\u0baa\u0bcdass",
       "from": "blocking",
       "item": "ubuntu-two",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "simplify-ci-workflow"
     },
     {
       "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
@@ -41,6 +41,138 @@
       "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "from": "worker",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 273,
+      "text": "Include the waiting story's approval document in board JSON",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: GitHub-unreachable board rows with unknown checks\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 205,
+      "text": "Not done: GitHub-unreachable board rows with unknown checks",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: derive readiness from the current head's complete check result\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 267,
+      "text": "Not done: derive readiness from the current head's complete check result",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose each item's recorded actionable occurrences\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 274,
+      "text": "Not done: expose each item's recorded actionable occurrences",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose recorded worker metadata and current-round stages\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 252,
+      "text": "Not done: expose recorded worker metadata and current-round stages",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose the latest review's open advisory findings\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 296,
+      "text": "Not done: expose the latest review's open advisory findings",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 283,
+      "text": "Not done: report each story\u2019s actual stage in the machine board",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report readiness when checks fail after a successful close\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 271,
+      "text": "Not done: report readiness when checks fail after a successful close",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report ready tasks and fixes at their current stage\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 260,
+      "text": "Not done: report ready tasks and fixes at their current stage",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: report the current stage when checks become green\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 265,
+      "text": "Not done: report the current stage when checks become green",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tPreserve commit-status timestamps when adapting the GraphQL rollup\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 158,
+      "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 204,
+      "text": "CI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -254,6 +386,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 8,
+      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
+      "from": "blocking",
+      "item": "codex-spawns-subagents-only-when-explici",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -353,6 +496,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor interrupt check times out locally on this branch and on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor interrupt check times out locally on this branch and on the default branch.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_doctor_fix_files.py\tNot done: repairs in an existing repo adopted on the previous release\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "tests/test_doctor_fix_files.py",
@@ -397,6 +562,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tNot done: board command coverage with a story, fix, running worker and open pull request\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 51,
+      "text": "Not done: board command coverage with a story, fix, running worker and open pull request",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tNot done: command test for a human-only merge returning null\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 230,
+      "text": "Not done: command test for a human-only merge returning null",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tNot done: command test for a non-runnable first Next line containing a placeholder\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 358,
+      "text": "Not done: command test for a non-runnable first Next line containing a placeholder",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 48,
+      "text": "Not done: machine-view tests for new and upgraded client repos",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_new_and_existing_repo_planning.py\tNot done: a cold read of a story without the section reports it\tfeatures-get-planned-and-reviewed-for-fo",
       "kind": "bug",
       "path": "tests/test_new_and_existing_repo_planning.py",
@@ -404,6 +613,28 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
+      "kind": "bug",
+      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
+      "line": 60,
+      "text": "Not done: New and previously adopted clients run the proposed picker through close",
+      "from": "blocking",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -430,6 +661,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
       "kind": "bug",
       "path": "tests/test_upgrade_command.py",
@@ -448,6 +690,50 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tClassify stale completed checks as failed",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 138,
+      "text": "Classify stale completed checks as failed",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tKeep skipped required checks from appearing green",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 139,
+      "text": "Keep skipped required checks from appearing green",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tPreserve the live stage's start across attempts in one round",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 283,
+      "text": "Preserve the live stage's start across attempts in one round",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tRecognize GitHub merges before the default branch is fetched",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 216,
+      "text": "Recognize GitHub merges before the default branch is fetched",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -540,6 +826,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated paths supplied through pytest addopts",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 59,
+      "text": "Exclude unrelated paths supplied through pytest addopts",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -573,6 +870,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tRead worker options only from pytest's selected configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 38,
+      "text": "Read worker options only from pytest's selected configuration",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize pytest invocations before adding pytest arguments",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 73,
+      "text": "Recognize pytest invocations before adding pytest arguments",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -584,6 +903,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tSupport pytest versions before 8.2 when narrowing tests",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 156,
+      "text": "Support pytest versions before 8.2 when narrowing tests",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
       "kind": "edge",
       "path": "src/forge/merge.py",
@@ -591,6 +921,28 @@
       "text": "Preserve completion when sibling tasks merge concurrently",
       "from": "review",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tIgnore previous-head failures when deriving the local next step",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 530,
+      "text": "Ignore previous-head failures when deriving the local next step",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tKeep release notices from replacing next.line",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 119,
+      "text": "Keep release notices from replacing next.line",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -639,6 +991,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 300,
+      "text": "Remove the project-install instruction from setup guidance",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/upgrade.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/upgrade.py",
@@ -672,6 +1035,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_codex_record.py\tThe cleanup test failed once alone and crashed a parallel worker, then passed alone.",
+      "kind": "edge",
+      "path": "tests/test_codex_record.py",
+      "line": 412,
+      "text": "The cleanup test failed once alone and crashed a parallel worker, then passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_codex_record.py\tThe process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
       "kind": "edge",
       "path": "tests/test_codex_record.py",
@@ -679,6 +1053,28 @@
       "text": "The process-cleanup test also exceeded the local timeout and crashed its worker on the default branch.",
       "from": "worker",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_resume.py\tThe crash-recovery test lost a worker in the parallel suite and passed alone.",
+      "kind": "edge",
+      "path": "tests/test_codex_resume.py",
+      "line": 555,
+      "text": "The crash-recovery test lost a worker in the parallel suite and passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
+      "kind": "edge",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The cleanup test failed in the full parallel run and passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -716,13 +1112,90 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
+      "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
-      "path": "src/forge/templates/brief.md",
-      "line": 8,
-      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
+      "path": "src/forge/prcheck.py",
+      "line": 59,
+      "text": "Preserve merge-result testing when running the full suite",
       "from": "blocking",
-      "item": "codex-spawns-subagents-only-when-explici",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review-tests.py\tNot done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 39,
+      "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C check times out on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_review_record_reuses_parent_tests.py\tNot done: prove the workflow skips the suite only for a records-only commit on a tested parent\tforge-close-reviews-first-and-only-then",
+      "kind": "bug",
+      "path": "tests/test_review_record_reuses_parent_tests.py",
+      "line": 45,
+      "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
+      "from": "blocking",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe interrupted review times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
+      "kind": "edge",
+      "path": "src/forge/templates/review-tests.py",
+      "line": 41,
+      "text": "Allow review commits to remove stale test-failure output",
+      "from": "review",
+      "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_codex_turns_trust_forge_hooks.py\tAn isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "kind": "edge",
+      "path": "tests/test_codex_turns_trust_forge_hooks.py",
+      "line": 302,
+      "text": "An isolated adoption probe on main refused forge ask while the branch probe passed; this remains unresolved.",
+      "from": "worker",
+      "item": "forge-close-reviews-first-and-only-then",
       "status": "open",
       "closed_by": null
     }

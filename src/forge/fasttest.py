@@ -1,12 +1,23 @@
-"""Run a pytest repo's changed and module-related tests: python -m forge.fasttest BASE."""
+"""Pick related tests in Forge; run pytest in the client's own environment."""
 import ast
+import configparser
 import json
 import os
 import re
+import shlex
 import subprocess
-import sys
+import tempfile
 import tomllib
 from pathlib import Path
+
+from forge import repo
+
+COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
+             "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
+             "help": "run a pytest repo's changed and module-related tests",
+             "listing": "| `forge test --pytest <base>` | Run related pytest tests with the repo's test command. |"}]
+
+REFUSALS = {"picker": ("Run forge test --pytest <base> to pick related pytest tests.", "")}
 
 
 def git_files(*args: str) -> list[str]:
@@ -19,15 +30,59 @@ def module_parts(path: Path) -> list[str]:
     return parts[1:] if parts[0] == "src" else parts
 
 
-def pytest_load_initial_conftests(early_config, parser, args):
-    # Let pytest parse every source of options before imposing our machine limit.
-    if hasattr(early_config.option, "numprocesses"):
-        limit = int(os.environ["PYTEST_XDIST_AUTO_NUM_WORKERS"])
-        args.append("--maxprocesses=" + str(min(limit, early_config.option.maxprocesses or limit)))
-    excluded = json.loads(os.environ.get("FORGE_FASTTEST_EXCLUDED", "[]"))
+def pytest_options(arguments: list[str]) -> str:
+    options = os.environ.get("PYTEST_ADDOPTS", "")
+    names = ["pytest.ini", ".pytest.ini", "tox.ini", "setup.cfg",
+             "pyproject.toml", "pytest.toml", ".pytest.toml"]
+    names += [arguments[index + 1] for index, value in enumerate(arguments[:-1])
+              if value in {"-c", "--config-file"}]
+    names += [value.split("=", 1)[1] for value in arguments if value.startswith("--config-file=")]
+    for name in names:
+        if not Path(name).is_file():
+            continue
+        if Path(name).suffix == ".toml":
+            config = tomllib.loads(Path(name).read_text("utf-8"))
+            section = config.get("tool", {}).get("pytest", {}) if Path(name).name == "pyproject.toml" else config.get("pytest", {})
+            value = section.get("ini_options", section).get("addopts", "")
+            options += " " + (" ".join(value) if isinstance(value, list) else value)
+        else:
+            config = configparser.ConfigParser(interpolation=None)
+            config.read(name, encoding="utf-8")
+            section = "tool:pytest" if Path(name).suffix == ".cfg" else "pytest"
+            options += " " + config.get(section, "addopts", fallback="")
+    return options
+
+
+def narrow_command(command: str, excluded: list[str], workers: str) -> str:
+    # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
-    args[:] = [arg for arg in args if Path(arg.split("::", 1)[0]).resolve() not in paths]
-    args.extend("--ignore=" + path for path in excluded)
+    tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
+    replacements = []
+    for token in tokens:
+        value = token.group().strip("\"'")
+        if Path(value.split("::", 1)[0]).resolve() in paths:
+            replacements.append((token.start(), token.end(), ""))
+    options = ["-p", "_forge_pytest_selection"] if excluded else []
+    configured = command + " " + pytest_options([token.group().strip("\"'") for token in tokens])
+    if re.search(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''', configured):
+        caps = [int(cap) for cap in re.findall(r'''(?:^|[\s"'=])--maxprocesses(?:=|\s+)["']?(\d+)''', configured)
+                if int(cap) > 0]
+        options.append("--maxprocesses=" + str(min([int(workers), *caps])))
+    # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
+    additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
+    found = False
+    for index, token in enumerate(tokens):
+        if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}:
+            end = next((part.start() for part in tokens[index + 1:]
+                        if part.group()[0] in ";&|<>"), len(command))
+            replacements.append((end, end, " " + additions + " "))
+            found = True
+    if not found:
+        # A test launcher must forward its arguments to pytest, just as for a full run.
+        command += " " + additions
+    for start, end, value in sorted(replacements, reverse=True):
+        command = command[:start] + value + command[end:]
+    return command
 
 
 def mentions(file: Path, module: str) -> bool:
@@ -54,18 +109,15 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: python -m forge.fasttest BASE", file=sys.stderr)
-        return 1
-    changed = git_files("diff", "--no-renames", "--name-only", sys.argv[1], "HEAD")
+def test(args) -> int:
+    if args.base is None:
+        repo.refuse(REFUSALS["picker"])
+    changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     environment = dict(os.environ)
     workers = str(max(1, (os.cpu_count() or 1) // 2))
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
-    environment["PYTEST_PLUGINS"] = ",".join(filter(None, [
-        environment.get("PYTEST_PLUGINS"), "forge.fasttest"]))
-    environment.pop("FORGE_FASTTEST_EXCLUDED", None)
+    excluded = []
     if any(Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile"}
            or Path(name).name.endswith(".lock")
            or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)
@@ -86,20 +138,29 @@ def main() -> int:
                 parts.pop()
             if parts:
                 modules.add(".".join(parts))
-        selected = sorted(path.as_posix() for path in tests
-                          if path.as_posix() in changed
-                          or any(module.rsplit(".", 1)[-1] in path.name
-                                 or mentions(path, module)
-                                 for module in modules))
+        selected = []
+        for path in tests:
+            text = path.read_text("utf-8")
+            if (path.as_posix() in changed
+                    or any(name in text for name in changed if name)
+                    or any(module.rsplit(".", 1)[-1] in path.name
+                           or mentions(path, module) for module in modules)):
+                selected.append(path.as_posix())
+        selected.sort()
         if not selected:
             print("No changed or module-related test files to run.")
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
-        environment["FORGE_FASTTEST_EXCLUDED"] = json.dumps(
-            [path.as_posix() for path in tests if path.as_posix() not in selected])
+        excluded = [path.as_posix() for path in tests if path.as_posix() not in selected]
         print("Related tests: " + ", ".join(selected), flush=True)
-    return subprocess.run(command, shell=True, env=environment).returncode
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    # A temporary pytest hook supports pre-8.2 clients without filling cmd.exe's command line.
+    with tempfile.TemporaryDirectory(prefix="forge-pytest-") as folder:
+        if excluded:
+            selection = Path(folder) / "_forge_pytest_selection.py"
+            selection.write_text("def pytest_configure(config):\n"
+                                 "    config.option.ignore = (config.option.ignore or []) + "
+                                 + json.dumps(excluded) + "\n", "utf-8")
+            environment["PYTHONPATH"] = os.pathsep.join(
+                [folder, environment.get("PYTHONPATH", "")])
+        return subprocess.run(narrow_command(command, excluded, workers), shell=True,
+                              env=environment).returncode
