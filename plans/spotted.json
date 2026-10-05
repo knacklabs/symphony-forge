@@ -771,6 +771,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/quicktest.py\tKeep installation before direct Node checks in mixed suggestions",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 50,
+      "text": "Keep installation before direct Node checks in mixed suggestions",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tPreserve trailing npm options when inserting the exec separator",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 85,
+      "text": "Preserve trailing npm options when inserting the exec separator",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/repo.py\tRecord run ends only after the child has stopped",
       "kind": "edge",
       "path": "src/forge/repo.py",
