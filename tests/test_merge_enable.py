@@ -142,7 +142,8 @@ def _rerun(env, stage):
 def _prototype_run(env, _):
     prototype(env)
     main = env.repo.git("rev-parse", "origin/main")
-    rollup = [{"name": name, "conclusion": "SUCCESS", "completedAt": "2026-09-29T10:00:00Z"}
+    rollup = [{"name": name, "status": "COMPLETED", "conclusion": "SUCCESS",
+               "completedAt": "2026-09-29T10:00:00Z"}
               for name in ("tests", "forge-pr-check")]
 
     def next_lines():
@@ -163,7 +164,14 @@ def _prototype_run(env, _):
     env.checks([run("tests", None, "in_progress"), run("forge-pr-check")])
     assert enable(env).returncode != 0
     env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps(
-        [{"headRefName": BRANCH, "url": URL, "statusCheckRollup": rollup, "isDraft": False}]))
+        [{"headRefName": BRANCH, "url": URL, "isDraft": False}]))
+    # The old pr-list rollup lacks completeness and head evidence. Readiness now reads
+    # the cached GraphQL result; keep the same owner-only merge assertions below.
+    env.gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {
+        "pullRequests": {"nodes": [{"headRefName": BRANCH, "url": URL, "isDraft": False,
+            "headRefOid": env.repo.git("rev-parse", BRANCH),
+            "commits": {"nodes": [{"commit": {"statusCheckRollup": {"contexts": {
+                "nodes": rollup, "pageInfo": {"hasNextPage": False}}}}}]}}]}}}}))
     shown = next_lines()
     assert f"The fix {FIX} is ready to merge: {URL}\nNext: merge {URL}, then forge next" in shown
     assert f"Next: forge close {FIX}" not in shown
