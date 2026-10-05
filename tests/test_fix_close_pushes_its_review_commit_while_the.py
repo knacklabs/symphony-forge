@@ -44,7 +44,8 @@ def test_2_close_retries_a_failed_push_before_giving_up(env):
 
     assert done.returncode == 0, done.stderr
     assert "Ready: tidy-readme" in done.stdout
-    assert len(tries.read_text("utf-8").splitlines()) == 3
+    # Two retries, the pre-review push, then the committed review's final push.
+    assert len(tries.read_text("utf-8").splitlines()) == 4
     assert (env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
             == env.repo.git("rev-parse", "HEAD", cwd=where))
 

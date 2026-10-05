@@ -1,9 +1,8 @@
 """forge close: close a task or fix by the close rule.
 
-Merge the default branch in, review the head (unless the committed review still covers it) and
-commit the result, push and open or update the pull request, then wait for the checks forge.toml
-names on exactly that pushed head. Nothing is committed after the checks: GitHub holds when they
-finished. A human merges.
+Merge the default branch in, push and open the pull request so CI runs during review. Commit and
+publish the result, then wait for the checks forge.toml names on exactly that pushed head.
+Nothing is committed after the checks: GitHub holds when they finished. A human merges.
 """
 from __future__ import annotations
 
@@ -152,6 +151,9 @@ def close(args: argparse.Namespace) -> int:
             _save(top, item, state, f"Tests of {item} failed")
             repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
         state.pop("tests", None)
+        _push(top, branch)
+        pr = _publish(top, item, state, branch, default, pr,
+                      {"status": "reviewing", "findings": [], "dismissals": []})
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -424,13 +426,13 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
-             pr: dict[str, Any] | None, result: dict[str, Any]) -> None:
+             pr: dict[str, Any] | None, result: dict[str, Any]) -> dict[str, Any]:
     """Open the pull request, or replace only Forge's block in its body. While the review is
     blocked, the pull request is a draft."""
     check = review.functional_check(top, f"origin/{default}")
     proof = review.commit_paragraph(top, f"origin/{default}", "Proof list:")
     block = _block(result, "\n\n".join(part for part in (check, proof) if part))
-    draft = result["status"] == "blocked"
+    draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.
     body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
@@ -440,10 +442,12 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         body_file.write_bytes(f"Why: {why}\nDone when: {summary}\n\n{notes}{block}\n".encode("utf-8"))
         create = ("--base", default, "--head", branch, "--title", title, "--body-file",
                   str(body_file))
-        url = ((draft and _draft(top, "pr", "create", "--draft", *create))
-               or _gh(top, "pr", "create", *create))
+        url = _draft(top, "pr", "create", "--draft", *create) if draft else ""
+        is_draft = bool(url)
+        url = url or _gh(top, "pr", "create", *create)
         print(f"Opened the pull request: {url.strip()}")
-        return
+        return {"number": int(url.strip().rsplit("/", 1)[1]), "state": "OPEN",
+                "body": body_file.read_text(encoding="utf-8"), "isDraft": is_draft}
     if draft and not pr.get("isDraft"):
         _draft(top, "pr", "ready", str(pr["number"]), "--undo")
     body = pr.get("body") or ""
@@ -454,6 +458,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
         body_file.write_bytes(new.encode("utf-8"))
         _gh(top, "pr", "edit", str(pr["number"]), "--body-file", str(body_file))
         print("Updated the pull request's review block.")
+    return {**pr, "body": new}
 
 
 def _block(result: dict[str, Any], check: str) -> str:
@@ -472,7 +477,9 @@ def _block(result: dict[str, Any], check: str) -> str:
         (blocking if note == "blocks the merge" else rest).append(
             f"- Finding {n} ({finding['priority']}): {finding['title']} "
             f"({finding['file']}:{finding['line']}): {note}")
-    if result["status"] == "blocked":
+    if result["status"] == "reviewing":
+        lines = [BEGIN, "Review: running; CI is running alongside it."]
+    elif result["status"] == "blocked":
         lines = [BEGIN, "The review found serious problems.", "", *blocking]
     else:
         lines = [BEGIN, f"Review: clean, {len(because)} dismissed, {len(rest) - len(because)} advice."]
