@@ -100,6 +100,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: expose the latest review's open advisory findings\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 296,
+      "text": "Not done: expose the latest review's open advisory findings",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: report each story\u2019s actual stage in the machine board\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -150,6 +161,17 @@
       "line": 158,
       "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
       "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tCI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 204,
+      "text": "CI waits record their start only when the wait finishes, so machine views cannot time a live CI wait yet.",
+      "from": "worker",
       "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
@@ -474,6 +496,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_contracts.py",
+      "line": 534,
+      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_contracts.py\tThe doctor interrupt check times out locally on this branch and on the default branch.",
       "kind": "bug",
       "path": "tests/test_contracts.py",
@@ -551,6 +584,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tNot done: command test for a non-runnable first Next line containing a placeholder\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 358,
+      "text": "Not done: command test for a non-runnable first Next line containing a placeholder",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "tests/test_machine_views.py",
@@ -573,6 +617,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 77,
+      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "tests/test_run_records.py",
@@ -591,6 +646,17 @@
       "text": "Not done: run-record coverage for previously adopted client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_steer_question.py",
+      "line": 120,
+      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
+      "from": "worker",
+      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     },
@@ -793,6 +859,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/nextstep.py\tIgnore previous-head failures when deriving the local next step",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 530,
+      "text": "Ignore previous-head failures when deriving the local next step",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tKeep release notices from replacing next.line",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
@@ -954,39 +1031,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C test times out locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_contracts.py",
-      "line": 534,
-      "text": "The doctor Ctrl-C test times out locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_reviews_remove_their_temp_folders.py",
-      "line": 77,
-      "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_steer_question.py",
-      "line": 120,
-      "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
-      "from": "worker",
-      "item": "simplify-ci-workflow",
       "status": "open",
       "closed_by": null
     }

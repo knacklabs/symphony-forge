@@ -6,36 +6,36 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "30253bd3db19eaaf637e04d6b1539f6d3e256d6b68eccc5edd95b99f50a53be6",
-    "changed": "f14e4dd8f3d747ef999b0a3fe72f3a25fb52fe67daab9427f93f6a0aeb1fb22b",
-    "commit": "03e366e062c8110270e4a86cca090a5f606b7df6",
+    "branch_diff": "58205c3ea48c69731210eb4d95579d30d5c6c731b7cba7ed823038c290c34dbc",
+    "changed": "8c173cbf09d8dab85d4455846a93e7749e8bf33313fc59b490c8a213270049f7",
+    "commit": "42ec41eac853f57c54cb0405aa36d8de8ad4d17f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The row's occurrences contain only GitHub check failures. Review findings, worker questions, run completions and readiness never produce occurrences here. New evidence beyond the RUNS deferral is that the current checkout already contains those producers: src/forge/repo.py:134\u2013152 writes events.jsonl with fresh ids, src/forge/worker.py:224 records questions, and src/forge/review.py:495 records review results. Consequently, even a run starting and ending between refreshes remains invisible to the EVENTS consumer. Read those records, expose the applicable occurrences per item, and derive readiness identity from the review id plus head commit. Add command coverage that exercises the real producers; the current occurrence tests cover only GitHub.",
+        "body": "A review containing only P2/P3 findings never produces a review_findings occurrence because this filter requires outcome failed or blocked. New evidence relevant to the ruling about exposing the latest open review result: src/forge/review.py:495\u2013499 records outcome clean whenever no blocking finding exists, while retaining advisory findings. Prototype reviews similarly mark non-P0 findings clean. Those findings appear in the board's count but their review identity is omitted, so EVENTS cannot announce that the review found problems as detail 3 requires. Expose the latest result whenever it has undismissed findings, without changing merge gates, and extend the producer-backed command test beyond its P1-only case.",
         "file": "src/forge/board.py",
-        "line": 274,
+        "line": 296,
         "priority": "P1",
-        "title": "Not done: expose each item's recorded actionable occurrences"
+        "title": "Not done: expose the latest review's open advisory findings"
       },
       {
-        "body": "The consumer does not match the RUNS records now present in this checkout. Tests selects step \"test\", but src/forge/review.py:299 writes \"test run\", so actual passed, failed and docs-only skipped tests all produce an empty Tests stage. Also, ended_at reads an \"end\" field that src/forge/repo.py:122\u2013124 never writes, and worker.started_at reads an unproduced state field at board.py:249. Live stages therefore have no timer until their completed timing is appended. Actual run timestamps and worker models are available in events.jsonl (repo.py:137\u2013152, worker.py:474\u2013475 and story.py:704\u2013705), including readers whose state has no worker family. Consume the existing producer contracts. The synthetic records in tests/test_machine_views.py:283\u2013291 use the wrong step and invented end/running fields, so they pass while these promised behaviors are broken.",
-        "file": "src/forge/board.py",
-        "line": 252,
-        "priority": "P1",
-        "title": "Not done: expose recorded worker metadata and current-round stages"
-      },
-      {
-        "body": "The required JSON command test for a merge only a human may perform is absent. This \"ready\", \"human\" case supplies no close receipt and expects forge close, so it exercises waiting rather than a genuinely ready human-owned PR. The successful-close lifecycle test configures merge=\"agent\" exclusively. A regression advertising forge merge for an ordinary human-owned ready PR would therefore pass these JSON tests. Close an item under human merge ownership, provide its PR, and assert through forge next --json that command is null while line describes readiness.",
+        "body": "The JSON command tests cover runnable steps, waiting prose and human-only merge prose, but never assert null for a Forge command containing a placeholder or ensure that a later runnable Next line is not selected instead. This is an explicit detail 2 rule. For example, src/forge/nextstep.py:409\u2013410 emits forge story done with an outcome placeholder after all tasks merge without a recorded outcome. Removing the placeholder rejection could advertise that command while the current assertions still pass. Add command-level coverage of this state, with a later runnable step present, asserting null in forge next --json and the story's board next.",
         "file": "tests/test_machine_views.py",
-        "line": 230,
+        "line": 358,
         "priority": "P1",
-        "title": "Not done: command test for a human-only merge returning null"
+        "title": "Not done: command test for a non-runnable first Next line containing a placeholder"
       },
       {
-        "body": "This previously reported gap remains. Machine-board merge detection uses state files on the fetched default branch, both PR lookups request only open PRs, and the story calculation receives an empty merged-PR set here. After a human merges on GitHub but before a fetch, task and fix rows retain their previous stages and merge/close instructions. The text report already obtains merged branches in src/forge/nextstep.py:189. Reuse that evidence for machine task/fix stages and story next-step calculation.",
+        "body": "A failed result unconditionally overrides the item's saved status, even when the local branch has advanced beyond the PR head described by the response. The query requests headRefOid, but neither the board nor next-step callers compare it with the local head before passing fail here. After a local repair commit, an old-head failure can therefore keep advertising forge work instead of forge close; it can also replace a newer working stage. This differs from the ruled same-head rerun case: the failure belongs to another commit. Preserve the PR check display, but do not use that failure to override newer local work. The existing stale-head test uses successful checks only.",
+        "file": "src/forge/nextstep.py",
+        "line": 530,
+        "priority": "P2",
+        "title": "Ignore previous-head failures when deriving the local next step"
+      },
+      {
+        "body": "The previous merge-detection gap remains: machine_board detects merged tasks and fixes only from state on the fetched default branch, both PR lookups request open PRs, and the story calculation receives an empty merged-PR set here. A PR merged on GitHub can consequently retain its old stage and merge/close advice until a fetch and subsequent board refresh. In contrast, src/forge/nextstep.py:189 obtains merged branches, and its _task implementation at lines 506\u2013516 uses that evidence. Reuse it for machine task/fix stages and story next-step calculation.",
         "file": "src/forge/board.py",
-        "line": 208,
+        "line": 209,
         "priority": "P2",
         "title": "Recognize GitHub merges before the default branch is fetched"
       }
@@ -78,6 +78,10 @@
     },
     {
       "at": "2026-10-05T07:40:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T08:22:15+00:00",
       "step": "review"
     }
   ],
