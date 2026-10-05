@@ -6,43 +6,36 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "58205c3ea48c69731210eb4d95579d30d5c6c731b7cba7ed823038c290c34dbc",
-    "changed": "8c173cbf09d8dab85d4455846a93e7749e8bf33313fc59b490c8a213270049f7",
-    "commit": "42ec41eac853f57c54cb0405aa36d8de8ad4d17f",
+    "branch_diff": "edeb4d181f36b73248e623ff248b662e0ecc617c64e9b6afe3e9532d6edfffd9",
+    "changed": "8931a1fed91d401aafeff8fdbb037192fe174f05e4cabfa18b99a533c39fcd16",
+    "commit": "87aee195afaebe8e51d567aa1bd03b67d898ffef",
     "dismissals": [],
     "findings": [
       {
-        "body": "A review containing only P2/P3 findings never produces a review_findings occurrence because this filter requires outcome failed or blocked. New evidence relevant to the ruling about exposing the latest open review result: src/forge/review.py:495\u2013499 records outcome clean whenever no blocking finding exists, while retaining advisory findings. Prototype reviews similarly mark non-P0 findings clean. Those findings appear in the board's count but their review identity is omitted, so EVENTS cannot announce that the review found problems as detail 3 requires. Expose the latest result whenever it has undismissed findings, without changing merge gates, and extend the producer-backed command test beyond its P1-only case.",
-        "file": "src/forge/board.py",
-        "line": 296,
-        "priority": "P1",
-        "title": "Not done: expose the latest review's open advisory findings"
-      },
-      {
-        "body": "The JSON command tests cover runnable steps, waiting prose and human-only merge prose, but never assert null for a Forge command containing a placeholder or ensure that a later runnable Next line is not selected instead. This is an explicit detail 2 rule. For example, src/forge/nextstep.py:409\u2013410 emits forge story done with an outcome placeholder after all tasks merge without a recorded outcome. Removing the placeholder rejection could advertise that command while the current assertions still pass. Add command-level coverage of this state, with a later runnable step present, asserting null in forge next --json and the story's board next.",
-        "file": "tests/test_machine_views.py",
-        "line": 358,
-        "priority": "P1",
-        "title": "Not done: command test for a non-runnable first Next line containing a placeholder"
-      },
-      {
-        "body": "A failed result unconditionally overrides the item's saved status, even when the local branch has advanced beyond the PR head described by the response. The query requests headRefOid, but neither the board nor next-step callers compare it with the local head before passing fail here. After a local repair commit, an old-head failure can therefore keep advertising forge work instead of forge close; it can also replace a newer working stage. This differs from the ruled same-head rerun case: the failure belongs to another commit. Preserve the PR check display, but do not use that failure to override newer local work. The existing stale-head test uses successful checks only.",
+        "body": "This previous finding remains open. A failed check overrides the saved status without comparing the response's headRefOid with the local branch head. After a repair commit, tasks and fixes can therefore still show checks failed and advertise forge work instead of forge close, in both board and next output. Preserve the PR's check display, but apply the failure to local readiness only when it describes the current head.",
         "file": "src/forge/nextstep.py",
         "line": 530,
         "priority": "P2",
         "title": "Ignore previous-head failures when deriving the local next step"
       },
       {
-        "body": "The previous merge-detection gap remains: machine_board detects merged tasks and fixes only from state on the fetched default branch, both PR lookups request open PRs, and the story calculation receives an empty merged-PR set here. A PR merged on GitHub can consequently retain its old stage and merge/close advice until a fetch and subsequent board refresh. In contrast, src/forge/nextstep.py:189 obtains merged branches, and its _task implementation at lines 506\u2013516 uses that evidence. Reuse it for machine task/fix stages and story next-step calculation.",
+        "body": "This previous finding remains open. The machine board queries only open PRs and passes an empty merged-PR set to the story calculation. A task or fix merged on GitHub can consequently retain its old stage and merge advice until origin/main is fetched. The unchanged next-step implementation already obtains merged branches at src/forge/nextstep.py:189 and uses them at lines 506\u2013516. Share that evidence with machine task/fix stages and story next steps.",
         "file": "src/forge/board.py",
         "line": 209,
         "priority": "P2",
         "title": "Recognize GitHub merges before the default branch is fetched"
+      },
+      {
+        "body": "The live stage uses only the currently active run's start, resetting its timer when another attempt starts in the same round. Both Claude and Codex commit nudges launch a second run (src/forge/worker.py:193\u2013199 and 212\u2013219); review retries do likewise (src/forge/review.py:464\u2013470). Earlier starts remain recorded but are excluded from live here. Build and Review therefore lose elapsed time during the second attempt, then jump to the full duration when timing is recorded. Anchor the stage clock to its first recorded start in the current round while retaining the active worker's own start.",
+        "file": "src/forge/board.py",
+        "line": 283,
+        "priority": "P2",
+        "title": "Preserve the live stage's start across attempts in one round"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-04T17:59:47+00:00",
@@ -82,6 +75,10 @@
     },
     {
       "at": "2026-10-05T08:22:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T08:52:41+00:00",
       "step": "review"
     }
   ],

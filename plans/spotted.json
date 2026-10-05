@@ -617,6 +617,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
+      "kind": "bug",
+      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
+      "line": 60,
+      "text": "Not done: New and previously adopted clients run the proposed picker through close",
+      "from": "blocking",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
       "kind": "bug",
       "path": "tests/test_reviews_remove_their_temp_folders.py",
@@ -699,6 +710,17 @@
       "path": "src/forge/board.py",
       "line": 139,
       "text": "Keep skipped required checks from appearing green",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tPreserve the live stage's start across attempts in one round",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 283,
+      "text": "Preserve the live stage's start across attempts in one round",
       "from": "review",
       "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
@@ -804,6 +826,17 @@
       "closed_by": "simplify-fasttest"
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated paths supplied through pytest addopts",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 59,
+      "text": "Exclude unrelated paths supplied through pytest addopts",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated tests explicitly named by the full command",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -837,6 +870,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tRead worker options only from pytest's selected configuration",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 38,
+      "text": "Read worker options only from pytest's selected configuration",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tRecognize pytest invocations before adding pytest arguments",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 73,
+      "text": "Recognize pytest invocations before adding pytest arguments",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -846,6 +901,17 @@
       "item": "forge-s-python-changed-test-picker-scrip",
       "status": "done",
       "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tSupport pytest versions before 8.2 when narrowing tests",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 156,
+      "text": "Support pytest versions before 8.2 when narrowing tests",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
@@ -921,6 +987,17 @@
       "text": "Classify cached test stages as skipped",
       "from": "review",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
+      "kind": "edge",
+      "path": "src/forge/templates/skill.md",
+      "line": 300,
+      "text": "Remove the project-install instruction from setup guidance",
+      "from": "review",
+      "item": "the-shipped-python-test-picker-uv-run-py",
       "status": "open",
       "closed_by": null
     },
@@ -1031,72 +1108,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
-      "kind": "bug",
-      "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
-      "line": 60,
-      "text": "Not done: New and previously adopted clients run the proposed picker through close",
-      "from": "blocking",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tExclude unrelated paths supplied through pytest addopts",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 59,
-      "text": "Exclude unrelated paths supplied through pytest addopts",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tRead worker options only from pytest's selected configuration",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 38,
-      "text": "Read worker options only from pytest's selected configuration",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tRecognize pytest invocations before adding pytest arguments",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 73,
-      "text": "Recognize pytest invocations before adding pytest arguments",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tSupport pytest versions before 8.2 when narrowing tests",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 156,
-      "text": "Support pytest versions before 8.2 when narrowing tests",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/templates/skill.md\tRemove the project-install instruction from setup guidance",
-      "kind": "edge",
-      "path": "src/forge/templates/skill.md",
-      "line": 300,
-      "text": "Remove the project-install instruction from setup guidance",
-      "from": "review",
-      "item": "the-shipped-python-test-picker-uv-run-py",
       "status": "open",
       "closed_by": null
     }
