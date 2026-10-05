@@ -102,6 +102,39 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
     assert len(env.review_calls()) == before + 1
 
 
+def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismissals(env):
+    # Inspect the instructions delivered to the reviewer, not whether a canned response obeys them.
+    seed(env, "src/a.py")
+    item, where = env.start_fix()
+    safe = finding("P1", "Proven safe", "src/a.py")
+    env.reviews(blocked(safe))
+    assert env.close(item).returncode == 1
+    evidence = "src/a.py:1 Proven harmless"
+    assert env.close(item, "--dismiss", "1", "--because", evidence).returncode == 0
+    defect = finding("P1", "Unfixed defect", "src/a.py")
+    for number in (2, 3):
+        env.commit(where, "app.py", f"print({number})\n")
+        env.reviews(blocked(safe, defect))
+        assert env.close(item).returncode == 1
+    reason = "The human accepts this risk for this version"
+    accepted = env.close(item, "--resolve", "accept", "--reason", reason)
+    assert accepted.returncode == 0, accepted.stderr
+    assert env.close(item).returncode == 0
+    # Leave the accepted defect intact and change another product file.
+    env.commit(where, "other.py", "print('new work')\n")
+    before = len(env.review_calls())
+    env.reviews(CLEAN)
+    reviewed = env.close(item)
+    assert reviewed.returncode == 0, reviewed.stderr
+    assert len(env.review_calls()) == before + 1
+    prompt = env.prompt()
+    assert "Unfixed defect (src/a.py:1): Evidence for: Unfixed defect" in prompt
+    assert reason not in prompt  # Neither previous findings nor historical rulings bind acceptance.
+    assert "Human accepted the remaining finding" not in prompt
+    assert f"Proven safe (src/a.py:1): Evidence for: Proven safe; dismissed because {evidence}" in prompt
+    assert f"Proven safe (src/a.py): dismissed because {evidence}" in prompt
+
+
 def test_3_acceptance_refuses_code_changed_since_the_stopped_review(env):
     item, where = stopped(env)
     env.commit(where, "app.py", "print('unreviewed')\n")
