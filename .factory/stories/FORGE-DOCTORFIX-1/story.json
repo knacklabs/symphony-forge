@@ -9,7 +9,13 @@
     "session": "d23ad7d6-f80d-585f-a14c-31f44f6a2fc1"
   },
   "doc": "plans/FORGE-DOCTORFIX-1.md",
-  "status": "approved",
+  "finished": "2026-10-04T22:45:56+00:00",
+  "merged": {
+    "FILES": "2026-10-04T22:45:56+00:00",
+    "REPAIRS": "2026-10-01T15:16:49+00:00"
+  },
+  "outcome": "forge doctor --fix repairs what it can in one run: installs the pinned Forge, restores git hooks and the Codex SDK, removes finished work's folders, and brings Forge's files up to date through its own dated fix, never on the default branch and never over hand edits",
+  "status": "done",
   "steps": [
     {
       "at": "2026-09-30T13:44:47+00:00",
@@ -62,6 +68,10 @@
     {
       "at": "2026-10-01T01:35:13+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-10-05T02:05:32+00:00",
+      "step": "done"
     }
   ],
   "title": "forge doctor fixes what it finds",
