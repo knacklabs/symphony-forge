@@ -24,7 +24,7 @@ ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
 # The adapter files the spec lists for both hosts, plus the generated workflow and the
 # test-audit skill with its licence notice.
 # .gitattributes carries the roadmap's merge rule; .forge/hooks.sh finds forge for the host hooks.
-LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+LISTED = {"AGENTS.md", ".gitattributes", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",

@@ -29,6 +29,8 @@ def test_1_close_uses_base_lines_only_for_deleted_files(env, change, path, line,
     first = env.close(item)
     assert first.returncode == 1, first.stderr
     env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+    # The first round now edits its initial running-review block when review finishes.
+    edits_before = env.gh_calls("pr", "edit")
 
     cited = f"{path}:{line} the branch removes the old password"
     second = env.close(item, "--dismiss", "1", "--because", cited)
@@ -40,7 +42,7 @@ def test_1_close_uses_base_lines_only_for_deleted_files(env, change, path, line,
         else:
             assert (f"{path}:{line} is not a line of the reviewed commit, so it can't prove "
                     "a finding wrong.") in second.stderr
-        assert not env.gh_calls("pr", "edit")
+        assert env.gh_calls("pr", "edit") == edits_before  # invalid evidence publishes nothing
         return
 
     assert second.returncode == 0, second.stderr

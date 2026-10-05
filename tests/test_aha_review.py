@@ -59,7 +59,9 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     assert (result.returncode == 0) is ready, result.stderr
     assert ("Prototype review finding" in result.stderr) is not ready
     [create] = env.gh_calls("pr", "create")
-    assert ("--draft" not in create) is ready
+    # The PR now starts as a draft before review, and only both gates make it ready.
+    assert "--draft" in create
+    assert bool(env.gh_calls("pr", "ready")) is ready
     assert ("advisory" in body(create)) is ready
     branch = "fix/tidy-readme"
     head = env.repo.git("rev-parse", "HEAD", cwd=env.tmp / "fix-tidy-readme")

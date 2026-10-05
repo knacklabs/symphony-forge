@@ -1,0 +1,101 @@
+{
+  "allow_large": "The owner allowed it: one behaviour (review while CI runs, no re-test of unchanged code) across close, review, the workflow writer, Forge's workflow and the skill",
+  "amendments": [
+    {
+      "at": "2026-10-04T12:23:44+00:00",
+      "because": "The worker found the committed review makes a new head; owner's goal is speed without dropping checks, so CI skips only re-testing unchanged code",
+      "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when both the review is clean and the checks are green; a failing check or a blocking finding stops it as today, and the pull request's review block is updated when the review finishes. New and existing repos: same behaviour in any repo on this release; nothing in forge.toml changes. One command-level test shows the push happens before the review starts and Ready needs both."
+    }
+  ],
+  "base": "990588b0565d340a32587133511523ab8ec3c148",
+  "branch": "fix/forge-close-reviews-first-and-only-then",
+  "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the review is clean and the checks are green. Review storage and the required PR check stay as they are. The tests workflow forge sync writes (and Forge's own) passes at once, without running the suite, when the only change since the parent commit is Forge's review record under .factory/ and the parent commit's tests passed; any other change runs the suite as today. New and existing repos: every repo gets the workflow change on its next forge sync after upgrading. One command-level test shows the push happens before the review and Ready needs both; one test shows the workflow's quick pass applies only to a records-only commit on a tested parent.",
+  "flagged": [
+    "src/forge/prcheck.py",
+    "src/forge/templates/review-tests.py",
+    "tests/test_review_record_reuses_parent_tests.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a6c630b767240f4deb0a1dc3f260d5676740914a0cb80f9abb63690db3532ecd",
+    "changed": "7c1934c4484182d7b5c254f915b547b74aceaecc3675e7a7296b64788b5338c0",
+    "commit": "e7c5b75af63b6ef830b0d3ecf005dc3fd395b10d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After a local test failure, close saves a `tests` field in the item's record. The worker preserves it when saving state (`src/forge/worker.py:121\u2013143`). On the successful retry, close removes that field at `src/forge/close.py:120`, but commits the removal only with the review result, after the initial push. Even when that pushed parent's CI succeeds, this comparison rejects the final review-only commit because `tests` is outside the bookkeeping set, unnecessarily running the full suite again. Permit this cleanup, or persist it before the initial push. Apply the fix to both this template and `.forge/review-tests.py`.",
+        "file": "src/forge/templates/review-tests.py",
+        "line": 41,
+        "priority": "P2",
+        "title": "Allow review commits to remove stale test-failure output"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T10:31:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T13:49:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-04T15:38:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T03:40:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T04:00:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T04:50:34+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T05:31:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:31:21+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:41:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T07:57:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T08:47:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:16:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:42:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T10:48:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:17:54+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge close reviews first and only then pushes and waits for CI, so every round waits for the review (4-30 minutes) and then for CI (10-15 minutes) one after the other",
+  "worker": "codex"
+}
