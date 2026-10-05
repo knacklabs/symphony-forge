@@ -2,12 +2,43 @@
   "base": "ef770cd9e49ed10ead9d951a69a85a39b340f911",
   "branch": "fix/repos-without-a-quick-test-setting-don-t",
   "done_when": "forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {base}; vitest or jest repos get their runner on changed files with --passWithNoTests using the repo's own install and runner; mixed repos get one part per kind; Go, Rust, Java, .NET and Ruby repos get no line; skill.md says so; new and existing client repos each have a command test",
+  "flagged": [
+    "src/forge/quicktest.py"
+  ],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6c6cf226a6ef23840520a251e71aac0fe7b8d2cdcda7fc072350ed2f62d74d5d",
+    "changed": "eda3d96b02e9eebfda61ce5f41a51938a457d7048ada6c37ab0e97736bfad0bb",
+    "commit": "751edefb0449a3e18f874cace21ebb0621eb0f8a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "For the mixed command covered by the new tests, the recommendation runs `forge test --pytest {base}` followed by a filtered Vitest command. However, `src/forge/fasttest.py:115` reads the entire configured `test` command, and lines 155\u2013157 execute that pipeline after narrowing only pytest. Whenever related Python tests are selected, this runs the full JavaScript suite first, then runs JavaScript again through the appended filtered command. Python/Jest combinations have the same problem, through both doctor and upgrade. Ensure the Python part does not execute the other test kinds. The current mixed tests assert the printed string and therefore pass despite this defect.",
+        "file": "src/forge/quicktest.py",
+        "line": 40,
+        "priority": "P1",
+        "title": "Not done: mixed repos get one part per kind"
+      },
+      {
+        "body": "For `test = \"npm ci && npm exec vitest run\"`, this appends the filters without an argument separator. npm parses the added switches itself instead of forwarding `--changed` and `--passWithNoTests` to Vitest; the same issue affects `npm exec jest` and `--changedSince`. Thus a valid existing runner receives an unsuitable quick-test command. Preserve the invocation while inserting `--` when needed for npm exec, as described in the [npm exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec). Both doctor and upgrade use this path.",
+        "file": "src/forge/quicktest.py",
+        "line": 48,
+        "priority": "P2",
+        "title": "Forward the added filters through npm exec's argument separator"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T08:21:50+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T08:52:00+00:00",
+      "step": "review"
     }
   ],
   "why": "Repos without a quick test setting don't learn which quick test command fits them",
