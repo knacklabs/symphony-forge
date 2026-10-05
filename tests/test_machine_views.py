@@ -526,6 +526,11 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     assert row["stage"] == "approved"
     assert row["children"][0]["next"]["command"] == "forge work SHOP/T1"
     assert view(repo, "next")["next"]["command"] == "forge work SHOP/T1"
+    # The shipped views consume the same real run producers on new and upgraded clients.
+    from test_worker import install_claude
+    install_claude(repo)
+    worked = repo.forge("work", item)
+    assert worked.returncode == 0, worked.stderr
     env.open_pr("")
     env.checks(GREEN)
     closed = env.close(item)
@@ -534,6 +539,13 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     child = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")["children"][0]
     assert child["stage"] == "ready"
     assert child["next"]["command"] == "forge merge SHOP/T1"
+    assert any(o["kind"] == "run_finished" for o in child["occurrences"])
+    assert any(o["kind"] == "ready_to_merge" for o in child["occurrences"])
+    stages = {s["name"]: s for s in child["stages"]}
+    assert stages["Build"]["status"] == "pass"
+    assert stages["Tests"]["status"] == "skipped"
+    assert stages["Review"]["status"] == "pass"
+    assert stages["Review"]["ended_at"] is not None
     fix, fix_tree = env.start_fix(changes={"readme.md": "Welcome.\n"})
     closed = env.close(fix)
     assert closed.returncode == 0, closed.stderr
