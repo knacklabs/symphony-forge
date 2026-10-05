@@ -190,7 +190,16 @@ def _holding(repo, turns: Path) -> tuple[subprocess.Popen, dict]:
     pytest.fail(f"the turn never started: {work.communicate()[1]}")
 
 
-def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
+@pytest.mark.parametrize("reason", ["context", "no-record", "missing-rollout", "moved", "rewritten"])
+def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data, reason):
+    # One criterion owner, with independent cases so serial rounds do not share a timeout.
+    if reason == "context":
+        _continued_context(repo, monkeypatch, sdk_data)
+    else:
+        _fresh_conversation(repo, monkeypatch, sdk_data, reason)
+
+
+def _continued_context(repo, monkeypatch, sdk_data):
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     # The worker commits during the first turn, before Forge hears that the turn started.
     monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
@@ -264,8 +273,7 @@ def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data):
     (folder / "big.txt").unlink()
 
 
-@pytest.mark.parametrize("reason", ["no-record", "missing-rollout", "moved", "rewritten"])
-def test_7_unresumable_conversations_start_fresh(repo, monkeypatch, sdk_data, reason):
+def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
     # These are independent refusal paths. Running all four after the context checks above
     # exceeded Windows' per-test budget; each now starts from the same completed first turn.
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
