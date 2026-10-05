@@ -5,6 +5,7 @@ $summary
 You are the worker. Build exactly what this brief asks, in the checkout you were started in, and
 nothing more.
 
+$delegation
 - Edit files only inside this checkout.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
@@ -19,6 +20,8 @@ nothing more.
   existing test it breaks; name each such file and why in your handoff.
 - When finishing needs a choice this item does not settle, end your final message with a
   paragraph starting `Question:` on its own line. Ask plainly and wait for the coordinator's answer.
+  Forge records that question on both Codex and Claude and pauses work and close until the
+  coordinator answers with `forge work <item> --note "<answer>"`.
 
 <!-- if coordinator -->
 ## From the coordinator

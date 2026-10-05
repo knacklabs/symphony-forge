@@ -6,7 +6,7 @@ import os
 import tomllib
 
 from conftest import ROOT, _install
-from test_codex_worker import _sent, sdk_data  # noqa: F401 (fixture)
+from test_codex_worker import QUIET, _sent, sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
 from test_subagent_roles import _settings
 
@@ -54,7 +54,7 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     assert worked.returncode == 0, worked.stdout + worked.stderr
     [call] = _sent(log, "thread/start")
     # A fix's first turn uses lite; its helpers must reach the SDK too.
-    assert call["config"] == {
+    assert call["config"] == {**QUIET, "features.multi_agent": True,
         "model": "gpt-6.1-sol", "model_reasoning_effort": "medium",
         "agents.default_subagent_model": "gpt-6-luna",
         "agents.default_subagent_reasoning_effort": "max"}

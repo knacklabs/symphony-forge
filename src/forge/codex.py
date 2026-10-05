@@ -58,6 +58,9 @@ GROUP = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "n
 OVERRIDES = {"model": "model", "effort": "model_reasoning_effort",
              "subagents": "agents.default_subagent_model",
              "subagent_effort": "agents.default_subagent_reasoning_effort"}
+# Every Forge-owned thread stays quiet, regardless of user or project Codex settings.
+QUIET = {"model_verbosity": "low", "model_reasoning_summary": "none",
+         "developer_instructions": "Write no progress commentary. Write only the final handoff and any question."}
 # Forge's own Codex hooks as Codex's hooks/list defines them, Codex's defaults for what forge sync
 # leaves out included: the driver trusts a hook only when its whole definition is one of these.
 FORGE_HOOKS = [{"eventName": event[0].lower() + event[1:], "matcher": matcher,
@@ -145,7 +148,7 @@ def settings(cfg: dict[str, Any], kind: str) -> dict[str, str]:
     """The kind's models from forge.toml, as the Codex settings its conversation starts with; a
     worker's (Build, Fix, Lite) fall back to Forge's default when forge.toml has none for Codex.
 
-    Everything else comes from Codex's own settings for the checkout, which the thread's folder picks.
+    Other than Forge's fixed quiet settings, everything else comes from Codex's own settings.
     """
     chosen = (repo.worker_models(cfg, kind.lower(), "codex") if kind in ("Build", "Fix", "Lite")
               else repo.models(cfg, "lite" if kind == "Ask" else kind.lower(), "codex"))
@@ -286,10 +289,13 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     chosen = (repo.design_models(config, "codex") if design else None)
     request = {"cwd": str(checkout), "root": str(root), "name": name, "prompt": prompt, "sandbox": sandbox,
                "config": ({} if archive_thread or attach_request else
-                          {OVERRIDES[key]: value for key, value in chosen.items()} if chosen else
+                          {**settings(config, kind),
+                           **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
                "thread": thread, "read": read, "archive": archive_thread,
                "ephemeral": kind == "Ask", "hooks": FORGE_HOOKS}
+    if kind in ("Build", "Fix", "Lite") and not (archive_thread or attach_request):
+        request["config"]["features.multi_agent"] = True
     if attach_request is not None:
         request.update(attach=True, **attach_request)
     if fresh_prompt is not None:
@@ -298,6 +304,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         request["config"]["model"] = model
     if effort is not None:
         request["config"]["model_reasoning_effort"] = effort
+    request["config"].update(QUIET)
     log = (_item_file(checkout, item, ".work.log", kind) if kind == "Ask" else
            repo.work_log(checkout, item))
     record, turns = (_item_file(checkout, item, suffix, kind) for suffix in (".json", ".log"))
@@ -310,10 +317,14 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     # Codex writes any Unicode, and whoever reads this (a console, an agent, a test) reads UTF-8.
     # A Windows pipe's legacy code page would print the names' "·" as a byte UTF-8 can't read.
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    with log.open("a", encoding="utf-8") as out, subprocess.Popen(
+    activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
+                else repo.record_run(checkout, item, command, family="codex",
+                                     model=request["config"].get("model")))
+    with activity as ran, \
+            log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
-            errors="replace", **GROUP) as driver:
+            errors="replace", env={**os.environ, "FORGE_WORKER": "1"}, **GROUP) as driver:
         machine.started(driver.pid)
         out.write(f"--- forge {command} {item} at {repo.now()}\n")
         started_by: dict[str, Any] | None = None
@@ -357,12 +368,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex app-server: process {server}"
                 elif "refused" in said:
                     refused, text, untrusted = said["refused"], "", said
-                elif "read" in said:
-                    result["read"], text = said["read"], ""
-                elif "archived" in said:
-                    result["archived"], text = said["archived"], ""
-                elif "attached" in said:
-                    result["attached"], text = said["attached"], ""
+                elif control := next((key for key in ("read", "archived", "attached") if key in said), None):
+                    result[control], text = said[control], ""
                 elif "attachment_failed" in said:
                     text = f"Could not attach the pull request to the Codex chat: {said['attachment_failed']}"
                 elif "project" in said:
@@ -446,6 +453,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     stuck = True  # thirty seconds on, a member still runs: don't claim it ended
                 if stuck:
                     repo.refuse(REFUSALS["leftover"], pid=driver.pid, item=item, command=command)
+            ran["outcome"] = result.get("status") or "failed"
     if refused:
         repo.refuse(REFUSALS[refused], log=log, item=item, command=command,
                     pid=driver.pid if refused == "driver" else server,

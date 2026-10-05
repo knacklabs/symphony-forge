@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import machine, repo, spotted
-from forge.task import sections
+from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
 AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -62,25 +62,22 @@ REFUSALS = {
 # helper asks for stays as it is. The helper gives Claude only web search and refuses Read as a
 # tool option, so the `claude` one adds the read-only file tools; --restricted keeps them inside
 # the checkout and leaves out every tool that runs commands.
-LAUNCHER = {
-    "codex": '''\
+LAUNCHER = '''\
 import subprocess, sys
 argv = sys.argv[1:]
-for i in range(len(argv) - 1):
-    if argv[i] in ("-C", "--cd"):
-        argv[i + 1] = {tree!r}
-sys.exit(subprocess.call([{real!r}, *argv]))
-''',
-    "claude": '''\
-import subprocess, sys
-argv = sys.argv[1:]
-if "--tools" in argv:
+if {engine!r} == "codex":
+    for i in range(len(argv) - 1):
+        if argv[i] in ("-C", "--cd"):
+            argv[i + 1] = {tree!r}
+    if "exec" in argv:
+        i = argv.index("exec")
+        argv[i:i] = {quiet!r}
+elif "--tools" in argv:
     i = argv.index("--tools") + 1
     argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
     argv.append("--restricted")
 sys.exit(subprocess.call([{real!r}, *argv], cwd={tree!r}))
-''',
-}
+'''
 
 
 # --- the story doc ---------------------------------------------------------------------
@@ -240,17 +237,6 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
 
 
-def _review_rules(top: Path) -> str:
-    """The review-rules block of templates/review.md with the repo's own `## Review rules`, or ""."""
-    from forge import story  # story imports review indirectly
-    rules = story.agents_section(top, "Review rules")
-    if not rules:
-        return ""
-    text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
-    block = text.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
-    return "\n\n" + string.Template(block.strip()).substitute(review_rules=rules)
-
-
 def close_test(top: Path, base: str) -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
     else its test. The pull request's tests check always runs test."""
@@ -261,51 +247,56 @@ def close_test(top: Path, base: str) -> str:
 
 
 def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
-    """Run forge.toml's test command here, so the reviewer sees tests its sandbox can't run.
-    Returns its exit status and the report: the exit status, every line that mentions a skip with
-    the line before it (where Go's -v prints the reason), and the last 30 lines, at most 80 in all.
-    pytest also lists each skip's reason (-rs). Skipped, as status 0, when it already passed here on
-    the same committed files, or when the change touches only forge.toml, docs, plans, Markdown
-    or Forge's records; one run per machine at a time."""
-    if not command:
-        return 0, "forge.toml names no test command, so close ran none."
-    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                       cwd=top).split("\0")
-    if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
-           for path in changed if path):
-        said = DOCS_ONLY.format(command=command)
-        print(said, flush=True)
-        return 0, said
-    from forge import codex  # codex imports review indirectly
+    """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
+    branch = repo.current_branch(top)
+    item = (branch_item(branch, top) or (branch, {}))[0]
+    start, clock = repo.now(), time.monotonic()
+    outcome = "skipped"
+    try:
+        if not command:
+            return 0, "forge.toml names no test command, so close ran none."
+        changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                           cwd=top).split("\0")
+        if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
+               for path in changed if path):
+            said = DOCS_ONLY.format(command=command)
+            print(said, flush=True)
+            return 0, said
+        from forge import codex  # codex imports review indirectly
 
-    folder = machine._repos_file().parent
-    passed = passed_record(top, command)
-    skipped = SKIPPED.format(command=command)
-    if passed and passed.exists():
-        print(skipped, flush=True)
-        return 0, skipped
-    folder.mkdir(parents=True, exist_ok=True)
-    # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
-    with codex.in_line(folder / "test-runs", WAITING):
-        if passed and passed.exists():  # the close this one waited for passed the same files
+        passed = passed_record(top, command)
+        skipped = SKIPPED.format(command=command)
+        if passed and passed.exists():
             print(skipped, flush=True)
             return 0, skipped
-        env = {**os.environ,
-               "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
-        done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                              encoding="utf-8", errors="replace")
-        if done.returncode == 0 and passed:
-            passed.parent.mkdir(exist_ok=True)
-            passed.touch()
-    out = [line.rstrip() for line in done.stdout.splitlines()]
-    picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
-                     for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
-    lines = [out[i] for i in picked]
-    if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
-        lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
-    return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
-                      "forge close.", *lines])
+        # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
+        with codex.in_line(machine._repos_file().parent / "test-runs", WAITING):
+            if passed and passed.exists():  # the close this one waited for passed the same files
+                print(skipped, flush=True)
+                return 0, skipped
+            env = {**os.environ, "FORGE_WORKER": "1",
+                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
+            with repo.record_run(top, item, "test") as ran:
+                done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                      encoding="utf-8", errors="replace")
+                outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
+            if done.returncode == 0 and passed:
+                passed.parent.mkdir(exist_ok=True)
+                passed.touch()
+        out = [line.rstrip() for line in done.stdout.splitlines()]
+        picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
+                         for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
+        lines = [out[i] for i in picked]
+        if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
+            lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+        return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
+                          "forge close.", *lines])
+    except BaseException:
+        outcome = "failed"
+        raise
+    finally:
+        repo.record_timing(top, item, "test run", start, clock, outcome)
 
 
 WAITING = lambda ahead: (  # noqa: E731
@@ -410,7 +401,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous, tested)
-    prompt += _review_rules(top)
+    from forge import story  # story imports review indirectly
+    block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    if rules := story.agents_section(top, "Review rules"):
+        own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
+        prompt += "\n\n" + string.Template(own.strip()).substitute(review_rules=rules)
     path = helper()
     head = repo.git("rev-parse", "HEAD", cwd=top)
     product = (sorted({name for command in (("ls-files", "-z"),
@@ -440,7 +435,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             review_base = repo.git("rev-parse", base, cwd=tree)
             prompt += _hide_generated(tree, repo.git("merge-base", review_base, head, cwd=tree), head)
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
-        block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
         # then create the file afresh ("x" refuses anything still there).
@@ -469,11 +463,17 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             argv += [f"--{engine}-bin", str(launcher)]
         with machine.agent_slot(top, "review"):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
-                findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
+                    findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                    ran["outcome"] = "failed" if reason else "completed"
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if signoff_prompt:
+            serious = [f for f in findings if f["priority"] in SERIOUS]
+            repo.record_event(top, item, "review result", commit=head,
+                outcome="failed" if reason or selected.get("model") != "gpt-6.1-sol"
+                or selected.get("effort") != "high" else "blocked" if serious else "clean")
             if reason:
                 repo.refuse(("The sign-off review did not finish: " + reason + ".",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
@@ -481,7 +481,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 repo.refuse(("The sign-off review did not confirm GPT-6.1 Sol at high effort: "
                              "model and effort must match.",
                              "check Autoreview, then forge decision accept client-signoff --by \"<name>\""))
-            serious = [f for f in findings if f["priority"] in SERIOUS]
             if serious:
                 repo.refuse(("Customer sign-off review found a blocking issue: "
                              + "; ".join(f["title"] for f in serious) + ".",
@@ -493,12 +492,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             return {"commit": head}
         if reason:
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
-    return {"commit": head, "changed": fingerprint(head, item, top, state, base,
-                                                     "P0" if light else "P1", findings),
-            "branch_diff": fingerprint(head, item, top, state, base,
-                                       "P0" if light else "P1", findings, branch_diff=True),
-            "findings": findings,
-            "dismissals": [], "blocking_level": "P0" if light else "P1"}
+    identity = repo.record_event(top, item, "review result", commit=head,
+                                 outcome="blocked" if any(f["priority"] in
+                                 (("P0",) if light else SERIOUS) for f in findings) else "clean")
+    return {"id": identity, "commit": head, "findings": findings,
+            "dismissals": [], "blocking_level": "P0" if light else "P1",
+            **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
+                                branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:
@@ -543,7 +543,7 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
     machine.started(proc.pid)
     last = ""
     for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
@@ -606,7 +606,9 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     # helper's --ignore-user-config; port it when a Windows review can't run its read-only shell.
     folder.mkdir()
     script = folder / f"{engine}_in_tree.py"
-    script.write_text(LAUNCHER[engine].format(tree=str(tree), real=real), encoding="utf-8")
+    from forge.codex import QUIET
+    quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
+    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet), encoding="utf-8")
     if os.name == "nt":
         launcher = folder / f"{engine}.cmd"
         launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n', encoding="utf-8")
