@@ -11,18 +11,27 @@
   "branch": "fix/forge-close-reviews-first-and-only-then",
   "done_when": "forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the review is clean and the checks are green. Review storage and the required PR check stay as they are. The tests workflow forge sync writes (and Forge's own) passes at once, without running the suite, when the only change since the parent commit is Forge's review record under .factory/ and the parent commit's tests passed; any other change runs the suite as today. New and existing repos: every repo gets the workflow change on its next forge sync after upgrading. One command-level test shows the push happens before the review and Ready needs both; one test shows the workflow's quick pass applies only to a records-only commit on a tested parent.",
   "flagged": [
+    "src/forge/prcheck.py",
     "src/forge/templates/review-tests.py",
     "tests/test_review_record_reuses_parent_tests.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "da5d9d2f1a9cd0bf6fed9d17fa720667ff7143dd5b80cfd90ce05db1a40d2eea",
-    "changed": "55196784e5ba0bb3f1e9a4a9f13528c9caba378131d4d03a750f1db09420607b",
-    "commit": "27a3f035cad9c68bdf1bae6ba4f4bc300077801a",
+    "branch_diff": "27ef9fd614cfe76d4efed4940504a29b60d960f40e18f25b621816593335c99b",
+    "changed": "10c8bdb7b852c44d482f2ccab722f44ac4c612fc915861a368df698c2fc5a6f9",
+    "commit": "9df78bc3eb13b5138086ba3f1edbee09fbf6c7c4",
     "dismissals": [],
-    "findings": [],
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The explicit head checkout changes ordinary CI from testing the PR merged into its base to testing the branch alone. This also affects `.github/workflows/forge.yml:22` and `.github/workflows/forge-next.yml:43`. If the default branch advances during review with a non-conflicting but incompatible change, the final suite can pass against the old base while the actual merge fails. This can reach merge: `src/forge/init.py:242` leaves strict up-to-date protection disabled by default, and `src/forge/merge.py:74` checks only the recorded head. GitHub documents the [default merge checkout versus explicit head checkout](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows). Inspect the branch head for the records-only shortcut, but retain merge-result testing for full-suite runs; reused results must also cover the same base. Otherwise, the promised \u201cany other change runs the suite as today\u201d behavior is weakened.",
+        "file": "src/forge/prcheck.py",
+        "line": 59,
+        "priority": "P1",
+        "title": "Preserve merge-result testing when running the full suite"
+      }
+    ],
+    "status": "blocked"
   },
   "status": "fixing",
   "steps": [
@@ -44,6 +53,10 @@
     },
     {
       "at": "2026-10-05T04:00:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T04:50:34+00:00",
       "step": "review"
     }
   ],
