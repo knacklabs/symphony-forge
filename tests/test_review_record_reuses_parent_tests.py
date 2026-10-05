@@ -36,9 +36,15 @@ def merge_checkout(workflow):
     assert "BASE_SHA: ${{ github.event.pull_request.base.sha }}" in tests_job
 
 
-@pytest.mark.parametrize("client_kind", ["new", "previous", "source"])
-@pytest.mark.parametrize("case", ["review", "push", "base-advanced", "wrong-tested-base", "target-only", "code", "other-record", "contract", "red",
-                                  "pending", "missing", "api-error", "newer-red"])
+# The helper has one implementation. Exercise its full trust boundary once; upgrade and
+# Forge-source delivery each still prove both reuse and running the suite on a changed base.
+@pytest.mark.parametrize("client_kind,case", [
+    (client_kind, case)
+    for client_kind in ("new", "previous", "source")
+    for case in ("review", "push", "base-advanced", "wrong-tested-base", "target-only", "code",
+                 "other-record", "contract", "red", "pending", "missing", "api-error", "newer-red")
+    if client_kind == "new" or case in ("review", "base-advanced")
+])
 def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tmp_path,
                                                                       monkeypatch, client_kind, case):
     if client_kind == "new":
