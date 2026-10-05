@@ -19,8 +19,9 @@ jobs:
       matrix:
         # Slower platforms need more runners as the suite grows.
         include:
-          - {os: ubuntu-latest, group: 1, groups: 2}
-          - {os: ubuntu-latest, group: 2, groups: 2}
+          - {os: ubuntu-latest, group: 1, groups: 3}
+          - {os: ubuntu-latest, group: 2, groups: 3}
+          - {os: ubuntu-latest, group: 3, groups: 3}
           - {os: macos-latest, group: 1, groups: 5}
           - {os: macos-latest, group: 2, groups: 5}
           - {os: macos-latest, group: 3, groups: 5}

@@ -14,7 +14,8 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 
 
 @pytest.mark.parametrize("runner,count,minutes", [
-    ("ubuntu-latest", 2, 10),
+    # Two Ubuntu groups left one job at 7m39s, above the seven-minute target.
+    ("ubuntu-latest", 3, 10),
     # Four groups averaged over seven minutes in the last successful CI run.
     ("macos-latest", 5, 10),
     ("windows-latest", 8, 20),
