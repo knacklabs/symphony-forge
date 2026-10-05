@@ -3,12 +3,13 @@
   "branch": "fix/client-repos-never-learn-that-a-newer-fo",
   "done_when": "When forge next runs, it checks at most once a day (cached in the shared Git directory) for the newest Forge release on GitHub and, if it is newer than forge.toml's pin, lists one line: 'Forge vX is out (you pin vY): forge upgrade vX'. It never upgrades by itself; with no network or a failed check it shows nothing and does not slow forge next by more than a few seconds. The skill tells the agent to offer the upgrade to the owner. New and existing repos: every repo on this release sees it. One command-level test: a stubbed newer release shows the line, a failed check shows none, and a second run the same day makes no request.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T02:11:55+00:00",
       "step": "start"
     }
   ],
-  "why": "Client repos never learn that a newer Forge release exists, so they stay on old releases and miss every speedup and fix, which only take effect once installed"
+  "why": "Client repos never learn that a newer Forge release exists, so they stay on old releases and miss every speedup and fix, which only take effect once installed",
+  "worker": "codex"
 }
