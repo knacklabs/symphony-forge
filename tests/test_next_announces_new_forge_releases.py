@@ -38,9 +38,16 @@ def test_1_next_announces_new_releases_with_a_shared_daily_cache(repo, gh, tmp_p
     gh.respond(*QUERY, stdout=json.dumps({"tagName": "v99.10.0", "futureField": True}))
     notice = f"Forge v99.10.0 is out (you pin {pin}): forge upgrade v99.10.0"
 
+    # A release announcement formerly replaced the machine state line. Both new
+    # and earlier-adopted clients must receive the actual next state instead.
+    machine = repo.forge("next", "--json", cwd=client)
+    assert machine.returncode == 0, machine.stderr
+    current = json.loads(machine.stdout)["next"]
+    assert current["line"] != notice
     first = repo.forge("next", cwd=client)
     assert first.returncode == 0, first.stderr
     assert first.stdout.splitlines().count(notice) == 1
+    assert current["line"] in first.stdout.splitlines()
     assert repo.git("status", "--porcelain", cwd=client) == before
     assert [call for call in gh.calls() if call == list(QUERY)] == [list(QUERY)]
 

@@ -240,11 +240,8 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, status, merge, comman
     folder = worktree(repo, "fix/polish")
     state(folder / ".factory/fixes/polish.json", status=status)
     github(gh, [])
-    gh.respond("release", "view", stdout=json.dumps({"tagName": "v99.10.0"}))
     plain = repo.forge("next").stdout
     result = view(repo, "next")
-    assert "Forge v99.10.0 is out" in plain
-    assert result["next"]["line"].startswith("The fix polish ")
     assert result["next"]["command"] == command
     assert result["next"]["line"] in plain.splitlines()
     assert not result["next"]["line"].startswith("Next: ")
