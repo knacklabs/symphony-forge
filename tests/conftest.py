@@ -27,7 +27,8 @@ REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
-import sys
+import signal, sys
+signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
