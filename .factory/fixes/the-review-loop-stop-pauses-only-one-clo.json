@@ -13,7 +13,7 @@
     "findings": [],
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T07:59:29+00:00",
