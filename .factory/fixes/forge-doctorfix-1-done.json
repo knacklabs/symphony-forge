@@ -2,13 +2,26 @@
   "base": "a10633d0ea75882d5505289c13e7e8b06a73ea41",
   "branch": "fix/forge-doctorfix-1-done",
   "done_when": "The board shows the story as finished, with its outcome.",
+  "flagged": [],
   "kind": "story-done",
   "outcome": "forge doctor --fix repairs what it can in one run: installs the pinned Forge, restores git hooks and the Codex SDK, removes finished work's folders, and brings Forge's files up to date through its own dated fix, never on the default branch and never over hand edits",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "fa44080ff0573d5366026eb531c351f31dd78219cca61d61755a0de1a09bfa5f",
+    "commit": "5e37bce727162272365360522cf37a2bc8bb800d",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T02:05:32+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T02:06:57+00:00",
+      "step": "review"
     }
   ],
   "touches": 0,
