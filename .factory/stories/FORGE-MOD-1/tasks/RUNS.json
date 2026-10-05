@@ -7,13 +7,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "09ca385f374892ecc148ba8a5b3a7bc8e618d41835fd52900a2650339ea66a10",
-    "changed": "4cdb9fac1a933824c2f1defb17586b3c0ff477def55c82fff51161701621398a",
-    "commit": "588d71d89927111f6098d318e72aee7ba6902066",
+    "branch_diff": "7f7d56a0b2baef61d15713747e62e15db33993c59726f069a13e7008312310be",
+    "changed": "9bd866566bfd22d3fae76d50a0996ac0c535c1ccd250f354bf4e2212b29bbed2",
+    "commit": "687a162fb6dbeb73999940da7abc9f0a99f2b8bf",
     "dismissals": [],
     "findings": [
       {
-        "body": "If SIGINT reaches Forge alone while an agent is running, this finally block writes a `run end` even though the agent can remain alive. The review path wraps `_attempt`, whose output loop and wait have no interruption cleanup (`src/forge/review.py:545\u2013566`). Both Claude paths have the same problem (`src/forge/worker.py:472\u2013488`, `src/forge/story.py:704\u2013713`): [CPython's Popen context manager](https://github.com/python/cpython/blob/v3.11.11/Lib/subprocess.py#L993-L1018) waits only briefly on KeyboardInterrupt and does not terminate the child. Consequently, consumers receive a completion occurrence for a running agent, and its eventual exit produces no further occurrence. Terminate and reap these children before recording the end, or retain the run until its actual exit is observed.",
+        "body": "The previously reported interruption defect remains. If SIGINT reaches Forge alone, this finally block publishes a `run end` while its agent can remain alive. The reviewer has no interruption cleanup around its output loop and wait (`review.py:545\u2013561`). Claude workers and readers rely on Popen context cleanup (`worker.py:474\u2013490`, `story.py:704\u2013713`), but [CPython's implementation](https://github.com/python/cpython/blob/v3.11.11/Lib/subprocess.py#L993-L1018) only waits briefly on KeyboardInterrupt; it does not terminate the child. The Codex sibling also reaches this finally block when its cleanup explicitly refuses because a process-group member remains alive (`codex.py:447\u2013455`). Consumers consequently receive a completion occurrence before completion, with no subsequent occurrence when the surviving process exits. Terminate and reap the processes before recording the end, or keep the run open until its actual exit is observed.",
         "file": "src/forge/repo.py",
         "line": 152,
         "priority": "P2",
@@ -50,6 +50,10 @@
     },
     {
       "at": "2026-10-05T06:25:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T06:59:21+00:00",
       "step": "review"
     }
   ],
