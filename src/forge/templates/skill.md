@@ -353,7 +353,7 @@ Adopting changes no app code.
    with the test tool's built-in changed-only option and `{base}` (for example
    `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
    `forge.toml` through a fix. For pytest repos, propose
-   `uv run python -m forge.fasttest {base}`: Forge ships this picker, which keeps the repo's
+   `forge test --pytest {base}`: Forge runs this picker outside the project, keeping the repo's
    full `test` command and narrows pytest to changed and module-related test files. Use the
    repo's Python runner with Forge installed; keep lint and other checks in `test`.
    Forge writes no `fast_test` by itself.
@@ -578,8 +578,8 @@ When the pull request's `tests` check runs the full suite, recommend a fast clos
 `fast_test` in `forge.toml` (in a fix) to run only the tests related to the changed files plus
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
 instead of `test`; the `tests` check keeps running the full `test`.
-For pytest repos, set `fast_test` to `uv run python -m forge.fasttest {base}` (using the repo's
-Python runner with Forge installed). Forge's own repo uses this shipped picker too: changed
+For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
+shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
 mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
 imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
@@ -588,7 +588,11 @@ the full `test` command's setup and options, caps pytest-xdist at half the machi
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
-upgrade. Upgrade never rewrites their `test` or `fast_test` settings.
+upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
+`python -m forge.fasttest` setting with its one-line replacement. Forge needs no pytest plugin
+or installation in the project. Test launchers must forward pytest arguments and expose xdist
+options in the command or pytest configuration.
+Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
