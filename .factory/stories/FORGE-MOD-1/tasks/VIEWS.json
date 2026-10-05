@@ -6,23 +6,30 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "changed": "85fd5060fd835c8829db88c4dd1a78fa0e295761ceb47d4afaa20d24597c796f",
-    "commit": "d83c83c1edb3f92039bb106b94a30f6905425783",
+    "changed": "d2233356e9b5d8be57dcfe62bca441f42f01d332461b5c0d7506433278f3d46e",
+    "commit": "3d5c8702c44867ce4805c6034e69d6602e59a0a7",
     "dismissals": [],
     "findings": [
       {
-        "body": "When the last task is merged through `forge merge`, completion is recorded in a `Forge-story-done` squash-message trailer (`src/forge/merge.py:88`), while the story JSON can remain `approved`. This row uses that JSON without consulting `story.completed`, so the machine board keeps a finished story marked approved and reports that its outcome still needs recording. The text view already resolves completion through `story.completed` (`src/forge/nextstep.py:358`), as does the HTML board (`src/forge/board.py:344\u2013346`). Apply the same completion resolution here and cover the last-task merge through the JSON command.",
+        "body": "The raw StatusContext nodes retain `createdAt`, but `_green_at` reads only `completedAt` or `startedAt` (src/forge/board.py:515\u2013524). GitHub CLI previously mapped a status's creation time to `startedAt` in its [JSON exporter](https://raw.githubusercontent.com/cli/cli/trunk/api/export_pr.go). For an item waiting for checks whose required checks are successful commit statuses, the JSON board therefore reports checks `pass` while its next step remains `forge close <item>` instead of the merge instruction. The HTML board also stops recognizing that PR as ready because it now consumes this same rollup. Normalize StatusContext timestamps for these consumers and preserve the CheckRun start-time fallback.",
         "file": "src/forge/board.py",
-        "line": 283,
+        "line": 158,
         "priority": "P1",
-        "title": "Not done: report each story\u2019s actual stage in the machine board"
+        "title": "Preserve commit-status timestamps when adapting the GraphQL rollup"
       },
       {
-        "body": "All three new test functions use `setup(repo)`, whose default is `forge-source` and which writes the currently running version directly into `forge.toml` (`tests/test_story.py:67\u201371`). None exercises the machine views in a newly initialized or adopted client repo, or in an existing client repo adopted on an earlier release and upgraded. The later one-line switch to `repo = \"client\"` only checks an unknown worker model. Add command coverage for both client lifecycles, including the earlier-release case required by the repository\u2019s review rule.",
+        "body": "Detail 1 explicitly assigns VIEWS a command test containing all four together, including GitHub-unreachable behavior. This test creates a story and running task worker but no fix; the fix assertions in tests 2 and 3 use separate repositories without a story. The client lifecycle test selects only the story row and does not assert a running worker. Consequently, the suite would still pass if story presence suppressed fix rows. Extend the command scenario to assert both root rows, the running worker, PR checks, and retained rows with unknown checks when GitHub is unreachable.",
         "file": "tests/test_machine_views.py",
-        "line": 48,
+        "line": 51,
         "priority": "P1",
-        "title": "Not done: machine-view tests for new and upgraded client repos"
+        "title": "Not done: board command coverage with a story, fix, running worker and open pull request"
+      },
+      {
+        "body": "This marks every SKIPPED or NEUTRAL check as passed, even when its name matches a required check. Forge's existing gate treats both conclusions as failed for named checks (src/forge/checks.py:35\u201338 and 68\u201370), including matrix variants. The machine board can therefore show checks `pass` with no failure occurrence while `forge close` refuses the same PR. Apply the required-name rule when classifying these conclusions; optional skipped or neutral checks can remain passed.",
+        "file": "src/forge/board.py",
+        "line": 139,
+        "priority": "P2",
+        "title": "Keep skipped required checks from appearing green"
       }
     ],
     "status": "blocked"
@@ -35,6 +42,10 @@
     },
     {
       "at": "2026-10-04T21:14:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T03:38:11+00:00",
       "step": "review"
     }
   ],

@@ -56,6 +56,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tPreserve commit-status timestamps when adapting the GraphQL rollup\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 158,
+      "text": "Preserve commit-status timestamps when adapting the GraphQL rollup",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -100,6 +111,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: CLOSED and MERGED doctor-fix retention tests\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 123,
+      "text": "Not done: CLOSED and MERGED doctor-fix retention tests",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: Doctor brings Forge's files up to date through a fix\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 220,
+      "text": "Not done: Doctor brings Forge's files up to date through a fix",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix enables spotted-list merging in repos adopted on the previous release\tforge-sync-points-git-s-merge-rule-for-t",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -107,6 +140,83 @@
       "text": "Not done: doctor --fix enables spotted-list merging in repos adopted on the previous release",
       "from": "blocking",
       "item": "forge-sync-points-git-s-merge-rule-for-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 226,
+      "text": "Not done: doctor keeps at most one fix of its own",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor never removes its own fix\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 394,
+      "text": "Not done: doctor never removes its own fix",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: failed commits clean up the new fix and show the reason\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 264,
+      "text": "Not done: failed commits clean up the new fix and show the reason",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 123,
+      "text": "Not done: functional check",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: no empty doctor fix is created\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 233,
+      "text": "Not done: no empty doctor fix is created",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 510,
+      "text": "Not done: the UI skills check covers both hosts",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tOnly remove a fix created by this doctor run\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 272,
+      "text": "Only remove a fix created by this doctor run",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
       "status": "open",
       "closed_by": null
     },
@@ -199,6 +309,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b\ttest-codex-resume-s-crash-recovery-test",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 54,
+      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b",
+      "from": "blocking",
+      "item": "test-codex-resume-s-crash-recovery-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/test_codex_turns_trust_forge_hooks.py",
@@ -206,6 +338,17 @@
       "text": "Not done: Hook trust in new and upgraded client repos",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_doctor_fix_files.py\tNot done: repairs in an existing repo adopted on the previous release\tFORGE-DOCTORFIX-1/FILES",
+      "kind": "bug",
+      "path": "tests/test_doctor_fix_files.py",
+      "line": 79,
+      "text": "Not done: repairs in an existing repo adopted on the previous release",
+      "from": "blocking",
+      "item": "FORGE-DOCTORFIX-1/FILES",
       "status": "open",
       "closed_by": null
     },
@@ -239,6 +382,17 @@
       "text": "Not done: test_4_only_a_fix_closes_its_named_files_entries",
       "from": "blocking",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tNot done: board command coverage with a story, fix, running worker and open pull request\tFORGE-MOD-1/VIEWS",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 51,
+      "text": "Not done: board command coverage with a story, fix, running worker and open pull request",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -283,6 +437,17 @@
       "text": "Not done: Test related-test instructions in new and previously adopted client repos",
       "from": "blocking",
       "item": "worker-fast-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tKeep skipped required checks from appearing green",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 139,
+      "text": "Keep skipped required checks from appearing green",
+      "from": "review",
+      "item": "FORGE-MOD-1/VIEWS",
       "status": "open",
       "closed_by": null
     },
@@ -342,6 +507,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/doctor.py\tQuote the worktree path in the removal step",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 229,
+      "text": "Quote the worktree path in the removal step",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tReport cleanup failures when discarding a new fix",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 285,
+      "text": "Report cleanup failures when discarding a new fix",
+      "from": "review",
+      "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tCap worker counts supplied through pytest configuration",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -362,6 +549,28 @@
       "item": "forge-s-python-changed-test-picker-scrip",
       "status": "done",
       "closed_by": "simplify-fasttest"
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 26,
+      "text": "Honor an existing worker limit below the machine cap",
+      "from": "review",
+      "item": "simplify-fasttest",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 29,
+      "text": "Preserve option values when removing explicit test paths",
+      "from": "review",
+      "item": "simplify-fasttest",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "edge\tsrc/forge/fasttest.py\tRecognize source-prefixed paths and package-relative imports",
@@ -452,6 +661,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_codex_resume.py\tThe crash-recovery test lost a worker in the parallel suite and passed alone.",
+      "kind": "edge",
+      "path": "tests/test_codex_resume.py",
+      "line": 555,
+      "text": "The crash-recovery test lost a worker in the parallel suite and passed alone.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_fix_leftover_app_server_bare_command.py\tThe cleanup test failed in the full parallel run and passed alone.",
       "kind": "edge",
       "path": "tests/test_fix_leftover_app_server_bare_command.py",
@@ -481,182 +701,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: CLOSED and MERGED doctor-fix retention tests\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 123,
-      "text": "Not done: CLOSED and MERGED doctor-fix retention tests",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: Doctor brings Forge's files up to date through a fix\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 220,
-      "text": "Not done: Doctor brings Forge's files up to date through a fix",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 226,
-      "text": "Not done: doctor keeps at most one fix of its own",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor never removes its own fix\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 394,
-      "text": "Not done: doctor never removes its own fix",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: failed commits clean up the new fix and show the reason\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 264,
-      "text": "Not done: failed commits clean up the new fix and show the reason",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 123,
-      "text": "Not done: functional check",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: no empty doctor fix is created\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 233,
-      "text": "Not done: no empty doctor fix is created",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 510,
-      "text": "Not done: the UI skills check covers both hosts",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tOnly remove a fix created by this doctor run\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 272,
-      "text": "Only remove a fix created by this doctor run",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_doctor_fix_files.py\tNot done: repairs in an existing repo adopted on the previous release\tFORGE-DOCTORFIX-1/FILES",
-      "kind": "bug",
-      "path": "tests/test_doctor_fix_files.py",
-      "line": 79,
-      "text": "Not done: repairs in an existing repo adopted on the previous release",
-      "from": "blocking",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/doctor.py\tQuote the worktree path in the removal step",
-      "kind": "edge",
-      "path": "src/forge/doctor.py",
-      "line": 229,
-      "text": "Quote the worktree path in the removal step",
-      "from": "review",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/doctor.py\tReport cleanup failures when discarding a new fix",
-      "kind": "edge",
-      "path": "src/forge/doctor.py",
-      "line": 285,
-      "text": "Report cleanup failures when discarding a new fix",
-      "from": "review",
-      "item": "FORGE-DOCTORFIX-1/FILES",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably\ttest-codex-resume-s-crash-recovery-test",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 54,
-      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably",
-      "from": "blocking",
-      "item": "test-codex-resume-s-crash-recovery-test",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tNot done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b\ttest-codex-resume-s-crash-recovery-test",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 54,
-      "text": "Not done: On Windows, tests/test_codex_resume.py::test_9_crash_recovery_reads_the_conversation_back passes reliably: the root cause in the \u200b",
-      "from": "blocking",
-      "item": "test-codex-resume-s-crash-recovery-test",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tHonor an existing worker limit below the machine cap",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 26,
-      "text": "Honor an existing worker limit below the machine cap",
-      "from": "review",
-      "item": "simplify-fasttest",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 29,
-      "text": "Preserve option values when removing explicit test paths",
-      "from": "review",
-      "item": "simplify-fasttest",
       "status": "open",
       "closed_by": null
     }
