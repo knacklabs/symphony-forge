@@ -1,7 +1,7 @@
 """The net-lines job keeps its five-minute cap.
 
-This once also pinned Windows at ten minutes; Windows now allows twenty, proven in
-test_fix_windows_test_jobs_are_cancelled_at_their.py.
+This once also pinned Windows at ten minutes; platform budgets are now proven in
+test_ci_job_budgets.py.
 """
 import re
 from pathlib import Path

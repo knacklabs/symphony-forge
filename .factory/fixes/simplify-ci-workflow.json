@@ -1,0 +1,28 @@
+{
+  "base": "3caadd6446a848c50bd81aadfe62dad4d9c0afbc",
+  "branch": "fix/simplify-ci-workflow",
+  "done_when": ".github/workflows/forge-next.yml is simpler and none of these happen any more: Not done: Forge s CI runs Windows in 8 groups 20-minute limit each and the workflow tests that check the matrix pass.; Not done: The Ubuntu test job runs the suite in 2 groups, each with a 10-minute limit, and the workflow test that checks the job matrix ass",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "changed": "cf5c14638bdc1d2d6b444e973552371668538e2abaa899ed1879dec4c1fac9f0",
+    "commit": "62cdde248e746f391937b9fdd92c132a8d8f2e91",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-04T19:26:28+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-04T21:24:12+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Simplify .github/workflows/forge-next.yml: problems keep turning up there",
+  "worker": "codex"
+}
