@@ -34,6 +34,28 @@
       "closed_by": "the-rules-that-stop-reviews-and-plan-rea"
     },
     {
+      "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tREADME.md\tNot done: Verify every CI group finishes within 70% of its time limit\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 165,
+      "text": "Not done: Verify every CI group finishes within 70% of its time limit",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tdocs/guide.md\tThe guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "kind": "bug",
       "path": "docs/guide.md",
@@ -342,6 +364,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends the running process tree before freeing its place\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 234,
+      "text": "Not done: forge stop ends the running process tree before freeing its place",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -474,6 +507,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 14,
+      "text": "Not done: A suite test proves CI consumes the committed test durations",
+      "from": "blocking",
+      "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
       "kind": "bug",
       "path": "tests/test_codex_record.py",
@@ -591,6 +635,17 @@
       "text": "Not done: test_4_only_a_fix_closes_its_named_files_entries",
       "from": "blocking",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission, machine view and stop are tested through both adapters\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_agents.py",
+      "line": 29,
+      "text": "Not done: agent admission, machine view and stop are tested through both adapters",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
       "status": "open",
       "closed_by": null
     },
@@ -1079,6 +1134,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane model metadata after defaults or fallback selection",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 472,
+      "text": "Refresh lane model metadata after defaults or fallback selection",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tRefresh review lane metadata when Autoreview selects another model",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -1229,39 +1295,6 @@
       "text": "Give forge ask a retry instruction that preserves the question",
       "from": "review",
       "item": "codex-hook-trust",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tREADME.md\tNot done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save\tforge-s-ci-splits-tests-into-groups-by-c",
-      "kind": "bug",
-      "path": "README.md",
-      "line": 165,
-      "text": "Not done: Forge's own CI splits its test groups by recorded test time (a committed .test_durations file that pytest-split reads, with a save",
-      "from": "blocking",
-      "item": "forge-s-ci-splits-tests-into-groups-by-c",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tREADME.md\tNot done: Verify every CI group finishes within 70% of its time limit\tforge-s-ci-splits-tests-into-groups-by-c",
-      "kind": "bug",
-      "path": "README.md",
-      "line": 165,
-      "text": "Not done: Verify every CI group finishes within 70% of its time limit",
-      "from": "blocking",
-      "item": "forge-s-ci-splits-tests-into-groups-by-c",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
-      "kind": "bug",
-      "path": "tests/test_ci_job_budgets.py",
-      "line": 14,
-      "text": "Not done: A suite test proves CI consumes the committed test durations",
-      "from": "blocking",
-      "item": "forge-s-ci-splits-tests-into-groups-by-c",
       "status": "open",
       "closed_by": null
     }

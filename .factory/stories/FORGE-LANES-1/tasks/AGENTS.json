@@ -1,38 +1,47 @@
 {
   "branch": "task/FORGE-LANES-1-AGENTS",
   "flagged": [
+    "src/forge/machine.py",
+    "tests/test_lanes_agents.py",
     "tests/test_lanes_view.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "caf1bc2a38317c06daa8b7383e67d833c80912c938fbc8cab11a5f4e885a0c9c",
-    "changed": "37e5fcab3c5673bdf87b190cfaac78e687e2b31eb0a861367419d87c6a7c36a4",
-    "commit": "7655114b6e55550a9243c2fca6db30226252a2f9",
+    "branch_diff": "44dbe18b4ff6bb73d1606ab9165dfb3d922e37d87b2912e6b8c6ffe193698a64",
+    "changed": "d9462a902b0c389b5446e109248617756584745da962b6801ab66020295b6333",
+    "commit": "281236a2aacc43e7b6f46b43ee31a6af5dff1dde",
     "dismissals": [],
     "findings": [
       {
-        "body": "The reused-pid and unverifiable-identity checks assert that `process` survives, but `start()` returns the Forge parent, whereas the recorded identity belongs to its model child. Killing that child incorrectly can leave the parent alive while it finishes cleanup, so these assertions still pass; `finish()` also accepts a nonzero parent exit. Assert survival of the actual recorded child in both cases. This is the explicitly required identity-safety test, and its current assertions do not detect termination of the protected process.",
-        "file": "tests/test_lanes_view.py",
-        "line": 154,
+        "body": "On POSIX, stop confirms only that the recorded group leader ended. The called helper returns immediately when that leader dies (`src/forge/codex.py:620\u2013622`), even if another group member survives SIGTERM. A Claude worker or review with such a child can therefore leave it running while this code removes the entry and admits the next run. Confirm and terminate the whole group before releasing admission, and exercise this through the stop command. The current stop tests launch childless held agents, so they cannot detect this gap.",
+        "file": "src/forge/machine.py",
+        "line": 234,
         "priority": "P1",
-        "title": "Not done: a process whose pid was reused is not terminated"
+        "title": "Not done: forge stop ends the running process tree before freeing its place"
       },
       {
-        "body": "On POSIX, this assumes every model child leads a process group. Existing callers do not: the retained checker launches Autoreview without group options in `tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533`, then calls the compatible `started(pid)` signature. For that entry, `codex._stop(..., True)` calls `killpg(child_pid)` (`src/forge/codex.py:615\u2013616`), which finds no such group; stop eventually refuses and leaves the run holding its place. Pre-upgrade Claude workers have the same launch pattern. The signature-compatibility ruling did not address this process-group mismatch. Safely handle these existing launches and exercise one through the command boundary.",
+        "body": "The added lane and stop checks all use the held Claude executable; none exercises a Codex worker through these commands. This misses the repository requirement that the same behaviour tests run through both adapters. For example, removing the registration at `src/forge/codex.py:328` would leave Codex entries without a started time and let stop remove their admission without stopping the model, while these tests still pass. Parameterize the existing command-level contracts to cover both adapters.",
+        "file": "tests/test_lanes_agents.py",
+        "line": 29,
+        "priority": "P1",
+        "title": "Not done: agent admission, machine view and stop are tested through both adapters"
+      },
+      {
+        "body": "The previous compatibility gap remains on POSIX. The retained checker launches Autoreview without group options (`tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533`) and uses the compatible started(pid) signature. Stop then calls killpg(child_pid) through `src/forge/codex.py:615\u2013616`, although that child does not lead a group; termination fails and its place remains held. The signature ruling preserves the call but does not solve this launch mismatch. The existing-queue test migrates a newly grouped child, so it does not exercise an actual older launch.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "The lane stores only `chosen` at admission. Autoreview's reported defaults and unavailable-model fallback update `selected` in `src/forge/review.py:564\u2013570`, but never update the lane entry. Consequently, a running review can expose null model/effort when defaults are used, or advertise the unavailable requested model after switching to another one. Persist the reported selection into the active entry so the machine view describes the running review.",
+        "body": "The lane still snapshots chosen only at admission. Autoreview's reported defaults and unavailable-model fallback update selected (`src/forge/review.py:564\u2013570`) without updating the entry, so the board can show null or an unavailable model for a running review. The same stale snapshot occurs when a split design worker switches from Claude to Codex (`src/forge/worker.py:167\u2013191`). Update the active entry when either caller changes its model and effort.",
         "file": "src/forge/review.py",
         "line": 472,
         "priority": "P2",
-        "title": "Refresh review lane metadata when Autoreview selects another model"
+        "title": "Refresh lane model metadata after defaults or fallback selection"
       },
       {
-        "body": "The stop command selects only entries in this queue, but actual test launches still bypass it: `src/forge/fasttest.py:165\u2013166` launches the command directly, and `src/forge/review.py:276\u2013285` uses the separate close-test ticket queue. Thus test output/progress cannot appear in the new view, and stop cannot select a running or waiting test or stop an item's worker and test together. The Tasks table assigns that integration and its command-level tests to TESTS, so this remains deferred P2 advice rather than an AGENTS merge blocker.",
+        "body": "Actual test launches still bypass this entry queue: `src/forge/fasttest.py:165\u2013166` launches directly, and close uses the separate ticket queue at `src/forge/review.py:276\u2013285`. Consequently, the board cannot expose their output/progress, and stop cannot cancel tests or stop an item's worker and test together. The Tasks table assigns this integration and its command-level checks to TESTS, so this remains deferred P2 advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
@@ -49,6 +58,10 @@
     },
     {
       "at": "2026-10-05T15:11:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T16:14:58+00:00",
       "step": "review"
     }
   ],
