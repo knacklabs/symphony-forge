@@ -2,12 +2,26 @@
   "base": "15661c43375705e51fbda9753a286761a08bbe88",
   "branch": "fix/the-quick-test-picker-breaks-on-client-r",
   "done_when": "forge test --pytest narrows the run on pytest versions before 8.2 as well as on newer ones (a command test with an older pytest); skill.md's setup guidance no longer tells agents to install Forge into the repo's Python right after proposing the external picker; new client repos get it from init and existing ones from upgrade, with a command test for each",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "939ac7ca0d8c719f4517a83e831f601196e687ed522edc1dcb34c4fe61ee30ad",
+    "changed": "2884645ab28de3468c6f5cd1a4bad35c19514d46fbe7e77f1482f6177aa42615",
+    "commit": "e4138b5bad6d84fd54f0a12b6c4a10352ea50014",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T09:14:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-05T09:36:16+00:00",
+      "step": "review"
     }
   ],
   "why": "The quick test picker breaks on client repos running pytest older than 8.2, and the guide contradicts itself on how to install it",
