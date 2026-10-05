@@ -10,13 +10,14 @@
   "branch": "fix/the-shipped-python-test-picker-uv-run-py",
   "done_when": "A 'forge fasttest <base>' command works in any pytest repo without installing Forge into the project: Forge picks the changed test files, test files named after a changed module, and test files importing or mentioning it, then runs the repo's own test command from forge.toml narrowed to those files in the repo's environment, runs the full test command when conftest.py, pyproject.toml or a lock file changed, and caps pytest at half the machine's cores; no pytest plugin. Forge's own forge.toml and the skill use 'forge fasttest {base}'; doctor reports a fast_test that still says 'python -m forge.fasttest' with the one-line replacement. Command-level tests cover both kinds of client: a new client (forge init in a plain pytest repo, Forge not installed in its environment) whose proposed fast_test runs only the related tests at close; and an existing client adopted on an earlier release whose forge.toml carries the old 'python -m forge.fasttest' line, where doctor names the replacement, forge.toml is not rewritten, and after the owner's one-line change close runs only the related tests.",
   "kind": "fix",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T04:52:56+00:00",
       "step": "start"
     }
   ],
+  "tests": "`forge test --pytest 5bde3613d72a5102bd95dad27ac8c94068ce0024` exited with status 1 on the machine running forge close.\nforge: argument {init,sync,doctor,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}: invalid choice: 'test' (choose from 'init', 'sync', 'doctor', 'migrate', 'upgrade', 'next', 'board', 'story', 'read', 'task', 'fix', 'work', 'ask', 'close', 'merge', 'land', 'spec', 'decision', 'roadmap', 'hook').\nNext: forge --help",
   "why": "The shipped Python test picker (uv run python -m forge.fasttest) fails in client repos with 'No module named forge', because Forge is a separate tool, not a dependency of the client's project; it only works in Forge's own repo",
   "worker": "codex"
 }
