@@ -3,12 +3,13 @@
   "branch": "fix/forge-land-starts-a-worker-round-even-wh",
   "done_when": "forge land goes straight to close when the item's branch already has commits past its start and no open findings or pending question; it runs a worker round only to build new work or to fix what close found. New and existing repos: every repo gets it on upgrade; nothing in forge.toml changes. One command-level test: forge land on a fix with a hand commit runs no worker and closes.",
   "kind": "fix",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-05T02:05:04+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land starts a worker round even when the work is already committed (a hand-made version bump spent over an hour on a worker re-running the whole suite)"
+  "why": "forge land starts a worker round even when the work is already committed (a hand-made version bump spent over an hour on a worker re-running the whole suite)",
+  "worker": "codex"
 }
