@@ -111,14 +111,18 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert "fell back to Codex" in clean.stdout and "exit code 3" in clean.stdout
     [claude_call] = calls(claude_log)
     [first] = _sent(codex_log, "thread/start")
-    assert first["config"] == {**QUIET, "model": "gpt-6-nova", "model_reasoning_effort": "xhigh"}
+    assert first["config"] == {**QUIET, "features.multi_agent": True, "model": "gpt-6-nova",
+                               "model_reasoning_effort": "xhigh",
+                               "agents.default_subagent_model": "gpt-6-luna",
+                               "agents.default_subagent_reasoning_effort": "max"}
     assert first["approvalPolicy"] == "never"
     [turn] = _sent(codex_log, "turn/start")
     assert turn["input"][0]["text"] == claude_call["brief"]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text("utf-8")
     assert "fell back to Codex" in log and "exit code 3" in log
 
-    # A later missing Claude command uses the design defaults without Build/Fix models.
+    # Delegation stays enabled and configured helpers survive the design override above.
+    # A later missing Claude command uses design defaults with no configured helpers.
     version = repo.forge("--version").stdout.split()[-1]
     config.write_text(
         f'version = "{version}"\nrepo = "client"\nworkers = "split"\n', encoding="utf-8")
@@ -132,7 +136,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
     assert missing.returncode == 0, missing.stdout + missing.stderr
     assert "fell back to Codex" in missing.stdout and "missing" in missing.stdout
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
-        **QUIET, "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "high"}
     install_claude(repo)
     assert len(calls(claude_log)) == 1
     # The round started on Claude after a round that ended on Codex, so its fallback starts a new

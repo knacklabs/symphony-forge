@@ -692,6 +692,17 @@
       "item": "client-repos-never-learn-that-a-newer-fo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 8,
+      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
+      "from": "blocking",
+      "item": "codex-spawns-subagents-only-when-explici",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
