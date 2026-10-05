@@ -127,6 +127,5 @@ def test_31_speed():
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]
     # The suite's five-minute cap was replaced by ten when passing Ubuntu runs hit the limit.
     assert timeouts and max(timeouts) <= 10, f"job timeouts over ten minutes: {timeouts}"
-    windows = re.findall(r"os: windows-latest, group: (\d), groups: (\d)", workflow)
-    # Five groups replace four as the suite grows.
-    assert sorted(windows) == [(str(g), "8") for g in range(1, 9)], f"Windows isn't in groups 1-8 of 8: {windows}"
+    # Complete platform group sequences and effective budgets have one owner:
+    # test_ci_job_budgets.py.
