@@ -8,20 +8,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a39659480a285c6e5b168d0c00b9c494cff2f15c19c9fbfc188c71ff719ee41c",
-    "changed": "bede501f7a7f47ef683cb08056152f04a896a7fd3ef85b9ff1b96b5ac8f3065d",
-    "commit": "0e7076a38389d9cbf659c875343b39bbb36d350f",
+    "branch_diff": "b9c46a19075ab8a46d1d66a49a30cfffcad7718f1aafb311b358e50b38ac0f85",
+    "changed": "acbe23f0a1c8c29dc918d7eefc90ab92694451ff580df9cc03e41e591ec44632",
+    "commit": "060690909e921bbea2b524fcbc89def92de20e34",
     "dismissals": [],
     "findings": [
       {
-        "body": "For `uv run pytest && npm ci && ./node_modules/.bin/eslint . && npm test`, where the test script runs Vitest or Jest, the local ESLint command receives no `node-check` classification. The Python picker consequently retains ESLint while removing `npm ci` and the Node test runner (src/forge/fasttest.py:119\u2013120). Both doctor and upgrade recommend running that picker before installation, so a clean checkout fails before reaching `npm ci`; an installed checkout runs ESLint twice. This is new evidence beyond the isolation ruling and previous npm-script example: direct local Node checks still lose their setup. Classify these checks consistently so they execute once after installation.",
+        "body": "The previously reported case remains: with `uv run pytest && npm ci && ./node_modules/.bin/eslint . && npm test`, where npm test runs Vitest or Jest, the direct ESLint invocation is not classified as a Node check. The Python picker retains it while removing installation and the Node runner at src/forge/fasttest.py:119\u2013120. Consequently, suggestions from both doctor and upgrade run ESLint before npm ci, failing on a clean checkout or running it twice when dependencies exist. Classify direct local Node checks consistently so they execute once after installation. This is the direct-executable evidence beyond the coordinator\u2019s isolation ruling.",
         "file": "src/forge/quicktest.py",
         "line": 50,
         "priority": "P2",
         "title": "Keep installation before direct Node checks in mixed suggestions"
       },
       {
-        "body": "The previous repair handles leading npm options, but `npm exec jest --workspace=web` becomes `npm exec -- jest --workspace=web --changedSince {base} --passWithNoTests`. The inserted separator turns workspace selection into a runner argument, so npm no longer executes Jest in the web workspace and its configuration can be lost. This affects both suggestion callers. The new evidence is an option after the runner: [npm's exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec) explicitly permits npm options there before a separator. Preserve those npm options before the inserted separator as well.",
+        "body": "The previously reported trailing-option case remains: `npm exec jest --workspace=web` becomes `npm exec -- jest --workspace=web --changedSince {base} --passWithNoTests`. Moving the separator before the runner converts workspace selection into a Jest argument, losing the intended execution context and potentially failing argument parsing. Vitest suggestions have the same problem, through both doctor and upgrade. Preserve npm\u2019s trailing configuration options before the inserted separator. [npm\u2019s exec contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec) confirms that npm parses options after positional arguments until `--`; this is the trailing-option evidence beyond the earlier leading-option repair.",
         "file": "src/forge/quicktest.py",
         "line": 85,
         "priority": "P2",
@@ -46,6 +46,10 @@
     },
     {
       "at": "2026-10-05T09:48:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T10:35:00+00:00",
       "step": "review"
     }
   ],
