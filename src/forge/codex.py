@@ -381,6 +381,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"project_skipped={said['project_skipped']}"
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
+                elif "selection" in said:
+                    if ran.get("run_id"):
+                        repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
+                    text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     continued = {"continued": said["continued"],

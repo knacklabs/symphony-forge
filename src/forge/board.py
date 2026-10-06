@@ -278,7 +278,7 @@ def machine_board(top: Path) -> Item:
                                     if e.get("run_id") == agent["id"] and e.get("step")), None)}
             for key in ("model", "effort"):
                 worker[key] = next((e[key] for e in reversed(activity)
-                                    if e.get("run_id") == agent["id"] and e.get(key)), worker[key])
+                                    if e.get("run_id") == agent["id"] and key in e), worker[key])
         now = _when(repo.now())
         elapsed = lambda at: max(0, (now - _when(at)).total_seconds()) if now and _when(at) else None
         if worker:
@@ -347,11 +347,14 @@ def machine_board(top: Path) -> Item:
                and approval.waiting_digest(item, tree) else None)
         review = state.get("review") or {}
         read_key = item.split("/")[0] if kind != "fix" else None
-        notes = _read(top, trees.get(f"story/{read_key}") or where, f"plans/{read_key}.read.md") if read_key else ""
+        read_where = trees.get(f"story/{read_key}") or next((ref for ref in (
+            f"story/{read_key}", f"origin/story/{read_key}", landed)
+            if story.show(top, ref, f"plans/{read_key}.md") is not None), where) if read_key else where
+        notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""
         read_record, _ = story._record(notes)
         plan_read = "none"
         if read_record:
-            text = _read(top, trees.get(f"story/{read_key}") or where, f"plans/{read_key}.md")
+            text = _read(top, read_where, f"plans/{read_key}.md")
             digest = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
             try:
                 story.gate(read_key, f"plans/{read_key}.md", notes, digest, text, top)

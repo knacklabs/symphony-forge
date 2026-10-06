@@ -196,6 +196,7 @@ def main():
             reply(message, {"approvalPolicy": params.get("approvalPolicy", "on-request"),
                             "approvalsReviewer": "user", "cwd": cwd,
                             "model": (config or {}).get("model", "stub-model"),
+                            "reasoningEffort": (config or {}).get("model_reasoning_effort", "medium"),
                             "modelProvider": "openai", "sandbox": {"type": "dangerFullAccess"},
                             "thread": thread})
         elif method == "hooks/list":

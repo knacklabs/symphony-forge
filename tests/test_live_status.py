@@ -30,7 +30,7 @@ def row(repo, item):
     return next(r for r in rows if r["id"] == item), boards[0]
 
 
-@pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "ci", "ci red", "ci green"])
+@pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "read default claude", "read default codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "plan detached", "ci", "ci red", "ci green"])
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     # Both commands read at different instants; freeze their clock for timer equality.
     monkeypatch.setenv("FORGE_NOW", "2026-10-06T12:00:00+00:00")
@@ -51,7 +51,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         result, _ = row(repo, item)
         assert result["idle_since"] == committed and result["stalled"] is True
         return
-    if case == "plan":
+    if case.startswith("plan"):
         from test_story import setup, new_story, DOC
         setup(repo)
         folder = new_story(repo, "SHOP")
@@ -59,17 +59,36 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         assert row(repo, "SHOP")[0]["gates"]["plan_read"] == {"status": "none"}
         assert repo.forge("read", "SHOP").returncode == 0
         assert row(repo, "SHOP")[0]["gates"]["plan_read"] == {"status": "passed"}
+        if case == "plan detached":
+            stale = repo.path.parent / "stale-task"
+            repo.git("worktree", "add", "-b", "task/SHOP-PAGE", str(stale), "story/SHOP")
+            env.commit(stale, ".factory/stories/SHOP/tasks/PAGE.json", json.dumps({"branch": "task/SHOP-PAGE", "status": "working"}))
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
+        if case == "plan detached":
+            repo.git("add", "plans/SHOP.md", cwd=folder)
+            repo.git("commit", "-m", "Change the plan", cwd=folder)
+            repo.git("push", "origin", "story/SHOP", cwd=folder)
+            repo.git("worktree", "remove", "--force", str(folder))
         assert row(repo, "SHOP")[0]["gates"]["plan_read"] == {"status": "blocked"}
+        if case == "plan detached":
+            repo.git("worktree", "add", str(folder), "story/SHOP")
+            assert repo.forge("read", "SHOP").returncode == 0
+            repo.git("worktree", "remove", "--force", str(folder))
+            assert row(repo, "SHOP")[0]["gates"]["plan_read"] == {"status": "passed"}
         return
     if case.startswith("read"):
         from test_story import setup, new_story, DOC
         from conftest import ROOT, _install
         setup(repo)
+        if "default" in case:
+            config = repo.path / "forge.toml"
+            config.write_text(config.read_text("utf-8").replace('models.grill.claude = { model = "opus", effort = "high" }\n', ''), "utf-8")
+            repo.git("add", "forge.toml")
+            repo.git("commit", "-m", "Use provider defaults")
         folder = new_story(repo, "SHOP")
         (folder / "plans/SHOP.md").write_text(DOC, "utf-8")
         item, model, effort = "SHOP", "opus", "high"
-        if case == "read codex":
+        if case.endswith("codex"):
             monkeypatch.setenv("XDG_DATA_HOME", str(request.getfixturevalue("sdk_data")))
             home = repo.path.parent / "reader-home"
             home.mkdir()
@@ -82,9 +101,14 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             monkeypatch.delenv("CODEX_THREAD_ID")
             monkeypatch.setenv("CLAUDECODE", "1")
             config = folder / "forge.toml"
-            config.write_text(config.read_text("utf-8") + 'models.grill.codex = { model = "gpt-6-sol", effort = "high" }\n', "utf-8")
+            if "default" not in case:
+                config.write_text(config.read_text("utf-8") + 'models.grill.codex = { model = "gpt-6-sol", effort = "high" }\n', "utf-8")
+            else:
+                stub.write_text(stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.1-sol"'), "utf-8")
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
+        if "default" in case:
+            model, effort = ("gpt-6.1-sol", "medium") if case.endswith("codex") else ("claude-sonnet-4-6", "medium")
         assert repo.forge("read", item).returncode == 0
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
     elif case == "codex":
@@ -165,7 +189,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 'timeout=30) as gate:\n    gate.recv(1)\n')
         expected_steps = ["editing src/forge/close.py", "committing"]
         selections = {}
-        if case in ("codex", "read codex"):
+        if case == "codex" or case.startswith("read") and case.endswith("codex"):
             stub = repo.bin / "codex-app-server"
             source = stub.read_text("utf-8")
             events = ""
@@ -184,9 +208,15 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 events += f'notify("item/started", threadId=THREAD, turnId=TURN, item={event!r})\n' + gate
             stub.write_text(source.replace('asked = {"stub-ask-1"',
                 events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'), "utf-8")
-        elif case in ("claude", "claude error", "read claude"):
+        elif case in ("claude", "claude error") or case.startswith("read") and case.endswith("claude"):
             stub = repo.bin / "claude"
             events = ""
+            if "default" in case:
+                event = {"type": "system", "subtype": "init", "model": model}
+                events += f'print({json.dumps(event)!r}, flush=True)\n'
+                event = {"type": "control_response", "response": {"subtype": "success", "request_id": "forge-live-settings", "response": {"applied": {"model": model, "effort": effort}}}}
+                events += 'assert any(e.get("request", {}).get("subtype") == "get_settings" for e in input_events)\n'
+                events += f'print({json.dumps(event)!r}, flush=True)\n'
             for tool, inputs in (("Edit", {"file_path": "src/forge/close.py"}),
                                  ("Bash", {"command": "git commit -m Done"})):
                 event = {"type": "assistant", "message": {"content": [

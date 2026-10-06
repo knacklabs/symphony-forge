@@ -188,6 +188,12 @@ def worker_step(name: str, inputs: dict[str, Any]) -> str:
 
 def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> str:
     """Read the same tool actions and result diagnostics for Claude workers and readers."""
+    if event.get("type") == "system" and event.get("subtype") == "init":
+        record_progress(top, item, run_id, **{key: event[key] for key in ("model", "effort") if key in event})
+    response = event.get("response") or {}
+    if event.get("type") == "control_response" and response.get("request_id") == "forge-live-settings":
+        applied = (response.get("response") or {}).get("applied") or {}
+        record_progress(top, item, run_id, **{key: applied[key] for key in ("model", "effort") if key in applied})
     content = (event.get("message") or {}).get("content", [])
     for tool in content:
         if isinstance(tool, dict) and tool.get("type") == "tool_use":

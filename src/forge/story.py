@@ -706,13 +706,16 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                              effort=models[models.index("--effort") + 1] if "--effort" in models else None) as ran:
             with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors, subprocess.Popen(
                                   [exe, "-p", *models, "--permission-mode", "plan",
-                                   "--output-format", "stream-json", "--verbose", *args],
+                                   "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", *args],
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=errors, text=True, encoding="utf-8",
                                   errors="replace",
                                   env={**os.environ, "FORGE_WORKER": "1"}) as reader:
                 machine.started(reader.pid)
-                reader.stdin.write(text)
+                for event in ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
+                              {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
+                              {"type": "user", "message": {"role": "user", "content": text}}):
+                    reader.stdin.write(json.dumps(event) + "\n")
                 reader.stdin.close()
                 lines, final = [], None
                 for line in reader.stdout:

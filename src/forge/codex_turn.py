@@ -177,6 +177,14 @@ def main() -> int:
                 state[hook["key"]] = {"trusted_hash": hook["currentHash"]}
         if state:  # nested: a hook's key holds dots, which a dotted override would split
             settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
+        # The SDK's high-level Thread discards the effective settings in this response.
+        request_raw = client._request_raw
+        def selected_request(method, params=None):
+            response = request_raw(method, params)
+            if method in ("thread/start", "thread/resume"):
+                emit(selection={"model": response["model"], "effort": response.get("reasoningEffort")})
+            return response
+        client._request_raw = selected_request
         resumed = None
         if request.get("thread"):
             try:
