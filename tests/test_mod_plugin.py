@@ -154,7 +154,7 @@ async function fire(name, event, api) {
 """
 
 
-def test_3_packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, packaged_mod, tmp_path):
+def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, packaged_mod, tmp_path):
     # The native tests own scheduling and failure cases. This protects the
     # transport from real command-produced ids/next steps to the shipped mod,
     # and independent live sessions sharing Claude's persistent store.
