@@ -1825,6 +1825,50 @@
       "item": "the-owner-s-review-loop-choice-often-can",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 134,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 137,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_clone_gets_test_tools.py\tNot done: proof that Forge's own outer uv commands are frozen\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "tests/test_fix_clone_gets_test_tools.py",
+      "line": 72,
+      "text": "Not done: proof that Forge's own outer uv commands are frozen",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tP2: Preserve related selection when harmless tables move or disappear",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 151,
+      "text": "P2: Preserve related selection when harmless tables move or disappear",
+      "from": "review",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

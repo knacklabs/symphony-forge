@@ -41,7 +41,10 @@ def pytest_options(arguments: list[str]) -> str:
         if not Path(name).is_file():
             continue
         if Path(name).suffix == ".toml":
-            config = tomllib.loads(Path(name).read_text("utf-8"))
+            try:
+                config = tomllib.loads(Path(name).read_text("utf-8"))
+            except tomllib.TOMLDecodeError:
+                continue  # Let pytest report an invalid config if it uses this file.
             section = config.get("tool", {}).get("pytest", {}) if Path(name).name == "pyproject.toml" else config.get("pytest", {})
             value = section.get("ini_options", section).get("addopts", "")
             options += " " + (" ".join(value) if isinstance(value, list) else value)
@@ -107,6 +110,52 @@ def mentions(file: Path, module: str) -> bool:
                                          for alias in node.names):
                 return True
     return False
+
+
+def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
+    """Fail closed unless only explicitly harmless TOML statements changed."""
+    build = {("tool", "hatch", "build"), ("tool", "hatch", "build", "targets", "wheel"),
+             ("tool", "hatch", "build", "targets", "sdist")}
+    snapshots = []
+    try:
+        for ref in (base, "HEAD"):
+            shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
+                                   capture_output=True, text=True)
+            text = shown.stdout if shown.returncode == 0 else ""
+            tomllib.loads(text)
+            section, statement, remaining = (), "", []
+            for line in text.splitlines(keepends=True):
+                statement += line
+                try:
+                    value = tomllib.loads(statement)
+                except tomllib.TOMLDecodeError:
+                    continue  # Consume multiline values before recognizing headers or keys.
+                if statement.lstrip().startswith("["):
+                    header = re.fullmatch(r"\s*\[([\w.-]+)\]\s*(?:#.*)?", statement.strip())
+                    section = tuple(header[1].split(".")) if header else ()
+                    safe = section == ("project",) or section in build or (
+                        section[:-1] in build and section[-1:] == ("force-include",))
+                else:
+                    key, item = next(iter(value.items())) if len(value) == 1 else ("", None)
+                    safe = (section == ("project",) and key in {"version", "description"}
+                            and isinstance(item, str))
+                    if section in build:
+                        safe = (key in {"include", "exclude"} and isinstance(item, list)
+                                and all(isinstance(entry, str) for entry in item)) or (
+                            key == "force-include" and isinstance(item, dict)
+                            and all(isinstance(entry, str) for entry in item.values()))
+                    elif section[:-1] in build and section[-1:] == ("force-include",):
+                        safe = len(value) == 1 and isinstance(item, str)
+                if not safe:
+                    # Preserve both text and table context: deleting a safe header may move an unsafe key.
+                    remaining.append((section, statement))
+                statement = ""
+            if statement:
+                return False
+            snapshots.append(remaining)
+    except (ValueError, TypeError, AttributeError):
+        return False
+    return snapshots[0] == snapshots[1]
 
 
 def own_version_only(path: Path, base: str) -> bool:
@@ -176,7 +225,9 @@ def test(args) -> int:
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
+    if any(not manifest_test_inputs_unchanged(Path(name), args.base)
+           if Path(name).name == "pyproject.toml" else
+           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
            or not own_version_only(Path(name), args.base) for name in shared):
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)

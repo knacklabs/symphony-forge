@@ -53,6 +53,8 @@ jobs:
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: ubuntu-latest
+    env:
+      UV_FROZEN: '1'
 <tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
