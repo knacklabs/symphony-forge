@@ -7,6 +7,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_1_package_version_is_1_2_1_and_dynamic():
-    assert '__version__ = "1.2.5"' in (ROOT / "src/forge/__init__.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.2.6"' in (ROOT / "src/forge/__init__.py").read_text(encoding="utf-8")
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert "version" in pyproject["project"]["dynamic"]  # pyproject reads the version from __init__
