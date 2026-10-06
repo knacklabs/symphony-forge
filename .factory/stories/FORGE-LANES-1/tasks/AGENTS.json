@@ -3,46 +3,40 @@
   "flagged": [
     "src/forge/machine.py",
     "src/forge/repo.py",
+    "tests/test_close_runs_only_related_tests.py",
     "tests/test_lanes_agents.py",
     "tests/test_lanes_view.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0ae4ef38204b10136fbc7a8186f3b91f7866dbc6feb6e7bd8327b474b2b0cf4c",
-    "changed": "d32436e6cc719bae8562fdec0ec04aaf8328d3960217b6b09e8476faf6d2f47a",
-    "commit": "337733d0854e1af729982b83a968d4254a2da3c1",
+    "branch_diff": "618e2487d3165dc66d0152f396343cc571f59472307ce95fb9ff58949c038b8e",
+    "changed": "b31d47449beb57db34655cf8756bd0f1b0a78185f17595d9848bbf0119cf34bc",
+    "commit": "ef8322b10f179cb744a487f3494b84f6c4964e80",
     "dismissals": [],
     "findings": [
       {
-        "body": "Every new Refused construction omits next_step, which is required by src/forge/repo.py:52. An unverifiable process therefore causes an uncaught TypeError and traceback instead of the promised one-line refusal. The same defect affects cancellation, worker-only restrictions, argument validation and failed termination at machine.py:87,121,219,221,235. Tests/test_lanes_view.py:194,198,206 accept these tracebacks because the displayed source contains the expected message. Supply next_step at every site and make the command assertions reject tracebacks.",
-        "file": "src/forge/machine.py",
-        "line": 230,
-        "priority": "P1",
-        "title": "Not done: unverifiable process identity refuses with one line"
-      },
-      {
-        "body": "The standard requires: \"Touch only what the task needs.\" The shared command boundary now retries Git configuration failures, and tests/test_close_test_runs_wait_in_line.py:125\u2013137 injects that unrelated failure into the close-queue test. Neither change implements core budgeting, lane entries, diagnostics or cancellation. The handoff names both files and explains the Windows failure, but establishes no dependency on this task. Move src/forge/repo.py's retry change and that test modification into a separate repair.",
-        "file": "src/forge/repo.py",
-        "line": 74,
+        "body": "The standard requires: \"Touch only what the task needs.\" This repairs the unrelated close-test picker's lock-file fixture. The selected base already contains the same semantic lock comparison in src/forge/fasttest.py:112\u2013158 and 175\u2013180; this branch changes only its core budget. Consequently, the comment-only fixture was already incompatible with that existing behavior, rather than broken by agent lanes. The handoff explains preserving the full-suite assertion but establishes no dependency on this task. Move this test repair into a separate change.",
+        "file": "tests/test_close_runs_only_related_tests.py",
+        "line": 54,
         "priority": "P1",
         "title": "Standard: Touch only what the task needs"
       },
       {
-        "body": "The retained checker launches Autoreview without process-group options and calls started(pid), as verified in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination through src/forge/codex.py:624\u2013625. Since that process does not lead its own group, it remains alive and stop cannot free its place. Older Claude workers and readers have the same mismatch. The compatibility ruling remains valid; cancellation must also support those ungrouped processes safely. The existing-queue test converts records from a newly grouped launch, so it does not exercise this case.",
+        "body": "The retained PR checker still launches Autoreview without process-group options, as verified at tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination for that child. src/forge/codex.py:624\u2013631 signals and checks a group named by the child's pid, which does not exist for these launches; the child remains alive and stop refuses without freeing its place. Older Claude workers and readers have the same mismatch. Retaining the old signatures remains valid, but cancellation also needs to handle those ungrouped launches safely. The existing-queue test starts a newly grouped worker before converting its record, so it does not cover this case.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "Review admission snapshots chosen, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Board JSON consequently continues showing null or the unavailable model during the running review. Split design workers likewise replace chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without updating their lane entry. Refresh the active entry's model and effort when either caller changes its selection.",
+        "body": "Review admission snapshots chosen here, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. The running review's board entry therefore continues reporting null or the unavailable model. Split design workers likewise replace chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without refreshing their lane entry. Update the active entry's model and effort whenever either caller changes its selection.",
         "file": "src/forge/review.py",
         "line": 478,
         "priority": "P2",
         "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:171\u2013172 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. The board therefore cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. Plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
+        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:222\u2013223 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. The board consequently cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so it remains deferred advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
@@ -84,6 +78,10 @@
     {
       "at": "2026-10-06T03:48:49+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-06T06:40:38+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -91,6 +89,5 @@
     "file": "src/forge/machine.py",
     "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
   },
-  "tests": "`uv run --python 3.11 forge test --pytest 632ef671a8bbedd027158249e851065eb5235683` exited with status 1 on the machine running forge close.\n        env.repo.git(\"add\", \"-A\")\n        env.repo.git(\"commit\", \"-q\", \"-m\", \"Use Forge's own test settings\")\n        env.repo.git(\"push\", \"-q\", \"origin\", \"main\")\n        changes = {\"src/probe_module.py\": \"VALUE = 2\\n\",\n                   \"tests/test_changed.py\": \"def test_changed():\\n    assert 4 + 4 == 8\\n\"}\n        if shared_input:\n            changes[shared_input] = (env.repo.path / shared_input).read_text(\"utf-8\") + \"\\n# Changed\\n\"\n        item, _ = env.start_fix(changes)\n\n        closed = env.close(item)\n\n        assert closed.returncode == 0, closed.stdout + closed.stderr\n        expected = {\"test_changed\", \"test_related\"}\n        if shared_input:\n            expected.add(\"test_unrelated\")\n>       assert {path.name for path in log.iterdir()} == expected\nE       AssertionError: assert {'test_change...test_related'} == {'test_change...st_unrelated'}\nE\nE         Extra items in the right set:\nE         'test_unrelated'\nE         Use -v to get more diff\n\ntests/test_close_runs_only_related_tests.py:60: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 1158 passed, 5 skipped in 1737.90s (0:28:57)",
   "worker": "codex"
 }
