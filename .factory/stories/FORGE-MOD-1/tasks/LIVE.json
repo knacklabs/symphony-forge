@@ -3,26 +3,34 @@
   "flagged": [
     "src/forge/board.py",
     "src/forge/codex.py",
-    "src/forge/review.py"
+    "src/forge/review.py",
+    "src/forge/story.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ec62f7cd5ccd61f4246e45e7a48819be26c8e3d48087ea506ad60a1a59669c1a",
-    "changed": "001fd0585d6b09c95b35f5f371fcb2a5b57fabf37de6efe6c3401f4cc9cdb5cf",
-    "commit": "7f7025ac985a6bedd888bf6ba377cff0c161bd96",
+    "branch_diff": "1b9dda382c00c8618d8067218a4cad35058bded4a214405e03a873f693a466c1",
+    "changed": "67997ae84b8d2590cf09968310eb279a4154619d9e0b619b9461f4fb63580aa7",
+    "commit": "e78c61361213f08a8eb2645ca771b9a8e2236a59",
     "dismissals": [],
     "findings": [
       {
-        "body": "Live reviewer metadata comes exclusively from the configured values written at run start (review.py:512 and board.py:273\u2013275). Autoreview's reported `model:` and `thinking:` values, including its fallback-model announcement, update only `selected` at review.py:604\u2013610; this progress record publishes only `step`. Consequently, a valid configuration without review metadata leaves model/effort null throughout the review, and a fallback keeps displaying the unavailable model. This affects both reviewer providers. Publish the reported selection into live run metadata and consume it in both views. The new reviewer tests explicitly configure both values and never emit selection or fallback messages, so they cannot detect this gap.",
-        "file": "src/forge/review.py",
-        "line": 603,
+        "body": "When the story worktree is absent, `where` can be a task checkout or task ref. This fallback then reads that task's copied plan and notes, even when the story branch contains a newer plan requiring another read. Both views can consequently report `plan_read: passed` against an outdated snapshot. `_read` at board.py:540\u2013543 reads exactly the supplied location; the existing command logic at nextstep.py:378\u2013384 instead consults the story branch when its worktree is absent. Resolve both plan and notes from the story's current location before falling back to the landed copy, and cover this through the commands. The current plan test retains the story worktree throughout.",
+        "file": "src/forge/board.py",
+        "line": 350,
         "priority": "P1",
-        "title": "Not done: each running reviewer's actual model and effort"
+        "title": "Not done: plan_read from the story's current read record"
+      },
+      {
+        "body": "A valid configuration without the reader's `models.grill` entry runs the cold read using the provider's settings: worker.py:245\u2013251 returns no Claude flags, and codex.py:153\u2013155 likewise supplies no model overrides. Here the Claude run records null model and effort; the Codex sibling at codex.py:323\u2013324 does the same. Neither reader path subsequently publishes the effective selection, so both machine views lack these required fields throughout such reads. Publish the effective provider settings and add missing-configuration reader cases. The new reader tests always configure model and effort, while the default-selection tests cover reviewers only.",
+        "file": "src/forge/story.py",
+        "line": 705,
+        "priority": "P1",
+        "title": "Not done: running readers' model and effort with default settings"
       }
     ],
     "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -35,7 +43,16 @@
     {
       "at": "2026-10-06T01:42:33+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-06T02:41:32+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "done": "src/forge/board.py is simpler and behaves as it did before",
+    "file": "src/forge/board.py",
+    "why": "Simplify src/forge/board.py before FORGE-MOD-1/LIVE carries on"
+  },
   "worker": "codex"
 }
