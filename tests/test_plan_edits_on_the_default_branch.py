@@ -84,10 +84,11 @@ def test_2_identical_copies_are_not_flagged(repo, claude_payload):
     assert started.returncode == 0, started.stderr
 
 
-def test_3_a_newer_story_branch_edit_is_not_flagged(repo, claude_payload, monkeypatch):
+def test_3_a_later_dated_story_edit_still_lacks_independent_main_changes(repo, claude_payload, monkeypatch):
     shop = _saved(repo, claude_payload)
     _fixed(repo, monkeypatch)
-    # The story branch edits its plan after the default branch did, outside what the approval binds.
+    # Commit dates used to hide independent main changes. Content history now keeps them blocked,
+    # even after a later story edit outside what the approval binds.
     (shop / "plans" / "SHOP.md").write_text(DOC.replace("People lose their basket when they leave.",
                                                         "People lose their basket when they close the tab."),
                                             encoding="utf-8")
@@ -95,8 +96,8 @@ def test_3_a_newer_story_branch_edit_is_not_flagged(repo, claude_payload, monkey
     read(repo)
 
     lines = repo.forge("next").stdout.splitlines()
-    assert not any(line.startswith(LACKS) for line in lines)
-    assert "Next: forge task start SHOP/SHOW  # Codex builds it" in lines
+    notice = f"{LACKS}git -C {quote(str(shop))} merge origin/main"
+    assert notice in lines
+    assert "Next: forge task start SHOP/SHOW  # Codex builds it" not in lines
     started = repo.forge("task", "start", "SHOP/SHOW")
-    assert started.returncode == 0, started.stderr
-    assert not started.stderr.startswith(LACKS)
+    assert (started.returncode, started.stdout, started.stderr) == (1, "", f"{notice}\n")
