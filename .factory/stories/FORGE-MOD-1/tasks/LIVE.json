@@ -10,18 +10,18 @@
     "blocking_level": "P1",
     "branch_diff": "1b9dda382c00c8618d8067218a4cad35058bded4a214405e03a873f693a466c1",
     "changed": "67997ae84b8d2590cf09968310eb279a4154619d9e0b619b9461f4fb63580aa7",
-    "commit": "e78c61361213f08a8eb2645ca771b9a8e2236a59",
+    "commit": "43d985dd1c563a666ec7b857daa649501348c834",
     "dismissals": [],
     "findings": [
       {
-        "body": "When the story worktree is absent, `where` can be a task checkout or task ref. This fallback then reads that task's copied plan and notes, even when the story branch contains a newer plan requiring another read. Both views can consequently report `plan_read: passed` against an outdated snapshot. `_read` at board.py:540\u2013543 reads exactly the supplied location; the existing command logic at nextstep.py:378\u2013384 instead consults the story branch when its worktree is absent. Resolve both plan and notes from the story's current location before falling back to the landed copy, and cover this through the commands. The current plan test retains the story worktree throughout.",
+        "body": "The previous gap remains open. Without the story worktree, `where` can identify a task checkout or task ref containing an older plan and read notes. Both views can therefore report `plan_read: passed` even after the story branch's plan changes and requires another read. `_read` at board.py:540\u2013543 reads only the supplied location; nextstep.py:378\u2013384 already consults the story branch when its worktree is absent. Resolve both the plan and notes from the current story location before falling back to the landed copy. Add a command-level regression with the story worktree removed; the current plan test retains it.",
         "file": "src/forge/board.py",
         "line": 350,
         "priority": "P1",
         "title": "Not done: plan_read from the story's current read record"
       },
       {
-        "body": "A valid configuration without the reader's `models.grill` entry runs the cold read using the provider's settings: worker.py:245\u2013251 returns no Claude flags, and codex.py:153\u2013155 likewise supplies no model overrides. Here the Claude run records null model and effort; the Codex sibling at codex.py:323\u2013324 does the same. Neither reader path subsequently publishes the effective selection, so both machine views lack these required fields throughout such reads. Publish the effective provider settings and add missing-configuration reader cases. The new reader tests always configure model and effort, while the default-selection tests cover reviewers only.",
+        "body": "The previous gap remains open for both providers. With no matching `models.grill` entry, worker.py:245\u2013251 supplies no Claude model flags, and codex.py:153\u2013155 supplies no Codex model overrides. This Claude run consequently records null model and effort; codex.py:323\u2013324 does likewise. Neither reader subsequently publishes its effective provider settings, leaving both machine views without the required metadata throughout these reads. Capture the effective selection and cover readers without Forge model configuration. The reader tests configure model and effort explicitly; the default-selection cases cover reviewers only.",
         "file": "src/forge/story.py",
         "line": 705,
         "priority": "P1",
@@ -30,7 +30,7 @@
     ],
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -46,6 +46,10 @@
     },
     {
       "at": "2026-10-06T02:41:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:13:35+00:00",
       "step": "review"
     }
   ],
