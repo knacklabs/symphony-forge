@@ -97,9 +97,9 @@ def main_ref() -> str:
     return f"origin/{repo.default_branch()}"
 
 
-def show(ref: str, rel: str) -> str | None:
+def show(ref: str, rel: str, top: Path | None = None) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
-    done = run("git", "show", f"{ref}:{rel}")
+    done = run("git", "show", f"{ref}:{rel}", cwd=top)
     return done.stdout if done.returncode == 0 else None
 
 
@@ -135,9 +135,25 @@ def start(args: argparse.Namespace) -> None:
     key, task = match["key"], match["task"]
     from forge import story  # story imports this module's helpers
     main = main_ref()
-    if behind := story.plan_behind(repo.root(), key, main):  # a plan edit that came another way, as a fix
+    top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
+    behind = story.plan_behind(top, key, main)
+    if (show(story_branch, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0"):
+        folder = story.stories_here(top).get(key)
+        if folder is None:
+            folder = _folder(f"story-{key}")
+            git("worktree", "add", "-q", str(folder), story_branch)
+        if (not git("status", "--porcelain", cwd=folder) and
+                run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
+            merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
+            if not merged.returncode:
+                print(f"Merged {main} into {story_branch}; only the story doc differs.")
+                behind = ""
+            elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                git("merge", "--abort", cwd=folder)
+    if behind:
         sys.exit(behind)  # the same one line forge next prints
-    doc_rel, notes_rel, story_branch = f"plans/{key}.md", f"plans/{key}.read.md", f"story/{key}"
+    notes_rel = f"plans/{key}.read.md"
     # The story doc lands on the default branch with its first merged task; until then the
     # story branch holds it, and tasks start from there. After that, a story read in rounds is
     # read from its story branch while it exists, and its doc, notes and state are carried over.
@@ -200,24 +216,24 @@ def start_base(main: str, key: str, row: dict[str, str]) -> str:
     return f"story/{key}"
 
 
-def _merged(main: str, item: str) -> bool:
+def _merged(main: str, item: str, top: Path | None = None) -> bool:
     """An item's state reaches the default branch only with its merged pull request."""
-    return show(main, repo.state_path(item)) is not None
+    return show(main, repo.state_path(item), top) is not None
 
 
-def _started(main: str) -> dict[str, list[str]]:
+def _started(main: str, top: Path | None = None) -> dict[str, list[str]]:
     """Every story's started, unmerged tasks, each with its Scope."""
     # ponytail: a few git calls per task branch; fine for the handful of tasks in flight.
     found: dict[str, list[str]] = {}
     refs = git("for-each-ref", "--format=%(refname)", "refs/heads/task/",
-               "refs/remotes/origin/task/").splitlines()
+               "refs/remotes/origin/task/", cwd=top).splitlines()
     for ref in refs:
         branch = "task/" + ref.split("/task/", 1)[1]
-        for rel in git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories").splitlines():
+        for rel in git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories", cwd=top).splitlines():
             match = re.fullmatch(r"\.factory/stories/([^/]+)/tasks/([^/]+)\.json", rel)
             if match and f"task/{match[1]}-{match[2]}" == branch and not _merged(
-                    main, f"{match[1]}/{match[2]}"):
-                doc = rows(sections(show(ref, f"plans/{match[1]}.md") or ""))
+                    main, f"{match[1]}/{match[2]}", top):
+                doc = rows(sections(show(ref, f"plans/{match[1]}.md", top) or ""))
                 found[f"{match[1]}/{match[2]}"] = cell_list(doc.get(match[2], {}).get("Scope", ""))
     return found
 
