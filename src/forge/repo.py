@@ -22,6 +22,10 @@ from typing import Any, NoReturn
 
 from forge import __version__
 
+# Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
+TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
+              ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),

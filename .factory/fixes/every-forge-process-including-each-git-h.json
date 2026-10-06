@@ -1,0 +1,40 @@
+{
+  "allow_large": "Owner approved faster forge start (2026-10-06): it changes how the command-line startup finds and builds commands, keeping every command, option and help text unchanged",
+  "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
+  "branch": "fix/every-forge-process-including-each-git-h",
+  "done_when": "A forge command reads and builds only the module and subcommand it runs (command names found without parsing every module); forge --help and every command's help and behaviour are unchanged; a command test shows a git hook run of forge imports at most the modules its command needs (counted, no wall-clock timing); new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2bfd276e07c35704b155ce1df9af960cf7877c8d851e894dcb19ff3a64e1fd59",
+    "changed": "0ec3508ca0d4846a73670736b3398acb7953176712f5c69cae4cab7f3581118e",
+    "commit": "a6a8c2524cc15acc6293a035386f901518b9bdcc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "For example, `forge story --he` still invokes help because [argparse accepts unambiguous option abbreviations by default](https://docs.python.org/3.11/library/argparse.html#argument-abbreviations-prefix-matching), but this exact-token check leaves the group description unset. Previously that invocation displayed the same description as `forge story --help`. The same regression affects task, fix, spec, decision, roadmap and hook. Populate the description when help is rendered so accepted help spellings retain their output without loading group owners during normal commands. The snapshots exercise only the full `--help` spelling and miss this edge case.",
+        "file": "src/forge/cli.py",
+        "line": 75,
+        "priority": "P2",
+        "title": "Preserve group descriptions for abbreviated help flags"
+      }
+    ],
+    "id": "606bbccc-e4af-4fd0-a669-e05ad0abe9e9",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T10:53:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T14:24:28+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every forge process, including each git hook on commit and push, parses all 33 Forge modules and builds every subcommand before doing anything (~0.23 s per start)",
+  "worker": "codex"
+}
