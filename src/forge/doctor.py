@@ -1,6 +1,7 @@
 """Check Forge's tools, generated files, hooks, CI and Codex trust; repair safe drift with --fix."""
 from __future__ import annotations
 import argparse
+import io
 import json
 import os
 import re
@@ -75,21 +76,101 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
                 line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
-def _held(top: Path, cfg: dict[str, Any], rel: str, ref: str) -> str:
-    if repo.git("status", "--porcelain", "--untracked-files=all", "--ignored", "--", rel, cwd=top):
-        return "has changes not committed yet, so doctor won't overwrite it"
-    last = repo.git("log", "-1", "--format=%H %s", ref, "--", rel, cwd=top)
-    if not last or cfg["repo"] == "forge-source": return ""
-    commit, _, subject = last.partition(" ")
-    pin = lambda at: repo._pin(story.show(top, at, "forge.toml") or "")  # noqa: E731  # pyright: ignore[reportPrivateUsage]
-    landed = repo.run("git", "merge-base", "--is-ancestor", commit, story.landed_ref(top), cwd=top).returncode == 0
-    if landed and (subject.startswith(WHY) or pin(commit) != pin(f"{commit}^")): return ""
-    return f"was changed by hand ({subject}), so doctor won't overwrite it"
-def _split(top: Path, folder: Path, cfg: dict[str, Any], wanted: dict[str, str],
-           ref: str) -> tuple[list[str], list[tuple[str, str]], frozenset[str]]:
-    staged = set(repo.run("git", "diff", "--cached", "--name-only", "-z", "--", *wanted, cwd=top).stdout.split("\0"))
+def _pin_changes(top: Path, commits: set[str]) -> set[str]:
+    if not commits: return set()
+    specs = [f"{commit}{parent}:forge.toml" for commit in sorted(commits) for parent in ("", "^")]
+    done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                          input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True, check=True,
+                          env={**os.environ, "FORGE_WORKER": "1"})
+    contents = io.BytesIO(done.stdout)
+    pins = {}
+    for spec in specs:
+        header = contents.readline()
+        if header.endswith(b" missing\n"): pins[spec] = ""
+        else:
+            size = int(header.split()[-1])
+            text = contents.read(size).decode("utf-8", errors="replace")
+            contents.read(1)  # cat-file adds a newline after each blob's bytes.
+            pins[spec] = repo._pin(text)  # pyright: ignore[reportPrivateUsage]
+    return {commit for commit in commits if pins[f"{commit}:forge.toml"] != pins[f"{commit}^:forge.toml"]}
+def _history(top: Path, wanted: dict[str, str], ref: str) -> dict[str, str]:
+    history = repo.git("log", "--format=commit %H%x00%P%x00%s", "-z", "--raw", "--no-renames",
+                       "--no-abbrev", "--full-history", "--sparse", "--diff-merges=first-parent",
+                       ref, "--", *wanted, cwd=top)
+    parents: dict[str, list[str]] = {}
+    subjects: dict[str, str] = {}
+    changes: dict[tuple[str, str], tuple[str, str]] = {}
+    fields = iter(history.split("\0"))
+    commit = ""
+    for field in fields:
+        field = field.lstrip("\n")
+        if field.startswith("commit "):
+            commit = field.removeprefix("commit ")
+            parents[commit] = next(fields).split()
+            subjects[commit] = next(fields)
+        elif field.startswith(":"):
+            _, mode, _, blob, _ = field.split()
+            rel = next(fields)
+            changes[commit, rel] = (mode, blob) if mode != "000000" else ("", "")
+    def entry(at: str, rel: str) -> tuple[str, str]:
+        trail = []
+        while at and (at, rel) not in changes:
+            trail.append(at)
+            at = next(iter(parents[at]), "")
+        value = changes.get((at, rel), ("", ""))
+        for ancestor in trail: changes[ancestor, rel] = value
+        return value
+    latest = {}
+    for rel in wanted:
+        at = next(iter(parents), "")
+        while at:
+            value = entry(at, rel)
+            # Like log -- <one path>, follow the first parent with the same file.
+            same = next((parent for parent in parents[at] if entry(parent, rel) == value), "")
+            if same: at = same
+            else:
+                if parents[at] or value != ("", ""): latest[rel] = f"{at} {subjects[at]}"
+                break
+    return latest
+
+def _changes(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
+             ref: str) -> tuple[set[str], dict[str, str]]:
+    if not wanted: return set(), {}
+    status = repo.git("status", "--porcelain=v2", "-z", "--no-renames", "--untracked-files=all",
+                      "--ignored", "--", *wanted, cwd=top)
+    dirty, staged = set(), set()
+    for entry in status.split("\0"):
+        if entry.startswith("1 "):
+            _, xy, *_, rel = entry.split(" ", 8)
+            dirty.add(rel)
+            if xy[0] != ".": staged.add(rel)
+        elif entry.startswith(("? ", "! ")): dirty.add(entry[2:])
+        elif entry.startswith("u "):
+            rel = entry.split(" ", 10)[-1]
+            dirty.add(rel)
+            staged.add(rel)
+    latest = _history(top, wanted, ref)
+    landed = (set(repo.git("rev-list", story.landed_ref(top), cwd=top).splitlines())
+              if cfg["repo"] != "forge-source" else set())
+    owned = {commit for last in latest.values() for commit, _, subject in [last.partition(" ")]
+             if commit in landed and subject.startswith(WHY)}
+    commits = {last.partition(" ")[0] for last in latest.values()} & landed
+    free = owned | _pin_changes(top, commits - owned)
+    held: dict[str, str] = {}
+    for rel in wanted:
+        if rel in dirty:
+            held[rel] = "has changes not committed yet, so doctor won't overwrite it"
+        else:
+            last = latest.get(rel, "")
+            commit, _, subject = last.partition(" ")
+            held[rel] = ("" if not last or cfg["repo"] == "forge-source" or commit in free
+                         else f"was changed by hand ({subject}), so doctor won't overwrite it")
+    return staged, held
+
+def _split(folder: Path, wanted: dict[str, str], staged: set[str],
+           held: dict[str, str]) -> tuple[list[str], list[tuple[str, str]], frozenset[str]]:
     differing = set(sync.differing(folder, wanted))
-    reasons = {rel: _held(top, cfg, rel, ref) for rel in wanted if rel in differing or rel in staged}
+    reasons = {rel: held.get(rel, "") for rel in wanted if rel in differing or rel in staged}
     free = [rel for rel, reason in reasons.items() if not reason]
     keep = {rel for rel, reason in reasons.items() if reason}
     rows = [(f"{rel} {reason}.", HAND) for rel, reason in reasons.items() if reason]
@@ -111,7 +192,8 @@ def _unfinished(name: str, branch: str, path: Path | None) -> tuple[str, str]:
 def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tuple[str, str]]:
     ref, default = story.landed_ref(top), repo.default_branch(top)
     if branch := _open_files_fix(top): return [_unfinished(branch.removeprefix("fix/"), branch, story.worktrees(top).get(branch))]
-    free, held, _ = _split(top, top, cfg, wanted, ref)
+    staged, changes = _changes(top, cfg, wanted, ref)
+    free, held, _ = _split(top, wanted, staged, changes)
     heads = repo.git("rev-parse", "HEAD", ref, cwd=top).splitlines()
     if (len(set(heads)) != 1 or repo.git("status", "--porcelain", "--untracked-files=all", cwd=top)):
         return [(f"Doctor needs a clean checkout at origin/{default} before it makes a fix for "
@@ -134,7 +216,7 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
         fixed = repo.config(path)
         fixed_wanted = sync.files(path, fixed)
         if linked := _linked(path, fixed_wanted): return [(problem, _unfinished(name, branch, path)[1]) for problem, _ in linked]
-        free, held, keep = _split(top, path, cfg, fixed_wanted, ref)
+        free, held, keep = _split(path, fixed_wanted, staged, changes)
         if free:
             free = sync.write(path, fixed, keep)
             repo.git("add", "-A", "-f", "--", *free, cwd=path)
@@ -158,7 +240,8 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
         if not fetched.returncode: return _in_fix(top, cfg, wanted)
         failed = [(f"doctor couldn't fetch {default} from origin, so it started no fix for " f"Forge's files: {_last(fetched)}",
                    f"check your network and GitHub access, then {REPAIR}")]
-    free, rows, keep = _split(top, top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD")
+    staged, changes = _changes(top, cfg, wanted, story.landed_ref(top) if on_default else "HEAD")
+    free, rows, keep = _split(top, wanted, staged, changes)
     if not fix or not free or failed: return failed + _rows(free) + rows
     try:  # forge sync's own write, so deletions and links behave exactly as there
         written = sync.write(top, cfg, keep)

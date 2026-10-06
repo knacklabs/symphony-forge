@@ -18,12 +18,12 @@ STORY = "FIX-REVIEWS-LEAVE-THEIR-FORGE-REVIEW-TEMPORA"
 # Answers as the stub Autoreview does, after what $REVIEW_DO says: "hang" records its id and
 # waits to be stopped; "lock" leaves a folder in the review tree that nobody may write to.
 HELPER = '''#!{python}
-import os, subprocess, sys, time
+import os, subprocess, sys, threading
 do = os.environ.get("REVIEW_DO", "")
 if do == "hang":
     with open(os.environ["AUTOREVIEW_STUB"] + ".hanging", "w", encoding="utf-8") as out:
         out.write(str(os.getpid()))
-    time.sleep(600)
+    threading.Event().wait()
 if do == "lock":
     os.makedirs("locked/inner")
     open("locked/inner/file", "w").close()
@@ -61,9 +61,19 @@ def _hanging_close(env, item, monkeypatch):
                              cwd=env.repo.path, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, start_new_session=True)
     deadline = time.monotonic() + 60
-    while not (marker.exists() and marker.read_text("utf-8")):
-        assert close.poll() is None and time.monotonic() < deadline, "the review never started"
-        time.sleep(0.05)
+    try:
+        while not (marker.exists() and marker.read_text("utf-8")):
+            assert close.poll() is None and time.monotonic() < deadline, "the review never started"
+            time.sleep(0.05)
+    except BaseException:
+        close.kill()
+        if os.name != "nt":
+            try:
+                os.killpg(close.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        close.wait(timeout=60)
+        raise
     monkeypatch.delenv("REVIEW_DO")
     return close, int(marker.read_text("utf-8"))
 
@@ -72,11 +82,17 @@ def _hanging_close(env, item, monkeypatch):
 def test_1_a_review_stopped_with_ctrl_c_leaves_no_folder(env, temp, monkeypatch):
     item, _ = env.start_fix()
     close, _ = _hanging_close(env, item, monkeypatch)
-    assert _leftovers(temp)
-    os.killpg(close.pid, signal.SIGINT)  # what Ctrl-C sends the terminal's foreground group
-    assert close.wait(timeout=60) != 0
-
-    assert _leftovers(temp) == []
+    try:
+        assert _leftovers(temp)
+        os.killpg(close.pid, signal.SIGINT)  # what Ctrl-C sends the terminal's foreground group
+        assert close.wait(timeout=60) != 0
+        assert _leftovers(temp) == []
+    finally:
+        try:
+            os.killpg(close.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        close.wait(timeout=60)
 
 
 def test_2_a_killed_review_s_fresh_folder_is_left_alone_until_it_is_a_day_old(
