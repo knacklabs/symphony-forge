@@ -320,6 +320,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex_turn.py\tNot done: running Codex readers' effort with default settings\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/codex_turn.py",
+      "line": 185,
+      "text": "Not done: running Codex readers' effort with default settings",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: CLOSED and MERGED doctor-fix retention tests\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -661,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "kind": "bug",
+      "path": "tests/test_close_test_runs_wait_in_line.py",
+      "line": 110,
+      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "from": "worker",
+      "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_record.py\tThe process-cleanup test exceeds its timeout on the default branch too.",
       "kind": "bug",
       "path": "tests/test_codex_record.py",
@@ -855,6 +877,17 @@
       "text": "Not done: New and previously adopted clients run the proposed picker through close",
       "from": "blocking",
       "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-126",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 11,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "release-126",
       "status": "open",
       "closed_by": null
     },
@@ -1299,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\tHandle Windows readers holding the progress file open",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 171,
+      "text": "Handle Windows readers holding the progress file open",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/repo.py\tRecord run ends only after the child has stopped",
       "kind": "edge",
       "path": "src/forge/repo.py",
@@ -1464,6 +1508,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_machine_views.py\tThe reported Windows worker crash still needs a Windows rerun.",
+      "kind": "edge",
+      "path": "tests/test_machine_views.py",
+      "line": 545,
+      "text": "The reported Windows worker crash still needs a Windows rerun.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_next_announces_new_forge_releases.py\tThe reported Windows timing assertion still needs a Windows rerun.",
+      "kind": "edge",
+      "path": "tests/test_next_announces_new_forge_releases.py",
+      "line": 99,
+      "text": "The reported Windows timing assertion still needs a Windows rerun.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
       "kind": "edge",
       "path": "tests/test_proto_deploy.py",
@@ -1504,28 +1570,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_release_version.py\tNot done: proof list\trelease-126",
-      "kind": "bug",
-      "path": "tests/test_release_version.py",
-      "line": 11,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "release-126",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
-      "kind": "bug",
-      "path": "tests/test_close_test_runs_wait_in_line.py",
-      "line": 110,
-      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
-      "from": "worker",
-      "item": "discovery-due-check-test",
       "status": "open",
       "closed_by": null
     }
