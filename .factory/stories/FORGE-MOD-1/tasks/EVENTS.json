@@ -5,31 +5,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "adb72710cfa7138c596d989260920ff809cc36bbf0e1e77af844a9b52c106dc9",
-    "changed": "408766283846ec2b019a38cf2511517794bfadaa73d10ba5c4009cc787efa608",
-    "commit": "ac260e5fd41e1899c31f2cce048737beee007563",
+    "branch_diff": "17dce9d6654797044cb8a75574e59f7476ed4b1be47a9a6a369a2e0a4b13a714",
+    "changed": "49975f59af3d602bce2069f1be1b4ef90500315d3ed532f85fada337ea355880",
+    "commit": "b6217781e4cea56dca722aa5a22e1710e313de43",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous gap remains: baselines and successful submissions retain every seen ID, and session.end never removes obsolete session keys. src/forge/board.py:289\u2013300 exposes historical run endings, so each session copies an increasing history. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. Once full, this write fails after submission succeeds; the batch remains unacknowledged and is submitted again on subsequent refreshes. New-session baselines also fail. Bound retained history and obsolete session keys while preserving deduplication.",
+        "body": "The previous gap remains: baselines and successful submissions retain every seen ID, and session.end never deletes obsolete session keys. The unchanged src/forge/board.py:289\u2013300 exposes historical run endings, so each session copies an increasing history. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the plugin store. Once that limit is reached, acknowledgement can fail after submission succeeds, causing the same batch to be submitted again; new-session baselines also fail. Bound retained history and obsolete session keys while preserving deduplication.",
         "file": "src/forge/mod/hooks/events.ts",
         "line": 74,
         "priority": "P2",
         "title": "Bound persisted seen history before Claude's store limit"
       },
       {
-        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. Packaged cases exercise real occurrences, shared-store sessions and reload batching, but submission-failure retries, worker/headless gating and session resets still depend on native assertions the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must execute these tests and propagate failures. This remains P2 advice under the task-ownership rule.",
+        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. The packaged cases exercise real occurrences, shared-store sessions and reload batching, but submission-failure retries, worker/headless gating and session resets still depend on native assertions that the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must execute these tests and propagate failures. This remains P2 advice under the task-ownership ruling.",
         "file": "src/forge/mod/hooks/events.test.ts",
-        "line": 125,
+        "line": 127,
         "priority": "P2",
         "title": "Later: SHIP must run the native event tests in CI"
       }
     ],
-    "id": "81429650-1330-4fdf-a066-c57cc90b0f18",
+    "id": "9a60aa9a-c74d-437f-a9a7-d9530ccfd53b",
     "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T00:54:29+00:00",
@@ -61,6 +61,10 @@
     },
     {
       "at": "2026-10-06T07:07:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T09:30:17+00:00",
       "step": "review"
     }
   ],
