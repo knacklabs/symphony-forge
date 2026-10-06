@@ -1,0 +1,72 @@
+{
+  "branch": "task/FORGE-MOD-1-EVENTS",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "17dce9d6654797044cb8a75574e59f7476ed4b1be47a9a6a369a2e0a4b13a714",
+    "changed": "49975f59af3d602bce2069f1be1b4ef90500315d3ed532f85fada337ea355880",
+    "commit": "b6217781e4cea56dca722aa5a22e1710e313de43",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous gap remains: baselines and successful submissions retain every seen ID, and session.end never deletes obsolete session keys. The unchanged src/forge/board.py:289\u2013300 exposes historical run endings, so each session copies an increasing history. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the plugin store. Once that limit is reached, acknowledgement can fail after submission succeeds, causing the same batch to be submitted again; new-session baselines also fail. Bound retained history and obsolete session keys while preserving deduplication.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "line": 74,
+        "priority": "P2",
+        "title": "Bound persisted seen history before Claude's store limit"
+      },
+      {
+        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. The packaged cases exercise real occurrences, shared-store sessions and reload batching, but submission-failure retries, worker/headless gating and session resets still depend on native assertions that the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must execute these tests and propagate failures. This remains P2 advice under the task-ownership ruling.",
+        "file": "src/forge/mod/hooks/events.test.ts",
+        "line": 127,
+        "priority": "P2",
+        "title": "Later: SHIP must run the native event tests in CI"
+      }
+    ],
+    "id": "9a60aa9a-c74d-437f-a9a7-d9530ccfd53b",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T00:54:29+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T02:17:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T02:40:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:16:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T04:15:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T05:00:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T06:06:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T07:07:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T09:30:17+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}
