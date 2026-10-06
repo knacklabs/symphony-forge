@@ -19,6 +19,7 @@ from test_task import story
 from conftest import ROOT
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
+from test_mod_plugin import packaged_mod  # noqa: F401
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
@@ -211,8 +212,24 @@ def github(gh, prs):
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
 
-@pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read"])
+@pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read",
+                                    "plugin checks", "plugin refresh"])
 def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, context):
+    # CORE adds the packaged plugin boundary to this criterion's existing owner.
+    # The old command cases stay; the mod cases prove transport and refresh lifecycle.
+    if context in ("plugin checks", "plugin refresh"):
+        from test_mod_plugin import (
+            packaged_mod_refreshes_real_checks_and_returns_headless_text,
+            refresh_failures_timeout_and_overlap_keep_the_last_snapshot,
+        )
+        plugin = request.getfixturevalue("packaged_mod")
+        temporary = request.getfixturevalue("tmp_path")
+        if context == "plugin checks":
+            packaged_mod_refreshes_real_checks_and_returns_headless_text(
+                request.getfixturevalue("env"), plugin, temporary)
+        else:
+            refresh_failures_timeout_and_overlap_keep_the_last_snapshot(plugin, temporary)
+        return
     if context in ("live worker", "live read"):
         _board_shows_recorded_live_agent_metadata(request.getfixturevalue("env"), context.split()[1])
         return
