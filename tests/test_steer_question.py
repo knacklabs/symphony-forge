@@ -106,18 +106,28 @@ def _interrupted_answer_keeps_the_question_unanswered(repo, monkeypatch, sdk_dat
         [sys.executable, str(repo.bin / "forge"), "work", "BOARD/PAGE", "--note", "Yes, use it."],
         cwd=repo.path, env={**os.environ, "STUB_CODEX_STATUS": "hold"},
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    for _ in range(600):
-        try:
-            if len(_lines(turns)) > before:
-                break
-        except (FileNotFoundError, ValueError):
-            pass  # the turn log may be halfway through a line
-        time.sleep(0.05)
-    else:
-        answering.kill()
-        pytest.fail(f"the answering turn never started: {answering.communicate()[1]}")
-    answering.send_signal(signal.SIGINT)
-    answering.communicate(timeout=30)
+    try:
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline and answering.poll() is None:
+            try:
+                # The turn log precedes the recovery record; wait for both, as _holding does.
+                if len(_lines(turns)) > before:
+                    saved = json.loads(record.read_text("utf-8"))
+                    if saved.get("pending") is None and "continued" in saved:
+                        break
+            except (FileNotFoundError, ValueError):
+                pass  # either file may be halfway written
+            time.sleep(0.05)
+        else:
+            pytest.fail("the answering turn never started")
+        answering.send_signal(signal.SIGINT)
+        # Driver cleanup itself has a five-second wait and a thirty-second group-exit bound.
+        _, error = answering.communicate(timeout=60)
+        assert answering.returncode == 130, error
+    finally:
+        if answering.poll() is None:
+            answering.kill()
+        answering.communicate(timeout=60)
 
     assert json.loads(record.read_text("utf-8"))["question"] == question
     expected = (f"The worker is waiting for an answer:\n{question}\n"
