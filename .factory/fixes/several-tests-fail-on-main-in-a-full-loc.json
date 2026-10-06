@@ -1,0 +1,14 @@
+{
+  "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
+  "branch": "fix/several-tests-fail-on-main-in-a-full-loc",
+  "done_when": "tests/test_reviews_remove_their_temp_folders.py::test_1, tests/test_steer_question.py::test_2[interrupt], tests/test_pytest_cleanup_skips_locked_files.py::test_4 and the doctor Ctrl-C test send Ctrl-C only after the process reports it is ready and wait for its exit within a bound, instead of fixed sleeps, so they pass when their files run together with -n 8 on macOS; what they test is unchanged; new and existing client repos see no behaviour change",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-06T10:41:09+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Several tests fail on main in a full local run on macOS though they pass alone (Ctrl-C handling in review cleanup, worker questions and doctor, plus locked-file cleanup), so every worker's full run looks red and workers spend rounds re-checking main"
+}
