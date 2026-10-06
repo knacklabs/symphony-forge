@@ -10,6 +10,58 @@ const started = { cwd: '/repo', surface: 'terminal', isInteractive: true } as co
 const complete = { answer: '', durationMs: 1, isAborted: false, turnId: 'main', reason: 'answer' } as const
 
 for (const surface of ['terminal', 'desktop'] as const) {
+  for (const transition of ['start', 'complete'] as const) {
+    test(`3: ${surface} tracks main turn ${transition} while reload refresh is pending`, async ($, on) => {
+      const clock = mock.clock(on)
+      mock.store(on)
+      mock.env(on, {})
+      let items = [row('Guide', 'initial')]
+      let gate: Promise<void> | null = null
+      let entered = () => {}
+      const prompts: string[] = []
+      on('session.start', () => ({ cwd: '/repo' }))
+      on('session.id', () => ({ value: 'reload' }))
+      on('session.cwd', () => ({ value: '/repo' }))
+      on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
+      on('session.surfaces', () => ({ value: [surface] }))
+      on('command.register', () => ({ value: { command: 'forge' } }))
+      on('ui.invalidate', () => ({ value: undefined }))
+      on('process.run', async (_$, e) => {
+        if (gate) { entered(); await gate }
+        return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
+          e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items } :
+          e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },
+        ) } }
+      })
+      on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
+      on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+      on('turn.complete', () => ({ text: '' }))
+      await $.session.start({ ...started, surface })
+      if (transition === 'complete') await $.turn.start({ text: 'Working', turnId: 'main' })
+      let release = () => {}
+      gate = new Promise<void>(resolve => { release = resolve })
+      const refreshing = new Promise<void>(resolve => { entered = resolve })
+      const reload = $.session.start({ ...started, surface })
+      await refreshing
+      if (transition === 'complete') await $.turn.complete(complete)
+      else await $.turn.start({ text: 'Working', turnId: 'main' })
+      release()
+      await reload
+      gate = null
+      items = [row('Guide', 'after-refresh')]
+      await clock.advance(10000)
+      if (transition === 'start') {
+        expect(prompts).toEqual([])
+        await $.turn.complete(complete)
+      }
+      expect(prompts).toEqual(['Guide: Which option? Next: forge work guide'])
+      await clock.advance(10000)
+      expect(prompts.length).toBe(1)
+    })
+  }
+}
+
+for (const surface of ['terminal', 'desktop'] as const) {
   test(`3: ${surface} follows session resets and repository moves without another start`, async ($, on) => {
     const clock = mock.clock(on)
     mock.store(on)

@@ -22,7 +22,7 @@ function occurrences(items: Item[]): Map<string, string> {
 }
 
 export function registerEvents(on: On, data: Data) {
-  let enabled = false
+  let eligibility = Promise.resolve(false)
   let key: string | null = null
   const pending = new Map<string, string>()
   let drain = async () => {}
@@ -32,11 +32,11 @@ export function registerEvents(on: On, data: Data) {
     drain = async () => {}
     key = null
     pending.clear()
-    enabled = false
+    // Turn hooks must share this decision while the reload refresh is pending.
+    eligibility = (async () => await $.env.get('FORGE_WORKER') !== '1'
+      && (await $.session.surfaces()).some(s => s === 'terminal' || s === 'desktop'))()
     const started = await next(e)
-    if (await $.env.get('FORGE_WORKER') === '1' || !e.isInteractive
-      || !(await $.session.surfaces()).some(s => s === 'terminal' || s === 'desktop')) return started
-    enabled = true
+    if (!await eligibility) return started
     let running = false
     drain = async () => {
       if (running) return
@@ -86,16 +86,16 @@ export function registerEvents(on: On, data: Data) {
   on('session.end', async ($, e, next) => {
     key = null
     pending.clear()
-    if (enabled) await $.store.set(JSON.stringify(['forge-active-turn', e.sessionId]), null)
+    if (await eligibility) await $.store.set(JSON.stringify(['forge-active-turn', e.sessionId]), null)
     return next(e)
   })
   on('turn.start', async ($, e, next) => {
-    if (enabled) await $.store.set(JSON.stringify(['forge-active-turn', await $.session.id()]), e.turnId)
+    if (await eligibility) await $.store.set(JSON.stringify(['forge-active-turn', await $.session.id()]), e.turnId)
     return next(e)
   })
   on('turn.complete', async ($, e, next) => {
     const result = await next(e)
-    if (enabled && !e.agentId) {
+    if (!e.agentId && await eligibility) {
       const activeKey = JSON.stringify(['forge-active-turn', await $.session.id()])
       if (await $.store.get(activeKey) === e.turnId) await $.store.set(activeKey, null)
       await drain()

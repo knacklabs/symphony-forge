@@ -172,8 +172,9 @@ function forge(args) {{
   return execFileSync({json.dumps(sys.executable)}, [{json.dumps(str(repo.bin / 'forge'))}, ...args],
     {{cwd: {json.dumps(str(repo.path))}, encoding: 'utf8', timeout: 30000}});
 }}
-async function session(id) {{
+async function session(id, duringRefresh) {{
   const registered = new Map(), timers = [], prompts = [];
+  let initialRefresh = true;
   function on(name, matcher, hook) {{
     if (typeof matcher === 'function') {{ hook = matcher; matcher = {{}}; }}
     const list = registered.get(name) ?? [];
@@ -188,6 +189,7 @@ async function session(id) {{
     store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value)}},
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
+      if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}
       try {{ return {{exitCode: 0, stdout: forge(argv.slice(1)), stderr: ''}}; }}
       catch (e) {{ return {{exitCode: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '')}}; }}
     }}}},
@@ -236,6 +238,22 @@ assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Wo
 assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Question:')).length, 2);
 await busyReload.tick();
 assert.equal(busyReload.prompts.length, 1);
+await busyReload.fire('turn.start', {{text: 'Working', turnId: 'during-refresh'}});
+const endedDuringReload = await session('first', fire => fire('turn.complete',
+  {{answer: '', durationMs: 1, isAborted: false, turnId: 'during-refresh', reason: 'answer'}}));
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await endedDuringReload.tick();
+assert.equal(endedDuringReload.prompts.length, 1);
+await endedDuringReload.tick();
+assert.equal(endedDuringReload.prompts.length, 1);
+const startedDuringReload = await session('first', fire => fire('turn.start',
+  {{text: 'Working', turnId: 'new-during-refresh'}}));
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await startedDuringReload.tick();
+assert.deepEqual(startedDuringReload.prompts, []);
+await startedDuringReload.fire('turn.complete',
+  {{answer: '', durationMs: 1, isAborted: false, turnId: 'new-during-refresh', reason: 'answer'}});
+assert.equal(startedDuringReload.prompts.length, 1);
 console.log(JSON.stringify({{first: first.prompts, second: second.prompts}}));
 """)
     assert answer["first"] == answer["second"]
