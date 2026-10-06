@@ -154,7 +154,7 @@ async function fire(name, event, api) {
 """
 
 
-def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, packaged_mod, tmp_path):
+def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, packaged_mod, tmp_path, case):
     # The native tests own scheduling and failure cases. This protects the
     # transport from real command-produced ids/next steps to the shipped mod,
     # and independent live sessions sharing Claude's persistent store.
@@ -208,6 +208,8 @@ async function session(id, duringRefresh) {{
   await fire('session.start', {{cwd: {json.dumps(str(repo.path))}, isInteractive: true, surface: 'terminal'}});
   return {{prompts, fire, tick: async () => {{timers[0](); await new Promise(resolve => setImmediate(resolve));}}}};
 }}
+// Each lifecycle has its own host budget: real Forge processes are slower on Windows.
+if ({json.dumps(case)} === 'events') {{
 const first = await session('first'), second = await session('second');
 assert.deepEqual(first.prompts, []);
 assert.deepEqual(second.prompts, []);
@@ -224,7 +226,10 @@ assert.equal(second.prompts.length, 1);
 const reloaded = await session('first');
 await reloaded.tick();
 assert.deepEqual(reloaded.prompts, []);
-await reloaded.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+console.log(JSON.stringify({{first: first.prompts, second: second.prompts}}));
+}} else if ({json.dumps(case)} === 'busy reload') {{
+const first = await session('first');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
 // A fresh register discards module variables just as a real hot reload does.
 const busyReload = await session('first');
 forge(['work', {json.dumps(item)}, '--note', 'Yes']);
@@ -238,7 +243,10 @@ assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Wo
 assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Question:')).length, 2);
 await busyReload.tick();
 assert.equal(busyReload.prompts.length, 1);
-await busyReload.fire('turn.start', {{text: 'Working', turnId: 'during-refresh'}});
+console.log(JSON.stringify({{prompts: busyReload.prompts}}));
+}} else if ({json.dumps(case)} === 'reload complete') {{
+const first = await session('first');
+await first.fire('turn.start', {{text: 'Working', turnId: 'during-refresh'}});
 const endedDuringReload = await session('first', fire => fire('turn.complete',
   {{answer: '', durationMs: 1, isAborted: false, turnId: 'during-refresh', reason: 'answer'}}));
 forge(['work', {json.dumps(item)}, '--note', 'Yes']);
@@ -246,6 +254,9 @@ await endedDuringReload.tick();
 assert.equal(endedDuringReload.prompts.length, 1);
 await endedDuringReload.tick();
 assert.equal(endedDuringReload.prompts.length, 1);
+console.log(JSON.stringify({{prompts: endedDuringReload.prompts}}));
+}} else {{
+await session('first');
 const startedDuringReload = await session('first', fire => fire('turn.start',
   {{text: 'Working', turnId: 'new-during-refresh'}}));
 forge(['work', {json.dumps(item)}, '--note', 'Yes']);
@@ -254,9 +265,11 @@ assert.deepEqual(startedDuringReload.prompts, []);
 await startedDuringReload.fire('turn.complete',
   {{answer: '', durationMs: 1, isAborted: false, turnId: 'new-during-refresh', reason: 'answer'}});
 assert.equal(startedDuringReload.prompts.length, 1);
-console.log(JSON.stringify({{first: first.prompts, second: second.prompts}}));
+console.log(JSON.stringify({{prompts: startedDuringReload.prompts}}));
+}}
 """)
-    assert answer["first"] == answer["second"]
+    if case == "events":
+        assert answer["first"] == answer["second"]
 
 
 def test_6_feature_registrars_share_one_snapshot_and_machine_gets_the_tab_host(packaged_mod, tmp_path):
