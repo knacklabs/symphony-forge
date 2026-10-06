@@ -397,6 +397,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/core.test.ts\tNot done: elapsed time advances between refreshes\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/core.test.ts",
+      "line": 39,
+      "text": "Not done: elapsed time advances between refreshes",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/forge.ts\tAccept unknown worker start times from the board contract\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/forge.ts",
+      "line": 27,
+      "text": "Accept unknown worker start times from the board contract",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/summary.ts",
+      "line": 33,
+      "text": "Not done: /forge returns the summary of detail 2",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -404,6 +437,28 @@
       "text": "Preserve merge-result testing when running the full suite",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {\trepos-without-a-quick-test-setting-don-t",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 16,
+      "text": "Not done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {",
+      "from": "blocking",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/quicktest.py\tNot done: mixed repos get one part per kind\trepos-without-a-quick-test-setting-don-t",
+      "kind": "bug",
+      "path": "src/forge/quicktest.py",
+      "line": 40,
+      "text": "Not done: mixed repos get one part per kind",
+      "from": "blocking",
+      "item": "repos-without-a-quick-test-setting-don-t",
       "status": "open",
       "closed_by": null
     },
@@ -525,6 +580,17 @@
       "text": "Not done: A suite test proves CI consumes the committed test durations",
       "from": "blocking",
       "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "kind": "bug",
+      "path": "tests/test_close_test_runs_wait_in_line.py",
+      "line": 110,
+      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "from": "worker",
+      "item": "discovery-due-check-test",
       "status": "open",
       "closed_by": null
     },
@@ -690,6 +756,17 @@
       "text": "Not done: machine-view tests for new and upgraded client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
+      "kind": "bug",
+      "path": "tests/test_mod_plugin.py",
+      "line": 38,
+      "text": "Standard: TypeScript in strict mode",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/CORE",
       "status": "open",
       "closed_by": null
     },
@@ -991,6 +1068,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tIn a mixed repo the Python picker also runs the full command's other test runners before the suggested changed-file parts.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 155,
+      "text": "In a mixed repo the Python picker also runs the full command's other test runners before the suggested changed-file parts.",
+      "from": "worker",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tKeep installation before retained Node checks in mixed commands",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 120,
+      "text": "Keep installation before retained Node checks in mixed commands",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -1086,6 +1185,50 @@
       "text": "Validate fix branch names before reading their states",
       "from": "review",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tForward the added filters through npm exec's argument separator",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 48,
+      "text": "Forward the added filters through npm exec's argument separator",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tInsert npm exec's separator after its existing options",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 62,
+      "text": "Insert npm exec's separator after its existing options",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tKeep installation before direct Node checks in mixed suggestions",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 50,
+      "text": "Keep installation before direct Node checks in mixed suggestions",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/quicktest.py\tPreserve trailing npm options when inserting the exec separator",
+      "kind": "edge",
+      "path": "src/forge/quicktest.py",
+      "line": 85,
+      "text": "Preserve trailing npm options when inserting the exec separator",
+      "from": "review",
+      "item": "repos-without-a-quick-test-setting-don-t",
       "status": "open",
       "closed_by": null
     },
@@ -1273,138 +1416,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/quicktest.py\tNot done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {\trepos-without-a-quick-test-setting-don-t",
-      "kind": "bug",
-      "path": "src/forge/quicktest.py",
-      "line": 16,
-      "text": "Not done: forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {",
-      "from": "blocking",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/quicktest.py\tNot done: mixed repos get one part per kind\trepos-without-a-quick-test-setting-don-t",
-      "kind": "bug",
-      "path": "src/forge/quicktest.py",
-      "line": 40,
-      "text": "Not done: mixed repos get one part per kind",
-      "from": "blocking",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tIn a mixed repo the Python picker also runs the full command's other test runners before the suggested changed-file parts.",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 155,
-      "text": "In a mixed repo the Python picker also runs the full command's other test runners before the suggested changed-file parts.",
-      "from": "worker",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tKeep installation before retained Node checks in mixed commands",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 120,
-      "text": "Keep installation before retained Node checks in mixed commands",
-      "from": "review",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/quicktest.py\tForward the added filters through npm exec's argument separator",
-      "kind": "edge",
-      "path": "src/forge/quicktest.py",
-      "line": 48,
-      "text": "Forward the added filters through npm exec's argument separator",
-      "from": "review",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/quicktest.py\tInsert npm exec's separator after its existing options",
-      "kind": "edge",
-      "path": "src/forge/quicktest.py",
-      "line": 62,
-      "text": "Insert npm exec's separator after its existing options",
-      "from": "review",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/quicktest.py\tKeep installation before direct Node checks in mixed suggestions",
-      "kind": "edge",
-      "path": "src/forge/quicktest.py",
-      "line": 50,
-      "text": "Keep installation before direct Node checks in mixed suggestions",
-      "from": "review",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/quicktest.py\tPreserve trailing npm options when inserting the exec separator",
-      "kind": "edge",
-      "path": "src/forge/quicktest.py",
-      "line": 85,
-      "text": "Preserve trailing npm options when inserting the exec separator",
-      "from": "review",
-      "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/core.test.ts\tNot done: elapsed time advances between refreshes\tFORGE-MOD-1/CORE",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/core.test.ts",
-      "line": 39,
-      "text": "Not done: elapsed time advances between refreshes",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/CORE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/forge.ts\tAccept unknown worker start times from the board contract\tFORGE-MOD-1/CORE",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/forge.ts",
-      "line": 27,
-      "text": "Accept unknown worker start times from the board contract",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/CORE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/summary.ts",
-      "line": 33,
-      "text": "Not done: /forge returns the summary of detail 2",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/CORE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
-      "kind": "bug",
-      "path": "tests/test_mod_plugin.py",
-      "line": 38,
-      "text": "Standard: TypeScript in strict mode",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/CORE",
       "status": "open",
       "closed_by": null
     }
