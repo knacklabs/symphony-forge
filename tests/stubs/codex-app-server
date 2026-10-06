@@ -196,9 +196,18 @@ def main():
             reply(message, {"approvalPolicy": params.get("approvalPolicy", "on-request"),
                             "approvalsReviewer": "user", "cwd": cwd,
                             "model": (config or {}).get("model", "stub-model"),
-                            "reasoningEffort": (config or {}).get("model_reasoning_effort", "medium"),
+                            "reasoningEffort": (config or {}).get("model_reasoning_effort"),
                             "modelProvider": "openai", "sandbox": {"type": "dangerFullAccess"},
                             "thread": thread})
+        elif method == "model/list":
+            assert params["includeHidden"] is True
+            model = (config or {}).get("model", "stub-model") if params.get("cursor") else "other-model"
+            reply(message, {"data": [{"id": model, "model": model,
+                                     "displayName": model, "description": "Stub model",
+                                     "hidden": True, "isDefault": False,
+                                     "defaultReasoningEffort": "medium" if params.get("cursor") else "high",
+                                     "supportedReasoningEfforts": [{"reasoningEffort": "medium", "description": "Default"}]}],
+                            "nextCursor": None if params.get("cursor") else "selected-model"})
         elif method == "hooks/list":
             listed = [{"cwd": cwd, "hooks": hooks(cwd), "errors": [], "warnings": []}
                       for cwd in params["cwds"]]

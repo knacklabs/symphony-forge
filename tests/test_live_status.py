@@ -104,6 +104,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             if "default" not in case:
                 config.write_text(config.read_text("utf-8") + 'models.grill.codex = { model = "gpt-6-sol", effort = "high" }\n', "utf-8")
             else:
+                # Codex reports a null configured effort. Its matching model's default
+                # is on the second catalog page, after a different model's high default.
                 stub.write_text(stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.1-sol"'), "utf-8")
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
