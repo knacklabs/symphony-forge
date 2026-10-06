@@ -78,9 +78,7 @@ def close(args: argparse.Namespace) -> int:
         if choice == "accept":
             default = repo.default_branch(top)
             repo.git("fetch", "-q", "origin", default, cwd=top)
-            if any(result.get(key) != review.fingerprint(
-                    "HEAD", item, top, state, f"origin/{default}", branch_diff=key == "branch_diff")
-                   for key in ("changed", "branch_diff")):
+            if not _choice_fresh(top, item, state, f"origin/{default}"):
                 repo.refuse(REFUSALS["stale_choice"], item=item)
             result["dismissals"].extend(
                 {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
@@ -94,6 +92,7 @@ def close(args: argparse.Namespace) -> int:
             f"Next: forge close {item}" if choice == "accept" else
             f"{choice.capitalize()} the part as agreed, then forge work {item}."))
         return 0
+    had_stop = bool(state.get("stop"))
     check_stop(item, state)
     question = codex.record(top, item).get("question")
     if question:
@@ -111,6 +110,18 @@ def close(args: argparse.Namespace) -> int:
         return _merged(top, item)
 
     previous = state.get("review") or {}
+    if dismissals:
+        if not previous or not _choice_fresh(top, item, state, f"origin/{default}"):
+            repo.refuse(REFUSALS["stale_dismiss" if previous else "bad_dismiss"], item=item)
+        for number, because in dismissals:
+            if not 1 <= number <= len(previous["findings"]):
+                repo.refuse(REFUSALS["bad_dismiss"], item=item)
+            from_base = _check_line(top, item, previous["commit"],
+                                    previous.get("base") or f"origin/{default}",
+                                    because.split()[0])
+            previous["dismissals"] = [d for d in previous["dismissals"] if d["finding"] != number]
+            previous["dismissals"].append({"finding": number, "because": because,
+                                          "from_base": from_base})
     legacy_diff = None
     if (previous and "branch_diff" not in previous and previous.get("changed") ==
             review.fingerprint("HEAD", item, top, state, f"origin/{default}")):
@@ -130,6 +141,7 @@ def close(args: argparse.Namespace) -> int:
         _synced(top, item)
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
+    base = repo.git("merge-base", f"origin/{default}", "HEAD", cwd=top)
     changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
                                      branch_diff=True)
@@ -137,11 +149,9 @@ def close(args: argparse.Namespace) -> int:
     if any(d.get("accepted") for d in result.get("dismissals", [])):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
+                           result.get("branch_diff") != branch_diff or result.get("base") != base)
     if fresh:
-        result.update(changed=changed, branch_diff=branch_diff)
-    if dismissals and not fresh:
-        repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
+        result.update(changed=changed, branch_diff=branch_diff, base=base)
     if not fresh:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
@@ -182,15 +192,9 @@ def close(args: argparse.Namespace) -> int:
     elif (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
-    for number, because in dismissals:
-        if not 1 <= number <= len(result["findings"]):
-            repo.refuse(REFUSALS["bad_dismiss"], item=item)
-        from_base = _check_line(top, item, result["commit"], f"origin/{default}",
-                                because.split()[0])
-        result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
-        result["dismissals"].append({"finding": number, "because": because,
-                                     "from_base": from_base})
     serious = review.blocking(result)
+    if not serious and not (state.get("stop") or {}).get("choice"):
+        state.pop("stop", None)
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh:
@@ -207,7 +211,7 @@ def close(args: argparse.Namespace) -> int:
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed:
+    if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious else "waiting for checks")
@@ -263,11 +267,24 @@ def close(args: argparse.Namespace) -> int:
 
 
 def check_stop(item: str, state: dict[str, Any]) -> None:
-    """The recorded choice, not a worker's status update, releases a review loop stop."""
+    """A human choice or a later clean review releases a review loop stop."""
+    result = state.get("review") or {}
+    if (result.get("status") == "clean" and not review.blocking(result) and
+            not (state.get("stop") or {}).get("choice")):
+        state.pop("stop", None)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
                     round=sum(step["step"] == "review" for step in state.get("steps", [])),
                     **state["stop"])
+
+
+def _choice_fresh(top: Path, item: str, state: dict[str, Any], default: str) -> bool:
+    result = state["review"]
+    base = result.get("base") or repo.git("merge-base", default, result["commit"], cwd=top)
+    reviewed = result.get("branch_diff") or review.fingerprint(
+        result["commit"], item, top, state, base, branch_diff=True)
+    return reviewed == review.fingerprint(
+        "HEAD", item, top, state, base, branch_diff=True)
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
