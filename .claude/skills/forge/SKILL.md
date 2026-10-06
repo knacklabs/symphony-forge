@@ -96,6 +96,21 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 ## Machine views
 
+Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
+plan reads and close reviews share a first-come line and say their place while waiting. The test
+lane has one place; tests use the same half-core budget. `forge doctor` shows the split.
+
+`forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
+alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
+`model`, `effort`, `joined_at`, `started_at`, `process`, `output_path` and `progress`.
+Waiting entries have no start time. Test output and progress are null until the test runner sets
+them. The process includes its pid and start identity; a reused pid cannot hold an old place.
+
+Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that item's entries in
+both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
+Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
+before its place is freed. An unverifiable identity refuses without terminating anything.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
 other readers. The usual commands still print text or open the HTML board. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main
@@ -461,7 +476,12 @@ finishes. One machine runs at most 2 Forge agents at once (work rounds, plan rea
 reviews), across all its repos; the rest wait in line, first come, first served, and print their
 place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
-so with the command that merges it into the story branch; run it, then carry on.
+so with the command that merges it into the story branch; run it, then carry on. Forge compares
+content history, never commit dates: an older copy on the default branch does not block a start.
+When only the story doc differs, `forge task start` merges the default branch into the clean
+story branch itself and says so; conflicting edits still need the printed merge command.
+`forge next` names the unmerged item a part waits on for overlapping files, including another
+story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
 
@@ -607,6 +627,11 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+For `uv.lock`, `poetry.lock`, `Pipfile.lock` and `package-lock.json`, a change only to
+the repo's own package version selects related tests instead. Forge identifies the
+root package from the adjacent manifest and its local source; dependency versions,
+hashes and other lock data still trigger the full run. Missing or unrecognized lock
+data also triggers the full run.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
 `python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation

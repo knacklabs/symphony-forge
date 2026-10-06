@@ -31,7 +31,13 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const clock = mock.clock(on)
     let mode = 'good'
     const opens: unknown[] = []
+    mock.store(on)
+    mock.env(on, {})
     on('session.start', () => ({ cwd: '/repo' }))
+    on('session.id', () => ({ value: 'pane' }))
+    on('session.cwd', () => ({ value: '/repo' }))
+    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
+    on('session.surfaces', () => ({ value: [surface] }))
     on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
@@ -85,7 +91,13 @@ for (const surface of ['terminal', 'desktop'] as const) {
     let failRead = false, failSubmit = false
     const submitted: string[] = [], toasts: string[] = []
     const origins: unknown[] = []
+    mock.store(on)
+    mock.env(on, {})
     on('session.start', () => ({ cwd: '/repo' }))
+    on('session.id', () => ({ value: 'pane' }))
+    on('session.cwd', () => ({ value: '/repo' }))
+    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
+    on('session.surfaces', () => ({ value: [surface] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
     on('ui.toast', (_$, e) => { toasts.push(e.text); return { value: undefined } })
@@ -124,7 +136,13 @@ for (const surface of ['terminal', 'desktop'] as const) {
     let extra = false, old = false, long = false, inactive = false
     const submissions: string[] = []
     let nextCommand: string | null = following.next.command
+    mock.store(on)
+    mock.env(on, {})
     on('session.start', () => ({ cwd: '/repo' }))
+    on('session.id', () => ({ value: 'pane' }))
+    on('session.cwd', () => ({ value: '/repo' }))
+    on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
+    on('session.surfaces', () => ({ value: [surface] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
     on('prompt.submit', (_$, e) => { submissions.push(e.text); return { text: e.text } })
