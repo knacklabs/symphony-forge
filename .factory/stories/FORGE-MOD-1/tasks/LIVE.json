@@ -10,34 +10,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "45d2ff4f2e17760b177e9922a9b790ed8a4118e06dcafb726795b3fe2e7680bf",
-    "changed": "5d7df23972fa46d5431da2aa6f44dfe52c2d827258f6bd59bb30103a26d53735",
-    "commit": "65caab3635751309279030b905878615a6de60f8",
+    "branch_diff": "e3a16ac2d04d57dcc4c8231f922f5293cd2e02e48c85fac3db0e3ae2853e3078",
+    "changed": "cdc3eedaf003044ba044e6c1e03af9592f9d02de2b07af300f3ba4162b8b3ab5",
+    "commit": "8ef540079322b99870bbda6bcd0cb6d5a3c5e007",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previous P2 remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, failing a worker, reader, review or test command while recording progress. Add bounded replacement retries, as src/forge/codex.py:532\u2013539 already does.",
+        "body": "This previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, failing the worker, reader, reviewer or test command recording progress. Add bounded replacement retries, as src/forge/codex.py:532\u2013539 already does.",
         "file": "src/forge/repo.py",
         "line": 171,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "This previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:443\u2013445 therefore misses it, and the reader checks only stderr at src/forge/story.py:732 although this decoder returns the diagnostic through stdout. Both paths refuse instead of starting the intended fresh session. Recognize the missing-session diagnostic in both callers while preserving other errors. The [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609) confirms this response shape.",
+        "body": "This previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. Consequently, the worker's prefix check at src/forge/worker.py:443\u2013445 misses it; the reader checks only stderr at src/forge/story.py:732, although this decoder returns the diagnostic through stdout. Both paths refuse instead of starting the intended fresh session. Recognize the missing-session diagnostic in both callers while preserving other failures. The [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609) documents this response shape.",
         "file": "src/forge/repo.py",
         "line": 203,
         "priority": "P2",
         "title": "Preserve missing-session recovery for structured Claude errors"
       },
       {
-        "body": "The previous deferred gap remains. src/forge/mod/hooks/machine.ts:5 still has an empty registrar, so the Machine tab does not display the live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 still suppresses the running count and current step when lane data is absent, despite LIVE supplying running items. Complete these consumer behaviors and their tests in PANE and MACHINE, as assigned by the Tasks table; this is deferred advice rather than a blocking LIVE producer gap.",
+        "body": "The previous deferred gap remains. src/forge/mod/hooks/machine.ts:5 still has an empty registrar, so the Machine tab does not display the live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 still suppresses the running count and current step when lane data is absent, despite LIVE supplying running items. Complete these consumer behaviors and their tests in PANE and MACHINE, as assigned by plans/FORGE-MOD-1.md:281 and :288; this is deferred advice rather than a blocking LIVE producer gap.",
         "file": "tests/fixtures/board.json",
         "line": 85,
         "priority": "P2",
         "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "bd048fdb-e51f-45c8-b52e-c2832e0120a6",
+    "id": "c5c87525-8bda-4baf-8d04-8510ee7b95d8",
     "status": "clean"
   },
   "round": 10,
@@ -89,6 +89,10 @@
     },
     {
       "at": "2026-10-06T12:38:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T13:33:31+00:00",
       "step": "review"
     }
   ],
