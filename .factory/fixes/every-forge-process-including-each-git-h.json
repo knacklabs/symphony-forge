@@ -3,12 +3,14 @@
   "branch": "fix/every-forge-process-including-each-git-h",
   "done_when": "A forge command reads and builds only the module and subcommand it runs (command names found without parsing every module); forge --help and every command's help and behaviour are unchanged; a command test shows a git hook run of forge imports at most the modules its command needs (counted, no wall-clock timing); new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-06T10:53:25+00:00",
       "step": "start"
     }
   ],
-  "why": "Every forge process, including each git hook on commit and push, parses all 33 Forge modules and builds every subcommand before doing anything (~0.23 s per start)"
+  "why": "Every forge process, including each git hook on commit and push, parses all 33 Forge modules and builds every subcommand before doing anything (~0.23 s per start)",
+  "worker": "codex"
 }
