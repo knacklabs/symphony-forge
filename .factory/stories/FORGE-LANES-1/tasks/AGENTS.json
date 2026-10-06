@@ -7,27 +7,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "263cd4aa86ab6baef5f7adbf77fcde2a1960f104a2b7884f1f9af3d2e07bcd92",
-    "changed": "f407591d299c881e8e059bac1a71d371bfb2a73e8ef4621dbcd5298ee3982e16",
-    "commit": "49c38ff6c1c1fb45b00fa721f10bd3eb25160684",
+    "branch_diff": "c653b02f7f9f34c7fd46433825a8cd6b1d6e7c5f3d31416dcf8c36be13d3d796",
+    "changed": "ff70b47778d74ba2e182d1641662a08fd244e26caba5310a25724dffa3e9f872",
+    "commit": "e6a7d488a72612831b6c302a65c47eb15c842ad3",
     "dismissals": [],
     "findings": [
       {
-        "body": "The retained PR checker still launches Autoreview without process-group options and calls started(pid), as verified in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path calls killpg(child_pid) through src/forge/codex.py:624\u2013625, but that child does not lead a process group. The process remains alive and stop refuses without freeing its place. Migrated older Claude workers and readers have the same launch mismatch. Preserve safe cancellation for these ungrouped launches; the existing-queue test migrates a newly grouped process and does not cover them. This remains the previously reported advisory gap, separate from the ruling preserving the old signatures.",
+        "body": "The retained PR checker launches Autoreview without process-group options and calls started(pid), as verified in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination through src/forge/codex.py:624\u2013625. Because that child does not lead a process group, it remains alive and stop refuses without freeing its place. Migrated older Claude workers and readers have the same launch mismatch. The new group-member wait does not resolve this case; the existing-queue test migrates a newly grouped launch. Preserve safe cancellation for these ungrouped processes while retaining the ruled compatibility signatures.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "The review entry snapshots chosen at admission, while Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Board JSON consequently keeps null or the unavailable model throughout the running review. The same stale snapshot occurs when a split design worker switches to Codex at src/forge/worker.py:167\u2013191. Update the active entry's model and effort whenever either caller changes its selection. The previously reported gap remains open.",
+        "body": "The review entry snapshots chosen at admission, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Consequently, board JSON retains null or the unavailable model throughout the running review. The same stale snapshot occurs when a split design worker switches to Codex at src/forge/worker.py:167\u2013191. Update the active entry's model and effort whenever either caller changes its selection. This previously reported advisory defect remains open.",
         "file": "src/forge/review.py",
         "line": 478,
         "priority": "P2",
         "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual tests still bypass the shared entry queue: src/forge/fasttest.py:171\u2013172 launches directly, and close uses the separate ticket queue at src/forge/review.py:279\u2013288. Board JSON therefore cannot expose running tests or their output/progress, and stop cannot cancel tests or stop an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
+        "body": "Actual tests still bypass the shared entry queue: src/forge/fasttest.py:171\u2013172 launches directly, and close uses the separate ticket queue at src/forge/review.py:279\u2013288. Board JSON therefore cannot expose running tests or their output/progress, and stop cannot cancel tests or stop an item's worker and test together. plans/FORGE-LANES-1.md:132\u2013142 explicitly assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
@@ -36,7 +36,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -56,6 +56,10 @@
     },
     {
       "at": "2026-10-06T00:04:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T01:49:36+00:00",
       "step": "review"
     }
   ],
