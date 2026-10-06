@@ -125,7 +125,7 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 
 def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: str,
                 reviewed_level: str | None = None, findings: list[Any] | None = None, *,
-                branch_diff: bool = False, include_records: bool = False) -> str:
+                branch_diff: bool = False) -> str:
     """What a clean review covers: changed product files, every file the review's findings cite
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
@@ -139,8 +139,6 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     if findings is None:
         findings = (state.get("review") or {}).get("findings", [])
     changed |= {str(f["file"]) for f in findings if isinstance(f, dict) and f.get("file")}
-    if not include_records:
-        changed = {path for path in changed if not path.startswith(".factory/")}
     # Close writes the spotted list after the review, so it never makes that review stale.
     changed.discard(spotted.PATH)
     if branch_diff:
@@ -511,8 +509,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     identity = repo.record_event(top, item, "review result", commit=head,
                                  outcome="blocked" if any(f["priority"] in
                                  (("P0",) if light else SERIOUS) for f in findings) else "clean")
-    return {"id": identity, "commit": head,
-            "base": repo.git("merge-base", base, head, cwd=top), "findings": findings,
+    return {"id": identity, "commit": head, "findings": findings,
             "dismissals": [], "blocking_level": "P0" if light else "P1",
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
