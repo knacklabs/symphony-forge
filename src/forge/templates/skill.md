@@ -611,7 +611,16 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
-full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+full command when `conftest.py`, requirements or lock files change.
+For `pyproject.toml`, every change triggers the full command unless all changed lines are
+known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
+`include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
+or `sdist` targets. Multiline values are supported. Unknown sections, unsupported layouts,
+comments outside safe values and mixed safe/unsafe edits run the full command.
+Forge's commands and generated tests job set `UV_FROZEN=1`, so uv consumes the recorded
+lockfile without rewriting it, including in older worktrees. If you wrap a Forge command in
+`uv run`, use `uv run --frozen`: the outer uv starts before Forge can set its environment.
+Update dependency locks deliberately before testing changed dependencies.
 For `uv.lock`, `poetry.lock`, `Pipfile.lock` and `package-lock.json`, a change only to
 the repo's own package version selects related tests instead. Forge identifies the
 root package from the adjacent manifest and its local source; dependency versions,

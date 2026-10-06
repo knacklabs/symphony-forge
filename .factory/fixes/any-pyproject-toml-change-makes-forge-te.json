@@ -1,0 +1,74 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-06T13:31:03+00:00",
+      "because": "Owner chose to narrow at the review-loop hold: a safe list fails closed instead of hunting every tool's dependency sections",
+      "done_when": "forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only related tests otherwise; every uv command Forge runs uses the lockfile without rewriting it, so no Forge command leaves uv.lock changed; one command test per case; new and earlier-adopted client repos get it, with a command test for each"
+    }
+  ],
+  "base": "ead5fa3b90b590e25c99f387b6e660e07bc8376b",
+  "branch": "fix/any-pyproject-toml-change-makes-forge-te",
+  "done_when": "forge test --pytest runs the whole suite for any pyproject.toml change unless every changed line sits in a short list of known-harmless sections (packaged-file build settings such as hatch build include lists, and the project's version and description), in which case it runs only related tests; every uv command Forge runs uses the lockfile without rewriting it, so no Forge command leaves uv.lock changed; one command test per case; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/fasttest.py",
+    "tests/test_fix_clone_gets_test_tools.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99a86f4ae5f4c6c2105684300fcd7185caa87789c5c0d04a83480388f2f83480",
+    "changed": "9771bf06b3e57d4c0646ff295e301730fe3b85d5a77df853f4a933c80ee8a49e",
+    "commit": "b6dfc9b534f208138503cc7778d97ea5c9bcb03a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Unchanged blank lines and comments are stored together with their table context. For example, deleting `[tool.hatch.build]` and its `include` assignment while retaining the existing blank separator before the next table changes that separator's recorded context from Hatch to project. The snapshots then differ, so Forge runs the full suite despite only known-harmless lines changing. Moving an include-only table between the allowed Hatch sections has the same problem. Preserve table context for unsafe assignments, but do not let unchanged whitespace or comments make these safe edits trigger the full suite. The existing removed-include case lacks a trailing separator and misses this behavior.",
+        "file": "src/forge/fasttest.py",
+        "line": 151,
+        "priority": "P2",
+        "title": "P2: Preserve related selection when harmless tables move or disappear"
+      }
+    ],
+    "id": "d8d1634c-ab05-4da0-813f-20db1e0a2a41",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T07:30:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T09:45:07+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T11:18:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T13:28:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T15:37:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T17:04:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T18:16:17+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "file": "src/forge/fasttest.py",
+    "reason": "Owner: fail closed with a safe list. Any pyproject.toml change runs the full suite unless every changed line sits in a short list of known-harmless sections (packaged-file build settings, project version and description); no dependency hunting"
+  },
+  "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup",
+  "worker": "codex"
+}
