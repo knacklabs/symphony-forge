@@ -298,6 +298,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix git-call count still grows with separately landed hand edits\tforge-doctor-fix-checks-every-forge-file",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 150,
+      "text": "Not done: doctor --fix git-call count still grows with separately landed hand edits",
+      "from": "blocking",
+      "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -1046,17 +1057,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/cli.py\tPreserve group descriptions for abbreviated help flags",
-      "kind": "edge",
-      "path": "src/forge/cli.py",
-      "line": 75,
-      "text": "Preserve group descriptions for abbreviated help flags",
-      "from": "review",
-      "item": "every-forge-process-including-each-git-h",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -1097,6 +1097,17 @@
       "text": "Respect explicit worktree distrust before inheriting repository trust",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tForce root diffs when reconstructing merge-parent file contents",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 97,
+      "text": "Force root diffs when reconstructing merge-parent file contents",
+      "from": "review",
+      "item": "forge-doctor-fix-checks-every-forge-file",
       "status": "open",
       "closed_by": null
     },
@@ -1559,6 +1570,17 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/cli.py\tPreserve group descriptions for abbreviated help flags",
+      "kind": "edge",
+      "path": "src/forge/cli.py",
+      "line": 75,
+      "text": "Preserve group descriptions for abbreviated help flags",
+      "from": "review",
+      "item": "every-forge-process-including-each-git-h",
       "status": "open",
       "closed_by": null
     }
