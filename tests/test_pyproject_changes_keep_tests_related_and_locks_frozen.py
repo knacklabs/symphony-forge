@@ -163,10 +163,13 @@ def test_2_uv_setup_and_test_runs_keep_an_older_worktrees_lock_unchanged(repo, m
         repo.git("rm", "uv.lock")
         repo.git("commit", "-qm", "Remove lock")
     result = pick(repo, base)
-    assert result.returncode == {"success": 0, "failed-tests": 1, "missing-lock": 2}[case], result.stdout + result.stderr
     if case == "missing-lock":
+        # uv releases use different failure codes; the contract is frozen refusal without a new lock.
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "Unable to find lockfile at `uv.lock`" in result.stderr, result.stderr
         assert not (repo.path / "uv.lock").exists()
     else:
+        assert result.returncode == {"success": 0, "failed-tests": 1}[case], result.stdout + result.stderr
         assert (repo.path / "uv.lock").read_bytes() == lock
         assert ("1 failed" if case == "failed-tests" else "1 passed") in result.stdout
     assert repo.git("status", "--porcelain") == ""
