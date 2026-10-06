@@ -1,10 +1,48 @@
 {
   "branch": "task/FORGE-MOD-1-EVENTS",
-  "status": "working",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c7ffec1bf20267e10069f9f83a2ab7d164ef5bcb737f8c3b024149ad640e7e5a",
+    "changed": "6c3924870d589cdbd254bf0ab7a0465873e691c5084d77b209207fca45c79beb",
+    "commit": "b43752dbf678d809ede0a5acf421f053ac21c760",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The repository and session key are captured once. New evidence beyond the entry-point ruling: [Claude's lifecycle contract](https://code.claude.com/docs/en/plugins/mods/reference#session) says `/clear`, `/resume` and `/branch` do not fire `session.start`; the [SDK declarations](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) confirm session identity can change and `session.repo()` reads the current working copy. These transitions therefore retain the old seen key and skip the required silent baseline. A repository move also retains the original repository guard, while `register.ts:29` continues polling the original directory, allowing that repository's changes to start turns in another repository. The tests keep the host repository fixed and explicitly replay `session.start` when changing session ids, so they miss both failures. Refresh the current identity before consuming events and handle the actual session-reset lifecycle.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "line": 37,
+        "priority": "P1",
+        "title": "Not done: bind events to the current repo and session"
+      },
+      {
+        "body": "Reloading during an active turn resets `busy` to false, and the existing turn does not replay `turn.start`. After the silent baseline, changes arriving in separate refreshes are submitted separately before that turn completes. The host queues each submission, producing multiple prompts instead of the required single batch. New evidence beyond the ruling's separate busy and reload checks: [Claude's documentation](https://code.claude.com/docs/en/plugins/mods/interface#keep-state) confirms reload discards module variables, while the [submission contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) permits submissions to resolve when queued behind a running turn. Preserve or recover the active-turn state across reload, and exercise two refreshes after reloading during a turn.",
+        "file": "src/forge/mod/hooks/events.ts",
+        "line": 31,
+        "priority": "P1",
+        "title": "Not done: batch changes while busy after a reload"
+      },
+      {
+        "body": "The native event cases exist and were run manually, but the repository suite does not execute them. `forge.toml:6` runs only pytest; `tests/test_mod_plugin.py:45\u201357` typechecks the TypeScript files without running their assertions. The packaged event test does not cover busy batching, refusal retries or worker/headless gating, so regressions in those rules can leave the suite green. This is additional test-routing evidence, not a challenge to the ruling accepting the native test boundary. `plans/FORGE-MOD-1.md:284` assigns the plugin CI job to SHIP, so that task must wire these cases into automated checks.",
+        "file": "src/forge/mod/hooks/events.test.ts",
+        "line": 14,
+        "priority": "P2",
+        "title": "Later: SHIP must run the native event tests in CI"
+      }
+    ],
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-06T00:54:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T02:17:06+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
