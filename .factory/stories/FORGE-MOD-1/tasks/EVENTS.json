@@ -5,26 +5,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "beb7150e21d9fc770c52b8bfe785b1b055e46710cd99c579ca3552f16c1af7f8",
+    "branch_diff": "aa9a3f6dfc91169fafb0eb1dc172bf3cd4d705d4a0791be29d720e8f1f2a9c7e",
     "changed": "8f6be3ee1e1cb57e9cf66a105b81234dd92b51dd5f19ce2c5ed4c2fa897d62a4",
-    "commit": "efe606821adbbd2b51202401e68bc334a60d4f18",
+    "commit": "33017abfa6a29a31e38a5413ceab147b0ed0e437",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previously reported gap remains: seen arrays grow indefinitely, and session.end never removes their keys. Each new session also copies historical run-end IDs exposed by src/forge/board.py:289\u2013300. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. At that limit, this write fails after a successful submission, leaving the batch pending and unacknowledged so later refreshes repeatedly submit it. New-session baselines also fail. Bound retained history while preserving occurrence deduplication.",
+        "body": "The previously reported gap remains: seen IDs accumulate indefinitely, and session.end never deletes their keys. Each session also copies historical run-end IDs exposed by src/forge/board.py:289\u2013300. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. Once full, this write fails after successful submission, leaving the batch unacknowledged and causing repeated submissions on subsequent refreshes; new-session baselines also fail. Bound retained history and obsolete session keys while preserving occurrence deduplication.",
         "file": "src/forge/mod/hooks/events.ts",
         "line": 74,
         "priority": "P2",
         "title": "Bound persisted seen history before Claude's store limit"
       },
       {
-        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:45\u201357 only typecheck the native tests. The packaged case executes initialization and busy-reload checks, but failed-submit retries, worker/headless gating and session resets still rely on native assertions that the automated suite does not execute. SHIP owns the plugin CI job in plans/FORGE-MOD-1.md:284 and must route these tests into CI.",
+        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. The packaged case exercises real occurrences and reload batching, but failed-submit retries, worker/headless gating and session resets still depend on native assertions the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must route these tests into CI.",
         "file": "src/forge/mod/hooks/events.test.ts",
         "line": 125,
         "priority": "P2",
         "title": "Later: SHIP must run the native event tests in CI"
       }
     ],
+    "id": "e154b816-367f-4978-a39d-d21fdc090014",
     "status": "clean"
   },
   "status": "waiting for checks",
@@ -47,6 +48,10 @@
     },
     {
       "at": "2026-10-06T04:15:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T05:00:56+00:00",
       "step": "review"
     }
   ],
