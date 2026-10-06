@@ -173,11 +173,31 @@ def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:
     """Describe only the tool's action, never its output or message contents."""
+    actions = {"webSearch": "searching the web", "imageGeneration": "generating an image",
+               "sleep": "waiting", "subAgentActivity": "working with a helper",
+               "enteredReviewMode": "reviewing", "exitedReviewMode": "finishing the review",
+               "contextCompaction": "compacting context"}
+    if name in actions:
+        return actions[name]
     command = inputs.get("command")
     if isinstance(command, str):
         return "committing" if re.search(r"\bgit\s+commit\b", command) else "running " + " ".join(command.split())
     path = inputs.get("file_path") or inputs.get("path")
-    return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + str(path) if path else "using " + name
+    return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + " ".join(str(path).split()) if path else "using " + name
+
+
+def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> str:
+    """Read the same tool actions and result diagnostics for Claude workers and readers."""
+    content = (event.get("message") or {}).get("content", [])
+    for tool in content:
+        if isinstance(tool, dict) and tool.get("type") == "tool_use":
+            record_progress(top, item, run_id,
+                            step=worker_step(tool.get("name", "tool"), tool.get("input") or {}))
+    if event.get("type") == "result":
+        return str(event.get("result") or "\n".join(
+            [str(event.get("subtype", "")), *event.get("errors", [])])) + "\n"
+    return "".join(c.get("text", "") + "\n" for c in content
+                   if isinstance(c, dict) and c.get("type") == "text")
 
 
 @contextmanager
@@ -185,6 +205,8 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
     """Keep starts and ends even for a run entirely between two board refreshes."""
     identity = record_event(top, item, "run start", kind=kind, **fields)
     result = {"outcome": "failed", "run_id": identity}
+    if "round" in fields:
+        result["round"] = fields["round"]
     try:
         yield result
     finally:

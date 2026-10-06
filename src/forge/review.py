@@ -289,9 +289,10 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
                     output, total, completed, finished = [], None, 0, set()
                     for line in process.stdout:
                         output.append(line)
-                        found = re.search(r"collected (\d+) items|\[(\d+) items\]", line)
+                        found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
                         if found:
-                            total = int(found[1] or found[2])
+                            selected = re.search(r" / (\d+) selected", found[2] or "")
+                            total = int(selected[1] if selected else found[1] or found[3])
                             completed = 0
                             finished.clear()
                         marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
@@ -509,7 +510,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         with machine.agent_slot(top, "review"):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
-                    findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                    findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
+                                                strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
                 if not reason:
                     break
@@ -584,7 +586,8 @@ def signoff(top: Path, answers: str) -> str:
 
 
 def _attempt(argv: list[str], cwd: Path, out: Path,
-             selected: dict[str, str], strict: bool = False) -> tuple[list[dict[str, Any]], str]:
+             selected: dict[str, str], top: Path, item: str, run_id: str,
+             strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -596,6 +599,8 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
         sys.stderr.buffer.write(line)
         sys.stderr.flush()
         last = line.decode("utf-8", "replace").strip() or last
+        if line.strip():
+            repo.record_progress(top, item, run_id, step=" ".join(last.split()))
         if last.startswith("model: ") and "model" not in selected:
             selected["model"] = last.removeprefix("model: ")
         elif last.startswith("thinking: ") and "effort" not in selected:

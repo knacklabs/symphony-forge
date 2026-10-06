@@ -489,16 +489,9 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             except ValueError:
                 event = None
             if isinstance(event, dict):
-                for tool in (event.get("message") or {}).get("content", []):
-                    if isinstance(tool, dict) and tool.get("type") == "tool_use":
-                        repo.record_progress(top, item, ran["run_id"],
-                                             step=repo.worker_step(tool.get("name", "tool"), tool.get("input") or {}))
+                line = repo.claude_output(top, item, ran["run_id"], event)
                 if event.get("type") == "result":
-                    final_result = str(event.get("result", ""))
-                line = (str(event.get("result", "")) + "\n" if event.get("type") == "result" else
-                        "".join(c.get("text", "") + "\n" for c in
-                                (event.get("message") or {}).get("content", [])
-                                if isinstance(c, dict) and c.get("type") == "text"))
+                    final_result = line.rstrip("\n")
             if line:
                 if not isinstance(event, dict) or event.get("type") == "result":
                     print(line, end="", flush=True)

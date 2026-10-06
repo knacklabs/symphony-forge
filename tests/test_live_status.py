@@ -5,10 +5,12 @@ idle transitions, runner progress or severity. These cases protect that transpor
 and lifecycle contract without importing Forge or supplying its derived fields.
 """
 import json
+import os
 import socket
 import subprocess
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -28,11 +30,27 @@ def row(repo, item):
     return next(r for r in rows if r["id"] == item), boards[0]
 
 
-@pytest.mark.parametrize("case", ["idle", "checks", "claude", "codex", "progress", "progress parallel", "progress error", "progress teardown", "restart", "plan", "ci"])
+@pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "review claude", "review codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "ci", "ci red", "ci green"])
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     # Both commands read at different instants; freeze their clock for timer equality.
     monkeypatch.setenv("FORGE_NOW", "2026-10-06T12:00:00+00:00")
     repo = env.repo
+    if case.startswith("remote"):
+        if case == "remote task":
+            folder, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
+            item, branch = "BOARD/PAGE", "task/BOARD-PAGE"
+        else:
+            configure(env)
+            item, folder = env.start_fix()
+            branch = f"fix/{item}"
+        committed = repo.git("log", "-1", "--format=%cI", cwd=folder)
+        repo.git("push", "-q", "origin", branch)
+        repo.git("worktree", "remove", "--force", str(folder))
+        repo.git("branch", "-D", branch)
+        monkeypatch.setenv("FORGE_NOW", (datetime.fromisoformat(committed) + timedelta(hours=25)).isoformat())
+        result, _ = row(repo, item)
+        assert result["idle_since"] == committed and result["stalled"] is True
+        return
     if case == "plan":
         from test_story import setup, new_story, DOC
         setup(repo)
@@ -44,15 +62,52 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
         assert row(repo, "SHOP")[0]["gates"]["plan_read"] == {"status": "blocked"}
         return
-    if case == "codex":
+    if case.startswith("read"):
+        from test_story import setup, new_story, DOC
+        from conftest import ROOT, _install
+        setup(repo)
+        folder = new_story(repo, "SHOP")
+        (folder / "plans/SHOP.md").write_text(DOC, "utf-8")
+        item, model, effort = "SHOP", "opus", "high"
+        if case == "read codex":
+            monkeypatch.setenv("XDG_DATA_HOME", str(request.getfixturevalue("sdk_data")))
+            home = repo.path.parent / "reader-home"
+            home.mkdir()
+            (home / "config.toml").write_text(f'[projects.{json.dumps(str(repo.path))}]\ntrust_level = "trusted"\n', "utf-8")
+            monkeypatch.setenv("CODEX_HOME", str(home))
+            _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
+            stub = repo.bin / "codex-app-server"
+            stub.write_text(stub.read_text("utf-8").replace('"stub codex: built it with "\n            + json.dumps(config, sort_keys=True) + os.environ.get("STUB_SAY", "")', '"No findings."'), "utf-8")
+            monkeypatch.setenv("CODEX_BIN", str(repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
+            monkeypatch.delenv("CODEX_THREAD_ID")
+            monkeypatch.setenv("CLAUDECODE", "1")
+            config = folder / "forge.toml"
+            config.write_text(config.read_text("utf-8") + 'models.grill.codex = { model = "gpt-6-sol", effort = "high" }\n', "utf-8")
+            monkeypatch.setenv("STUB_SAY", "No findings.")
+            model = "gpt-6-sol"
+        assert repo.forge("read", item).returncode == 0
+        (folder / "plans/SHOP.md").write_text(DOC.replace("come back", "return"), "utf-8")
+    elif case == "codex":
         folder, _ = _codex_repo(repo, monkeypatch, request.getfixturevalue("sdk_data"))
         item = "BOARD/PAGE"
         model, effort = "gpt-6-sol", "medium"
     else:
         configure(env)
+        if case.startswith("review"):
+            config = repo.path / "forge.toml"
+            env.commit(repo.path, "forge.toml", config.read_text("utf-8") +
+                       'models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
+                       'models.review.claude = { model = "opus", effort = "high" }\n')
         item, folder = env.start_fix()
         model, effort = "sonnet", "medium"
     number = 1
+    if case.startswith("read"):
+        number = 2
+    if case.startswith("review"):
+        if case == "review claude":
+            from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
+            _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
+        model, effort = ("gpt-6-sol", "xhigh") if case == "review codex" else ("opus", "high")
     if case == "restart":
         assert repo.forge("work", item).returncode == 0
         assert row(repo, item)[0]["idle_since"] is not None
@@ -79,13 +134,18 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                   finding("P2", "Copy unclear"), finding("P1", "Already handled")],
                   "dismissals": [{"finding": 3, "because": "Already handled"}]}
         state(folder / f".factory/fixes/{item}.json", review=review)
-        prs = [pull(7, f"fix/{item}", "TIMED_OUT")]
+        prs = [pull(7, f"fix/{item}", "CANCELLED")]
         checks = prs[0]["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
         checks.append({**checks[0], "databaseId": 123, "name": "tests", "conclusion": "FAILURE"})
+        checks.append({**checks[0], "databaseId": 124, "name": "manually cancelled"})
+        # GitHub cancels both jobs; only its timeout annotation distinguishes them.
+        env.gh.respond("api", "--paginate", "--slurp", f'repos/{{owner}}/{{repo}}/check-runs/{checks[0]["databaseId"]}/annotations?per_page=100', stdout=json.dumps([[{"message": "The operation was canceled."}], [{"message": "The job running on runner Hosted Agent has exceeded the maximum execution time of 1 minute."}]]))
+        env.gh.respond("api", "--paginate", "--slurp", "repos/{owner}/{repo}/check-runs/124/annotations?per_page=100", stdout=json.dumps([[{"message": "The operation was canceled."}]]))
         github(env.gh, prs)
         result, _ = row(repo, item)
         assert result["pr"]["failures"] == [{"job": "forge-pr-check", "cause": "timeout"},
-                                            {"job": "tests", "cause": "failed"}]
+                                            {"job": "tests", "cause": "failed"},
+                                            {"job": "manually cancelled", "cause": "failed"}]
         assert result["findings"]["items"] == [{"title": "Input lost", "priority": "P1"},
                                               {"title": "Copy unclear", "priority": "P2"}]
         assert result["findings"]["dismissed"] == 1
@@ -93,7 +153,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                                    "review": {"status": "blocked", "count": 2},
                                    "ci": {"status": "red"}}
         return
-    # Two raw tool events arrive without a timer sleep. The socket only holds the
+        # Raw tool/progress events arrive without a timer sleep. The socket only holds the
     # external process, so Forge must consume and expose both events itself.
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
@@ -101,17 +161,27 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         listener.settimeout(30)
         gate = (f'import socket\nwith socket.create_connection({listener.getsockname()!r}, '
                 'timeout=30) as gate:\n    gate.recv(1)\n')
-        if case == "codex":
+        expected_steps = ["editing src/forge/close.py", "committing"]
+        if case in ("codex", "read codex"):
             stub = repo.bin / "codex-app-server"
             source = stub.read_text("utf-8")
             events = ""
-            for command in ("pytest tests/test_live_status.py", "git commit -m Done"):
-                events += (f'notify("item/started", threadId=THREAD, turnId=TURN, item={{'
-                           f'"type": "commandExecution", "id": "live", "command": {command!r}, '
-                           '"cwd": cwd, "status": "inProgress", "processId": "1"})\n' + gate)
+            tools = [("commandExecution", {"command": "pytest tests/test_live_status.py", "cwd": str(folder), "status": "inProgress", "processId": "1"}),
+                     ("fileChange", {"changes": [{"path": "app.py", "kind": {"type": "update"}, "diff": "+x"}], "status": "inProgress"}),
+                     ("webSearch", {"query": "Forge docs", "action": {"type": "search", "query": "Forge docs"}}),
+                     ("mcpToolCall", {"server": "docs", "tool": "lookup", "arguments": {}, "status": "inProgress"}),
+                     ("dynamicToolCall", {"tool": "lookup", "arguments": {}, "status": "inProgress"}),
+                     ("collabAgentToolCall", {"tool": "spawnAgent", "status": "inProgress", "senderThreadId": "parent", "receiverThreadIds": []}),
+                     ("imageView", {"path": "screen.png"}), ("imageGeneration", {"status": "inProgress"}), ("sleep", {}),
+                     ("subAgentActivity", {"kind": "progress", "agentThreadId": "helper", "agentPath": "helper"}),
+                     ("enteredReviewMode", {"review": "Review the change"}), ("exitedReviewMode", {"review": "Done"}), ("contextCompaction", {})]
+            expected_steps = ["running pytest tests/test_live_status.py", "editing app.py", "searching the web", "using docs.lookup", "using lookup", "using spawnAgent", "reading screen.png", "generating an image", "waiting", "working with a helper", "reviewing", "finishing the review", "compacting context"]
+            for index, (kind, inputs) in enumerate(tools):
+                event = {"type": kind, "id": f"live-{index}", **inputs}
+                events += f'notify("item/started", threadId=THREAD, turnId=TURN, item={event!r})\n' + gate
             stub.write_text(source.replace('asked = {"stub-ask-1"',
                 events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'), "utf-8")
-        elif case == "claude":
+        elif case in ("claude", "claude error", "read claude"):
             stub = repo.bin / "claude"
             events = ""
             for tool, inputs in (("Edit", {"file_path": "src/forge/close.py"}),
@@ -121,10 +191,21 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 events += f'print({json.dumps(event)!r}, flush=True)\n' + gate
             source = stub.read_text("utf-8")
             question = "Question: May I reuse the parser?"
-            stub.write_text(source.replace('print("stub claude: built it")', events +
+            marker = 'said = here / "claude-says.md"' if case.startswith("read") else 'print("stub claude: built it")'
+            replacement = events + ('print(json.dumps({"type": "result", "result": "No findings."}), flush=True)\nraise SystemExit(0)\n' if case.startswith("read") else
                 f'print(json.dumps({{"type": "assistant", "message": {{"content": [{{"type": "text", "text": {question!r}}}]}}}}), flush=True)\n'
-                f'print(json.dumps({{"type": "result", "result": {question!r}}}), flush=True)'), "utf-8")
-        elif case == "ci":
+                f'print(json.dumps({{"type": "result", "result": {question!r}}}), flush=True)')
+            if case == "claude error":
+                replacement = events + 'print(json.dumps({"type": "result", "subtype": "error_during_execution", "errors": ["Provider connection closed"]}), flush=True)\nraise SystemExit(3)\n'
+            stub.write_text(source.replace(marker, replacement), "utf-8")
+        elif case.startswith("review"):
+            stub = (Path(os.environ["HOME"]) / ".claude/skills/autoreview/scripts/autoreview"
+                    if case == "review claude" else env.queue.parent / "autoreview/scripts/autoreview")
+            source = stub.read_text("utf-8")
+            expected_steps = ["preparation: initial source snapshot", "preparation: pre-review verification"]
+            events = "".join(f'print({step!r}, flush=True)\n' + gate for step in expected_steps)
+            stub.write_text(source.replace('if "--codex-bin" in args:', events + 'if "--codex-bin" in args:'), "utf-8")
+        elif case.startswith("ci"):
             stub = repo.bin / "gh"
             source = stub.read_text("utf-8")
             stub.write_text(source.replace('responses = here / "gh-responses.json"',
@@ -134,6 +215,11 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             pr = pull(7, f"fix/{item}", None)
             check = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"][0]
             check["startedAt"] = "2026-10-06T11:59:00Z"
+            if case != "ci":
+                check.update(status="COMPLETED", conclusion="FAILURE" if case == "ci red" else "SUCCESS")
+            else:
+                pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"].append({"__typename": "StatusContext", "state": "SUCCESS", "context": "old success", "createdAt": "2026-10-05T00:00:00Z"})
+            pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"].append({**check, "databaseId": 123, "name": "tests", "status": "COMPLETED", "conclusion": "SUCCESS"})
             github(env.gh, [pr])
         else:
             # Run actual pytest cases. Its second test holds at the external runner
@@ -148,34 +234,36 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                               'def test_two():\n    ' + gate.replace("\n", "\n    ") +
                               '\ndef test_three():\n    assert True\n\n'
                               'def test_four():\n    assert True\n', "utf-8")
+            if case == "progress single":
+                script.write_text(script.read_text("utf-8").replace('def test_one():', 'def other_one():').replace('def test_three():', 'def other_three():').replace('def test_four():', 'def other_four():'), "utf-8")
             config = folder / "forge.toml"
             parallel = " -n 2 --dist loadfile" if case == "progress parallel" else ""
+            parallel += " -k test_two" if case == "progress selected" else ""
             env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
                 json.dumps(f'"{sys.executable}" -c "print(123)"'),
                 json.dumps(f'"{sys.executable}" -m pytest -vv{parallel} test_progress.py')))
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
-                                   "close" if case.startswith("progress") or case == "ci" else "work", item], cwd=repo.path,
+                                   "read" if case.startswith("read") else "close" if case.startswith(("progress", "ci", "review")) else "work", item], cwd=repo.path,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         connections = []
         try:
-            first = "editing src/forge/close.py" if case == "claude" else "running pytest tests/test_live_status.py"
-            for expected in ([None] if case.startswith("progress") or case == "ci" else [first,
-                                                                   "committing"]):
+            for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
                 result, _ = row(repo, item)
                 assert result["activity"]["status"] == "running"
                 assert result["idle_since"] is None and result["stalled"] is False
                 if case.startswith("progress"):
-                    assert result["tests"]["done"] == 1 and result["tests"]["total"] == 4
-                elif case == "ci":
-                    assert result["gates"]["ci"] == {"status": "running", "elapsed": 60}
+                    assert result["tests"]["done"] == (0 if case in ("progress single", "progress selected") else 1)
+                    assert result["tests"]["total"] == (1 if case in ("progress single", "progress selected") else 4)
+                elif case.startswith("ci"):
+                    assert result["gates"]["ci"] == ({"status": "red" if case == "ci red" else "green"} if case != "ci" else {"status": "running", "elapsed": 60})
                     stage = next(s for s in result["stages"] if s["name"] == "CI")
                     assert stage["status"] == "running" and stage["elapsed"] == 0
                 else:
                     worker = result["worker"]
                     assert (worker["tool"], worker["model"], worker["effort"], worker["round"]) == (
-                        case, model, effort, number)
+                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
                     assert worker["step"] == expected
                     datetime.fromisoformat(worker["started_at"])
                 connection.sendall(b"1")
@@ -188,7 +276,11 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 process.kill()
                 process.communicate()
                 raise
-        assert (process.returncode == 0) == (case not in ("progress error", "progress teardown")), output + error
+        assert (process.returncode == 0) == (case not in ("progress error", "progress teardown", "claude error")), output + error
+        if case == "claude error":
+            log = repo.path / ".git/forge" / f"work-{item}.log"
+            assert "error_during_execution" in log.read_text("utf-8")
+            assert "Provider connection closed" in log.read_text("utf-8")
     ended, board = row(repo, item)
     assert ended["activity"] == {"status": "idle"}
     assert ended["idle_since"] is not None

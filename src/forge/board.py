@@ -108,6 +108,19 @@ def _machine_prs(top: Path) -> list[Item]:
             return []
     except (ValueError, KeyError, TypeError):
         return []  # An expired answer must not hide a failed check while GitHub is unreachable.
+    for pr in prs:
+        for check in _rollup(pr):
+            if check.get("conclusion") != "CANCELLED" or not isinstance(check.get("databaseId"), int):
+                continue
+            annotations = repo.run("gh", "api", "--paginate", "--slurp",
+                f"repos/{{owner}}/{{repo}}/check-runs/{check['databaseId']}/annotations?per_page=100", cwd=top)
+            try:
+                pages = json.loads(annotations.stdout) if annotations.returncode == 0 else []
+                check["timeout"] = any("has exceeded the maximum execution time of" in str(a.get("message", ""))
+                                       for page in pages if isinstance(page, list)
+                                       for a in page if isinstance(a, dict))
+            except (ValueError, TypeError):
+                pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
     temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
     try:
         temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
@@ -143,7 +156,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
                         else "running" if value in ("PENDING", "EXPECTED") or check.get("status") in
                         ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED") else "unknown")
         if failed:
-            failures.append({"job": name, "cause": "timeout" if value == "TIMED_OUT" else "failed"})
+            failures.append({"job": name, "cause": "timeout" if value == "TIMED_OUT" or
+                             value == "CANCELLED" and check.get("timeout") is True else "failed"})
             identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
                         if check.get("databaseId") is not None and check.get("completedAt")
                         else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
@@ -270,6 +284,8 @@ def machine_board(top: Path) -> Item:
                                               if e.get("event") == "run end"), None)
         if not active and idle_since is None:
             committed = repo.run("git", "log", "-1", "--format=%cI", branch, cwd=top)
+            if committed.returncode:
+                committed = repo.run("git", "log", "-1", "--format=%cI", f"refs/remotes/origin/{branch}", cwd=top)
             idle_since = committed.stdout.strip() if committed.returncode == 0 else None
         test_runs = [e for e in active if e.get("kind") == "test"]
         tests = None
@@ -342,9 +358,10 @@ def machine_board(top: Path) -> Item:
         ci = {"status": {"pass": "green", "fail": "red", "running": "running"}.get(checks, "none")}
         if checks == "running":
             starts = [c.get("startedAt") for c in _rollup(pr or {}) if _when(c.get("startedAt"))
-                      and (c.get("status") != "COMPLETED" or c.get("state") in ("PENDING", "EXPECTED"))]
+                      and (c.get("status") in ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED")
+                           or c.get("state") in ("PENDING", "EXPECTED"))]
             ci["elapsed"] = elapsed(min(starts, key=_when)) if starts else None
-        elif any(e.get("kind") == "ci" for e in active):
+        elif checks == "unknown" and any(e.get("kind") == "ci" for e in active):
             ci = {"status": "running", "elapsed": elapsed(next(e["at"] for e in active if e.get("kind") == "ci"))}
         return {"id": item, "kind": kind, "title": title, "stage": stage,
                 "activity": {"status": "running", "action": active[-1].get("kind")} if active else {"status": "idle"},
