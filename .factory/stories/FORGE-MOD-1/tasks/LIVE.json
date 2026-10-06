@@ -9,29 +9,22 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9ded44acd83b837e59c138b019ef8b380d897812a4df3b800c03c4a249411f43",
-    "changed": "c2d7c45c80ce99e727dbac2274a3332429c22a570c1f573c747afb28aa94017b",
-    "commit": "9af01b16650b67c936ec87a3d2dcee3fe952e698",
+    "branch_diff": "051ceaa7605cfb869c8fb06404464e3a6942ab553855de19c341dbe68f44ad24",
+    "changed": "51a1828bc1a684b99cb72fd85036a4ffbf48695e1c6388333e18c4d0232e4a6a",
+    "commit": "e0f5358171e10672cb062cd5c290450752fa04f8",
     "dismissals": [],
     "findings": [
       {
-        "body": "The Codex portion of the previous default-reader gap remains. New evidence from the pinned Codex 0.159.2 shows that the thread response copies the configured optional effort from its [settings snapshot](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/core/src/session/session.rs#L279), while the [effective effort](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/core/src/session/step_settings.rs#L81) separately falls back to model metadata. With no Forge or Codex effort override, this response therefore contains null despite the model having a default. This line publishes null, and board.py:279\u2013281 carries it into both views throughout the read. The new default-reader test misses this because tests/stubs/codex-app-server:199 invents a `medium` response when no override exists. Resolve the effective model default when the response effort is null, and make the command regression exercise that real response shape.",
-        "file": "src/forge/codex_turn.py",
-        "line": 185,
-        "priority": "P1",
-        "title": "Not done: running Codex readers' effort with default settings"
-      },
-      {
-        "body": "A concurrent machine-view refresh reads events.jsonl without taking the writer guard (board.py:203\u2013204). On Windows, that open reader can prevent this replacement, raising an uncaught PermissionError and aborting the worker, reader, review or test run reporting progress. The guard here serializes writers only. The existing replacement helper in codex.py:534\u2013543 already handles this Windows reader-lock condition with bounded retries; use the same protection for progress writes so routine live polling cannot terminate work.",
+        "body": "The previous P2 remains unresolved. Both machine views read events.jsonl without the writer guard (src/forge/board.py:203\u2013204). On Windows, an open reader can make this replacement raise PermissionError, interrupting a worker, reader, reviewer or test run while it reports progress. The guard serializes writers only. Apply bounded reader-lock retries, as the existing replacement helper does in src/forge/codex.py:534\u2013543.",
         "file": "src/forge/repo.py",
         "line": 171,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       }
     ],
-    "status": "blocked"
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -55,6 +48,10 @@
     },
     {
       "at": "2026-10-06T05:12:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T06:16:53+00:00",
       "step": "review"
     }
   ],
