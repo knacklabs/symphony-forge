@@ -47,6 +47,9 @@ def test_5_new_owners_join_the_page_and_shipped_files(repo, tmp_path):
         'COMMANDS = [{"words": "new-owner", "run": "run", "changes_state": False, '
         '"help": "Run new owner", "args": [], "position": 15, '
         '"listing": "| `forge new-owner` | Runs the new owner |"}]\n', encoding="utf-8")
+    # New commands explicitly register their names; startup no longer scans every owner.
+    cli = package / "cli.py"
+    cli.write_text(cli.read_text("utf-8") + '\nROUTES["new-owner"] = "new_command"\n', "utf-8")
     (package / "new_ship.py").write_text(
         'def ships(top, cfg):\n    return {"docs/new-owner.md": "New owner file.\\n"}\n',
         encoding="utf-8")

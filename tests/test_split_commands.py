@@ -472,7 +472,7 @@ def _copy_forge(repo, tmp_path):
     return package
 
 
-def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
+def commands_keep_their_help_and_register_a_new_owner(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     for words, expected in HELP_GOLDEN.items():
         result = repo.forge(*words.split(), "--help")
@@ -489,6 +489,9 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe` | A newly owned command |"}]\n',
         encoding="utf-8",
     )
+    # Names are registered without scanning implementations; declarations still own all options.
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES["probe"] = "probe"\n')
     assert "probe" in repo.forge("--help").stdout
     assert repo.forge("probe", "--dismiss", "7", "--dismiss", "8").stdout == "int:[7, 8]\n"
     assert "invalid int value" in repo.forge("probe", "--dismiss", "seven").stderr
@@ -499,10 +502,14 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe run` | Run the probe |"}]\n',
         encoding="utf-8",
     )
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES.pop("probe")\nROUTES["probe run"] = "probe"\n'
+                   'GROUP_OWNERS["probe"] = "probe"\n')
     assert "group help missing: probe" in repo.forge("--help").stderr
     with owner.open("a", encoding="utf-8") as file:
         file.write('GROUP_HELP = {"probe": "Probe commands"}\n')
     assert repo.forge("probe", "run").stdout == "group command ran\n"
     (package / "other.py").write_text('GROUP_HELP = {"probe": "Duplicate"}\n',
                                       encoding="utf-8")
-    assert "group help declared twice: probe" in repo.forge("--help").stderr
+    # Unregistered files no longer participate in command discovery or group ownership.
+    assert repo.forge("probe", "run").stdout == "group command ran\n"
