@@ -5,20 +5,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f2012d7e1880a37b8ddabb0a15143723082abeeb032b3bb97dab251dc65e8425",
-    "changed": "49dc6ccbc082acdf24419ed2ed00e6ceb87db507ede8dc9f744c7f870d37c973",
-    "commit": "bd78917a3542ca65d1c3b7656df320e8c6841395",
+    "branch_diff": "beb7150e21d9fc770c52b8bfe785b1b055e46710cd99c579ca3552f16c1af7f8",
+    "changed": "8f6be3ee1e1cb57e9cf66a105b81234dd92b51dd5f19ce2c5ed4c2fa897d62a4",
+    "commit": "efe606821adbbd2b51202401e68bc334a60d4f18",
     "dismissals": [],
     "findings": [
       {
-        "body": "Seen arrays only grow, and session.end never removes their per-session keys. Each new session also copies the board's historical run-end ids (src/forge/board.py:289\u2013300). Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the entire store. Once accumulated session history reaches that limit, this write fails after a successful submission; the catch leaves the batch pending and its ids unacknowledged, so subsequent refreshes repeatedly submit it. Baseline writes also fail for new sessions. Retire obsolete session history or otherwise bound storage while preserving occurrence deduplication.",
+        "body": "This previously reported gap remains: seen arrays grow indefinitely, and session.end never removes their keys. Each new session also copies historical run-end IDs exposed by src/forge/board.py:289\u2013300. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. At that limit, this write fails after a successful submission, leaving the batch pending and unacknowledged so later refreshes repeatedly submit it. New-session baselines also fail. Bound retained history while preserving occurrence deduplication.",
         "file": "src/forge/mod/hooks/events.ts",
         "line": 74,
         "priority": "P2",
         "title": "Bound persisted seen history before Claude's store limit"
       },
       {
-        "body": "The previous test-routing gap remains open. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:45\u201357 typecheck the native tests without executing their assertions. The packaged test now exercises the initialization repair, but failed-submit retries, worker/headless gating and session resets still rely on native tests absent from the automated suite. SHIP owns the plugin CI job (plans/FORGE-MOD-1.md:284), so that task must route these tests into CI.",
+        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:45\u201357 only typecheck the native tests. The packaged case executes initialization and busy-reload checks, but failed-submit retries, worker/headless gating and session resets still rely on native assertions that the automated suite does not execute. SHIP owns the plugin CI job in plans/FORGE-MOD-1.md:284 and must route these tests into CI.",
         "file": "src/forge/mod/hooks/events.test.ts",
         "line": 125,
         "priority": "P2",
@@ -27,7 +27,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T00:54:29+00:00",
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-10-06T03:16:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T04:15:02+00:00",
       "step": "review"
     }
   ],
