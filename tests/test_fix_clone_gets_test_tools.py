@@ -59,7 +59,11 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
 
 
 def test_2_ci_runs_the_documented_pytest_command():
-    command = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["test"]
+    settings = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))
+    # Outer uv starts before Forge can set UV_FROZEN; both entry points must freeze it.
+    for key in ("test", "fast_test"):
+        assert "--frozen" in shlex.split(settings[key]), key
+    command = settings["test"]
     args = shlex.split(command)
     assert args[:2] == ["uv", "run"]
     assert "pytest" in args

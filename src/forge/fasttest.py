@@ -134,7 +134,14 @@ def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
                 {key: tool.get("uv", {}).get(key) for key in
                  ("sources", "index", "workspace", "constraint-dependencies", "override-dependencies",
                   "exclude-dependencies", "environments", "required-environments", "conflicts",
-                  "default-groups", "dev-dependencies")},
+                  "default-groups", "dev-dependencies", "dependency-groups", "dependency-metadata",
+                  "build-constraint-dependencies", "extra-build-dependencies", "extra-build-variables",
+                  "resolution", "prerelease", "prerelease-package", "exclude-newer", "exclude-newer-package",
+                  "index-url", "extra-index-url", "index-strategy", "find-links", "fork-strategy",
+                  "no-index", "no-sources", "no-sources-package", "minimum-libc-version",
+                  "config-settings", "config-settings-package", "no-build-isolation", "no-build-isolation-package",
+                  "no-build", "no-build-package", "no-binary", "no-binary-package",
+                  "upgrade", "upgrade-package", "managed", "package")},
                 {key: tool.get("pdm", {}).get(key) for key in
                  ("dev-dependencies", "resolution", "source")},
                 {key: tool.get("setuptools", {}).get("dynamic", {}).get(key) for key in
