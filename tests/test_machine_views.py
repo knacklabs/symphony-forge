@@ -471,10 +471,18 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
 
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
+    ("plugin " + case, None) for case in ("events", "busy reload", "reload complete", "reload start")] + [
     (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):
+    # EVENTS joins this criterion's command owner, as CORE does for criterion 1.
+    if conclusion and conclusion.startswith("plugin "):
+        from test_mod_plugin import packaged_events_start_each_sessions_turn_from_real_worker_occurrences
+        packaged_events_start_each_sessions_turn_from_real_worker_occurrences(
+            request.getfixturevalue("env"), request.getfixturevalue("packaged_mod"),
+            request.getfixturevalue("tmp_path"), conclusion.removeprefix("plugin "))
+        return
     if conclusion and conclusion.startswith("review "):
         _board_exposes_produced_questions_reviews_run_ends_and_readiness(
             request.getfixturevalue("env"), conclusion.split()[1])
