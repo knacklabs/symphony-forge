@@ -1517,6 +1517,17 @@
       "item": "release-126",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "kind": "bug",
+      "path": "tests/test_close_test_runs_wait_in_line.py",
+      "line": 110,
+      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "from": "worker",
+      "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
