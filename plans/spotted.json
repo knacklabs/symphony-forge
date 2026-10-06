@@ -650,6 +650,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "from": "worker",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "kind": "bug",
       "path": "tests/test_close_test_runs_wait_in_line.py",
