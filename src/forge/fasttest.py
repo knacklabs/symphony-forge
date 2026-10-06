@@ -109,6 +109,55 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
+def own_version_only(path: Path, base: str) -> bool:
+    """Compare committed locks, ignoring only an identified root package's version."""
+    snapshots = []
+    try:
+        for ref in (base, "HEAD"):
+            def read(name: str):
+                text = subprocess.run(["git", "show", f"{ref}:{path.with_name(name).as_posix()}"],
+                                      check=True, capture_output=True, text=True).stdout
+                return json.loads(text) if name.endswith(".json") or name == "Pipfile.lock" else tomllib.loads(text)
+
+            lock = read(path.name)
+            if path.name == "package-lock.json":
+                name = read("package.json")["name"]
+                if lock["name"] != name:
+                    return False
+                entries = [lock]
+                if "packages" in lock:
+                    root = lock["packages"][""]
+                    if root.get("name", name) != name:
+                        return False
+                    entries.append(root)
+            else:
+                manifest = read("pyproject.toml")
+                name = (manifest.get("project") or manifest["tool"]["poetry"])["name"]
+                normalize = lambda value: re.sub(r"[-_.]+", "-", value).lower()
+                if path.name == "Pipfile.lock":
+                    entries = [entry for group in ("default", "develop")
+                               for key, entry in lock.get(group, {}).items()
+                               if normalize(key) == normalize(name)
+                               and entry.get("path") == "." and entry.get("editable") is True]
+                else:
+                    entries = [entry for entry in lock["package"]
+                               if normalize(entry["name"]) == normalize(name)
+                               and (entry.get("source") in ({"editable": "."}, {"virtual": "."})
+                                    if path.name == "uv.lock" else
+                                    entry.get("source", {}).get("type") == "directory"
+                                    and entry["source"].get("url") == ".")]
+            if not entries:
+                return False
+            for entry in entries:
+                if not isinstance(entry.get("version"), str):
+                    return False
+                entry["version"] = None
+            snapshots.append(lock)
+    except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, AttributeError):
+        return False  # Missing or unrecognized inputs must retain the full-suite fallback.
+    return snapshots[0] == snapshots[1]
+
+
 def test(args) -> int:
     if args.base is None:
         repo.refuse(REFUSALS["picker"])
@@ -123,10 +172,12 @@ def test(args) -> int:
     workers = str(max(1, (os.cpu_count() or 1) // 2))
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     excluded = []
-    if any(Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile"}
-           or Path(name).name.endswith(".lock")
-           or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)
-           for name in changed):
+    shared = [name for name in changed
+              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
+              or Path(name).name.endswith(".lock")
+              or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
+    if any(Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
+           or not own_version_only(Path(name), args.base) for name in shared):
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)
     else:
