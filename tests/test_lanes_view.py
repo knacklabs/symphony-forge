@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, machine_cores
+from conftest import ROOT, _install, machine_cores
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start, person, lane_adapter  # noqa: F401
@@ -145,14 +145,24 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
     machine_cores(repo, 2)
     item, name = make_work(repo, "First typo")
     hold_agents(env)
-    # The recorded process is the model child, not the Forge parent. A fresh reply
-    # from that pid proves it survived each stop attempt, even while its parent lives.
+    # Check the recorded process and the actual model. Windows records a .cmd
+    # launcher, so a fresh reply comes from the model's own pid, not the launcher's.
     child = repo.bin / "claude"
-    child.write_text(child.read_text("utf-8").replace("    time.sleep(0.05)",
+    child.write_text(child.read_text("utf-8").replace('name = pathlib.Path.cwd().name',
+        'name = pathlib.Path.cwd().name\n(here / "model-pid").write_text(str(os.getpid()))').replace("    time.sleep(0.05)",
         '    challenge = here / "challenge"\n'
         '    if challenge.exists():\n'
         '        (here / "reply").write_text(str(os.getpid()) + ":" + challenge.read_text())\n'
         '    time.sleep(0.05)'), "utf-8")
+    if lane_adapter == "claude" and older_queue and os.name != "nt":
+        # Match Windows' .cmd launcher: Forge records the launcher, while the
+        # actual model replying to our challenge has another pid.
+        model = child.with_name("held-claude")
+        child.rename(model)
+        _install(repo.bin, "claude", f'''#!{sys.executable}
+import subprocess, sys
+sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
+''')
     process, _ = start(repo.path, tmp_path, repo, "work", item)
     try:
         _until(lambda: (repo.bin / f"started-{name}").exists(), "running worker")
@@ -165,15 +175,18 @@ def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(en
                 "repo": repo.path.as_posix(), "kind": "work"}]), "utf-8")
         row = lanes(repo)["agents"]["entries"][0]
         assert row["process"]["pid"] != process.pid
+        model_pid = int((repo.bin / "model-pid").read_text("utf-8")) if lane_adapter == "claude" else None
+        if lane_adapter == "claude" and older_queue and os.name != "nt":
+            assert model_pid != row["process"]["pid"]
 
         def child_survives(challenge):
+            assert alive(row["process"]["pid"]), "the recorded agent process was terminated"
             if lane_adapter == "codex":
-                assert alive(row["process"]["pid"]), "the recorded Codex driver was terminated"
                 return
             (repo.bin / "challenge").write_text(challenge, "utf-8")
             reply = repo.bin / "reply"
             _until(lambda: reply.exists() and reply.read_text("utf-8") ==
-                   f'{row["process"]["pid"]}:{challenge}', "the recorded model child's reply")
+                   f'{model_pid}:{challenge}', "the actual model child's reply")
 
         assert lanes(repo)["agents"]["entries"][0]["id"] == row["id"]
         for arguments in ((), (item, "--id", row["id"]), ("--id", row["id"], "--repo", str(repo.path))):
