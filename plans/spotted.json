@@ -1310,6 +1310,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve every changed path when module names collide",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 248,
+      "text": "Preserve every changed path when module names collide",
+      "from": "review",
+      "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
