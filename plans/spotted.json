@@ -375,6 +375,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 134,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'\tany-pyproject-toml-change-makes-forge-te",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
