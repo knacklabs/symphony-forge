@@ -1,10 +1,11 @@
 {
   "branch": "task/FORGE-MOD-1-EVENTS",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-06T00:54:29+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "worker": "codex"
 }
