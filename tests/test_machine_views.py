@@ -546,9 +546,12 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-def test_4_client_machine_views_follow_the_last_task_merge(env, history):
+@pytest.mark.parametrize("phase", ["checks", "offline", "completion"])
+def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # The HTML completion test cannot detect an approved JSON row after a squash merge.
     # Exercise both shipped client lifecycles, including real earlier-release adoption output.
+    # Independent check, offline and completion flows get separate command-test budgets;
+    # the combined Windows case timed out before reaching completion.
     repo = env.repo
     if history == "new":
         client, remote = env.tmp / "new-client", env.tmp / "new-client.git"
@@ -633,58 +636,62 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history):
     row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
     assert row["stage"] == "ready"
     assert row["next"]["command"] == f"forge merge {fix}"
-    # A same-head rerun can invalidate the receipt's merge advice. A running rerun
-    # retains readiness until it fails, per the coordinator's receipt-and-no-failure rule.
-    prs = [pull(1, "task/SHOP-T1"), pull(2, f"fix/{fix}")]
-    for pr in prs:
-        pr["headRefOid"] = repo.git("rev-parse", pr["headRefName"])
-        nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
-        nodes.append({**nodes[0], "name": "tests"})
-    for conclusion in (None, "FAILURE", "SUCCESS"):
+    if phase == "checks":
+        # A same-head rerun can invalidate the receipt's merge advice. A running rerun
+        # retains readiness until it fails, per the coordinator's receipt-and-no-failure rule.
+        prs = [pull(1, "task/SHOP-T1"), pull(2, f"fix/{fix}")]
         for pr in prs:
-            check = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"][0]
-            check.update(conclusion=conclusion, status="IN_PROGRESS" if conclusion is None else "COMPLETED")
-        github(env.gh, prs)
-        cache = checkout / ".git/forge/checks-cache.json"
-        if cache.exists():
-            state(cache, fetched_at="2000-01-01T00:00:00+00:00")
-        rows = {r["id"]: r for r in view(repo, "board")["items"]}
-        for current, result in ((item, rows["SHOP"]["children"][0]), (fix, rows[fix])):
-            assert result["stage"] == ("checks failed" if conclusion == "FAILURE" else "ready")
-            assert result["next"]["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {current}"
-        following = view(repo, "next")["next"]
-        assert following["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {item}"
-        assert ("checks failed" in following["line"]) == (conclusion == "FAILURE")
-    # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
-    pr = pull(1, f"fix/{fix}")
-    pr["headRefOid"] = repo.git("rev-parse", f"fix/{fix}")
-    contexts = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
-    contexts["nodes"].append({**contexts["nodes"][0], "name": "tests"})
-    github(env.gh, [pr])
-    env.commit(fix_tree, "readme.md", "Welcome back.\n")
-    row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
-    assert row["stage"] == "waiting for checks"
-    assert row["next"]["command"] == f"forge close {fix}"
-    assert env.close(fix).returncode == 0
-    remote = repo.git("remote", "get-url", "origin")
-    gh = env.gh
-    gh.respond("api", "graphql", exit=1, stderr="offline")
-    state(checkout / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
-    for merged_fix in (False, True):
-        if merged_fix:
-            # Retain the merged worktree to cover its permission-dependent cleanup instruction.
-            repo.git("merge", "--squash", "fix/tidy-readme")
-            repo.git("commit", "-qm", "Accept the fix")
-            repo.git("push", "-q", "origin", "main")
-        repo.git("remote", "set-url", "origin", str(env.tmp / "unreachable.git"))
-        offline = {r["id"]: r for r in view(repo, "board")["items"]}
-        assert offline["SHOP"]["children"][0]["stage"] == "ready"
-        assert offline["SHOP"]["children"][0]["pr"]["checks"] == "unknown"
-        assert offline["SHOP"]["children"][0]["next"]["command"] is None
-        assert offline[fix]["stage"] == ("merged" if merged_fix else "ready")
-        assert offline[fix]["pr"]["checks"] == "unknown"
-        assert offline[fix]["next"]["command"] is None
-        repo.git("remote", "set-url", "origin", remote)
+            pr["headRefOid"] = repo.git("rev-parse", pr["headRefName"])
+            nodes = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"]
+            nodes.append({**nodes[0], "name": "tests"})
+        for conclusion in (None, "FAILURE", "SUCCESS"):
+            for pr in prs:
+                check = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"][0]
+                check.update(conclusion=conclusion, status="IN_PROGRESS" if conclusion is None else "COMPLETED")
+            github(env.gh, prs)
+            cache = checkout / ".git/forge/checks-cache.json"
+            if cache.exists():
+                state(cache, fetched_at="2000-01-01T00:00:00+00:00")
+            rows = {r["id"]: r for r in view(repo, "board")["items"]}
+            for current, result in ((item, rows["SHOP"]["children"][0]), (fix, rows[fix])):
+                assert result["stage"] == ("checks failed" if conclusion == "FAILURE" else "ready")
+                assert result["next"]["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {current}"
+            following = view(repo, "next")["next"]
+            assert following["command"] == f"forge {'work' if conclusion == 'FAILURE' else 'merge'} {item}"
+            assert ("checks failed" in following["line"]) == (conclusion == "FAILURE")
+        return
+    if phase == "offline":
+        # A later commit invalidates that receipt; a machine view must not advertise stale readiness.
+        pr = pull(1, f"fix/{fix}")
+        pr["headRefOid"] = repo.git("rev-parse", f"fix/{fix}")
+        contexts = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]
+        contexts["nodes"].append({**contexts["nodes"][0], "name": "tests"})
+        github(env.gh, [pr])
+        env.commit(fix_tree, "readme.md", "Welcome back.\n")
+        row = next(r for r in view(repo, "board")["items"] if r["id"] == fix)
+        assert row["stage"] == "waiting for checks"
+        assert row["next"]["command"] == f"forge close {fix}"
+        assert env.close(fix).returncode == 0
+        remote = repo.git("remote", "get-url", "origin")
+        gh = env.gh
+        gh.respond("api", "graphql", exit=1, stderr="offline")
+        state(checkout / ".git/forge/checks-cache.json", fetched_at="2000-01-01T00:00:00+00:00")
+        for merged_fix in (False, True):
+            if merged_fix:
+                # Retain the merged worktree to cover its permission-dependent cleanup instruction.
+                repo.git("merge", "--squash", "fix/tidy-readme")
+                repo.git("commit", "-qm", "Accept the fix")
+                repo.git("push", "-q", "origin", "main")
+            repo.git("remote", "set-url", "origin", str(env.tmp / "unreachable.git"))
+            offline = {r["id"]: r for r in view(repo, "board")["items"]}
+            assert offline["SHOP"]["children"][0]["stage"] == "ready"
+            assert offline["SHOP"]["children"][0]["pr"]["checks"] == "unknown"
+            assert offline["SHOP"]["children"][0]["next"]["command"] is None
+            assert offline[fix]["stage"] == ("merged" if merged_fix else "ready")
+            assert offline[fix]["pr"]["checks"] == "unknown"
+            assert offline[fix]["next"]["command"] is None
+            repo.git("remote", "set-url", "origin", remote)
+        return
     github_merge(env, "task/SHOP-T1")
     merged = repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
