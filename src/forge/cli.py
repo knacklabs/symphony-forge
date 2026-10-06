@@ -4,7 +4,6 @@ import ast
 import importlib.metadata
 import json
 import os
-import pkgutil
 import subprocess
 import sys
 import urllib.request
@@ -20,6 +19,71 @@ REFUSALS = {
     "failed": ("{command} failed: {problem}", "forge doctor"),
 }
 
+# Names and display order are known without reading command implementations. Arguments,
+# descriptions and handlers still belong to their owners.
+ROUTES = {
+    "init": "init", "sync": "sync", "doctor": "doctor", "test": "fasttest",
+    "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board",
+    "story new": "story", "story done": "story", "read": "story",
+    "task start": "task", "fix start": "task", "fix allow-large": "task", "fix amend": "task",
+    "work": "worker", "ask": "ask", "close": "close", "merge": "merge", "land": "land",
+    "spec save": "records", "spec confirm": "records", "spec measure": "records",
+    "spec payback": "payback", "decision new": "records", "decision accept": "records",
+    "roadmap add": "records", "roadmap retire": "records",
+    "hook context": "nextstep", "hook handoff": "nextstep", "hook approval": "approval",
+    "hook deny": "deny", "hook pre-commit": "githooks", "hook pre-push": "githooks",
+    "hook merge-roadmap": "sync", "hook pr-check": "prcheck",
+}
+GROUP_OWNERS = {"story": "story", "task": "task", "fix": "task", "spec": "records",
+                "decision": "records", "roadmap": "records", "hook": "nextstep"}
+
+
+class _Commands(argparse._SubParsersAction):
+    """Argparse's normal choices and errors, with parsers built only when selected."""
+
+    def __init__(self, *args: Any, prefix: str, load: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.prefix, self.load = prefix, load
+        for words in ROUTES:
+            if words.startswith(prefix):
+                self._name_parser_map.setdefault(words[len(prefix):].split()[0], None)
+
+    def _description(self, words: str) -> str:
+        if words in ROUTES:
+            return self._command(words)["help"]
+        owner = GROUP_OWNERS.get(words)
+        if not owner or words not in self.load(owner).get("GROUP_HELP", {}):
+            raise ValueError(f"group help missing: {words}")
+        return self.load(owner)["GROUP_HELP"][words]
+
+    def _command(self, words: str) -> dict[str, Any]:
+        return next(command for command in self.load(ROUTES[words])["COMMANDS"]
+                    if command["words"] == words)
+
+    def _get_subactions(self) -> list[Any]:
+        # Only help needs the descriptions of siblings; running a command never reads them.
+        return [self._ChoicesPseudoAction(name, [], self._description(self.prefix + name))
+                for name in self._name_parser_map]
+
+    def __call__(self, parser: Any, namespace: Any, values: Any, option_string: Any = None) -> None:
+        name = values[0]
+        if name in self._name_parser_map and self._name_parser_map[name] is None:
+            words = self.prefix + name
+            command = self._command(words) if words in ROUTES else None
+            selected = _Parser(prog=f"{self._prog_prefix} {name}",
+                               description=self._description(words) if command or
+                               values[1:2] in (["--help"], ["-h"]) else None)
+            if command:
+                for names, options in command["args"]:
+                    selected.add_argument(*names, **options)
+                selected.set_defaults(words=words, handler=f"{ROUTES[words]}:{command['run']}",
+                                      changes=command["changes_state"])
+            else:
+                selected.add_subparsers(action=_Commands, required=True, title="commands",
+                                       prefix=words + " ", load=self.load)
+            self._name_parser_map[name] = selected
+        super().__call__(parser, namespace, values, option_string)
+
 
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
@@ -30,41 +94,20 @@ def _parser() -> _Parser:
     parser = _Parser(prog="forge",
                      description="Forge takes a story from approval to a merged pull request.")
     parser.add_argument("--version", action="version", version=f"forge v{__version__}")
-    commands = parser.add_subparsers(required=True, title="commands")
-    groups: dict[str, Any] = {}
-    declarations = []
-    group_help = {}
-    for info in pkgutil.iter_modules(forge.__path__):
-        if info.ispkg:
-            continue
-        source = Path(info.module_finder.path) / f"{info.name}.py"
-        names = {target.id for node in ast.parse(source.read_text(encoding="utf-8")).body
-                 if isinstance(node, ast.Assign) for target in node.targets
-                 if isinstance(target, ast.Name)}
-        if not names.intersection({"COMMANDS", "GROUP_HELP"}):
-            continue
-        module = importlib.import_module(f"forge.{info.name}")
-        for group, help_text in getattr(module, "GROUP_HELP", {}).items():
-            if group in group_help:
-                raise ValueError(f"group help declared twice: {group}")
-            group_help[group] = help_text
-        for command in getattr(module, "COMMANDS", []):
-            declarations.append((command["position"], command["words"],
-                                 f"{info.name}:{command['run']}", command["changes_state"],
-                                 command["help"], command["args"]))
-    for _, words, target, changes, text, arguments in sorted(declarations):
-        name, _, sub = words.partition(" ")
-        if sub and name not in groups:
-            if name not in group_help:
-                raise ValueError(f"group help missing: {name}")
-            group = commands.add_parser(name, help=group_help[name], description=group_help[name])
-            groups[name] = group.add_subparsers(required=True, title="commands")
-        command = (groups[name] if sub else commands).add_parser(sub or name, help=text,
-                                                                 description=text)
-        for names, options in arguments:
-            command.add_argument(*names, **options)
-        # "handler", not "target": `forge read` has a positional argument named target.
-        command.set_defaults(words=words, handler=target, changes=changes)
+    declarations: dict[str, dict[str, Any]] = {}
+
+    def load(owner: str) -> dict[str, Any]:
+        if owner not in declarations:
+            source = Path(__file__).with_name(f"{owner}.py")
+            # Evaluate only declarations, without importing the owner's runtime dependencies.
+            tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
+            declarations[owner] = {
+                target.id: eval(compile(ast.Expression(node.value), str(source), "eval"))
+                for node in tree.body if isinstance(node, ast.Assign) for target in node.targets
+                if isinstance(target, ast.Name) and target.id in ("COMMANDS", "GROUP_HELP")}
+        return declarations[owner]
+
+    parser.add_subparsers(action=_Commands, required=True, title="commands", prefix="", load=load)
     return parser
 
 
