@@ -3,7 +3,7 @@
   "branch": "fix/picker-two-rules",
   "done_when": "forge test --pytest selects only by two rules: changed test files, and tests that import or name the changed Python module (its dotted name or its file path); a change to a shared input (lockfiles, conftest.py, requirements, or pyproject.toml outside its safe list) runs the full command; every other selection rule and its code is removed; replaying the v1.2.6 release change selects fewer than 71 test files; one command test per rule; new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
