@@ -421,14 +421,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
                           if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
     busy = _started(story.landed_ref(top), top)
+    overlapping: set[str] = set()
     for task in doc["tasks"]:
         if task["id"] in waits:
-            waits[task["id"]] += [item for item, scope in busy.items()
-                                  if item not in waits[task["id"]] and any(
-                                      _overlap(a, b) for a in task["scope"] for b in scope)]
+            blockers = [item for item, scope in busy.items()
+                        if any(_overlap(a, b) for a in task["scope"] for b in scope)]
+            if blockers:
+                overlapping.add(task["id"])
+            waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
-               if deps]
+               if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
