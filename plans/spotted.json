@@ -221,6 +221,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 283,
+      "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
+      "from": "blocking",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -298,6 +309,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix git-call count still grows with separately landed hand edits\tforge-doctor-fix-checks-every-forge-file",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 150,
+      "text": "Not done: doctor --fix git-call count still grows with separately landed hand edits",
+      "from": "blocking",
+      "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -371,6 +393,28 @@
       "text": "Only remove a fix created by this doctor run",
       "from": "blocking",
       "item": "FORGE-DOCTORFIX-1/FILES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 134,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 137,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
       "status": "open",
       "closed_by": null
     },
@@ -683,6 +727,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "from": "worker",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "kind": "bug",
       "path": "tests/test_close_test_runs_wait_in_line.py",
@@ -804,6 +859,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\ttests/test_fix_clone_gets_test_tools.py\tNot done: proof that Forge's own outer uv commands are frozen\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "tests/test_fix_clone_gets_test_tools.py",
+      "line": 72,
+      "text": "Not done: proof that Forge's own outer uv commands are frozen",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_hotspots.py\tNot done: test_4_only_a_fix_closes_its_named_files_entries\tFORGE-SPOTTED-1/HOT",
       "kind": "bug",
       "path": "tests/test_hotspots.py",
@@ -855,6 +921,17 @@
       "text": "Not done: machine-view tests for new and upgraded client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 660,
+      "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "from": "worker",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "open",
       "closed_by": null
     },
@@ -914,6 +991,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tNot done: proof list\tseveral-tests-fail-on-main-in-a-full-loc",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 85,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe interrupted review times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_reviews_remove_their_temp_folders.py",
@@ -921,8 +1009,8 @@
       "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
@@ -932,8 +1020,8 @@
       "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
@@ -965,8 +1053,8 @@
       "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
@@ -976,8 +1064,8 @@
       "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
@@ -1101,6 +1189,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/doctor.py\tForce root diffs when reconstructing merge-parent file contents",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 97,
+      "text": "Force root diffs when reconstructing merge-parent file contents",
+      "from": "review",
+      "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/doctor.py\tPreserve the source-repo hook exclusion during driver repair",
       "kind": "edge",
       "path": "src/forge/doctor.py",
@@ -1196,6 +1295,17 @@
       "text": "Keep installation before retained Node checks in mixed commands",
       "from": "review",
       "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tP2: Preserve related selection when harmless tables move or disappear",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 151,
+      "text": "P2: Preserve related selection when harmless tables move or disappear",
+      "from": "review",
+      "item": "any-pyproject-toml-change-makes-forge-te",
       "status": "open",
       "closed_by": null
     },

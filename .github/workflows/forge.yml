@@ -16,6 +16,8 @@ jobs:
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: ubuntu-latest
+    env:
+      UV_FROZEN: '1'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -28,7 +30,7 @@ jobs:
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
-      - run: "uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
+      - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
         if: steps.parent-tests.outputs.reuse != 'true'
 
   forge-pr-check:

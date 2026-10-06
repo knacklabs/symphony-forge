@@ -523,24 +523,33 @@ def test_8_plain_english(env):
     if os.name != "nt":
         slow, started, gh_pid = env.tmp / "slow", env.tmp / "gh-started", env.tmp / "gh-pid"
         slow.mkdir()
-        _executable(slow / "gh", f'#!/bin/sh\necho $$ > "{gh_pid}"\ntouch "{started}"\nexec sleep 30\n')
+        _executable(slow / "gh", f'''#!{sys.executable}
+import os, signal
+from pathlib import Path
+Path({json.dumps(str(gh_pid))}).write_text(str(os.getpid()), encoding="utf-8")
+Path({json.dumps(str(started))}).touch()
+signal.pause()
+''')
         doctor = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "doctor"], cwd=repo.path,
                                env={**os.environ, "PATH": f"{slow}{os.pathsep}{os.environ['PATH']}"},
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         try:
-            while not started.exists() and doctor.poll() is None:
+            deadline = time.monotonic() + 60
+            while not started.exists():
+                assert doctor.poll() is None and time.monotonic() < deadline, "doctor never reached gh"
                 time.sleep(0.05)
             doctor.send_signal(signal.SIGINT)
-            out, err = doctor.communicate(timeout=30)
-            assert (doctor.returncode, err) == (130, ""), (out, err)
+            doctor.wait(timeout=60)
         finally:  # the SIGINT reached forge alone, so the waiting gh is still running
-            doctor.kill()
-            doctor.communicate()
+            if doctor.poll() is None:
+                doctor.kill()
             if gh_pid.exists():
                 try:
                     os.kill(int(gh_pid.read_text("utf-8")), signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+            out, err = doctor.communicate(timeout=60)
+        assert (doctor.returncode, err) == (130, ""), (out, err)
 
 
 # --- criterion 9: nothing changes outside a pull request --------------------------------------

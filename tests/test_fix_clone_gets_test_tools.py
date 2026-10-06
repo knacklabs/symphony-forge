@@ -59,7 +59,11 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
 
 
 def test_2_ci_runs_the_documented_pytest_command():
-    command = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))["test"]
+    settings = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))
+    # Outer uv starts before Forge can set UV_FROZEN; both entry points must freeze it.
+    for key in ("test", "fast_test"):
+        assert "--frozen" in shlex.split(settings[key]), key
+    command = settings["test"]
     args = shlex.split(command)
     assert args[:2] == ["uv", "run"]
     assert "pytest" in args
@@ -68,6 +72,7 @@ def test_2_ci_runs_the_documented_pytest_command():
     workflows = ROOT / ".github" / "workflows"
     for name in ("forge-next.yml", "forge.yml", "codex-smoke.yml"):
         workflow = (workflows / name).read_text(encoding="utf-8")
-        assert "uv run --python 3.11 pytest" in workflow
+        # Forge's generated workflow now consumes the lock without refreshing it.
+        assert (command if name == "forge.yml" else "uv run --python 3.11 pytest") in workflow
         assert "--group dev" not in workflow
         assert "--with pytest" not in workflow

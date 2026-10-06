@@ -1,0 +1,45 @@
+{
+  "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
+  "branch": "fix/forge-doctor-fix-checks-every-forge-file",
+  "done_when": "forge doctor --fix finds changed-by-hand files with one git status and one git log call for all of Forge's files instead of two calls per file, with the same results; a command test counts git calls per doctor --fix run and shows they no longer grow with the number of files; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/doctor.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "00ffb90dbbd12d9fe32b600e1c3311187a737026820c66a93dfa01c23a747b9e",
+    "changed": "ccbea09a0a8c170d02852d31969011bc01300dfd5d17dbe9d00f6dfd595eb76c",
+    "commit": "9150c16c57cc8ff812b13c6e06efeca3f871c793",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "With `log.showRoot=false`, this invocation emits root commit metadata without its raw file records; I verified that behavior with read-only Git calls. Consequently, `entry()` treats files inherited unchanged from the root as absent. If a Forge file exists in the root, remains unchanged on the first parent, and is deleted by hand on a merged side branch, the merge's deletion incorrectly compares equal to the first parent's reconstructed state. `_history()` then returns no last change, allowing doctor to recreate the hand-deleted file instead of protecting it. Both default-branch repairs and in-place fix repairs use this helper. Add `--root` so reconstruction always receives the initial file contents, independently of the user's [Git configuration](https://git-scm.com/docs/git-log#Documentation/git-log.txt-logshowRoot).",
+        "file": "src/forge/doctor.py",
+        "line": 97,
+        "priority": "P2",
+        "title": "Force root diffs when reconstructing merge-parent file contents"
+      }
+    ],
+    "id": "06157b79-97c6-472a-a892-dd8288f98ee7",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T10:54:10+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T13:12:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T15:12:43+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge doctor --fix checks every Forge file with two git commands each (about 190 git processes per run)",
+  "worker": "codex"
+}
