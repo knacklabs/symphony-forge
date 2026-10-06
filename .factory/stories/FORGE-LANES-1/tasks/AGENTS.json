@@ -2,41 +2,56 @@
   "branch": "task/FORGE-LANES-1-AGENTS",
   "flagged": [
     "src/forge/machine.py",
+    "src/forge/repo.py",
     "tests/test_lanes_agents.py",
     "tests/test_lanes_view.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c653b02f7f9f34c7fd46433825a8cd6b1d6e7c5f3d31416dcf8c36be13d3d796",
-    "changed": "ff70b47778d74ba2e182d1641662a08fd244e26caba5310a25724dffa3e9f872",
-    "commit": "e6a7d488a72612831b6c302a65c47eb15c842ad3",
+    "branch_diff": "0ae4ef38204b10136fbc7a8186f3b91f7866dbc6feb6e7bd8327b474b2b0cf4c",
+    "changed": "d32436e6cc719bae8562fdec0ec04aaf8328d3960217b6b09e8476faf6d2f47a",
+    "commit": "4393c18fbcf90334b03c55ea88e160f91a30722e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The retained PR checker launches Autoreview without process-group options and calls started(pid), as verified in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination through src/forge/codex.py:624\u2013625. Because that child does not lead a process group, it remains alive and stop refuses without freeing its place. Migrated older Claude workers and readers have the same launch mismatch. The new group-member wait does not resolve this case; the existing-queue test migrates a newly grouped launch. Preserve safe cancellation for these ungrouped processes while retaining the ruled compatibility signatures.",
+        "body": "Every new Refused construction omits the required next_step argument, defined in src/forge/repo.py:52. An unverifiable process therefore produces an uncaught TypeError and traceback instead of the promised one-line refusal. The same defect affects worker-only and argument guards, failed termination, and cancellation in machine.py:87,121,219,221,235. The assertions in tests/test_lanes_view.py:194,198,206 still pass because the traceback includes the source line containing the expected message. Supply the required argument at every site and make the command assertions reject tracebacks.",
+        "file": "src/forge/machine.py",
+        "line": 230,
+        "priority": "P1",
+        "title": "Not done: unverifiable process identity refuses with one line"
+      },
+      {
+        "body": "The standard requires: \"Touch only what the task needs.\" This change adds configuration-error retries to every Git invocation, and tests/test_close_test_runs_wait_in_line.py:125\u2013137 injects that unrelated failure into the existing close-queue test. Neither change implements core budgeting, lane entries, diagnostics, or cancellation. The handoff names both files and explains the Windows configuration-read failure, but does not establish that the agent-lane change caused it. Move this independent Git reliability repair and its test into a separate fix.",
+        "file": "src/forge/repo.py",
+        "line": 74,
+        "priority": "P1",
+        "title": "Standard: Touch only what the task needs"
+      },
+      {
+        "body": "The previous advisory remains open. The retained checker launches Autoreview without process-group options and calls started(pid), as shown in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path requests group termination through src/forge/codex.py:624\u2013625, although that process does not lead its own group. It consequently remains alive and its place cannot be freed. Older Claude workers and readers have the same mismatch. Preserve the ruled compatibility signatures while supporting safe cancellation of these ungrouped processes; the migration test currently launches a newly grouped process.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "The review entry snapshots chosen at admission, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Consequently, board JSON retains null or the unavailable model throughout the running review. The same stale snapshot occurs when a split design worker switches to Codex at src/forge/worker.py:167\u2013191. Update the active entry's model and effort whenever either caller changes its selection. This previously reported advisory defect remains open.",
+        "body": "The review admission snapshots chosen, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Board JSON therefore continues showing null or the unavailable model during the running review. Split design workers similarly change chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without updating their active entry. Refresh model and effort in the lane entry whenever either caller changes its selection. This previously reported advisory remains unresolved.",
         "file": "src/forge/review.py",
         "line": 478,
         "priority": "P2",
         "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual tests still bypass the shared entry queue: src/forge/fasttest.py:171\u2013172 launches directly, and close uses the separate ticket queue at src/forge/review.py:279\u2013288. Board JSON therefore cannot expose running tests or their output/progress, and stop cannot cancel tests or stop an item's worker and test together. plans/FORGE-LANES-1.md:132\u2013142 explicitly assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
+        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:171\u2013172 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. Consequently, the board cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:141 assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "status": "clean"
+    "status": "blocked"
   },
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -61,7 +76,16 @@
     {
       "at": "2026-10-06T01:49:36+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:03:59+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "done": "src/forge/machine.py is simpler and behaves as it did before",
+    "file": "src/forge/machine.py",
+    "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
+  },
   "worker": "codex"
 }
