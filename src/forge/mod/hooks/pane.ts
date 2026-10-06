@@ -83,7 +83,7 @@ export function registerPane(on: On, data: Data) {
       const counts = data.lanes ? `${n.agentsRunning + (n.test ? 1 : 0)} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · ` : ''
       const step = record(first?.worker).step
       lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
-      if (first) compact = { title: first.title, counts, timing: `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · `, tail: `${data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}` }
+      compact = { title: first?.title ?? '', counts, timing: first ? `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : '', tail: `${data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}` }
     }
     if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) {
       lines[0] += ' · /forge for the board'

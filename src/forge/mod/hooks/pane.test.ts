@@ -121,15 +121,16 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
   test(`2: ${surface} strip fits two items, overflow and narrow or older sessions`, async ($, on) => {
     const clock = mock.clock(on)
-    let extra = false, old = false, long = false
+    let extra = false, old = false, long = false, inactive = false
+    const submissions: string[] = []
     let nextCommand: string | null = following.next.command
     on('session.start', () => ({ cwd: '/repo' }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
-    on('prompt.submit', (_$, e) => ({ text: e.text }))
+    on('prompt.submit', (_$, e) => { submissions.push(e.text); return { text: e.text } })
     on('process.run', (_$, e) => {
       if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-      const items = [long ? { ...row, title: 'A very long guide title that must never displace stage times or the total', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
+      const items = inactive ? [] : [long ? { ...row, title: 'A very long guide title that must never displace stage times or the total', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
       const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: nextCommand } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
@@ -176,9 +177,12 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(drawn).not.toContain('Agents ')
     expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
     await ui.press({ key: 'next-step' })
+    expect(submissions.at(-1)).toBe('forge close guide')
     await ui.redraw({ ...band, bodyColumns: 79 })
     expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide:')
     expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
+    await ui.press({ key: 'next-step' })
+    expect(submissions).toEqual(['forge close guide', 'forge close guide'])
     old = false; extra = false; long = true; await clock.advance(10000)
     await ui.redraw({ ...band, bodyColumns: 80 })
     const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('100h'))!
@@ -230,6 +234,16 @@ for (const surface of ['terminal', 'desktop'] as const) {
         expect((row.children ?? []).reduce((sum, b) => sum + (typeof b === 'object' && b !== null && b.type === 'Box' ? Number(b.props?.width) : NaN), 0)).toBe(bodyColumns)
       }
     }
+    inactive = true
+    nextCommand = 'forge work a-very-long-item-name-that-cannot-fit-beside-the-current-stage'
+    await clock.advance(10000)
+    await ui.redraw({ ...band, bodyColumns: 79 })
+    const boxes = await ui.findAll({ type: 'Box' })
+    const counts = boxes.find(b => b.props.flexShrink === 0 && b.text === '2 running, 1+1 waiting · ')!
+    expect(counts).toBeDefined()
+    expect(counts.props.width).toBe(counts.text.length)
+    expect(boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== 79).reduce((sum, b) => sum + Number(b.props.width), 0)).toBe(79)
+    expect(await ui.find({ text: /Review ●/ })).toBeUndefined()
   })
 }
 
