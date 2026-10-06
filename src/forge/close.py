@@ -45,9 +45,6 @@ REFUSALS = {
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
-    "stale_choice": ("The code or scope changed since the stopped review, so those findings "
-                     "cannot be accepted for this version.",
-                     'forge close {item} --resolve <narrow|split> --reason "<human\'s choice>"'),
     "unsynced": ("This {kind} changes Forge's version, but {files} {verb} what forge sync writes "
                  "for it.", "forge sync in {path}, commit what it wrote, then forge close {item}"),
     "unsynced_forge": ("This {kind} pins Forge {pinned}, but Forge {installed} is running close, "
@@ -76,24 +73,21 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["bad_choice"], item=item)
         result = state["review"]
         if choice == "accept":
-            default = repo.default_branch(top)
-            repo.git("fetch", "-q", "origin", default, cwd=top)
-            if any(result.get(key) != review.fingerprint(
-                    "HEAD", item, top, state, f"origin/{default}", branch_diff=key == "branch_diff")
-                   for key in ("changed", "branch_diff")):
-                repo.refuse(REFUSALS["stale_choice"], item=item)
+            dismissed = {d["finding"] for d in result["dismissals"]}
             result["dismissals"].extend(
                 {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
                  "accepted": True}
-                for number, _ in review.blocking(result))
+                for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
             result["status"] = "clean"
         state["stop"].update(choice=choice, reason=reason.strip())
         state["status"] = "waiting for checks" if choice == "accept" else "fixing"
         _save(top, item, state, f"Record the human's review loop choice: {choice}")
-        print("Recorded the human's choice. " + (
-            f"Next: forge close {item}" if choice == "accept" else
-            f"{choice.capitalize()} the part as agreed, then forge work {item}."))
-        return 0
+        if choice != "accept":
+            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
+                  f"then forge work {item}.")
+            return 0
+        print("Recorded the human's choice.")
+    had_stop = bool(state.get("stop"))
     check_stop(item, state)
     question = codex.record(top, item).get("question")
     if question:
@@ -133,15 +127,15 @@ def close(args: argparse.Namespace) -> int:
     changed = review.fingerprint("HEAD", item, top, state, f"origin/{default}")
     branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
                                      branch_diff=True)
-    fresh = result.get("branch_diff", legacy_diff) == branch_diff
-    if any(d.get("accepted") for d in result.get("dismissals", [])):
+    fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
+    if choice != "accept" and any(d.get("accepted") for d in result.get("dismissals", [])):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
                            result.get("branch_diff") != branch_diff)
     if fresh:
         result.update(changed=changed, branch_diff=branch_diff)
     if dismissals and not fresh:
-        repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
+        repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     if not fresh:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
@@ -191,6 +185,8 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
+    if not serious and not (state.get("stop") or {}).get("choice"):
+        state.pop("stop", None)
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh:
@@ -207,7 +203,7 @@ def close(args: argparse.Namespace) -> int:
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed:
+    if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious else "waiting for checks")
@@ -263,7 +259,11 @@ def close(args: argparse.Namespace) -> int:
 
 
 def check_stop(item: str, state: dict[str, Any]) -> None:
-    """The recorded choice, not a worker's status update, releases a review loop stop."""
+    """A human choice or a later clean review releases a review loop stop."""
+    result = state.get("review") or {}
+    if (result.get("status") == "clean" and not review.blocking(result) and
+            not (state.get("stop") or {}).get("choice")):
+        state.pop("stop", None)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
                     round=sum(step["step"] == "review" for step in state.get("steps", [])),

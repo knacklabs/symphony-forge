@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
-import tomllib
 from pathlib import Path
 
 import pytest
@@ -49,16 +49,14 @@ def record_run(request):
     changes = {"src/probe_module.py": "VALUE = 2\n",
                "tests/test_changed.py": "def test_changed():\n    assert 4 + 4 == 8\n"}
     if shared_input:
-        changes[shared_input] = (env.repo.path / shared_input).read_text("utf-8") + "\n# Changed\n"
-        # Metadata/comments no longer stand for dependency or pytest-setting changes.
+        original = (env.repo.path / shared_input).read_text("utf-8")
+        # Lock selection compares dependency data; comments do not change that contract.
+        changes[shared_input] = (re.sub(r'(name = "pytest"\nversion = )"[^"]+"',
+                                      r'\1"999.0.0"', original, count=1)
+                                 if shared_input == "uv.lock" else original + "\n# Changed\n")
         if shared_input == "pyproject.toml":
             changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
-        elif shared_input == "uv.lock":
-            lock = (env.repo.path / shared_input).read_text("utf-8")
-            version = next(package["version"] for package in tomllib.loads(lock)["package"]
-                           if package["name"] == "pytest")
-            changes[shared_input] = lock.replace(f'name = "pytest"\nversion = "{version}"',
-                                                'name = "pytest"\nversion = "99.0.0"')
+        assert changes[shared_input] != original
     item, _ = env.start_fix(changes)
 
     closed = env.close(item)
