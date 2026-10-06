@@ -1,6 +1,6 @@
 # Forge lives inside Claude Code
 
-8 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
+11 parts · Risks: code that runs inside every developer's Claude Code session · New moving parts: one Claude Code mod shipped with Forge
 
 ## What changes for you
 
@@ -12,13 +12,22 @@
   up to two active items, each showing its stages from build through tests, review and CI to
   merge, with how long each finished stage took, a live timer on the current one, its round and
   its total time. More items show as "+N more". A narrow terminal gets one line.
+- The pane answers "what's happening?" without anyone asking: for each running worker its tool,
+  model, reasoning effort, round, elapsed time and what it is doing right now; for every item
+  whether it is running, waiting in line (and where) or idle and since when, with items idle over a
+  day marked stalled; each stage's time with a live timer on the current one, and test progress;
+  for a red check, which job failed and whether it timed out; review findings with their severity
+  and how many were dismissed.
 - A Machine tab in the pane shows what runs on this machine across your repos on this Forge
   release: the agents building, reading or reviewing, with model and time; the one test run with
   its progress; who waits next in each lane; and the machine's load. While Claude works the
   spinner line says where your work is in line. Pressing `o` opens a run's live output; pressing
   `s` stops a run after you confirm.
-- Where Claude Code can't draw (the VS Code chat panel, a phone through Remote Control), `/forge`
-  prints the same summary as text.
+- In the Code tab of the Claude Desktop app the same pane draws richer: each item's stages as a
+  timeline you can hover for times, the Machine tab's agents as a drawn tree, lists as tables, and
+  native buttons. Where Claude Code draws nothing for a mod (the VS Code chat panel, a phone or
+  claude.ai through Remote Control), `/forge` replies with the full status as text. Desktop's WSL
+  sessions load no plugins at all, so there Forge works through the `forge` command as today.
 - When work needs the agent (a review found problems, checks failed, a pull request is ready to
   merge, a worker asked a question, or a run finished), Forge tells the session and the agent acts
   on it straight away. Progress such as a run starting or checks running only updates the pane.
@@ -43,12 +52,13 @@ all four.
 
 ## Done when
 
-1. **In Claude Code, a Forge pane shows each story and fix with its stage, each running worker and how long it has run, each pull request's checks, and open findings, and it updates by itself.**
+1. **In Claude Code, a Forge pane shows each story and fix with its stage, each running worker and how long it has run, each pull request's checks, and open findings, and it updates by itself; in the Desktop app it also draws each item's stages as a timeline and uses native buttons, and where nothing draws (VS Code chat panel, Remote Control) `/forge` replies with the full status as text.**
 2. **The strip above the prompt always shows a summary of running and waiting agents and tests, Forge's next step, and up to two active items with each stage's time and the total, and pressing 1 on an empty prompt runs the next step.**
 3. **When a review finds problems, checks fail, a pull request is ready to merge, a worker asks a question or a run finishes, the session starts a turn that names each such change and its next step; progress only updates the pane.**
 4. **Pressing Approve on a waiting story opens Claude Code's own plan-approval prompt with the story's exact text from its file, and approving there records the same approval Plan Mode does; if Claude Code doesn't allow this, the button is left out and Plan Mode stays the way to approve.**
 5. **`forge sync` turns the mod on from Forge's latest release, it works in every repo whatever Forge version that repo pins, and Codex and sessions without the mod work as today.**
-6. **The Machine tab shows every agent and test run on the machine from repos on this release, with model, time, test progress and who waits next, plus the machine's load; a run's output opens with one key, a run stops only after a person confirms, and where nothing can draw `/forge` prints the summary as text.**
+6. **The Machine tab shows every agent and test run on the machine from repos on this release, with model, time, test progress and who waits next, plus the machine's load; a run's output opens with one key, a run stops only after a person confirms, in the Desktop app the agents show as a drawn tree, and where nothing can draw `/forge` prints the summary as text.**
+7. **For every item the pane shows whether it is running, queued (with its place in line) or idle and since when (stalled after a day); for each running worker its tool, model, effort, round, elapsed time and current step; each stage's time and test progress; for a red check the failing job and whether it timed out; and findings with their severity and dismissed count.**
 
 ## New and existing repos
 
@@ -198,7 +208,7 @@ tightening it needs no new approval. -->
    with npm to run `claude plugin test` and `validate`.
 
 6. Machine tab. Drawn as an agent tree (owner chose 2026-10-04, after a Claude Code agent-tree
-   design): the coordinating session at the top (tool, model, effort, "plans + decides"); under it
+   design): this session at the top ("plans + decides"); under it
    one box per running entry of the agent lane (worker, plan reader, reviewer: item in plain words,
    tool, model, effort, round, elapsed) and the test lane's box (item, progress bar, elapsed); a
    gates column listing each active item's gates (plan read passed, review clean/blocked with its
@@ -206,14 +216,20 @@ tightening it needs no new approval. -->
    outcomes and status, and ask for detail when they need it): pressing `l` shows the last events,
    one line each with time, and `l` again hides them; a legend of colours per tool and lane, each also marked with a symbol so it reads without
    colour. Only facts Forge records: no probabilities, token counts or other figures Forge does not
-   keep. Under 100 columns, or on Desktop where boxes don't fit, the tree becomes a list in the same
-   order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
+   keep. In the Desktop app (`e.surface === 'desktop'`; `Svg` is Desktop-only) the tree is one `Svg` drawing (interactive,
+   `<title>` tooltips with model, round and elapsed; colours plus symbols; `alt` text listing the
+   same facts), the keys become native Buttons. In the terminal under 100 columns the tree becomes a
+   list in the same order. Tests (plugin): tree from a fixture with a worker, a reviewer, a reader and a test run;
    gates for a blocked review and a red check; no log until `l` is pressed, then the last events newest last; list form at
-   80 columns.
+   80 columns; the same fixture on `desktop` draws an Svg whose alt text names each run.
    MACHINE's After names FORGE-LANES-1's AGENTS and TESTS tasks. CORE creates pane.ts with `addTab(name, render)` (a
    stub PANE fills) and machine.ts with an empty `registerMachine(on, data, addTab)`; PANE owns the
    tabs and the whole strip. MACHINE adds only the tab, the spinner line and the keys. Data: `forge lanes
-   --json` (FORGE-LANES-1), which lists only repos on this release. Rows per lane in queue order:
+   --json` (FORGE-LANES-1), which lists only repos on this release. The tree's facts and their
+   producers: for this repo's runs, tool, model, effort, round, step and the gates column come from
+   `forge board --json` (LIVE, detail 7); for another repo's runs only the lane entry's own facts
+   show (repo, item, kind, model, elapsed, place), with no gates and no round; a fixture field that
+   no producer writes fails the contract test both views share. Rows per lane in queue order:
    repo name, item in plain words, kind, model and effort, elapsed; a running test shows
    `done/total` as a bar when the runner reports it, else elapsed only (no time-left estimate). Load
    line: the view's load average as a `Raster` sparkline of the last 30 samples, taken at each
@@ -230,33 +246,71 @@ tightening it needs no new approval. -->
    nothing; `s` confirmed stops the run; `s` on an ended or replaced run says so; a failed stop shows
    its reason; a failed or malformed refresh keeps the rows.
 
+7. Live status (LIVE). This detail is the contract: LIVE owns these field names, their shapes and
+   the shared fixture `tests/fixtures/board.json`; PANE and MACHINE read only fields named here and
+   show nothing for an absent one. `forge board --json` and `forge next --json` gain, per item:
+   `activity` (`running` with the run's action, `queued` with `lane` and `place`, or `idle`) and
+   `idle_since`: the end time of the item's last run record (RUNS), or, with no run record, the
+   item's branch's last commit time; a run starting clears it and the run's end sets it again;
+   `stalled: true` when idle over 24 hours; `gates`: `plan_read` (`passed`, `blocked` or `none`, from
+   the story's read record), `review` (`clean`, `blocked` with finding count, or `none`) and `ci`
+   (`green`, `red`, `running` with elapsed, or `none`); per running worker `tool`, `model`, `effort`, `round`,
+   `started_at` and `step` (the latest step the worker reported: Forge records it from the worker's
+   turn events as one plain line, such as "running 109 related tests", "editing src/forge/close.py",
+   "committing"; at most one record per 10 seconds); per test run `done`/`total` when the runner
+   reports it; per red check `job` and `cause` (`timeout` when GitHub cancelled the job at its time
+   limit, else `failed`); per finding `priority`, plus `dismissed` (count); and a top-level `events`: the last 20
+   run records RUNS writes (run start and end, review result, worker question), each with time,
+   item and one plain line, newest last; the Machine tab's `l` shows exactly these. Queue place comes from
+   FORGE-LANES-1's lane entries when that story has merged; until then `queued` is absent and the
+   item reads `idle`. The pane (PANE) and Machine tab (MACHINE) show these; the strip shows the
+   running count and the first running item's step. Tests (command): a run that starts, ends (idle_since set) and
+   starts again (idle_since cleared); a worker step recorded through each worker path, a stub Codex
+   app-server emitting raw tool events and a stub Claude emitting its raw stream, each showing as
+   the live step (the latest of two); an item idle for 25 hours (stalled), a red
+   check whose job timed out and one that failed, and a review with a P1, a P2 and one dismissed
+   finding; both views carry the same fields; new and earlier-adopted client repos both get them.
+
 ## Tasks
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing |
 |---|---|---|---|---|---|---|---|
 | RUNS | Run and question records | Records with ids for run start and end, review results and worker questions on both worker paths, the item's round number on every timing record and a timing record for each test run, written inside review.test_run so close's run and the lanes story's `forge test` both record it, and `FORGE_WORKER=1` for every process Forge starts | 2, 3 | src/forge/repo.py, src/forge/worker.py, src/forge/close.py, src/forge/codex.py, src/forge/review.py | tests/test_run_records.py | | no |
 | VIEWS | Machine views and the guide | `--json` on `forge next` and `forge board` with the fields in details 1-4 and `version`, a contract test both views share with the mod's fixtures, and the guide's machine views section, the per-item `stages` and the 60-second GitHub checks cache | 1, 2, 3 | src/forge/nextstep.py, src/forge/board.py, src/forge/cli.py, src/forge/templates/skill.md, tests/fixtures/board.json | tests/test_machine_views.py | | no |
-| CORE | Plugin core | The plugin skeleton, the `forge` calls and the one refresh schedule, the too-old line, the summary formatter in summary.ts that both `/forge`'s text and the strip use, and the seams: `data` is `{ board, next, lanes, error, refreshedAt }` with `onUpdate(fn)`; register.ts calls `registerPane(on, data)`, `registerEvents(on, data)`, `registerApproval(on, data)` and `registerMachine(on, data, addTab)`, and pane.ts exports `addTab`, all created here as stubs with one test crossing them | 1, 6 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/summary.ts, src/forge/mod/hooks/core.test.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/machine.ts, pyproject.toml, src/forge/templates/skill.md | src/forge/mod/hooks/core.test.ts, tests/test_mod_plugin.py | VIEWS | no |
-| PANE | Pane and summary strip | The pane and its `addTab`, the summary strip in every layout and its hotkey, filling `registerPane` | 1, 2 | src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/pane.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/pane.test.ts | CORE | yes |
-| EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/skill.md, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | CORE | yes |
-| APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md, src/forge/templates/skill.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
-| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml, src/forge/templates/skill.md, tests/fixtures/marketplace/** | tests/test_mod_sync.py, tests/test_mod_install.py | PANE | no |
-| MACHINE | Machine tab | The Machine tab, the spinner line, output and stop keys, filling `registerMachine` | 6 | src/forge/mod/hooks/machine.ts, src/forge/mod/hooks/machine.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/machine.test.ts | PANE, FORGE-LANES-1/AGENTS, FORGE-LANES-1/TESTS | yes |
+| CORE | Plugin core | The plugin skeleton, the `forge` calls and the one refresh schedule, the too-old line, the summary formatter in summary.ts that both `/forge`'s text and the strip use, and the seams: `data` is `{ board, next, lanes, error, refreshedAt }` with `onUpdate(fn)`; register.ts calls `registerPane(on, data)`, `registerEvents(on, data)`, `registerApproval(on, data)` and `registerMachine(on, data, addTab)`, and pane.ts exports `addTab`, all created here as stubs with one test crossing them | 1, 6 | src/forge/mod/.claude-plugin/**, src/forge/mod/hooks/hooks.json, src/forge/mod/hooks/register.ts, src/forge/mod/hooks/forge.ts, src/forge/mod/hooks/summary.ts, src/forge/mod/hooks/core.test.ts, src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/events.ts, src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/machine.ts, pyproject.toml | src/forge/mod/hooks/core.test.ts, tests/test_mod_plugin.py | VIEWS | no |
+| PANE | Pane and summary strip | The pane and its `addTab`, the summary strip in every layout and its hotkey, filling `registerPane`, and the seam APPROVE fills: pane.ts exports `addItemAction(kind, render)`, drawn on that kind's rows, with one test that an action added there appears on a story row, the richer drawing in the Desktop app (the Surfaces note), and detail 7's fields once LIVE has merged (absent fields show nothing) | 1, 2, 7 | src/forge/mod/hooks/pane.ts, src/forge/mod/hooks/pane.test.ts | src/forge/mod/hooks/pane.test.ts | CORE | yes |
+| EVENTS | Turns when work needs the agent | Seen store per repo and session, batching, session gating, filling `registerEvents` | 3 | src/forge/mod/hooks/events.ts, src/forge/mod/hooks/events.test.ts, src/forge/templates/brief.md | src/forge/mod/hooks/events.test.ts | CORE | yes |
+| APPROVE | Approve from the pane | The proof step, then the button and the plan prompt filling `registerApproval`, or the recorded reason it was left out | 4 | src/forge/mod/hooks/approval.ts, src/forge/mod/hooks/approval.test.ts, src/forge/approval.py, plans/FORGE-MOD-1.md | src/forge/mod/hooks/approval.test.ts, tests/test_mod_approval.py | PANE | yes |
+| SHIP | Sync turns the mod on | Marketplace file pinned to the package version, sync's install or update at user scope, doctor's warning, CI's plugin test job | 5 | .claude-plugin/marketplace.json, src/forge/sync.py, src/forge/doctor.py, .github/workflows/forge-next.yml, tests/fixtures/marketplace/** | tests/test_mod_sync.py, tests/test_mod_install.py | CORE | no |
+| GUIDE | The guide for the pane and events | skill.md's sections for the plugin core, the pane and strip, and events, as they were built | 1, 2, 3 | src/forge/templates/skill.md | tests/test_mod_guide.py | CORE, PANE, EVENTS | no |
+| GUIDE2 | The guide for approving and installing | skill.md's sections for approving from the pane and how the mod is installed, as they were built | 4, 5 | src/forge/templates/skill.md | tests/test_mod_guide.py | APPROVE, SHIP, GUIDE | no |
+| LIVE | Live status in the machine views | Detail 7's fields in both views: activity, idle since and stalled, each running worker's tool, model, effort, round, start and current step, test progress, a red check's job and cause, findings' severity and dismissed count | 7 | src/forge/board.py, src/forge/nextstep.py, src/forge/worker.py, src/forge/codex.py, src/forge/close.py, src/forge/review.py, src/forge/repo.py, tests/fixtures/board.json | tests/test_live_status.py | | no |
+| MACHINE | Machine tab | The Machine tab, the spinner line, output and stop keys, filling `registerMachine` | 6 | src/forge/mod/hooks/machine.ts, src/forge/mod/hooks/machine.test.ts, src/forge/templates/skill.md | src/forge/mod/hooks/machine.test.ts | PANE, LIVE, FORGE-LANES-1/AGENTS, FORGE-LANES-1/TESTS | yes |
 
 New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns on (Done-when 1-5)
 
 ## Notes
 
-- VIEWS no longer waits for RUNS (owner wants the visible parts sooner): until RUNS merges, the
-  run fields in the machine views (run start and end, round, occurrence ids) are null, and the mod
-  shows elapsed time only for what it can compute; RUNS fills them in when it lands.
-
+- Surfaces (owner, 2026-10-05: same pane, richer where the surface can draw; checked against
+  code.claude.com/docs/en/plugins/mods/overview "Where mods run": only the terminal and the
+  Desktop app's Code tab show a mod's drawing; the VS Code chat panel, `claude -p` and Remote
+  Control from a phone or claude.ai draw nothing): read `e.surface`. Terminal draws text as in
+  details 1-2. The Desktop app adds, per item, a stage timeline as one
+  `Svg` (a segment per stage, coloured by outcome with a symbol, `<title>` hover with its time;
+  `alt` lists the same), Markdown tables for the item lists, and native Buttons for every key
+  action. Where nothing draws, `/forge`'s reply is the full status as text (detail 1's fields
+  and detail 7's, one item per two lines), the same text the headless reply gives. The strip (AbovePrompt) stays text on every surface. Every pane and
+  Machine tab test loops over `['terminal', 'desktop']`, and one test checks `/forge`'s text reply;
+  on `desktop`, pane.test.ts also finds each item's timeline `Svg` whose alt text gives every
+  stage's time, and presses a native Button by key and sees its action run (the plugin test kit's `mount`
+  with `surface`), asserting facts, never paint.
 - Mods docs: code.claude.com/docs/en/plugins/mods/overview, /reference, /interface (v2.1.287+).
   Render sites `Pane`, `AbovePrompt`; `$.clock.every`, `$.process.run`, `$.prompt.submit`,
   `$.store`, `$.session.surfaces`, `$.session.repo`, `$.session.id`.
 - All Forge rules stay in the `forge` command; the mod only reads the machine views, runs `forge`
   commands and draws. It never writes repo files.
-- Each task updates the guide for what it adds, in its own section of skill.md (VIEWS: machine
-  views; PANE: the pane and band; EVENTS: events, plus brief.md's line that workers never act on
-  them; APPROVE: approving from the pane; SHIP: how the mod is installed). Tasks that run at the
-  same time wait for each other on skill.md through task start's overlap rule.
+- Guide sections: VIEWS writes the machine views section; GUIDE writes the plugin core, the pane and band and events, and GUIDE2
+  approving from the pane and how the mod is installed, after those parts merge; MACHINE writes its
+  own. EVENTS still adds brief.md's line that workers never act on events. Owner, 2026-10-05:
+  PANE, EVENTS, APPROVE and SHIP build side by side after CORE, and CORE doesn't wait for other stories' guide edits, so all five leave skill.md to GUIDE and GUIDE2;
+  their reviews don't report the missing guide update (GUIDE is that update).
