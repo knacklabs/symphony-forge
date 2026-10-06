@@ -130,8 +130,6 @@ def _base(*tips: str) -> str:
 def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, head: str) -> None:
     """Refuse a fix over the limit or touching an interface, unless the human allowed it.
     head "" means the staged changes."""
-    from forge import sync, worker
-
     if state.get("allow_large"):
         return
     diff = (base, head) if head else ("--cached", base)
@@ -146,9 +144,11 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
     if touched:
         refuse(REFUSALS["promote"], fix=fix, problem=f"changes the interface {touched[0]}")
     # Test files and forge sync's own output don't count toward the size.
-    tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *worker.TEST_PATHS)
+    tests = git("diff", "--name-only", "--no-renames", "-z", *diff, "--", *repo.TEST_PATHS)
     code = [path for path in code if path not in tests.split("\0")]
     if len(code) > LIMIT:
+        from forge import sync
+
         output = sync.synced(repo.root(), cfg, base, head, code)
         code = [path for path in code if path not in output]
     if len(code) > LIMIT:

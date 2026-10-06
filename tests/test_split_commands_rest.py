@@ -2,7 +2,7 @@
 import ast
 from pathlib import Path
 
-from test_split_commands import commands_keep_their_help_and_discover_a_new_owner
+from test_split_commands import commands_keep_their_help_and_register_a_new_owner
 
 STORY = "FORGE-SPLIT-1"
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
@@ -42,4 +42,4 @@ def test_2_remaining_commands_are_owned_and_keep_their_help(repo, tmp_path, monk
             assert result.returncode == 0, (command, result.stderr)
             assert result.stdout.startswith(f"usage: forge {command} ")
     # The existing golden help and new-module checks remain the criterion's CLI proof.
-    commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch)
+    commands_keep_their_help_and_register_a_new_owner(repo, tmp_path, monkeypatch)
