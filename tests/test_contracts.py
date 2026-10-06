@@ -197,7 +197,9 @@ def _no_spec(repo, gh, tmp_path, monkeypatch, request):
 def _reader_fails(repo, gh, tmp_path, monkeypatch, request):
     setup(repo)
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
-    (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(DOC, encoding="utf-8")
+    # Exceed the pipe buffer so an early provider exit deterministically rejects stdin.
+    (worktree(repo, "story/SHOP") / "plans" / "SHOP.md").write_text(
+        DOC + "\n" + "The reader must report its failure.\n" * 4096, encoding="utf-8")
     conftest._install(repo.bin, "claude", f"#!{sys.executable}\nimport sys\n"
                       "sys.stderr.write('claude: the model is unavailable\\n')\nsys.exit(1)\n")
     return (("read", "SHOP"), None, "",

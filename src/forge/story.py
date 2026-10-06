@@ -712,11 +712,11 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                                   errors="replace",
                                   env={**os.environ, "FORGE_WORKER": "1"}) as reader:
                 machine.started(reader.pid)
-                for event in ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
-                              {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
-                              {"type": "user", "message": {"role": "user", "content": text}}):
-                    reader.stdin.write(json.dumps(event) + "\n")
-                reader.stdin.close()
+                events = ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
+                          {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
+                          {"type": "user", "message": {"role": "user", "content": text}})
+                # communicate's writer handles a provider closing stdin, including Windows EINVAL.
+                reader._stdin_write("".join(json.dumps(event) + "\n" for event in events))
                 lines, final = [], None
                 for line in reader.stdout:
                     try:

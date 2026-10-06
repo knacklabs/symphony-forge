@@ -481,8 +481,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             env={**os.environ, "FORGE_WORKER": "1"}) as worker:
         machine.started(worker.pid)
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        worker.stdin.write(brief)
-        worker.stdin.close()
+        worker._stdin_write(brief)
         for line in worker.stdout:
             try:
                 event = json.loads(line)
