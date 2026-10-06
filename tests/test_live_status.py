@@ -30,7 +30,7 @@ def row(repo, item):
     return next(r for r in rows if r["id"] == item), boards[0]
 
 
-@pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "review claude", "review codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "ci", "ci red", "ci green"])
+@pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "ci", "ci red", "ci green"])
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     # Both commands read at different instants; freeze their clock for timer equality.
     monkeypatch.setenv("FORGE_NOW", "2026-10-06T12:00:00+00:00")
@@ -93,7 +93,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         model, effort = "gpt-6-sol", "medium"
     else:
         configure(env)
-        if case.startswith("review"):
+        if case.startswith("review") and "default" not in case:
             config = repo.path / "forge.toml"
             env.commit(repo.path, "forge.toml", config.read_text("utf-8") +
                        'models.review.codex = { model = "gpt-6-sol", effort = "xhigh" }\n'
@@ -104,10 +104,12 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     if case.startswith("read"):
         number = 2
     if case.startswith("review"):
-        if case == "review claude":
+        if case.endswith("claude"):
             from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
             _claude_only(env.tmp, monkeypatch, repo.bin, (env.tmp / "autoreview/scripts/autoreview").read_text("utf-8"))
-        model, effort = ("gpt-6-sol", "xhigh") if case == "review codex" else ("opus", "high")
+        model, effort = ("gpt-6-sol", "xhigh") if case.endswith("codex") else ("opus", "high")
+        if "default" in case:
+            model, effort = None, None
     if case == "restart":
         assert repo.forge("work", item).returncode == 0
         assert row(repo, item)[0]["idle_since"] is not None
@@ -162,6 +164,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         gate = (f'import socket\nwith socket.create_connection({listener.getsockname()!r}, '
                 'timeout=30) as gate:\n    gate.recv(1)\n')
         expected_steps = ["editing src/forge/close.py", "committing"]
+        selections = {}
         if case in ("codex", "read codex"):
             stub = repo.bin / "codex-app-server"
             source = stub.read_text("utf-8")
@@ -200,9 +203,22 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             stub.write_text(source.replace(marker, replacement), "utf-8")
         elif case.startswith("review"):
             stub = (Path(os.environ["HOME"]) / ".claude/skills/autoreview/scripts/autoreview"
-                    if case == "review claude" else env.queue.parent / "autoreview/scripts/autoreview")
+                    if case.endswith("claude") else env.queue.parent / "autoreview/scripts/autoreview")
             source = stub.read_text("utf-8")
             expected_steps = ["preparation: initial source snapshot", "preparation: pre-review verification"]
+            if "default" in case or "fallback" in case:
+                reported = "gpt-6-sol" if case.endswith("codex") else "opus"
+                # The provider edge supplies reports, never machine-view metadata.
+                # Hold after partial selection, effort, a change, and later ordinary progress.
+                selections = {f"model: {reported}": (reported, effort),
+                              "thinking: medium": (reported, "medium")}
+                if "fallback" in case:
+                    changed = ("codex model gpt-6-sol is unavailable for this account; retrying with gpt-6.1-sol"
+                               if case.endswith("codex") else "model: sonnet")
+                    reported = "gpt-6.1-sol" if case.endswith("codex") else "sonnet"
+                    selections[changed] = (reported, "medium")
+                    selections["thinking: high"] = (reported, "high")
+                expected_steps = [*selections, *expected_steps]
             events = "".join(f'print({step!r}, flush=True)\n' + gate for step in expected_steps)
             stub.write_text(source.replace('if "--codex-bin" in args:', events + 'if "--codex-bin" in args:'), "utf-8")
         elif case.startswith("ci"):
@@ -262,6 +278,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                     assert stage["status"] == "running" and stage["elapsed"] == 0
                 else:
                     worker = result["worker"]
+                    model, effort = selections.get(expected, (model, effort))
                     assert (worker["tool"], worker["model"], worker["effort"], worker["round"]) == (
                         "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
                     assert worker["step"] == expected

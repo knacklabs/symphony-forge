@@ -276,6 +276,9 @@ def machine_board(top: Path) -> Item:
                       "started_at": agent.get("at"),
                       "step": next((e.get("step") for e in reversed(activity)
                                     if e.get("run_id") == agent["id"] and e.get("step")), None)}
+            for key in ("model", "effort"):
+                worker[key] = next((e[key] for e in reversed(activity)
+                                    if e.get("run_id") == agent["id"] and e.get(key)), worker[key])
         now = _when(repo.now())
         elapsed = lambda at: max(0, (now - _when(at)).total_seconds()) if now and _when(at) else None
         if worker:

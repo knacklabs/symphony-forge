@@ -599,15 +599,15 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
         sys.stderr.buffer.write(line)
         sys.stderr.flush()
         last = line.decode("utf-8", "replace").strip() or last
-        if line.strip():
-            repo.record_progress(top, item, run_id, step=" ".join(last.split()))
-        if last.startswith("model: ") and "model" not in selected:
+        if last.startswith("model: "):
             selected["model"] = last.removeprefix("model: ")
-        elif last.startswith("thinking: ") and "effort" not in selected:
+        elif last.startswith("thinking: "):
             selected["effort"] = last.removeprefix("thinking: ")
         elif match := re.fullmatch(
                 r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
             selected["model"] = match[1]
+        if line.strip():
+            repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
     code = proc.wait()
     try:
         # Decode first: JSON represents null characters as escaped text.
