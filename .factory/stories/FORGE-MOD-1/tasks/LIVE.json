@@ -24,7 +24,7 @@
     ],
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -56,8 +56,10 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "done": "src/forge/board.py is simpler and behaves as it did before",
     "file": "src/forge/board.py",
+    "reason": "Nothing to narrow: the latest review (11:46) is clean with one P2 only; the stop came from an earlier round. Close again for a fresh review.",
     "why": "Simplify src/forge/board.py before FORGE-MOD-1/LIVE carries on"
   },
   "worker": "codex"
