@@ -84,7 +84,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")]
                 position = next((n for n, run in enumerate(lane) if run["id"] == entry["id"]), None)
                 if position is None:
-                    raise repository.Refused("This run was stopped while waiting; it will not start.")
+                    raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 place = position - size + 1
             if place <= 0:
                 return entry
@@ -118,7 +118,7 @@ def started(entry: dict[str, Any] | int, pid: int | None = None) -> None:
     # Stop may win between admission and spawning. Do not leave a cancelled child running.
     if codex._alive(process) is True:
         codex._stop(process, True)
-    raise repo.Refused("This run was stopped; it will not start another agent.")
+    raise repo.Refused("This run was stopped; it will not start another agent.", "")
 
 
 def leave(entry: dict[str, Any]) -> None:
@@ -216,9 +216,9 @@ def stop(args: Any) -> int:
     """A person cancels waiting entries or ends verified process trees before freeing places."""
     from forge import codex
     if os.environ.get("FORGE_WORKER"):
-        raise repo.Refused("Only a person can run forge stop; ask the person to stop the run.")
+        raise repo.Refused("Only a person can run forge stop; ask the person to stop the run.", "")
     if bool(args.entry_id) == bool(args.item) or (args.entry_id and args.repo):
-        raise repo.Refused("Name an item with optional --repo, or use --id alone.")
+        raise repo.Refused("Name an item with optional --repo, or use --id alone.", "")
     root = main_checkout(Path(args.repo).resolve() if args.repo else repo.root()) if args.item else None
     with _queue() as runs:
         selected = [run for run in runs if run["id"] == args.entry_id or
@@ -227,12 +227,12 @@ def stop(args: Any) -> int:
         for run in selected:
             process = run["process"]
             if (run.get("agent") or run["started_at"]) and ("started" not in process or codex._alive(process) is None):
-                raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.")
+                raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
         for run in selected:
             if (run.get("agent") or run["started_at"]) and codex._alive(run["process"]) is True:
                 ended = codex._stop(run["process"], run["process"] != run.get("forge"))
                 if not ended or codex._alive(run["process"]) is not False:
-                    raise repo.Refused("Forge could not confirm the run stopped; its place is still held.")
+                    raise repo.Refused("Forge could not confirm the run stopped; its place is still held.", "")
             runs.remove(run)
     print("Stopped the run." if selected else "There is nothing to stop.")
     return 0

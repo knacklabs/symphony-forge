@@ -144,5 +144,8 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
         _until(lambda: started(queued[2][1]), "the last waiting agent")
         assert not started(queued[1][1])
         assert processes[4].wait(timeout=30) != 0
+        cancelled = (tmp_path / "waiting-2/work.out").read_text("utf-8")
+        assert cancelled.splitlines()[-1] == "This run was stopped while waiting; it will not start."
+        assert "Traceback" not in cancelled
     finally:
         finish(repo, processes)

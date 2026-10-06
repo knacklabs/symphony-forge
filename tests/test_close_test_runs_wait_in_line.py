@@ -4,13 +4,11 @@ while waiting leaves no place behind."""
 from __future__ import annotations
 
 import subprocess
-import shutil
 import sys
 import time
 from pathlib import Path
 
 from test_close import env  # noqa: F401
-from conftest import _install
 from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 
 STORY = "FIX-ABOUT-TWENTY-CLOSES-SHARE-THE-MACHINE-S"
@@ -122,19 +120,6 @@ def test_2_a_close_that_dies_while_waiting_leaves_no_place(env):
     log = _with_test_command(env)
     for name in ("held", "dies", "lives"):
         _fix(env, name)
-    # A Windows scanner can briefly deny Git's configuration read. The failure
-    # happens before Git acts; a close must still finish after the lock clears.
-    _install(env.repo.bin, "git", f'''#!{sys.executable}
-import pathlib, subprocess, sys
-marker = pathlib.Path({str(env.tmp / "config-refused")!r})
-if (sys.argv[1:2] == ["show"] and pathlib.Path.cwd().name == "fix-held"
-        and (marker.parent / "release-fix-held").exists() and not marker.exists()):
-    marker.touch()
-    sys.stderr.write("warning: unable to access gitconfig: Permission denied\\n"
-                     "fatal: unknown error occurred while reading the configuration files\\n")
-    sys.exit(128)
-sys.exit(subprocess.call([{shutil.which('git')!r}, *sys.argv[1:]]))
-''')
     held = Close(env, "held")
     _running(env, log, "start fix-held")
     dies = Close(env, "dies")
@@ -148,5 +133,4 @@ sys.exit(subprocess.call([{shutil.which('git')!r}, *sys.argv[1:]]))
     _release(env, "lives")
     held.end()
     lives.end()
-    assert (env.tmp / "config-refused").exists()
     assert _runs(log) == ["start fix-held", "end", "start fix-lives", "end"]

@@ -191,11 +191,13 @@ sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
         assert lanes(repo)["agents"]["entries"][0]["id"] == row["id"]
         for arguments in ((), (item, "--id", row["id"]), ("--id", row["id"], "--repo", str(repo.path))):
             refused = repo.forge("stop", *arguments)
-            assert refused.returncode != 0 and "Name an item" in refused.stderr
+            assert refused.returncode == 1
+            assert refused.stderr == "Name an item with optional --repo, or use --id alone.\n"
             assert process.poll() is None
         monkeypatch.setenv("FORGE_WORKER", "1")
         refused = repo.forge("stop", item)
-        assert refused.returncode != 0 and "Only a person" in refused.stderr
+        assert refused.returncode == 1
+        assert refused.stderr == "Only a person can run forge stop; ask the person to stop the run.\n"
         monkeypatch.delenv("FORGE_WORKER")
         # An unreadable identity retains its place but grants no right to signal it.
         saved = json.loads(queue.read_text("utf-8"))
@@ -203,7 +205,8 @@ sys.exit(subprocess.call([sys.executable, {model.as_posix()!r}, *sys.argv[1:]]))
         identity.pop("started")
         queue.write_text(json.dumps(saved), "utf-8")
         refused = repo.forge("stop", "--id", row["id"])
-        assert refused.returncode != 0 and "cannot verify" in refused.stderr
+        assert refused.returncode == 1
+        assert refused.stderr == "Forge cannot verify this run's process; nothing was stopped.\n"
         assert process.poll() is None
         child_survives("unverified")
         # Reused pid: the recorded start differs. Never terminate its new owner.
