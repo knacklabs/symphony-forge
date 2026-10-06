@@ -41,7 +41,10 @@ def pytest_options(arguments: list[str]) -> str:
         if not Path(name).is_file():
             continue
         if Path(name).suffix == ".toml":
-            config = tomllib.loads(Path(name).read_text("utf-8"))
+            try:
+                config = tomllib.loads(Path(name).read_text("utf-8"))
+            except tomllib.TOMLDecodeError:
+                continue  # Let pytest report an invalid config if it uses this file.
             section = config.get("tool", {}).get("pytest", {}) if Path(name).name == "pyproject.toml" else config.get("pytest", {})
             value = section.get("ini_options", section).get("addopts", "")
             options += " " + (" ".join(value) if isinstance(value, list) else value)
@@ -107,6 +110,39 @@ def mentions(file: Path, module: str) -> bool:
                                          for alias in node.names):
                 return True
     return False
+
+
+def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
+    """Compare dependency and pytest settings, not packaging metadata or other tools."""
+    snapshots = []
+    try:
+        for ref in (base, "HEAD"):
+            shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
+                                   capture_output=True, text=True)
+            # The diff already validated both refs; an added/deleted manifest has an empty side.
+            manifest = tomllib.loads(shown.stdout) if shown.returncode == 0 else {}
+            project, tool = manifest.get("project", {}), manifest.get("tool", {})
+            snapshots.append([
+                project.get("dependencies", []), project.get("optional-dependencies", {}),
+                project.get("requires-python"),
+                [key for key in project.get("dynamic", [])
+                 if key in ("dependencies", "optional-dependencies", "requires-python")],
+                manifest.get("dependency-groups", {}), manifest.get("build-system", {}),
+                tool.get("pytest", {}),
+                {key: tool.get("poetry", {}).get(key) for key in
+                 ("dependencies", "dev-dependencies", "group", "extras", "source")},
+                {key: tool.get("uv", {}).get(key) for key in
+                 ("sources", "index", "workspace", "constraint-dependencies", "override-dependencies",
+                  "exclude-dependencies", "environments", "required-environments", "conflicts",
+                  "default-groups", "dev-dependencies")},
+                {key: tool.get("pdm", {}).get(key) for key in
+                 ("dev-dependencies", "resolution", "source")},
+                {key: tool.get("setuptools", {}).get("dynamic", {}).get(key) for key in
+                 ("dependencies", "optional-dependencies")},
+            ])
+    except (subprocess.CalledProcessError, ValueError, TypeError, AttributeError):
+        return False  # Malformed manifests cannot safely narrow tests.
+    return snapshots[0] == snapshots[1]
 
 
 def own_version_only(path: Path, base: str) -> bool:
@@ -176,7 +212,9 @@ def test(args) -> int:
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    if any(Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
+    if any(not manifest_test_inputs_unchanged(Path(name), args.base)
+           if Path(name).name == "pyproject.toml" else
+           Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
            or not own_version_only(Path(name), args.base) for name in shared):
         print("Shared test inputs changed; running " +
               ("all Python tests." if mixed else "the full test command."), flush=True)

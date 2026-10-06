@@ -606,7 +606,18 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
-full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+full command when `conftest.py`, requirements or lock files change.
+For `pyproject.toml`, only dependency or pytest settings changes trigger the full command;
+package metadata, comments and other tools' settings select related tests instead.
+Forge's commands and generated tests job set `UV_FROZEN=1`, so uv consumes the recorded
+lockfile without rewriting it, including in older worktrees. If you wrap a Forge command in
+`uv run`, use `uv run --frozen`: the outer uv starts before Forge can set its environment.
+Update dependency locks deliberately before testing changed dependencies.
+For `uv.lock`, `poetry.lock`, `Pipfile.lock` and `package-lock.json`, a change only to
+the repo's own package version selects related tests instead. Forge identifies the
+root package from the adjacent manifest and its local source; dependency versions,
+hashes and other lock data still trigger the full run. Missing or unrecognized lock
+data also triggers the full run.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
 `python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation

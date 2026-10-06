@@ -22,6 +22,9 @@ from typing import Any, NoReturn
 
 from forge import __version__
 
+# Every Forge command loads this shared runtime; child processes consume the recorded lock.
+os.environ["UV_FROZEN"] = "1"
+
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
