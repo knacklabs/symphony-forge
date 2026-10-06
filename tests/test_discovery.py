@@ -120,7 +120,7 @@ def test_3_options_are_priced_by_payback_and_the_choice_goes_into_the_spec(repo,
 
 
 @pytest.mark.parametrize("adoption", ["new", "previous release"])
-def test_due_success_check_precedes_discovery_when_every_roadmap_story_is_done(
+def test_due_success_check_precedes_planning_when_every_roadmap_story_is_done(
         repo, gh, tmp_path, monkeypatch, adoption):
     # Empty means no unfinished stories; keep their roadmap links for check-back.
     monkeypatch.setenv("FORGE_NOW", "2026-10-01T09:00:00+00:00")
@@ -159,4 +159,9 @@ def test_due_success_check_precedes_discovery_when_every_roadmap_story_is_done(
     repo.git("fetch", "-q", "origin")
     repo.git("worktree", "remove", str(plan))
 
-    assert _ok(repo.forge("next")).splitlines()[:5] == DUE + DISCOVER
+    # Completed entries retain their links: next offers planning rather than discovery.
+    # The crossing contract is that the due check precedes those next-step instructions.
+    assert _ok(repo.forge("next")).splitlines()[:6] == DUE + [
+        "No story or fix is in progress.",
+        'Next: forge story new <KEY> "<title>" for an item on plans/roadmap.json',
+        'Next: forge fix start "<why>" --done "<done when>"']
