@@ -9,24 +9,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e92331a0c0bf13801877bedca80798951cd92ae57aac4a983ba7bb972ed93f6f",
-    "changed": "b452bbc9939d5ba933e325d913a16e58a1875c1f483ea43dd91943fbbf9804ae",
-    "commit": "60987491b875b599a38a936228c15e4944fd43d8",
+    "branch_diff": "c68f23a2e3c6c1780346d21adc858a0759699e37a2515f1fa6fe2e664037dcf3",
+    "changed": "6f4e06e280fca5c6a7fccb9abdba720fc03c0323e84cb4c04b25afc178c01090",
+    "commit": "c341d781aef9ea65f60af2a0866643af5f32765f",
     "dismissals": [],
     "findings": [
       {
-        "body": "Closing an existing review created by an earlier release still executes multiple worker-history logs. In src/forge/close.py:109\u2013112, a review without `branch_diff` fingerprints HEAD and then the previously reviewed commit before `_merge_default`. Those fingerprints now call `commit_log`; the saved bookkeeping commit means the two heads differ. The fetch then deletes both cached histories here, so the fingerprint at close.py:127 issues another log\u2014even when fetching and merging change nothing. This produces three worker-history log calls instead of one. The new count test starts an unreviewed fix in both client cases, so it passes while this upgrade path violates the budget. Extend the budget check to the legacy-review scenario already exercised by tests/test_close_keeps_reviews_for_unchanged_branch_diffs.py:123\u2013137, and batch/reuse the history needed before and after the merge.",
+        "body": "With `log.showSignature=true` and a signed commit first in the batch, Git prints signature diagnostics before the NUL-delimited record ([Git documentation](https://git-scm.com/docs/git-log), [output ordering](https://github.com/git/git/blob/v2.51.0/log-tree.c#L793-L829)). The parser then treats that preamble as a record and raises `ValueError` at line 166, so close crashes before review. The previous message readers searched individual lines and did not require every output segment to contain a SHA and message. Pass `--no-show-signature` when reading this machine-readable batch.",
         "file": "src/forge/repo.py",
-        "line": 135,
-        "priority": "P1",
-        "title": "Not done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it"
+        "line": 161,
+        "priority": "P2",
+        "title": "[P2] Disable signature output in the machine-readable log"
+      },
+      {
+        "body": "The replacement log enables rename detection by default, unlike the previous plumbing command ([Git configuration](https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenames)). For a worker commit moving `app.py` to `plans/archived.py`, `--name-only` reports only the destination. `commit_paragraph` at `src/forge/review.py:372` therefore classifies the commit as bookkeeping and copies an older commit's proof and functional check, ignoring the newest worker message. This affects both paragraph readers. Add `--no-renames` so classification still sees the deleted product path.",
+        "file": "src/forge/repo.py",
+        "line": 162,
+        "priority": "P2",
+        "title": "[P2] Disable rename detection when identifying bookkeeping commits"
       }
     ],
-    "id": "6a2d2380-9df6-4d5e-9baa-ca949cea5515",
-    "status": "blocked"
+    "id": "6951b4d6-a767-4ebc-86e1-f7976e834073",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T10:54:56+00:00",
@@ -34,6 +41,10 @@
     },
     {
       "at": "2026-10-06T19:09:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T20:18:32+00:00",
       "step": "review"
     }
   ],

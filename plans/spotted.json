@@ -1541,6 +1541,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\t[P2] Disable rename detection when identifying bookkeeping commits",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 162,
+      "text": "[P2] Disable rename detection when identifying bookkeeping commits",
+      "from": "review",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\t[P2] Disable signature output in the machine-readable log",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 161,
+      "text": "[P2] Disable signature output in the machine-readable log",
+      "from": "review",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
       "kind": "edge",
       "path": "src/forge/review.py",
