@@ -10,38 +10,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "910d1bc0229a3234c94377641227c25dcd822d0bfb6d216d6a7b6b6e88eb66d8",
-    "changed": "ce0440ab65a9822b542e15b9c8ffaca85e3c7307f88fbc0adb0566bd2efc0e40",
-    "commit": "cbf58c836961751eb70801d10f7e1e644cf88000",
+    "branch_diff": "1b6b35cca4ed2ea26635a562b9038435d0be659a525698d5226d61615eabe0ce",
+    "changed": "4363cfab002ad72a98ccccb443194d6dff95ea95899d815c7185def80d7443e0",
+    "commit": "4948622aecfba6f3c39016150bf7e0ad3c2a4545",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous advisory remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping read can make this replacement raise PermissionError, aborting the enclosing worker, reader, review or test command. Add bounded replacement retries, following src/forge/codex.py:532\u2013539.",
+        "body": "The previous advisory remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping read can make this replacement raise PermissionError, failing the enclosing worker, reader, review or test command merely while recording progress. Add bounded replacement retries, following the existing handling at src/forge/codex.py:532\u2013539.",
         "file": "src/forge/repo.py",
         "line": 171,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "The previous advisory remains open. A structured missing-session result becomes `error_during_execution` followed by the diagnostic. The worker's prefix check at src/forge/worker.py:443\u2013445 therefore misses it, while the reader checks only stderr at src/forge/story.py:738\u2013740 although the decoded diagnostic is stdout. Both paths refuse instead of starting a fresh session. Recognize the diagnostic in both callers while preserving the error details. The structured response is documented in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
+        "body": "The previous advisory remains open. A structured missing-session result is decoded with error_during_execution before its diagnostic, so the worker's prefix check at src/forge/worker.py:443\u2013445 misses it. The reader checks only stderr at src/forge/story.py:738\u2013740, while this decoder returns the diagnostic through stdout. Both paths therefore refuse instead of starting the intended fresh session. Recognize the missing-session diagnostic in both callers while preserving other failure details. The [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609) confirms this structured response.",
         "file": "src/forge/repo.py",
         "line": 203,
         "priority": "P2",
         "title": "Preserve missing-session recovery for structured Claude errors"
       },
       {
-        "body": "The command fields are supplied, but the remaining consumer checks belong to other tasks. src/forge/mod/hooks/machine.ts:5 still contains an empty registrar, so MACHINE does not display the live fields or provide `l`'s exact event list. For PANE, src/forge/mod/hooks/summary.ts:62\u201364 suppresses the running count and current step when lane data is absent, even when LIVE supplies running items. Complete and test these behaviors in PANE and MACHINE, as assigned by the Tasks table; they are deferred consumer work, not blocking LIVE producer gaps.",
+        "body": "The previous deferred gap remains. src/forge/mod/hooks/machine.ts:5 still has an empty registrar, so MACHINE does not display these live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 still suppresses the running count and current step when lane data is absent, despite LIVE supplying running items. Complete and test these consumer behaviors in PANE and MACHINE, as assigned by the Tasks table; they are P2 deferred work rather than blocking LIVE producer gaps.",
         "file": "tests/fixtures/board.json",
         "line": 85,
         "priority": "P2",
         "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "6d94cf9e-2d88-4ffe-a480-c23959a8d031",
+    "id": "1870bb63-6ae0-4b07-94df-ef9a7eb73d60",
     "status": "clean"
   },
   "round": 10,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -81,6 +81,10 @@
     },
     {
       "at": "2026-10-06T09:33:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T10:55:45+00:00",
       "step": "review"
     }
   ],
