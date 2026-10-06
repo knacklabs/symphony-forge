@@ -1572,6 +1572,94 @@
       "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 178,
+      "text": "Not done: older-Forge hotkey submits the next step",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: proof list\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 29,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: narrow summary counts remain visible without an active item\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 152,
+      "text": "Not done: narrow summary counts remain visible without an active item",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: narrow summary strip preserves the current stage and its time\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 121,
+      "text": "Not done: narrow summary strip preserves the current stage and its time",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: summary strip always shows agents and tests waiting counts\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 129,
+      "text": "Not done: summary strip always shows agents and tests waiting counts",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: summary strip shows each stage's time and the total\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 119,
+      "text": "Not done: summary strip shows each stage's time and the total",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tThe Python related-test picker cannot select the mod native tests for TypeScript-only changes.",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 140,
+      "text": "The Python related-test picker cannot select the mod native tests for TypeScript-only changes.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 38,
+      "text": "Keep timer redraws active after clearing or resuming a session",
+      "from": "review",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
