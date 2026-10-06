@@ -71,9 +71,18 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
-    return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                          text=True, encoding="utf-8", errors="replace",
-                          env={**os.environ, "FORGE_WORKER": "1"})
+    deadline = time.monotonic() + 5
+    while True:
+        done = subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
+                              text=True, encoding="utf-8", errors="replace",
+                              env={**os.environ, "FORGE_WORKER": "1"})
+        # Git has not acted when configuration loading fails. Windows file locks
+        # can briefly prevent that read; other failures must not replay a command.
+        if not (args[0] == "git" and done.returncode and "Permission denied" in done.stderr
+                and "fatal: unknown error occurred while reading the configuration files" in done.stderr
+                and time.monotonic() < deadline):
+            return done
+        time.sleep(0.05)
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
