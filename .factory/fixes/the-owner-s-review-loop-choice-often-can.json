@@ -3,7 +3,7 @@
   "branch": "fix/the-owner-s-review-loop-choice-often-can",
   "done_when": "forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed since the stopped review (the check compares the item's own changes against the review's merge base and ignores files under .factory/); --dismiss after a recorded choice works on the same terms; a clean review clears an unanswered review-loop stop; one command test per case; skill.md says so; new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
