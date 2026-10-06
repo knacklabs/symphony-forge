@@ -5,6 +5,7 @@ import { activeRows, itemLines, itemTime, laneCounts, record, rows, stageText, s
 
 const tabs = new Map<string, (e: RenderInput<'Pane'>) => RenderNode>()
 const actions = new Map<string, ((item: Item, e: RenderInput<'Pane'>) => RenderNode)[]>()
+const MIN_TITLE_COLUMNS = 4
 
 export function addTab(name: string, render: (e: RenderInput<'Pane'>) => RenderNode) {
   tabs.set(name, render)
@@ -74,21 +75,28 @@ export function registerPane(on: On, data: Data) {
     const command = data.error === TOO_OLD || working ? null : data.next?.next.command
     const narrow = e.props.bodyColumns < 80 || e.props.maxRows === 1
     let lines = summary(data, now, working)
+    let compact: { title: string, counts: string, timing: string, tail: string } | undefined
     if (narrow && !data.lanes) lines = lines.slice(0, 1)
     else if (narrow && data.error !== TOO_OLD) {
       const n = laneCounts(data), first = activeRows(data)[0]
       const stage = first && stages(first).find(s => s.status === 'running')
-      const item = first ? `${first.title}: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : ''
       const counts = data.lanes ? `${n.agentsRunning + (n.test ? 1 : 0)} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · ` : ''
       const step = record(first?.worker).step
-      lines = [`${counts}${item}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
+      lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
+      if (first) compact = { title: first.title, counts, timing: `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · `, tail: `${data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}` }
     }
-    if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) lines[0] += ' · /forge for the board'
+    if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) {
+      lines[0] += ' · /forge for the board'
+      if (compact) compact.tail += ' · /forge for the board'
+    }
     const children: RenderNode[] = []
+    const firstChildren: RenderNode[] = []
     const first = lines[0] ?? ''
+    let tailColumns = compact?.tail.length ?? 0
     if (command) {
       const [prefix, suffix = ''] = first.split(`1: ${command}`)
-      children.push(t.Box({ flexDirection: 'row', children: [
+      tailColumns = command.length + 3 + suffix.length
+      firstChildren.push(
         t.Text({ children: prefix ?? '', wrap: 'truncate-end' }),
         t.Button({ key: 'next-step', hotkey: '1', plain: true, label: command, onPress: async () => {
           if (working) return
@@ -117,8 +125,18 @@ export function registerPane(on: On, data: Data) {
           }
         } }),
         t.Text({ children: suffix, wrap: 'truncate-end' }),
+      )
+    } else firstChildren.push(t.Text({ wrap: 'truncate-end', children: first }))
+    if (compact) {
+      const fixed = compact.counts.length + compact.timing.length
+      const tailWidth = Math.min(tailColumns, Math.max(0, e.props.bodyColumns - fixed - MIN_TITLE_COLUMNS))
+      children.push(t.Box({ flexDirection: 'row', width: e.props.bodyColumns, children: [
+        t.Box({ width: compact.counts.length, flexShrink: 0, children: t.Text({ children: compact.counts }) }),
+        t.Box({ width: Math.max(0, e.props.bodyColumns - fixed - tailWidth), minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: compact.title }) }),
+        t.Box({ width: compact.timing.length, flexShrink: 0, children: t.Text({ children: compact.timing }) }),
+        t.Box({ width: tailWidth, flexShrink: 0, overflow: 'hidden', flexDirection: 'row', children: command ? firstChildren.slice(1) : t.Text({ wrap: 'truncate-end', children: compact.tail }) }),
       ] }))
-    } else children.push(t.Text({ wrap: 'truncate-end', children: first }))
+    } else children.push(command ? t.Box({ flexDirection: 'row', children: firstChildren }) : firstChildren[0]!)
     const active = activeRows(data)
     for (const [n, line] of lines.slice(1, Math.min(3, e.props.maxRows)).entries()) {
       const item = active.length > 2 && n === 1 ? undefined : active[n]

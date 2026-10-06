@@ -122,6 +122,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
   test(`2: ${surface} strip fits two items, overflow and narrow or older sessions`, async ($, on) => {
     const clock = mock.clock(on)
     let extra = false, old = false, long = false
+    let nextCommand: string | null = following.next.command
     on('session.start', () => ({ cwd: '/repo' }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
@@ -129,7 +130,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => {
       if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
       const items = [long ? { ...row, title: 'A very long guide title that must never displace stage times or the total', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
-      const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? following : lanes
+      const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: nextCommand } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
@@ -183,6 +184,30 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(Number(protectedTime.props.width)).toBe(protectedTime.text.length)
     expect(protectedTime.text.length < 80).toBe(true)
     for (const fact of ['Build✓100h0m', 'Tests✗100h0m', 'Review●30s', 'CI', 'Merge–', 'round2', 'total100h0m']) expect(protectedTime.text).toContain(fact)
+    // Compact rows need the same cell-budget proof, including the no-button path.
+    for (const state of ['ready', 'long command', 'busy', 'null']) {
+      if (state === 'long command') {
+        nextCommand = 'forge work a-very-long-item-name-that-cannot-fit-beside-the-current-stage'
+        await ui.press({ key: 'next-step' })
+      }
+      if (state === 'null') {
+        await ui.redraw({ ...band, bodyColumns: 79 })
+        nextCommand = null
+        await ui.press({ key: 'next-step' })
+      }
+      for (const bodyColumns of [79, 120]) {
+        await ui.redraw({ ...band, bodyColumns, maxRows: bodyColumns < 80 ? band.maxRows : 1, isWorking: state === 'busy' })
+        const boxes = await ui.findAll({ type: 'Box' })
+        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ': Review ● 30s (100h 0m) · ')!
+        expect(timing).toBeDefined()
+        expect(timing.props.width).toBe(timing.text.length)
+        const cells = boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== bodyColumns)
+        expect(cells.reduce((sum, b) => sum + Number(b.props.width), 0)).toBe(bodyColumns)
+        const title = boxes.find(b => b.props.minWidth === 0)!
+        expect(Number(title.props.width) < title.text.length).toBe(true)
+        expect((await ui.find({ key: 'next-step' })) !== undefined).toBe(state === 'ready' || state === 'long command')
+      }
+    }
   })
 }
 
