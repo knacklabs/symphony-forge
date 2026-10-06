@@ -37,11 +37,7 @@ sys.exit(subprocess.call([{json.dumps(real_git)}, *sys.argv[1:]]))
     return log
 
 
-@pytest.mark.parametrize("adoption", ["new init", "previous release"])
-def test_1_doctor_fix_batches_git_checks_without_overwriting_hand_changes(
-        repo, gh, tmp_path, monkeypatch, adoption):
-    # Independent contract: process cost stays fixed as drift grows, while git still
-    # determines which committed, staged and unstaged edits doctor must leave alone.
+def _adopted_client(repo, gh, tmp_path, monkeypatch, adoption):
     if adoption == "new init":
         client = _client(repo, gh, tmp_path, monkeypatch)
     else:
@@ -60,6 +56,15 @@ def test_1_doctor_fix_batches_git_checks_without_overwriting_hand_changes(
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
         monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
         _install(repo.bin, "uv", f"#!{sys.executable}\nimport sys\nsys.exit(1)\n")
+    return client
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+def test_1_doctor_fix_batches_git_checks_without_overwriting_hand_changes(
+        repo, gh, tmp_path, monkeypatch, adoption):
+    # Independent contract: process cost stays fixed as drift grows, while git still
+    # determines which committed, staged and unstaged edits doctor must leave alone.
+    client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
     folder = _start_fix(repo, client)
     synced = repo.forge("sync", cwd=folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
@@ -116,6 +121,53 @@ def test_2_doctor_fix_reuses_git_checks_when_creating_its_repair_checkout(
         assert json.loads((folder / rel).read_text(encoding="utf-8"))["hooks"]
     assert sum(args[0] == "status" and "--" in args for args in calls) == 1
     assert sum(args[0] == "log" and "--" in args for args in calls) == 1
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+@pytest.mark.parametrize("branch", ["default", "fix"])
+def test_4_doctor_fix_batches_separately_landed_hand_edits(
+        repo, gh, tmp_path, monkeypatch, adoption, branch):
+    # Land each hand edit independently: each last-change commit needs its own pin
+    # classification, unlike the earlier test's single unlanded commit.
+    client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
+    synced = _start_fix(repo, client, "Prepare current generated files")
+    done = repo.forge("sync", cwd=synced)
+    assert done.returncode == 0, done.stdout + done.stderr
+    generated = sorted(path.relative_to(synced).as_posix()
+                       for path in (synced / ".codex" / "skills").rglob("*.md"))
+    assert len(generated) > 5
+    current = {path.relative_to(synced).as_posix(): path.read_text(encoding="utf-8")
+               for directory in (".codex", ".claude", ".github", ".forge")
+               for path in (synced / directory).rglob("*") if path.is_file()}
+    for name in ("AGENTS.md", "CLAUDE.md", ".gitattributes"):
+        if (synced / name).exists():
+            current[name] = (synced / name).read_text(encoding="utf-8")
+    current["forge.toml"] = (synced / "forge.toml").read_text(encoding="utf-8") + "\n# Client guidance: café\n"
+    _land(repo, client, "Keep our first instructions", lambda folder: (
+        [_set(folder, rel, text) for rel, text in current.items()],
+        _set(folder, generated[0], "Our instructions.\n")))
+    folder = client if branch == "default" else _start_fix(repo, client)
+    log = _git_log(repo, tmp_path, monkeypatch)
+    counts = []
+    for paths in (generated[:1], generated):
+        for rel in paths[1:]:
+            _land(repo, client, f"Keep our instructions in {rel}",
+                  lambda clone, rel=rel: _set(clone, rel, "Our instructions.\n"))
+        if branch == "fix":
+            repo.git("merge", "-q", "--no-edit", "origin/main", cwd=folder)
+        log.write_text("", encoding="utf-8")
+        done = repo.forge("doctor", "--fix", cwd=folder)
+        calls = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+        for rel in paths:
+            subject = ("Keep our first instructions" if rel == generated[0]
+                       else f"Keep our instructions in {rel}")
+            assert f"{rel} was changed by hand ({subject}), so doctor won't overwrite it" in done.stdout, done.stdout + done.stderr
+            assert (folder / rel).read_text(encoding="utf-8") == "Our instructions.\n"
+        counts.append(calls)
+    for calls in counts:
+        assert sum(args[0] == "status" and "--" in args for args in calls) == 1
+        assert sum(args[0] == "log" and "--" in args for args in calls) == 1
+    assert len(counts[0]) == len(counts[1]), [len(calls) for calls in counts]
 
 
 @pytest.mark.parametrize("resolution", ["keep main", "new value"])

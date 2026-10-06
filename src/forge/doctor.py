@@ -1,6 +1,7 @@
 """Check Forge's tools, generated files, hooks, CI and Codex trust; repair safe drift with --fix."""
 from __future__ import annotations
 import argparse
+import io
 import json
 import os
 import re
@@ -75,12 +76,23 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
                 line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
-def _held(top: Path, cfg: dict[str, Any], last: str, landed: set[str]) -> str:
-    if not last or cfg["repo"] == "forge-source": return ""
-    commit, _, subject = last.partition(" ")
-    pin = lambda at: repo._pin(story.show(top, at, "forge.toml") or "")  # noqa: E731  # pyright: ignore[reportPrivateUsage]
-    if commit in landed and (subject.startswith(WHY) or pin(commit) != pin(f"{commit}^")): return ""
-    return f"was changed by hand ({subject}), so doctor won't overwrite it"
+def _pin_changes(top: Path, commits: set[str]) -> set[str]:
+    if not commits: return set()
+    specs = [f"{commit}{parent}:forge.toml" for commit in sorted(commits) for parent in ("", "^")]
+    done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                          input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True, check=True,
+                          env={**os.environ, "FORGE_WORKER": "1"})
+    contents = io.BytesIO(done.stdout)
+    pins = {}
+    for spec in specs:
+        header = contents.readline()
+        if header.endswith(b" missing\n"): pins[spec] = ""
+        else:
+            size = int(header.split()[-1])
+            text = contents.read(size).decode("utf-8", errors="replace")
+            contents.read(1)  # cat-file adds a newline after each blob's bytes.
+            pins[spec] = repo._pin(text)  # pyright: ignore[reportPrivateUsage]
+    return {commit for commit in commits if pins[f"{commit}:forge.toml"] != pins[f"{commit}^:forge.toml"]}
 def _history(top: Path, wanted: dict[str, str], ref: str) -> dict[str, str]:
     history = repo.git("log", "--format=commit %H%x00%P%x00%s", "-z", "--raw", "--no-renames",
                        "--no-abbrev", "--full-history", "--sparse", "--diff-merges=first-parent",
@@ -140,15 +152,19 @@ def _changes(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
     latest = _history(top, wanted, ref)
     landed = (set(repo.git("rev-list", story.landed_ref(top), cwd=top).splitlines())
               if cfg["repo"] != "forge-source" else set())
+    owned = {commit for last in latest.values() for commit, _, subject in [last.partition(" ")]
+             if commit in landed and subject.startswith(WHY)}
+    commits = {last.partition(" ")[0] for last in latest.values()} & landed
+    free = owned | _pin_changes(top, commits - owned)
     held: dict[str, str] = {}
-    by_commit: dict[str, str] = {"": ""}
     for rel in wanted:
         if rel in dirty:
             held[rel] = "has changes not committed yet, so doctor won't overwrite it"
         else:
             last = latest.get(rel, "")
-            if last not in by_commit: by_commit[last] = _held(top, cfg, last, landed)
-            held[rel] = by_commit[last]
+            commit, _, subject = last.partition(" ")
+            held[rel] = ("" if not last or cfg["repo"] == "forge-source" or commit in free
+                         else f"was changed by hand ({subject}), so doctor won't overwrite it")
     return staged, held
 
 def _split(folder: Path, wanted: dict[str, str], staged: set[str],
