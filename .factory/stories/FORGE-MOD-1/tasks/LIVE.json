@@ -10,45 +10,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1581206ffb605b578b82e6ce92503170c63869506400a81d47d3ee4ae2811cf5",
-    "changed": "b1bd94ca43e986fcc2374c3164651366c7a3f18a46cf8f243297c1abd6790f79",
-    "commit": "0bc48a2ed07b64811eac8c9304825580f408723a",
+    "branch_diff": "e253d0163424042ac6a35d97d6053031fbed73fae7735a725fad68994a747376",
+    "changed": "e91d0dca6f8b61cf607c35d90c5776a0fbea78a6376cd16fb13328c95aacc64d",
+    "commit": "58bc539037f4b5ff55a129d5b215726b95a6a9ce",
     "dismissals": [],
     "findings": [
       {
-        "body": "The required command proof checks only activity.status at line 302 and event keys/count here. It never asserts the running action or that a review result appears in top-level events. Removing activity.action and filtering review results out of board.py's public event projection would leave the named proofs green. The RUNS tests inspect producer records, and test_machine_views.py:137\u2013144 checks occurrences, which does not protect this separate events contract. Extend the existing real-command cases to assert the run's action and a close-produced review-result event, including its time, item and plain line, in both views.",
-        "file": "tests/test_live_status.py",
-        "line": 343,
-        "priority": "P1",
-        "title": "Not done: activity actions and review-result events in both views"
-      },
-      {
-        "body": "The previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, failing the worker, reader, reviewer or test command while recording progress. Add bounded replacement retries, as codex._record already does at src/forge/codex.py:550\u2013558.",
+        "body": "The previous P2 remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, aborting a worker, reader, reviewer or test command while it records progress. Add bounded replacement retries, following the existing handling at src/forge/codex.py:532\u2013539.",
         "file": "src/forge/repo.py",
         "line": 175,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "The previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:441\u2013443 consequently misses it; the reader checks stderr at src/forge/story.py:732 although this decoder returns the diagnostic through stdout. Both paths refuse instead of starting a fresh session. Recognize the missing-session diagnostic in both callers while preserving other failures. The structured response is documented in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
+        "body": "The previous P2 remains open. A structured missing-session result is decoded with error_during_execution before its diagnostic. The worker's prefix check at src/forge/worker.py:441\u2013443 consequently misses it; the reader checks stderr at src/forge/story.py:732, although this decoder returns the diagnostic through stdout. Both paths refuse instead of restarting with the full prompt. Recognize this diagnostic in both callers while preserving other failures. The response shape appears in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
         "file": "src/forge/repo.py",
         "line": 207,
         "priority": "P2",
         "title": "Preserve missing-session recovery for structured Claude errors"
       },
       {
-        "body": "The previous deferred gap remains. src/forge/mod/hooks/machine.ts:5 still has an empty registrar, so the Machine tab cannot display the live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 still suppresses the running count and current step when lane data is absent. Complete these consumer behaviors and their tests in PANE and MACHINE, as assigned by plans/FORGE-MOD-1.md:281 and :288. This is deferred advice, not a blocking LIVE producer gap.",
+        "body": "The deferred consumer gap remains. src/forge/mod/hooks/machine.ts:5 still has an empty registrar, so the Machine tab cannot display the live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 still suppresses the running count and current step when lane data is absent. Complete these behaviors and their consumer tests in PANE and MACHINE, as assigned by plans/FORGE-MOD-1.md:281 and :288. This is P2 advice for those tasks, not a blocking LIVE producer gap.",
         "file": "tests/fixtures/board.json",
         "line": 85,
         "priority": "P2",
         "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "8e348c7d-3e83-4b2d-99ff-a135cbf03e88",
-    "status": "blocked"
+    "id": "8a843c77-4ab1-4629-8e48-ed39bce91c72",
+    "status": "clean"
   },
   "round": 12,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -112,6 +105,10 @@
     },
     {
       "at": "2026-10-06T17:53:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T18:53:25+00:00",
       "step": "review"
     }
   ],
