@@ -293,13 +293,13 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
                                    "read" if case.startswith("read") else "close" if case.startswith(("progress", "ci", "review")) else "work", item], cwd=repo.path,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        connections = []
+        connections, activities = [], []
         try:
             for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
                 result, _ = row(repo, item)
-                assert result["activity"]["status"] == "running"
+                activities.append(result["activity"])
                 assert result["idle_since"] is None and result["stalled"] is False
                 if case.startswith("progress"):
                     assert result["tests"]["done"] == (0 if case in ("progress single", "progress selected") else 1)
@@ -333,6 +333,11 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 process.communicate()
                 raise
         assert (process.returncode == 0) == (case not in ("progress error", "progress teardown", "claude error")), output + error
+        action = ("test" if case.startswith("progress") else "ci" if case.startswith("ci")
+                  else "review" if case.startswith("review") else "read" if case.startswith("read")
+                  else "worker" if case.startswith("claude") else "work")
+        assert all(activity == {"status": "running", "action": action}
+                   for activity in activities), activities
         if case == "claude error":
             log = repo.path / ".git/forge" / f"work-{item}.log"
             assert "error_during_execution" in log.read_text("utf-8")
@@ -342,5 +347,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
     assert ended["idle_since"] is not None
     assert all(set(e) == {"time", "item", "line"} for e in board["events"])
     assert len(board["events"]) <= 20
+    if case.startswith("review"):
+        assert {"time": "2026-10-06T12:00:00+00:00", "item": item,
+                "line": "Review clean"} in board["events"]
     if case == "claude":
         assert board["events"][-1]["line"] == question
