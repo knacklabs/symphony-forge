@@ -606,6 +606,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it\tone-forge-close-looks-up-the-same-git-fa",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 135,
+      "text": "Not done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it",
+      "from": "blocking",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -723,6 +734,17 @@
       "text": "Not done: A suite test proves CI consumes the committed test durations",
       "from": "blocking",
       "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
       "status": "open",
       "closed_by": null
     },
@@ -866,6 +888,28 @@
       "text": "Not done: proof that Forge's own outer uv commands are frozen",
       "from": "blocking",
       "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
       "status": "open",
       "closed_by": null
     },

@@ -3,16 +3,40 @@
   "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
   "branch": "fix/one-forge-close-looks-up-the-same-git-fa",
   "done_when": "Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it needs with one git log call; behaviour is unchanged; a command test counts git calls in one close and shows each of those lookups happens once; the sdk_data test fixture finds the real uv even when a stub uv is on PATH; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/repo.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e92331a0c0bf13801877bedca80798951cd92ae57aac4a983ba7bb972ed93f6f",
+    "changed": "b452bbc9939d5ba933e325d913a16e58a1875c1f483ea43dd91943fbbf9804ae",
+    "commit": "60987491b875b599a38a936228c15e4944fd43d8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Closing an existing review created by an earlier release still executes multiple worker-history logs. In src/forge/close.py:109\u2013112, a review without `branch_diff` fingerprints HEAD and then the previously reviewed commit before `_merge_default`. Those fingerprints now call `commit_log`; the saved bookkeeping commit means the two heads differ. The fetch then deletes both cached histories here, so the fingerprint at close.py:127 issues another log\u2014even when fetching and merging change nothing. This produces three worker-history log calls instead of one. The new count test starts an unreviewed fix in both client cases, so it passes while this upgrade path violates the budget. Extend the budget check to the legacy-review scenario already exercised by tests/test_close_keeps_reviews_for_unchanged_branch_diffs.py:123\u2013137, and batch/reuse the history needed before and after the merge.",
+        "file": "src/forge/repo.py",
+        "line": 135,
+        "priority": "P1",
+        "title": "Not done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it"
+      }
+    ],
+    "id": "6a2d2380-9df6-4d5e-9baa-ca949cea5515",
+    "status": "blocked"
+  },
   "round": 5,
   "status": "fixing",
   "steps": [
     {
       "at": "2026-10-06T10:54:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T19:09:48+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --python 3.11 forge test --pytest 186ef9c83585035fd021623128ee7e9010e1258a` exited with status 1 on the machine running forge close.\n        env.repo.git(\"add\", \"-A\")\n        env.repo.git(\"commit\", \"-q\", \"-m\", \"Use Forge's own test settings\")\n        env.repo.git(\"push\", \"-q\", \"origin\", \"main\")\n        changes = {\"src/probe_module.py\": \"VALUE = 2\\n\",\n                   \"tests/test_changed.py\": \"def test_changed():\\n    assert 4 + 4 == 8\\n\"}\n        if shared_input:\n            changes[shared_input] = (env.repo.path / shared_input).read_text(\"utf-8\") + \"\\n# Changed\\n\"\n        item, _ = env.start_fix(changes)\n\n        closed = env.close(item)\n\n        assert closed.returncode == 0, closed.stdout + closed.stderr\n        expected = {\"test_changed\", \"test_related\"}\n        if shared_input:\n            expected.add(\"test_unrelated\")\n>       assert {path.name for path in log.iterdir()} == expected\nE       AssertionError: assert {'test_change...test_related'} == {'test_change...st_unrelated'}\nE\nE         Extra items in the right set:\nE         'test_unrelated'\nE         Use -v to get more diff\n\ntests/test_close_runs_only_related_tests.py:60: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\n1 failed, 1244 passed, 5 skipped in 1484.97s (0:24:44)",
   "why": "One forge close looks up the same git facts again and again (default branch 74 times, landed ref 24, git common folder 13) and reads each commit message with its own git calls; and a shared test fixture breaks when another test has put a stub uv on PATH",
   "worker": "codex"
 }
