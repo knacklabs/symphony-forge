@@ -10,41 +10,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "202d1b63efe84f98f2c66f4604ca35b8fc70bd6f3af8613b202f6d01b7ef2527",
-    "changed": "51a1828bc1a684b99cb72fd85036a4ffbf48695e1c6388333e18c4d0232e4a6a",
-    "commit": "e45738f08561831b03c2454513fd46a79c0e4910",
+    "branch_diff": "6599c623e875eaebc0682cb4389f752cd3e934a1a709dc360dd5fa56b5976c8b",
+    "changed": "8df50f3a146d61ae5cf3952f6aeb08adb1fdf46845e1d2075b083450a96902d1",
+    "commit": "2b6ec8733d84cb214d3c6b4586d94ab8b4d2479a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied proof list is `missing`. Historical commits contain proof lists, but the latest handoff does not provide the required current mapping of every LIVE detail to its named proof, including the later default-reader changes. Supply the complete, updated list in the latest worker handoff.",
+        "body": "The latest worker handoff contains a mapping headed `Current proof list for LIVE detail 7:`, but Forge requires the exact heading `Proof list:`. The extraction at src/forge/review.py:220 and 400\u2013408 therefore returns nothing, and src/forge/close.py:434 cannot copy the mapping into the PR. This explains why the supplied proof list remains `missing`. Rename the handoff heading so the complete mapping reaches both review and PR.",
         "file": "tests/test_live_status.py",
         "line": 34,
         "priority": "P1",
         "title": "Not done: proof list"
       },
       {
-        "body": "The raw-stream cases assert the latest visible step, but never assert the ten-second retention bound. With FORGE_NOW frozen, replacing coalescing with an append for every notification would still satisfy these assertions and the final twenty-event check, which excludes progress records. This leaves an explicit detail-7 recording rule untested. Extend the command-level stream test to verify that a burst retains one progress record while exposing its latest step. This concerns proof of the accepted coalescing ruling, not changing that ruling.",
-        "file": "tests/test_live_status.py",
-        "line": 316,
-        "priority": "P1",
-        "title": "Not done: at most one progress record per ten seconds"
-      },
-      {
-        "body": "Claude can report a missing resumed session as an error result on stdout ([upstream reproduction](https://github.com/anthropics/claude-code/issues/40609)). This decoder prefixes its errors with `error_during_execution`, so the worker's existing prefix check at src/forge/worker.py:443\u2013445 no longer recognizes that result. The reader likewise checks only stderr at src/forge/story.py:738\u2013740, although decoded result errors are returned on stdout. For a structured-only missing-session failure, both paths refuse instead of starting the intended fresh session. Preserve structured error information for recovery in both callers; the existing stub's plain stderr error does not exercise this case.",
-        "file": "src/forge/repo.py",
-        "line": 203,
-        "priority": "P2",
-        "title": "Preserve missing-session recovery for structured Claude errors"
-      },
-      {
-        "body": "The previous P2 remains unresolved. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, aborting progress reporting and its enclosing worker, reader, review or test command. The guard serializes writers only. Use bounded reader-lock retries, as the existing replacement helper does at src/forge/codex.py:532\u2013539.",
+        "body": "The previous advisory remains open: this replacement has no retry when Windows refuses to replace a file held open by a reader. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204, so an overlapping refresh can raise PermissionError and abort the enclosing worker, reader, review or test command. Add bounded retries, following the existing replacement handling at src/forge/codex.py:532\u2013539.",
         "file": "src/forge/repo.py",
         "line": 171,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
+      },
+      {
+        "body": "The previous advisory remains open. Claude can report a missing resumed session in a structured stdout result ([upstream reproduction](https://github.com/anthropics/claude-code/issues/40609)). This decoder places `error_during_execution` before the diagnostic, so the worker's `No conversation found` prefix check at src/forge/worker.py:443\u2013445 misses it. The reader checks only stderr at src/forge/story.py:738\u2013740, although the decoded error is returned on stdout. Both paths consequently refuse instead of recovering with a fresh session. Preserve and recognize the structured missing-session diagnostic in both callers.",
+        "file": "src/forge/repo.py",
+        "line": 203,
+        "priority": "P2",
+        "title": "Preserve missing-session recovery for structured Claude errors"
       }
     ],
-    "id": "b9e2b9a8-c7e5-46ca-bc8f-cdbf7f6740da",
+    "id": "4c85e596-23b5-4734-b6d4-cd0c6ce9084e",
     "status": "blocked"
   },
   "round": 8,
@@ -80,6 +73,10 @@
     },
     {
       "at": "2026-10-06T07:04:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T08:03:32+00:00",
       "step": "review"
     }
   ],
