@@ -364,6 +364,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix git-call count still grows with separately landed hand edits\tforge-doctor-fix-checks-every-forge-file",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 150,
+      "text": "Not done: doctor --fix git-call count still grows with separately landed hand edits",
+      "from": "blocking",
+      "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -470,6 +481,39 @@
       "text": "Not done: elapsed time advances between refreshes",
       "from": "blocking",
       "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: batch changes while busy after a reload\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 31,
+      "text": "Not done: batch changes while busy after a reload",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: bind events to the current repo and session\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 37,
+      "text": "Not done: bind events to the current repo and session",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 35,
+      "text": "Not done: track active turns throughout reload initialization",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
       "status": "open",
       "closed_by": null
     },
@@ -870,6 +914,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 343,
+      "text": "Not done: activity actions and review-result events in both views",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: at most one progress record per ten seconds\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -936,6 +991,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 660,
+      "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "from": "worker",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
@@ -987,6 +1053,17 @@
       "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tNot done: proof list\tseveral-tests-fail-on-main-in-a-full-loc",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 85,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "open",
       "closed_by": null
     },
@@ -1134,6 +1211,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/cli.py\tPreserve group descriptions for abbreviated help flags",
+      "kind": "edge",
+      "path": "src/forge/cli.py",
+      "line": 75,
+      "text": "Preserve group descriptions for abbreviated help flags",
+      "from": "review",
+      "item": "every-forge-process-including-each-git-h",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tAbort source-code conflicts before scanning live Forge modules",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -1174,6 +1262,17 @@
       "text": "Respect explicit worktree distrust before inheriting repository trust",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tForce root diffs when reconstructing merge-parent file contents",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 97,
+      "text": "Force root diffs when reconstructing merge-parent file contents",
+      "from": "review",
+      "item": "forge-doctor-fix-checks-every-forge-file",
       "status": "open",
       "closed_by": null
     },
@@ -1350,6 +1449,17 @@
       "text": "Preserve completion when sibling tasks merge concurrently",
       "from": "review",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 74,
+      "text": "Bound persisted seen history before Claude's store limit",
+      "from": "review",
+      "item": "FORGE-MOD-1/EVENTS",
       "status": "open",
       "closed_by": null
     },
@@ -1691,105 +1801,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: batch changes while busy after a reload\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 31,
-      "text": "Not done: batch changes while busy after a reload",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: bind events to the current repo and session\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 37,
-      "text": "Not done: bind events to the current repo and session",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 35,
-      "text": "Not done: track active turns throughout reload initialization",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 74,
-      "text": "Bound persisted seen history before Claude's store limit",
-      "from": "review",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/cli.py\tPreserve group descriptions for abbreviated help flags",
-      "kind": "edge",
-      "path": "src/forge/cli.py",
-      "line": 75,
-      "text": "Preserve group descriptions for abbreviated help flags",
-      "from": "review",
-      "item": "every-forge-process-including-each-git-h",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
-      "kind": "bug",
-      "path": "tests/test_machine_views.py",
-      "line": 660,
-      "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
-      "from": "worker",
-      "item": "several-tests-fail-on-main-in-a-full-loc",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tNot done: proof list\tseveral-tests-fail-on-main-in-a-full-loc",
-      "kind": "bug",
-      "path": "tests/test_reviews_remove_their_temp_folders.py",
-      "line": 85,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "several-tests-fail-on-main-in-a-full-loc",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix git-call count still grows with separately landed hand edits\tforge-doctor-fix-checks-every-forge-file",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 150,
-      "text": "Not done: doctor --fix git-call count still grows with separately landed hand edits",
-      "from": "blocking",
-      "item": "forge-doctor-fix-checks-every-forge-file",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/doctor.py\tForce root diffs when reconstructing merge-parent file contents",
-      "kind": "edge",
-      "path": "src/forge/doctor.py",
-      "line": 97,
-      "text": "Force root diffs when reconstructing merge-parent file contents",
-      "from": "review",
-      "item": "forge-doctor-fix-checks-every-forge-file",
       "status": "open",
       "closed_by": null
     }

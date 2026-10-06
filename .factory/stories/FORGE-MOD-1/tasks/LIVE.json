@@ -10,20 +10,27 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3062c6a6463c7abb5735b994efe57e85ae4c983b9140a484bee8976ecb3a8424",
-    "changed": "e36db8554ee3544be6201fb01969198a9a82e0296829fde14d57c3babe5cd788",
-    "commit": "1d04040f8490c8d50b14e72eb1a9ef333988c7e4",
+    "branch_diff": "1581206ffb605b578b82e6ce92503170c63869506400a81d47d3ee4ae2811cf5",
+    "changed": "b1bd94ca43e986fcc2374c3164651366c7a3f18a46cf8f243297c1abd6790f79",
+    "commit": "0bc48a2ed07b64811eac8c9304825580f408723a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, aborting the worker, reader, reviewer or test command recording progress. Add bounded replacement retries, as codex._record already does at src/forge/codex.py:528\u2013539.",
+        "body": "The required command proof checks only activity.status at line 302 and event keys/count here. It never asserts the running action or that a review result appears in top-level events. Removing activity.action and filtering review results out of board.py's public event projection would leave the named proofs green. The RUNS tests inspect producer records, and test_machine_views.py:137\u2013144 checks occurrences, which does not protect this separate events contract. Extend the existing real-command cases to assert the run's action and a close-produced review-result event, including its time, item and plain line, in both views.",
+        "file": "tests/test_live_status.py",
+        "line": 343,
+        "priority": "P1",
+        "title": "Not done: activity actions and review-result events in both views"
+      },
+      {
+        "body": "The previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, failing the worker, reader, reviewer or test command while recording progress. Add bounded replacement retries, as codex._record already does at src/forge/codex.py:550\u2013558.",
         "file": "src/forge/repo.py",
         "line": 175,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "The previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:441\u2013443 consequently misses it, while the reader checks stderr at src/forge/story.py:732 although this decoder returns the diagnostic through stdout. Both paths refuse instead of retrying with a fresh session. Recognize the missing-session diagnostic in both callers while preserving other failures. The response shape is shown in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
+        "body": "The previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:441\u2013443 consequently misses it; the reader checks stderr at src/forge/story.py:732 although this decoder returns the diagnostic through stdout. Both paths refuse instead of starting a fresh session. Recognize the missing-session diagnostic in both callers while preserving other failures. The structured response is documented in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
         "file": "src/forge/repo.py",
         "line": 207,
         "priority": "P2",
@@ -37,11 +44,11 @@
         "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "56c5cf69-e092-4e2f-84a0-be776f3b8041",
-    "status": "clean"
+    "id": "8e348c7d-3e83-4b2d-99ff-a135cbf03e88",
+    "status": "blocked"
   },
   "round": 11,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -101,6 +108,10 @@
     },
     {
       "at": "2026-10-06T16:41:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T17:53:22+00:00",
       "step": "review"
     }
   ],
