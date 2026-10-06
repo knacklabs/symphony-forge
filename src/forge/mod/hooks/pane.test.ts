@@ -32,6 +32,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     let mode = 'good'
     const opens: unknown[] = []
     on('session.start', () => ({ cwd: '/repo' }))
+    on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
     on('process.run', (_$, e) => {
@@ -61,7 +62,12 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(reply.text).toContain('Windows: timeout')
     expect(reply.text).toContain('editing the guide')
     expect(opens.at(-1)).toEqual({ id: 'forge', title: 'Forge', focus: true })
-    mode = 'bad'; await clock.advance(5000)
+    for (const [reason, time] of [['clear', '6s'], ['resume', '7s']] as const) {
+      await $.session.end({ reason, sessionId: 'previous', resume: { id: 'previous' } })
+      await clock.advance(1000)
+      expect(JSON.stringify(await ui.drawn())).toContain(time)
+    }
+    mode = 'bad'; await clock.advance(3000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('Polish the guide')
     expect(drawn).toContain("Couldn't refresh: Malformed forge board output")
@@ -115,26 +121,43 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
   test(`2: ${surface} strip fits two items, overflow and narrow or older sessions`, async ($, on) => {
     const clock = mock.clock(on)
-    let extra = false, old = false
+    let extra = false, old = false, long = false
     on('session.start', () => ({ cwd: '/repo' }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
     on('prompt.submit', (_$, e) => ({ text: e.text }))
     on('process.run', (_$, e) => {
       if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-      const items = [row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
+      const items = [long ? { ...row, title: 'A very long guide title that must never displace stage times or the total', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
       const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? following : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'AbovePrompt', props: band })
     let drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('Another fix: Build ✓ 4s')
-    expect(drawn).toContain('Polish the guide: Build ✓ 4s')
+    const itemRows = await ui.findAll({ type: 'Box' })
+    expect(itemRows.some(b => b.text.includes('Another fix: Build ✓ 4s'))).toBe(true)
+    expect(itemRows.some(b => b.text.includes('Polish the guide: Build ✓ 4s'))).toBe(true)
     expect(drawn).toContain('Tests: Polish the guide (1 waiting)')
     expect(drawn).toContain('editing the guide')
     expect(drawn).toContain('round 2 · total 9s')
     expect((await ui.findAll({ type: 'Text' })).some(t => t.text.includes('Tests ✗ 5s'))).toBe(true)
+    // A mounted description does not paint clipping. Check the allocated cells:
+    // the timing block must fit without shrinking; only the title may truncate.
+    for (const bodyColumns of [80, 100]) {
+      await ui.redraw({ ...band, bodyColumns })
+      const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('total 9s'))
+      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0)
+      expect(blocks.length).toBe(2)
+      expect(titles.length).toBe(2)
+      expect(Number(titles[0]?.props.width) + Number(blocks[0]?.props.width)).toBe(bodyColumns)
+      for (const block of blocks) {
+        expect(Number(block.props.width)).toBe(block.text.length)
+        expect(block.text.length < bodyColumns).toBe(true)
+        for (const fact of ['Build ✓ 4s', 'Tests ✗ 5s', 'Review ● 0s', 'CI', 'Merge –', 'round 2', 'total 9s']) expect(block.text).toContain(fact)
+      }
+    }
+    await ui.redraw(band)
     extra = true; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('+2 more · /forge for all')
@@ -154,6 +177,12 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await ui.redraw({ ...band, bodyColumns: 79 })
     expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide:')
     expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
+    old = false; extra = false; long = true; await clock.advance(10000)
+    await ui.redraw({ ...band, bodyColumns: 80 })
+    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('100h'))!
+    expect(Number(protectedTime.props.width)).toBe(protectedTime.text.length)
+    expect(protectedTime.text.length < 80).toBe(true)
+    for (const fact of ['Build✓100h0m', 'Tests✗100h0m', 'Review●30s', 'CI', 'Merge–', 'round2', 'total100h0m']) expect(protectedTime.text).toContain(fact)
   })
 }
 

@@ -1,7 +1,7 @@
 import type { On, RenderInput, RenderNode, Timer } from 'claude-code'
 import type { Data, Item, Next } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
-import { activeRows, itemLines, laneCounts, record, rows, stageText, stages, summary, total } from './summary.ts'
+import { activeRows, itemLines, itemTime, laneCounts, record, rows, stageText, stages, summary, total } from './summary.ts'
 
 const tabs = new Map<string, (e: RenderInput<'Pane'>) => RenderNode>()
 const actions = new Map<string, ((item: Item, e: RenderInput<'Pane'>) => RenderNode)[]>()
@@ -35,7 +35,10 @@ export function registerPane(on: On, data: Data) {
     repaint = $.clock.every(1000, () => { $.ui.invalidate('ui.render') })
     return next(e)
   })
-  on('session.end', (_$, e, next) => { repaint?.cancel(); return next(e) })
+  on('session.end', (_$, e, next) => {
+    if (e.reason !== 'clear' && e.reason !== 'resume') repaint?.cancel()
+    return next(e)
+  })
   on('ui.render', { component: 'Pane' }, async ($, e, next) => {
     if (e.requestId !== 'forge' || (e.surface !== 'terminal' && e.surface !== 'desktop')) return next(e)
     const t = $.ui.resolve(e)
@@ -80,7 +83,7 @@ export function registerPane(on: On, data: Data) {
       const step = record(first?.worker).step
       lines = [`${counts}${item}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
     }
-    if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) lines[lines.length - 1] += ' · /forge for the board'
+    if ((e.viewport?.columns ?? e.props.bodyColumns) < 144 && data.error !== TOO_OLD) lines[0] += ' · /forge for the board'
     const children: RenderNode[] = []
     const first = lines[0] ?? ''
     if (command) {
@@ -116,7 +119,19 @@ export function registerPane(on: On, data: Data) {
         t.Text({ children: suffix, wrap: 'truncate-end' }),
       ] }))
     } else children.push(t.Text({ wrap: 'truncate-end', children: first }))
-    for (const line of lines.slice(1, Math.min(3, e.props.maxRows))) children.push(t.Text({ wrap: 'truncate-end', children: line.split('✗').flatMap((part, n) => n ? [t.Text({ color: 'red', children: '✗' }), part] : [part]) }))
+    const active = activeRows(data)
+    for (const [n, line] of lines.slice(1, Math.min(3, e.props.maxRows)).entries()) {
+      const item = active.length > 2 && n === 1 ? undefined : active[n]
+      const timing = item ? itemTime(item, now).slice(item.title.length + 2) : undefined
+      let status = timing ?? line
+      // Reserve the timing cells; the native surface truncates only the title.
+      if (timing && status.length >= e.props.bodyColumns) status = status.replaceAll(' ', '')
+      const text = t.Text({ wrap: 'truncate-end', children: status.split('✗').flatMap((part, n) => n ? [t.Text({ color: 'red', children: '✗' }), part] : [part]) })
+      children.push(item && timing ? t.Box({ flexDirection: 'row', width: e.props.bodyColumns, children: [
+        t.Box({ width: Math.max(0, e.props.bodyColumns - status.length), minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: `${item.title}: ` }) }),
+        t.Box({ width: status.length, flexShrink: 0, children: text }),
+      ] }) : text)
+    }
     return t.Box({ flexDirection: 'column', children })
   })
 }
