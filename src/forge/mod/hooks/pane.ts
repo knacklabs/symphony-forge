@@ -92,13 +92,18 @@ export function registerPane(on: On, data: Data) {
     const children: RenderNode[] = []
     const firstChildren: RenderNode[] = []
     const first = lines[0] ?? ''
+    const lanes = laneCounts(data)
+    const counts = !narrow && data.lanes && data.error !== TOO_OLD ? `Agents ${lanes.agentsRunning}/${lanes.size} (${lanes.agentsWaiting} waiting) · Tests: ${lanes.test ? 1 : 0} running (${lanes.testsWaiting} waiting) · ` : ''
+    const testTitle = `${lanes.testTitle ?? lanes.test?.item ?? 'idle'} · `
+    const titleWidth = Math.min(testTitle.length, Math.max(0, e.props.bodyColumns - counts.length - MIN_TITLE_COLUMNS))
+    const nextWidth = Math.max(0, e.props.bodyColumns - counts.length - titleWidth)
     let tailColumns = compact?.tail.length ?? 0
     if (command) {
       const [prefix, suffix = ''] = first.split(`1: ${command}`)
       tailColumns = command.length + 3 + suffix.length
       firstChildren.push(
         t.Text({ children: prefix ?? '', wrap: 'truncate-end' }),
-        t.Button({ key: 'next-step', hotkey: '1', plain: true, label: command, onPress: async () => {
+        t.Button({ key: 'next-step', hotkey: '1', plain: true, label: counts && command.length + 3 > nextWidth ? `${Array.from(command).slice(0, Math.max(0, nextWidth - 4)).join('')}…` : command, onPress: async () => {
           if (working) return
           let updated: Next
           try {
@@ -135,6 +140,14 @@ export function registerPane(on: On, data: Data) {
         t.Box({ width: Math.max(0, e.props.bodyColumns - fixed - tailWidth), minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: compact.title }) }),
         t.Box({ width: compact.timing.length, flexShrink: 0, children: t.Text({ children: compact.timing }) }),
         t.Box({ width: tailWidth, flexShrink: 0, overflow: 'hidden', flexDirection: 'row', children: command ? firstChildren.slice(1) : t.Text({ wrap: 'truncate-end', children: compact.tail }) }),
+      ] }))
+    } else if (counts) {
+      const step = record(activeRows(data).find(i => typeof record(i.worker).step === 'string')?.worker).step
+      const tail = `${data.next?.next.line ?? 'Loading Forge…'}${step ? ` · ${step}` : ''}${(e.viewport?.columns ?? e.props.bodyColumns) < 144 ? ' · /forge for the board' : ''}`
+      children.push(t.Box({ flexDirection: 'row', width: e.props.bodyColumns, children: [
+        t.Box({ width: counts.length, flexShrink: 0, children: t.Text({ children: counts }) }),
+        t.Box({ width: titleWidth, minWidth: 0, children: t.Text({ wrap: 'truncate-end', children: testTitle }) }),
+        t.Box({ width: nextWidth, flexShrink: 0, overflow: 'hidden', flexDirection: 'row', children: command ? firstChildren.slice(1) : t.Text({ wrap: 'truncate-end', children: tail }) }),
       ] }))
     } else children.push(command ? t.Box({ flexDirection: 'row', children: firstChildren }) : firstChildren[0]!)
     const active = activeRows(data)

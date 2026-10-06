@@ -139,7 +139,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const itemRows = await ui.findAll({ type: 'Box' })
     expect(itemRows.some(b => b.text.includes('Another fix: Build ✓ 4s'))).toBe(true)
     expect(itemRows.some(b => b.text.includes('Polish the guide: Build ✓ 4s'))).toBe(true)
-    expect(drawn).toContain('Tests: Polish the guide (1 waiting)')
+    expect(drawn).toContain('Tests: 1 running (1 waiting)')
+    expect(drawn).toContain('Polish the guide · ')
     expect(drawn).toContain('editing the guide')
     expect(drawn).toContain('round 2 · total 9s')
     expect((await ui.findAll({ type: 'Text' })).some(t => t.text.includes('Tests ✗ 5s'))).toBe(true)
@@ -148,7 +149,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     for (const bodyColumns of [80, 100]) {
       await ui.redraw({ ...band, bodyColumns })
       const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('total 9s'))
-      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0)
+      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(': '))
       expect(blocks.length).toBe(2)
       expect(titles.length).toBe(2)
       expect(Number(titles[0]?.props.width) + Number(blocks[0]?.props.width)).toBe(bodyColumns)
@@ -206,6 +207,27 @@ for (const surface of ['terminal', 'desktop'] as const) {
         const title = boxes.find(b => b.props.minWidth === 0)!
         expect(Number(title.props.width) < title.text.length).toBe(true)
         expect((await ui.find({ key: 'next-step' })) !== undefined).toBe(state === 'ready' || state === 'long command')
+      }
+    }
+    nextCommand = following.next.command; await clock.advance(10000)
+    // Counts are now reserved before the test title, rather than hidden after it.
+    for (const state of ['ready', 'busy', 'null']) {
+      if (state === 'null') {
+        await ui.redraw(band)
+        nextCommand = null
+        await ui.press({ key: 'next-step' })
+      }
+      for (const bodyColumns of [80, 120]) {
+        await ui.redraw({ ...band, bodyColumns, isWorking: state === 'busy' })
+        const boxes = await ui.findAll({ type: 'Box' })
+        const counts = boxes.find(b => b.props.flexShrink === 0 && b.text.includes('Agents 1/4 (1 waiting)') && b.text.includes('Tests: 1 running (1 waiting)'))!
+        expect(counts).toBeDefined()
+        expect(counts.props.width).toBe(counts.text.length)
+        const tree = await ui.drawn()
+        if (tree.type !== 'Box') throw new Error('Expected the strip container')
+        const row = tree.children?.[0]
+        if (typeof row !== 'object' || row === null || row.type !== 'Box') throw new Error('Expected the summary row')
+        expect((row.children ?? []).reduce((sum, b) => sum + (typeof b === 'object' && b !== null && b.type === 'Box' ? Number(b.props?.width) : NaN), 0)).toBe(bodyColumns)
       }
     }
   })
