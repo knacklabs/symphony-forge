@@ -9,7 +9,7 @@ from conftest import ROOT
 STORY = "FIX-PICKER-TWO-RULES"
 
 
-def test_1_release_1_2_6_changes_select_fewer_than_71_test_files(repo):
+def test_5_release_1_2_6_changes_select_fewer_than_71_test_files(repo):
     # Frozen v1.2.6 parent/tag paths, Python content and shared inputs need no tags
     # in shallow CI clones. Other non-Python content uses markers: only its path
     # can affect selection. Current tests remain the candidate suite.
