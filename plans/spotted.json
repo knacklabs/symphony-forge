@@ -888,8 +888,8 @@
       "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
@@ -899,8 +899,8 @@
       "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
@@ -932,8 +932,8 @@
       "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
@@ -943,8 +943,8 @@
       "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
