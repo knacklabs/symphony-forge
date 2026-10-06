@@ -21,13 +21,14 @@ export function register(on: On) {
   const core = createCore()
   const { data } = core
   let loaded = false
+  registerEvents(on, data)
   on('session.start', async ($, e, next) => {
     if (!loaded) {
       loaded = true
       await $.command.register({ name: 'forge', description: 'Show the Forge board', immediate: true })
       $.clock.every(REFRESH_INTERVAL_MS, () => { void refresh($, core, e.cwd) })
-      await refresh($, core, e.cwd)
     }
+    await refresh($, core, e.cwd)
     return next(e)
   })
   on('command.run', { command: 'forge' }, async $ => {
@@ -35,7 +36,6 @@ export function register(on: On) {
     return { text: text(data, await $.clock.now()) }
   })
   registerPane(on, data)
-  registerEvents(on, data)
   registerApproval(on, data)
   registerMachine(on, data, addTab)
 }
