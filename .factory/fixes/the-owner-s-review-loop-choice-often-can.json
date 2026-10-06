@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98a78d4e13af04e18bd90205f292c307363d3cf87eff60a4d1d694bcbc60435b",
-    "changed": "e37c2b64bf508eee12e27b407a69684af1972306d696993bed601ca58348ff3e",
-    "commit": "73c8929d77d15fe165d11b70c3635b87dd13a728",
+    "branch_diff": "9bdcb583e4b1486cdd39de87d825996c7d3b1f44b9b65eecab91b9552097d742",
+    "changed": "0b1f48cfd97dc871f594f233418899bdb307c82938f7ed9bdb78c096d0681c50",
+    "commit": "adf39bb5f633192d3130ea9509b83c14334b7c8c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Stopped reviews recorded before this upgrade have `branch_diff` but no `base`: the pre-change `review.run` return shown in this patch never saved it. If the default branch advances through the reviewed commit, as test_1 exercises, this fallback selects that commit itself as the base. The saved fingerprint describes the original product diff, while the current fingerprint describes an empty product diff, so accept still refuses with `stale_choice`; dismissals after a recorded choice also fail. Likewise, an older fingerprint containing a named or cited `.factory/` file cannot match the newly filtered fingerprint, even when only Forge records changed.\n\nThe earlier-adopted tests upgrade the client before creating its stopped reviews, so they miss both cases. Preserve freshness for existing stopped reviews and add command coverage that records the review using the pre-change implementation before upgrading.",
-        "file": "src/forge/close.py",
-        "line": 283,
-        "priority": "P1",
-        "title": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed"
-      }
-    ],
-    "id": "9eed35df-56d7-4c96-856b-829d523e7481",
-    "status": "blocked"
+    "findings": [],
+    "id": "63c63a10-ef36-431f-aca8-d97fcdbcafa4",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T07:29:38+00:00",
@@ -37,6 +29,10 @@
     },
     {
       "at": "2026-10-06T11:22:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T13:28:36+00:00",
       "step": "review"
     }
   ],
