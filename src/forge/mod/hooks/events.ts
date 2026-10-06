@@ -22,42 +22,56 @@ function occurrences(items: Item[]): Map<string, string> {
 }
 
 export function registerEvents(on: On, data: Data) {
-  let busy = false
+  let enabled = false
+  let key: string | null = null
+  const pending = new Map<string, string>()
   let drain = async () => {}
   let unsubscribe = () => {}
   on('session.start', { isInteractive: true }, async ($, e, next) => {
     unsubscribe()
     drain = async () => {}
-    busy = false
+    key = null
+    pending.clear()
+    enabled = false
     const started = await next(e)
     if (await $.env.get('FORGE_WORKER') === '1' || !e.isInteractive
       || !(await $.session.surfaces()).some(s => s === 'terminal' || s === 'desktop')) return started
-    const repo = await $.session.repo()
-    if (!repo) return started
-    const key = JSON.stringify([repo.root, await $.session.id()])
-    const pending = new Map<string, string>()
-    let baseline = true
+    enabled = true
     let running = false
     drain = async () => {
-      if (running || data.error || data.board?.repo_root !== repo.root) return
+      if (running) return
       running = true
       try {
-        const saved = await $.store.get(key)
+        const repo = await $.session.repo()
+        const session = await $.session.id()
+        const currentKey = repo ? JSON.stringify([repo.root, session]) : null
+        const baseline = key !== currentKey || key === null
+        if (baseline) {
+          key = null
+          pending.clear()
+        }
+        if (!repo || data.error || data.board?.repo_root !== repo.root
+          || await $.env.get('FORGE_WORKER') === '1'
+          || !(await $.session.surfaces()).some(s => s === 'terminal' || s === 'desktop')) return
+        const seenKey = JSON.stringify([repo.root, session])
+        const saved = await $.store.get(seenKey)
         const seen = new Set(Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : [])
         const current = occurrences(data.board.items)
         if (baseline) {
           for (const id of current.keys()) seen.add(id)
-          await $.store.set(key, [...seen])
-          baseline = false
+          await $.store.set(seenKey, [...seen])
+          key = seenKey
           return
         }
         for (const [id, line] of current) if (!seen.has(id)) pending.set(id, line)
-        if (busy || !pending.size) return
+        if (!pending.size || await $.store.get(JSON.stringify(['forge-active-turn', session]))) return
+        // The host can change identity while the asynchronous reads finish.
+        if ((await $.session.repo())?.root !== repo.root || await $.session.id() !== session) return
         const batch = [...pending]
         const result = await $.prompt.submit({ text: batch.map(([, line]) => line).join('\n') })
         if (result.drop !== undefined) return
         for (const [id] of batch) seen.add(id)
-        await $.store.set(key, [...seen])
+        await $.store.set(seenKey, [...seen])
         for (const [id] of batch) pending.delete(id)
       } catch {
         // A failed host call leaves occurrences unseen for the next refresh.
@@ -69,14 +83,21 @@ export function registerEvents(on: On, data: Data) {
     await drain()
     return started
   })
-  on('turn.start', ($, e, next) => {
-    busy = true
+  on('session.end', async ($, e, next) => {
+    key = null
+    pending.clear()
+    if (enabled) await $.store.set(JSON.stringify(['forge-active-turn', e.sessionId]), null)
+    return next(e)
+  })
+  on('turn.start', async ($, e, next) => {
+    if (enabled) await $.store.set(JSON.stringify(['forge-active-turn', await $.session.id()]), e.turnId)
     return next(e)
   })
   on('turn.complete', async ($, e, next) => {
     const result = await next(e)
-    if (!e.agentId) {
-      busy = false
+    if (enabled && !e.agentId) {
+      const activeKey = JSON.stringify(['forge-active-turn', await $.session.id()])
+      if (await $.store.get(activeKey) === e.turnId) await $.store.set(activeKey, null)
       await drain()
     }
     return result

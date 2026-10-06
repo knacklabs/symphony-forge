@@ -10,6 +10,66 @@ const started = { cwd: '/repo', surface: 'terminal', isInteractive: true } as co
 const complete = { answer: '', durationMs: 1, isAborted: false, turnId: 'main', reason: 'answer' } as const
 
 for (const surface of ['terminal', 'desktop'] as const) {
+  test(`3: ${surface} follows session resets and repository moves without another start`, async ($, on) => {
+    const clock = mock.clock(on)
+    mock.store(on)
+    mock.env(on, {})
+    let session = 'first', root = '/repo', boardRoot = '/repo'
+    let items = [row('Guide', 'initial')]
+    const prompts: string[] = [], directories: string[] = []
+    on('session.start', () => ({ cwd: '/repo' }))
+    on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
+    on('session.id', () => ({ value: session }))
+    on('session.cwd', () => ({ value: root }))
+    on('session.repo', () => ({ value: { root, remote: null, internal: false, name: null } }))
+    on('session.surfaces', () => ({ value: [surface] }))
+    on('command.register', () => ({ value: { command: 'forge' } }))
+    on('ui.invalidate', () => ({ value: undefined }))
+    on('process.run', (_$, e) => {
+      directories.push(e.init?.cwd ?? '')
+      return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
+        e.argv[1] === 'board' ? { version: '1.2.5', repo_root: boardRoot, items } :
+        e.argv[1] === 'next' ? { version: '1.2.5', repo_root: boardRoot, next: { command: null, line: '' } } : { version: '1.2.5' },
+      ) } }
+    })
+    on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
+    await $.session.start({ ...started, surface })
+    for (const reason of ['clear', 'resume', 'resume'] as const) { // /branch also reports resume.
+      const before = prompts.length
+      await $.session.end({ reason, sessionId: session, resume: { id: session } })
+      session += '-new'
+      items = [row('Guide', `existing-${session}`)]
+      await clock.advance(10000)
+      expect(prompts.length).toBe(before)
+      items = [row('Guide', `new-${session}`)]
+      await clock.advance(10000)
+    }
+    expect(prompts.length).toBe(3)
+    // The actual host repo moves; an in-flight snapshot from the old repo is ignored.
+    root = '/other'
+    items = [row('Foreign guide', 'foreign-change')]
+    await clock.advance(10000)
+    expect(prompts.length).toBe(3)
+    expect(directories.slice(-3)).toEqual(['/other', '/other', '/other'])
+    boardRoot = '/other'
+    items = [row('New repo', 'other-baseline')]
+    await clock.advance(10000)
+    expect(prompts.length).toBe(3)
+    items = [row('New repo', 'other-change')]
+    await clock.advance(10000)
+    expect(prompts[3]).toBe('New repo: Which option? Next: forge work guide')
+    root = boardRoot = '/repo'
+    items = [row('Guide', 'return-baseline')]
+    await clock.advance(10000)
+    expect(prompts.length).toBe(4)
+    // Same id already seen in the other repo still acts independently here.
+    items = [row('Guide', 'other-change')]
+    await clock.advance(10000)
+    expect(prompts.length).toBe(5)
+  })
+}
+
+for (const surface of ['terminal', 'desktop'] as const) {
   test(`3: ${surface} turns consume occurrences once, batch while busy and retry failures`, async ($, on) => {
     const clock = mock.clock(on)
     mock.store(on)
@@ -19,6 +79,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const prompts: string[] = []
     on('session.start', () => ({ cwd: '/repo' }))
     on('session.id', () => ({ value: session }))
+    on('session.cwd', () => ({ value: '/repo' }))
     on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
     on('session.surfaces', () => ({ value: [surface] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
@@ -47,6 +108,8 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(prompts.length).toBe(1)
     // Same words, a new recorded occurrence; a short run need not be observed running.
     await $.turn.start({ text: 'Working', turnId: 'main' })
+    // Reload has no replay of the active turn's start. Both following ticks must batch.
+    await $.session.start({ ...started, surface })
     items = [row('Guide', 'question-2')]
     await clock.advance(10000)
     items = [row('Checks', 'check-run:7:later', 'forge close checks')]
@@ -124,6 +187,7 @@ for (const mode of ['worker', 'headless'] as const) {
     const prompts: string[] = []
     on('session.start', () => ({ cwd: '/repo' }))
     on('session.id', () => ({ value: 'quiet' }))
+    on('session.cwd', () => ({ value: '/repo' }))
     on('session.repo', () => ({ value: { root: '/repo', remote: null, internal: false, name: null } }))
     on('session.surfaces', () => ({ value: mode === 'worker' ? ['terminal'] : [] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
