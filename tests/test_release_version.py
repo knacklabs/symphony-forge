@@ -14,7 +14,8 @@ def test_1_forge_version_is_1_2_6_everywhere_it_is_recorded(repo):
     assert "FORGE_VERSION=1.2.6\n" in (ROOT / "scripts/install-mac.sh").read_text(encoding="utf-8")
     assert "$ForgeVersion = '1.2.6'" in (ROOT / "scripts/install-windows.ps1").read_text(encoding="utf-8")
     assert "symphony-forge@v1.2.6\"" in (ROOT / "README.md").read_text(encoding="utf-8")
-    lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    # Check the shipped lock: newer uv drops dynamic versions from its working copy.
+    lock = tomllib.loads(repo.git("show", "HEAD:uv.lock", cwd=ROOT))
     assert next(package for package in lock["package"] if package["name"] == "symphony-forge")["version"] == "1.2.6"
     repo.git("checkout", "-b", "fix/release")
     repo.write("forge.toml", 'version = "v1.2.6"\ntest = "echo ok"\n')
