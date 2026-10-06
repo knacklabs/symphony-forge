@@ -16,16 +16,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c864be15c0f1c6f8748a1a84bf9e1e21bd9cccb6ff88e2865aca3590f56344b",
-    "changed": "7fe4350b50b8624092f03b05282f4a5de0f5dec0623ced95aef1167147192eda",
-    "commit": "e9f78632f8bf85ae6a97d5a6dbccfecf0c066fc6",
+    "branch_diff": "99a86f4ae5f4c6c2105684300fcd7185caa87789c5c0d04a83480388f2f83480",
+    "changed": "9771bf06b3e57d4c0646ff295e301730fe3b85d5a77df853f4a933c80ee8a49e",
+    "commit": "b6dfc9b534f208138503cc7778d97ea5c9bcb03a",
     "dismissals": [],
-    "findings": [],
-    "id": "afa777e5-7e94-4467-ac30-ccf88a1c1d7b",
+    "findings": [
+      {
+        "body": "Unchanged blank lines and comments are stored together with their table context. For example, deleting `[tool.hatch.build]` and its `include` assignment while retaining the existing blank separator before the next table changes that separator's recorded context from Hatch to project. The snapshots then differ, so Forge runs the full suite despite only known-harmless lines changing. Moving an include-only table between the allowed Hatch sections has the same problem. Preserve table context for unsafe assignments, but do not let unchanged whitespace or comments make these safe edits trigger the full suite. The existing removed-include case lacks a trailing separator and misses this behavior.",
+        "file": "src/forge/fasttest.py",
+        "line": 151,
+        "priority": "P2",
+        "title": "P2: Preserve related selection when harmless tables move or disappear"
+      }
+    ],
+    "id": "d8d1634c-ab05-4da0-813f-20db1e0a2a41",
     "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
@@ -49,6 +57,10 @@
     },
     {
       "at": "2026-10-06T17:04:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T18:16:17+00:00",
       "step": "review"
     }
   ],
