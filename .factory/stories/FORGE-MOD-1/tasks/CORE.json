@@ -8,13 +8,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "03899b9994567f5d1c34456d4cb87d3251a4133454768da8a17330691ae19194",
-    "changed": "ee67b53ccb6e194cb6b0956868ead59ff223fd9457d4f8f44b3279cbbbc4fb52",
-    "commit": "f5aecb2fce512ad327da0fd6357580c26bf26d9a",
+    "branch_diff": "a6855525ac290cd267b142b2e1a140e6239649b21cc60c72457e1d0681f57d54",
+    "changed": "49dcaa36ff1012f54dfdcce625093da225a817aaac476df790a26560ccadbc51",
+    "commit": "62c7371b597a9fa56baef0446f985071761c8994",
     "dismissals": [],
     "findings": [
       {
-        "body": "The between-refresh elapsed assertion, nullable worker-start case and stage-outcome assertions remain outside the repository's executed suite. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:54 compiles core.test.ts but never executes it. A regression in these behaviors can therefore pass the supplied close run. SHIP owns the native plugin test job (plans/FORGE-MOD-1.md:243); that task must run `claude plugin test` and propagate failures. This remains deferred advice under the task ownership rule.",
+        "body": "The previous gap remains: the between-refresh elapsed assertion, nullable worker-start case and stage-outcome assertions in core.test.ts are not executed by the repository suite. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:54 type-checks the native tests but never executes them. These regressions could therefore pass the supplied close run. SHIP owns the native plugin test job (plans/FORGE-MOD-1.md:284), which must run `claude plugin test` and propagate failures. This remains deferred advice under the task ownership rule.",
         "file": "src/forge/mod/hooks/core.test.ts",
         "line": 40,
         "priority": "P2",
@@ -23,7 +23,7 @@
     ],
     "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:37:08+00:00",
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-10-05T17:28:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T00:06:50+00:00",
       "step": "review"
     }
   ],
