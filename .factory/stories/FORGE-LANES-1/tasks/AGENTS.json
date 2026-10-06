@@ -85,8 +85,10 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "done": "src/forge/machine.py is simpler and behaves as it did before",
     "file": "src/forge/machine.py",
+    "reason": "Owner accepted the finding; the worker had already reverted the unrelated lockfile test change at 12:11, so the part now leaves that test alone. Close again for a fresh review.",
     "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
   },
   "worker": "codex"
