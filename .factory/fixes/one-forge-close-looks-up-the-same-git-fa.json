@@ -9,31 +9,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c68f23a2e3c6c1780346d21adc858a0759699e37a2515f1fa6fe2e664037dcf3",
-    "changed": "6f4e06e280fca5c6a7fccb9abdba720fc03c0323e84cb4c04b25afc178c01090",
-    "commit": "c341d781aef9ea65f60af2a0866643af5f32765f",
+    "branch_diff": "f9320c1a1f459afb5ddf3851641722a7420f1002efd46f23340f76c11dd5944c",
+    "changed": "8d63ecfbc31c38d0073cd50073dce4bbe83e16397620dd8b31477170287caa0c",
+    "commit": "5973e87251a46a9e7f50b8709ce7e70fd18b6ae0",
     "dismissals": [],
     "findings": [
       {
-        "body": "With `log.showSignature=true` and a signed commit first in the batch, Git prints signature diagnostics before the NUL-delimited record ([Git documentation](https://git-scm.com/docs/git-log), [output ordering](https://github.com/git/git/blob/v2.51.0/log-tree.c#L793-L829)). The parser then treats that preamble as a record and raises `ValueError` at line 166, so close crashes before review. The previous message readers searched individual lines and did not require every output segment to contain a SHA and message. Pass `--no-show-signature` when reading this machine-readable batch.",
+        "body": "With `log.showSignature=true` and a signed commit first in the batch, Git emits signature diagnostics before the NUL-delimited record. The parser at line 166 treats that preamble as a record and raises `ValueError`, so close crashes before review. The batch still lacks `--no-show-signature`. Disable signature output explicitly. This follows [Git's configuration contract](https://git-scm.com/docs/git-log#Documentation/git-log.txt-logshowSignature) and [its output ordering](https://github.com/git/git/blob/v2.51.0/log-tree.c#L793-L829).",
         "file": "src/forge/repo.py",
         "line": 161,
         "priority": "P2",
         "title": "[P2] Disable signature output in the machine-readable log"
       },
       {
-        "body": "The replacement log enables rename detection by default, unlike the previous plumbing command ([Git configuration](https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenames)). For a worker commit moving `app.py` to `plans/archived.py`, `--name-only` reports only the destination. `commit_paragraph` at `src/forge/review.py:372` therefore classifies the commit as bookkeeping and copies an older commit's proof and functional check, ignoring the newest worker message. This affects both paragraph readers. Add `--no-renames` so classification still sees the deleted product path.",
+        "body": "Git log enables rename detection by default, unlike the replaced plumbing command. If a worker moves `app.py` to `plans/archived.py`, `--name-only` reports only the destination. The bookkeeping predicate at `src/forge/review.py:372` then skips this product-changing commit and copies an older commit's proof and functional check. Both paragraph readers are affected. Add `--no-renames` so classification sees the deleted product path as well. [Git documents this porcelain/plumbing difference](https://git-scm.com/docs/git-config#Documentation/git-config.txt-diffrenames).",
         "file": "src/forge/repo.py",
         "line": 162,
         "priority": "P2",
         "title": "[P2] Disable rename detection when identifying bookkeeping commits"
       }
     ],
-    "id": "6951b4d6-a767-4ebc-86e1-f7976e834073",
+    "id": "08c1871b-2f41-4160-8427-3fdc05745396",
     "status": "clean"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T10:54:56+00:00",
@@ -45,6 +45,10 @@
     },
     {
       "at": "2026-10-06T20:18:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T21:24:16+00:00",
       "step": "review"
     }
   ],
