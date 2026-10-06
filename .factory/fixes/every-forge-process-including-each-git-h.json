@@ -4,7 +4,7 @@
   "branch": "fix/every-forge-process-including-each-git-h",
   "done_when": "A forge command reads and builds only the module and subcommand it runs (command names found without parsing every module); forge --help and every command's help and behaviour are unchanged; a command test shows a git hook run of forge imports at most the modules its command needs (counted, no wall-clock timing); new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
