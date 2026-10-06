@@ -19,6 +19,7 @@ from test_task import story
 from conftest import ROOT
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
+from test_mod_plugin import packaged_mod  # noqa: F401
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
@@ -211,8 +212,24 @@ def github(gh, prs):
         {"data": {"repository": {"pullRequests": {"nodes": prs}}}}))
 
 
-@pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read"])
+@pytest.mark.parametrize("context", [None, "commit status", "check start", "live worker", "live read",
+                                    "plugin checks", "plugin refresh"])
 def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, context):
+    # CORE adds the packaged plugin boundary to this criterion's existing owner.
+    # The old command cases stay; the mod cases prove transport and refresh lifecycle.
+    if context in ("plugin checks", "plugin refresh"):
+        from test_mod_plugin import (
+            packaged_mod_refreshes_real_checks_and_returns_headless_text,
+            refresh_failures_timeout_and_overlap_keep_the_last_snapshot,
+        )
+        plugin = request.getfixturevalue("packaged_mod")
+        temporary = request.getfixturevalue("tmp_path")
+        if context == "plugin checks":
+            packaged_mod_refreshes_real_checks_and_returns_headless_text(
+                request.getfixturevalue("env"), plugin, temporary)
+        else:
+            refresh_failures_timeout_and_overlap_keep_the_last_snapshot(plugin, temporary)
+        return
     if context in ("live worker", "live read"):
         _board_shows_recorded_live_agent_metadata(request.getfixturevalue("env"), context.split()[1])
         return
@@ -454,10 +471,18 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
 
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
+    ("plugin " + case, None) for case in ("events", "busy reload", "reload complete", "reload start")] + [
     (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):
+    # EVENTS joins this criterion's command owner, as CORE does for criterion 1.
+    if conclusion and conclusion.startswith("plugin "):
+        from test_mod_plugin import packaged_events_start_each_sessions_turn_from_real_worker_occurrences
+        packaged_events_start_each_sessions_turn_from_real_worker_occurrences(
+            request.getfixturevalue("env"), request.getfixturevalue("packaged_mod"),
+            request.getfixturevalue("tmp_path"), conclusion.removeprefix("plugin "))
+        return
     if conclusion and conclusion.startswith("review "):
         _board_exposes_produced_questions_reviews_run_ends_and_readiness(
             request.getfixturevalue("env"), conclusion.split()[1])

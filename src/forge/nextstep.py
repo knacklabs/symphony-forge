@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
-from forge.task import start_base
+from forge.task import _overlap, _started, start_base
 
 COMMANDS = [
     {
@@ -409,7 +409,6 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
                 f'Next: forge story done {key} "<outcome sentence>"'], list(states.values())
     lines: list[str] = cleanup
-    busy = [task["scope"] for task in doc["tasks"] if states[task["id"]] and task["id"] not in merged]
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
@@ -421,11 +420,18 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and _task(top, *after.split("/"), trees, merged_prs).get("status") == "merged"}
     waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
                           if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
-    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []
-             and not any(story.overlaps(task["scope"], scope) for scope in busy)]
-    # A task held back by another story's task would wait out of sight, so say which.
+    busy = _started(story.landed_ref(top), top)
+    overlapping: set[str] = set()
+    for task in doc["tasks"]:
+        if task["id"] in waits:
+            blockers = [item for item, scope in busy.items()
+                        if any(_overlap(a, b) for a in task["scope"] for b in scope)]
+            if blockers:
+                overlapping.add(task["id"])
+            waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
+    ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
-               if any(not dep.startswith(f"{key}/") for dep in deps)]
+               if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)
     if reread:  # a doc changed after approval gets a round before its next task starts
         return lines + reread, list(states.values())
@@ -545,10 +551,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
-    if status == "hotspot":
+    if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
-        return [f"Close stopped {label}: {stop['file']} keeps breaking, so a fix that simplifies "
-                "it goes first.",
+        return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
+                "narrow the part, split it, or accept the remaining findings.",
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if receipt.get("tidied") is True:
         return []

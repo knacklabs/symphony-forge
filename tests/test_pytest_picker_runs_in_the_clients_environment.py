@@ -82,7 +82,7 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
 
 
 def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
-    repo.write("forge.toml", 'version = "v1.2.5"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
+    repo.write("forge.toml", 'version = "v1.2.6"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
     result = repo.forge("doctor")
     assert 'fast_test = "forge test --pytest {base}"' in result.stdout
     assert "python -m forge.fasttest" in result.stdout

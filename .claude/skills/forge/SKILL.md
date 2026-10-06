@@ -104,22 +104,29 @@ worktree path, shared by the repo's worktrees).
 The board's `items` has one row per story and fix, with tasks in the story's `children`.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
-`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`, and its own `next`.
+`findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
+`approval`, and its own `next`. A story awaiting approval has `approval.doc`, the
+absolute path to its document in its own worktree; other rows have null approval.
 An empty board has an empty items list. Missing state shows unknown. No run start,
 end, round or occurrence id is invented when its producer has not recorded one.
 The last task's merged outcome marks its story done, even when the saved story
 state still says approved. New clients get these views and this guide at init;
 existing clients get them after upgrading Forge and running sync.
-Close's clean-review receipt marks tasks and fixes ready while it matches the
-branch's current commit. If the next step cannot be checked, the row stays visible
-with no runnable command; check the connection and run `forge next` again.
+Tasks and fixes are ready only while close's clean-review receipt matches the
+branch's current commit and the pull request's checks are not failing. A failed
+rerun shows `checks failed` with `forge work` as its next step, even after a successful
+close. A running rerun or unavailable checks retain a matching receipt's readiness;
+green checks alone cannot grant it. The item's next step uses the same evidence.
+If the next step cannot be checked,
+the row stays visible with no runnable command; check the connection and run `forge next` again.
 
 Stages are Build, Tests, Review, CI and Merge, in that order. Each carries status,
 started_at, ended_at and seconds for the current round from Forge's timing records;
 unrecorded values are null. Total_seconds adds recorded stage durations across rounds;
 live elapsed time comes from timestamps. Worker-owned tests belong to Build; close's tests and
-`forge test` belong to Tests. A skipped test has status skipped. RUNS supplies the
-round and run records; until it lands these values remain null.
+`forge test` belong to Tests. A skipped test has status skipped. Run starts and ends
+provide live worker and reader metadata; completed timing durations supply stage end
+times. Values remain null where the producer has not recorded them.
 
 The newest 25 open pull requests get checks in one GitHub request, cached for 60
 seconds in the shared Git directory. Older pull requests and unreachable GitHub
@@ -128,11 +135,15 @@ skipped or neutral required checks show fail, while optional ones count as passe
 A failed check occurrence keeps GitHub's own identity:
 `check-run:<databaseId>:<completedAt>` or `status:<id>`. A rerun with a later
 completion is a new occurrence. Each occurrence has id, kind and plain title;
-run, review and question occurrences await RUNS' recorded ids.
+run completions, undismissed review findings (including advisory findings) and unanswered
+worker questions retain the ids in Forge's event records. Advisory occurrences do not
+change the merge gate. Readiness uses the clean review's id plus the current head
+commit. Runs that start and finish between board refreshes still appear as completions.
 
 Both views' `next` contains `command` and `line`. Command is the first Next line
 only when it is one runnable Forge command without a placeholder or alternative;
 otherwise it is null. Line carries the plain current state from the text report.
+Release notices appear in the text output and never replace the machine view's state line.
 Use each board row's next step for that item, never another
 item's step. Machine views do not grant approval or permission to merge.
 
@@ -344,8 +355,20 @@ Adopting changes no app code.
    `forge.toml` through a fix. For pytest repos, propose
    `forge test --pytest {base}`: Forge runs this picker outside the project, keeping the repo's
    full `test` command and narrows pytest to changed and module-related test files. Use the
-   repo's Python runner with Forge installed; keep lint and other checks in `test`.
+   repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
+   checks in `test`.
    Forge writes no `fast_test` by itself.
+   When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
+   `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
+   repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
+   and `--passWithNoTests`. Mixed repos get one part per kind. The Python picker skips
+   the JavaScript test runners, checks and installation steps, including when shared Python
+   inputs require all Python tests; the suggested Node part installs first and runs its checks
+   once. Forge's generated optional-package wrapper is kept around the Node suggestion.
+   `npm exec` keeps its own options before `--` and its runner after it so npm forwards
+   the changed-file flags. Go, Rust, Java, .NET
+   and Ruby get no suggestion. Check the suggestion against the repo's setup before
+   agreeing to it; other shell flows need the agent to adapt the command.
 
 On a live app, every story and fix also follows these:
 
@@ -578,15 +601,17 @@ For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own r
 shipped picker too: changed
 test files, tests whose filenames contain a changed Python module name, and tests importing or
 mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
-imports. It supports root packages and the `src/` layout, and pytest's `test_*.py` and `*_test.py`
-filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
+imports. It also selects tests naming any changed file's repository-relative path, including
+docs, shipped guides and workflows. It supports root packages and the `src/` layout, and pytest's
+`test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
-`python -m forge.fasttest` setting with its one-line replacement. Forge needs no pytest plugin
-or installation in the project. Test launchers must forward pytest arguments and expose xdist
+`python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation
+in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
+before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
 Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
@@ -652,9 +677,14 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
-When close stops an item because a file keeps breaking, start the fix it prints without
-asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
-after that fix merges.
+When close stops an item because a file keeps breaking, run no more `forge work` on that item.
+Ask the human to narrow the part, split it, or accept the remaining findings.
+Never re-run close or land past this stop until their choice is recorded.
+After their answer, record it with
+`forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Narrow or split the part as agreed before building again. Accept records the remaining findings
+as accepted for the reviewed code and scope; close still requires green checks. Changed code or
+scope needs another review.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

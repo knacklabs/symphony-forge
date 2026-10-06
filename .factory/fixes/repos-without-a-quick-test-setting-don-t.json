@@ -1,0 +1,74 @@
+{
+  "base": "ef770cd9e49ed10ead9d951a69a85a39b340f911",
+  "branch": "fix/repos-without-a-quick-test-setting-don-t",
+  "done_when": "forge doctor and forge upgrade print one suggested fast_test line for the repo's test kind: Python repos get forge test --pytest {base}; vitest or jest repos get their runner on changed files with --passWithNoTests using the repo's own install and runner; mixed repos get one part per kind; Go, Rust, Java, .NET and Ruby repos get no line; skill.md says so; new and existing client repos each have a command test",
+  "flagged": [
+    "src/forge/quicktest.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d45d2e9646273824b447162010497353c85e320b697e463106e84b31b0b52bdc",
+    "changed": "372546b4b2aa93afa66055a8e8564694eefffb19c95992dfb4158bfee8074073",
+    "commit": "c4ebdb81356331f476b444687d35fd46ae3f6d52",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous finding remains open. For `uv run pytest && npm ci && ./node_modules/.bin/eslint . && npm test`, where npm test invokes Vitest or Jest, direct ESLint gets an empty kind. The Python picker retains it while removing Node installation and runners (src/forge/fasttest.py:120\u2013121), then executes it at line 171. With selected Python tests or changed shared inputs, this fails before installation when dependencies are absent; otherwise ESLint runs twice. Direct `./node_modules/.bin/tsc` checks have the same problem. This direct-executable evidence is outside the coordinator's isolation ruling. Classify these checks consistently so suggestions from both doctor and upgrade run them once, after installation.",
+        "file": "src/forge/quicktest.py",
+        "line": 50,
+        "priority": "P2",
+        "title": "Keep installation before direct Node checks in mixed suggestions"
+      },
+      {
+        "body": "The previous finding remains open. `npm exec jest --workspace=web` becomes `npm exec -- jest --workspace=web --changedSince {base} --passWithNoTests`. Inserting the separator before the runner changes npm's workspace option into a runner argument, losing the original execution context. Vitest and trailing npm options such as `--package` are affected through both doctor and upgrade. [npm's documented contract](https://docs.npmjs.com/cli/v11/commands/npm-exec/#npx-vs-npm-exec) confirms that npm parses configuration options after positional arguments until `--`. This trailing-option case goes beyond the earlier leading-option repair. Preserve npm configuration options before the inserted separator.",
+        "file": "src/forge/quicktest.py",
+        "line": 85,
+        "priority": "P2",
+        "title": "Preserve trailing npm options when inserting the exec separator"
+      }
+    ],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T08:21:50+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-05T08:52:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:13:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T09:48:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T10:35:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T11:46:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T12:08:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T13:59:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-05T17:24:59+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Repos without a quick test setting don't learn which quick test command fits them",
+  "worker": "codex"
+}

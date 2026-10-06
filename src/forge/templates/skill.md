@@ -358,6 +358,17 @@ Adopting changes no app code.
    repo's Python runner for `test`; keep Forge outside the project, and keep lint and other
    checks in `test`.
    Forge writes no `fast_test` by itself.
+   When `fast_test` is missing, `forge doctor` and `forge upgrade` print one suggested
+   `fast_test` line: Python gets `forge test --pytest {base}`; vitest and jest keep the
+   repo's own install and runner, adding `--changed {base}` or `--changedSince {base}`
+   and `--passWithNoTests`. Mixed repos get one part per kind. The Python picker skips
+   the JavaScript test runners, checks and installation steps, including when shared Python
+   inputs require all Python tests; the suggested Node part installs first and runs its checks
+   once. Forge's generated optional-package wrapper is kept around the Node suggestion.
+   `npm exec` keeps its own options before `--` and its runner after it so npm forwards
+   the changed-file flags. Go, Rust, Java, .NET
+   and Ruby get no suggestion. Check the suggestion against the repo's setup before
+   agreeing to it; other shell flows need the agent to adapt the command.
 
 On a live app, every story and fix also follows these:
 
@@ -450,7 +461,12 @@ finishes. One machine runs at most 2 Forge agents at once (work rounds, plan rea
 reviews), across all its repos; the rest wait in line, first come, first served, and print their
 place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
-so with the command that merges it into the story branch; run it, then carry on.
+so with the command that merges it into the story branch; run it, then carry on. Forge compares
+content history, never commit dates: an older copy on the default branch does not block a start.
+When only the story doc differs, `forge task start` merges the default branch into the clean
+story branch itself and says so; conflicting edits still need the printed merge command.
+`forge next` names the unmerged item a part waits on for overlapping files, including another
+story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
 
@@ -596,6 +612,11 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+For `uv.lock`, `poetry.lock`, `Pipfile.lock` and `package-lock.json`, a change only to
+the repo's own package version selects related tests instead. Forge identifies the
+root package from the adjacent manifest and its local source; dependency versions,
+hashes and other lock data still trigger the full run. Missing or unrecognized lock
+data also triggers the full run.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
 `python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation
@@ -666,9 +687,14 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
-When close stops an item because a file keeps breaking, start the fix it prints without
-asking the owner, run no more `forge work` on that item, and run `forge close <item>` again only
-after that fix merges.
+When close stops an item because a file keeps breaking, run no more `forge work` on that item.
+Ask the human to narrow the part, split it, or accept the remaining findings.
+Never re-run close or land past this stop until their choice is recorded.
+After their answer, record it with
+`forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+Narrow or split the part as agreed before building again. Accept records the remaining findings
+as accepted for the reviewed code and scope; close still requires green checks. Changed code or
+scope needs another review.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

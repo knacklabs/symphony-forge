@@ -291,6 +291,27 @@ New moving parts: one Claude Code plugin (mod) that Forge ships and sync turns o
 
 ## Notes
 
+- APPROVE proof (2026-10-06): leave the Approve button out; Done-when 4 uses
+  Plan Mode alone. In real interactive Claude Code 2.1.291, a temporary mod's
+  immediate command called `$.tool.call({ tool: 'ExitPlanMode', plan: text })`
+  in Plan Mode with a supplied story-shaped plan. Claude displayed only
+  "Exit plan mode?" and "Claude wants to exit plan mode", without that text.
+  Accepting its native prompt ran the PostToolUse hooks and returned
+  `{ plan: null, isAgent: false, filePath: <session plan path> }`. The same
+  generic prompt was seen on 2.1.290. The installed runtime strips the reserved
+  `plan` and `planFilePath` inputs before injecting its own session plan from
+  disk; the public ExitPlanMode input declares only deprecated `allowedPrompts`.
+  A mod therefore cannot provide the story's exact text through this API.
+  Writing Claude's session plan file or submitting an agent instruction is
+  outside this button's contract. No button, document reader or custom approval
+  prompt is shipped, and `forge hook approval` is unchanged. The existing pane
+  remains keyboard accessible with its native controls and labels; there is
+  no new control, colour or animation to audit. `approval.test.ts` checks the
+  assembled pane on terminal and Desktop has no Approve button and `/forge`
+  retains the Plan Mode next step. `tests/test_mod_approval.py` proves Plan Mode
+  still records approval, rejects a changed doc and replay, and refuses the
+  real probe's missing-plan result. New and previously adopted repos receive
+  the same button-free mod; their approval hooks need no upgrade or change.
 - Surfaces (owner, 2026-10-05: same pane, richer where the surface can draw; checked against
   code.claude.com/docs/en/plugins/mods/overview "Where mods run": only the terminal and the
   Desktop app's Code tab show a mod's drawing; the VS Code chat panel, `claude -p` and Remote
