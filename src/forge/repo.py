@@ -22,6 +22,8 @@ from typing import Any, NoReturn
 
 from forge import __version__
 
+# Every Forge command loads this shared runtime; child processes consume the recorded lock.
+os.environ["UV_FROZEN"] = "1"
 # Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
 TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
               ":(glob)**/test_*.py", ":(glob)**/*_test.py"]

@@ -10,7 +10,6 @@
 | `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
 | `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
-| `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
 | `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
 | `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |

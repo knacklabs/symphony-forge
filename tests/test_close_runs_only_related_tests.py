@@ -54,6 +54,8 @@ def record_run(request):
         changes[shared_input] = (re.sub(r'(name = "pytest"\nversion = )"[^"]+"',
                                       r'\1"999.0.0"', original, count=1)
                                  if shared_input == "uv.lock" else original + "\n# Changed\n")
+        if shared_input == "pyproject.toml":
+            changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
         assert changes[shared_input] != original
     item, _ = env.start_fix(changes)
 
