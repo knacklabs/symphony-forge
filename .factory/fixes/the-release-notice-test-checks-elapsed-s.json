@@ -2,13 +2,28 @@
   "base": "ead5fa3b90b590e25c99f387b6e660e07bc8376b",
   "branch": "fix/the-release-notice-test-checks-elapsed-s",
   "done_when": "tests/test_next_announces_new_forge_releases.py checks how many release lookups happen instead of how many seconds pass, with no wall-clock assertion left in it; behaviour is unchanged for new and existing client repos",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "969d89d33d83aa82c70995220b529d65a569481935bc9061eaf96b6ef981d180",
+    "changed": "7049773d30d83f4cbfa46c99a97a7d89b9a94baabd1b2519dcedc0c251f74c3b",
+    "commit": "28d2cdb7e109f32ca4d47f63d4d53906ade83b3b",
+    "dismissals": [],
+    "findings": [],
+    "id": "8bd4c73d-bc00-4e5f-a9f9-6c5745383d2e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T07:31:11+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T09:27:41+00:00",
+      "step": "review"
     }
   ],
   "why": "The release-notice test checks elapsed seconds and fails on busy Windows CI runners",
