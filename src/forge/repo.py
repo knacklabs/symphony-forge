@@ -151,16 +151,22 @@ def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str,
 
     def read():
         tip = git("rev-parse", head, cwd=top)
-        log = git("log", "--no-merges", "--format=%x00%x00%H%x00m%B",
-                  "--name-only", "-z", f"{base}..{head}", cwd=top)
-        rows = []
+        return command_fact(key(tip), top, lambda: select(tip))
+
+    def select(tip):
+        commits = git("rev-list", "--no-merges", f"{base}..{tip}", cwd=top).splitlines()
+        # Commit contents are immutable even when a fetch changes range membership.
+        records = command_fact(("commit records", top.resolve()), top, dict)
+        missing = [sha for sha in commits if sha not in records]
+        log = (git("log", "--no-walk", "--format=%x00%x00%H%x00m%B",
+                   "--name-only", "-z", *missing, cwd=top) if missing else "")
         for record in log.split("\0\0"):
             if not record:
                 continue
             sha, message, *paths = record.lstrip("\0").split("\0", 2)
             files = [p for p in (paths[0].removeprefix("\n").split("\0") if paths else []) if p]
-            rows.append((sha, message.removeprefix("m"), files))
-        return command_fact(key(tip), top, lambda: rows)
+            records[sha] = (sha, message.removeprefix("m"), files)
+        return [records[sha] for sha in commits]
     return command_fact(key(head), top, read)
 
 
