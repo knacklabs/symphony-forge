@@ -430,6 +430,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 35,
+      "text": "Not done: track active turns throughout reload initialization",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/forge.ts\tAccept unknown worker start times from the board contract\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/forge.ts",
