@@ -17,7 +17,7 @@ import pytest
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_machine_views import github, pull, state, view
-from test_run_records import configure
+from test_run_records import configure, records
 
 STORY = "FORGE-MOD-1"
 
@@ -315,6 +315,13 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                         "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
                     assert worker["step"] == expected
                     datetime.fromisoformat(worker["started_at"])
+                    # The clock stays in one ten-second window throughout this burst.
+                    # Keep the latest action visible without retaining every notification.
+                    events = records(repo, "events.jsonl")
+                    run = next(e for e in reversed(events) if e["item"] == item and e["event"] == "run start")
+                    progress = [e for e in events if e.get("run_id") == run["id"] and e["event"] == "progress"]
+                    assert len(progress) == 1
+                    assert progress[0]["step"] == expected
                 connection.sendall(b"1")
         finally:
             for connection in connections:
