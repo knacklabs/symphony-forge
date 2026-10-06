@@ -461,7 +461,12 @@ finishes. One machine runs at most 2 Forge agents at once (work rounds, plan rea
 reviews), across all its repos; the rest wait in line, first come, first served, and print their
 place when they start waiting and each time it changes. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
-so with the command that merges it into the story branch; run it, then carry on.
+so with the command that merges it into the story branch; run it, then carry on. Forge compares
+content history, never commit dates: an older copy on the default branch does not block a start.
+When only the story doc differs, `forge task start` merges the default branch into the clean
+story branch itself and says so; conflicting edits still need the printed merge command.
+`forge next` names the unmerged item a part waits on for overlapping files, including another
+story's work, using the same overlap rule as `forge task start`.
 
 ## Cold read findings
 
@@ -607,8 +612,11 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, requirements or lock files change.
-For `pyproject.toml`, only dependency or pytest settings changes trigger the full command;
-package metadata, comments and other tools' settings select related tests instead.
+For `pyproject.toml`, every change triggers the full command unless all changed lines are
+known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
+`include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
+or `sdist` targets. Multiline values are supported. Unknown sections, unsupported layouts,
+comments outside safe values and mixed safe/unsafe edits run the full command.
 Forge's commands and generated tests job set `UV_FROZEN=1`, so uv consumes the recorded
 lockfile without rewriting it, including in older worktrees. If you wrap a Forge command in
 `uv run`, use `uv run --frozen`: the outer uv starts before Forge can set its environment.

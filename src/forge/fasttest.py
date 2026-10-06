@@ -112,88 +112,49 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
-def hatch_dependency_inputs(hatch: dict) -> list:
-    """Keep dependency options at Hatch's named environment, target and hook boundaries."""
-    env_keys = {"dependencies", "extra-dependencies", "features", "dependency-groups", "template",
-                "detached", "skip-install", "dev-mode", "python", "installer", "sources", "workspace",
-                "matrix", "locked", "locker", "lock-filename"}
-    build_keys = {"dependencies", "require-runtime-dependencies", "require-runtime-features"}
-
-    def select(settings, keys):
-        selected = {key: value for key, value in settings.items() if key.removeprefix("set-") in keys}
-        for key in list(selected):
-            if key.removeprefix("set-") == "workspace":
-                members = {name: value for name, value in selected[key].items() if name in {"members", "exclude"}}
-                if members:
-                    selected[key] = members
-                else:
-                    del selected[key]
-        return selected
-
-    envs, builds = {}, {}
-    for name, settings in hatch.get("envs", {}).items():
-        options = select(settings, env_keys)
-        for source, conditions in settings.get("overrides", {}).items():
-            for condition, values in conditions.items():
-                selected = select(values, env_keys)
-                if selected:
-                    options.setdefault("overrides", {}).setdefault(source, {})[condition] = selected
-        if options:
-            envs[name] = options
-    build = hatch.get("build", {})
-    for name, settings in {"": build, **build.get("targets", {})}.items():
-        options = select(settings, build_keys)
-        hooks = {hook: selected for hook, values in settings.get("hooks", {}).items()
-                 if (selected := select(values, build_keys | {"enable-by-default"}))}
-        if hooks:
-            options["hooks"] = hooks
-        if options:
-            builds[name] = options
-    return [envs, builds, select(hatch, {"sources", "lock-envs", "locker"})]
-
-
 def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
-    """Compare dependency and pytest settings, not packaging metadata or other tools."""
+    """Fail closed unless only explicitly harmless TOML statements changed."""
+    build = {("tool", "hatch", "build"), ("tool", "hatch", "build", "targets", "wheel"),
+             ("tool", "hatch", "build", "targets", "sdist")}
     snapshots = []
-    uv_keys = ("sources", "index", "workspace", "constraint-dependencies", "override-dependencies",
-               "exclude-dependencies", "environments", "required-environments", "conflicts",
-               "default-groups", "dev-dependencies", "dependency-groups", "dependency-metadata",
-               "build-constraint-dependencies", "extra-build-dependencies", "extra-build-variables",
-               "resolution", "prerelease", "prerelease-package", "exclude-newer", "exclude-newer-package",
-               "index-url", "extra-index-url", "index-strategy", "find-links", "fork-strategy",
-               "no-index", "no-sources", "no-sources-package", "minimum-libc-version",
-               "config-settings", "config-settings-package", "no-build-isolation", "no-build-isolation-package",
-               "no-build", "no-build-package", "no-binary", "no-binary-package",
-               "upgrade", "upgrade-package", "managed", "package", "torch-backend")
     try:
         for ref in (base, "HEAD"):
             shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
                                    capture_output=True, text=True)
-            # The diff already validated both refs; an added/deleted manifest has an empty side.
-            manifest = tomllib.loads(shown.stdout) if shown.returncode == 0 else {}
-            project, tool = manifest.get("project", {}), manifest.get("tool", {})
-            snapshots.append([
-                project.get("dependencies", []), project.get("optional-dependencies", {}),
-                project.get("requires-python"),
-                [key for key in project.get("dynamic", [])
-                 if key in ("dependencies", "optional-dependencies", "requires-python")],
-                manifest.get("dependency-groups", {}), manifest.get("build-system", {}),
-                tool.get("pytest", {}),
-                {key: tool.get("poetry", {}).get(key) for key in
-                 ("dependencies", "dev-dependencies", "group", "extras", "source")},
-                {key: tool.get("uv", {}).get(key) for key in uv_keys},
-                {key: tool.get("uv", {}).get("pip", {}).get(key) for key in uv_keys +
-                 ("all-extras", "extra", "group", "no-extra", "no-deps", "no-emit-package",
-                  "no-strip-extras", "no-strip-markers", "only-binary", "python", "python-version",
-                  "python-platform", "universal")},
-                hatch_dependency_inputs(tool.get("hatch", {})),
-                {key: tool.get("pdm", {}).get(key) for key in
-                 ("dev-dependencies", "resolution", "source")},
-                {key: tool.get("setuptools", {}).get("dynamic", {}).get(key) for key in
-                 ("dependencies", "optional-dependencies")},
-            ])
-    except (subprocess.CalledProcessError, ValueError, TypeError, AttributeError):
-        return False  # Malformed manifests cannot safely narrow tests.
+            text = shown.stdout if shown.returncode == 0 else ""
+            tomllib.loads(text)
+            section, statement, remaining = (), "", []
+            for line in text.splitlines(keepends=True):
+                statement += line
+                try:
+                    value = tomllib.loads(statement)
+                except tomllib.TOMLDecodeError:
+                    continue  # Consume multiline values before recognizing headers or keys.
+                if statement.lstrip().startswith("["):
+                    header = re.fullmatch(r"\s*\[([\w.-]+)\]\s*(?:#.*)?", statement.strip())
+                    section = tuple(header[1].split(".")) if header else ()
+                    safe = section == ("project",) or section in build or (
+                        section[:-1] in build and section[-1:] == ("force-include",))
+                else:
+                    key, item = next(iter(value.items())) if len(value) == 1 else ("", None)
+                    safe = (section == ("project",) and key in {"version", "description"}
+                            and isinstance(item, str))
+                    if section in build:
+                        safe = (key in {"include", "exclude"} and isinstance(item, list)
+                                and all(isinstance(entry, str) for entry in item)) or (
+                            key == "force-include" and isinstance(item, dict)
+                            and all(isinstance(entry, str) for entry in item.values()))
+                    elif section[:-1] in build and section[-1:] == ("force-include",):
+                        safe = len(value) == 1 and isinstance(item, str)
+                if not safe:
+                    # Preserve both text and table context: deleting a safe header may move an unsafe key.
+                    remaining.append((section, statement))
+                statement = ""
+            if statement:
+                return False
+            snapshots.append(remaining)
+    except (ValueError, TypeError, AttributeError):
+        return False
     return snapshots[0] == snapshots[1]
 
 
