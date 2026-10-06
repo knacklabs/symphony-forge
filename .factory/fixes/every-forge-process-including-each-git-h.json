@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner instructed this staged CLI startup fix to be committed after the cli.py interface-glob refusal; the public command interface stays unchanged",
   "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
   "branch": "fix/every-forge-process-including-each-git-h",
   "done_when": "A forge command reads and builds only the module and subcommand it runs (command names found without parsing every module); forge --help and every command's help and behaviour are unchanged; a command test shows a git hook run of forge imports at most the modules its command needs (counted, no wall-clock timing); new and earlier-adopted client repos get it, with a command test for each",
