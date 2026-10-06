@@ -419,6 +419,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: older-Forge hotkey submits the next step\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 178,
+      "text": "Not done: older-Forge hotkey submits the next step",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tNot done: proof list\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 29,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: narrow summary counts remain visible without an active item\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 152,
+      "text": "Not done: narrow summary counts remain visible without an active item",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: narrow summary strip preserves the current stage and its time\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -613,6 +646,17 @@
       "text": "Not done: A suite test proves CI consumes the committed test durations",
       "from": "blocking",
       "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "kind": "bug",
+      "path": "tests/test_close_test_runs_wait_in_line.py",
+      "line": 110,
+      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
+      "from": "worker",
+      "item": "discovery-due-check-test",
       "status": "open",
       "closed_by": null
     },
@@ -1460,17 +1504,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
-      "kind": "bug",
-      "path": "tests/test_close_test_runs_wait_in_line.py",
-      "line": 110,
-      "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
-      "from": "worker",
-      "item": "discovery-due-check-test",
       "status": "open",
       "closed_by": null
     }

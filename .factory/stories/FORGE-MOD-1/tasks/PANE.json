@@ -1,30 +1,46 @@
 {
   "branch": "task/FORGE-MOD-1-PANE",
   "flagged": [
+    "src/forge/mod/hooks/pane.test.ts",
     "src/forge/mod/hooks/pane.ts"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4843f6ce7466183deb39e7aa878e794df16523bf8a2dc33d7960924b32b46280",
-    "changed": "5f7e694914062b138e8876dab18769ab13d968256e0ff9c1ed69bd33701a4cda",
-    "commit": "ca96ea3ea70e4e1ff71493ba1ba13f973301be6d",
+    "branch_diff": "3a134e7a6ad81db193d80b32e2cc25872c334c3c015ecea249753b82f1fe0752",
+    "changed": "4f3dbe27fc4de4acd9d8a8b4a59ed093aa2387401f4c60c0f27e31cbbe29df67",
+    "commit": "0e4882d212d05c5a266775bf5df84dd083d11413",
     "dismissals": [],
     "findings": [
       {
-        "body": "At 80\u2013143 columns with multiple summary rows, a busy or null-command state truncates the entire first line. summary.ts:64 puts the full running test title before its waiting count. With the long title already supplied by pane.test.ts:132, that count starts beyond column 100, so an 80-column strip hides it on both surfaces. The ready state also puts these facts in one truncatable prefix at line 100. New evidence beyond the compact-layout ruling: the protected count boxes only apply when `compact` is populated; the wide summary row remains unprotected. Reserve the required counts and shorten the test title and trailing next-step text within the remaining cells.",
+        "body": "The protected compact layout is created only when an active item exists (line 86), and the other protected count layout excludes narrow strips (line 96). With lane data but no active item, a 79-column strip therefore reaches this fallback, placing its counts in a truncatable prefix beside an unrestricted command button. A long runnable command, such as the one already used by the compact-layout test, can displace the required counts. This is a sibling case the previous rulings did not weigh: the new tests always supply active items. Reserve the count cells and constrain the trailing command even when there is no active item.",
         "file": "src/forge/mod/hooks/pane.ts",
-        "line": 129,
+        "line": 152,
         "priority": "P1",
-        "title": "Not done: summary strip always shows agents and tests waiting counts"
+        "title": "Not done: narrow summary counts remain visible without an active item"
       },
       {
-        "body": "The previous deferred gap remains: forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only type-checks the native tests. The pane assertions can fail without failing the repository suite. plans/FORGE-MOD-1.md:284 assigns the plugin test job to SHIP, so that task must execute `claude plugin test` and propagate failures.",
+        "body": "The supplied proof list is explicitly missing, and the implementation commit messages contain functional checks and test-audit notes but no required Proof list mapping the covered Done-when details to their named evidence. Supply the complete mapping for details 1, 2 and the applicable parts of 7, including the extension seam and Desktop behavior, and identify checks owned by other tasks.",
+        "file": "src/forge/mod/hooks/pane.test.ts",
+        "line": 29,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      },
+      {
+        "body": "The older-Forge case presses the next-step button but never checks that a prompt was submitted. Its prompt.submit interception at line 129 records nothing; subsequent assertions only inspect the drawing and hotkey property. A handler that returns immediately whenever lane data is absent would pass this case and all submission assertions in the other test, which supplies lanes. Record submissions and assert the exact command after pressing in the older-Forge state, as detail 2 explicitly requires.",
+        "file": "src/forge/mod/hooks/pane.test.ts",
+        "line": 178,
+        "priority": "P1",
+        "title": "Not done: older-Forge hotkey submits the next step"
+      },
+      {
+        "body": "The previously deferred gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest; tests/test_mod_plugin.py:45\u201357 type-checks the native tests without executing their assertions. Consequently pane assertions can fail while the repository suite stays green. plans/FORGE-MOD-1.md:284 assigns the plugin test job to SHIP, which must execute claude plugin test and propagate failures.",
         "file": "src/forge/mod/hooks/pane.test.ts",
         "line": 29,
         "priority": "P2",
         "title": "Later: SHIP must run the native pane tests in the repository suite"
       }
     ],
+    "id": "5a964bf9-9f73-411b-bb96-22584f877a3d",
     "status": "blocked"
   },
   "round": 4,
@@ -44,6 +60,10 @@
     },
     {
       "at": "2026-10-06T03:53:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T05:13:11+00:00",
       "step": "review"
     }
   ],
