@@ -88,6 +88,7 @@ const replies = [];
 const opened = [];
 const timers = [];
 const api = {{
+  session: {{cwd: async () => {json.dumps(str(repo.path))}}},
   clock: {{ now: async () => now, every: (ms, fn) => {{ timers.push({{ms, fn}}); return {{cancel(){{}}}} }} }},
   command: {{ register: async spec => {{ assert.equal(spec.immediate, true) }} }},
   ui: {{ invalidate() {{}}, open: async options => {{ opened.push(options); return {{isPlaced: false}} }} }},
@@ -153,6 +154,124 @@ async function fire(name, event, api) {
 """
 
 
+def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, packaged_mod, tmp_path, case):
+    # The native tests own scheduling and failure cases. This protects the
+    # transport from real command-produced ids/next steps to the shipped mod,
+    # and independent live sessions sharing Claude's persistent store.
+    from test_run_records import configure
+    repo = configure(env)
+    item, _ = env.start_fix()
+    stub = repo.bin / "claude"
+    source = stub.read_text("utf-8")
+    stub.write_text(source.replace('print("stub claude: built it")',
+                                  'print("Question: May I reuse the parser?")'), encoding="utf-8")
+    answer = node_run(tmp_path, HOST + f"""
+const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
+const store = new Map();
+function forge(args) {{
+  return execFileSync({json.dumps(sys.executable)}, [{json.dumps(str(repo.bin / 'forge'))}, ...args],
+    {{cwd: {json.dumps(str(repo.path))}, encoding: 'utf8', timeout: 30000}});
+}}
+async function session(id, duringRefresh) {{
+  const registered = new Map(), timers = [], prompts = [];
+  let initialRefresh = true;
+  function on(name, matcher, hook) {{
+    if (typeof matcher === 'function') {{ hook = matcher; matcher = {{}}; }}
+    const list = registered.get(name) ?? [];
+    list.push({{matcher, hook}}); registered.set(name, list); return {{catch(){{}}}};
+  }}
+  const api = {{
+    clock: {{now: async () => 0, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
+    command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}, open: async () => ({{isPlaced: false}})}},
+    env: {{get: async () => undefined}},
+    session: {{id: async () => id, cwd: async () => {json.dumps(str(repo.path))}, repo: async () => ({{root: {json.dumps(str(repo.path))}}}),
+      surfaces: async () => ['terminal']}},
+    store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value)}},
+    prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
+    process: {{run: async argv => {{
+      if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}
+      try {{ return {{exitCode: 0, stdout: forge(argv.slice(1)), stderr: ''}}; }}
+      catch (e) {{ return {{exitCode: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '')}}; }}
+    }}}},
+  }};
+  mod.register(on);
+  async function fire(name, event) {{
+    const list = registered.get(name) ?? [];
+    async function next(i, e) {{
+      if (i === list.length) return e;
+      const {{matcher, hook}} = list[i];
+      if (!Object.entries(matcher).every(([key, value]) => e[key] === value)) return next(i + 1, e);
+      return hook(api, e, changed => next(i + 1, changed));
+    }}
+    return next(0, event);
+  }}
+  await fire('session.start', {{cwd: {json.dumps(str(repo.path))}, isInteractive: true, surface: 'terminal'}});
+  return {{prompts, fire, tick: async () => {{timers[0](); await new Promise(resolve => setImmediate(resolve));}}}};
+}}
+// Each lifecycle has its own host budget: real Forge processes are slower on Windows.
+if ({json.dumps(case)} === 'events') {{
+const first = await session('first'), second = await session('second');
+assert.deepEqual(first.prompts, []);
+assert.deepEqual(second.prompts, []);
+forge(['work', {json.dumps(item)}]);
+await first.tick(); await second.tick();
+assert.equal(first.prompts.length, 1);
+assert.deepEqual(second.prompts, first.prompts);
+assert.match(first.prompts[0], /Question: May I reuse the parser\\?/);
+assert.match(first.prompts[0], /Worker finished/);
+assert.ok(first.prompts[0].split('\\n').every(line => line.endsWith({json.dumps('Next: forge close ' + item)})));
+await first.tick(); await second.tick();
+assert.equal(first.prompts.length, 1);
+assert.equal(second.prompts.length, 1);
+const reloaded = await session('first');
+await reloaded.tick();
+assert.deepEqual(reloaded.prompts, []);
+console.log(JSON.stringify({{first: first.prompts, second: second.prompts}}));
+}} else if ({json.dumps(case)} === 'busy reload') {{
+const first = await session('first');
+await first.fire('turn.start', {{text: 'Working', turnId: 'busy'}});
+// A fresh register discards module variables just as a real hot reload does.
+const busyReload = await session('first');
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await busyReload.tick();
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await busyReload.tick();
+assert.deepEqual(busyReload.prompts, []);
+await busyReload.fire('turn.complete', {{answer: '', durationMs: 1, isAborted: false, turnId: 'busy', reason: 'answer'}});
+assert.equal(busyReload.prompts.length, 1);
+assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Worker finished')).length, 2);
+assert.equal(busyReload.prompts[0].split('\\n').filter(line => line.includes('Question:')).length, 2);
+await busyReload.tick();
+assert.equal(busyReload.prompts.length, 1);
+console.log(JSON.stringify({{prompts: busyReload.prompts}}));
+}} else if ({json.dumps(case)} === 'reload complete') {{
+const first = await session('first');
+await first.fire('turn.start', {{text: 'Working', turnId: 'during-refresh'}});
+const endedDuringReload = await session('first', fire => fire('turn.complete',
+  {{answer: '', durationMs: 1, isAborted: false, turnId: 'during-refresh', reason: 'answer'}}));
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await endedDuringReload.tick();
+assert.equal(endedDuringReload.prompts.length, 1);
+await endedDuringReload.tick();
+assert.equal(endedDuringReload.prompts.length, 1);
+console.log(JSON.stringify({{prompts: endedDuringReload.prompts}}));
+}} else {{
+await session('first');
+const startedDuringReload = await session('first', fire => fire('turn.start',
+  {{text: 'Working', turnId: 'new-during-refresh'}}));
+forge(['work', {json.dumps(item)}, '--note', 'Yes']);
+await startedDuringReload.tick();
+assert.deepEqual(startedDuringReload.prompts, []);
+await startedDuringReload.fire('turn.complete',
+  {{answer: '', durationMs: 1, isAborted: false, turnId: 'new-during-refresh', reason: 'answer'}});
+assert.equal(startedDuringReload.prompts.length, 1);
+console.log(JSON.stringify({{prompts: startedDuringReload.prompts}}));
+}}
+""")
+    if case == "events":
+        assert answer["first"] == answer["second"]
+
+
 def test_6_feature_registrars_share_one_snapshot_and_machine_gets_the_tab_host(packaged_mod, tmp_path):
     strict_typescript_against_claude_declarations(packaged_mod)
     plugin = tmp_path / "plugin"
@@ -180,7 +299,7 @@ const timers = [];
 const values = {{board: {{version: '1.2.5', repo_root: '/repo', items: [{{title: 'Shared board'}}]}},
   next: {{version: '1.2.5', repo_root: '/repo', next: {{command: null, line: 'Shared next step'}}}},
   lanes: {{version: '1.2.5', marker: 'shared lanes'}}}};
-const api = {{ clock: {{now: async () => 123, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
+const api = {{ session: {{cwd: async () => '/repo'}}, clock: {{now: async () => 123, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
   command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}}},
   process: {{run: async argv => ({{exitCode: 0, stdout: JSON.stringify(values[argv[1]]), stderr: ''}})}} }};
 mod.register(on);
@@ -208,6 +327,7 @@ const pending = [];
 const texts = [];
 let now = 0, calls = 0, mode = 'good';
 const api = {{
+  session: {{cwd: async () => '/repo with spaces'}},
   clock: {{ now: async () => now, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}} }},
   command: {{register: async () => {{}}}},
   ui: {{invalidate(){{}}, open: async () => ({{isPlaced: false}})}},

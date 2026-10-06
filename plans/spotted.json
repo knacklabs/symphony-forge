@@ -1506,6 +1506,50 @@
       "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: batch changes while busy after a reload\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 31,
+      "text": "Not done: batch changes while busy after a reload",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: bind events to the current repo and session\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 37,
+      "text": "Not done: bind events to the current repo and session",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 35,
+      "text": "Not done: track active turns throughout reload initialization",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 74,
+      "text": "Bound persisted seen history before Claude's store limit",
+      "from": "review",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
