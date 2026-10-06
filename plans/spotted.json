@@ -910,8 +910,8 @@
       "text": "The interrupted review times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tThe review Ctrl-C test times out and leaks processes locally on the default branch too.",
@@ -921,8 +921,8 @@
       "text": "The review Ctrl-C test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_run_records.py\tNot done: prove every worker, reader and reviewer gets FORGE_WORKER=1\tFORGE-MOD-1/RUNS",
@@ -954,8 +954,8 @@
       "text": "The interrupted answer times out and leaves processes on both this branch and origin/main.",
       "from": "worker",
       "item": "forge-close-reviews-first-and-only-then",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted question test times out and leaks processes locally on the default branch too.",
@@ -965,8 +965,8 @@
       "text": "The interrupted question test times out and leaks processes locally on the default branch too.",
       "from": "worker",
       "item": "simplify-ci-workflow",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
@@ -1603,6 +1603,28 @@
       "text": "Force root diffs when reconstructing merge-parent file contents",
       "from": "review",
       "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 660,
+      "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "from": "worker",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tNot done: proof list\tseveral-tests-fail-on-main-in-a-full-loc",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 85,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "open",
       "closed_by": null
     }
