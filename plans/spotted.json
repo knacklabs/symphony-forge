@@ -419,6 +419,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: narrow summary strip preserves the current stage and its time\tFORGE-MOD-1/PANE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 121,
+      "text": "Not done: narrow summary strip preserves the current stage and its time",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/pane.ts\tNot done: summary strip shows each stage's time and the total\tFORGE-MOD-1/PANE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/pane.ts",

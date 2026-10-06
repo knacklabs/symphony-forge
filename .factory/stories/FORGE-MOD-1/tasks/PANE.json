@@ -5,27 +5,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cd7897cc1163c5c006bb4ecd1f5bcad2941d7bca570b87441f6539aea348e314",
-    "changed": "6e3a77476279b6a1cbe24d5e7c5934fe64b4c68633a881fa22dd8031b439e161",
-    "commit": "04fd91dd92a9244a65b977eb45ca67a08efb38e4",
+    "branch_diff": "2b1e3d7880ed7d1f0c48a3c3be55c89293724f26230a5fa85f250a6c725718f6",
+    "changed": "6fde99d73b8525f9cd859f51cebbb18647b076d9ace1968519ab5f4265838d7c",
+    "commit": "ef33cb77ce69965568df738b9b7ffd25ac249275",
     "dismissals": [],
     "findings": [
       {
-        "body": "At 80 columns, the strip uses the full layout because the compact layout starts below 80. The existing fixture's item line is already 91 characters, with `total` starting at character 84. Applying `truncate-end` to the whole line therefore hides the total and part of the round; longer titles also hide stages. This affects both surfaces. Reserve space for the required status and timing fields, shortening the title or adapting the layout before truncation.",
+        "body": "The compact layout puts the complete title before the stage and total, then truncates the entire prefix at line 92, or the entire line here when Claude is busy or the next command is null. With the long title already used in pane.test.ts:131, the current stage begins around column 100, so a 79-column strip cannot display either its time or the total. This affects both surfaces. New evidence beyond the earlier timing ruling: the protected timing boxes apply only to lines 2\u20133; the narrow layout has only line 1. Reserve space for its required status and timings and shorten the title first. The narrow assertions at pane.test.ts:165\u2013170 inspect unpainted text, so they pass despite this clipping.",
         "file": "src/forge/mod/hooks/pane.ts",
-        "line": 119,
+        "line": 121,
         "priority": "P1",
-        "title": "Not done: summary strip shows each stage's time and the total"
+        "title": "Not done: narrow summary strip preserves the current stage and its time"
       },
       {
-        "body": "This cancels the repaint timer for every `session.end`, including `/clear`, `/resume` and `/branch`. Claude's documented lifecycle fires `session.start` only at module load or reload, so those actions never recreate the timer. Elapsed times consequently stop advancing between CORE's ten-second refreshes. Preserve the timer when the process continues, or restart it through an appropriate lifecycle event. See the [session event contract](https://code.claude.com/docs/en/plugins/mods/reference).",
-        "file": "src/forge/mod/hooks/pane.ts",
-        "line": 38,
-        "priority": "P2",
-        "title": "Keep timer redraws active after clearing or resuming a session"
-      },
-      {
-        "body": "The new mounted pane and strip tests are not executed by the configured repository suite. `forge.toml:6` and `.github/workflows/forge-next.yml:58` run pytest, while `tests/test_mod_plugin.py:54` only type-checks these native tests. Their assertions can therefore break without failing the supplied close run. `plans/FORGE-MOD-1.md:284` assigns the native plugin test job to SHIP, so this is deferred advice: that task must execute `claude plugin test` and propagate failures.",
+        "body": "This previous gap remains open: forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:54\u201359 only type-checks the native tests. Their assertions can fail without failing the repository suite. plans/FORGE-MOD-1.md:284 assigns the native plugin test job to SHIP, so this remains deferred advice for that task: execute `claude plugin test` and propagate failures.",
         "file": "src/forge/mod/hooks/pane.test.ts",
         "line": 29,
         "priority": "P2",
@@ -42,6 +35,10 @@
     },
     {
       "at": "2026-10-06T02:22:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:03:43+00:00",
       "step": "review"
     }
   ],
