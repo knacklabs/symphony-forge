@@ -2,12 +2,26 @@
   "base": "5713562e7b50cb0e41c5af01c197b5fe7fd04f32",
   "branch": "fix/discovery-due-check-test",
   "done_when": "tests/test_discovery.py has one command test where a project with nothing on its roadmap also has a spec whose success check is due, and forge next lists the due success check before the discovery prompt; new and earlier-adopted client repos both pass it",
+  "flagged": [],
   "kind": "fix",
-  "status": "working",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e8545accfa42e83ef80a0d3ddd91ac74a58d72a41f99d38a7c8547e968d4e026",
+    "changed": "0663ea0895132edeb28f7167231f46f3db8b71f6ff99bca05d8931e8ff773698",
+    "commit": "713c62ba7c185d5457fdc84fece9a101940e2d9a",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T23:38:35+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T02:18:08+00:00",
+      "step": "review"
     }
   ],
   "why": "No test shows that forge next lists a due success check before the discovery prompt; DISCOVER shipped without that crossing test",
