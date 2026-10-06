@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9914f83d9867f2936fb1baca5b5a848233be53d42d6cfaafe0b0b5e616af7b59",
-    "changed": "e8ffd8dcbe8b6fdf823909bee50e64292cfa19bd6799a681ebd6634b0ed451f8",
-    "commit": "b92f080084a634c024f9a5807209a7e77ba5bdd1",
+    "branch_diff": "00ffb90dbbd12d9fe32b600e1c3311187a737026820c66a93dfa01c23a747b9e",
+    "changed": "ccbea09a0a8c170d02852d31969011bc01300dfd5d17dbe9d00f6dfd595eb76c",
+    "commit": "9150c16c57cc8ff812b13c6e06efeca3f871c793",
     "dismissals": [],
     "findings": [
       {
-        "body": "If N Forge files were edited by hand in N separate commits already landed on the default branch, this loop calls `_held` once per commit. Each call evaluates `pin(commit)` and `pin(commit^)`, and `src/forge/story.py:605` implements each lookup with a separate `git show` process. Consequently, both default-branch runs and fix-branch runs containing those landed commits still add 2N git calls, violating the required fixed total as changed files grow. The performance test's two adoption cases miss this: tests/test_doctor_batches_file_checks.py:73\u201377 commit all changed paths together on an unlanded fix branch, bypassing these pin lookups entirely. Batch the pin checks too, and cover separately landed edits with the command-level call counter.",
+        "body": "With `log.showRoot=false`, this invocation emits root commit metadata without its raw file records; I verified that behavior with read-only Git calls. Consequently, `entry()` treats files inherited unchanged from the root as absent. If a Forge file exists in the root, remains unchanged on the first parent, and is deleted by hand on a merged side branch, the merge's deletion incorrectly compares equal to the first parent's reconstructed state. `_history()` then returns no last change, allowing doctor to recreate the hand-deleted file instead of protecting it. Both default-branch repairs and in-place fix repairs use this helper. Add `--root` so reconstruction always receives the initial file contents, independently of the user's [Git configuration](https://git-scm.com/docs/git-log#Documentation/git-log.txt-logshowRoot).",
         "file": "src/forge/doctor.py",
-        "line": 150,
-        "priority": "P1",
-        "title": "Not done: doctor --fix git-call count still grows with separately landed hand edits"
+        "line": 97,
+        "priority": "P2",
+        "title": "Force root diffs when reconstructing merge-parent file contents"
       }
     ],
-    "id": "3ce169a6-9154-4410-b037-e8cdc15112a6",
-    "status": "blocked"
+    "id": "06157b79-97c6-472a-a892-dd8288f98ee7",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T10:54:10+00:00",
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-06T13:12:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T15:12:43+00:00",
       "step": "review"
     }
   ],
