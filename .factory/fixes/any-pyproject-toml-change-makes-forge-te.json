@@ -16,24 +16,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8568a9a761bcee6ffe07d910479b7ec57452253e4c37b76d802715c76cff824b",
-    "changed": "8146ae1918a0e38f65825b9bba077e5bd3f92fba148f6271a6ad3cd358eefdd2",
-    "commit": "e3088b6ef0f2ee4b9b62a99676e71bd97ca84598",
+    "branch_diff": "3076f1117bb963e41a4157112aa85fe93eea024d073d278ff97878aaac73105b",
+    "changed": "605a59e8d52aead48530d111e7b32ba6504f4ae38d068159213aa7ea8da94431",
+    "commit": "4759dcac2616e341c90bb6f0d3c04ae4f90f5236",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The dependency projection omits entire dependency-bearing namespaces. Changing `[tool.tox.env_run_base] deps` or a named tox environment's `deps` leaves both snapshots equal, so Forge runs related tests\u2014or returns success without testing at lines 297\u2013299\u2014instead of the full suite. The same omission affects Flit's `tool.flit.metadata.requires`, `requires-extra` and `requires-python`, and Rye's `tool.rye.dev-dependencies`, `excluded-dependencies` and dependency sources. New evidence beyond the previous uv/Hatch ruling: these are documented dependency inputs in [tox's native TOML configuration](https://tox.wiki/en/4.64.2/reference/config.html#deps), [Flit's supported older metadata format](https://flit.pypa.io/en/3.12.0/pyproject_toml.html#old-style-metadata), and [Rye's project configuration](https://rye.astral.sh/guide/pyproject/). The command regression table contains none of these namespaces, so every listed proof can pass while dependency edits still skip full execution. Include these dependency inputs and extend the existing command-level table.",
-        "file": "src/forge/fasttest.py",
-        "line": 193,
-        "priority": "P1",
-        "title": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'"
-      }
-    ],
-    "id": "1059e0f8-9f2b-467b-ae92-7a208444a592",
-    "status": "blocked"
+    "findings": [],
+    "id": "1fb4d3f3-0b77-45ef-8b9b-5c8a7ea5ef16",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
@@ -49,6 +41,10 @@
     },
     {
       "at": "2026-10-06T13:28:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T15:37:27+00:00",
       "step": "review"
     }
   ],
