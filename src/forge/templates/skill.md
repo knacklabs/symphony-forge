@@ -622,6 +622,11 @@ docs, shipped guides and workflows. It supports root packages and the `src/` lay
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, `pyproject.toml`, requirements or lock files change.
+For `uv.lock`, `poetry.lock`, `Pipfile.lock` and `package-lock.json`, a change only to
+the repo's own package version selects related tests instead. Forge identifies the
+root package from the adjacent manifest and its local source; dependency versions,
+hashes and other lock data still trigger the full run. Missing or unrecognized lock
+data also triggers the full run.
 New pytest repos get this proposal at setup; existing repos get the picker and guidance after
 upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor reports an old
 `python -m forge.fasttest` setting with its one-line replacement. Forge needs no installation
