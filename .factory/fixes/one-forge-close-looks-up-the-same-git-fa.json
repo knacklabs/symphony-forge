@@ -4,7 +4,7 @@
   "branch": "fix/one-forge-close-looks-up-the-same-git-fa",
   "done_when": "Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it needs with one git log call; behaviour is unchanged; a command test counts git calls in one close and shows each of those lookups happens once; the sdk_data test fixture finds the real uv even when a stub uv is on PATH; new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "round": 4,
+  "round": 5,
   "status": "fixing",
   "steps": [
     {
