@@ -10,22 +10,22 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d8d8dafbfa533641bb11a4825354ec51ad20d055c8e5dcbb714b5657d96d795e",
-    "changed": "32c25f3418ecf16e7dfa738628f8417531f88e483f98e9a5f54d2725133503e4",
-    "commit": "18d8e7b64ad8afeab850794cd667a87aae51c5ad",
+    "branch_diff": "3062c6a6463c7abb5735b994efe57e85ae4c983b9140a484bee8976ecb3a8424",
+    "changed": "e36db8554ee3544be6201fb01969198a9a82e0296829fde14d57c3babe5cd788",
+    "commit": "1d04040f8490c8d50b14e72eb1a9ef333988c7e4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, aborting the worker, reader, reviewer or test command that records progress. Add bounded replacement retries, following the existing approach in codex._record.",
+        "body": "The previous P2 remains open. Both machine views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping reader can make this replacement raise PermissionError, aborting the worker, reader, reviewer or test command recording progress. Add bounded replacement retries, as codex._record already does at src/forge/codex.py:528\u2013539.",
         "file": "src/forge/repo.py",
-        "line": 171,
+        "line": 175,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "The previous P2 remains open. A structured missing-session result is decoded as error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:443\u2013445 therefore misses it, while the reader checks stderr at src/forge/story.py:732 even though this decoder returns the diagnostic through stdout. Both paths refuse instead of retrying with a fresh session. Recognize that diagnostic in both callers while preserving other failures. The response shape is documented in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
+        "body": "The previous P2 remains open. A structured missing-session result becomes error_during_execution followed by its diagnostic. The worker's prefix check at src/forge/worker.py:441\u2013443 consequently misses it, while the reader checks stderr at src/forge/story.py:732 although this decoder returns the diagnostic through stdout. Both paths refuse instead of retrying with a fresh session. Recognize the missing-session diagnostic in both callers while preserving other failures. The response shape is shown in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
         "file": "src/forge/repo.py",
-        "line": 203,
+        "line": 207,
         "priority": "P2",
         "title": "Preserve missing-session recovery for structured Claude errors"
       },
@@ -37,7 +37,7 @@
         "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "dcd4a92c-5405-461c-be34-bb0826677047",
+    "id": "56c5cf69-e092-4e2f-84a0-be776f3b8041",
     "status": "clean"
   },
   "round": 11,
@@ -97,6 +97,10 @@
     },
     {
       "at": "2026-10-06T15:23:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T16:41:38+00:00",
       "step": "review"
     }
   ],
