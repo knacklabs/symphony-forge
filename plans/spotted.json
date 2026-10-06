@@ -298,6 +298,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: doctor --fix git-call count still grows with separately landed hand edits\tforge-doctor-fix-checks-every-forge-file",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 150,
+      "text": "Not done: doctor --fix git-call count still grows with separately landed hand edits",
+      "from": "blocking",
+      "item": "forge-doctor-fix-checks-every-forge-file",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: doctor keeps at most one fix of its own\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",

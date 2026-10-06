@@ -2,13 +2,38 @@
   "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
   "branch": "fix/forge-doctor-fix-checks-every-forge-file",
   "done_when": "forge doctor --fix finds changed-by-hand files with one git status and one git log call for all of Forge's files instead of two calls per file, with the same results; a command test counts git calls per doctor --fix run and shows they no longer grow with the number of files; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/doctor.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9914f83d9867f2936fb1baca5b5a848233be53d42d6cfaafe0b0b5e616af7b59",
+    "changed": "e8ffd8dcbe8b6fdf823909bee50e64292cfa19bd6799a681ebd6634b0ed451f8",
+    "commit": "b92f080084a634c024f9a5807209a7e77ba5bdd1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If N Forge files were edited by hand in N separate commits already landed on the default branch, this loop calls `_held` once per commit. Each call evaluates `pin(commit)` and `pin(commit^)`, and `src/forge/story.py:605` implements each lookup with a separate `git show` process. Consequently, both default-branch runs and fix-branch runs containing those landed commits still add 2N git calls, violating the required fixed total as changed files grow. The performance test's two adoption cases miss this: tests/test_doctor_batches_file_checks.py:73\u201377 commit all changed paths together on an unlanded fix branch, bypassing these pin lookups entirely. Batch the pin checks too, and cover separately landed edits with the command-level call counter.",
+        "file": "src/forge/doctor.py",
+        "line": 150,
+        "priority": "P1",
+        "title": "Not done: doctor --fix git-call count still grows with separately landed hand edits"
+      }
+    ],
+    "id": "3ce169a6-9154-4410-b037-e8cdc15112a6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-06T10:54:10+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T13:12:23+00:00",
+      "step": "review"
     }
   ],
   "why": "forge doctor --fix checks every Forge file with two git commands each (about 190 git processes per run)",
