@@ -1,0 +1,14 @@
+{
+  "base": "ead5fa3b90b590e25c99f387b6e660e07bc8376b",
+  "branch": "fix/after-a-story-part-merges-starting-the-n",
+  "done_when": "forge task start no longer refuses when the default branch's copy of the story doc is older content than the story branch's (it compares content history, not commit dates) and, when only the story doc differs, merges the default branch into the story branch itself and says so; forge next names the unmerged item a part waits on for overlapping files instead of listing it as ready; one command test per case; skill.md says so; new and earlier-adopted client repos get it, with a command test for each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-06T07:30:08+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After a story part merges, starting the next part refuses because the story doc on main looks newer than the story branch's, and forge next lists parts as ready that task start then refuses for overlapping files"
+}
