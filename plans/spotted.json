@@ -474,6 +474,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 603,
+      "text": "Not done: each running reviewer's actual model and effort",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/review.py",

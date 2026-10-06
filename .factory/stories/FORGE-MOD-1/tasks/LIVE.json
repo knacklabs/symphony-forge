@@ -2,70 +2,22 @@
   "branch": "task/FORGE-MOD-1-LIVE",
   "flagged": [
     "src/forge/board.py",
-    "src/forge/codex.py"
+    "src/forge/codex.py",
+    "src/forge/review.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2a0373d940fed4e8c2a7b40f729cf95d55e818384c0aabd4f34f2ec4c5402b1a",
-    "changed": "80a9f905b1449019a223e161eea9dd43ce64685b9661bed5297064ef325aec13",
-    "commit": "b1558755872e0801b429da1d590ed519f39030ae",
+    "branch_diff": "ec62f7cd5ccd61f4246e45e7a48819be26c8e3d48087ea506ad60a1a59669c1a",
+    "changed": "001fd0585d6b09c95b35f5f371fcb2a5b57fabf37de6efe6c3401f4cc9cdb5cf",
+    "commit": "7f7025ac985a6bedd888bf6ba377cff0c161bd96",
     "dismissals": [],
     "findings": [
       {
-        "body": "Codex progress accepts only commandExecution and fileChange, so a subsequent webSearch, mcpToolCall, dynamicToolCall or collabAgentToolCall leaves the previous step visible. These are supported by the [pinned Codex protocol](https://github.com/openai/codex/blob/rust-v0.159.2/codex-rs/app-server-protocol/src/protocol/v2/item.rs). The sibling paths also have gaps: Claude plan readers use communicate() without consuming tool events (src/forge/story.py:707\u2013713), and both review providers merely forward Autoreview progress without recording it (src/forge/review.py:590\u2013604). Consequently, those running entries never acquire a live step. Record a plain action for all supported tool events and consume progress through the reader and reviewer paths; the current two-command build tests do not catch these omissions.",
-        "file": "src/forge/codex.py",
-        "line": 431,
-        "priority": "P1",
-        "title": "Not done: the latest step through every worker path"
-      },
-      {
-        "body": "Every CANCELLED check is classified as failed; only TIMED_OUT produces timeout. The promised case is specifically a job GitHub cancels at its time limit. [GitHub documents this cancellation behavior](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idtimeout-minutes). The query collects no cancellation reason or timeout annotation, so this implementation cannot distinguish that case from manual cancellation. The test supplies TIMED_OUT directly (tests/test_live_status.py:79), leaving the required cancellation case unproven. Obtain GitHub's timeout evidence for cancelled jobs and exercise that response through both commands.",
-        "file": "src/forge/board.py",
-        "line": 146,
-        "priority": "P1",
-        "title": "Not done: identify jobs cancelled at their time limit"
-      },
-      {
-        "body": "An item discovered from origin/fix/foo or origin/task/KEY-TASK can have no local branch and no local run history, as happens in another developer's clone. _copies explicitly includes these remote-only states (src/forge/board.py:477\u2013489), but this lookup uses only the unqualified local branch. Git therefore fails and both views return idle_since=null and stalled=false even when the available remote branch's last commit is over 24 hours old. Resolve the remote-tracking branch when the local branch is absent and cover this no-run-record fallback through the commands.",
-        "file": "src/forge/board.py",
-        "line": 272,
-        "priority": "P1",
-        "title": "Not done: idle_since and stalled for remote-only items"
-      },
-      {
-        "body": "The newly exposed round comes from the run-start record, but both plan-reader paths record round 0 rather than the actual cold-read round. story.read computes round_number from the read notes at src/forge/story.py:194, then neither the Claude call at lines 224\u2013226 nor the Codex call at lines 238\u2013239 passes it into the run record. record_event instead defaults to the story state's absent round field (src/forge/repo.py:138). Thus a reader performing round 1, 2 or later is shown as round 0 in both views. Propagate the computed read round into the run metadata and assert it while each reader is running.",
-        "file": "src/forge/board.py",
-        "line": 261,
-        "priority": "P1",
-        "title": "Not done: a running plan reader's actual round"
-      },
-      {
-        "body": "This fallback overwrites a known red or green GitHub result with running whenever close still has an active CI-wait record. A newly failed check can consequently show pr.checks=fail but gates.ci.status=running until checks.wait polls again; its polling interval is up to 15 seconds (src/forge/checks.py:63). The adjacent elapsed calculation also treats completed SUCCESS StatusContext entries as running because they have no status field (lines 344\u2013345), allowing an older successful status to inflate the timer. Preserve terminal GitHub results and explicitly distinguish pending commit statuses from completed ones.",
-        "file": "src/forge/board.py",
-        "line": 347,
-        "priority": "P2",
-        "title": "Respect terminal check states when projecting the CI gate"
-      },
-      {
-        "body": "Claude error result messages can contain errors without a result string, as represented by the [official SDK result type](https://github.com/anthropics/claude-agent-sdk-python/blob/main/src/claude_agent_sdk/types.py). This conversion turns such a message into an empty line and discards errors and subtype. Forge still refuses on the nonzero exit, but the log it directs the user to no longer contains the actual failure reason. Preserve the structured error diagnostics when flattening a result message and exercise an error result in the raw-stream test.",
-        "file": "src/forge/worker.py",
-        "line": 498,
-        "priority": "P2",
-        "title": "Keep Claude's structured failure reason in the work log"
-      },
-      {
-        "body": "The total parser misses pytest's normal 'collected 1 item' output because it requires 'items'. It also takes the collected count from 'collected 4 items / 3 deselected / 1 selected', reporting total=4 although only one test will run. Both formats appear in [pytest's documentation](https://docs.pytest.org/en/stable/example/markers.html), and the singular format also appears in its [basic example](https://docs.pytest.org/en/stable/index.html). Accept singular/plural forms and use the selected count when present; the current four-test cases cannot detect either error.",
+        "body": "Live reviewer metadata comes exclusively from the configured values written at run start (review.py:512 and board.py:273\u2013275). Autoreview's reported `model:` and `thinking:` values, including its fallback-model announcement, update only `selected` at review.py:604\u2013610; this progress record publishes only `step`. Consequently, a valid configuration without review metadata leaves model/effort null throughout the review, and a fallback keeps displaying the unavailable model. This affects both reviewer providers. Publish the reported selection into live run metadata and consume it in both views. The new reviewer tests explicitly configure both values and never emit selection or fallback messages, so they cannot detect this gap.",
         "file": "src/forge/review.py",
-        "line": 292,
-        "priority": "P2",
-        "title": "Parse pytest's singular and selected test totals"
-      },
-      {
-        "body": "This branch produces JSON fields but contains no pane, strip or Machine-tab implementation. Detail 7's visible status, first-running-item step and exact events display therefore remain unproven. The Tasks table assigns those consumers and their rendering tests to PANE and MACHINE (plans/FORGE-MOD-1.md:281 and 288), so this is a dependency handoff rather than a blocking LIVE requirement.",
-        "file": "src/forge/board.py",
-        "line": 350,
-        "priority": "P2",
-        "title": "Later: PANE and MACHINE must render Detail 7's live fields"
+        "line": 603,
+        "priority": "P1",
+        "title": "Not done: each running reviewer's actual model and effort"
       }
     ],
     "status": "blocked"
@@ -78,6 +30,10 @@
     },
     {
       "at": "2026-10-06T00:21:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T01:42:33+00:00",
       "step": "review"
     }
   ],
