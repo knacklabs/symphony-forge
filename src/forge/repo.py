@@ -64,6 +64,42 @@ def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
 # --- git -------------------------------------------------------------------------------
 
 
+_command_cache: dict[tuple, Any] | None = None
+
+
+@contextmanager
+def command_cache():
+    """Repository facts and worker history live only for this command, never the next one."""
+    global _command_cache
+    previous, _command_cache = _command_cache, {}
+    try:
+        yield
+    finally:
+        _command_cache = previous
+
+
+def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
+    """Identify linked worktrees without another git process."""
+    top = Path(cwd or Path.cwd()).resolve()
+    for folder in (top, *top.parents):
+        dot = folder / ".git"
+        if dot.is_file():
+            dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
+        if dot.is_dir():
+            common = dot / "commondir"
+            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+    return top
+
+
+def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
+    key = (kind, _common_path(cwd))
+    if _command_cache is None:
+        return read()
+    if key not in _command_cache:
+        _command_cache[key] = read()
+    return _command_cache[key]
+
+
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
@@ -71,9 +107,27 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
-    return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                          text=True, encoding="utf-8", errors="replace",
-                          env={**os.environ, "FORGE_WORKER": "1"})
+    def execute():
+        return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
+                              text=True, encoding="utf-8", errors="replace",
+                              env={**os.environ, "FORGE_WORKER": "1"})
+    if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
+        return command_fact("common directory", cwd, execute)
+    done = execute()
+    if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        key = ("landed ref", _common_path(cwd))
+        if key in _command_cache and not _command_cache[key].startswith("origin/"):
+            del _command_cache[key]  # A first fetch can create the previously absent remote ref.
+    if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
+        for kind in ("default branch", "landed ref"):
+            _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and args[1] in ("fetch", "merge", "switch", "checkout")):
+        common = _common_path(cwd)
+        for key in list(_command_cache):
+            if isinstance(key[0], tuple) and key[0][0] == "commits" and key[1] == common:
+                del _command_cache[key]
+    return done
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
@@ -82,6 +136,26 @@ def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
+
+
+def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str, list[str]]]:
+    """Snapshot worker history once; close's later bookkeeping commits add no worker evidence."""
+    def key(ref):
+        return ("commits", top.resolve(), base, ref)
+
+    def read():
+        tip = git("rev-parse", head, cwd=top)
+        log = git("log", "--no-merges", "--format=%x00%x00%H%x00m%B",
+                  "--name-only", "-z", f"{base}..{head}", cwd=top)
+        rows = []
+        for record in log.split("\0\0"):
+            if not record:
+                continue
+            sha, message, *paths = record.lstrip("\0").split("\0", 2)
+            files = [p for p in (paths[0].removeprefix("\n").split("\0") if paths else []) if p]
+            rows.append((sha, message.removeprefix("m"), files))
+        return command_fact(key(tip), top, lambda: rows)
+    return command_fact(key(head), top, read)
 
 
 def root(cwd: str | os.PathLike[str] | None = None) -> Path:
@@ -99,7 +173,8 @@ def current_branch(cwd: str | os.PathLike[str] | None = None) -> str:
 
 def default_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     # ponytail: origin/HEAD, else "main". A remote-less repo on another name needs origin/HEAD set.
-    done = run("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=cwd)
+    done = command_fact("default branch", cwd, lambda: run(
+        "git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=cwd))
     return done.stdout.strip().removeprefix("origin/") if done.returncode == 0 else "main"
 
 
