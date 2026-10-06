@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -49,12 +48,7 @@ def record_run(request):
     changes = {"src/probe_module.py": "VALUE = 2\n",
                "tests/test_changed.py": "def test_changed():\n    assert 4 + 4 == 8\n"}
     if shared_input:
-        original = (env.repo.path / shared_input).read_text("utf-8")
-        # Lock comments no longer require the full suite; change a dependency instead.
-        changes[shared_input] = (re.sub(r'(name = "pytest"\nversion = ")[^"]+',
-                                        r'\g<1>0.0.0', original, count=1)
-                                 if shared_input == "uv.lock" else original + "\n# Changed\n")
-        assert changes[shared_input] != original
+        changes[shared_input] = (env.repo.path / shared_input).read_text("utf-8") + "\n# Changed\n"
     item, _ = env.start_fix(changes)
 
     closed = env.close(item)
