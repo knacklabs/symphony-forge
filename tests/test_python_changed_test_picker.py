@@ -63,7 +63,9 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
     assert selected.returncode == 0, selected.stdout + selected.stderr
     assert "6 passed" in selected.stdout
     for shared in ("conftest.py", "pyproject.toml", "uv.lock", "poetry.lock"):
-        repo.write(shared, "# shared input\n")
+        # Full fallback now requires a real manifest setting change, not a comment.
+        repo.write(shared, '[tool.pytest.ini_options]\naddopts = "-q"\n'
+                   if shared == "pyproject.toml" else "# shared input\n")
         repo.git("add", "-A")
         repo.git("commit", "-q", "-m", "Change shared input")
         full = run(full=True)
