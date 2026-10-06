@@ -1,0 +1,29 @@
+{
+  "base": "c1b448d6ad7593c73e13af25ddc18793c833b60f",
+  "branch": "fix/every-version-bump-re-runs-the-whole-tes",
+  "done_when": "forge test --pytest treats a lockfile change that only moves the repo's own package version (uv.lock, poetry.lock, Pipfile.lock or package-lock.json) as not a shared test input, and still runs the full suite for any dependency change; a command test shows a version-only lockfile change selecting only related tests and a dependency change running everything; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ac38996a309ab78e57e859d324da4e1ce2eef459a0f677d510893dd907bca840",
+    "changed": "1a584f91cd13c3043ec59a048e6b855fab31d2088ea755236e300f97d28e0849",
+    "commit": "5db3d2dc65ffa7535437c83d2f22f722bab61760",
+    "dismissals": [],
+    "findings": [],
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T02:36:45+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T03:13:14+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every version bump re-runs the whole test suite twice locally (40 min in the worker, 25+ min in close) because any lockfile change counts as a shared test input, though a bump only moves the project's own version",
+  "worker": "codex"
+}
