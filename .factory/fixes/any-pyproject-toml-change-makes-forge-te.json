@@ -26,7 +26,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
@@ -46,7 +46,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/fasttest.py"
+    "choice": "narrow",
+    "file": "src/forge/fasttest.py",
+    "reason": "Owner: fail closed with a safe list. Any pyproject.toml change runs the full suite unless every changed line sits in a short list of known-harmless sections (packaged-file build settings, project version and description); no dependency hunting"
   },
   "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup",
   "worker": "codex"
