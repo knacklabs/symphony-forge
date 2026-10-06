@@ -2,13 +2,46 @@
   "base": "ead5fa3b90b590e25c99f387b6e660e07bc8376b",
   "branch": "fix/any-pyproject-toml-change-makes-forge-te",
   "done_when": "forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only related tests otherwise; every uv command Forge runs uses the lockfile without rewriting it, so no Forge command leaves uv.lock changed; one command test per case; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/fasttest.py",
+    "tests/test_fix_clone_gets_test_tools.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "03f4eebbd1e2ed6f438481e45f64cd10561455f5fe369872b8e0c7359bd083ef",
+    "changed": "ae5b547eaa912fe7fe02f2f44cfb8b20637a97802aa53687d224bf353cc2bc58",
+    "commit": "21b7683e2d619e4226bd4a3e642a379d595ae74f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The uv projection omits dependency settings including `build-constraint-dependencies`, `extra-build-dependencies`, `dependency-metadata` and `dependency-groups`. Changing only one of these leaves both snapshots equal, so Forge selects related tests\u2014or returns without testing\u2014instead of running the full suite. New evidence beyond the parsed-settings ruling: [uv documents these fields](https://docs.astral.sh/uv/reference/settings/) as build dependencies, dependency metadata and group Python requirements. Dependency-resolution settings such as `resolution`, `prerelease`, `exclude-newer` and legacy `index-url`/`extra-index-url` are also omitted. Include the dependency-affecting settings in the comparison and extend the command regression table; its sole uv case currently changes `constraint-dependencies`, so it cannot detect these omissions.",
+        "file": "src/forge/fasttest.py",
+        "line": 137,
+        "priority": "P1",
+        "title": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'"
+      },
+      {
+        "body": "The named proof `test_2_ci_runs_the_documented_pytest_command` never requires `--frozen`: it reads the expected command from `forge.toml` and checks that the workflow contains that same command. Removing `--frozen` from both files would still pass. It also never checks `fast_test`. The new lock-preservation tests launch Forge directly, so they cannot catch an outer `uv run` rewriting the lock before Forge sets `UV_FROZEN`. Add an independent frozen assertion for both configured commands, or exercise them with a mismatched recorded lock and `UV_FROZEN=0`. This is missing proof for the explicitly claimed outer-command rule.",
+        "file": "tests/test_fix_clone_gets_test_tools.py",
+        "line": 72,
+        "priority": "P1",
+        "title": "Not done: proof that Forge's own outer uv commands are frozen"
+      }
+    ],
+    "id": "a8d75131-35e9-4a2d-8909-3b5392ec4abe",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-06T09:45:07+00:00",
+      "step": "review"
     }
   ],
   "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup",
