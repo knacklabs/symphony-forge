@@ -574,10 +574,12 @@ def add_worktree(top: Path, branch: str, start: str) -> Path:
 
 def landed_ref(top: Path) -> str:
     """Where merged work lands: origin/<default> as last fetched; the local default with no remote."""
-    default = repo.default_branch(top)
-    fetched = f"origin/{default}"
-    found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
-    return default if found else fetched
+    def read():
+        default = repo.default_branch(top)
+        fetched = f"origin/{default}"
+        found = repo.run("git", "rev-parse", "-q", "--verify", f"{fetched}^{{commit}}", cwd=top).returncode
+        return default if found else fetched
+    return repo.command_fact("landed ref", top, read)
 
 
 def plan_behind(top: Path, key: str, ref: str) -> str:

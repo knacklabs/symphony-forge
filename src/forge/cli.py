@@ -116,12 +116,11 @@ def _run(argv: list[str] | None) -> int:
     top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
     url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url") or ""
     made = urllib.request.url2pathname(urllib.parse.urlparse(url).path) if url.startswith("file:") else ""
-    # Without git's variables: inside a hook GIT_DIR would answer for every folder.
-    common = [Path(subprocess.run(["git", "-C", path or os.devnull, "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True,
-                                  env={k: v for k, v in os.environ.items() if not k.startswith("GIT_")}).stdout.strip() or os.devnull).resolve() for path in (top, made)]
     src = str(Path(top, "src"))
-    if (top and common[0] == common[1] and os.environ.get("FORGE_FROM_CHECKOUT") != src
-            and Path(forge.__file__).resolve().parent != Path(src, "forge")):
+    forwarding = (top and made and os.environ.get("FORGE_FROM_CHECKOUT") != src
+                  and Path(forge.__file__).resolve().parent != Path(src, "forge"))
+    # Read the folders directly: a hook's GIT_DIR must not answer for both of them.
+    if forwarding and repo._common_path(top) == repo._common_path(made):
         print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
         return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
                               env={**os.environ, "PYTHONPATH": src, "FORGE_FROM_CHECKOUT": src}).returncode
@@ -159,7 +158,8 @@ def main(argv: list[str] | None = None) -> int:
     for stream in (sys.stdin, sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     try:
-        return _run(argv)
+        with repo.command_cache():
+            return _run(argv)
     except repo.Refused as refusal:
         print(refusal, file=sys.stderr)
         return refusal.code
