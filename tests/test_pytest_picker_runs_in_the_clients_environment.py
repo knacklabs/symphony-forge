@@ -71,7 +71,9 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
     assert (repo.path / "setup-ran").exists()
     monkeypatch.setenv("FULL_SUITE", "1")
     for shared in ("conftest.py", "pyproject.toml", "uv.lock"):
-        repo.write(shared, "# shared input\n")
+        # A manifest comment now selects related files; actual pytest settings stay shared.
+        repo.write(shared, '[tool.pytest.ini_options]\naddopts = "-q"\n'
+                   if shared == "pyproject.toml" else "# shared input\n")
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Change shared input")
         result = repo.forge("test", "--pytest", base)
