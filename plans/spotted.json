@@ -1572,6 +1572,17 @@
       "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/cli.py\tPreserve group descriptions for abbreviated help flags",
+      "kind": "edge",
+      "path": "src/forge/cli.py",
+      "line": 75,
+      "text": "Preserve group descriptions for abbreviated help flags",
+      "from": "review",
+      "item": "every-forge-process-including-each-git-h",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
