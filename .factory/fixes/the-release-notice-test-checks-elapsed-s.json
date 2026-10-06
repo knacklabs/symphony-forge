@@ -3,12 +3,14 @@
   "branch": "fix/the-release-notice-test-checks-elapsed-s",
   "done_when": "tests/test_next_announces_new_forge_releases.py checks how many release lookups happen instead of how many seconds pass, with no wall-clock assertion left in it; behaviour is unchanged for new and existing client repos",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-06T07:31:11+00:00",
       "step": "start"
     }
   ],
-  "why": "The release-notice test checks elapsed seconds and fails on busy Windows CI runners"
+  "why": "The release-notice test checks elapsed seconds and fails on busy Windows CI runners",
+  "worker": "codex"
 }
