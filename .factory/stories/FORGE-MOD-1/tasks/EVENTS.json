@@ -5,31 +5,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bff8f583c4cfa13a8cd770d7a77f925cb6b5f72399f223dadf22f765345c416f",
-    "changed": "81341796f2931ec814cf6229c8dab40bdb2ac123c3a048569b7d64412eea15e9",
-    "commit": "707998a3157c1997f5ebc541957a67e15b6582d9",
+    "branch_diff": "adb72710cfa7138c596d989260920ff809cc36bbf0e1e77af844a9b52c106dc9",
+    "changed": "408766283846ec2b019a38cf2511517794bfadaa73d10ba5c4009cc787efa608",
+    "commit": "ac260e5fd41e1899c31f2cce048737beee007563",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous gap remains: every baseline and successful submission adds IDs permanently, and session.end never removes obsolete session keys. src/forge/board.py:289\u2013300 exposes historical run-end occurrences, which each session copies. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. Once full, this write fails after prompt submission succeeds, leaving the batch unacknowledged and causing repeated submissions on subsequent refreshes; new-session baselines also fail. Bound retained history and obsolete session keys while preserving occurrence deduplication.",
+        "body": "The previous gap remains: baselines and successful submissions retain every seen ID, and session.end never removes obsolete session keys. src/forge/board.py:289\u2013300 exposes historical run endings, so each session copies an increasing history. Claude's [pinned store contract](https://raw.githubusercontent.com/anthropics/claude-code/684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts) rejects writes exceeding 4 MiB across the store. Once full, this write fails after submission succeeds; the batch remains unacknowledged and is submitted again on subsequent refreshes. New-session baselines also fail. Bound retained history and obsolete session keys while preserving deduplication.",
         "file": "src/forge/mod/hooks/events.ts",
         "line": 74,
         "priority": "P2",
         "title": "Bound persisted seen history before Claude's store limit"
       },
       {
-        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 execute pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. The packaged cases now exercise real occurrences, session isolation and reload transitions, but submission-refusal retry, worker/headless gating and session resets still rely on native assertions the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must execute these tests and propagate failures. This remains P2 advice under the task-ownership rule.",
+        "body": "The previous routing gap remains. forge.toml:6 and .github/workflows/forge-next.yml:58 run pytest, while tests/test_mod_plugin.py:45\u201357 only typechecks the native tests. Packaged cases exercise real occurrences, shared-store sessions and reload batching, but submission-failure retries, worker/headless gating and session resets still depend on native assertions the automated suite does not execute. plans/FORGE-MOD-1.md:284 assigns the plugin CI job to SHIP; that task must execute these tests and propagate failures. This remains P2 advice under the task-ownership rule.",
         "file": "src/forge/mod/hooks/events.test.ts",
         "line": 125,
         "priority": "P2",
         "title": "Later: SHIP must run the native event tests in CI"
       }
     ],
-    "id": "27c123b0-04be-4b9a-b9b8-63214eccb327",
+    "id": "81429650-1330-4fdf-a066-c57cc90b0f18",
     "status": "clean"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-06T00:54:29+00:00",
@@ -57,6 +57,10 @@
     },
     {
       "at": "2026-10-06T06:06:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T07:07:58+00:00",
       "step": "review"
     }
   ],
