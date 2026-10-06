@@ -10,39 +10,39 @@
     "blocking_level": "P1",
     "branch_diff": "0ae4ef38204b10136fbc7a8186f3b91f7866dbc6feb6e7bd8327b474b2b0cf4c",
     "changed": "d32436e6cc719bae8562fdec0ec04aaf8328d3960217b6b09e8476faf6d2f47a",
-    "commit": "4393c18fbcf90334b03c55ea88e160f91a30722e",
+    "commit": "337733d0854e1af729982b83a968d4254a2da3c1",
     "dismissals": [],
     "findings": [
       {
-        "body": "Every new Refused construction omits the required next_step argument, defined in src/forge/repo.py:52. An unverifiable process therefore produces an uncaught TypeError and traceback instead of the promised one-line refusal. The same defect affects worker-only and argument guards, failed termination, and cancellation in machine.py:87,121,219,221,235. The assertions in tests/test_lanes_view.py:194,198,206 still pass because the traceback includes the source line containing the expected message. Supply the required argument at every site and make the command assertions reject tracebacks.",
+        "body": "Every new Refused construction omits next_step, which is required by src/forge/repo.py:52. An unverifiable process therefore causes an uncaught TypeError and traceback instead of the promised one-line refusal. The same defect affects cancellation, worker-only restrictions, argument validation and failed termination at machine.py:87,121,219,221,235. Tests/test_lanes_view.py:194,198,206 accept these tracebacks because the displayed source contains the expected message. Supply next_step at every site and make the command assertions reject tracebacks.",
         "file": "src/forge/machine.py",
         "line": 230,
         "priority": "P1",
         "title": "Not done: unverifiable process identity refuses with one line"
       },
       {
-        "body": "The standard requires: \"Touch only what the task needs.\" This change adds configuration-error retries to every Git invocation, and tests/test_close_test_runs_wait_in_line.py:125\u2013137 injects that unrelated failure into the existing close-queue test. Neither change implements core budgeting, lane entries, diagnostics, or cancellation. The handoff names both files and explains the Windows configuration-read failure, but does not establish that the agent-lane change caused it. Move this independent Git reliability repair and its test into a separate fix.",
+        "body": "The standard requires: \"Touch only what the task needs.\" The shared command boundary now retries Git configuration failures, and tests/test_close_test_runs_wait_in_line.py:125\u2013137 injects that unrelated failure into the close-queue test. Neither change implements core budgeting, lane entries, diagnostics or cancellation. The handoff names both files and explains the Windows failure, but establishes no dependency on this task. Move src/forge/repo.py's retry change and that test modification into a separate repair.",
         "file": "src/forge/repo.py",
         "line": 74,
         "priority": "P1",
         "title": "Standard: Touch only what the task needs"
       },
       {
-        "body": "The previous advisory remains open. The retained checker launches Autoreview without process-group options and calls started(pid), as shown in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path requests group termination through src/forge/codex.py:624\u2013625, although that process does not lead its own group. It consequently remains alive and its place cannot be freed. Older Claude workers and readers have the same mismatch. Preserve the ruled compatibility signatures while supporting safe cancellation of these ungrouped processes; the migration test currently launches a newly grouped process.",
+        "body": "The retained checker launches Autoreview without process-group options and calls started(pid), as verified in tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination through src/forge/codex.py:624\u2013625. Since that process does not lead its own group, it remains alive and stop cannot free its place. Older Claude workers and readers have the same mismatch. The compatibility ruling remains valid; cancellation must also support those ungrouped processes safely. The existing-queue test converts records from a newly grouped launch, so it does not exercise this case.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "The review admission snapshots chosen, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Board JSON therefore continues showing null or the unavailable model during the running review. Split design workers similarly change chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without updating their active entry. Refresh model and effort in the lane entry whenever either caller changes its selection. This previously reported advisory remains unresolved.",
+        "body": "Review admission snapshots chosen, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. Board JSON consequently continues showing null or the unavailable model during the running review. Split design workers likewise replace chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without updating their lane entry. Refresh the active entry's model and effort when either caller changes its selection.",
         "file": "src/forge/review.py",
         "line": 478,
         "priority": "P2",
         "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:171\u2013172 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. Consequently, the board cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:141 assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
+        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:171\u2013172 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. The board therefore cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. Plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
@@ -51,7 +51,7 @@
     ],
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -79,6 +79,10 @@
     },
     {
       "at": "2026-10-06T03:03:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:48:49+00:00",
       "step": "review"
     }
   ],
