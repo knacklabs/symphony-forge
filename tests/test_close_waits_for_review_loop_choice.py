@@ -71,7 +71,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
     assert result.returncode == 0, result.stderr
     assert len(env.review_calls()) == before
     assert env.close(item, "--resolve", choice, "--reason", reason).returncode == 1
-    # Acceptance covers the reviewed code only; narrowing/splitting still needs work.
+    # The owner accepts the latest findings; later work needs review again.
     if choice == "accept":
         resumed = env.close(item)
         assert resumed.returncode == 0, resumed.stderr
@@ -136,27 +136,13 @@ def test_5_later_review_instructions_expire_acceptance_but_keep_evidence_dismiss
     assert f"Proven safe (src/a.py): dismissed because {evidence}" in prompt
 
 
-def test_3_acceptance_refuses_code_changed_since_the_stopped_review(env):
-    item, where = stopped(env)
-    env.commit(where, "app.py", "print('unreviewed')\n")
-    result = env.close(item, "--resolve", "accept", "--reason", "Human accepts")
-    assert result.returncode == 1
-    assert result.stderr == (
-        "The code or scope changed since the stopped review, so those findings "
-        "cannot be accepted for this version.\n"
-        f'Next: forge close {item} --resolve <narrow|split> --reason "<human\'s choice>"\n'
-    )
-    assert env.close(item).returncode == 1
-    assert saved(where, item)["status"] == "hotspot"
-
-
 @pytest.mark.parametrize("phase", ["before-accept", "close", "land"])
 @pytest.mark.parametrize("old,new", [
     ("`app.py`", "`app.py`, `other.py`"),
     ("`tests/test_app.py`", "`tests/test_basket.py`"),
     ("A shopper can save a basket.", "A shopper can save two baskets."),
 ])
-def test_6_live_story_scope_changes_expire_task_acceptance(env, phase, old, new):
+def test_6_live_story_changes_allow_owner_accept_but_expire_earlier_acceptance(env, phase, old, new):
     # The reviewer reads the story branch, even when the task's own commit stays unchanged.
     item, where = stopped(env, "task")
     reason = "Human accepts this version"
@@ -171,11 +157,11 @@ def test_6_live_story_scope_changes_expire_task_acceptance(env, phase, old, new)
     env.commit(story_tree, "plans/SHOP.md", doc.replace(old, new), "Change the task requirements")
     before = len(env.review_calls())
     if phase == "before-accept":
-        refused = env.close(item, "--resolve", "accept", "--reason", reason)
-        assert refused.returncode == 1
-        assert "code or scope changed since the stopped review" in refused.stderr
+        # The owner's current choice now applies after scope changes; later work still expires it.
+        accepted = env.close(item, "--resolve", "accept", "--reason", reason)
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+        assert "Ready:" in accepted.stdout
         assert len(env.review_calls()) == before
-        assert env.repo.forge("land", item).returncode == 1
     else:
         env.reviews(CLEAN)
         if phase == "land":

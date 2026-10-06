@@ -702,9 +702,11 @@ Ask the human to narrow the part, split it, or accept the remaining findings.
 Never re-run close or land past this stop until their choice is recorded.
 After their answer, record it with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
-Narrow or split the part as agreed before building again. Accept records the remaining findings
-as accepted for the reviewed code and scope; close still requires green checks. Changed code or
-scope needs another review.
+Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+of the latest review with the owner's reason and carries on without checking whether code or
+the default branch changed since that review. Close still requires green checks; later work
+needs another review.
+A clean review clears an unanswered review-loop stop.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

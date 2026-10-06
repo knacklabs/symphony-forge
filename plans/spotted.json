@@ -1803,6 +1803,28 @@
       "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 283,
+      "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
+      "from": "blocking",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "from": "worker",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
