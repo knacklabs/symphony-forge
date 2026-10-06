@@ -9,24 +9,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "07c59fc93f3b7c723ebe7e6cbea3ebbde2510f2cf9ec62f9dfefe22d156c6df0",
-    "changed": "43ae6f16ec4e5b9c8b96ba1dac361ca653e7f7c466a785ec1a4ef550485ae62c",
-    "commit": "2a2ed28471dbe1f06a45a6a6d3ab9871afa4d2db",
+    "branch_diff": "8568a9a761bcee6ffe07d910479b7ec57452253e4c37b76d802715c76cff824b",
+    "changed": "8146ae1918a0e38f65825b9bba077e5bd3f92fba148f6271a6ad3cd358eefdd2",
+    "commit": "e3088b6ef0f2ee4b9b62a99676e71bd97ca84598",
     "dismissals": [],
     "findings": [
       {
-        "body": "The dependency projection still ignores dependency-affecting settings in `tool.uv.pip` and `tool.hatch`. For example, changing only `[tool.uv.pip] resolution = \"lowest\"` in a client whose test command installs dependencies with `uv pip` leaves the snapshots equal. Forge then runs related tests, or returns success without running any tests at fasttest.py:252\u2013254, instead of running the full suite. New evidence beyond the earlier ruling: [uv documents dependency-resolution settings under tool.uv.pip](https://docs.astral.sh/uv/reference/settings/#pip), independently of the root settings added here; the root `torch-backend` setting is also omitted. The same omission affects Hatch environment `dependencies`, `extra-dependencies`, features and dependency-group selection, plus build-target and build-hook dependencies, documented in [Hatch environment configuration](https://hatch.pypa.io/latest/config/environment/overview/) and [Hatch build configuration](https://hatch.pypa.io/latest/config/build/). These are dependency settings, rather than unrelated tool metadata. The command regression table at tests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py:72\u2013128 covers neither namespace, so all listed proofs can pass while these Done-when cases remain broken. Include these dependency inputs in the comparison and add command regression cases.",
+        "body": "The dependency projection omits entire dependency-bearing namespaces. Changing `[tool.tox.env_run_base] deps` or a named tox environment's `deps` leaves both snapshots equal, so Forge runs related tests\u2014or returns success without testing at lines 297\u2013299\u2014instead of the full suite. The same omission affects Flit's `tool.flit.metadata.requires`, `requires-extra` and `requires-python`, and Rye's `tool.rye.dev-dependencies`, `excluded-dependencies` and dependency sources. New evidence beyond the previous uv/Hatch ruling: these are documented dependency inputs in [tox's native TOML configuration](https://tox.wiki/en/4.64.2/reference/config.html#deps), [Flit's supported older metadata format](https://flit.pypa.io/en/3.12.0/pyproject_toml.html#old-style-metadata), and [Rye's project configuration](https://rye.astral.sh/guide/pyproject/). The command regression table contains none of these namespaces, so every listed proof can pass while dependency edits still skip full execution. Include these dependency inputs and extend the existing command-level table.",
         "file": "src/forge/fasttest.py",
-        "line": 134,
+        "line": 193,
         "priority": "P1",
-        "title": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change"
+        "title": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'"
       }
     ],
-    "id": "ceccb150-4019-4927-8827-2f88050a0320",
+    "id": "1059e0f8-9f2b-467b-ae92-7a208444a592",
     "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
@@ -39,8 +39,15 @@
     {
       "at": "2026-10-06T11:18:49+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-06T13:28:15+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/fasttest.py"
+  },
   "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup",
   "worker": "codex"
 }
