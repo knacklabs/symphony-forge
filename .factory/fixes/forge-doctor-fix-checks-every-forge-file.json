@@ -1,0 +1,14 @@
+{
+  "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
+  "branch": "fix/forge-doctor-fix-checks-every-forge-file",
+  "done_when": "forge doctor --fix finds changed-by-hand files with one git status and one git log call for all of Forge's files instead of two calls per file, with the same results; a command test counts git calls per doctor --fix run and shows they no longer grow with the number of files; new and earlier-adopted client repos get it, with a command test for each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-06T10:54:10+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge doctor --fix checks every Forge file with two git commands each (about 190 git processes per run)"
+}
