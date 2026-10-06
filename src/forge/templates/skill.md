@@ -699,6 +699,8 @@ Accept and `--dismiss` after a recorded choice compare the item's own changes ag
 review's merge base. The comparison ignores files under `.factory/`, so moving the default
 branch or recording Forge's own choices does not invalidate the choice.
 A clean review clears an unanswered review-loop stop.
+Reviews recorded before upgrading also keep valid choices: Forge recovers their base from git
+and checks the original fingerprint before ignoring its record files.
 
 When `forge merge` fails because the pull request no longer merges cleanly, run
 `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted

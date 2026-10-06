@@ -29,7 +29,7 @@ def test_1_accept_uses_the_stopped_reviews_merge_base(env):
 
 def _records_stop(env):
     seed(env, "src/a.py")
-    item, where = env.start_fix(done_when="The .factory/ records describe the result")
+    item, where = env.start_fix(done_when="The .factory/fixes/tidy-readme.json record describes the result")
     record = f".factory/fixes/{item}.json"
     for number in range(1, 4):
         env.commit(where, "app.py", f"print({number})\n")
@@ -109,3 +109,4 @@ def test_5_clients_receive_the_choice_and_clean_review_rules(repo, gh, tmp_path,
         assert "ignores files under `.factory/`" in text
         assert "A clean review clears an unanswered review-loop stop" in text
         assert "`--dismiss` after a recorded choice" in text
+        assert "Reviews recorded before upgrading also keep valid choices" in text
