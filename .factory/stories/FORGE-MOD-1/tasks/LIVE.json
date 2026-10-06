@@ -10,38 +10,38 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6599c623e875eaebc0682cb4389f752cd3e934a1a709dc360dd5fa56b5976c8b",
-    "changed": "8df50f3a146d61ae5cf3952f6aeb08adb1fdf46845e1d2075b083450a96902d1",
-    "commit": "2b6ec8733d84cb214d3c6b4586d94ab8b4d2479a",
+    "branch_diff": "910d1bc0229a3234c94377641227c25dcd822d0bfb6d216d6a7b6b6e88eb66d8",
+    "changed": "ce0440ab65a9822b542e15b9c8ffaca85e3c7307f88fbc0adb0566bd2efc0e40",
+    "commit": "cbf58c836961751eb70801d10f7e1e644cf88000",
     "dismissals": [],
     "findings": [
       {
-        "body": "The latest worker handoff contains a mapping headed `Current proof list for LIVE detail 7:`, but Forge requires the exact heading `Proof list:`. The extraction at src/forge/review.py:220 and 400\u2013408 therefore returns nothing, and src/forge/close.py:434 cannot copy the mapping into the PR. This explains why the supplied proof list remains `missing`. Rename the handoff heading so the complete mapping reaches both review and PR.",
-        "file": "tests/test_live_status.py",
-        "line": 34,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      },
-      {
-        "body": "The previous advisory remains open: this replacement has no retry when Windows refuses to replace a file held open by a reader. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204, so an overlapping refresh can raise PermissionError and abort the enclosing worker, reader, review or test command. Add bounded retries, following the existing replacement handling at src/forge/codex.py:532\u2013539.",
+        "body": "The previous advisory remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping read can make this replacement raise PermissionError, aborting the enclosing worker, reader, review or test command. Add bounded replacement retries, following src/forge/codex.py:532\u2013539.",
         "file": "src/forge/repo.py",
         "line": 171,
         "priority": "P2",
         "title": "Handle Windows readers holding the progress file open"
       },
       {
-        "body": "The previous advisory remains open. Claude can report a missing resumed session in a structured stdout result ([upstream reproduction](https://github.com/anthropics/claude-code/issues/40609)). This decoder places `error_during_execution` before the diagnostic, so the worker's `No conversation found` prefix check at src/forge/worker.py:443\u2013445 misses it. The reader checks only stderr at src/forge/story.py:738\u2013740, although the decoded error is returned on stdout. Both paths consequently refuse instead of recovering with a fresh session. Preserve and recognize the structured missing-session diagnostic in both callers.",
+        "body": "The previous advisory remains open. A structured missing-session result becomes `error_during_execution` followed by the diagnostic. The worker's prefix check at src/forge/worker.py:443\u2013445 therefore misses it, while the reader checks only stderr at src/forge/story.py:738\u2013740 although the decoded diagnostic is stdout. Both paths refuse instead of starting a fresh session. Recognize the diagnostic in both callers while preserving the error details. The structured response is documented in the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
         "file": "src/forge/repo.py",
         "line": 203,
         "priority": "P2",
         "title": "Preserve missing-session recovery for structured Claude errors"
+      },
+      {
+        "body": "The command fields are supplied, but the remaining consumer checks belong to other tasks. src/forge/mod/hooks/machine.ts:5 still contains an empty registrar, so MACHINE does not display the live fields or provide `l`'s exact event list. For PANE, src/forge/mod/hooks/summary.ts:62\u201364 suppresses the running count and current step when lane data is absent, even when LIVE supplies running items. Complete and test these behaviors in PANE and MACHINE, as assigned by the Tasks table; they are deferred consumer work, not blocking LIVE producer gaps.",
+        "file": "tests/fixtures/board.json",
+        "line": 85,
+        "priority": "P2",
+        "title": "Later: complete detail 7 rendering in PANE and MACHINE"
       }
     ],
-    "id": "4c85e596-23b5-4734-b6d4-cd0c6ce9084e",
-    "status": "blocked"
+    "id": "6d94cf9e-2d88-4ffe-a480-c23959a8d031",
+    "status": "clean"
   },
   "round": 9,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T22:32:25+00:00",
@@ -77,6 +77,10 @@
     },
     {
       "at": "2026-10-06T08:03:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T09:33:11+00:00",
       "step": "review"
     }
   ],
