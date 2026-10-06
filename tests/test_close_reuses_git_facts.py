@@ -1,14 +1,13 @@
 """One close reuses repository facts and reads worker commit messages in one batch."""
 
 import json
-import os
 import shutil
 import subprocess
 import sys
 
 import pytest
 
-from conftest import FORGE_SHIM, ROOT, _install
+from conftest import FORGE_SHIM, ROOT
 from test_close import body, env  # noqa: F401 (the shared command fixture)
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -17,7 +16,7 @@ STORY = "one-forge-close-looks-up-the-same-git-fa"
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 @pytest.mark.parametrize("history", ["unreviewed", "legacy-review", "legacy-review-base-merge"])
-def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env, previous, history):
+def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env, monkeypatch, previous, history):
     client(env, previous)
     if history != "unreviewed":
         env.commit(env.repo.path, "NEWS.md", "Old news\n")
@@ -51,14 +50,8 @@ def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env,
             env.repo.git("push", "-q", "origin", "main")
     reviews_before = len(env.review_calls())
     calls = env.tmp / "git-calls.jsonl"
-    real_git = shutil.which("git")
-    assert real_git
-    _install(env.repo.bin, "git", f'''#!{sys.executable}
-import json, os, subprocess, sys
-with open({json.dumps(str(calls))}, "a", encoding="utf-8") as out:
-    out.write(json.dumps({{"cwd": os.getcwd(), "args": sys.argv[1:]}}) + "\\n")
-sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
-''')
+    # Git traces its native argv; a Windows .cmd forwarding shim consumes the ^ in refs.
+    monkeypatch.setenv("GIT_TRACE2_EVENT", calls.as_posix())
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     pr = body(env.gh_calls("pr", "create" if history == "unreviewed" else "edit")[-1])
@@ -72,8 +65,7 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
         # The pinned release's prompt predates proof lists; reused reviews keep that prompt.
         assert "Proof list: app.py prints a greeting." in env.prompt()
     recorded = [json.loads(line) for line in calls.read_text("utf-8").splitlines()]
-    # Git's platform bootstrap probes /dev/null outside a repo; only repository lookups count.
-    args = [call["args"] for call in recorded if call["cwd"] != os.devnull]
+    args = [call["argv"][1:] for call in recorded if call["event"] == "start"]
     assert sum(a == ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"] for a in args) == 1
     landed = sum(a == ["rev-parse", "-q", "--verify", "origin/main^{commit}"] for a in args)
     # A reused review does not need the landed ref; unused facts incur no lookup.
