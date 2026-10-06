@@ -6,6 +6,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import (  # noqa: F401 (pytest fixtures)
     env, unsynced_up, _repo_adopted_on_the_previous_release,
@@ -118,3 +120,25 @@ def test_4_earlier_adopted_clients_get_two_rule_selection_after_upgrade(unsynced
     launcher = unsynced_up.tmp / "uvbin/forge"
     assert launcher.exists()
     _module_selection(repo, monkeypatch, launcher)
+
+
+@pytest.mark.parametrize("layout", ["", "src/"])
+def test_6_module_to_package_conversion_keeps_both_changed_file_references(repo, layout):
+    _configure(repo)
+    old, new = layout + "prices.py", layout + "prices/__init__.py"
+    repo.write(old, "PRICE = 1\n")
+    for name, path in (("previous", old), ("package", new)):
+        repo.write(f"tests/test_{name}.py", "from pathlib import Path\n"
+                   f"def test_{name}():\n    assert Path({json.dumps(path)}).is_file()\n")
+    repo.write("tests/test_unrelated.py", "raise RuntimeError('Unrelated test collected')\n")
+    _commit(repo, "Set up file references before package conversion")
+    base = repo.git("rev-parse", "HEAD")
+    repo.git("rm", old)
+    repo.write(new, "PRICE = 1\n")
+    _commit(repo, "Convert the module to a package")
+    result = _run(repo, base)
+    assert result.stdout.splitlines()[0] == (
+        "Related tests: tests/test_package.py, tests/test_previous.py")
+    # The removed-file reader must run and fail, rather than a false green quick run.
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "1 failed, 1 passed" in result.stdout

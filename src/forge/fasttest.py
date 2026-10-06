@@ -236,7 +236,7 @@ def test(args) -> int:
                                                 "--exclude-standard")
                  if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
                  and name.endswith(".py") and Path(name).is_file()]
-        modules = {}
+        modules = []
         for name in changed:
             path = Path(name)
             if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
@@ -245,12 +245,12 @@ def test(args) -> int:
             if parts[-1] == "__init__":
                 parts.pop()
             if parts:
-                modules[".".join(parts)] = path
+                modules.append((".".join(parts), path))
         selected = []
         for path in tests:
             if (path.as_posix() in changed
                     or any(mentions(path, module, source)
-                           for module, source in modules.items())):
+                           for module, source in modules)):
                 selected.append(path.as_posix())
         selected.sort()
         if not selected:
