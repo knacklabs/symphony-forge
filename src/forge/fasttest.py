@@ -112,9 +112,59 @@ def mentions(file: Path, module: str) -> bool:
     return False
 
 
+def hatch_dependency_inputs(hatch: dict) -> list:
+    """Keep dependency options at Hatch's named environment, target and hook boundaries."""
+    env_keys = {"dependencies", "extra-dependencies", "features", "dependency-groups", "template",
+                "detached", "skip-install", "dev-mode", "python", "installer", "sources", "workspace",
+                "matrix", "locked", "locker", "lock-filename"}
+    build_keys = {"dependencies", "require-runtime-dependencies", "require-runtime-features"}
+
+    def select(settings, keys):
+        selected = {key: value for key, value in settings.items() if key.removeprefix("set-") in keys}
+        for key in list(selected):
+            if key.removeprefix("set-") == "workspace":
+                members = {name: value for name, value in selected[key].items() if name in {"members", "exclude"}}
+                if members:
+                    selected[key] = members
+                else:
+                    del selected[key]
+        return selected
+
+    envs, builds = {}, {}
+    for name, settings in hatch.get("envs", {}).items():
+        options = select(settings, env_keys)
+        for source, conditions in settings.get("overrides", {}).items():
+            for condition, values in conditions.items():
+                selected = select(values, env_keys)
+                if selected:
+                    options.setdefault("overrides", {}).setdefault(source, {})[condition] = selected
+        if options:
+            envs[name] = options
+    build = hatch.get("build", {})
+    for name, settings in {"": build, **build.get("targets", {})}.items():
+        options = select(settings, build_keys)
+        hooks = {hook: selected for hook, values in settings.get("hooks", {}).items()
+                 if (selected := select(values, build_keys | {"enable-by-default"}))}
+        if hooks:
+            options["hooks"] = hooks
+        if options:
+            builds[name] = options
+    return [envs, builds, select(hatch, {"sources", "lock-envs", "locker"})]
+
+
 def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
     """Compare dependency and pytest settings, not packaging metadata or other tools."""
     snapshots = []
+    uv_keys = ("sources", "index", "workspace", "constraint-dependencies", "override-dependencies",
+               "exclude-dependencies", "environments", "required-environments", "conflicts",
+               "default-groups", "dev-dependencies", "dependency-groups", "dependency-metadata",
+               "build-constraint-dependencies", "extra-build-dependencies", "extra-build-variables",
+               "resolution", "prerelease", "prerelease-package", "exclude-newer", "exclude-newer-package",
+               "index-url", "extra-index-url", "index-strategy", "find-links", "fork-strategy",
+               "no-index", "no-sources", "no-sources-package", "minimum-libc-version",
+               "config-settings", "config-settings-package", "no-build-isolation", "no-build-isolation-package",
+               "no-build", "no-build-package", "no-binary", "no-binary-package",
+               "upgrade", "upgrade-package", "managed", "package", "torch-backend")
     try:
         for ref in (base, "HEAD"):
             shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
@@ -131,17 +181,12 @@ def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
                 tool.get("pytest", {}),
                 {key: tool.get("poetry", {}).get(key) for key in
                  ("dependencies", "dev-dependencies", "group", "extras", "source")},
-                {key: tool.get("uv", {}).get(key) for key in
-                 ("sources", "index", "workspace", "constraint-dependencies", "override-dependencies",
-                  "exclude-dependencies", "environments", "required-environments", "conflicts",
-                  "default-groups", "dev-dependencies", "dependency-groups", "dependency-metadata",
-                  "build-constraint-dependencies", "extra-build-dependencies", "extra-build-variables",
-                  "resolution", "prerelease", "prerelease-package", "exclude-newer", "exclude-newer-package",
-                  "index-url", "extra-index-url", "index-strategy", "find-links", "fork-strategy",
-                  "no-index", "no-sources", "no-sources-package", "minimum-libc-version",
-                  "config-settings", "config-settings-package", "no-build-isolation", "no-build-isolation-package",
-                  "no-build", "no-build-package", "no-binary", "no-binary-package",
-                  "upgrade", "upgrade-package", "managed", "package")},
+                {key: tool.get("uv", {}).get(key) for key in uv_keys},
+                {key: tool.get("uv", {}).get("pip", {}).get(key) for key in uv_keys +
+                 ("all-extras", "extra", "group", "no-extra", "no-deps", "no-emit-package",
+                  "no-strip-extras", "no-strip-markers", "only-binary", "python", "python-version",
+                  "python-platform", "universal")},
+                hatch_dependency_inputs(tool.get("hatch", {})),
                 {key: tool.get("pdm", {}).get(key) for key in
                  ("dev-dependencies", "resolution", "source")},
                 {key: tool.get("setuptools", {}).get("dynamic", {}).get(key) for key in
