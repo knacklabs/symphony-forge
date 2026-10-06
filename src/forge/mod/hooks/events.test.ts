@@ -26,6 +26,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       on('session.surfaces', () => ({ value: [surface] }))
       on('command.register', () => ({ value: { command: 'forge' } }))
       on('ui.invalidate', () => ({ value: undefined }))
+      on('ui.open', () => ({ value: undefined }))
       on('process.run', async (_$, e) => {
         if (gate) { entered(); await gate }
         return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
@@ -77,6 +78,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('session.surfaces', () => ({ value: [surface] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.invalidate', () => ({ value: undefined }))
+    on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => {
       directories.push(e.init?.cwd ?? '')
       return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
@@ -136,6 +138,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('session.surfaces', () => ({ value: [surface] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.invalidate', () => ({ value: undefined }))
+    on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
       e.argv[1] === 'board' ? { version: '1.2.5', repo_root: root, items } :
       e.argv[1] === 'next' ? { version: '1.2.5', repo_root: root, next: { command: null, line: '' } } : { version: '1.2.5' },
@@ -244,6 +247,7 @@ for (const mode of ['worker', 'headless'] as const) {
     on('session.surfaces', () => ({ value: mode === 'worker' ? ['terminal'] : [] }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.invalidate', () => ({ value: undefined }))
+    on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
       e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items: [row('Guide', id)] } :
       e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },

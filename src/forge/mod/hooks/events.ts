@@ -83,7 +83,7 @@ export function registerEvents(on: On, data: Data) {
     await drain()
     return started
   })
-  on('session.end', async ($, e, next) => {
+  on('session.end', {}, async ($, e, next) => {
     key = null
     pending.clear()
     if (await eligibility) await $.store.set(JSON.stringify(['forge-active-turn', e.sessionId]), null)

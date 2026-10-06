@@ -182,7 +182,7 @@ async function session(id, duringRefresh) {{
   }}
   const api = {{
     clock: {{now: async () => 0, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
-    command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}}},
+    command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}, open: async () => ({{isPlaced: false}})}},
     env: {{get: async () => undefined}},
     session: {{id: async () => id, cwd: async () => {json.dumps(str(repo.path))}, repo: async () => ({{root: {json.dumps(str(repo.path))}}}),
       surfaces: async () => ['terminal']}},
