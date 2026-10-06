@@ -33,7 +33,6 @@ import subprocess
 import tempfile
 import uuid
 from datetime import datetime, timezone
-from fnmatch import fnmatch
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -436,14 +435,6 @@ def approval_hash(text: str) -> str | None:
     return hashlib.sha256("\n".join(found[name].strip() for name in APPROVED).encode("utf-8")).hexdigest()
 
 
-def overlaps(scope: list[str], other: list[str]) -> bool:
-    """Whether two Scope lists share a path: the same path, one inside the other, or a glob match."""
-    def one(a: str, b: str) -> bool:
-        a, b = a.rstrip("/"), b.rstrip("/")
-        return a == b or a.startswith(b + "/") or b.startswith(a + "/") or fnmatch(a, b) or fnmatch(b, a)
-    return any(one(a, b) for a in scope for b in other)
-
-
 # --- the cold read gate and forge-pr-check -------------------------------------------------
 
 
@@ -591,12 +582,14 @@ def landed_ref(top: Path) -> str:
 
 def plan_behind(top: Path, key: str, ref: str) -> str:
     """One line with the command that merges ref into story/<KEY> when ref's plans/<KEY>.md differs
-    from the story branch's and ref changed it last, as when a fix edits the plan; else ""."""
+    from the story branch's content history, as when a fix edits the plan; else ""."""
     branch, doc = f"refs/heads/story/{key}", f"plans/{key}.md"
-    if show(top, branch, doc) in (None, show(top, ref, doc)):
+    theirs = show(top, ref, doc)
+    if theirs is None or show(top, branch, doc) in (None, theirs):
         return ""
-    ours, theirs = (repo.git("log", "-1", "--format=%ct", tip, "--", doc, cwd=top) for tip in (branch, ref))
-    if not theirs or int(theirs) <= int(ours or 0):
+    blob = repo.git("rev-parse", f"{ref}:{doc}", cwd=top)
+    history = repo.git("rev-list", "--objects", branch, "--", doc, cwd=top)
+    if blob in {line.split()[0] for line in history.splitlines()}:
         return ""
     folder = stories_here(top).get(key)
     add = ""
