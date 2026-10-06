@@ -19,6 +19,7 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
   const clock = mock.clock(on)
   const calls: string[][] = []
   const opened: unknown[] = []
+  on('session.cwd', () => ({ value: '/repo' }))
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.invalidate', () => ({ value: undefined }))
@@ -49,6 +50,7 @@ test('1: initial load and scheduled refresh reach the headless /forge command', 
 test('1: /forge accepts unknown worker starts and preserves next commands and stage outcomes', async ($, on) => {
   const clock = mock.clock(on)
   let runnable = true
+  on('session.cwd', () => ({ value: '/repo' }))
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.invalidate', () => ({ value: undefined }))
@@ -83,6 +85,7 @@ test('1: /forge accepts unknown worker starts and preserves next commands and st
 test('1: failed and malformed refreshes preserve rows and retry on the next tick', async ($, on) => {
   const clock = mock.clock(on)
   let refresh = 0
+  on('session.cwd', () => ({ value: '/repo' }))
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.invalidate', () => ({ value: undefined }))
@@ -114,6 +117,7 @@ test('1: failed and malformed refreshes preserve rows and retry on the next tick
 test('1: empty and missing state stay readable; old Forge asks for an upgrade', async ($, on) => {
   const clock = mock.clock(on)
   let mode = 'empty'
+  on('session.cwd', () => ({ value: '/repo' }))
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.invalidate', () => ({ value: undefined }))
@@ -138,6 +142,7 @@ test('1, 6: one refresh at a time; the whole refresh expires after twenty second
   const clock = mock.clock(on)
   let slow = false
   let boards = 0
+  on('session.cwd', () => ({ value: '/repo' }))
   let published: (() => void) | undefined
   on('session.start', () => ({ cwd: '/repo' }))
   on('command.register', () => ({ value: { command: 'forge' } }))
