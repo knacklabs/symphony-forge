@@ -3,12 +3,14 @@
   "branch": "fix/any-pyproject-toml-change-makes-forge-te",
   "done_when": "forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only related tests otherwise; every uv command Forge runs uses the lockfile without rewriting it, so no Forge command leaves uv.lock changed; one command test per case; new and earlier-adopted client repos get it, with a command test for each",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-06T07:30:39+00:00",
       "step": "start"
     }
   ],
-  "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup"
+  "why": "Any pyproject.toml change makes forge test --pytest run the whole suite locally (30+ minutes holding the test slot), and uv run rewrites uv.lock back to an old cached version in older worktrees, leaving stray changes that block closes and cleanup",
+  "worker": "codex"
 }
