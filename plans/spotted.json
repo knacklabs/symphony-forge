@@ -408,6 +408,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: batch changes while busy after a reload\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 31,
+      "text": "Not done: batch changes while busy after a reload",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: bind events to the current repo and session\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 37,
+      "text": "Not done: bind events to the current repo and session",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 35,
+      "text": "Not done: track active turns throughout reload initialization",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/forge.ts\tAccept unknown worker start times from the board contract\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/forge.ts",
@@ -826,6 +859,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "kind": "bug",
+      "path": "tests/test_machine_views.py",
+      "line": 660,
+      "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
+      "from": "worker",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
@@ -877,6 +921,17 @@
       "text": "Not done: prove the workflow skips the suite only for a records-only commit on a tested parent",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_reviews_remove_their_temp_folders.py\tNot done: proof list\tseveral-tests-fail-on-main-in-a-full-loc",
+      "kind": "bug",
+      "path": "tests/test_reviews_remove_their_temp_folders.py",
+      "line": 85,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "open",
       "closed_by": null
     },
@@ -1233,6 +1288,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 74,
+      "text": "Bound persisted seen history before Claude's store limit",
+      "from": "review",
+      "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -1504,50 +1570,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: batch changes while busy after a reload\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 31,
-      "text": "Not done: batch changes while busy after a reload",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: bind events to the current repo and session\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 37,
-      "text": "Not done: bind events to the current repo and session",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/events.ts\tNot done: track active turns throughout reload initialization\tFORGE-MOD-1/EVENTS",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 35,
-      "text": "Not done: track active turns throughout reload initialization",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/EVENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/events.ts",
-      "line": 74,
-      "text": "Bound persisted seen history before Claude's store limit",
-      "from": "review",
-      "item": "FORGE-MOD-1/EVENTS",
       "status": "open",
       "closed_by": null
     }

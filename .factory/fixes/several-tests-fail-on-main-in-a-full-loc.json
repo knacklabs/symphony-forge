@@ -2,17 +2,27 @@
   "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
   "branch": "fix/several-tests-fail-on-main-in-a-full-loc",
   "done_when": "tests/test_reviews_remove_their_temp_folders.py::test_1, tests/test_steer_question.py::test_2[interrupt], tests/test_pytest_cleanup_skips_locked_files.py::test_4 and the doctor Ctrl-C test send Ctrl-C only after the process reports it is ready and wait for its exit within a bound, instead of fixed sleeps, so they pass when their files run together with -n 8 on macOS; what they test is unchanged; new and existing client repos see no behaviour change",
-  "flagged": [],
+  "flagged": [
+    "tests/test_reviews_remove_their_temp_folders.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6bef3c958f1ccf662a2905747f01be6751af44914db9ee0e89dac8bfdfddd924",
+    "branch_diff": "4247fc8cd9dce77e39193ad97b31884623db346cd64aec1a969f906dc05ed6db",
     "changed": "0529a60d34e25727d14f2a7aa141cd2b396d1e11135b9273684fd6023ab47bd2",
-    "commit": "8d7afebe310107bd9b22b5cd5d7134655a359d36",
+    "commit": "26a38cae1f62671069f3ce422a67b3796df89987",
     "dismissals": [],
-    "findings": [],
-    "id": "3d602a82-781c-4650-9ab0-4cb1397220b8",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The supplied PR proof list is `missing`. The latest worker commit, f743db6a, refers to the proof list \u201cabove\u201d but contains no `Proof list:` paragraph. The complete list in an older commit does not satisfy this requirement: src/forge/review.py:368\u2013376 extracts that paragraph only from the latest worker commit. Include the complete list there, covering all four named tests, both locked-file cases, the combined macOS run with `-n 8`, preserved assertions, and unchanged behavior for new and existing client repos.",
+        "file": "tests/test_reviews_remove_their_temp_folders.py",
+        "line": 85,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "4374be84-24ae-45be-8e9c-ed8a2e19b6ea",
+    "status": "blocked"
   },
   "round": 3,
   "status": "fixing",
@@ -23,6 +33,10 @@
     },
     {
       "at": "2026-10-06T11:23:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T14:46:58+00:00",
       "step": "review"
     }
   ],
