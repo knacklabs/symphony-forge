@@ -1,4 +1,5 @@
 {
+  "allow_large": "The user requested committing the staged internal CLI change after the interface-limit refusal; command options and behavior are unchanged.",
   "base": "a1153547af09b5e787cad7b757fc13301b96ad0a",
   "branch": "fix/one-forge-close-looks-up-the-same-git-fa",
   "done_when": "Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it needs with one git log call; behaviour is unchanged; a command test counts git calls in one close and shows each of those lookups happens once; the sdk_data test fixture finds the real uv even when a stub uv is on PATH; new and earlier-adopted client repos get it, with a command test for each",
