@@ -20,9 +20,7 @@ from forge.repo import git, refuse
 HERE = Path(__file__).parent
 # The shipped how-to per concern of the client stack; the brief names it and the worker may read it.
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
-# Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
-TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
-              ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+TEST_PATHS = repo.TEST_PATHS
 SERIOUS = ("P0", "P1")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
