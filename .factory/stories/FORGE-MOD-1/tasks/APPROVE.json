@@ -1,0 +1,39 @@
+{
+  "branch": "task/FORGE-MOD-1-APPROVE",
+  "flagged": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e57b85b5ec6c1fee0aa6adc2417e2044b1fe8ad31b16e2b4cb559473e1f24b09",
+    "changed": "722acda801cfbd1cdf441a8437ecb33c00d37a94e1305097e6cfa6a0b8406548",
+    "commit": "3540107d305692c9ff25c9fa0993d941afa7d09e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The terminal and Desktop cases remain outside automated testing: `forge.toml:6` and `.github/workflows/forge-next.yml:58` execute only Python tests. The reported native run verifies this revision, but subsequent changes could break the button-free fallback without failing those checks. `plans/FORGE-MOD-1.md:284` assigns the native plugin test job to SHIP; that task should include this file. This previously reported gap remains open.",
+        "file": "src/forge/mod/hooks/approval.test.ts",
+        "line": 4,
+        "priority": "P2",
+        "title": "Later: SHIP must include the approval tests in the native test job"
+      }
+    ],
+    "id": "5317cba9-dd6b-40fb-aada-8b3ff33e2b0f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T06:19:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T06:42:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T07:09:32+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}
