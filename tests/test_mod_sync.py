@@ -16,6 +16,7 @@ import pytest
 from conftest import ROOT, _install, patient
 from test_mod_install import (mod_reads_real_old_forge_refusal_and_spaced_working_directory,
                               real_claude_sync_installs_from_local_release_tag)
+from test_mod_native import run_native_plugin_checks
 from test_setup import _autoreview, _on_a_branch_with_forge_toml, _version
 
 STORY = 'FORGE-MOD-1'
@@ -78,7 +79,7 @@ def _sync_keeps_the_mod_current_at_user_scope(repo, monkeypatch, marketplace, in
     writes = [args for args in _calls(repo) if args[:1] == ['plugin'] and 'list' not in args]
     assert writes == ([['plugin', 'marketplace', 'add', 'knacklabs/symphony-forge']] if not marketplace else []) + [
         ['plugin', 'marketplace', 'update', 'forge'],
-        ['plugin', 'update', 'forge@forge'] if installed else
+        ['plugin', 'update', 'forge@forge', '--scope', 'user'] if installed else
         ['plugin', 'install', 'forge@forge', '--scope', 'user'],
     ]
     assert _snapshot(repo.path) == before  # Codex bytes unchanged; no repo-local mod files
@@ -94,7 +95,7 @@ def _sync_reports_plugin_failure_once_and_still_succeeds(repo):
     assert 'Network unavailable' in warnings[0]
     assert 'retry later' not in done.stdout + done.stderr
     assert ['plugin', 'marketplace', 'update', 'forge'] in _calls(repo)
-    assert ['plugin', 'update', 'forge@forge'] not in _calls(repo)
+    assert ['plugin', 'update', 'forge@forge', '--scope', 'user'] not in _calls(repo)
 
 
 def _sync_succeeds_without_claude_and_writes_no_mod_files(repo, monkeypatch):
@@ -176,7 +177,7 @@ def _previously_adopted_repo_gets_the_mod(repo):
 @pytest.mark.parametrize('case', ['fresh-machine', 'already-current', 'older-install', 'no-network',
                                 'no-claude', 'doctor-missing', 'doctor-old', 'doctor-supported',
                                 'marketplace-version', 'previously-adopted', 'real-local-install',
-                                'real-transport'])
+                                'real-transport', 'native-plugin-checks'])
 def test_5_sync_turns_on_the_mod(repo, gh, tmp_path, monkeypatch, case):
     if case in ('fresh-machine', 'already-current', 'older-install'):
         _sync_keeps_the_mod_current_at_user_scope(repo, monkeypatch, case != 'fresh-machine',
@@ -196,5 +197,7 @@ def test_5_sync_turns_on_the_mod(repo, gh, tmp_path, monkeypatch, case):
         _previously_adopted_repo_gets_the_mod(repo)
     elif case == 'real-local-install':
         real_claude_sync_installs_from_local_release_tag(repo, tmp_path, monkeypatch)
+    elif case == 'native-plugin-checks':
+        run_native_plugin_checks(tmp_path)
     else:
         mod_reads_real_old_forge_refusal_and_spaced_working_directory(repo, tmp_path, monkeypatch)

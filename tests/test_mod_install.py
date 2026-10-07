@@ -39,6 +39,7 @@ os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
     for name in ("TMPDIR", "TMP", "TEMP", "XDG_CACHE_HOME"):
         monkeypatch.setenv(name, str(scratch))
     monkeypatch.setenv("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")
+    monkeypatch.setenv("GIT_ALLOW_PROTOCOL", "file")
     for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
         monkeypatch.setenv(name, "http://127.0.0.1:9")
     for name in ("NO_PROXY", "no_proxy"):
@@ -81,27 +82,39 @@ os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
     # Register the public marketplace name from a local path first: sync's
     # normal update/install commands then use only local git, with no network.
     claude("plugin", "marketplace", "add", str(market))
-    synced = repo.forge("sync")
-    assert synced.returncode == 0, synced.stdout + synced.stderr
-    installed = json.loads(claude("plugin", "list", "--json"))
-    entry = next((row for row in installed if row["id"] == "forge@forge"), None)
-    assert entry is not None, installed
-    assert entry["scope"] == "user" and entry["enabled"] is True
-    assert entry["version"] == version
-    claude("plugin", "validate", "--strict", entry["installPath"])
-    _reload_and_open_installed_mod(repo.path, home, "Nothing in progress.")
+    assert not json.loads(claude("plugin", "list", "--json"))
+    (home / ".claude/settings.json").write_text("{}", encoding="utf-8")
+    current_path = os.environ["PATH"]
+
+    def install():
+        # The session is already running without the mod. Sync changes only the
+        # user install; /reload-plugins must make it live in the native pane.
+        with monkeypatch.context() as local:
+            local.setenv("PATH", current_path)
+            synced = repo.forge("sync")
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        installed = json.loads(claude("plugin", "list", "--json"))
+        entry = next((row for row in installed if row["id"] == "forge@forge"), None)
+        assert entry is not None, installed
+        assert entry["scope"] == "user" and entry["enabled"] is True
+        assert entry["version"] == version
+        claude("plugin", "validate", "--strict", entry["installPath"])
+
+    _reload_and_open_installed_mod(repo.path, home, "Nothing in progress.", install)
+    claude("plugin", "uninstall", "forge@forge", "--scope", "user")
+    assert not json.loads(claude("plugin", "list", "--json"))
     old_bin = tmp_path / "old-bin"
     patient(lambda: old_bin.mkdir())
     _old_forge(old_bin, tmp_path, "forge")
     old_repo = tmp_path / "old repo with spaces"
     patient(lambda: old_repo.mkdir())
     repo.git("init", "-q", "-b", "main", str(old_repo))
-    monkeypatch.setenv("PATH", f"{old_bin}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("PATH", f"{old_bin}{os.pathsep}{current_path}")
     _reload_and_open_installed_mod(old_repo, home,
-                                  "This repo's Forge is too old for the pane: upgrade Forge here.")
+                                  "This repo's Forge is too old for the pane: upgrade Forge here.", install)
 
 
-def _reload_and_open_installed_mod(folder, home, expected):
+def _reload_and_open_installed_mod(folder, home, expected, install):
     if os.name == "nt":
         pytest.skip("The real interactive PTY lifecycle runs in the pinned Linux plugin job; Windows command transport has separate coverage.")
     import pty
@@ -120,8 +133,9 @@ def _reload_and_open_installed_mod(folder, home, expected):
     environment.update(TERM="xterm-256color", ANTHROPIC_API_KEY="offline-test-key",
                        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="1")
     master, slave = pty.openpty()
-    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
-    process = subprocess.Popen([REAL_CLAUDE, "--setting-sources", "user", "--ax-screen-reader"], cwd=folder,
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 180, 0, 0))
+    process = subprocess.Popen([REAL_CLAUDE, "--setting-sources", "user", "--ax-screen-reader",
+                                "--debug-file", "/dev/stderr"], cwd=folder,
                                env=environment, stdin=slave, stdout=slave, stderr=slave,
                                start_new_session=True)
     os.close(slave)
@@ -148,19 +162,22 @@ def _reload_and_open_installed_mod(folder, home, expected):
         until("DoyouwanttousethisAPIkey\\?")
         os.write(master, b"y\r")
         until("Notloggedin|APIUsageBilling")
-        until("LoadingForge|forgefortheboard|1:forge")
+        until("effort:medium.*?/effort")
+        assert "Nothing in progress." not in output and "upgrade Forge here." not in output
+        output = ""
+        install()
+        # Claude debounces its settings watcher. Wait for the real running
+        # client to acknowledge this external write before asking it to reload.
+        until("Detected change to " + re.escape(str(home / ".claude/settings.json")))
         output = ""
         os.write(master, b"/reload-plugins")
         until("/reload-plugins")
         output = ""
         os.write(master, b"\r")
         until(r"reload(?:ed|ing).*plugin|plugin.*reload(?:ed|ing)")
-        output = ""
-        os.write(master, b"/forge")
-        until("/forge")
-        output = ""
-        os.write(master, b"\r")
-        until(re.escape(re.sub(r"\s+", "", expected)))
+        # No /forge command is sent: its independent text reply cannot satisfy
+        # this check. The wide terminal must draw the native Board pane itself.
+        until(re.escape(re.sub(r"\s+", "", expected)) + r"✕")
     finally:
         try:
             os.killpg(process.pid, signal.SIGTERM)

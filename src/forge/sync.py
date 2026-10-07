@@ -491,7 +491,7 @@ def install_mod(top: Path) -> None:
         run("marketplace", "update", "forge")
         if any(isinstance(row, dict) and row.get("id") == "forge@forge"
                and row.get("scope") == "user" for row in installed):
-            run("update", "forge@forge")
+            run("update", "forge@forge", "--scope", "user")
         else:
             run("install", "forge@forge", "--scope", "user")
     except (OSError, ValueError, subprocess.TimeoutExpired) as error:
