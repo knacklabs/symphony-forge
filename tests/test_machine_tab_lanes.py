@@ -12,6 +12,8 @@ from test_lanes_tests import accepted, configure, reap, release_server  # noqa: 
 from test_story import worktree
 from test_mod_plugin import HOST, node_run, packaged_mod  # noqa: F401
 
+STORY = "FORGE-MOD-1-MACHINE"
+
 
 def check_machine_fixture_and_headless(repo, packaged_mod, tmp_path, data):
     # Native mount tests use this exact fixture. Compare its field names against
@@ -60,7 +62,7 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
     assert "waiting #2" in machine and "Older second" not in machine
 
 
-def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(env, tmp_path, lane_adapter, packaged_mod, release_server):
+def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(env, tmp_path, lane_adapter, packaged_mod, release_server):
     # Existing board tests do not exercise the plugin's lanes command or release
     # filtering. Real work commands produce every row; only the model edge waits.
     repo = env.repo
@@ -121,6 +123,9 @@ def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(
         test_run, test_output = start(first_folder, tmp_path / "test-run", repo, "test")
         test_processes.append(test_run)
         connection, _ = accepted(server, connections, first_folder, test_run, test_output)
+        # The child marker can reach us before Forge consumes its progress line.
+        _until(lambda: view()["tests"]["entries"][0]["progress"] == {"done": 1, "total": 2},
+               "Forge to report the client test's completed result")
         data = view()
         assert data["tests"]["entries"][0]["progress"] == {"done": 1, "total": 2}
         check_machine_fixture_and_headless(repo, packaged_mod, tmp_path, data)
