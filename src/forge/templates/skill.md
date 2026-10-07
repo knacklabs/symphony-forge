@@ -177,6 +177,96 @@ item's step. Machine views do not grant approval or permission to merge.
 The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
 in `tests/test_machine_views.py` checks both views against it.
 
+## Claude Code plugin core
+
+The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
+it never edits repo files or replaces the commands' approval and merge rules.
+All its consumers share one snapshot. On load, then every 10 seconds, one refresh
+runs `forge board --json`, `forge next --json` and `forge lanes --json` together.
+If that Forge has no lanes command, lane data is absent. A due refresh is skipped
+while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
+Drawing ticks advance live timers every second without fetching state.
+
+A failed or malformed refresh, or a command taking over 20 seconds, keeps the
+last good rows and adds a dim `Couldn't refresh: <first line of the error>`.
+It retries on the next tick. A Forge too old for JSON shows
+`Upgrade Forge in this repo to use the board.` The board command owns the
+60-second GitHub checks cache described above; a check changing without a local
+edit appears on the next refresh after that cache expires. Unknown checks stay
+unknown, including when GitHub is unreachable.
+
+## The pane and strip
+
+Type `/forge` at any width, including 80 columns, to open and focus the pane.
+The mod requests it at interactive session start too; Claude Code places it
+automatically at 144 columns, or 110 after the person has opened it once.
+The strip below that wide-screen threshold ends with `/forge for the board`.
+The terminal pane shows each story, its tasks and each fix with their stage,
+running worker's kind, model and elapsed time, pull request checks and open
+findings. Recorded details add tool, effort, round, current step, activity,
+idle time and stalled state, stage times, test progress, failed job and timeout
+cause, and findings' severity and dismissed count. Missing state or timing stays
+unknown. An empty board says `Nothing in progress.`
+
+The Desktop app's Code tab draws the same facts as tables and a stage timeline
+for each item, with hover times, equivalent alt text and native buttons for key
+actions. The strip stays text. `/forge` always returns the summary and full board
+as text, two lines per item, with tasks indented under their story, as well as
+opening the pane. Where mods draw nothing (the VS Code chat panel, `claude -p`
+and Remote Control from a phone or claude.ai), that text is the status reply.
+It uses the last completed snapshot, including any refresh error.
+
+The strip above the prompt uses at most three lines. Its first line shows
+`Agents N/M (W waiting) · Tests: <running item or idle> (K waiting) · 1: <next command>`.
+It also shows a recorded current worker step. The other lines show up to two active items
+from this repo, each with Build → Tests → Review → CI → Merge, its round and total
+time. A third active item replaces the last line with `+N more · /forge for all`.
+Finished stages show ✓ and their duration, the current stage ● and a live timer,
+and failed stages ✗ in red. Unreached stages have only their name; skipped tests
+show `Tests –`. Symbols carry the meaning without colour. The total adds recorded
+durations across rounds and live elapsed time without counting concurrent stages
+twice. At widths under 80 columns it is one line: running and waiting counts, the first
+active item's current stage and time, its total and the next step; without lane data,
+the first line is only the next step; the narrow strip has no item or lane summary.
+
+Press `1` on an empty prompt when Claude is idle to run the displayed next command
+as the user. Before submitting, the mod re-reads `forge next --json`: if the command
+changed it redraws and runs nothing. A failed re-read submits nothing and toasts
+`Couldn't check the next step: <reason>`; a failed submit toasts
+`Couldn't run the next step: <reason>`. A null command or busy Claude has no hotkey
+and shows the plain next-step line instead. Typing into a nonempty prompt stays typing.
+
+## Events
+
+The mod starts a session turn for new review findings, failed checks, a pull request
+ready to merge, worker questions and finished runs. Progress only updates the pane:
+starting a run or running checks never asks the agent for a status turn.
+Each event line names the plain item title, what happened and that item's own next command,
+or `forge next` when there is no runnable command. When the turn arrives, act on it
+straight away through Forge's commands: resolve findings with evidence or send a
+worker round, follow a failed check's next step, close finished work, and merge ready
+work only when allowed. Answer a worker question with
+`forge work <item> --note "<answer>"`; a choice the human owns still goes to them.
+Do not build another polling or watcher loop for an interactive mod session.
+
+Forge's occurrence ids distinguish events, never their text: review results, run
+ends and questions get fresh ids; failed check runs use GitHub's id and completion time,
+failed commit statuses use their own id, and readiness uses the review id and head commit.
+The same question in another round or a check failing again after a later completion
+therefore gets another turn, even if its wording is unchanged. A run that starts
+and finishes between refreshes still has its completion occurrence.
+
+Seen ids are stored for the repo root and session id together, so two sessions
+consume events independently. At session start or reload the current ids become
+seen without starting a turn. Several changes, including those found while Claude
+is busy, are combined in one turn after the current turn ends, one line per event.
+A failed submission leaves them unseen for the next refresh to retry; a successful
+one is not repeated. Only interactive sessions on terminal or Desktop receive
+event turns, and only for their own repo. Forge-started workers, readers and
+reviewers have `FORGE_WORKER=1` and never act on events. Headless sessions receive
+no event turns. Codex and sessions without the mod keep using `forge next` and the
+existing command flow.
+
 ## Handoff
 
 `.git/forge/handoff.md` in the main checkout, shared by every worktree, carries your state across

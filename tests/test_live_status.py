@@ -9,6 +9,7 @@ import os
 import socket
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -188,7 +189,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         listener.listen()
         listener.settimeout(30)
         gate = (f'import socket\nwith socket.create_connection({listener.getsockname()!r}, '
-                'timeout=30) as gate:\n    gate.recv(1)\n')
+                'timeout=30) as gate:\n    gate.settimeout(None)\n    gate.recv(1)\n')
         expected_steps = ["editing src/forge/close.py", "committing"]
         selections = {}
         if case == "codex" or case.startswith("read") and case.endswith("codex"):
@@ -298,6 +299,18 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
+                # A connection acknowledges emission, not Forge consuming the event.
+                # Hold the producer until the real board exposes this step; only then
+                # compare snapshots. The test and parent cleanup bound the held run.
+                if expected is not None:
+                    deadline = time.monotonic() + 30
+                    while True:
+                        snapshot = view(repo, "board")
+                        current = next(r for parent in snapshot["items"]
+                                       for r in [parent, *parent["children"]] if r["id"] == item)
+                        if (current["worker"] or {}).get("step") == expected:
+                            break
+                        assert time.monotonic() < deadline, f"Forge did not report {expected}"
                 result, _ = row(repo, item)
                 activities.append(result["activity"])
                 assert result["idle_since"] is None and result["stalled"] is False

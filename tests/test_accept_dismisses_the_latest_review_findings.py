@@ -92,7 +92,7 @@ def test_5_clients_receive_the_choice_and_clean_review_rules(repo, gh, tmp_path,
         folder, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stderr
     for host in (".codex", ".claude"):
-        text = " ".join((folder / host / "skills/forge/SKILL.md").read_text().split())
+        text = " ".join((folder / host / "skills/forge/SKILL.md").read_text(encoding="utf-8").split())
         assert "every remaining finding" in text
         assert "owner's reason" in text
         assert "without checking whether code or the default branch changed" in text
