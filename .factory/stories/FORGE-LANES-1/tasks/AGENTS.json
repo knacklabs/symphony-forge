@@ -10,31 +10,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7c367f119349f4111b15f0cf27ad0b568e73376ff9ca52219ae4d2db0fd74e91",
-    "changed": "ae398d0062854972850ed10b35cc13c0eb7e30ae27ca5f16f8aa3bae3bb179f2",
-    "commit": "b4a60231a3ea1838a515c5e78c66b79cabcdbc8c",
+    "branch_diff": "fc2a54c59d5a023aca19c4516f453c27fd7e819c9637342e672e151c4184a33d",
+    "changed": "c61135e6e4429800946c98d355e602daf6ffb6dee1d5a3912d27f7346535759c",
+    "commit": "7bfcc62a40e895d8eae2b845420cd1a7cdf5493e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous metadata defect remains open. This provider-confirmed selection updates activity records, but the lane retains the initial `chosen` snapshot from review.py:509. The same gap occurs when worker.py:165 switches providers and in both reader paths at story.py:222\u2013231: repo.py:411\u2013419 permits an empty selection, while confirmed settings at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, board lane entries can show null or obsolete model and effort values for running agents. Refresh the shared entry whenever a provider confirms or changes its selection.",
+        "body": "The previous metadata defect remains open. Provider-confirmed selections update activity records here, but the lane keeps the initial `chosen` snapshot from review.py:509. The same problem affects worker.py:165 when a design worker falls back to Codex, and both reader paths at story.py:222\u2013231 when settings are omitted. repo.py:411\u2013419 allows an empty selection; confirmed settings at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, running entries in board JSON can report null or obsolete model and effort values. Refresh the shared lane entry when a provider confirms or changes its selection.",
         "file": "src/forge/review.py",
         "line": 604,
         "priority": "P2",
         "title": "Refresh lane metadata when the provider selects its model and effort"
       },
       {
-        "body": "The deferred integration remains outstanding. fasttest.py:271\u2013272 launches tests directly, while review.py:279\u2013288 uses the separate ticket queue; neither registers shared test entries. These selectors therefore cannot stop tests, cancel waiting tests, or stop an item's worker and test together, and the board cannot expose test output or progress. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level proofs to TESTS. Complete it there; this is advice rather than an AGENTS blocker.",
+        "body": "The deferred integration remains outstanding. fasttest.py:271\u2013272 launches tests directly, while review.py:279\u2013288 uses the separate ticket queue; neither registers shared test entries. These selectors therefore cannot stop running or waiting tests, stop an item's worker and test together, or expose test output and progress in board JSON. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level proofs to TESTS. Complete it there; this remains advice rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "id": "7427cd85-17e3-4171-ae17-32c1cf8ecb20",
+    "id": "83c5d5b4-1bd0-4916-9975-7a4fc5b09375",
     "status": "clean"
   },
   "round": 27,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -102,6 +102,10 @@
     },
     {
       "at": "2026-10-07T11:54:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T12:51:27+00:00",
       "step": "review"
     }
   ],
