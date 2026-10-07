@@ -1,0 +1,14 @@
+{
+  "base": "271419fece73b2a9022d1173e9e2e08087fc9e89",
+  "branch": "fix/find-the-problem-to-solve",
+  "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-07T03:30:49+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Find the problem to solve"
+}
