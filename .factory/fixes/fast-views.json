@@ -10,38 +10,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "548f12939a913a911f140245d57568c1b7038f7976621dc5b4764bf3e7789281",
+    "branch_diff": "294013e439c66bde4a63d61c5b851c65c8ab0fcc5e9c663a41c6431dd7c96d03",
     "changed": "18cd6030d55802f425a6bfcfa61e1db0b3c6790a3a5ce54c692a6801c2977787",
-    "commit": "b8e220a6b0df68b8c604bdaa4fc3d2a7541ef3db",
+    "commit": "9e8f6ab86a9912a1f0a2b4d46ad31b49e813e0ee",
     "dismissals": [],
     "findings": [
       {
-        "body": "This explicit Done-when requirement remains unproven. The proof list acknowledges that the latest repaired source has no successful Windows execution. The supplied close run passes six new retention/CRLF cases locally; the broader machine-view results are also local. The earlier Windows run predates the repair and does not establish that every machine-view case ran. The enforced limits in tests/conftest.py:167 and .github/workflows/forge-next.yml:42,58 cannot substitute for execution evidence. Supply a successful Windows CI run covering tests/test_machine_views.py on the repaired source.",
-        "file": "tests/test_machine_views_recent_finished_items.py",
-        "line": 107,
-        "priority": "P1",
-        "title": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI"
-      },
-      {
-        "body": "The previous advisory remains open. With a signed landed commit and log.showSignature=true, this git show includes signature-verification output, as specified by the [Git configuration contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-logshowSignature). src/forge/repo.py:144 returns the entire trimmed stdout; board.py:576 then inserts it into diff-tree input as a tree ID. That corrupts the snapshot batch used by both JSON commands and the human board. Resolve the tree with rev-parse <ref>^{tree}, or explicitly disable signature output.",
+        "body": "The previous advisory remains open. For a signed landed commit with log.showSignature=true, git show includes signature-verification output, per the [Git configuration contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-logshowSignature). src/forge/repo.py:144 returns the entire trimmed stdout, which board.py:576 inserts into diff-tree input as a tree ID. This corrupts the snapshot batch used by both JSON commands and the human board. Resolve the tree with rev-parse <ref>^{tree}, or explicitly disable signature output.",
         "file": "src/forge/board.py",
         "line": 567,
         "priority": "P2",
         "title": "Disable signature output when reading the landed tree ID"
       },
       {
-        "body": "The previous advisory remains open. This comprehension expires historical additions even when their files no longer exist in landed_states. After reverting an old merge and removing its refs, a task or fix can restart with the same identity: src/forge/task.py:219\u2013221 checks current file existence, and task.py:189,273 use that check when starting work. The new ongoing item is consequently omitted from both JSON views, and nextstep.py:209 also suppresses restarted-fix guidance. Require the path to exist in landed_states before expiring it from a historical merge date.",
+        "body": "The previous advisory remains open. This comprehension expires historical additions even when their files no longer exist in landed_states. After reverting an old merge and removing its refs, a task or fix can restart with the same identity: src/forge/task.py:219\u2013221 checks current file existence, and task.py:189,273 use that check when starting work. The ongoing replacement is consequently omitted from both JSON views, and nextstep.py:209 also suppresses restarted-fix guidance. Require the path to exist in landed_states before expiring it from a historical merge date.",
         "file": "src/forge/board.py",
         "line": 533,
         "priority": "P2",
         "title": "Do not expire restarted tasks and fixes using reverted merge dates"
       }
     ],
-    "id": "bc7634ff-0258-45c9-a38a-43d5d1db3bbb",
-    "status": "blocked"
+    "id": "393855b7-398b-4ba9-a917-2db238eb9525",
+    "status": "clean"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T03:31:17+00:00",
@@ -65,6 +58,10 @@
     },
     {
       "at": "2026-10-07T05:48:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T06:02:35+00:00",
       "step": "review"
     }
   ],
