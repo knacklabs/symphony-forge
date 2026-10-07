@@ -104,7 +104,7 @@ def traced(repo, monkeypatch, command, trace):
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 @pytest.mark.parametrize("command", ["board", "next"])
-def test_machine_views_omit_old_finished_items_without_more_git_calls(
+def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
         repo, gh, monkeypatch, tmp_path, history, command):
     # Old contract retained all landed work. JSON now drops only work older than
     # seven days; exact-boundary, ongoing, and human-history contracts stay intact.

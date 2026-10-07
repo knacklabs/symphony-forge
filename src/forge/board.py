@@ -568,11 +568,13 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     empty.check_returncode()
     # Comparing each unique tree with Git's empty tree lists all its blobs in one process.
     snapshots: dict[str, dict[str, str]] = {tree: {} for tree in refs.values()}
-    done = repo.run("git", "diff-tree", "--stdin", "-r", "--raw", "-z", "--no-abbrev",
-                    "--no-renames", "--", ".factory/stories", ".factory/fixes", "plans", cwd=top,
-                    input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots))
-    done.check_returncode()
-    fields = iter(done.stdout.split("\0"))
+    # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
+    done = subprocess.run([shutil.which("git") or "git", "diff-tree", "--stdin", "-r", "--raw",
+                           "-z", "--no-abbrev", "--no-renames", "--", ".factory/stories",
+                           ".factory/fixes", "plans"], cwd=top,
+                          input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots).encode("utf-8"),
+                          capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
+    fields = iter(done.stdout.decode("utf-8", errors="replace").split("\0"))
     for field in fields:
         for line in field.splitlines():
             if line.startswith(":"):
