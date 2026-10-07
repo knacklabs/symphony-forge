@@ -6,45 +6,24 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "38dd46cf4f6b96c578ae3bb31dffb2d9037f3f9d9e20bcbada9fc861862c467f",
-    "changed": "87877e5574432f1285dfaeb277a86257ab9ae4ddcda4f42dae2350da24816ce8",
-    "commit": "e8023853eaff0c786e4b9528b2232e0bd85c13b4",
+    "branch_diff": "2c6d6a2a7542502b1756599168961ac6b24bb0080bc57481d868614fda912182",
+    "changed": "77b382d2e7f774b51793fa0b0e54d582d599bbef692f499a13fc1340bd4e79a6",
+    "commit": "0da1d6def53a7e22f9597e7e019b0e9db9913061",
     "dismissals": [],
     "findings": [
       {
-        "body": "The two producers use different path representations on Windows: machine.py:77 writes repo_root with as_posix(), while board.py:68\u201371 returns str(Path(...).resolve()), which contains backslashes. This comparison therefore rejects this repo's own entries. Both surfaces and /forge lose local titles, tool, round and step enrichment, treating local runs as foreign runs. Normalize both roots with the existing path helper before comparing them.",
-        "file": "src/forge/mod/hooks/machine.ts",
-        "line": 35,
-        "priority": "P1",
-        "title": "Not done: local Machine run facts on Windows"
-      },
-      {
-        "body": "Run selectors identify only the item and repo. When an agent and test run share an item\u2014as worker and tests already do in machine.fixture.ts\u2014they have indistinguishable button labels. The confirmation at machine.ts:176 also names only that item and repo. Keyboard and screen-reader users cannot reliably distinguish which run they are selecting or confirming, despite these controls stopping different processes. Include the lane or run kind in both the selector label and confirmation.",
-        "file": "src/forge/mod/hooks/machine.ts",
-        "line": 143,
-        "priority": "P1",
-        "title": "Distinguish agent and test targets before confirming a stop"
-      },
-      {
-        "body": "Several explicitly required proofs remain green when their claimed behavior breaks:\n- machine.test.ts:76\u201379 checks absence of Svg at 80 columns, but terminal rendering never uses Svg at any width. Keeping the wide tree connectors and gates layout at 80 columns would pass.\n- The tree assertions at lines 49\u201350 check 3/8 and blocked, but neither the progress bar nor the review finding count. Removing the bar while retaining 3/8, or dropping the finding count, passes.\n- The load check at line 75 asserts only 30 columns with an unchanged load input. Repeating the latest sample in every cell instead of retaining the last 30 refresh samples passes. The null-load cases check only absence of Raster, so an unwanted load Text remains undetected.\n- The fs.read mock at line 23 returns identical content for every path. Opening the worker's file regardless of the selected run passes both output cases.\n- tests/test_machine_tab_lanes.py:49 checks only the first agent entry; its fields helper at lines 45\u201346 also traverses only the first list element. Invented fields in a test entry or a later board fixture item escape the promised shared producer contract.\nAdd assertions at the existing native and command boundaries that fail for these concrete regressions.",
-        "file": "src/forge/mod/hooks/machine.test.ts",
-        "line": 77,
-        "priority": "P1",
-        "title": "Not done: Machine tests detect the behaviors claimed by the proof list"
-      },
-      {
-        "body": "These native cases are not executed by the repository's automated test command. forge.toml:6 and .github/workflows/forge-next.yml:58 run Python tests; tests/test_mod_plugin.py:45\u201357 typechecks the hooks but does not execute their native tests. The reported manual native run verifies this revision, but subsequent interaction regressions would escape CI. plans/FORGE-MOD-1.md assigns the plugin test job to SHIP, so this is that task's follow-up rather than a MACHINE merge blocker.",
+        "body": "The previous CI gap remains open: forge.toml:6 and .github/workflows/forge-next.yml:58 execute Python tests, while tests/test_mod_plugin.py:45\u201357 typechecks hooks without running the native interaction tests. The reported manual run verifies this revision, but automated checks still would not detect regressions in output selection, confirmation, hotkeys or surface rendering. plans/FORGE-MOD-1.md assigns the native plugin test job to SHIP, so that task should wire these cases into the automated suite.",
         "file": "src/forge/mod/hooks/machine.test.ts",
         "line": 40,
         "priority": "P2",
         "title": "Later: SHIP must include the Machine native tests in CI"
       }
     ],
-    "id": "9f49429a-9ab8-40ba-9da0-fd9020fd95b3",
-    "status": "blocked"
+    "id": "9623caf9-5da5-4353-97ec-a77aa1fb09da",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T17:39:11+00:00",
@@ -52,6 +31,10 @@
     },
     {
       "at": "2026-10-07T18:44:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T19:04:52+00:00",
       "step": "review"
     }
   ],
