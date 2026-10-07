@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 517,
+      "text": "Not done: Git command counts still grow with old finished items",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: GitHub-unreachable board rows with unknown checks\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -261,6 +272,17 @@
       "text": "Expire human acceptance in subsequent review instructions",
       "from": "blocking",
       "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 283,
+      "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
+      "from": "blocking",
+      "item": "the-owner-s-review-loop-choice-often-can",
       "status": "open",
       "closed_by": null
     },
@@ -452,6 +474,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 134,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 137,
+      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -639,6 +683,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it\tone-forge-close-looks-up-the-same-git-fa",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 135,
+      "text": "Not done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it",
+      "from": "blocking",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -782,6 +837,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 60,
+      "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
+      "from": "worker",
+      "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "kind": "bug",
       "path": "tests/test_close_test_runs_wait_in_line.py",
@@ -903,6 +980,50 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\ttests/test_fix_clone_gets_test_tools.py\tNot done: proof that Forge's own outer uv commands are frozen\tany-pyproject-toml-change-makes-forge-te",
+      "kind": "bug",
+      "path": "tests/test_fix_clone_gets_test_tools.py",
+      "line": 72,
+      "text": "Not done: proof that Forge's own outer uv commands are frozen",
+      "from": "blocking",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 98,
+      "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
+      "from": "worker",
+      "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_fix_leftover_app_server_bare_command.py",
+      "line": 33,
+      "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_hotspots.py\tNot done: test_4_only_a_fix_closes_its_named_files_entries\tFORGE-SPOTTED-1/HOT",
       "kind": "bug",
       "path": "tests/test_hotspots.py",
@@ -954,8 +1075,8 @@
       "text": "Not done: board command coverage with a story, fix, running worker and open pull request",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: command test for a human-only merge returning null\tFORGE-MOD-1/VIEWS",
@@ -965,8 +1086,8 @@
       "text": "Not done: command test for a human-only merge returning null",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: command test for a non-runnable first Next line containing a placeholder\tFORGE-MOD-1/VIEWS",
@@ -976,8 +1097,8 @@
       "text": "Not done: command test for a non-runnable first Next line containing a placeholder",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
@@ -987,8 +1108,8 @@
       "text": "Not done: machine-view tests for new and upgraded client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
@@ -998,8 +1119,8 @@
       "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
       "from": "worker",
       "item": "several-tests-fail-on-main-in-a-full-loc",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
@@ -1376,6 +1497,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/fasttest.py\tP2: Preserve related selection when harmless tables move or disappear",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 151,
+      "text": "P2: Preserve related selection when harmless tables move or disappear",
+      "from": "review",
+      "item": "any-pyproject-toml-change-makes-forge-te",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve every changed path when module names collide",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 248,
+      "text": "Preserve every changed path when module names collide",
+      "from": "review",
+      "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/fasttest.py\tPreserve option values when removing explicit test paths",
       "kind": "edge",
       "path": "src/forge/fasttest.py",
@@ -1585,6 +1728,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\t[P2] Disable rename detection when identifying bookkeeping commits",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 162,
+      "text": "[P2] Disable rename detection when identifying bookkeeping commits",
+      "from": "review",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\t[P2] Disable signature output in the machine-readable log",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 161,
+      "text": "[P2] Disable signature output in the machine-readable log",
+      "from": "review",
+      "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tCanonicalize raw diff ordering before hashing",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -1746,8 +1911,8 @@
       "text": "The reported Windows worker crash still needs a Windows rerun.",
       "from": "worker",
       "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "edge\ttests/test_next_announces_new_forge_releases.py\tThe reported Windows timing assertion still needs a Windows rerun.",
@@ -1801,160 +1966,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed\tthe-owner-s-review-loop-choice-often-can",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 283,
-      "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
-      "from": "blocking",
-      "item": "the-owner-s-review-loop-choice-often-can",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
-      "kind": "bug",
-      "path": "tests/test_close_runs_only_related_tests.py",
-      "line": 60,
-      "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
-      "from": "worker",
-      "item": "the-owner-s-review-loop-choice-often-can",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change\tany-pyproject-toml-change-makes-forge-te",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 134,
-      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change",
-      "from": "blocking",
-      "item": "any-pyproject-toml-change-makes-forge-te",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/fasttest.py\tNot done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'\tany-pyproject-toml-change-makes-forge-te",
-      "kind": "bug",
-      "path": "src/forge/fasttest.py",
-      "line": 137,
-      "text": "Not done: forge test --pytest runs the whole suite for a pyproject.toml change only when its dependency or pytest settings change, and only'",
-      "from": "blocking",
-      "item": "any-pyproject-toml-change-makes-forge-te",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_clone_gets_test_tools.py\tNot done: proof that Forge's own outer uv commands are frozen\tany-pyproject-toml-change-makes-forge-te",
-      "kind": "bug",
-      "path": "tests/test_fix_clone_gets_test_tools.py",
-      "line": 72,
-      "text": "Not done: proof that Forge's own outer uv commands are frozen",
-      "from": "blocking",
-      "item": "any-pyproject-toml-change-makes-forge-te",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tP2: Preserve related selection when harmless tables move or disappear",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 151,
-      "text": "P2: Preserve related selection when harmless tables move or disappear",
-      "from": "review",
-      "item": "any-pyproject-toml-change-makes-forge-te",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it\tone-forge-close-looks-up-the-same-git-fa",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 135,
-      "text": "Not done: Within one forge command the default branch, landed ref and git common folder are looked up once, and close reads the commits it",
-      "from": "blocking",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
-      "kind": "bug",
-      "path": "tests/test_close_runs_only_related_tests.py",
-      "line": 60,
-      "text": "The comment-only uv.lock case expects an unrelated test to run, but it is omitted on the default branch too.",
-      "from": "worker",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
-      "kind": "bug",
-      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
-      "line": 98,
-      "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
-      "from": "worker",
-      "item": "picker-two-rules",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_leftover_app_server_bare_command.py",
-      "line": 33,
-      "text": "The orphan-server setup failed again in the full suite but passed alone; this flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_leftover_app_server_bare_command.py\tThe orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_fix_leftover_app_server_bare_command.py",
-      "line": 33,
-      "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/fasttest.py\tPreserve every changed path when module names collide",
-      "kind": "edge",
-      "path": "src/forge/fasttest.py",
-      "line": 248,
-      "text": "Preserve every changed path when module names collide",
-      "from": "review",
-      "item": "picker-two-rules",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\t[P2] Disable rename detection when identifying bookkeeping commits",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 162,
-      "text": "[P2] Disable rename detection when identifying bookkeeping commits",
-      "from": "review",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\t[P2] Disable signature output in the machine-readable log",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 161,
-      "text": "[P2] Disable signature output in the machine-readable log",
-      "from": "review",
-      "item": "one-forge-close-looks-up-the-same-git-fa",
       "status": "open",
       "closed_by": null
     }

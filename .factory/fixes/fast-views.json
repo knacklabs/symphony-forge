@@ -2,13 +2,38 @@
   "base": "39c22897865905b190a9ef0679919ec43368e5d3",
   "branch": "fix/fast-views",
   "done_when": "forge board --json and forge next --json leave out stories, tasks and fixes that were merged or done more than 7 days ago (they still show in the text board's history), with no cache; their output is otherwise unchanged; a command test on a repo with old finished items shows they are left out and that the number of git commands per call does not grow with them (no wall-clock timing); tests/test_machine_views.py stays within its time limit on Windows CI; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/board.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6e43f20a0a70b6f391f41b7e19729d31f2c60c611e4c68ebb0f33a93dc83ee46",
+    "changed": "6e44b67541f343d39bbf964db9822ed45b1e10aa8cf5767e871b3a708d22e93a",
+    "commit": "2954908d8f81a18c358ad2f21aff6f5061dbaf36",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The bounded-Git-work requirement remains unmet in both JSON commands. `_machine_history` calls `_copies` before filtering, and `src/forge/board.py:568\u2013569` still starts one `git ls-tree` per remote story/task/fix branch, including retained branches for expired work. There are two further paths: with an approved story containing an unmerged task, `src/forge/nextstep.py:437` calls `_started`, whose loop at `src/forge/task.py:228\u2013235` starts an `ls-tree` and a merge-state lookup for each retained old task branch; archived tasks with cross-story dependencies also trigger per-row Git reads through `src/forge/story.py:377\u2013392`. These items can be absent from JSON while continuing to add subprocesses on every refresh. The new regression passes despite these defects because its twelve additions create no additional branch refs, its LIVE tasks are all merged (returning before `_started`), and the added rows have `After: none`. Reuse the bulk history for these discovery/dependency paths and extend the command test to cover retained finished refs, a genuinely unfinished story, and archived cross-story dependencies.",
+        "file": "src/forge/board.py",
+        "line": 517,
+        "priority": "P1",
+        "title": "Not done: Git command counts still grow with old finished items"
+      }
+    ],
+    "id": "951ad643-d9ad-40f0-b32b-bcd12bf0d01c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-07T03:31:17+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-07T04:30:04+00:00",
+      "step": "review"
     }
   ],
   "why": "forge board --json takes about 45 seconds and forge next --json about 10, so the pane's 10-second refresh would keep a core busy in every open Claude Code session",
