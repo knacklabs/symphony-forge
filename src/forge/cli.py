@@ -130,6 +130,10 @@ def _run(argv: list[str] | None) -> int:
                     problem=f"forge {args.words}: unrecognized arguments: {' '.join(extra)}",
                     prog=f"forge {args.words}")
     args.args = extra
+    if args.words == "sync":
+        # The user-scoped mod follows installed Forge; repo adapters follow its pin.
+        from forge.sync import install_mod
+        install_mod(repo.root())
     if args.changes and not args.words.startswith("hook "):
         repo.check_pin(item=getattr(args, "item", None) or "", words=args.words)
     module, name = args.handler.split(":")

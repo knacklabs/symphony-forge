@@ -164,6 +164,7 @@ def _reload_and_open_installed_mod(folder, home, expected, install):
         os.write(master, b"y\r")
         until("Notloggedin|APIUsageBilling")
         until("effort:medium.*?/effort")
+        until("Watching for changes in setting files.*" + re.escape(str(home / ".claude/settings.json")))
         assert "Nothing in progress." not in output and "upgrade Forge here." not in output
         output = ""
         install()

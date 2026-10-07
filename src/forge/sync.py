@@ -464,7 +464,6 @@ def sync(args: argparse.Namespace) -> None:
         print("Installed the git hooks that check each commit and push.")
     elif not changed:
         print(f"Nothing to change: the adapters and git hooks already match Forge {cfg['version']}.")
-    install_mod(top)
 
 
 def install_mod(top: Path) -> None:
