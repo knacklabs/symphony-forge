@@ -3,45 +3,25 @@
   "flagged": [
     ".claude-plugin/marketplace.json",
     ".github/workflows/forge-next.yml",
+    "src/forge/sync.py",
     "tests/test_mod_install.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "33eceebd48b3b4c2c9067073170529db1ee58092e150a27d6004ba251e912fb9",
-    "changed": "4661e648aa6d69ebe952616fd6df5f9d49214fd37f43285a40b960d4cef0b848",
-    "commit": "9c5f5e04623174c94055a8bc32d65aa2acd864a8",
+    "branch_diff": "59769a06159b1ba22bef4aa5ae65af67f79e23536eabbf01a4a5bf87df6f4475",
+    "changed": "4e553bf7f2cb6bc3edc3ee4871a78082c09c79c5cffb86569288edf326e45849",
+    "commit": "e617d6d27d5daa860d202e39c0a7d8f10f1fcf39",
     "dismissals": [],
     "findings": [
       {
-        "body": "The existing v1.2.6 tag resolves to 6b532f46fc7b56eb830196dd3d6624a779c41621. Its plugin manifest still declares version 1.2.5 without an author, and its hooks/forge.ts still contains the superseded upgrade sentence. This marketplace therefore installs that older artifact, rather than the implementation validated on this branch. The integration test hides the mismatch by copying the working tree into a newly created local tag (tests/test_mod_install.py:62\u201366). Publish and reference a release containing these changes, and check the referenced artifact.",
-        "file": ".claude-plugin/marketplace.json",
-        "line": 14,
-        "priority": "P1",
-        "title": "Not done: delivery from the release tag"
-      },
-      {
-        "body": "This test installs the plugin before launching Claude (lines 84\u201392), so the plugin is already loaded before /reload-plugins runs. It cannot detect a reload that fails to load a newly installed mod. Its final assertion also searches the entire terminal output for text that the independent /forge command reply returns (src/forge/mod/hooks/register.ts:35\u201337); removing the pane's empty-state or too-old rendering can still satisfy it. Exercise installation while the session is running and verify the native pane separately from the command reply in both repos.",
-        "file": "tests/test_mod_install.py",
-        "line": 163,
-        "priority": "P1",
-        "title": "Not done: real installation, reload, and native-pane integration proof"
-      },
-      {
-        "body": "The standard requires \u201cforge.toml's `test` command runs everything CI needs (install, lint, typecheck, all tests)\u201d. forge.toml:6 still runs only pytest, and no pytest test invokes the native plugin test command or validates the public marketplace. These new CI checks consequently remain outside the repository test command: a failing native plugin test or marketplace validation can pass the close run. Include the pinned dependency setup and native checks in the repository's test entry point.",
-        "file": ".github/workflows/forge-next.yml",
-        "line": 30,
-        "priority": "P1",
-        "title": "Standard: forge.toml's test command runs everything CI needs"
-      },
-      {
-        "body": "If forge@forge is installed at user scope and also at project or local scope, this unscoped update selects the more specific installation. The machine-wide copy stays outdated despite sync reporting it current. Claude Code changed this default before the minimum supported version; its [command reference](https://code.claude.com/docs/en/plugins/cli-reference#which-scope-the-command-updates) documents local/project precedence. Pass --scope user on the update, matching the installation and detection logic.",
+        "body": "With current Forge on PATH and a client still pinning v1.2.2, `forge sync` never reaches this installation call: src/forge/cli.py:134 checks the pin before loading the handler, and src/forge/repo.py:534\u2013537 exits through the pinned release. That release's sync implementation (tests/fixtures/forge-v1.2.2/src/forge/sync.py:376) has no plugin installation step. Consequently, sync cannot install or update the machine-wide mod from that repo. The previously-adopted test changes its pin first (tests/test_mod_sync.py:163), and the old-session integration invokes sync in the current repo (tests/test_mod_install.py:95), so neither detects this gap. Perform machine-wide plugin maintenance before version delegation while retaining pinned adapter generation, and cover sync with an unchanged older repo pin.",
         "file": "src/forge/sync.py",
-        "line": 494,
-        "priority": "P2",
-        "title": "Specify user scope when updating an existing installation"
+        "line": 467,
+        "priority": "P1",
+        "title": "Not done: forge sync turns the mod on whatever version a repo pins"
       }
     ],
-    "id": "0a80c93d-64ee-4251-85e1-c8689f40b500",
+    "id": "294d5d23-8614-4156-81d0-fc8c10a59d63",
     "status": "blocked"
   },
   "round": 5,
@@ -54,8 +34,11 @@
     {
       "at": "2026-10-07T14:54:49+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-07T18:12:01+00:00",
+      "step": "review"
     }
   ],
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 919be0a6ec0a306bf8226e47f8f16066d5ac84a1` exited with status 1 on the machine running forge close.\nendtime = 2629127.728666, orig_timeout = 60, stdout_seq = [b'']\nstderr_seq = [b'autoreview done\\n', b''], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\nstdout_seq = [b'Started fix upgrade-forge-to-v9-9-9 in /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiran...ude Code.\\n', b\"Committed the upgrade to Forge v9.9.9.\\nRunning Forge v9.9.9's forge close upgrade-forge-to-v9-9-9.\\n\"]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 2629587.674824208, orig_timeout = 60\nstdout_seq = [b'Started fix upgrade-forge-to-v9-9-9 in /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiran...Forge v9.9.9.\\n', b\"The forge on your PATH is Forge v9.9.9.\\nRunning Forge v9.9.9's forge sync in the fix's folder.\\n\"]\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-MOD-1-SHIP/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-2070/popen-gw2/test_3_successful_upgrade_keep0/bin/forge', 'upgrade', 'v9.9.9']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n3 failed, 1373 passed, 5 skipped, 2 errors in 1842.18s (0:30:42)",
   "worker": "codex"
 }

@@ -694,6 +694,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tForge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 26,
+      "text": "Forge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
@@ -822,6 +833,17 @@
       "text": "Not done: running readers' model and effort with default settings",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 467,
+      "text": "Not done: forge sync turns the mod on whatever version a repo pins",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     },
@@ -1156,6 +1178,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_tests.py\tGive the new lane tests unique rule ownership\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 104,
+      "text": "Give the new lane tests unique rule ownership",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_tests.py\tNot done: forge stop ends a worker and its test run\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 222,
+      "text": "Not done: forge stop ends a worker and its test run",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_lanes_view.py\tNot done: a process whose pid was reused is not terminated\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_view.py",
@@ -1207,6 +1251,28 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tThe close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 348,
+      "text": "The close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tThe review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 330,
+      "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
       "status": "open",
       "closed_by": null
     },
@@ -1321,6 +1387,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py",
+      "line": 220,
+      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
       "kind": "bug",
       "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
@@ -1328,6 +1405,17 @@
       "text": "Not done: New and previously adopted clients run the proposed picker through close",
       "from": "blocking",
       "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_quick_test_suggestions.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_quick_test_suggestions.py",
+      "line": 202,
+      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     },
@@ -1429,6 +1517,17 @@
       "item": "simplify-ci-workflow",
       "status": "done",
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
+    },
+    {
+      "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_trim_skills.py",
+      "line": 27,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
@@ -2168,6 +2267,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_lanes_tests.py\tKill the Forge interpreter rather than its Windows launcher",
+      "kind": "edge",
+      "path": "tests/test_lanes_tests.py",
+      "line": 193,
+      "text": "Kill the Forge interpreter rather than its Windows launcher",
+      "from": "review",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_machine_views.py\tThe reported Windows worker crash still needs a Windows rerun.",
       "kind": "edge",
       "path": "tests/test_machine_views.py",
@@ -2230,72 +2340,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/register.ts\tForge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/register.ts",
-      "line": 26,
-      "text": "Forge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_live_status.py\tThe review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_live_status.py",
-      "line": 330,
-      "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_lanes_tests.py\tGive the new lane tests unique rule ownership\tFORGE-LANES-1/TESTS",
-      "kind": "bug",
-      "path": "tests/test_lanes_tests.py",
-      "line": 104,
-      "text": "Give the new lane tests unique rule ownership",
-      "from": "blocking",
-      "item": "FORGE-LANES-1/TESTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_lanes_tests.py\tNot done: forge stop ends a worker and its test run\tFORGE-LANES-1/TESTS",
-      "kind": "bug",
-      "path": "tests/test_lanes_tests.py",
-      "line": 222,
-      "text": "Not done: forge stop ends a worker and its test run",
-      "from": "blocking",
-      "item": "FORGE-LANES-1/TESTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
-      "kind": "bug",
-      "path": "tests/test_trim_skills.py",
-      "line": 27,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "FORGE-LANES-1/TESTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_lanes_tests.py\tKill the Forge interpreter rather than its Windows launcher",
-      "kind": "edge",
-      "path": "tests/test_lanes_tests.py",
-      "line": 193,
-      "text": "Kill the Forge interpreter rather than its Windows launcher",
-      "from": "review",
-      "item": "FORGE-LANES-1/TESTS",
       "status": "open",
       "closed_by": null
     }
