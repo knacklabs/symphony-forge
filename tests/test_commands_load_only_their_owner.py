@@ -14,7 +14,7 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FIX-EVERY-FORGE-PROCESS-INCLUDING-EACH-GIT-H"
 HELP = {**HELP_GOLDEN,
         "test": "usage: forge test [-h] [--pytest BASE]\n\n"
-                "run a pytest repo's changed and module-related tests\n\n"
+                "Run related tests in the machine test lane, or pick pytest tests with --pytest\n\n"
                 "options:\n  -h, --help     show this help message and exit\n  --pytest BASE\n",
         "land": "usage: forge land [-h] item\n\nBuild, close, fix and merge a task or fix\n\n"
                 "positional arguments:\n  item\n\n"

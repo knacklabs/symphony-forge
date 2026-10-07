@@ -16,7 +16,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
 # Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
-# Test adds the pytest picker after doctor; stop adds person-only cancellation after board.
+# Test adds the machine lane and pytest picker; stop adds person-only cancellation after board.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,test,migrate,upgrade,next,board,stop,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -37,7 +37,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '                        the pinned version\n'
      '    doctor              Check tools, versions, hooks, adapter drift and the\n'
      '                        named CI checks\n'
-     "    test                run a pytest repo's changed and module-related tests\n"
+     "    test                Run related tests in the machine test lane, or pick\n"
+     "                        pytest tests with --pytest\n"
      '    migrate             Move a client from the copied-in Forge to v1 in one\n'
      '                        pull request\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'
