@@ -109,6 +109,18 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
     repo = env.repo
     machine_cores(repo, 6)
     first, first_name = make_work(repo, "First typo")
+    # Windows's venv redirector can have a different pid from the Forge interpreter.
+    parent_pid = tmp_path / "forge-parent-pid"
+    launcher = repo.bin / "forge"
+    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+        "import os, pathlib\n"
+        f"if sys.argv[1:] == ['work', {first!r}]:\n"
+        f"    pathlib.Path({str(parent_pid)!r}).write_text(str(os.getpid()))\n"
+        "from forge.cli import main"), "utf-8")
+    # Exercise a redirecting launcher on every OS, rather than only Windows CI.
+    redirector = tmp_path / "redirector.py"
+    redirector.write_text("import subprocess, sys\n"
+        f"raise SystemExit(subprocess.call([sys.executable, {str(launcher)!r}, *sys.argv[1:]]))\n", "utf-8")
     closing, _ = env.start_fix()
     other = _other_repo(tmp_path, repo.bin)
     if lane_adapter == "codex":
@@ -156,7 +168,7 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             (repo.path, "close", closing, "review"),
         ):
             process, _ = start(where, tmp_path / str(len(processes)), repo, command, item,
-                               launcher=legacy if command == "close" else None)
+                               launcher=redirector if command == "work" else legacy if command == "close" else None)
             processes.append(process)
             _until(lambda: started(marker), f"{command} agent")
         for place, (item, marker) in enumerate(queued, 1):
@@ -215,7 +227,7 @@ else:
         rows = entries()
         between = next(e for e in rows if e["item"] == first)
         assert between["id"] == admitted["id"] and between["joined_at"] == admitted["joined_at"]
-        assert between["process"]["pid"] == processes[0].pid
+        assert between["process"]["pid"] == int(parent_pid.read_text("utf-8"))
         assert waiting(rows) == waiters
         assert all(not started(marker) for _, marker in queued)
         (repo.bin / "git").unlink()
@@ -235,7 +247,7 @@ else:
             rows = entries()
             nudging = next(e for e in rows if e["item"] == first)
             assert nudging["id"] == admitted["id"] and nudging["joined_at"] == admitted["joined_at"]
-            assert nudging["process"]["pid"] != processes[0].pid
+            assert nudging["process"]["pid"] != int(parent_pid.read_text("utf-8"))
             assert waiting(rows) == waiters
             assert all(not started(marker) for _, marker in queued)
             (repo.bin / f"go-{first_name}-nudge").touch()
