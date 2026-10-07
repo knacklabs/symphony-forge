@@ -13,7 +13,9 @@ import pytest
 from conftest import machine_cores
 from test_close import Forge, env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
-from test_lanes_agents import alive, start
+from test_lanes_agents import alive, finish, hold_agents, make_work, start
+
+STORY = "FORGE-LANES-1"
 
 
 def shell(argv):
@@ -101,7 +103,24 @@ def reap(processes, server, connections):
         process.wait(timeout=30)
 
 
-def test_2_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_path, release_server):
+@pytest.mark.parametrize("scenario", [
+    "shared-lane", "killed-forge", "no-command", "missing-origin", "dirty-picker", "upgrade",
+])
+def test_2_workers_and_close_share_one_test_lane(env, tmp_path, release_server, monkeypatch, scenario):
+    if scenario == "shared-lane":
+        check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_path, release_server)
+    elif scenario == "killed-forge":
+        check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path, release_server)
+    elif scenario in ("no-command", "missing-origin"):
+        check_test_names_an_absent_command_or_missing_default_reference(env, scenario == "missing-origin")
+    elif scenario == "dirty-picker":
+        check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monkeypatch)
+    else:
+        from test_lanes_upgrade import check_previous_release_upgrade_keeps_settings_and_runs_both_lanes
+        check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_path)
+
+
+def check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_path, release_server):
     # Close's existing docs/cache skips must not bypass a worker's dirty code.
     server, connections = release_server
     repo = env.repo
@@ -176,21 +195,38 @@ def test_2_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_p
         reap(processes, server, connections)
 
 
-def test_2_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path, release_server):
+def check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path, release_server):
     server, connections = release_server
     repo = env.repo
     machine_cores(repo, 8)
     configure(env, server)
     _, folder = env.start_fix()
+    # Kill the Forge interpreter, including when a venv redirector starts it.
+    parent_pid = tmp_path / "forge-parent-pid"
+    launcher = repo.bin / "forge"
+    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+        "import os, pathlib\n"
+        f"pathlib.Path({json.dumps(str(parent_pid))}).write_text(str(os.getpid()))\n"
+        "from forge.cli import main"), "utf-8")
+    redirector = tmp_path / "redirector.py"
+    redirector.write_text("import subprocess, sys\n"
+        f"raise SystemExit(subprocess.call([sys.executable, {json.dumps(str(launcher))}, *sys.argv[1:]]))\n",
+        "utf-8")
     processes = []
     child_pid = None
     try:
-        first, output = start(folder, tmp_path / "first", repo, "test")
+        first, output = start(folder, tmp_path / "first", repo, "test", launcher=redirector)
         processes.append(first)
         connection, observed = accepted(server, connections, folder, first, output)
         child_pid = observed["pid"]
         assert observed["cpus"] == observed["xdist"] == "4"
-        first.kill()
+        forge_pid = int(parent_pid.read_text("utf-8"))
+        assert forge_pid != first.pid and forge_pid != child_pid
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/PID", str(forge_pid)], check=True, capture_output=True)
+        else:
+            os.kill(forge_pid, 9)
+        _until(lambda: not alive(forge_pid), "the actual Forge interpreter to end")
         first.wait(timeout=30)
         assert alive(child_pid)
         second, waiting = start(folder, tmp_path / "second", repo, "test")
@@ -211,14 +247,34 @@ def test_2_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_pat
             _until(lambda: not alive(child_pid), "owned orphan to exit")
 
 
-def test_5_stop_removes_a_waiting_test_and_ends_the_running_command(env, tmp_path, release_server, monkeypatch):
+def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_server, monkeypatch, lane_adapter):
     monkeypatch.delenv("FORGE_WORKER", raising=False)
     server, connections = release_server
     repo = env.repo
+    machine_cores(repo, 6)
     configure(env, server)
     item, folder = env.start_fix()
+    hold_agents(env)
+    provider = repo.bin / ("claude" if lane_adapter == "claude" else "codex-app-server")
+    indent = "" if lane_adapter == "claude" else "            "
+    marker = 'name = pathlib.Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
+    provider.write_text(provider.read_text("utf-8").replace(marker,
+        marker + f'\n{indent}(here / "model-pid").write_text(str(os.getpid()))'), "utf-8")
+    worker_pid = tmp_path / "worker-pid"
+    launcher = repo.bin / "forge"
+    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+        "import os, pathlib\n"
+        f"if sys.argv[1:] == ['work', {json.dumps(item)}]:\n"
+        f"    pathlib.Path({json.dumps(str(worker_pid))}).write_text(str(os.getpid()))\n"
+        "from forge.cli import main"), "utf-8")
     processes = []
+    worker_processes = []
     try:
+        worker, worker_output = start(repo.path, tmp_path / "worker", repo, "work", item)
+        worker_processes.append(worker)
+        started = repo.bin / f"started-{folder.name}"
+        _until(lambda: started.exists() or worker.poll() is not None, "the actual worker's model to start")
+        assert worker.poll() is None, worker_output.read_text("utf-8")
         first, output = start(folder, tmp_path / "first", repo, "test")
         processes.append(first)
         _, observed = accepted(server, connections, folder, first, output)
@@ -229,20 +285,51 @@ def test_5_stop_removes_a_waiting_test_and_ends_the_running_command(env, tmp_pat
         stopped = repo.forge("stop", "--id", queued["id"])
         assert stopped.returncode == 0, stopped.stderr
         assert second.wait(timeout=30) != 0
+        assert "This run was stopped while waiting; it will not start." in waiting.read_text("utf-8")
+        assert json.loads((folder / "test-started.json").read_text("utf-8"))["pid"] == observed["pid"]
         assert alive(observed["pid"])
-        assert len(rows(repo)) == 1
+        board = repo.forge("board", "--json")
+        assert board.returncode == 0, board.stderr
+        lanes = json.loads(board.stdout)["lanes"]
+        agent = next(e for e in lanes["agents"]["entries"] if e["item"] == item)
+        assert len(lanes["tests"]["entries"]) == 1
+        assert agent["started_at"] and alive(agent["process"]["pid"])
+        model_pid = int((repo.bin / "model-pid").read_text("utf-8"))
+        assert alive(model_pid) and alive(int(worker_pid.read_text("utf-8")))
         stopped = repo.forge("stop", item)
         assert stopped.returncode == 0, stopped.stderr
         first.wait(timeout=30)
+        worker.wait(timeout=30)
         assert not alive(observed["pid"])
+        assert not alive(agent["process"]["pid"])
+        assert not alive(model_pid)
+        assert not alive(int(worker_pid.read_text("utf-8")))
+        board = repo.forge("board", "--json")
+        assert board.returncode == 0, board.stderr
+        assert all(lane["entries"] == [] for lane in json.loads(board.stdout)["lanes"].values())
+        # Reuse both admissions with real commands, rather than only inspecting rows.
+        next_item, next_name = make_work(repo, "Work after stop")
+        replacement, replacement_output = start(repo.path, tmp_path / "replacement-worker", repo, "work", next_item)
+        worker_processes.append(replacement)
+        _until(lambda: (repo.bin / f"started-{next_name}").exists() or replacement.poll() is not None,
+               "a worker to take the freed agent place")
+        assert replacement.poll() is None, replacement_output.read_text("utf-8")
+        (folder / "test-started.json").unlink()
+        next_test, next_output = start(folder, tmp_path / "replacement-test", repo, "test")
+        processes.append(next_test)
+        connection, _ = accepted(server, connections, folder, next_test, next_output)
+        connection.sendall(b"x")
+        assert next_test.wait(timeout=30) == 0, next_output.read_text("utf-8")
+        (repo.bin / f"go-{next_name}").touch()
+        assert replacement.wait(timeout=30) == 0, replacement_output.read_text("utf-8")
         assert rows(repo) == []
     finally:
         release(connections)
+        finish(repo, worker_processes)
         reap(processes, server, connections)
 
 
-@pytest.mark.parametrize("configured", [False, True], ids=["no-command", "missing-origin"])
-def test_2_test_names_an_absent_command_or_missing_default_reference(env, configured):
+def check_test_names_an_absent_command_or_missing_default_reference(env, configured):
     repo = env.repo
     if configured:
         cfg = (repo.path / "forge.toml").read_text("utf-8") + 'test = "echo should-not-run"\n'
@@ -258,7 +345,7 @@ def test_2_test_names_an_absent_command_or_missing_default_reference(env, config
         assert "forge.toml names no test command" in result.stdout
 
 
-def test_2_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monkeypatch):
+def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monkeypatch):
     # The lane wrapper must not delegate to a picker that ignores its worker's dirty code.
     repo = env.repo
     machine_cores(repo, 6)

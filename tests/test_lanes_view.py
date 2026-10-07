@@ -19,6 +19,7 @@ from test_lanes_agents import alive, finish, hold_agents, make_work, start, pers
 from test_codex_worker import sdk_data  # noqa: F401
 from test_codex_record import _freeze
 from test_story import worktree
+from test_lanes_tests import release_server  # noqa: F401
 
 STORY = "FORGE-LANES-1"
 
@@ -184,8 +185,21 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     assert lanes(repo)["agents"]["entries"] == []
 
 
-@pytest.mark.parametrize("older_queue", [False, True], ids=["current-queue", "existing-queue"])
-def test_5_stop_refuses_workers_and_unverified_processes_without_killing_them(env, tmp_path, monkeypatch, person, older_queue, lane_adapter):
+@pytest.mark.parametrize("scenario,older_queue", [
+    ("identity", False), ("identity", True), ("worker-and-test", False),
+], ids=["current-queue", "existing-queue", "worker-and-test"])
+def test_5_stop_ends_named_runs_and_preserves_unverified_processes(
+        env, tmp_path, monkeypatch, person, scenario, older_queue, lane_adapter, release_server):
+    if scenario == "worker-and-test":
+        from test_lanes_tests import check_stop_removes_waiter_and_ends_worker_and_test
+        check_stop_removes_waiter_and_ends_worker_and_test(
+            env, tmp_path, release_server, monkeypatch, lane_adapter)
+    else:
+        check_stop_refuses_workers_and_unverified_processes(
+            env, tmp_path, monkeypatch, older_queue, lane_adapter)
+
+
+def check_stop_refuses_workers_and_unverified_processes(env, tmp_path, monkeypatch, older_queue, lane_adapter):
     repo = env.repo
     machine_cores(repo, 2)
     item, name = make_work(repo, "First typo")

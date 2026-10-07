@@ -14,7 +14,7 @@ from test_story import worktree
 STORY = "FORGE-LANES-1"
 
 
-def test_2_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_path):
+def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_path):
     # Real older adoption output, advanced to the previous release with the
     # client's chosen settings, then upgraded without changing those choices.
     repo = env.repo
