@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import REAL_UV, _install
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -71,7 +71,7 @@ else:
 def sdk_data(pytestconfig: pytest.Config) -> Path:
     """An XDG_DATA_HOME holding Forge's SDK environment: the pinned SDK and the libraries its
     METADATA requires, but not its Codex program. Built once, then kept in pytest's cache."""
-    uv = shutil.which("uv")
+    uv = REAL_UV
     if uv is None:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")

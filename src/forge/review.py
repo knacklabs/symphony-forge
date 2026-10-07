@@ -372,10 +372,11 @@ def _previous(result: dict[str, Any]) -> str:
 def _rulings(top: Path, item: str, base: str) -> str:
     """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
     their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
-    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
-    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    commits = list(reversed(repo.commit_log(top, base)))
+    found = [line.strip() for _, message, _ in commits
+             for line in message.splitlines() if line.startswith("Ruling:")]
     path = repo.state_path(item)
-    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+    for sha in repo.git("rev-list", "--reverse", f"{base}..HEAD", "--", path,
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         for dismissal in result.get("dismissals", []):
@@ -399,12 +400,10 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
 
 def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> str:
     """Copy a labelled paragraph from the latest worker commit, never an older round's proof."""
-    for sha in repo.git("rev-list", "--no-merges", f"{base}..{head}", cwd=top).split():
-        files = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, cwd=top).split()
+    for _, message, files in repo.commit_log(top, base, head):
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^" + re.escape(label) + r".*", repo.git(
-            "show", "-s", "--format=%B", sha, cwd=top), re.M | re.S)
+        found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 

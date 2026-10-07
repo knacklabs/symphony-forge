@@ -53,7 +53,9 @@ def exercise(repo, kind, launcher=None, *, dependency=False, source=".", extra=F
     repo.write("pyproject.toml", '[project]\nname = "shop"\nversion = "1.0"\n')
     repo.write("package.json", json.dumps({"name": "shop", "version": "1.0"}))
     repo.write(kind, lockfile(kind, source=source))
-    repo.write("tests/test_release.py", "# " + kind + "\n"
+    # An exempt lock bump does not select lock readers: only the changed Python module does.
+    repo.write("src/shop/prices.py", "PRICE = 1\n")
+    repo.write("tests/test_release.py", "# shop/prices.py\n"
                "def test_release():\n    assert True\n")
     repo.write("tests/test_unrelated.py", "def test_unrelated():\n    assert True\n")
     repo.git("add", "-A")
@@ -63,7 +65,8 @@ def exercise(repo, kind, launcher=None, *, dependency=False, source=".", extra=F
     if extra:
         changed = changed.replace("unchanged", "changed")
     repo.write(kind, changed)
-    repo.git("add", kind)
+    repo.write("src/shop/prices.py", "PRICE = 2\n")
+    repo.git("add", kind, "src/shop/prices.py")
     repo.git("-c", f"core.hooksPath={repo.path / '.git/no-hooks'}", "commit", "-qm", "Bump version")
     result = subprocess.run([sys.executable, str(launcher or repo.bin / "forge"),
                              "test", "--pytest", base], cwd=repo.path,
