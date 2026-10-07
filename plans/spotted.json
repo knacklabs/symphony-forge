@@ -1134,6 +1134,17 @@
       "closed_by": "fast-views"
     },
     {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: tests/test_machine_views.py stays within its time limit on Windows CI\tfast-views",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 107,
+      "text": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
