@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.claude-plugin/marketplace.json\tNot done: delivery from the release tag\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": ".claude-plugin/marketplace.json",
+      "line": 14,
+      "text": "Not done: delivery from the release tag",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -21,6 +32,17 @@
       "item": "ubuntu-two",
       "status": "done",
       "closed_by": "simplify-ci-workflow"
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tStandard: forge.toml's test command runs everything CI needs\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 30,
+      "text": "Standard: forge.toml's test command runs everything CI needs",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
@@ -1266,6 +1288,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 163,
+      "text": "Not done: real installation, reload, and native-pane integration proof",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
@@ -1999,6 +2032,17 @@
       "text": "Refresh review lane metadata when Autoreview selects another model",
       "from": "review",
       "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\tSpecify user scope when updating an existing installation",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 494,
+      "text": "Specify user scope when updating an existing installation",
+      "from": "review",
+      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     },

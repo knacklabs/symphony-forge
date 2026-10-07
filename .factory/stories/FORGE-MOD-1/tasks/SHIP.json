@@ -1,11 +1,59 @@
 {
   "branch": "task/FORGE-MOD-1-SHIP",
+  "flagged": [
+    ".claude-plugin/marketplace.json",
+    ".github/workflows/forge-next.yml",
+    "tests/test_mod_install.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "33eceebd48b3b4c2c9067073170529db1ee58092e150a27d6004ba251e912fb9",
+    "changed": "4661e648aa6d69ebe952616fd6df5f9d49214fd37f43285a40b960d4cef0b848",
+    "commit": "9c5f5e04623174c94055a8bc32d65aa2acd864a8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The existing v1.2.6 tag resolves to 6b532f46fc7b56eb830196dd3d6624a779c41621. Its plugin manifest still declares version 1.2.5 without an author, and its hooks/forge.ts still contains the superseded upgrade sentence. This marketplace therefore installs that older artifact, rather than the implementation validated on this branch. The integration test hides the mismatch by copying the working tree into a newly created local tag (tests/test_mod_install.py:62\u201366). Publish and reference a release containing these changes, and check the referenced artifact.",
+        "file": ".claude-plugin/marketplace.json",
+        "line": 14,
+        "priority": "P1",
+        "title": "Not done: delivery from the release tag"
+      },
+      {
+        "body": "This test installs the plugin before launching Claude (lines 84\u201392), so the plugin is already loaded before /reload-plugins runs. It cannot detect a reload that fails to load a newly installed mod. Its final assertion also searches the entire terminal output for text that the independent /forge command reply returns (src/forge/mod/hooks/register.ts:35\u201337); removing the pane's empty-state or too-old rendering can still satisfy it. Exercise installation while the session is running and verify the native pane separately from the command reply in both repos.",
+        "file": "tests/test_mod_install.py",
+        "line": 163,
+        "priority": "P1",
+        "title": "Not done: real installation, reload, and native-pane integration proof"
+      },
+      {
+        "body": "The standard requires \u201cforge.toml's `test` command runs everything CI needs (install, lint, typecheck, all tests)\u201d. forge.toml:6 still runs only pytest, and no pytest test invokes the native plugin test command or validates the public marketplace. These new CI checks consequently remain outside the repository test command: a failing native plugin test or marketplace validation can pass the close run. Include the pinned dependency setup and native checks in the repository's test entry point.",
+        "file": ".github/workflows/forge-next.yml",
+        "line": 30,
+        "priority": "P1",
+        "title": "Standard: forge.toml's test command runs everything CI needs"
+      },
+      {
+        "body": "If forge@forge is installed at user scope and also at project or local scope, this unscoped update selects the more specific installation. The machine-wide copy stays outdated despite sync reporting it current. Claude Code changed this default before the minimum supported version; its [command reference](https://code.claude.com/docs/en/plugins/cli-reference#which-scope-the-command-updates) documents local/project precedence. Pass --scope user on the update, matching the installation and detection logic.",
+        "file": "src/forge/sync.py",
+        "line": 494,
+        "priority": "P2",
+        "title": "Specify user scope when updating an existing installation"
+      }
+    ],
+    "id": "0a80c93d-64ee-4251-85e1-c8689f40b500",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-07T13:07:39+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-07T14:54:49+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
