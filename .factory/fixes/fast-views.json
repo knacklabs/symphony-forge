@@ -10,34 +10,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ddcfcd69ff79842bc2346b0baa7d4b6300048f0f3dc59481a61b2a849dd75618",
-    "changed": "98806c1a1a6d4478658c753d00828ea3f52e56bd7dd3f58b0b39ed8589af5bd0",
-    "commit": "7e3ea94528ff767d6fceb7d6902dde4b2ae73d3a",
+    "branch_diff": "548f12939a913a911f140245d57568c1b7038f7976621dc5b4764bf3e7789281",
+    "changed": "18cd6030d55802f425a6bfcfa61e1db0b3c6790a3a5ce54c692a6801c2977787",
+    "commit": "b8e220a6b0df68b8c604bdaa4fc3d2a7541ef3db",
     "dismissals": [],
     "findings": [
       {
-        "body": "The Done-when requirement remains incomplete: the proof list explicitly says a successful Windows run of the repaired branch is still required. The supplied close run passes only the four new retention/client cases, while the broader machine-view pass was local. The limits in tests/conftest.py:167 and .github/workflows/forge-next.yml:42,58 remain enforced, but they do not establish that the repaired branch passes within them. Supply a successful Windows CI run covering tests/test_machine_views.py.",
+        "body": "This explicit Done-when requirement remains unproven. The proof list acknowledges that the latest repaired source has no successful Windows execution. The supplied close run passes six new retention/CRLF cases locally; the broader machine-view results are also local. The earlier Windows run predates the repair and does not establish that every machine-view case ran. The enforced limits in tests/conftest.py:167 and .github/workflows/forge-next.yml:42,58 cannot substitute for execution evidence. Supply a successful Windows CI run covering tests/test_machine_views.py on the repaired source.",
         "file": "tests/test_machine_views_recent_finished_items.py",
         "line": 107,
         "priority": "P1",
         "title": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI"
       },
       {
-        "body": "The previously reported defect remains. For a signed landed commit, log.showSignature=true makes this git show include signature-verification output ([Git configuration documentation](https://git-scm.com/docs/git-config#Documentation/git-config.txt-logshowSignature)). src/forge/repo.py:144 returns the entire trimmed stdout, which board.py:575 embeds into diff-tree input as a tree ID. This corrupts the snapshot batch used by both JSON commands and the human board. Use rev-parse <ref>^{tree}, or explicitly disable signature output.",
+        "body": "The previous advisory remains open. With a signed landed commit and log.showSignature=true, this git show includes signature-verification output, as specified by the [Git configuration contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-logshowSignature). src/forge/repo.py:144 returns the entire trimmed stdout; board.py:576 then inserts it into diff-tree input as a tree ID. That corrupts the snapshot batch used by both JSON commands and the human board. Resolve the tree with rev-parse <ref>^{tree}, or explicitly disable signature output.",
         "file": "src/forge/board.py",
-        "line": 566,
+        "line": 567,
         "priority": "P2",
         "title": "Disable signature output when reading the landed tree ID"
       },
       {
-        "body": "The previously reported defect remains: dates includes historical additions whose state files no longer exist in landed_states, and this comprehension expires those paths anyway. After reverting an old fix merge and removing its refs, src/forge/task.py:273 permits restarting the same slug because _merged checks current file existence at task.py:219\u2013221. Tasks can likewise restart through task.py:189. The new ongoing item is then omitted from both JSON views; next also suppresses fix guidance at nextstep.py:209. Require the path to exist in landed_states before expiring it from a historical merge date.",
+        "body": "The previous advisory remains open. This comprehension expires historical additions even when their files no longer exist in landed_states. After reverting an old merge and removing its refs, a task or fix can restart with the same identity: src/forge/task.py:219\u2013221 checks current file existence, and task.py:189,273 use that check when starting work. The new ongoing item is consequently omitted from both JSON views, and nextstep.py:209 also suppresses restarted-fix guidance. Require the path to exist in landed_states before expiring it from a historical merge date.",
         "file": "src/forge/board.py",
-        "line": 532,
+        "line": 533,
         "priority": "P2",
         "title": "Do not expire restarted tasks and fixes using reverted merge dates"
       }
     ],
-    "id": "7d5196b6-3d85-472b-a148-dd485b7213d5",
+    "id": "bc7634ff-0258-45c9-a38a-43d5d1db3bbb",
     "status": "blocked"
   },
   "round": 6,
@@ -61,6 +61,10 @@
     },
     {
       "at": "2026-10-07T05:21:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:48:10+00:00",
       "step": "review"
     }
   ],
