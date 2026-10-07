@@ -498,4 +498,3 @@ def install_mod(top: Path) -> None:
         detail = str(error).splitlines()[0]
         print(f"- Warning: Could not update the Forge mod: {detail}; run forge sync to retry.", file=sys.stderr)
         return
-    print("Forge mod is current at user scope; run /reload-plugins or restart Claude Code.", file=sys.stderr)
