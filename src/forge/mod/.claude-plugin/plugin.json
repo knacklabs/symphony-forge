@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "author": {"name": "Knack Labs"},
   "description": "Forge's board and machine views inside Claude Code."
 }

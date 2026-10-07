@@ -67,10 +67,11 @@ os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
     repo.git("tag", "v" + version, cwd=release)
     market = tmp_path / "marketplace"
     patient(lambda: (market / ".claude-plugin").mkdir(parents=True))
-    manifest = json.loads((ROOT / "tests/fixtures/marketplace/marketplace.json").read_text("utf-8"))
+    # Use Forge's shipped marketplace contract. Only its remote transport is
+    # replaced for the offline test; Claude must resolve its actual path/ref.
+    manifest = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text("utf-8"))
     plugin = manifest["plugins"][0]
-    plugin["version"] = version
-    plugin["source"].update(url=release.as_uri(), ref="v" + version)
+    plugin["source"]["url"] = release.as_uri()
     (market / ".claude-plugin/marketplace.json").write_text(json.dumps(manifest), encoding="utf-8")
 
     def claude(*args):

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-FORGE_VERSION=1.2.6
+FORGE_VERSION=1.2.7
 
 if [[ $# -gt 1 || ( $# -eq 1 && $1 != --check ) ]]; then
   echo 'Use: install-mac.sh [--check]' >&2
