@@ -25,7 +25,7 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
     repo.write("src/shop/prices.py", "PRICE = 1\n")
     repo.write("src/shop/__init__.py", "")
     for name, reference in {
-        "prices": "",
+        "prices": "# shop/prices.py",  # Related by module reference, never filename alone.
         "import": "from shop.prices import PRICE",
         "path": "# shop/prices.py",
         "dotted": "# shop.prices",
@@ -62,7 +62,7 @@ def test_1_python_client_runs_related_tests_and_falls_back_for_shared_inputs(rep
     selected = run()
     assert selected.returncode == 0, selected.stdout + selected.stderr
     assert "6 passed" in selected.stdout
-    for shared in ("conftest.py", "pyproject.toml", "uv.lock", "poetry.lock"):
+    for shared in ("conftest.py", "requirements-dev.txt", "pyproject.toml", "uv.lock", "poetry.lock"):
         # Full fallback now requires a real manifest setting change, not a comment.
         repo.write(shared, '[tool.pytest.ini_options]\naddopts = "-q"\n'
                    if shared == "pyproject.toml" else "# shared input\n")
