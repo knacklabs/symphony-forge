@@ -3,9 +3,16 @@ import { expect, mock, test } from 'claude-code/testing'
 for (const surface of ['terminal', 'desktop'] as const) {
   test(`4: ${surface} waiting story leaves approval to Plan Mode`, async ($, on) => {
     mock.clock(on)
+    mock.store(on)
+    mock.env(on, {})
+    on('session.id', () => ({ value: 'approval' }))
+    on('session.cwd', () => ({ value: '/session-checkout' }))
+    on('session.repo', () => ({ value: { root: '/session-checkout', remote: null, internal: false, name: null } }))
+    on('session.surfaces', () => ({ value: [surface] }))
     on('session.start', () => ({ cwd: '/session-checkout' }))
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', () => ({ value: undefined }))
+    on('ui.invalidate', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: {
       exitCode: 0, stderr: '', stdout: JSON.stringify(e.argv[1] === 'board'
         ? { version: '1.2.6', repo_root: '/session-checkout', items: [{

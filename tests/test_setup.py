@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import patient
 from test_close import PIN
 
 # Forge's subagent roles, which sync writes for both hosts.
@@ -197,7 +198,8 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
 
 @pytest.mark.parametrize("case, rows", [
     ("fresh", ()),
-    ("missing tool", ("claude is not installed or not on PATH.",)),
+    # Claude's mod is optional: absence is advice, rather than a failed doctor check.
+    ("missing tool", ()),
     ("version mismatch", ("but this repo pins v0.0.1.",)),
     ("missing hook shims", ("The git hooks that check each commit and push aren't installed.",)),
     ("forge's own repo without git hooks", ("The git hooks that check each commit and push aren't installed.",)),
@@ -271,6 +273,9 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     if case == "missing tool":  # no claude anywhere on PATH, even on a machine that has it
+        # Remove only the test's Claude first; keep its gh/forge executables on PATH.
+        for name in ("claude", "claude.cmd"):
+            patient(lambda: (repo.bin / name).unlink(missing_ok=True))
         monkeypatch.setenv("PATH", os.pathsep.join(
             folder for folder in os.environ["PATH"].split(os.pathsep)
             if not shutil.which("claude", path=folder)))
@@ -330,6 +335,9 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         for hook in ("context", "handoff", "deny", "approval"):
             assert calls.count(f"hook {hook}\n") == 1, calls
         assert calls.count('"hook_event_name"') == 4
+    elif case == "missing tool":
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert "Warning: Claude Code is missing or older than v2.1.287" in done.stdout
     elif case == "codex doesn't trust the project":
         # Advice, not a failure, and "everything checks out" never hides it.
         assert done.returncode == 0, done.stdout + done.stderr

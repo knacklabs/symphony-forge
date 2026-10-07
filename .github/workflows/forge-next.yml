@@ -12,6 +12,25 @@ permissions:
   actions: read
 
 jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global @anthropic-ai/claude-code@2.1.291
+      - uses: astral-sh/setup-uv@v6
+      - name: Check the marketplace and plugin manifests
+        run: |
+          claude plugin validate --strict .claude-plugin/marketplace.json
+          claude plugin validate --strict src/forge/mod
+      - name: Run the native plugin tests
+        run: claude plugin test src/forge/mod
+      - name: Install from the local release fixture
+        run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k real-local-install
+
   tests:
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}

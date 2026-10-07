@@ -288,6 +288,18 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     bin_dir.mkdir()
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
+    # Sync manages Claude's user-scope plugins. Never let a command test touch
+    # the developer's real plugin install or contact its marketplace.
+    _install(bin_dir, "claude", f'''#!{sys.executable}
+import sys
+args = sys.argv[1:]
+if args == ["--version"]:
+    print("2.1.291 (Claude Code)")
+elif args == ["plugin", "marketplace", "list", "--json"]:
+    print('[{{"name":"forge"}}]')
+elif args == ["plugin", "list", "--json"]:
+    print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
+''')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
     # Host hooks find forge through uv's tool folders, so those name this one too.
     monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
