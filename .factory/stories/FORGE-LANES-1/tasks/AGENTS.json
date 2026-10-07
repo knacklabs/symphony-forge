@@ -9,41 +9,34 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "64772e192d77ca323a3f3582fa717ad43a976cb056b955449c2480616f8722ed",
-    "changed": "46559e18c21cf56fd04fe8d8e8d6500121f7f9a754c5960813fe614f605b5acd",
-    "commit": "cc9cd877841fe4a1753d4840951e61e458f55c2b",
+    "branch_diff": "9bd4113dd441e96c7dfb9b52619677783723eb29d3f356ad576557b70818727d",
+    "changed": "f10dcd668bfbfa30bd524b8ba15ef104145e785ec1c580119885e34d16ee7121",
+    "commit": "36aa4571b96e6a3c492c80144860999bf07abb8e",
     "dismissals": [],
     "findings": [
       {
-        "body": "The latest proof list explicitly leaves this behavior without runtime proof. The FIFO test releases the first model and waits for the entire Forge command to exit; the view test holds a single launch. Neither observes a command between launches while another agent waits. Existing nudge/retry tests check completion without competing admission, so reserving separately for each launch could pass them while violating the approved parent-holds-admission rule. Extend a command-level case to require the same entry and admission through a commit nudge or retry, with the waiter remaining queued.",
-        "file": "tests/test_lanes_agents.py",
-        "line": 136,
-        "priority": "P1",
-        "title": "Not done: agent admission survives sequential model launches"
-      },
-      {
-        "body": "This still assumes every recorded child leads its own process group. The supported older PR checker launches Autoreview without group options at tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. On POSIX, codex._stop signals the group named by that child's pid, which does not exist; the child survives and stop refuses without freeing its place. Actual older Claude workers and readers have the same problem. The existing-queue test converts a newly grouped launch's record, so it does not exercise an actual ungrouped launch. Verify group ownership and support safely terminating these existing processes.",
+        "body": "The new sequential-launch proof exposes a running state that stop handles incorrectly: tests/test_lanes_agents.py:170\u2013197 holds a Git subprocess between model launches and confirms that the entry now records the Forge parent. Here the comparison passes group=False; codex._stop then signals only that parent on POSIX (src/forge/codex.py:645\u2013648). Its Git subprocess and any hooks remain alive, while stop can remove the entry once the parent is reaped. A blocked subprocess makes this an unbounded state, not merely a subsecond spawn window. End the verified run's complete tree before releasing admission and cover stopping the parent-held state in the command test. The advisory legacy variant also remains: tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533 launches an ungrouped child, but this comparison passes group=True, so stop targets a nonexistent group and cannot stop it.",
         "file": "src/forge/machine.py",
         "line": 233,
-        "priority": "P2",
-        "title": "Handle existing agents without a dedicated process group"
+        "priority": "P1",
+        "title": "Not done: forge stop ends a named running or waiting run in either lane and frees its place"
       },
       {
-        "body": "Admission snapshots configuration, but later selections never update the lane entry. Autoreview defaults and fallback only update selected at review.py:603\u2013611; split design fallback replaces chosen at worker.py:165. Default readers also join with an empty selection at story.py:222 and :230: repo.models returns {} when unconfigured (repo.py:411\u2013419), while actual Claude/Codex selections update only run progress (repo.py:278\u2013283 and codex.py:384\u2013386). Thus lanes can report null or the previous model while the item's activity reports the actual selection. Refresh the shared entry for review, worker fallback and both reader providers.",
+        "body": "This previous gap remains open. Admission snapshots chosen, but Autoreview's defaults and fallback update only selected and activity progress at review.py:603\u2013611. The worker's Claude-to-Codex fallback similarly replaces chosen at worker.py:165 without updating the entry. Both reader paths join using repo.models at story.py:222 and :230, which returns an empty selection when unconfigured (src/forge/repo.py:411\u2013419); subsequent Claude and Codex selection events update only activity records (repo.py:278\u2013283 and codex.py:384\u2013386). Board lanes can therefore show null or the previous model/effort throughout an actual run. Refresh the shared entry when selection becomes known or changes across these callers.",
         "file": "src/forge/review.py",
         "line": 509,
         "priority": "P2",
         "title": "Refresh lane metadata when the provider selects its model and effort"
       },
       {
-        "body": "Actual test commands still bypass these shared entries: fasttest.py:271 launches directly, and review.py:279\u2013288 uses the separate ticket queue. Consequently, board cannot expose their lane output/progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns that integration and its command-level checks to TESTS, so this remains deferred advice for that task rather than an AGENTS blocker.",
+        "body": "Test commands still bypass the shared entries: src/forge/fasttest.py:271 launches directly, and src/forge/review.py:279\u2013288 uses the separate ticket queue. Consequently, board cannot expose running tests' lane output/progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice for that task rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "id": "ce5c1cfa-410f-4823-a619-399a1203326e",
+    "id": "899e9bd2-fccd-479a-a141-ebda32df4843",
     "status": "blocked"
   },
   "round": 21,
@@ -92,6 +85,10 @@
     {
       "at": "2026-10-07T05:00:56+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-07T06:33:47+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -101,6 +98,5 @@
     "reason": "Owner accepted the finding; the worker had already reverted the unrelated lockfile test change at 12:11, so the part now leaves that test alone. Close again for a fresh review.",
     "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 405f199adfb88d029944088322ae2d503dfb9003` exited with status 1 on the machine running forge close.\n            admitted = next(e for e in rows if e[\"item\"] == first)\n            waiting = lambda rows: {e[\"item\"]: (e[\"id\"], e[\"started_at\"]) for e in rows\n                                    if e[\"item\"] in {q[0] for q in queued}}\n            waiters = waiting(rows)\n            assert len(waiters) == len(queued) and all(start is None for _, start in waiters.values())\n            real_git = shutil.which(\"git\")\n            _install(repo.bin, \"git\", f'''#!{sys.executable}\n    import pathlib, subprocess, sys, time\n    here = pathlib.Path(__file__).resolve().parent\n    if sys.argv[1:] == [\"status\", \"--porcelain\", \"-uall\"] and pathlib.Path.cwd().name == {first_name!r} and (here / \"first-ended\").exists() and not (here / \"between-launches\").exists():\n        (here / \"between-launches\").touch()\n        while not (here / \"go-between\").exists() and not (here / \"go-all\").exists():\n            time.sleep(0.05)\n    sys.exit(subprocess.call([{real_git!r}, *sys.argv[1:]]))\n    ''')\n            (repo.bin / f\"go-{first_name}\").touch()\n            _until(lambda: (repo.bin / \"between-launches\").exists(), \"between model launches\")\n            rows = entries()\n>           between = next(e for e in rows if e[\"item\"] == first)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE           StopIteration\n\ntests/test_lanes_agents.py:176: StopIteration\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 1348 passed, 5 skipped in 1165.66s (0:19:25)",
   "worker": "codex"
 }

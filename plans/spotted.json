@@ -496,6 +496,17 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends a named running or waiting run in either lane and frees its place\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 233,
+      "text": "Not done: forge stop ends a named running or waiting run in either lane and frees its place",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends the running process tree before freeing its place\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "src/forge/machine.py",
