@@ -8,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 from test_close import env  # noqa: F401
 from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 
@@ -73,7 +75,9 @@ class Close:
     def end(self) -> None:
         out, err = self.process.communicate(timeout=120)
         self.said += out
-        assert self.process.returncode == 0, (self.said, err)
+        if self.process.returncode != 0:
+            pytest.fail(f"forge close exited {self.process.returncode}\n{self.said}\n{err}",
+                        pytrace=False)
 
     def places(self) -> list[str]:
         return [line for line in self.said.splitlines() if "waits its turn" in line]
