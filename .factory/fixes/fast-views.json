@@ -3,25 +3,40 @@
   "branch": "fix/fast-views",
   "done_when": "forge board --json and forge next --json leave out stories, tasks and fixes that were merged or done more than 7 days ago (they still show in the text board's history), with no cache; their output is otherwise unchanged; a command test on a repo with old finished items shows they are left out and that the number of git commands per call does not grow with them (no wall-clock timing); tests/test_machine_views.py stays within its time limit on Windows CI; new and earlier-adopted client repos get it, with a command test for each",
   "flagged": [
-    "src/forge/board.py"
+    "src/forge/board.py",
+    "src/forge/nextstep.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6e43f20a0a70b6f391f41b7e19729d31f2c60c611e4c68ebb0f33a93dc83ee46",
-    "changed": "6e44b67541f343d39bbf964db9822ed45b1e10aa8cf5767e871b3a708d22e93a",
-    "commit": "2954908d8f81a18c358ad2f21aff6f5061dbaf36",
+    "branch_diff": "b99ef8c226e790acdcd1b06c72da4db5d48e6ed8d81943ece4e568d2a22481e7",
+    "changed": "06b874395dd85aa703b28db602ad7761818907cb01a765d6f16abdcbe04af779",
+    "commit": "36f4e53f9fd68cea657f58833a0901b6f099ea33",
     "dismissals": [],
     "findings": [
       {
-        "body": "The bounded-Git-work requirement remains unmet in both JSON commands. `_machine_history` calls `_copies` before filtering, and `src/forge/board.py:568\u2013569` still starts one `git ls-tree` per remote story/task/fix branch, including retained branches for expired work. There are two further paths: with an approved story containing an unmerged task, `src/forge/nextstep.py:437` calls `_started`, whose loop at `src/forge/task.py:228\u2013235` starts an `ls-tree` and a merge-state lookup for each retained old task branch; archived tasks with cross-story dependencies also trigger per-row Git reads through `src/forge/story.py:377\u2013392`. These items can be absent from JSON while continuing to add subprocesses on every refresh. The new regression passes despite these defects because its twelve additions create no additional branch refs, its LIVE tasks are all merged (returning before `_started`), and the added rows have `After: none`. Reuse the bulk history for these discovery/dependency paths and extend the command test to cover retained finished refs, a genuinely unfinished story, and archived cross-story dependencies.",
-        "file": "src/forge/board.py",
-        "line": 517,
+        "body": "The Git-command bound remains unmet for `forge next --json`. Add old completed stories to the landed roadmap, each linked to a distinct spec with an already-recorded Result: their rows are omitted and the JSON remains unchanged, but `_due` still executes one `story.show` per spec at src/forge/nextstep.py:302. That helper starts a `git show` subprocess at src/forge/story.py:611. The regression fixture adds no roadmap/spec links, so its constant-count assertion misses this path. Batch these spec reads and extend the command test with completed, already-measured specs.",
+        "file": "src/forge/nextstep.py",
+        "line": 298,
         "priority": "P1",
-        "title": "Not done: Git command counts still grow with old finished items"
+        "title": "Not done: Git command counts still grow with old finished stories linked to specs"
+      },
+      {
+        "body": "With `log.showSignature=true`, a signed landed commit makes this `git show` print signature information alongside the tree hash. Read-only verification against the supplied signed commit confirmed additional stdout before the hash. `repo.git` returns that entire stdout (src/forge/repo.py:144), so the multiline value becomes a supposed tree ID in the subsequent `diff-tree --stdin` input, which fails. This affects both JSON commands and the human board because all use `_copies`. Use `rev-parse <ref>^{tree}` or explicitly disable signature output.",
+        "file": "src/forge/board.py",
+        "line": 566,
+        "priority": "P2",
+        "title": "Disable signature output when reading the landed tree ID"
+      },
+      {
+        "body": "`dates` includes historical additions whose state files no longer exist on the landed branch, but this comprehension expires them unconditionally. After reverting an old fix merge and removing its old refs, starting a fix with the same slug is allowed by src/forge/task.py:273 because its state is absent from the current landed tree. Its new, ongoing worktree state is then omitted by both JSON commands using the previous incarnation's date; `next` also skips its guidance at src/forge/nextstep.py:209. Restarted tasks have the same problem. Only treat an addition date as a current merge when the state path still exists in `landed_states`.",
+        "file": "src/forge/board.py",
+        "line": 532,
+        "priority": "P2",
+        "title": "Do not expire restarted tasks and fixes using reverted merge dates"
       }
     ],
-    "id": "951ad643-d9ad-40f0-b32b-bcd12bf0d01c",
+    "id": "8ec3d482-ac52-4258-aaff-89b62ae66756",
     "status": "blocked"
   },
   "round": 2,
@@ -33,6 +48,10 @@
     },
     {
       "at": "2026-10-07T04:30:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:02:01+00:00",
       "step": "review"
     }
   ],
