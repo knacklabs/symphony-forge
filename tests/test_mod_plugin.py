@@ -8,7 +8,6 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from urllib.request import urlopen
 
 import pytest
 
@@ -43,13 +42,12 @@ def node_run(folder, text):
 
 
 def strict_typescript_against_claude_declarations(packaged_mod):
-    # Claude's published declarations are pinned independently of the hooks.
+    # Exact published declarations at this upstream commit, kept as a text
+    # fixture so runner DNS availability cannot decide strict type checking.
     declarations = packaged_mod / ".claude-plugin/types"
     declarations.mkdir(parents=True)
-    with urlopen("https://raw.githubusercontent.com/anthropics/claude-code/"
-                 "684800b206824dfd0cc8a876e8604b20f72c3617/mods/types/claude-code.d.ts",
-                 timeout=30) as response:
-        (declarations / "claude-code.d.ts").write_bytes(response.read())
+    shutil.copyfile(ROOT / "tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts",
+                    declarations / "claude-code.d.ts")
     result = subprocess.run(
         [shutil.which("npx") or "npx", "-y", "-p", "typescript@5.9.3", "tsc", "-p", str(packaged_mod)],
         capture_output=True, text=True, timeout=90,
