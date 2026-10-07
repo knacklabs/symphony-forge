@@ -221,19 +221,25 @@ def _merged(main: str, item: str, top: Path | None = None) -> bool:
     return show(main, repo.state_path(item), top) is not None
 
 
-def _started(main: str, top: Path | None = None) -> dict[str, list[str]]:
+def _started(main: str, top: Path | None = None,
+             history: dict[str, Any] | None = None) -> dict[str, list[str]]:
     """Every story's started, unmerged tasks, each with its Scope."""
     # ponytail: a few git calls per task branch; fine for the handful of tasks in flight.
     found: dict[str, list[str]] = {}
-    refs = git("for-each-ref", "--format=%(refname)", "refs/heads/task/",
-               "refs/remotes/origin/task/", cwd=top).splitlines()
+    refs = ([ref for ref in history["ref_states"] if ref.startswith(("refs/heads/task/", "refs/remotes/origin/task/"))]
+            if history is not None else git("for-each-ref", "--format=%(refname)", "refs/heads/task/",
+                                            "refs/remotes/origin/task/", cwd=top).splitlines())
     for ref in refs:
         branch = "task/" + ref.split("/task/", 1)[1]
-        for rel in git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories", cwd=top).splitlines():
+        paths = (history["ref_states"][ref] if history is not None else
+                 git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories", cwd=top).splitlines())
+        for rel in paths:
             match = re.fullmatch(r"\.factory/stories/([^/]+)/tasks/([^/]+)\.json", rel)
-            if match and f"task/{match[1]}-{match[2]}" == branch and not _merged(
-                    main, f"{match[1]}/{match[2]}", top):
-                doc = rows(sections(show(ref, f"plans/{match[1]}.md", top) or ""))
+            if match and f"task/{match[1]}-{match[2]}" == branch and not (
+                    rel in history["states"] if history is not None else _merged(main, f"{match[1]}/{match[2]}", top)):
+                text = (history["docs"].get(f"{ref}:plans/{match[1]}.md", "") if history is not None else
+                        show(ref, f"plans/{match[1]}.md", top) or "")
+                doc = rows(sections(text))
                 found[f"{match[1]}/{match[2]}"] = cell_list(doc.get(match[2], {}).get("Scope", ""))
     return found
 

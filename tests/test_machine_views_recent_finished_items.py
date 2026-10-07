@@ -103,11 +103,14 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
     # seven days; exact-boundary, ongoing, and human-history contracts stay intact.
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)
+    live_doc = DOC.replace("New moving parts: none", "| PENDING | Finish the remaining work | "
+                           "More work remains | 1 | `src/pending.py` | `tests/test_pending.py` | SAVE | no |"
+                           "\n\nNew moving parts: none")
     landed(repo, monkeypatch, OLD, {
         ".factory/stories/OLD/story.json": finished_story("OLD", OLD),
         "plans/OLD.md": DOC,
         ".factory/stories/LIVE/story.json": {"status": "approved", "title": "Live story"},
-        "plans/LIVE.md": DOC,
+        "plans/LIVE.md": live_doc,
         ".factory/stories/LIVE/tasks/SAVE.json": {"status": "waiting for checks", "touches": 0},
         ".factory/fixes/old-fix.json": finished_fix("old-fix"),
         ".factory/stories/UNKNOWN/story.json": {
@@ -142,12 +145,14 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
     assert {"LIVE", "RECENT", "recent-fix", "ongoing", "UNKNOWN"} <= rows.keys()
     assert [child["id"] for child in rows["LIVE"]["children"]] == ["LIVE/SHOW"]
     assert "LIVE/SAVE" not in rows["LIVE"]["next"]["line"]
-    assert rows["LIVE"]["next"]["line"] == "Every part of Live story is merged; record its outcome."
+    assert rows["LIVE"]["next"]["line"] == "1 part of Live story can start now."
+    assert rows["LIVE"]["next"]["command"] == "forge task start LIVE/PENDING"
     if command == "next":
         assert "LIVE/SAVE" not in first["next"]["line"]
     repo.git("switch", "-q", "main")
     added = {}
     task_lines = []
+    retained_refs = []
     for n in range(12):
         key, name = f"PAST-{n}", f"past-{n}"
         added[f".factory/stories/{key}/story.json"] = finished_story(key, OLD)
@@ -156,10 +161,14 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
         added[f".factory/fixes/{name}.json"] = finished_fix(name)
         added[f".factory/stories/LIVE/tasks/{key}.json"] = {"status": "waiting for checks", "touches": 0}
         task_lines.append(f"| {key} | Archived task {n} | Finished work | 1 | `src/past-{n}.py` | "
-                          f"`tests/test_past_{n}.py` | none | no |")
-    expanded_plan = DOC.replace("New moving parts: none", "\n".join(task_lines) + "\n\nNew moving parts: none")
+                          f"`tests/test_past_{n}.py` | {key}/SAVE | no |")
+        retained_refs += [f"HEAD:refs/heads/story/{key}", f"HEAD:refs/heads/task/{key}-SAVE",
+                          f"HEAD:refs/heads/fix/{name}"]
+    expanded_plan = live_doc.replace("New moving parts: none", "\n".join(task_lines) + "\n\nNew moving parts: none")
     added["plans/LIVE.md"] = expanded_plan
     landed(repo, monkeypatch, OLD, added)
+    repo.git("push", "-q", "origin", *retained_refs)
+    repo.git("fetch", "-q", "origin")
     repo.git("switch", "-q", "fix/ongoing")
     # Retained worktrees also see the current active plan. Its archived task rows
     # must not cause per-task git calls while deriving the story's next action.
@@ -169,6 +178,39 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
     second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
     assert second == first
     assert more_count == count, f"Old finished inventory added {more_count - count} git commands"
+    # Bulk dependency lookup keeps the real validator and local plan precedence.
+    live_plans = [repo.path / "plans/LIVE.md", tmp_path / "old-fix-worktree/plans/LIVE.md",
+                  tmp_path / "old-task-worktree/plans/LIVE.md"]
+    for plan in live_plans:
+        plan.write_text(expanded_plan.replace("PAST-0/SAVE", "PAST-0/MISSING"), encoding="utf-8")
+    invalid, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    invalid_live = next(row for row in invalid["items"] if row["id"] == "LIVE")
+    assert "After PAST-0/MISSING is not a task in the plan of PAST-0" in invalid_live["next"]["line"]
+    for plan in live_plans:
+        plan.write_text(expanded_plan, encoding="utf-8")
+    local_plan = tmp_path / "empty-plan-worktree"
+    repo.git("worktree", "add", "-qb", "story/PAST-0", str(local_plan), "main")
+    (local_plan / "plans/PAST-0.md").write_text("", encoding="utf-8")
+    invalid, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    invalid_live = next(row for row in invalid["items"] if row["id"] == "LIVE")
+    assert "After PAST-0/SAVE is not a task in the plan of PAST-0" in invalid_live["next"]["line"]
+    repo.git("worktree", "remove", "--force", str(local_plan))
+    # A genuinely unmerged task still blocks another task touching its scope.
+    busy = tmp_path / "busy-task-worktree"
+    repo.git("worktree", "add", "-qb", "task/BUSY-HOLD", str(busy), "main")
+    busy_doc = trailer_doc.replace("| SAVE |", "| HOLD |").replace("`src/basket.py`", "`src/pending.py`")
+    (busy / "plans/BUSY.md").write_text(busy_doc, encoding="utf-8")
+    state = busy / ".factory/stories/BUSY/tasks/HOLD.json"
+    state.parent.mkdir(parents=True)
+    state.write_text(json.dumps({"branch": "task/BUSY-HOLD", "status": "working"}), encoding="utf-8")
+    repo.git("add", "-A", cwd=busy)
+    repo.git("commit", "-qm", "Start the overlapping task", cwd=busy)
+    blocked, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    blocked_live = next(row for row in blocked["items"] if row["id"] == "LIVE")
+    assert blocked_live["next"]["line"] == "LIVE/PENDING waits for BUSY/HOLD to merge first."
+    assert blocked_live["next"]["command"] != "forge task start LIVE/PENDING"
+    repo.git("worktree", "remove", "--force", str(busy))
+    repo.git("branch", "-D", "task/BUSY-HOLD")
     # Completion changes appear on the next invocation; no machine-view cache.
     repo.git("restore", "plans/LIVE.md")
     repo.git("switch", "-q", "main")

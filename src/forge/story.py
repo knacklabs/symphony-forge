@@ -323,7 +323,8 @@ def sections(text: str) -> dict[str, str]:
     return found
 
 
-def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[str, Any]:
+def parse(text: str, top: Path | None = None, ref: str | None = None,
+          history: dict[str, Any] | None = None) -> dict[str, Any]:
     """A story doc's Done-when items, their details and its task rows, once its shape is sound.
     With the checkout `top`, an After entry KEY/TASK must name a task in story KEY's plan, read
     first at the commit `ref` when given.
@@ -376,20 +377,23 @@ def parse(text: str, top: Path | None = None, ref: str | None = None) -> dict[st
             raise ValueError(f"Tasks row {task['id']}: After {unknown[0]} is not a task in this table")
         for other in (after for after in task["after"] if "/" in after and top):
             key, _, name = other.partition("/")
-            if name not in _task_ids(_plan(top, key, ref)):
+            if name not in _task_ids(_plan(top, key, ref, history)):
                 raise ValueError(f"Tasks row {task['id']}: After {other} is not a task in the plan of {key}")
     _no_cycle(tasks)
     return {"done": done, "details": notes, "tasks": list(tasks.values())}
 
 
-def _plan(top: Path, key: str, ref: str | None = None) -> str:
+def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] | None = None) -> str:
     """Story KEY's plan: at `ref` when given, else its worktree's copy; else its story branch's,
     local or fetched, else the default branch's."""
-    rel, tree = f"plans/{key}.md", stories_here(top).get(key)
+    rel = f"plans/{key}.md"
+    tree = ((history["worktrees"].get(f"story/{key}") if KEY.fullmatch(key) else None)
+            if history is not None else stories_here(top).get(key))
     if not ref and tree and (tree / rel).is_file():
         return _text(tree / rel)
     refs = ([ref] if ref else []) + [f"story/{key}", f"origin/story/{key}", landed_ref(top)]
-    return next((text for one in refs if (text := show(top, one, rel)) is not None), "")
+    return next((text for one in refs if (text := history["docs"].get(f"{one}:{rel}")
+                 if history is not None else show(top, one, rel)) is not None), "")
 
 
 def _task_ids(text: str) -> set[str]:

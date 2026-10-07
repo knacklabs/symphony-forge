@@ -401,7 +401,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
     try:
-        doc = story.parse(text, top)
+        doc = story.parse(text, top, history=history)
     except ValueError as exc:
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
@@ -434,7 +434,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
     waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
                           if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
-    busy = _started(story.landed_ref(top), top)
+    busy = _started(story.landed_ref(top), top, history)
     overlapping: set[str] = set()
     for task in doc["tasks"]:
         if task["id"] in waits:
