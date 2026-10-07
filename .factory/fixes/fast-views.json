@@ -1,0 +1,14 @@
+{
+  "base": "39c22897865905b190a9ef0679919ec43368e5d3",
+  "branch": "fix/fast-views",
+  "done_when": "forge board --json and forge next --json leave out stories, tasks and fixes that were merged or done more than 7 days ago (they still show in the text board's history), with no cache; their output is otherwise unchanged; a command test on a repo with old finished items shows they are left out and that the number of git commands per call does not grow with them (no wall-clock timing); tests/test_machine_views.py stays within its time limit on Windows CI; new and earlier-adopted client repos get it, with a command test for each",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-07T03:31:17+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge board --json takes about 45 seconds and forge next --json about 10, so the pane's 10-second refresh would keep a core busy in every open Claude Code session"
+}
