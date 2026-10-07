@@ -93,6 +93,10 @@ def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
 
 def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp_path, monkeypatch):
     # Reproduce close's cold PATH with the real earlier release, not a fake refusal.
+    # CI's unfrozen uv run can dirty the harness lock; the picker now tests dirty inputs.
+    # This no-change contract needs its own clean checkout, not the running suite's ROOT.
+    source = tmp_path / "source"
+    repo.git("clone", "-q", "--no-hardlinks", str(ROOT), str(source))
     old = tmp_path / "release"
     shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2/src/forge", old / "forge")
     (old / "forge/cli-py.txt").rename(old / "forge/cli.py")
@@ -107,9 +111,9 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
     cold.mkdir()
     _install(cold, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old)))
     monkeypatch.setenv("PATH", str(cold) + os.pathsep + os.environ["PATH"])
-    command = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))["fast_test"]
-    command = command.replace("{base}", repo.git("rev-parse", "HEAD", cwd=ROOT))
-    result = subprocess.run(command, shell=True, cwd=ROOT, capture_output=True,
+    command = tomllib.loads((source / "forge.toml").read_text("utf-8"))["fast_test"]
+    command = command.replace("{base}", repo.git("rev-parse", "HEAD", cwd=source))
+    result = subprocess.run(command, shell=True, cwd=source, capture_output=True,
                             text=True, timeout=120)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "No changed or module-related test files to run." in result.stdout
