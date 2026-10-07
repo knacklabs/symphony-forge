@@ -9,41 +9,41 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aa2d89632c89e0b4fd3ca53056e068b199a1d0141cf0c324b370b4619e2200e4",
-    "changed": "87325e5f4b48f43319628668774c0f87c4f2ded085fa933235fc07bd9823d5cc",
-    "commit": "4f5b4f95bddfeb3e51a143bee540474765d131e1",
+    "branch_diff": "64772e192d77ca323a3f3582fa717ad43a976cb056b955449c2480616f8722ed",
+    "changed": "46559e18c21cf56fd04fe8d8e8d6500121f7f9a754c5960813fe614f605b5acd",
+    "commit": "cc9cd877841fe4a1753d4840951e61e458f55c2b",
     "dismissals": [],
     "findings": [
       {
-        "body": "The required latest-commit proof list is missing. Historical commit messages give broad coverage summaries, but no current list maps every covered Done-when detail to its code and named proof. Supply the complete list, including agent admission, shared entry lifecycle, machine view, cancellation, diagnostics, guidance and new/existing client behavior.",
+        "body": "The latest proof list explicitly leaves this behavior without runtime proof. The FIFO test releases the first model and waits for the entire Forge command to exit; the view test holds a single launch. Neither observes a command between launches while another agent waits. Existing nudge/retry tests check completion without competing admission, so reserving separately for each launch could pass them while violating the approved parent-holds-admission rule. Extend a command-level case to require the same entry and admission through a commit nudge or retry, with the waiter remaining queued.",
         "file": "tests/test_lanes_agents.py",
-        "line": 103,
+        "line": 136,
         "priority": "P1",
-        "title": "Not done: proof list"
+        "title": "Not done: agent admission survives sequential model launches"
       },
       {
-        "body": "The supported default-branch PR checker still launches Autoreview without process-group options (tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533). This path nevertheless requests group termination for that child. codex._stop signals a group named by the child's pid (src/forge/codex.py:624\u2013630), which does not exist for that launch; the child remains alive and stop refuses without freeing its place. Older ungrouped Claude workers and readers have the same problem. The existing-queue test converts a newly grouped worker's record, so it does not cover cancellation of an actual older launch.",
+        "body": "This still assumes every recorded child leads its own process group. The supported older PR checker launches Autoreview without group options at tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. On POSIX, codex._stop signals the group named by that child's pid, which does not exist; the child survives and stop refuses without freeing its place. Actual older Claude workers and readers have the same problem. The existing-queue test converts a newly grouped launch's record, so it does not exercise an actual ungrouped launch. Verify group ownership and support safely terminating these existing processes.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "Admission snapshots chosen here, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:569\u2013575. The running review's board entry therefore continues reporting null or the unavailable model. Split design workers similarly replace chosen when falling back to Codex at src/forge/worker.py:165\u2013189 without updating their lane entry. Refresh the entry's model and effort when either caller changes its selection.",
+        "body": "Admission snapshots configuration, but later selections never update the lane entry. Autoreview defaults and fallback only update selected at review.py:603\u2013611; split design fallback replaces chosen at worker.py:165. Default readers also join with an empty selection at story.py:222 and :230: repo.models returns {} when unconfigured (repo.py:411\u2013419), while actual Claude/Codex selections update only run progress (repo.py:278\u2013283 and codex.py:384\u2013386). Thus lanes can report null or the previous model while the item's activity reports the actual selection. Refresh the shared entry for review, worker fallback and both reader providers.",
         "file": "src/forge/review.py",
-        "line": 477,
+        "line": 509,
         "priority": "P2",
-        "title": "Refresh lane metadata when the selected model changes"
+        "title": "Refresh lane metadata when the provider selects its model and effort"
       },
       {
-        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:271 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. Consequently, the board cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice for that task.",
+        "body": "Actual test commands still bypass these shared entries: fasttest.py:271 launches directly, and review.py:279\u2013288 uses the separate ticket queue. Consequently, board cannot expose their lane output/progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns that integration and its command-level checks to TESTS, so this remains deferred advice for that task rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "id": "de035578-ae02-485c-b662-4512ced6ecc2",
+    "id": "ce5c1cfa-410f-4823-a619-399a1203326e",
     "status": "blocked"
   },
   "round": 19,
@@ -87,6 +87,10 @@
     },
     {
       "at": "2026-10-07T03:30:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:00:56+00:00",
       "step": "review"
     }
   ],

@@ -89,6 +89,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: a running plan reader's actual round\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 261,
+      "text": "Not done: a running plan reader's actual round",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: derive readiness from the current head's complete check result\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -129,6 +140,39 @@
       "text": "Not done: expose the latest review's open advisory findings",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: identify jobs cancelled at their time limit\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 146,
+      "text": "Not done: identify jobs cancelled at their time limit",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: idle_since and stalled for remote-only items\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 272,
+      "text": "Not done: idle_since and stalled for remote-only items",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 350,
+      "text": "Not done: plan_read from the story's current read record",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
       "status": "open",
       "closed_by": null
     },
@@ -274,6 +318,28 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 431,
+      "text": "Not done: the latest step through every worker path",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex_turn.py\tNot done: running Codex readers' effort with default settings\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/codex_turn.py",
+      "line": 185,
+      "text": "Not done: running Codex readers' effort with default settings",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/doctor.py\tNot done: CLOSED and MERGED doctor-fix retention tests\tFORGE-DOCTORFIX-1/FILES",
@@ -650,6 +716,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 603,
+      "text": "Not done: each running reviewer's actual model and effort",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: every review result has a fresh id\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -681,6 +758,17 @@
       "item": "forge-runs-on-several-repos-at-once-can",
       "status": "done",
       "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/story.py\tNot done: running readers' model and effort with default settings\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 705,
+      "text": "Not done: running readers' model and effort with default settings",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
@@ -980,6 +1068,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission survives sequential model launches\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_agents.py",
+      "line": 136,
+      "text": "Not done: agent admission survives sequential model launches",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission, machine view and stop are tested through both adapters\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_agents.py",
@@ -1009,6 +1108,39 @@
       "text": "Not done: a process whose pid was reused is not terminated",
       "from": "blocking",
       "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 343,
+      "text": "Not done: activity actions and review-result events in both views",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tNot done: at most one progress record per ten seconds\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 316,
+      "text": "Not done: at most one progress record per ten seconds",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tNot done: proof list\tFORGE-MOD-1/LIVE",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 34,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/LIVE",
       "status": "open",
       "closed_by": null
     },
@@ -1262,6 +1394,17 @@
       "text": "Recognize GitHub merges before the default branch is fetched",
       "from": "review",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tRespect terminal check states when projecting the CI gate",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 347,
+      "text": "Respect terminal check states when projecting the CI gate",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
       "status": "open",
       "closed_by": null
     },
@@ -1640,6 +1783,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\tHandle Windows readers holding the progress file open",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 171,
+      "text": "Handle Windows readers holding the progress file open",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tPreserve missing-session recovery for structured Claude errors",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 203,
+      "text": "Preserve missing-session recovery for structured Claude errors",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/repo.py\tRecord run ends only after the child has stopped",
       "kind": "edge",
       "path": "src/forge/repo.py",
@@ -1691,6 +1856,28 @@
       "text": "Classify cached test stages as skipped",
       "from": "review",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 292,
+      "text": "Parse pytest's singular and selected test totals",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane metadata when the provider selects its model and effort",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 509,
+      "text": "Refresh lane metadata when the provider selects its model and effort",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
       "status": "open",
       "closed_by": null
     },
@@ -1757,6 +1944,17 @@
       "text": "Exclude staged new hook shims on an upgrade rerun",
       "from": "review",
       "item": "FORGE-UPGRADECMD-1/UPGRADE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tKeep Claude's structured failure reason in the work log",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 498,
+      "text": "Keep Claude's structured failure reason in the work log",
+      "from": "review",
+      "item": "FORGE-MOD-1/LIVE",
       "status": "open",
       "closed_by": null
     },
@@ -1838,6 +2036,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\ttests/test_machine_views.py\tThe reported Windows worker crash still needs a Windows rerun.",
+      "kind": "edge",
+      "path": "tests/test_machine_views.py",
+      "line": 545,
+      "text": "The reported Windows worker crash still needs a Windows rerun.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_next_announces_new_forge_releases.py\tThe reported Windows timing assertion still needs a Windows rerun.",
+      "kind": "edge",
+      "path": "tests/test_next_announces_new_forge_releases.py",
+      "line": 99,
+      "text": "The reported Windows timing assertion still needs a Windows rerun.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_proto_deploy.py\tThe Docker build timed out locally but passed in the default-branch subset, so its failure remains unresolved.",
       "kind": "edge",
       "path": "tests/test_proto_deploy.py",
@@ -1878,204 +2098,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: a running plan reader's actual round\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 261,
-      "text": "Not done: a running plan reader's actual round",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: identify jobs cancelled at their time limit\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 146,
-      "text": "Not done: identify jobs cancelled at their time limit",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: idle_since and stalled for remote-only items\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 272,
-      "text": "Not done: idle_since and stalled for remote-only items",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: plan_read from the story's current read record\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 350,
-      "text": "Not done: plan_read from the story's current read record",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 431,
-      "text": "Not done: the latest step through every worker path",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex_turn.py\tNot done: running Codex readers' effort with default settings\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/codex_turn.py",
-      "line": 185,
-      "text": "Not done: running Codex readers' effort with default settings",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/review.py",
-      "line": 603,
-      "text": "Not done: each running reviewer's actual model and effort",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tNot done: running readers' model and effort with default settings\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 705,
-      "text": "Not done: running readers' model and effort with default settings",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "tests/test_live_status.py",
-      "line": 343,
-      "text": "Not done: activity actions and review-result events in both views",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_live_status.py\tNot done: at most one progress record per ten seconds\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "tests/test_live_status.py",
-      "line": 316,
-      "text": "Not done: at most one progress record per ten seconds",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_live_status.py\tNot done: proof list\tFORGE-MOD-1/LIVE",
-      "kind": "bug",
-      "path": "tests/test_live_status.py",
-      "line": 34,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tRespect terminal check states when projecting the CI gate",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 347,
-      "text": "Respect terminal check states when projecting the CI gate",
-      "from": "review",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\tHandle Windows readers holding the progress file open",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 171,
-      "text": "Handle Windows readers holding the progress file open",
-      "from": "review",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\tPreserve missing-session recovery for structured Claude errors",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 203,
-      "text": "Preserve missing-session recovery for structured Claude errors",
-      "from": "review",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 292,
-      "text": "Parse pytest's singular and selected test totals",
-      "from": "review",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/worker.py\tKeep Claude's structured failure reason in the work log",
-      "kind": "edge",
-      "path": "src/forge/worker.py",
-      "line": 498,
-      "text": "Keep Claude's structured failure reason in the work log",
-      "from": "review",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_machine_views.py\tThe reported Windows worker crash still needs a Windows rerun.",
-      "kind": "edge",
-      "path": "tests/test_machine_views.py",
-      "line": 545,
-      "text": "The reported Windows worker crash still needs a Windows rerun.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\ttests/test_next_announces_new_forge_releases.py\tThe reported Windows timing assertion still needs a Windows rerun.",
-      "kind": "edge",
-      "path": "tests/test_next_announces_new_forge_releases.py",
-      "line": 99,
-      "text": "The reported Windows timing assertion still needs a Windows rerun.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/LIVE",
       "status": "open",
       "closed_by": null
     }
