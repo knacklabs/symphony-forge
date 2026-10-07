@@ -391,4 +391,4 @@ console.log(JSON.stringify(texts));
     assert "Couldn't refresh:" not in answer[7]
     assert "Nothing in progress." in answer[8]
     assert "Lost state · unknown" in answer[9]
-    assert answer[10] == "Upgrade Forge in this repo to use the board."
+    assert answer[10] == "This repo's Forge is too old for the pane: upgrade Forge here."

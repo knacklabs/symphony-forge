@@ -49,6 +49,19 @@ Risks: none
 READER = """#!{python}
 import io, json, os, pathlib, sys
 here = pathlib.Path(__file__).resolve().parent
+# Plugin maintenance and version queries do not start a cold read.
+args = sys.argv[1:]
+if args == ["--version"]:
+    print("2.1.291 (Claude Code)")
+    sys.exit(0)
+if args[:1] == ["plugin"]:
+    if args == ["plugin", "marketplace", "list", "--json"]:
+        print(json.dumps([{{"name": "forge", "source": {{
+            "source": "github", "repo": "knacklabs/symphony-forge"}}}}]))
+    elif args == ["plugin", "list", "--json"]:
+        print(json.dumps([{{"id": "forge@forge", "scope": "user", "enabled": True,
+                           "version": "1.2.6"}}]))
+    sys.exit(0)
 prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()  # UTF-8 whatever the code page
 if "--input-format" in sys.argv:
     input_events = [json.loads(line) for line in prompt.splitlines()]

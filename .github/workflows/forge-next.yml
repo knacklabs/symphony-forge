@@ -29,7 +29,7 @@ jobs:
       - name: Run the native plugin tests
         run: claude plugin test src/forge/mod
       - name: Install from the local release fixture
-        run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k real-local-install
+        run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k real-local-install -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
     env:
