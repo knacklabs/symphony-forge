@@ -116,8 +116,9 @@ def open_must_answer_topics(top: Path) -> list[str]:
 def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
-    lines = _report(top)[0]
-    print(json.dumps({**board.machine_board(top), "next": machine_next(lines)})
+    history = board._machine_history(top) if args.json else None
+    lines = _report(top, history)[0]
+    print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
 
@@ -180,7 +181,7 @@ def handoff_hook(args: Any) -> int:
     return 0
 
 
-def _report(top: Path) -> tuple[list[str], list[str]]:
+def _report(top: Path, history: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
@@ -192,11 +193,11 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     if trees:
         prs.update({pr["headRefName"]: pr for pr in board._machine_prs(top)
                     if isinstance(pr.get("headRefName"), str)})
-    for key, (path, state, text) in sorted(_stories(top).items()):
+    for key, (path, state, text) in sorted(_stories(top, history).items()):
         if state.get("status") == "done":
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals)
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
         lines += found
         touches = state.get("touches", 0) + sum(task.get("touches", 0) for task in tasks)
         states.append(f"{title} ({state.get('status', 'planning')}): {_touches(touches)} so far.")
@@ -205,6 +206,8 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
+            if history is not None and repo.state_path(name) in history["expired"]:
+                continue
             if branch in merged_prs:
                 state = {**state, "status": "merged"}
             lines += _item(name, f"The fix {name}", state, top, path, prs, refusals)
@@ -223,10 +226,11 @@ def _report(top: Path) -> tuple[list[str], list[str]]:
     if _needs_demo_address(top):
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
-    if repo.now()[:10] >= board.CHECK_DATE:  # the three success numbers, from the check date on
+    # Appended statistics never enter machine_next's first line or command.
+    if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
-    return _due(top) + _hotspots(top, trees) + lines, states
+    return _due(top, history) + _hotspots(top, trees) + lines, states
 
 
 def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
@@ -279,7 +283,7 @@ def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
         return repo.DEFAULTS
 
 
-def _due(top: Path) -> list[str]:
+def _due(top: Path, history: dict[str, Any] | None = None) -> list[str]:
     """A success check for each spec whose check date has come and whose stories are all done."""
     ref = story.landed_ref(top)
     items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
@@ -291,7 +295,8 @@ def _due(top: Path) -> list[str]:
             keys.setdefault(item["spec"], []).append(item["key"])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
-        if not all(story.completed(top, key, ref).get("status") == "done"
+        if not all((history["stories"].get(key, {}) if history is not None else
+                    story.completed(top, key, ref)).get("status") == "done"
                    for key in spec_keys):
             continue
         found = records.due_check(story.show(top, ref, rel) or "", repo.now()[:10])
@@ -354,15 +359,23 @@ def _idle(top: Path) -> list[str]:
             'filled problem card and the brief names it"']
 
 
-def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
+def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
     """Each story's worktree (None once it is only on the default branch), state and doc text."""
     found: dict[str, tuple[Path | None, dict[str, Any], str]] = {}
     ref = story.landed_ref(top)
-    listing = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories/", cwd=top)
-    for key in re.findall(r"^\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json$", listing, re.M):
-        found[key] = (None, story.completed(top, key, ref),
+    if history is None:
+        listing = repo.git("ls-tree", "-r", "--name-only", ref, "--", ".factory/stories/", cwd=top)
+        states = {key: story.completed(top, key, ref) for key in
+                  re.findall(r"^\.factory/stories/([A-Z][A-Z0-9-]*)/story\.json$", listing, re.M)}
+    else:
+        states = {key: state for key, state in history["stories"].items()
+                  if repo.state_path(key) not in history["expired"]}
+    for key, state in states.items():
+        found[key] = (None, state,
                       story.show(top, ref, f"plans/{key}.md") or "")
     for key, path in story.stories_here(top).items():
+        if history is not None and repo.state_path(key) in history["expired"]:
+            continue
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
@@ -371,7 +384,7 @@ def _stories(top: Path) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
 
 def _story(top: Path, key: str, path: Path | None, text: str,
            title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
-           refusals: dict[Path, str]
+           refusals: dict[Path, str], history: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
     notes, doc_hash, required = "", "", False
@@ -395,11 +408,12 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     digest = approval.waiting_digest(key, path) if path else None
     if digest:
         return _approval(top, key, path, title, digest, refusals, text), []
-    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs)
+    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
+               and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
     behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
@@ -417,7 +431,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if behind:
         return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
-               and _task(top, *after.split("/"), trees, merged_prs).get("status") == "merged"}
+               and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
     waits = {task["id"]: [after if "/" in after else f"{key}/{after}" for after in task["after"]
                           if after not in merged] for task in doc["tasks"] if not states[task["id"]]}
     busy = _started(story.landed_ref(top), top)
@@ -510,12 +524,16 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
 
 
 def _task(top: Path, key: str, task: str, trees: dict[str, Path],
-          merged_prs: set[str]) -> dict[str, Any]:
+          merged_prs: set[str], history: dict[str, Any] | None = None) -> dict[str, Any]:
     """A task's state: merged on the default branch or GitHub, else from its worktree."""
     item = f"{key}/{task}"
-    text = story.show(top, story.landed_ref(top), repo.state_path(item))
-    if text is not None:
-        return {**story.json_of(text), "status": "merged"}
+    if history is not None:
+        landed = history["states"].get(repo.state_path(item))
+    else:
+        text = story.show(top, story.landed_ref(top), repo.state_path(item))
+        landed = story.json_of(text) if text is not None else None
+    if landed is not None:
+        return {**landed, "status": "merged"}
     branch = f"task/{key}-{task}"
     path = trees.get(branch)
     state = (repo.read_state(item, path) if path else None) or {}

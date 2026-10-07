@@ -615,23 +615,28 @@ def merged_at(top: Path, ref: str, path: str) -> str:
     return datetime.fromisoformat(date).astimezone(timezone.utc).isoformat(timespec="seconds") if date else ""
 
 
-def completed(top: Path, key: str, ref: str) -> dict[str, Any]:
+def completed(top: Path, key: str, ref: str, history: dict[str, Any] | None = None) -> dict[str, Any]:
     """Read completion from the last task's squash message; older saved outcomes win."""
-    state = json_of(show(top, ref, repo.state_path(key)))
+    state = (history["stories"].get(key, {}) if history is not None else
+             json_of(show(top, ref, repo.state_path(key))))
     if state.get("status") == "done":
         return state
-    text = show(top, ref, f"plans/{key}.md") or ""
+    text = (history["docs"].get(f"{ref}:plans/{key}.md", "") if history is not None else
+            show(top, ref, f"plans/{key}.md") or "")
     try:
         tasks = parse(text)["tasks"]
     except ValueError:
         return state
-    dates = {row["id"]: merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")) for row in tasks}
+    dates = {row["id"]: (history["dates"].get(repo.state_path(f"{key}/{row['id']}"), "")
+                         if history is not None else merged_at(top, ref, repo.state_path(f"{key}/{row['id']}")))
+             for row in tasks}
     if not dates or not all(dates.values()):
         return state
     # The file's first appearance identifies its merge, even after later edits to task state.
     for tid in dates:
-        message = repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
-                           ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top)
+        message = (history["messages"][repo.state_path(f"{key}/{tid}")] if history is not None else
+                   repo.git("log", "--first-parent", "--diff-filter=A", "-1", "--format=%B",
+                            ref, "--", repo.state_path(f"{key}/{tid}"), cwd=top))
         for line in reversed(message.splitlines()):
             if line.startswith("Forge-story-done: "):
                 record = json_of(line.removeprefix("Forge-story-done: "))
