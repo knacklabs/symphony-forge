@@ -1200,6 +1200,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_live_status.py\tThe review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 330,
+      "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_machine_views.py\tNot done: board command coverage with a story, fix, running worker and open pull request\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "tests/test_machine_views.py",
