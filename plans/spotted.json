@@ -551,6 +551,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/approval.test.ts\tThe approval fixture lacks the session and environment host methods its assembled plugin calls, and the same three native failures occur on the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/approval.test.ts",
+      "line": 6,
+      "text": "The approval fixture lacks the session and environment host methods its assembled plugin calls, and the same three native failures occur on the default branch.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/core.test.ts\tNot done: elapsed time advances between refreshes\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/core.test.ts",
@@ -602,6 +613,39 @@
       "text": "Accept unknown worker start times from the board contract",
       "from": "blocking",
       "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: Machine tests detect the behaviors claimed by the proof list\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 77,
+      "text": "Not done: Machine tests detect the behaviors claimed by the proof list",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tDistinguish agent and test targets before confirming a stop\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 143,
+      "text": "Distinguish agent and test targets before confirming a stop",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: local Machine run facts on Windows\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 35,
+      "text": "Not done: local Machine run facts on Windows",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
       "status": "open",
       "closed_by": null
     },
