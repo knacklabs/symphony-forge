@@ -102,6 +102,15 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const foreign = await ui.find({ key: 'machine-run-foreign' })
     expect(foreign?.text).not.toContain('round')
     expect(foreign?.text).not.toContain('editing the guide')
+    // Pytest can report completed tests before it reports a collected total.
+    for (const progress of [{ done: 3, total: null }, { done: null, total: 8 }]) {
+      state.lanes.tests.entries[0]!.progress = progress
+      await clock.advance(10000)
+      drawn = JSON.stringify(await ui.drawn())
+      expect(drawn).not.toContain('Malformed forge lanes output')
+      expect(drawn).not.toContain('3/8')
+      expect(drawn).not.toContain('░')
+    }
     state.failure = 'Forge could not read the machine lanes. Run forge lanes to check.'
     await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())

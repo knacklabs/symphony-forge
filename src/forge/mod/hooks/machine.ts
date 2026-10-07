@@ -6,7 +6,7 @@ import { elapsed, record, rows, seconds } from './summary.ts'
 type Entry = {
   id: string; repo_root: string; checkout_root: string; repo_name: string; item: string | null; kind: string
   model: string | null; effort: string | null; joined_at: string; started_at: string | null
-  output_path: string | null; progress: { done: number; total: number } | null
+  output_path: string | null; progress: { done: number | null; total: number | null } | null
   place: number; elapsed: number
 }
 type Lanes = { agents: { size: number; entries: Entry[] }; tests: { size: number; entries: Entry[] }; machine: { load: number[] | null; cores: number | null } }
@@ -25,7 +25,9 @@ function valid(value: unknown): value is Lanes {
           ['item', 'model', 'effort', 'output_path'].every(k => e[k] === null || typeof e[k] === 'string') &&
           (e.started_at === null || (typeof e.started_at === 'string' && Number.isFinite(Date.parse(e.started_at)))) &&
           Number.isInteger(e.place) && Number(e.place) >= 0 && typeof e.elapsed === 'number' && Number.isFinite(e.elapsed) && e.elapsed >= 0 &&
-          (e.progress === null || (Number.isInteger(p.done) && Number.isInteger(p.total) && Number(p.done) >= 0 && Number(p.total) > 0 && Number(p.done) <= Number(p.total)))
+          (e.progress === null || ((p.done === null || (Number.isInteger(p.done) && Number(p.done) >= 0)) &&
+            (p.total === null || (Number.isInteger(p.total) && Number(p.total) > 0)) &&
+            (p.done === null || p.total === null || Number(p.done) <= Number(p.total))))
       })
     })
 }
@@ -52,7 +54,9 @@ function label(data: Data, entry: Entry, now: number): string {
   const current = worker(data, entry)
   const tool = typeof current.tool === 'string' ? current.tool : ''
   const symbol = entry.kind === 'test' ? '■' : tool === 'codex' ? '◆' : tool === 'claude' ? '●' : '◇'
-  const p = entry.progress, filled = p ? Math.floor(p.done / p.total * 10) : 0
+  const reported = entry.progress
+  const p = reported?.done != null && reported.total != null ? { done: reported.done, total: reported.total } : null
+  const filled = p ? Math.floor(p.done / p.total * 10) : 0
   const bar = p ? ` [${'█'.repeat(filled)}${'░'.repeat(10 - filled)}] ${p.done}/${p.total}` : ''
   const model = current.model ?? entry.model, effort = current.effort ?? entry.effort
   return `${symbol} ${entry.repo_name} · ${title(data, entry)} · ${entry.kind}${tool ? ` · ${tool}` : ''}${model ? ` · ${model}` : ''}${effort ? ` · ${effort}` : ''}${current.round != null ? ` · round ${current.round}` : ''} · ${seconds(elapsed(entry.started_at ?? entry.joined_at, now))}${entry.started_at === null ? entry.place > 0 ? ` · waiting #${entry.place}` : ' · starting' : ''}${bar}${current.step ? ` · ${current.step}` : ''}`
@@ -75,7 +79,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
   let showLog = false, outputPath: string | null = null, output: string | null = null, status = '', confirming = false
   const samples: number[] = []
   let invalidate = () => {}
-  let openOutput: (() => Promise<void>) | undefined, stop: (() => Promise<void>) | undefined
+  let openOutput: ((run: Entry) => Promise<void>) | undefined, stop: ((run: Entry) => Promise<void>) | undefined
   data.onUpdate(() => {
     if (data.error) { error = data.error; return }
     if (!valid(data.lanes)) { error = data.lanes === null ? 'Upgrade Forge in this repo to use the Machine tab.' : 'Malformed forge lanes output. Run forge lanes to check, then refresh.'; return }
@@ -88,6 +92,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
   })
   add('Machine', (e, t, now) => {
     const runs = snapshot ? entries(snapshot) : []
+    const selectedRun = runs.find(run => run.id === selected)
     const descriptions = runs.map(run => label(data, run, now))
     const children: RenderNode[] = []
     const tree: RenderNode[] = []
@@ -137,8 +142,8 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
     }
     for (const run of runs) children.push(t.Button({ key: `machine-run-${run.id}`, label: `${run.id === selected ? '› ' : ''}${title(data, run)} · ${run.repo_name}`, onPress: () => { selected = run.id; status = ''; invalidate() } }))
     children.push(t.Box({ flexDirection: 'row', gap: 1, children: [
-      ...(selected ? [t.Button({ key: 'machine-output', hotkey: 'o', label: 'Open output', onPress: () => openOutput?.() }),
-        t.Button({ key: 'machine-stop', hotkey: 's', label: 'Stop run', onPress: () => stop?.() })] : []),
+      ...(selectedRun ? [t.Button({ key: 'machine-output', hotkey: 'o', label: 'Open output', onPress: () => openOutput?.(selectedRun) }),
+        t.Button({ key: 'machine-stop', hotkey: 's', label: 'Stop run', onPress: () => stop?.(selectedRun) })] : []),
       t.Button({ key: 'machine-log', hotkey: 'l', label: showLog ? 'Hide events' : 'Show events', onPress: () => { showLog = !showLog; invalidate() } }),
     ] }))
     if (showLog) {
@@ -156,15 +161,14 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
     if (e.surface !== 'terminal' && e.surface !== 'desktop') return next(e)
     invalidate = () => { $.ui.invalidate('ui.render') }
     cwd = path(e.cwd)
-    openOutput = async () => {
-      outputPath = snapshot && entries(snapshot).find(e => e.id === selected)?.output_path || null
+    openOutput = async run => {
+      outputPath = run.output_path
       output = null
       await $.ui.open({ id: 'forge-output', title: 'Run output', focus: true })
       $.ui.invalidate('ui.render')
     }
-    stop = async () => {
-      const run = snapshot && entries(snapshot).find(e => e.id === selected)
-      if (!run || confirming) return
+    stop = async run => {
+      if (confirming) return
       confirming = true
       try {
         if (await $.ui.ask(`Stop ${title(data, run)} in ${run.repo_name}?`, ['Stop', 'Keep running']) !== 'Stop') return
