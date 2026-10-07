@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import FORGE_SHIM, ROOT, _install, machine_cores
+from conftest import ROOT, _install, machine_cores
 from test_codex_worker import sdk_data, _running  # noqa: F401
 from test_close import env  # noqa: F401
 from test_story import worktree
@@ -127,7 +127,9 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
         for name in ("close.py", "review.py", "prcheck.py"):
             shutil.copy(ROOT / "tests/fixtures/pr-check-before-branch-diff" / name, source / "forge" / name)
         legacy = tmp_path / "base-forge"
-        legacy.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)), "utf-8")
+        # Keep the same simulated six-core OS boundary for the older checker.
+        legacy.write_text((repo.bin / "forge").read_text("utf-8").replace(
+            str(ROOT / "src"), str(source)), "utf-8")
     # A dirty first turn forces a second model launch in the same work round.
     # Hold Git between launches: a per-launch reservation must not admit a waiter.
     for provider in ("claude", "codex-app-server"):
