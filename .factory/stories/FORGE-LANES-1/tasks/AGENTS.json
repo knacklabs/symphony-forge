@@ -10,13 +10,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8e1ef8209b29bdb5dc3815d270acac551ac5ce8a378df4ab7d7c110508695dc8",
-    "changed": "80f9dad85373fb22065bba53a5b0288337569f899f8c05a4674bccb3978c4bce",
-    "commit": "feeca4218173caec957b2538737d2000c0669e3f",
+    "branch_diff": "fd5c16f72ed08345ee592c5e99b0fb09aad5aaf4b576e4a661089ef0a285c896",
+    "changed": "d501df7caae87463efe89e81c3288f3095c74c7e9d5c89a5b65eb8ed2eab170f",
+    "commit": "88243634bc5dc458e0ab15356f307b3e6e427921",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous metadata gap remains open. Admission snapshots `chosen`, but Autoreview selection and fallback update only `selected` and activity records at review.py:603\u2013611. Worker fallback replaces `chosen` at worker.py:165 without updating the lane entry. Both reader paths join using repo.models at story.py:222 and :230; repo.py:411\u2013419 can return an empty selection, while subsequent selection events at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, board lane entries can show null or obsolete model/effort values during actual runs. Refresh the shared entry across these selection paths.",
+        "body": "The previous metadata gap remains open. Admission snapshots `chosen`, but Autoreview selection and fallback update only `selected` and activity records at review.py:603\u2013611. Worker fallback replaces `chosen` at worker.py:165 without updating the lane entry. Both reader paths join using repo.models at story.py:222 and :230; repo.py:411\u2013419 can return an empty selection, while subsequent selection events at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, board lane entries can show null or obsolete model/effort values during actual runs. Refresh the shared entry when each provider confirms or changes its selection.",
         "file": "src/forge/review.py",
         "line": 509,
         "priority": "P2",
@@ -30,11 +30,11 @@
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "id": "8fa94164-f2e9-48e2-8df7-fd5c230012ad",
+    "id": "faaa1eb8-81f4-4291-b270-439155603681",
     "status": "clean"
   },
   "round": 24,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -90,6 +90,10 @@
     },
     {
       "at": "2026-10-07T08:54:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T09:45:53+00:00",
       "step": "review"
     }
   ],
