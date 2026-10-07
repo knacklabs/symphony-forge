@@ -85,6 +85,13 @@ def finished_fix(name):
             "why": f"Finished fix {name}", "done_when": "The work is finished.", "touches": 0}
 
 
+def measured_spec(key):
+    return (f"---\nstatus: confirmed\ntitle: Measured work {key}\n---\n"
+            f"# Measured work {key}\n\n## Success measure\n\n"
+            "- Metric: completed jobs per week.\n- Baseline: 1.\n- Target: 2.\n"
+            "- Check date: 2026-11-01\n- Result: 2 completed jobs per week (2026-11-02)\n")
+
+
 def traced(repo, monkeypatch, command, trace):
     trace.unlink(missing_ok=True)
     with monkeypatch.context() as tracing:
@@ -106,6 +113,7 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
     live_doc = DOC.replace("New moving parts: none", "| PENDING | Finish the remaining work | "
                            "More work remains | 1 | `src/pending.py` | `tests/test_pending.py` | SAVE | no |"
                            "\n\nNew moving parts: none")
+    roadmap = [{"key": "OLD", "spec": "docs/specs/measured-old.md"}]
     landed(repo, monkeypatch, OLD, {
         ".factory/stories/OLD/story.json": finished_story("OLD", OLD),
         "plans/OLD.md": DOC,
@@ -115,6 +123,8 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
         ".factory/fixes/old-fix.json": finished_fix("old-fix"),
         ".factory/stories/UNKNOWN/story.json": {
             "status": "done", "title": "Finished story without a date"},
+        "plans/roadmap.json": {"items": roadmap},
+        "docs/specs/measured-old.md": measured_spec("OLD"),
     })
     trailer_doc = "\n".join(line for line in DOC.splitlines() if not line.startswith("| SHOW |"))
     landed(repo, monkeypatch, OLD, {
@@ -159,6 +169,9 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
         added[f"plans/{key}.md"] = DOC
         added[f".factory/stories/{key}/tasks/SAVE.json"] = {"status": "waiting for checks", "touches": 0}
         added[f".factory/fixes/{name}.json"] = finished_fix(name)
+        spec = f"docs/specs/measured-{name}.md"
+        roadmap.append({"key": key, "spec": spec})
+        added[spec] = measured_spec(key)
         added[f".factory/stories/LIVE/tasks/{key}.json"] = {"status": "waiting for checks", "touches": 0}
         task_lines.append(f"| {key} | Archived task {n} | Finished work | 1 | `src/past-{n}.py` | "
                           f"`tests/test_past_{n}.py` | {key}/SAVE | no |")
@@ -166,6 +179,8 @@ def test_machine_views_omit_old_finished_items_without_more_git_calls(
                           f"HEAD:refs/heads/fix/{name}"]
     expanded_plan = live_doc.replace("New moving parts: none", "\n".join(task_lines) + "\n\nNew moving parts: none")
     added["plans/LIVE.md"] = expanded_plan
+    # Recorded results add no advice, and must add no per-spec git subprocesses.
+    added["plans/roadmap.json"] = {"items": roadmap}
     landed(repo, monkeypatch, OLD, added)
     repo.git("push", "-q", "origin", *retained_refs)
     repo.git("fetch", "-q", "origin")

@@ -293,13 +293,14 @@ def _due(top: Path, history: dict[str, Any] | None = None) -> list[str]:
                 and re.fullmatch(r"[A-Z][A-Z0-9-]*", str(item.get("key")))
                 and item.get("status") != "superseded"):  # a replaced story never finishes
             keys.setdefault(item["spec"], []).append(item["key"])
+    specs = board._blob_texts(top, [f"{ref}:{rel}" for rel in keys])
     lines: list[str] = []
     for rel, spec_keys in sorted(keys.items()):
         if not all((history["stories"].get(key, {}) if history is not None else
                     story.completed(top, key, ref)).get("status") == "done"
                    for key in spec_keys):
             continue
-        found = records.due_check(story.show(top, ref, rel) or "", repo.now()[:10])
+        found = records.due_check(specs.get(f"{ref}:{rel}", ""), repo.now()[:10])
         if found:
             slug = Path(rel).stem
             lines += [f"Every story from the {found[0] or slug} spec is done and its check date has "
