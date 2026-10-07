@@ -51,6 +51,36 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     repo.git("push", "-q", "origin", "main")
     doctor = repo.forge("doctor")
     assert f"This machine: {cores or 2} cores, so {agents} agents at once and test runs on {agents} cores." in doctor.stdout
+    # Native OS inputs, not Forge's derived dictionary: changing measurements must
+    # reach both commands, so null or constant placeholders cannot satisfy this proof.
+    shim = repo.bin / "forge"
+    original = shim.read_text("utf-8")
+    for total, available, load in [(8192000, 2048000, (1.25, 2.5, 3.75)),
+                                   (16384000, 4096000, (4.5, 5.25, 6.0))]:
+        native = f"import os\nos.getloadavg = lambda: {load!r}\n"
+        if sys.platform == "linux":
+            raw = f"MemTotal: {total // 1024} kB\nMemAvailable: {available // 1024} kB\n"
+            native += ("from pathlib import Path\n_real_read = Path.read_text\n"
+                       f"Path.read_text = lambda self, *a, **kw: {raw!r} "
+                       "if str(self) == '/proc/meminfo' else _real_read(self, *a, **kw)\n")
+        elif sys.platform == "darwin":
+            _install(repo.bin, "sysctl", f"#!{sys.executable}\nprint({total})\n")
+            stats = f"Mach Virtual Memory Statistics: (page size of 4096 bytes)\nPages free: {available // 4096}."
+            _install(repo.bin, "vm_stat", f"#!{sys.executable}\nprint({stats!r})\n")
+        else:
+            native += ("import ctypes\ndef memory_status(pointer):\n"
+                       f"    pointer._obj.total = {total}\n    pointer._obj.available = {available}\n"
+                       "    return 1\nctypes.windll.kernel32.GlobalMemoryStatusEx = memory_status\n")
+        shim.write_text(original.replace("from forge.cli import main", native + "from forge.cli import main"), "utf-8")
+        for command in ("board", "next"):
+            result = repo.forge(command, "--json")
+            assert result.returncode == 0, result.stderr
+            assert json.loads(result.stdout)["machine"] == {
+                "load": list(load), "memory": {"total_bytes": total, "available_bytes": available}}
+    shim.write_text(original, "utf-8")
+    if sys.platform == "darwin":
+        for command in ("sysctl", "vm_stat"):
+            (repo.bin / command).unlink()
     first, first_name = make_work(repo, "First typo")
     folder = worktree(repo, "fix/" + first)
     synced = repo.forge("sync", cwd=folder)
