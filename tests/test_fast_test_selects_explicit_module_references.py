@@ -1,4 +1,4 @@
-"""Forge's own fast command selects changed files, filenames and qualified references."""
+"""Forge's own fast command selects changed tests and qualified module references."""
 from __future__ import annotations
 
 import json
@@ -35,7 +35,7 @@ def run_fast_test(repo, *, collect_only=False):
                           capture_output=True, text=True, timeout=120)
 
 
-def test_1_review_change_runs_only_changed_filename_and_explicit_reference_tests(repo):
+def test_1_review_change_runs_only_changed_tests_and_explicit_references(repo):
     # Bare words and unqualified imports used to select unrelated tests. These
     # negative controls fail if run, so real pytest proves the selection boundary.
     for name, mention in {
@@ -47,17 +47,18 @@ def test_1_review_change_runs_only_changed_filename_and_explicit_reference_tests
         "unqualified_import": "from review import something",
         "unrelated": "",
     }.items():
-        selected = name in {"review_filename", "path_reference", "dotted_reference", "changed"}
+        # A matching filename alone no longer selects a test.
+        selected = name in {"path_reference", "dotted_reference", "changed"}
         repo.write(f"tests/test_{name}.py",
                    f"# {mention}\ndef test_{name}():\n    assert {selected!r}\n")
 
     result = run_fast_test(repo)
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "4 passed" in result.stdout
+    assert "3 passed" in result.stdout
     assert result.stdout.splitlines()[0] == (
         "Related tests: tests/test_changed.py, tests/test_dotted_reference.py, "
-        "tests/test_path_reference.py, tests/test_review_filename.py")
+        "tests/test_path_reference.py")
 
 
 def test_2_review_change_selects_fewer_than_a_third_of_forges_test_files(repo):
@@ -70,6 +71,6 @@ def test_2_review_change_selects_fewer_than_a_third_of_forges_test_files(repo):
     selected = result.stdout.splitlines()[0].removeprefix("Related tests: ").split(", ")
     # forge.reviews is a harness method, not a reference to the forge.review module.
     assert "tests/test_close.py" not in selected
-    assert "tests/test_reviews_remove_their_temp_folders.py" in selected  # Filename match.
+    assert "tests/test_reviews_remove_their_temp_folders.py" not in selected  # Filename alone.
     assert "tests/test_doctor.py" not in selected
     assert 0 < len(selected) < len(list((ROOT / "tests").rglob("test_*.py"))) / 3

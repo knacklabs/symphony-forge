@@ -47,7 +47,8 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
     repo.write("pytest.ini", "[pytest]\naddopts = -n 2\n")
     repo.write("src/shop/__init__.py", "")
     repo.write("src/shop/prices.py", "PRICE = 1\n")
-    for name, reference in {"prices": "", "import": "from shop.prices import PRICE",
+    # Environment checks need a module reference now; filenames alone do not select tests.
+    for name, reference in {"prices": "# shop/prices.py", "import": "from shop.prices import PRICE",
                             "mention": "# src/shop/prices.py", "changed": "", "unrelated": ""}.items():
         repo.write(f"checks with spaces/test_{name}.py", reference + "\nimport os, importlib.util\n"
                    "def test_client(request):\n"
@@ -124,7 +125,7 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
 def _client_tests(client, python):
     (client / "tests").mkdir(exist_ok=True)
     (client / "prices.py").write_text("PRICE = 1\n", "utf-8")
-    for name, reference in (("prices", ""), ("import", "from prices import PRICE\n")):
+    for name, reference in (("prices", "# prices.py\n"), ("import", "from prices import PRICE\n")):
         (client / "tests" / f"test_{name}.py").write_text(
             reference + "import importlib.util, os\nfrom pathlib import Path\n"
             "def test_client():\n"

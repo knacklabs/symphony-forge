@@ -88,13 +88,13 @@ def narrow_command(command: str, excluded: list[str], workers: str) -> str:
     return command
 
 
-def mentions(file: Path, module: str) -> bool:
+def mentions(file: Path, module: str, module_path: Path) -> bool:
     text = file.read_text("utf-8")
     # A bare word is not a module reference; qualified paths and imports are.
-    path = module.replace(".", "/")
+    path = module_path.as_posix().removeprefix("src/")
     if "." in module and re.search(r"(?<![\w.])" + re.escape(module) + r"(?![\w])", text):
         return True
-    if re.search(r"(?<![\w/])(?:src/)?" + re.escape(path + ".py") + r"(?![\w])", text):
+    if re.search(r"(?<![\w/])(?:src/)?" + re.escape(path) + r"(?![\w])", text):
         return True
     try:
         tree = ast.parse(text)
@@ -236,7 +236,7 @@ def test(args) -> int:
                                                 "--exclude-standard")
                  if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
                  and name.endswith(".py") and Path(name).is_file()]
-        modules = set()
+        modules = []
         for name in changed:
             path = Path(name)
             if path.suffix != ".py" or path in tests or path.name.startswith("test_"):
@@ -245,14 +245,12 @@ def test(args) -> int:
             if parts[-1] == "__init__":
                 parts.pop()
             if parts:
-                modules.add(".".join(parts))
+                modules.append((".".join(parts), path))
         selected = []
         for path in tests:
-            text = path.read_text("utf-8")
             if (path.as_posix() in changed
-                    or any(name in text for name in changed if name)
-                    or any(module.rsplit(".", 1)[-1] in path.name
-                           or mentions(path, module) for module in modules)):
+                    or any(mentions(path, module, source)
+                           for module, source in modules)):
                 selected.append(path.as_posix())
         selected.sort()
         if not selected:

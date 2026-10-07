@@ -30,7 +30,9 @@ def configure(repo, *, uv=False):
     previous = tomllib.loads(settings).get("test")
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
     repo.write("pyproject.toml", MANIFEST)
-    repo.write("tests/test_manifest.py", "# pyproject.toml\n"
+    # Safe manifest edits no longer select their readers; change a Python module too.
+    repo.write("src/shop/prices.py", "PRICE = 1\n")
+    repo.write("tests/test_manifest.py", "# shop/prices.py\n"
                "def test_manifest():\n    assert True\n")
     repo.write("tests/test_unrelated.py", "def test_unrelated():\n    assert True\n")
     if uv:
@@ -65,7 +67,9 @@ def pick(repo, base, *, launcher=None):
 
 def commit_manifest(repo, text):
     repo.write("pyproject.toml", text)
-    repo.git("add", "pyproject.toml")
+    module = repo.path / "src/shop/prices.py"
+    repo.write("src/shop/prices.py", module.read_text("utf-8") + "# Changed module\n")
+    repo.git("add", "pyproject.toml", "src/shop/prices.py")
     repo.git("-c", f"core.hooksPath={repo.path / '.git/no-hooks'}", "commit", "-qm", "Change manifest")
 
 

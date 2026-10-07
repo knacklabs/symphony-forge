@@ -36,7 +36,7 @@ def run_picker(repo, command, *, shared=False):
 def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared, configuration, monkeypatch):
     cores = 4 if configuration == "smaller-cap" else 2
     repo.write("src/sitecustomize.py", f"import os\nos.cpu_count = lambda: {cores}\n")
-    repo.write("tests/test_prices.py", "def test_count(request):\n"
+    repo.write("tests/test_prices.py", "# shop/prices.py\ndef test_count(request):\n"
                "    assert request.config.workerinput['workercount'] == 1\n")
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q'
     if configuration == "pytest.ini":
@@ -69,7 +69,7 @@ def test_1_caps_worker_counts_supplied_through_pytest_configuration(repo, shared
 
 
 def test_2_excludes_unrelated_tests_explicitly_named_by_full_command(repo):
-    repo.write("tests/test_prices.py", "def test_prices():\n    assert True\n")
+    repo.write("tests/test_prices.py", "# shop/prices.py\ndef test_prices():\n    assert True\n")
     repo.write("tests/test_unrelated.py", "raise RuntimeError('Unrelated file collected')\n"
                "def test_unrelated():\n    assert False\n")
     result = run_picker(repo, f'"{Path(sys.executable).as_posix()}" -m pytest '
