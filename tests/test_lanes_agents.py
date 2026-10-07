@@ -5,6 +5,7 @@ Only the model providers wait at their edge; Forge owns admission and cancellati
 import os
 import json
 import subprocess
+import shutil
 import sys
 from pathlib import Path
 
@@ -116,6 +117,23 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
     read_name = worktree(other, "story/SHOP").name
     queued = [make_work(repo, name) for name in ("Fourth typo", "Fifth typo", "Sixth typo")]
     hold_agents(env)
+    # A dirty first turn forces a second model launch in the same work round.
+    # Hold Git between launches: a per-launch reservation must not admit a waiter.
+    for provider in ("claude", "codex-app-server"):
+        stub = repo.bin / provider
+        source = stub.read_text("utf-8")
+        indent = "            " if provider == "codex-app-server" else ""
+        source = source.replace('name = pathlib.Path(cwd).name' if indent else
+                                'name = pathlib.Path.cwd().name',
+            ('name = pathlib.Path(cwd).name' if indent else 'name = pathlib.Path.cwd().name') +
+            f'\n{indent}if name == {first_name!r} and (here / "first-ended").exists():\n'
+            f'{indent}    name += "-nudge"')
+        marker = '            turns += 1' if indent else 'print("No findings.")'
+        source = source.replace(marker,
+            f'{indent}if name == {first_name!r}:\n'
+            f'{indent}    pathlib.Path({str(worktree(repo, "fix/" + first) / "dirty.txt")!r}).write_text("needs committing")\n'
+            f'{indent}    (here / "first-ended").touch()\n' + marker)
+        stub.write_text(source, "utf-8")
     started = lambda name: (repo.bin / f"started-{name}").exists()
     processes = []
     try:
@@ -132,7 +150,45 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             processes.append(process)
             _until(lambda: f"number {place} in line." in output.read_text("utf-8"), "queue position")
             assert not started(marker)
+        def entries():
+            board = repo.forge("board", "--json")
+            assert board.returncode == 0, board.stderr
+            return json.loads(board.stdout)["lanes"]["agents"]["entries"]
+        rows = entries()
+        admitted = next(e for e in rows if e["item"] == first)
+        waiting = lambda rows: {e["item"]: (e["id"], e["started_at"]) for e in rows
+                                if e["item"] in {q[0] for q in queued}}
+        waiters = waiting(rows)
+        assert len(waiters) == len(queued) and all(start is None for _, start in waiters.values())
+        real_git = shutil.which("git")
+        _install(repo.bin, "git", f'''#!{sys.executable}
+import pathlib, subprocess, sys, time
+here = pathlib.Path(__file__).resolve().parent
+if sys.argv[1:] == ["status", "--porcelain", "-uall"] and pathlib.Path.cwd().name == {first_name!r} and (here / "first-ended").exists() and not (here / "between-launches").exists():
+    (here / "between-launches").touch()
+    while not (here / "go-between").exists() and not (here / "go-all").exists():
+        time.sleep(0.05)
+sys.exit(subprocess.call([{real_git!r}, *sys.argv[1:]]))
+''')
         (repo.bin / f"go-{first_name}").touch()
+        _until(lambda: (repo.bin / "between-launches").exists(), "between model launches")
+        rows = entries()
+        between = next(e for e in rows if e["item"] == first)
+        assert between["id"] == admitted["id"] and between["joined_at"] == admitted["joined_at"]
+        assert between["process"]["pid"] == processes[0].pid
+        assert waiting(rows) == waiters
+        assert all(not started(marker) for _, marker in queued)
+        (repo.bin / "go-between").touch()
+        _until(lambda: started(first_name + "-nudge"), "commit nudge model")
+        (repo.bin / "git").unlink()
+        (repo.bin / "git.cmd").unlink(missing_ok=True)
+        rows = entries()
+        nudging = next(e for e in rows if e["item"] == first)
+        assert nudging["id"] == admitted["id"] and nudging["joined_at"] == admitted["joined_at"]
+        assert nudging["process"]["pid"] != processes[0].pid
+        assert waiting(rows) == waiters
+        assert all(not started(marker) for _, marker in queued)
+        (repo.bin / f"go-{first_name}-nudge").touch()
         assert processes[0].wait(timeout=30) == 0
         _until(lambda: started(queued[0][1]), "the first waiting agent")
         assert not started(queued[1][1]) and not started(queued[2][1])
