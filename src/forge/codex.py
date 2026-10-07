@@ -260,7 +260,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         read: bool = False, note: str | None = None, echo: bool = True,
         archive_thread: bool = False, model: str | None = None,
         effort: str | None = None, fresh_prompt: str | None = None,
-        design: bool = False, attach_request: dict[str, Any] | None = None) -> dict[str, Any]:
+        design: bool = False, attach_request: dict[str, Any] | None = None,
+        round_number: int | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
     when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
@@ -319,7 +320,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
     activity = (contextlib.nullcontext({}) if read or archive_thread or attach_request is not None
                 else repo.record_run(checkout, item, command, family="codex",
-                                     model=request["config"].get("model")))
+                                     model=request["config"].get("model"),
+                                     effort=request["config"].get("model_reasoning_effort"),
+                                     **({"round": round_number} if round_number is not None else {})))
     with activity as ran, \
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             [str(_python(sdk_env())), str(TURN)], cwd=checkout, stdin=subprocess.PIPE,
@@ -378,6 +381,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"project_skipped={said['project_skipped']}"
                 elif "fresh" in said:  # Codex couldn't resume the conversation
                     fresh, text = said["fresh"], ""
+                elif "selection" in said:
+                    if ran.get("run_id"):
+                        repo.record_progress(checkout, item, ran["run_id"], **said["selection"])
+                    text = ""
                 elif "thread" in said:
                     result["conversation"] = said["thread"]
                     continued = {"continued": said["continued"],
@@ -425,6 +432,17 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     text = f"Codex ended the turn: {said['status']}"
                     text += f" ({said['error']})" if said.get("error") else ""
                 else:
+                    if said.get("event") in ("item/started", "item/completed") and ran.get("run_id"):
+                        tool = (said.get("params") or {}).get("item") or {}
+                        if tool.get("type") in ("commandExecution", "fileChange", "webSearch", "mcpToolCall",
+                                                "dynamicToolCall", "collabAgentToolCall", "imageView",
+                                                "imageGeneration", "sleep", "subAgentActivity",
+                                                "enteredReviewMode", "exitedReviewMode", "contextCompaction"):
+                            inputs = tool if tool["type"] != "fileChange" else {
+                                "path": ", ".join(c.get("path", "") for c in tool.get("changes", []))}
+                            tool_name = ".".join(str(v) for v in (tool.get("server") or tool.get("namespace"), tool.get("tool")) if v)
+                            repo.record_progress(checkout, item, ran["run_id"],
+                                                 step=repo.worker_step(tool_name or tool["type"], inputs))
                     text = _event(said)
                 if text:
                     if echo:

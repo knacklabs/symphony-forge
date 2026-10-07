@@ -166,6 +166,7 @@ def packaged_events_start_each_sessions_turn_from_real_worker_occurrences(env, p
     stub.write_text(source.replace('print("stub claude: built it")',
                                   'print("Question: May I reuse the parser?")'), encoding="utf-8")
     answer = node_run(tmp_path, HOST + f"""
+import {{execFile}} from 'node:child_process';
 const mod = await import({json.dumps((packaged_mod / 'hooks/register.ts').as_uri())});
 const store = new Map();
 function forge(args) {{
@@ -174,6 +175,7 @@ function forge(args) {{
 }}
 async function session(id, duringRefresh) {{
   const registered = new Map(), timers = [], prompts = [];
+  let refreshed = () => {{}};
   let initialRefresh = true;
   function on(name, matcher, hook) {{
     if (typeof matcher === 'function') {{ hook = matcher; matcher = {{}}; }}
@@ -182,7 +184,7 @@ async function session(id, duringRefresh) {{
   }}
   const api = {{
     clock: {{now: async () => 0, every: (ms, fn) => {{timers.push(fn); return {{cancel(){{}}}}}}}},
-    command: {{register: async () => {{}}}}, ui: {{invalidate(){{}}, open: async () => ({{isPlaced: false}})}},
+    command: {{register: async () => {{}}}}, ui: {{invalidate(){{refreshed();}}, open: async () => ({{isPlaced: false}})}},
     env: {{get: async () => undefined}},
     session: {{id: async () => id, cwd: async () => {json.dumps(str(repo.path))}, repo: async () => ({{root: {json.dumps(str(repo.path))}}}),
       surfaces: async () => ['terminal']}},
@@ -190,8 +192,11 @@ async function session(id, duringRefresh) {{
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
       if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}
-      try {{ return {{exitCode: 0, stdout: forge(argv.slice(1)), stderr: ''}}; }}
-      catch (e) {{ return {{exitCode: e.status ?? 1, stdout: String(e.stdout ?? ''), stderr: String(e.stderr ?? '')}}; }}
+      // Claude runs the snapshot's three commands concurrently; don't serialize them in the host.
+      return new Promise(resolve => execFile({json.dumps(sys.executable)},
+        [{json.dumps(str(repo.bin / 'forge'))}, ...argv.slice(1)],
+        {{cwd: {json.dumps(str(repo.path))}, encoding: 'utf8', timeout: 30000}},
+        (error, stdout, stderr) => resolve({{exitCode: error ? error.code ?? 1 : 0, stdout, stderr}})));
     }}}},
   }};
   mod.register(on);
@@ -206,7 +211,10 @@ async function session(id, duringRefresh) {{
     return next(0, event);
   }}
   await fire('session.start', {{cwd: {json.dumps(str(repo.path))}, isInteractive: true, surface: 'terminal'}});
-  return {{prompts, fire, tick: async () => {{timers[0](); await new Promise(resolve => setImmediate(resolve));}}}};
+  return {{prompts, fire, tick: async () => {{
+    await new Promise(resolve => {{refreshed = resolve; timers[0]();}});
+    await new Promise(resolve => setImmediate(resolve));
+  }}}};
 }}
 // Each lifecycle has its own host budget: real Forge processes are slower on Windows.
 if ({json.dumps(case)} === 'events') {{

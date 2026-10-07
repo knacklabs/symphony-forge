@@ -1,0 +1,131 @@
+{
+  "branch": "task/FORGE-MOD-1-LIVE",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/codex.py",
+    "src/forge/codex_turn.py",
+    "src/forge/review.py",
+    "src/forge/story.py",
+    "tests/test_live_status.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e56fff193a8b9461cc009bf3933018fdc2e71e93249c5237ad0577d9aab462c",
+    "changed": "91d20d4cdce3e8be57b327e5f430d089262dbf922afcdfb48f0c4ef581dbdc8e",
+    "commit": "0966d845c48afaf7f6b07ad628c9f100ab5ab18e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous P2 remains open. Both views read events.jsonl without the writer guard at src/forge/board.py:203\u2013204. On Windows, an overlapping read can make this replacement raise PermissionError, aborting a worker, reader, reviewer or test command while it records progress. Add bounded replacement retries, following the existing approach at src/forge/codex.py:534\u2013541.",
+        "file": "src/forge/repo.py",
+        "line": 258,
+        "priority": "P2",
+        "title": "Handle Windows readers holding the progress file open"
+      },
+      {
+        "body": "The previous P2 remains open. This decoder puts error_during_execution before the missing-session diagnostic and returns it through stdout. The worker's log-prefix check at src/forge/worker.py:441\u2013443 consequently misses it; the reader checks stderr instead at src/forge/story.py:732\u2013735. Both refuse instead of restarting with the full prompt. Recognize the structured missing-session diagnostic in both callers while preserving other failures. The response shape is confirmed by the [upstream reproduction](https://github.com/anthropics/claude-code/issues/40609).",
+        "file": "src/forge/repo.py",
+        "line": 290,
+        "priority": "P2",
+        "title": "Preserve missing-session recovery for structured Claude errors"
+      },
+      {
+        "body": "The deferred consumer gap remains: src/forge/mod/hooks/machine.ts:5 has an empty registrar, so the Machine tab cannot display the live fields or provide l's event list. src/forge/mod/hooks/summary.ts:62\u201364 also suppresses the running count and current step when lane data is absent. Complete those behaviors and their consumer tests in PANE and MACHINE, as assigned by plans/FORGE-MOD-1.md:281 and :288. This remains advice for those tasks, not a blocking LIVE producer gap.",
+        "file": "tests/fixtures/board.json",
+        "line": 85,
+        "priority": "P2",
+        "title": "Later: complete detail 7 rendering in PANE and MACHINE"
+      }
+    ],
+    "id": "e0049f6f-855f-4fdc-878c-0b52981618c5",
+    "status": "clean"
+  },
+  "round": 14,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-05T22:32:25+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T00:21:52+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T01:42:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T02:41:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T03:13:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T05:12:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T06:16:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T07:04:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T08:03:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T09:33:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T10:55:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T12:38:48+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T13:33:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T15:23:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T16:41:38+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T17:53:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T18:53:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T19:56:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T03:12:39+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "narrow",
+    "done": "src/forge/board.py is simpler and behaves as it did before",
+    "file": "src/forge/board.py",
+    "reason": "Nothing to narrow: the latest review (11:46) is clean with one P2 only; the stop came from an earlier round. Close again for a fresh review.",
+    "why": "Simplify src/forge/board.py before FORGE-MOD-1/LIVE carries on"
+  },
+  "worker": "codex"
+}
