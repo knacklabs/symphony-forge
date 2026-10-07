@@ -230,8 +230,8 @@ else:
         assert between["process"]["pid"] == int(parent_pid.read_text("utf-8"))
         assert waiting(rows) == waiters
         assert all(not started(marker) for _, marker in queued)
-        (repo.bin / "git").unlink()
-        (repo.bin / "git.cmd").unlink(missing_ok=True)
+        # cmd.exe resumes the .cmd after Python returns: keep this live launcher.
+        # The one-shot marker makes subsequent Git calls forward without holding.
         if cancel_between:
             tree = [int(pid) for pid in (repo.bin / "git-tree").read_text("utf-8").split()]
             reaper = threading.Thread(target=processes[0].wait, daemon=True)
