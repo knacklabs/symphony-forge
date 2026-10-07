@@ -504,7 +504,8 @@ def _blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
     for spec in specs:
         header = contents.readline()
         if not header.endswith(b" missing\n"):
-            texts[spec] = contents.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+            text = contents.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
             contents.read(1)
     return texts
 

@@ -237,3 +237,29 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     assert board.returncode == 0, board.stderr
     page = html.read_text("utf-8")
     assert "Finished story PAST-0" in page and "Finished fix old-fix" in page
+
+
+@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
+def test_2_machine_next_preserves_due_spec_guidance_with_crlf(
+        repo, gh, monkeypatch, tmp_path, history):
+    # Git retains CRLF bytes even on POSIX, reproducing the Windows checkout
+    # boundary. A due, unmeasured spec must give the same guidance as LF input.
+    client(repo, gh, history)
+    monkeypatch.setenv("FORGE_NOW", NOW)
+    repo.git("config", "core.autocrlf", "false")
+    spec = repo.path / "docs/specs/crlf-result.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    unmeasured = measured_spec("DUE").replace(
+        "- Result: 2 completed jobs per week (2026-11-02)\n", "")
+    spec.write_bytes(unmeasured.replace("\n", "\r\n").encode("utf-8"))
+    landed(repo, monkeypatch, OLD, {
+        ".factory/stories/DUE/story.json": finished_story("DUE", OLD),
+        "plans/roadmap.json": {"items": [{"key": "DUE", "spec": "docs/specs/crlf-result.md"}]},
+    })
+    shown, _ = traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
+    assert shown["next"]["line"] == (
+        "Every story from the Measured work DUE spec is done and its check date has passed; "
+        "measure completed jobs per week.")
+    assert shown["next"]["command"] == (
+        'forge fix start "Record the crlf-result success result" '
+        '--done "The crlf-result spec records its result"')
