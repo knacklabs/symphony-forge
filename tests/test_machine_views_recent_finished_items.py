@@ -191,7 +191,8 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     (tmp_path / "old-fix-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
     (tmp_path / "old-task-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
     second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
-    assert second == first
+    # The machine's load is a live OS reading, not part of the board's history.
+    assert {**second, "machine": None} == {**first, "machine": None}
     assert more_count == count, f"Old finished inventory added {more_count - count} git commands"
     # Bulk dependency lookup keeps the real validator and local plan precedence.
     live_plans = [repo.path / "plans/LIVE.md", tmp_path / "old-fix-worktree/plans/LIVE.md",
