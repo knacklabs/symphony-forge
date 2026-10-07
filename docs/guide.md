@@ -103,7 +103,7 @@ In a client repo, finish the prototype review and customer sign-off above before
    those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
-   the same time, but one machine runs at most 2 Forge agents at once (work rounds, plan reads and
+   the same time, but one machine runs agents on half its available cores (at least one; work rounds, plan reads and
    close reviews, across all its repos): the rest wait in line, first come, first served, and print
    their place when they start waiting and each time it changes; a run that dies frees its place
    once its agent ends.

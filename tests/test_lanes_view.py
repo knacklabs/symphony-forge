@@ -28,6 +28,8 @@ def lanes(repo):
     board = json.loads(done.stdout)
     assert "load" in board["machine"]
     assert set(board["machine"]["memory"]) == {"total_bytes", "available_bytes"}
+    for value in board["machine"]["memory"].values():
+        assert value is None or isinstance(value, int) and value >= 0
     return board["lanes"]
 
 
@@ -117,11 +119,19 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
             assert row["item"] == (first if index == 0 else waiting[index - 1][0])
             assert row["model"] and row["effort"]
             assert row["joined_at"] and row["process"]["pid"]
+            assert row["process"]["started"]
             assert row["output_path"] is None and row["progress"] is None
         assert rows[-1]["started_at"] is None and rows[0]["started_at"]
         _until(lambda: (repo.bin / "tree-pid").exists(), "the model's descendant")
         descendant = int((repo.bin / "tree-pid").read_text("utf-8"))
         assert alive(descendant)
+        if adopted:
+            # Killing Forge alone must leave the live model holding its admission.
+            processes[0].kill()
+            processes[0].wait(timeout=30)
+            assert alive(rows[0]["process"]["pid"])
+            assert any(r["id"] == rows[0]["id"] for r in lanes(repo)["agents"]["entries"])
+            assert not (repo.bin / f"started-{waiting[-1][1]}").exists()
         stopped = repo.forge("stop", "--id", rows[0]["id"])
         assert stopped.returncode == 0, stopped.stderr
         assert not alive(descendant), "stop freed admission while a group member still ran"
