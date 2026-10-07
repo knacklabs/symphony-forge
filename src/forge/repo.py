@@ -22,6 +22,12 @@ from typing import Any, NoReturn
 
 from forge import __version__
 
+# Every Forge command loads this shared runtime; child processes consume the recorded lock.
+os.environ["UV_FROZEN"] = "1"
+# Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
+TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
+              ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+
 REFUSALS = {
     "no_repo": ("This folder is not inside a git repository.", "cd <your repo>"),
     "missing_tool": ("{tool} is not installed or not on PATH.", "forge doctor"),
@@ -64,6 +70,42 @@ def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
 # --- git -------------------------------------------------------------------------------
 
 
+_command_cache: dict[tuple, Any] | None = None
+
+
+@contextmanager
+def command_cache():
+    """Repository facts and worker history live only for this command, never the next one."""
+    global _command_cache
+    previous, _command_cache = _command_cache, {}
+    try:
+        yield
+    finally:
+        _command_cache = previous
+
+
+def _common_path(cwd: str | os.PathLike[str] | None) -> Path:
+    """Identify linked worktrees without another git process."""
+    top = Path(cwd or Path.cwd()).resolve()
+    for folder in (top, *top.parents):
+        dot = folder / ".git"
+        if dot.is_file():
+            dot = (folder / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
+        if dot.is_dir():
+            common = dot / "commondir"
+            return (dot / common.read_text(encoding="utf-8").strip()).resolve() if common.is_file() else dot.resolve()
+    return top
+
+
+def command_fact(kind: Any, cwd: str | os.PathLike[str] | None, read):
+    key = (kind, _common_path(cwd))
+    if _command_cache is None:
+        return read()
+    if key not in _command_cache:
+        _command_cache[key] = read()
+    return _command_cache[key]
+
+
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         input: str | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
@@ -71,9 +113,27 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
-    return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
-                          text=True, encoding="utf-8", errors="replace",
-                          env={**os.environ, "FORGE_WORKER": "1"})
+    def execute():
+        return subprocess.run([exe, *args[1:]], cwd=cwd, input=input or "", capture_output=True,
+                              text=True, encoding="utf-8", errors="replace",
+                              env={**os.environ, "FORGE_WORKER": "1"})
+    if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
+        return command_fact("common directory", cwd, execute)
+    done = execute()
+    if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
+        key = ("landed ref", _common_path(cwd))
+        if key in _command_cache and not _command_cache[key].startswith("origin/"):
+            del _command_cache[key]  # A first fetch can create the previously absent remote ref.
+    if _command_cache is not None and done.returncode == 0 and args[:3] == ("git", "remote", "set-head"):
+        for kind in ("default branch", "landed ref"):
+            _command_cache.pop((kind, _common_path(cwd)), None)
+    if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
+            and args[1] in ("fetch", "merge", "switch", "checkout")):
+        common = _common_path(cwd)
+        for key in list(_command_cache):
+            if isinstance(key[0], tuple) and key[0][0] == "commits" and key[1] == common:
+                del _command_cache[key]
+    return done
 
 
 def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
@@ -82,6 +142,32 @@ def git(*args: str, cwd: str | os.PathLike[str] | None = None) -> str:
     if done.returncode:
         raise subprocess.CalledProcessError(done.returncode, ["git", *args], done.stdout, done.stderr)
     return done.stdout.strip()
+
+
+def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str, list[str]]]:
+    """Snapshot worker history once; close's later bookkeeping commits add no worker evidence."""
+    def key(ref):
+        return ("commits", top.resolve(), base, ref)
+
+    def read():
+        tip = git("rev-parse", head, cwd=top)
+        return command_fact(key(tip), top, lambda: select(tip))
+
+    def select(tip):
+        commits = git("rev-list", "--no-merges", f"{base}..{tip}", cwd=top).splitlines()
+        # Commit contents are immutable even when a fetch changes range membership.
+        records = command_fact(("commit records", top.resolve()), top, dict)
+        missing = [sha for sha in commits if sha not in records]
+        log = (git("log", "--no-walk", "--format=%x00%x00%H%x00m%B",
+                   "--name-only", "-z", *missing, cwd=top) if missing else "")
+        for record in log.split("\0\0"):
+            if not record:
+                continue
+            sha, message, *paths = record.lstrip("\0").split("\0", 2)
+            files = [p for p in (paths[0].removeprefix("\n").split("\0") if paths else []) if p]
+            records[sha] = (sha, message.removeprefix("m"), files)
+        return [records[sha] for sha in commits]
+    return command_fact(key(head), top, read)
 
 
 def root(cwd: str | os.PathLike[str] | None = None) -> Path:
@@ -99,7 +185,8 @@ def current_branch(cwd: str | os.PathLike[str] | None = None) -> str:
 
 def default_branch(cwd: str | os.PathLike[str] | None = None) -> str:
     # ponytail: origin/HEAD, else "main". A remote-less repo on another name needs origin/HEAD set.
-    done = run("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=cwd)
+    done = command_fact("default branch", cwd, lambda: run(
+        "git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD", cwd=cwd))
     return done.stdout.strip().removeprefix("origin/") if done.returncode == 0 else "main"
 
 
@@ -136,20 +223,87 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    with (forge_dir(top) / "events.jsonl").open("a", encoding="utf-8") as out:
+    from forge import codex
+    path = forge_dir(top) / "events.jsonl"
+    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
         out.write(json.dumps(line) + "\n")
     return identity
+
+
+def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
+    """Coalesce a run's live updates into at most one record per ten seconds."""
+    from forge import codex
+    path = forge_dir(top) / "events.jsonl"
+    with codex._one_at_a_time(path.with_suffix(".lock")):
+        rows = path.read_text(encoding="utf-8").splitlines()
+        parsed = [json.loads(row) for row in rows]
+        previous = next((n for n in range(len(rows) - 1, -1, -1)
+                         if parsed[n].get("run_id") == run_id and
+                         parsed[n].get("event") == "progress"), None)
+        start = next(row for row in parsed if row.get("id") == run_id)
+        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
+        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
+                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
+        if previous is not None:
+            old = parsed[previous]
+            line = {**old, **line}
+            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
+                rows[previous] = json.dumps({**line, "id": old["id"]})
+            else:
+                rows.append(json.dumps({**line, "recorded_at": now()}))
+        else:
+            rows.append(json.dumps({**line, "recorded_at": now()}))
+        temp = path.with_suffix(".new")
+        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        os.replace(temp, path)
+
+
+def worker_step(name: str, inputs: dict[str, Any]) -> str:
+    """Describe only the tool's action, never its output or message contents."""
+    actions = {"webSearch": "searching the web", "imageGeneration": "generating an image",
+               "sleep": "waiting", "subAgentActivity": "working with a helper",
+               "enteredReviewMode": "reviewing", "exitedReviewMode": "finishing the review",
+               "contextCompaction": "compacting context"}
+    if name in actions:
+        return actions[name]
+    command = inputs.get("command")
+    if isinstance(command, str):
+        return "committing" if re.search(r"\bgit\s+commit\b", command) else "running " + " ".join(command.split())
+    path = inputs.get("file_path") or inputs.get("path")
+    return ("editing " if name in ("Edit", "Write", "fileChange") else "reading ") + " ".join(str(path).split()) if path else "using " + name
+
+
+def claude_output(top: Path, item: str, run_id: str, event: dict[str, Any]) -> str:
+    """Read the same tool actions and result diagnostics for Claude workers and readers."""
+    if event.get("type") == "system" and event.get("subtype") == "init":
+        record_progress(top, item, run_id, **{key: event[key] for key in ("model", "effort") if key in event})
+    response = event.get("response") or {}
+    if event.get("type") == "control_response" and response.get("request_id") == "forge-live-settings":
+        applied = (response.get("response") or {}).get("applied") or {}
+        record_progress(top, item, run_id, **{key: applied[key] for key in ("model", "effort") if key in applied})
+    content = (event.get("message") or {}).get("content", [])
+    for tool in content:
+        if isinstance(tool, dict) and tool.get("type") == "tool_use":
+            record_progress(top, item, run_id,
+                            step=worker_step(tool.get("name", "tool"), tool.get("input") or {}))
+    if event.get("type") == "result":
+        return str(event.get("result") or "\n".join(
+            [str(event.get("subtype", "")), *event.get("errors", [])])) + "\n"
+    return "".join(c.get("text", "") + "\n" for c in content
+                   if isinstance(c, dict) and c.get("type") == "text")
 
 
 @contextmanager
 def record_run(top: Path, item: str, kind: str, **fields: Any):
     """Keep starts and ends even for a run entirely between two board refreshes."""
     identity = record_event(top, item, "run start", kind=kind, **fields)
-    result = {"outcome": "failed"}
+    result = {"outcome": "failed", "run_id": identity}
+    if "round" in fields:
+        result["round"] = fields["round"]
     try:
         yield result
     finally:
-        record_event(top, item, "run end", run_id=identity, kind=kind, **result)
+        record_event(top, item, "run end", kind=kind, **result)
 
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------

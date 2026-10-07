@@ -7,6 +7,9 @@ nothing more.
 
 $delegation
 - Edit files only inside this checkout.
+- Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- Forge workers, readers and reviewers never act on mod events; those turns belong to the
+  interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
@@ -197,6 +200,13 @@ Where the repo's own rules (its AGENTS.md House rules and conventions) differ, t
 conventions apply only to a repo on the default stack.
 
 ## When you finish
+
+Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
+cover and every detail next to the test or check that proves it, or marked `missing`. Include the
+test's file and case name, or the named check and its result. Keep the whole list current in every
+round, not only the entries you changed. Forge copies it into the pull request and gives it to
+the reviewer. The first review checks every entry and reports every missing case it finds in
+that one round.
 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover

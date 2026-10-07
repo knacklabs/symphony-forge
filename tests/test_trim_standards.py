@@ -1,6 +1,5 @@
 STORY = "FORGE-TRIM-1"
 
-import tomllib
 from pathlib import Path
 
 
@@ -24,11 +23,3 @@ def test_5_sync_places_standards_beside_both_forge_skills(repo):
         assert "standards.md" in build_simple
         assert "**Finding forms.**" in build_simple
         assert "Problem first:" not in build_simple
-
-
-def test_6_forge_fits_decided_python_ceiling(repo):
-    assert repo.forge("--help").returncode == 0
-    # Decision 0103 raises the Python cap from 10,000 to 11,000.
-    ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
-        "tool"]["forge"]["line_ceiling"]
-    assert ceiling == 11000

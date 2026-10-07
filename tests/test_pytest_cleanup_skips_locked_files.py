@@ -3,6 +3,7 @@ import getpass
 import os
 import subprocess
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -35,10 +36,14 @@ def locked_unlink(path, *args, **kwargs):
 os.unlink = locked_unlink
 _patiently(os, "unlink")
 ''', encoding="utf-8")
+    ready = suite / "ready"
     (suite / "test_cleanup.py").write_text('''
+from pathlib import Path
+
 def test_locked_files(tmp_path):
     for number in range(COUNT):
         (tmp_path / f"{number}.locked").write_text("locked")
+    Path(__file__).with_name("ready").touch()
 '''.replace("COUNT", "4" if cleanup == "passed_test" else "0"), encoding="utf-8")
     base = tmp_path / "child-temp"
     options = ["--basetemp", str(base)]
@@ -48,16 +53,27 @@ def test_locked_files(tmp_path):
         for number in range(4):
             (old / f"{number}.locked").write_text("locked", encoding="utf-8")
         options = ["-o", "tmp_path_retention_count=0"]
-    result = subprocess.run(
+    process = subprocess.Popen(
         # Without a cutoff pytest scans shared temp ancestors; Windows' same-file
         # checks then fail if another test deletes a directory during collection.
         [sys.executable, "-m", "pytest", str(suite), "--confcutdir", str(suite), "-q", *options,
          "-o", "tmp_path_retention_policy=failed"],
-        capture_output=True, text=True, encoding="utf-8", timeout=15,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
         env={**os.environ, "PYTEST_DEBUG_TEMPROOT": str(base)},
     )
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "1 passed" in result.stdout
+    try:
+        # Give startup its own bound; the fifteen-second limit measures cleanup, not imports.
+        deadline = time.monotonic() + 60
+        while not ready.exists():
+            assert process.poll() is None and time.monotonic() < deadline, "child pytest never started"
+            time.sleep(0.05)
+        output, error = process.communicate(timeout=15)
+    finally:
+        if process.poll() is None:
+            process.kill()
+        process.communicate(timeout=60)
+    assert process.returncode == 0, output + error
+    assert "1 passed" in output
     assert sorted(path.name for path in base.rglob("*.locked")) == [
         f"{number}.locked" for number in range(4)
     ], "Cleanup must leave every file it cannot delete"

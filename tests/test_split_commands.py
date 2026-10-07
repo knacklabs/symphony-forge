@@ -14,11 +14,12 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # The hook group's expected help now includes the handoff command shipped for PreCompact.
 # Git's list merger used a Python snippet; its PATH command now appears as merge-roadmap.
 # forge land joins the list after merge (FORGE-LAND-1), and forge roadmap retire after add.
+# Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
-# The approved test command adds the pytest picker after doctor.
+# Test adds the pytest picker after doctor; stop adds person-only cancellation after board.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,stop,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -29,7 +30,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,stop,story,read,task,fix,work,ask,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
@@ -43,6 +44,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '                        newest, through one fix\n'
      '    next                Say where things stand and give the exact next command\n'
      '    board               Write and open the plain-English board page\n'
+     '    stop                Stop a running or waiting run (only a person)\n'
      '    story               Start a story, or record its outcome\n'
      '    read                Run a round of the cold read of a story doc or spec\n'
      '    task                Start a task\n'
@@ -200,18 +202,20 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
             '\n'
             'options:\n'
             '  -h, --help  show this help message and exit\n',
- 'next': 'usage: forge next [-h]\n'
+ 'next': 'usage: forge next [-h] [--json]\n'
          '\n'
          'Say where things stand and give the exact next command\n'
          '\n'
          'options:\n'
-         '  -h, --help  show this help message and exit\n',
- 'board': 'usage: forge board [-h] [--out PATH]\n'
+         '  -h, --help  show this help message and exit\n'
+         '  --json      Print the machine view\n',
+ 'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
           'Write and open the plain-English board page\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
+          '  --json      Print the machine view\n'
           '  --out PATH  write the page here instead of .git/forge/board.html\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'
@@ -304,7 +308,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         '  -h, --help       show this help message and exit\n'
         '  --model MODEL    Codex model for this answer\n'
         '  --effort EFFORT  reasoning effort for this answer\n',
- 'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON] item\n'
+ 'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON]\n'
+          '                   [--resolve {narrow,split,accept}] [--reason REASON]\n'
+          '                   item\n'
           '\n'
           'Close a task or fix by the close rule\n'
           '\n'
@@ -314,7 +320,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           'options:\n'
           '  -h, --help            show this help message and exit\n'
           '  --dismiss N\n'
-          '  --because FILE:LINE_REASON\n',
+          '  --because FILE:LINE_REASON\n'
+          '  --resolve {narrow,split,accept}\n'
+          "  --reason REASON       The human's choice after a review loop stop\n",
  'merge': 'usage: forge merge [-h] [--outcome OUTCOME] item\n'
           '\n'
           'Merge a ready item when this repo allows it\n'
@@ -465,7 +473,7 @@ def _copy_forge(repo, tmp_path):
     return package
 
 
-def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatch):
+def commands_keep_their_help_and_register_a_new_owner(repo, tmp_path, monkeypatch):
     monkeypatch.setenv("COLUMNS", "80")
     for words, expected in HELP_GOLDEN.items():
         result = repo.forge(*words.split(), "--help")
@@ -482,6 +490,9 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe` | A newly owned command |"}]\n',
         encoding="utf-8",
     )
+    # Names are registered without scanning implementations; declarations still own all options.
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES["probe"] = "probe"\n')
     assert "probe" in repo.forge("--help").stdout
     assert repo.forge("probe", "--dismiss", "7", "--dismiss", "8").stdout == "int:[7, 8]\n"
     assert "invalid int value" in repo.forge("probe", "--dismiss", "seven").stderr
@@ -492,10 +503,14 @@ def commands_keep_their_help_and_discover_a_new_owner(repo, tmp_path, monkeypatc
         '"listing": "| `forge probe run` | Run the probe |"}]\n',
         encoding="utf-8",
     )
+    with (package / "cli.py").open("a", encoding="utf-8") as file:
+        file.write('\nROUTES.pop("probe")\nROUTES["probe run"] = "probe"\n'
+                   'GROUP_OWNERS["probe"] = "probe"\n')
     assert "group help missing: probe" in repo.forge("--help").stderr
     with owner.open("a", encoding="utf-8") as file:
         file.write('GROUP_HELP = {"probe": "Probe commands"}\n')
     assert repo.forge("probe", "run").stdout == "group command ran\n"
     (package / "other.py").write_text('GROUP_HELP = {"probe": "Duplicate"}\n',
                                       encoding="utf-8")
-    assert "group help declared twice: probe" in repo.forge("--help").stderr
+    # Unregistered files no longer participate in command discovery or group ownership.
+    assert repo.forge("probe", "run").stdout == "group command ran\n"

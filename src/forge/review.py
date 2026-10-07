@@ -164,9 +164,14 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
         items = json.loads(roadmap.stdout).get("items", []) if roadmap.returncode == 0 else []
         entry = next((value for value in items if value.get("key") == key), {})
         parts = [text, json.dumps(entry, sort_keys=True)]
+        if branch_diff:
+            # Close's reuse key covers the same live story document as the review prompt.
+            parts.append(task(top, item)[0])
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
+    if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
+        parts.append(proof)
     current_level = blocking_level(top, item, state, base, commit)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
@@ -211,7 +216,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
-              "test_run": tested}
+              "test_run": tested,
+              "proof_list": commit_paragraph(top, base, "Proof list:") or "missing"}
     if "/" in item:
         doc_text, doc, row = task(top, item)
         parsed = story.parse(doc_text)
@@ -225,13 +231,13 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
             context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
             moving_parts=moving_parts(doc_text))
-        chosen = ["task", "rules"]
+        chosen = ["task", "proof-list", "rules"]
         if row.get("user-facing", "").lower() in ("yes", "true"):
             chosen.insert(1, "functional-check")
             values["functional_check"] = functional_check(top, base) or (
                 "None: the worker's last commit message has no `Functional check:` paragraph.")
     else:
-        chosen = ["fix", "rules"]
+        chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
     return "\n\n".join(blocks[name].substitute(values) for name in chosen)
@@ -277,9 +283,41 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
             env = {**os.environ, "FORGE_WORKER": "1",
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
             with repo.record_run(top, item, "test") as ran:
-                done = subprocess.run(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                with subprocess.Popen(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                      encoding="utf-8", errors="replace")
+                                      encoding="utf-8", errors="replace") as process:
+                    output, total, completed, finished = [], None, 0, set()
+                    for line in process.stdout:
+                        output.append(line)
+                        found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
+                        if found:
+                            selected = re.search(r" / (\d+) selected", found[2] or "")
+                            total = int(selected[1] if selected else found[1] or found[3])
+                            completed = 0
+                            finished.clear()
+                        marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
+                        result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
+                        if not result and re.search(r"\[\s*\d+%\]", line):
+                            result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
+                        tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
+                        if tap and tap[2]:
+                            total = int(tap[2])
+                        if result:
+                            finished.add(result[1])  # teardown errors repeat the same test's id
+                            completed = len(finished)
+                        elif tap and tap[1]:
+                            completed = int(tap[1])
+                        elif marks:
+                            # A quiet error can be setup or a second report for teardown.
+                            # Keep done unknown until a percentage gives an exact count.
+                            completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
+                            if completed is None and total is not None:
+                                percent = int(re.search(r"(\d+)%", line)[1])
+                                lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
+                                completed = lower if lower == upper else None
+                        if found or marks or result or tap:
+                            repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
+                    done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
             if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)
@@ -323,7 +361,8 @@ def passed_record(top: Path, command: str) -> Path | None:
 
 def _previous(result: dict[str, Any]) -> str:
     findings = result.get("findings", [])
-    dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    dismissals = {d["finding"]: d["because"] for d in result.get("dismissals", [])
+                  if not d.get("accepted")}
     return "\n".join(
         f"{n}. {finding['priority']} {finding['title']} ({finding['file']}:{finding['line']}): "
         f"{finding['body']}" + (f"; dismissed because {dismissals[n]}" if n in dismissals else "")
@@ -331,15 +370,18 @@ def _previous(result: dict[str, Any]) -> str:
 
 
 def _rulings(top: Path, item: str, base: str) -> str:
-    """Every `Ruling:` line in the branch's commit messages, then every dismissal Forge committed on
-    the branch with its reason, oldest first. Git holds both; Forge copies them, never stores them."""
-    log = repo.git("log", "--reverse", "--no-merges", "--format=%B", f"{base}..HEAD", cwd=top)
-    found = [line.strip() for line in log.splitlines() if line.startswith("Ruling:")]
+    """Every `Ruling:` line in the branch's commit messages, then evidence-based dismissals with
+    their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
+    commits = list(reversed(repo.commit_log(top, base)))
+    found = [line.strip() for _, message, _ in commits
+             for line in message.splitlines() if line.startswith("Ruling:")]
     path = repo.state_path(item)
-    for sha in repo.git("log", "--reverse", "--format=%H", f"{base}..HEAD", "--", path,
+    for sha in repo.git("rev-list", "--reverse", f"{base}..HEAD", "--", path,
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         for dismissal in result.get("dismissals", []):
+            if dismissal.get("accepted"):
+                continue  # Human acceptance expires before a subsequent review.
             finding = result["findings"][dismissal["finding"] - 1]
             line = (f"{finding['title']} ({finding['file']}): dismissed because "
                     f"{dismissal['because']}")
@@ -353,12 +395,15 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
     empty commit counts); an older commit's check never counts. Git holds it; Forge copies it,
     never stores it."""
-    for sha in repo.git("rev-list", "--no-merges", f"{base}..{head}", cwd=top).split():
-        files = repo.git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, cwd=top).split()
+    return commit_paragraph(top, base, "Functional check:", head)
+
+
+def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> str:
+    """Copy a labelled paragraph from the latest worker commit, never an older round's proof."""
+    for _, message, files in repo.commit_log(top, base, head):
         if files and all(f.startswith(BOOKKEEPING) for f in files):
             continue
-        found = re.search(r"^Functional check:.*", repo.git("show", "-s", "--format=%B", sha,
-                                                            cwd=top), re.M | re.S)
+        found = re.search(r"^" + re.escape(label) + r".*", message, re.M | re.S)
         return found[0].strip() if found else ""
     return ""
 
@@ -461,10 +506,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot(top, "review"):
+        with machine.agent_slot(top, "review", item, **chosen):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
-                    findings, reason = _attempt(argv, tree, out, selected, strict=bool(signoff_prompt))
+                    findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
+                                                strict=bool(signoff_prompt))
                     ran["outcome"] = "failed" if reason else "completed"
                 if not reason:
                     break
@@ -539,26 +585,31 @@ def signoff(top: Path, answers: str) -> str:
 
 
 def _attempt(argv: list[str], cwd: Path, out: Path,
-             selected: dict[str, str], strict: bool = False) -> tuple[list[dict[str, Any]], str]:
+             selected: dict[str, str], top: Path, item: str, run_id: str,
+             strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
+    from forge import codex  # importing it here avoids sync's hook-import cycle
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
-    machine.started(proc.pid)
-    last = ""
-    for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
-        line = line.replace(b"\0", b"")
-        sys.stderr.buffer.write(line)
-        sys.stderr.flush()
-        last = line.decode("utf-8", "replace").strip() or last
-        if last.startswith("model: ") and "model" not in selected:
-            selected["model"] = last.removeprefix("model: ")
-        elif last.startswith("thinking: ") and "effort" not in selected:
-            selected["effort"] = last.removeprefix("thinking: ")
-        elif match := re.fullmatch(
-                r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
-            selected["model"] = match[1]
-    code = proc.wait()
+                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
+                            **codex.GROUP)
+    with proc, machine.agent_process(proc):
+        last = ""
+        for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
+            line = line.replace(b"\0", b"")
+            sys.stderr.buffer.write(line)
+            sys.stderr.flush()
+            last = line.decode("utf-8", "replace").strip() or last
+            if last.startswith("model: "):
+                selected["model"] = last.removeprefix("model: ")
+            elif last.startswith("thinking: "):
+                selected["effort"] = last.removeprefix("thinking: ")
+            elif match := re.fullmatch(
+                    r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
+                selected["model"] = match[1]
+            if line.strip():
+                repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
+        code = proc.wait()
     try:
         # Decode first: JSON represents null characters as escaped text.
         report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {

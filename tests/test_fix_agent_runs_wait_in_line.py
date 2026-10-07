@@ -8,7 +8,7 @@ import sys
 import time
 from pathlib import Path
 
-from conftest import Repo, _install
+from conftest import Repo, _install, machine_cores
 from test_close import env  # noqa: F401 (pytest fixture)
 from test_story import DOC, GRILL, worktree
 
@@ -74,6 +74,8 @@ def _until(check, what: str) -> None:
 
 
 def test_1_a_third_run_from_another_repo_waits_until_one_of_two_ends_then_runs(env, tmp_path):
+    # The old fixed-two contract is now half of the reported four-core machine.
+    machine_cores(env.repo, 4)
     bin_dir = env.repo.bin
     _install(bin_dir, "claude", HOLDING_CLAUDE.format(python=sys.executable))
     helper = Path(os.environ["AUTOREVIEW"])

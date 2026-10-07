@@ -23,6 +23,7 @@ import _pytest.pathlib
 import _pytest.tmpdir
 
 ROOT = Path(__file__).resolve().parents[1]
+REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
@@ -33,6 +34,15 @@ sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
 """
+
+
+def machine_cores(repo, count, system_count=None):
+    """Report a machine's CPU count at the command boundary, without a production test flag."""
+    shim = repo.bin / "forge"
+    source = shim.read_text("utf-8")
+    shim.write_text(source.replace("from forge.cli import main",
+        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.

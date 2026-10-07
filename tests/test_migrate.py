@@ -93,6 +93,9 @@ def _review_and_checks(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     (tmp_path / "reviews.json").write_text(json.dumps([CLEAN]), "utf-8")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
+    # Close opens before review, then publishes its result and makes the draft ready.
+    gh.respond("pr", "edit")
+    gh.respond("pr", "ready")
     gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=json.dumps(run("tests")) + "\n")
     gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout="")
 

@@ -20,9 +20,7 @@ from forge.repo import git, refuse
 HERE = Path(__file__).parent
 # The shipped how-to per concern of the client stack; the brief names it and the worker may read it.
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
-# Where a repo keeps its tests: a test folder anywhere, or a test file next to its code.
-TEST_PATHS = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
-              ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+TEST_PATHS = repo.TEST_PATHS
 SERIOUS = ("P0", "P1")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
@@ -96,7 +94,8 @@ def work(args: argparse.Namespace) -> None:
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
     # The round then waits for one of the machine's agent slots.
-    with codex.hold(top, item, kind), machine.agent_slot(top, "work"):
+    with codex.hold(top, item, kind), machine.agent_slot(top, "work", item,
+            chosen.get("model"), chosen.get("effort")):
         if on_codex:
             codex.recover(top, item)
         question = codex.record(top, item).get("question")
@@ -389,6 +388,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         local = review.close_test(top, f"origin/{repo.default_branch(top)}")
         command = f" (`{local}`)" if local else ""
         brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "
@@ -469,27 +469,38 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
+               "--output-format", "stream-json", "--verbose",
                "--add-dir", str(CONVENTIONS), *(session or [])]
-    lines = []
+    lines, final_result = [], None
     with repo.record_run(top, item, "worker", family="claude",
-                         model=models[models.index("--model") + 1]) as ran, \
+                         model=models[models.index("--model") + 1],
+                         effort=models[models.index("--effort") + 1]) as ran, \
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-            env={**os.environ, "FORGE_WORKER": "1"}) as worker:
-        machine.started(worker.pid)
+            env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker, \
+            machine.agent_process(worker):
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        worker.stdin.write(brief)
-        worker.stdin.close()
+        worker._stdin_write(brief)
         for line in worker.stdout:
-            print(line, end="", flush=True)
-            out.write(line)
-            lines.append(line)
+            try:
+                event = json.loads(line)
+            except ValueError:
+                event = None
+            if isinstance(event, dict):
+                line = repo.claude_output(top, item, ran["run_id"], event)
+                if event.get("type") == "result":
+                    final_result = line.rstrip("\n")
+            if line:
+                if not isinstance(event, dict) or event.get("type") == "result":
+                    print(line, end="", flush=True)
+                out.write(line)
+                lines.append(line)
         worker.wait()
         ran["outcome"] = "completed" if worker.returncode == 0 else "failed"
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-    return "".join(lines)
+    return final_result if final_result is not None else "".join(lines)
 
 
 COMMANDS = [{

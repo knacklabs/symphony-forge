@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-03T14:21:28+00:00
-read_hash: 7f4a39c41ffcfccb913f962767b5ef66513cb5bf
-round: 12
+read_at: 2026-10-05T17:44:00+00:00
+read_hash: 531e98dc9f61f323b4d75630f832d549b5f934b6
+round: 14
 passed: yes
-doc_seen: 7f4a39c41ffcfccb913f962767b5ef66513cb5bf
+doc_seen: 531e98dc9f61f323b4d75630f832d549b5f934b6
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: d847a0761ef3f51caa01ba4a600a1edfdc38940e
+notes_seen: 37c06ac20995ce347832b320303ef8d133d78b22
 ---
 # Cold read notes
 
@@ -306,5 +306,35 @@ No findings.
     Disposition: cut the line now reads: without lane data line 1 is the next step and pressing 1 still runs it
 
 ## Round 12
+
+No findings.
+
+## Round 13
+
+66. Pin LIVE’s shared data contract before its consumers build against it.
+    PANE and MACHINE consume `activity`, finding priorities, test progress and `events`, but neither depends on LIVE; LIVE also has no prerequisites. VIEWS owns the shared fixture, which LIVE’s Scope excludes. Name the earlier owner of these shapes and fixture updates, and order consumers after that contract.
+    Disposition: cut detail 7 is now the contract LIVE owns with the shared fixture; PANE and MACHINE read only named fields; MACHINE waits for LIVE
+
+67. The Machine tree requires facts its named producer does not deliver.
+    Detail 6 attributes its gates column to LIVE, but detail 7 specifies neither plan-read results nor a gates field. The coordinating session’s model and effort also have no named source under “Only facts Forge records.” Assign these producers and their contract tests before MACHINE; fixture-only values cannot satisfy the stated producer check.
+    Disposition: cut gates now come from detail 7's `gates` field (plan read, review, CI); the coordinator node shows this session without model or effort
+
+68. Unproven: item 7: `idle_since` has no defined starting or reset rule.
+    Detail 7 specifies the 24-hour threshold but not what starts an idle interval, resets it after resumed work, or represents missing history. A pre-aged fixture can pass while real items retain stale idle timestamps. Pin one rule and prove an actual run-to-idle-to-run transition in `tests/test_live_status.py`.
+    Disposition: cut idle_since starts at the last run record's end (or the branch's last commit), clears when a run starts; a run-idle-run test
+
+69. Unproven: item 7: the tests can bypass both worker event adapters.
+    A fixture worker with two recorded steps proves projection, while Claude could still emit only its final answer and Codex could discard tool events. The current launchers use different output paths. Require `tests/test_live_status.py` to drive both Forge worker paths with raw external event streams and observe the resulting live step.
+    Disposition: cut LIVE's tests drive a stub Codex app-server and a stub Claude stream through both worker paths
+
+70. Unproven: item 1: Desktop timelines and native buttons lack a check that distinguishes them from terminal text.
+    Looping fact assertions over both surfaces can pass when Desktop renders the terminal layout unchanged. MACHINE explicitly checks an `Svg`, but PANE has no equivalent promised check. In `pane.test.ts`, verify the Desktop timeline’s accessible stage times and invoke a native button’s action.
+    Disposition: cut pane.test.ts on desktop checks the timeline Svg's alt stage times and presses a native Button
+
+71. Trap: Desktop WSL sessions cannot deliver items 1 and 6 through this mod.
+    The new surface promise includes the Desktop Code tab without an exception. Claude’s [surface documentation](https://code.claude.com/docs/en/plugins/mods/overview#where-mods-run) says Desktop WSL sessions have no plugins, so neither the drawing nor the mod’s `/forge` text fallback runs there. State the supported boundary and the command fallback for that case.
+    Disposition: cut the top part states Desktop WSL sessions load no plugins and use the forge command as today
+
+## Round 14
 
 No findings.

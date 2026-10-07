@@ -47,7 +47,8 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
     repo.write("pytest.ini", "[pytest]\naddopts = -n 2\n")
     repo.write("src/shop/__init__.py", "")
     repo.write("src/shop/prices.py", "PRICE = 1\n")
-    for name, reference in {"prices": "", "import": "from shop.prices import PRICE",
+    # Environment checks need a module reference now; filenames alone do not select tests.
+    for name, reference in {"prices": "# shop/prices.py", "import": "from shop.prices import PRICE",
                             "mention": "# src/shop/prices.py", "changed": "", "unrelated": ""}.items():
         repo.write(f"checks with spaces/test_{name}.py", reference + "\nimport os, importlib.util\n"
                    "def test_client(request):\n"
@@ -71,7 +72,9 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
     assert (repo.path / "setup-ran").exists()
     monkeypatch.setenv("FULL_SUITE", "1")
     for shared in ("conftest.py", "pyproject.toml", "uv.lock"):
-        repo.write(shared, "# shared input\n")
+        # A manifest comment now selects related files; actual pytest settings stay shared.
+        repo.write(shared, '[tool.pytest.ini_options]\naddopts = "-q"\n'
+                   if shared == "pyproject.toml" else "# shared input\n")
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Change shared input")
         result = repo.forge("test", "--pytest", base)
@@ -82,7 +85,7 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
 
 
 def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
-    repo.write("forge.toml", 'version = "v1.2.5"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
+    repo.write("forge.toml", 'version = "v1.2.6"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
     result = repo.forge("doctor")
     assert 'fast_test = "forge test --pytest {base}"' in result.stdout
     assert "python -m forge.fasttest" in result.stdout
@@ -122,7 +125,7 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
 def _client_tests(client, python):
     (client / "tests").mkdir(exist_ok=True)
     (client / "prices.py").write_text("PRICE = 1\n", "utf-8")
-    for name, reference in (("prices", ""), ("import", "from prices import PRICE\n")):
+    for name, reference in (("prices", "# prices.py\n"), ("import", "from prices import PRICE\n")):
         (client / "tests" / f"test_{name}.py").write_text(
             reference + "import importlib.util, os\nfrom pathlib import Path\n"
             "def test_client():\n"

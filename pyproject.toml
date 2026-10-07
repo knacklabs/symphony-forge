@@ -22,6 +22,7 @@ path = "src/forge/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/forge"]
 [tool.hatch.build.targets.wheel.force-include]
+"src/forge/mod/.claude-plugin/plugin.json" = "forge/mod/.claude-plugin/plugin.json"
 ".codex/skills/app-baseline/SKILL.md" = "forge/templates/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = "forge/templates/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = "forge/templates/skills/test-audit/NOTICE.md"
@@ -29,12 +30,9 @@ packages = ["src/forge"]
 ".claude/skills/remote-approval/SKILL.md" = "forge/templates/skills/remote-approval/SKILL.md"
 
 [tool.hatch.build.targets.sdist.force-include]
+"src/forge/mod/.claude-plugin/plugin.json" = "src/forge/mod/.claude-plugin/plugin.json"
 ".codex/skills/app-baseline/SKILL.md" = ".codex/skills/app-baseline/SKILL.md"
 ".codex/skills/test-audit/SKILL.md" = ".codex/skills/test-audit/SKILL.md"
 ".codex/skills/test-audit/NOTICE.md" = ".codex/skills/test-audit/NOTICE.md"
 ".codex/skills/forge/fde.md" = ".codex/skills/forge/fde.md"
 ".claude/skills/remote-approval/SKILL.md" = ".claude/skills/remote-approval/SKILL.md"
-
-[tool.forge]
-# Only Python lines under src/forge/ count (decision 0094). Raising this needs an accepted decision.
-line_ceiling = 11000

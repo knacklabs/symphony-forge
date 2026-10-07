@@ -9,7 +9,6 @@ import os
 import re
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,19 +57,16 @@ def test_4_one_test_per_rule():
 
 
 def test_5_forge_stays_small(repo):
-    ceiling = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["forge"][
-        "line_ceiling"]
+    # Decision 0106 removes the total ceiling; module and command limits still apply.
     files = (ROOT / "src" / "forge").rglob("*.py")
     lines = {p.relative_to(ROOT).as_posix(): p.read_bytes().count(b"\n") for p in files}
     too_long = {path: n for path, n in lines.items() if n > 1200}
     assert not too_long, f"modules over 1,200 lines: {too_long}"
-    assert sum(lines.values()) <= ceiling, (
-        f"src/forge/ has {sum(lines.values())} lines, over the {ceiling} ceiling in pyproject.toml")
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    # Decision 0104 adds one shared test command for the picker and the test lane.
-    assert len(commands) <= 21, f"{len(commands)} commands: {commands}"
+    # Decisions 0104 and 0105 add test and person-only stop; board owns the lane view.
+    assert len(commands) <= 22, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 

@@ -44,6 +44,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   tests:
@@ -52,10 +53,22 @@ jobs:
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: ubuntu-latest
+    env:
+      UV_FROZEN: '1'
 <tests-timeout>    steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: parent-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
+        if: steps.parent-tests.outputs.reuse != 'true'
 <node>      - run: <test>
+        if: steps.parent-tests.outputs.reuse != 'true'
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
@@ -120,7 +133,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     node = ""
     if (top / "package.json").is_file():
-        node = "      - uses: actions/setup-node@v7\n"
+        node = ("      - uses: actions/setup-node@v7\n"
+                "        if: steps.parent-tests.outputs.reuse != 'true'\n")
         version_file = next((name for name in (".nvmrc", ".node-version")
                              if (top / name).is_file()), None)
         if version_file:
@@ -144,7 +158,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         start = workflow.index("  tests:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
-    return {WORKFLOW_PATH: workflow}
+    return {WORKFLOW_PATH: workflow,
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
 
 
 def pr_check(args: argparse.Namespace) -> int:
