@@ -108,6 +108,19 @@ def _machine_prs(top: Path) -> list[Item]:
             return []
     except (ValueError, KeyError, TypeError):
         return []  # An expired answer must not hide a failed check while GitHub is unreachable.
+    for pr in prs:
+        for check in _rollup(pr):
+            if check.get("conclusion") != "CANCELLED" or not isinstance(check.get("databaseId"), int):
+                continue
+            annotations = repo.run("gh", "api", "--paginate", "--slurp",
+                f"repos/{{owner}}/{{repo}}/check-runs/{check['databaseId']}/annotations?per_page=100", cwd=top)
+            try:
+                pages = json.loads(annotations.stdout) if annotations.returncode == 0 else []
+                check["timeout"] = any("has exceeded the maximum execution time of" in str(a.get("message", ""))
+                                       for page in pages if isinstance(page, list)
+                                       for a in page if isinstance(a, dict))
+            except (ValueError, TypeError):
+                pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
     temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
     try:
         temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
@@ -119,17 +132,17 @@ def _machine_prs(top: Path) -> list[Item]:
     return prs
 
 
-def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
+def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
     if not pr:
-        return "unknown", []
+        return "unknown", [], []
     try:
         contexts = pr["commits"]["nodes"][-1]["commit"]["statusCheckRollup"]["contexts"]
         nodes = contexts["nodes"]
         if not isinstance(nodes, list):
-            return "unknown", []
+            return "unknown", [], []
     except (KeyError, TypeError, IndexError):
-        return "unknown", []
-    statuses, events, names = [], [], []
+        return "unknown", [], []
+    statuses, events, names, failures = [], [], [], []
     for check in nodes:
         if not isinstance(check, dict):
             continue
@@ -143,6 +156,8 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
                         else "running" if value in ("PENDING", "EXPECTED") or check.get("status") in
                         ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED") else "unknown")
         if failed:
+            failures.append({"job": name, "cause": "timeout" if value == "TIMED_OUT" or
+                             value == "CANCELLED" and check.get("timeout") is True else "failed"})
             identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
                         if check.get("databaseId") is not None and check.get("completedAt")
                         else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
@@ -152,7 +167,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item]]:
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
               "unknown" if not statuses or "unknown" in statuses or missing or
               contexts.get("pageInfo", {}).get("hasNextPage") else "pass")
-    return status, events
+    return status, events, failures
 
 
 def _rollup(pr: Item) -> list[Item]:
@@ -202,7 +217,7 @@ def machine_board(top: Path) -> Item:
         tree = trees.get(branch)
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
-        checks, events = _checks(pr, cfg["checks"])
+        checks, events, failures = _checks(pr, cfg["checks"])
         try:
             lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
                      else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
@@ -213,7 +228,7 @@ def machine_board(top: Path) -> Item:
             lines = [f"{title} is finished."]
         dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
                      if isinstance(d, dict)}
-        findings = [f.get("title") or "Untitled finding" for n, f in
+        findings = [{"title": f.get("title") or "Untitled finding", "priority": f.get("priority")} for n, f in
                     enumerate((state.get("review") or {}).get("findings", []), 1)
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
@@ -256,13 +271,39 @@ def machine_board(top: Path) -> Item:
         if agents:
             agent = agents[-1]
             worker = {"kind": {"work": "build", "worker": "build"}.get(agent["kind"], agent["kind"]),
-                      "model": agent.get("model"), "started_at": agent.get("at")}
+                      "tool": agent.get("family"), "model": agent.get("model"),
+                      "effort": agent.get("effort"), "round": agent.get("round"),
+                      "started_at": agent.get("at"),
+                      "step": next((e.get("step") for e in reversed(activity)
+                                    if e.get("run_id") == agent["id"] and e.get("step")), None)}
+            for key in ("model", "effort"):
+                worker[key] = next((e[key] for e in reversed(activity)
+                                    if e.get("run_id") == agent["id"] and key in e), worker[key])
+        now = _when(repo.now())
+        elapsed = lambda at: max(0, (now - _when(at)).total_seconds()) if now and _when(at) else None
+        if worker:
+            worker["elapsed"] = elapsed(worker.get("started_at"))
+        idle_since = None if active else next((e.get("at") for e in reversed(activity)
+                                              if e.get("event") == "run end"), None)
+        if not active and idle_since is None:
+            committed = repo.run("git", "log", "-1", "--format=%cI", branch, cwd=top)
+            if committed.returncode:
+                committed = repo.run("git", "log", "-1", "--format=%cI", f"refs/remotes/origin/{branch}", cwd=top)
+            idle_since = committed.stdout.strip() if committed.returncode == 0 else None
+        test_runs = [e for e in active if e.get("kind") == "test"]
+        tests = None
+        if test_runs:
+            current = test_runs[-1]
+            tests = {"started_at": current.get("at"), "elapsed": elapsed(current.get("at"))}
+            tests.update(next(({k: e[k] for k in ("done", "total") if e.get(k) is not None}
+                               for e in reversed(activity) if e.get("run_id") == current["id"]
+                               and e.get("event") == "progress"), {}))
         item_timings = [r for r in timings if r.get("item") == item]
         round_number = state.get("round", (activity or item_timings or [{}])[-1].get("round"))
         stages = []
         for name, step, kinds in (("Build", "worker round", ("work", "worker")),
                                   ("Tests", "test run", ("test",)), ("Review", "review", ("review",)),
-                                  ("CI", "CI wait", ()), ("Merge", "merge", ())):
+                                  ("CI", "CI wait", ("ci",)), ("Merge", "merge", ())):
             records = [r for r in timings if round_number is not None and r.get("item") == item
                        and r.get("round") == round_number and r.get("step") == step]
             live = [e for e in active if e.get("round") == round_number and e.get("kind") in kinds]
@@ -281,6 +322,7 @@ def machine_board(top: Path) -> Item:
                            if any(r.get("seconds") is not None for r in records) else None})
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
+                stages[-1]["elapsed"] = elapsed(live[0].get("at"))
         stage, receipt = (nextstep._item_readiness(item, state, top, checks)
                           if kind != "story" else (state.get("status"), {}))
         stage = stage or "unknown"
@@ -303,10 +345,41 @@ def machine_board(top: Path) -> Item:
                            "title": "Ready to merge"})
         doc = (tree / "plans" / f"{item}.md" if kind == "story" and stage != "done" and tree
                and approval.waiting_digest(item, tree) else None)
+        review = state.get("review") or {}
+        read_key = item.split("/")[0] if kind != "fix" else None
+        read_where = trees.get(f"story/{read_key}") or next((ref for ref in (
+            f"story/{read_key}", f"origin/story/{read_key}", landed)
+            if story.show(top, ref, f"plans/{read_key}.md") is not None), where) if read_key else where
+        notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""
+        read_record, _ = story._record(notes)
+        plan_read = "none"
+        if read_record:
+            text = _read(top, read_where, f"plans/{read_key}.md")
+            digest = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+            try:
+                story.gate(read_key, f"plans/{read_key}.md", notes, digest, text, top)
+                plan_read = "passed"
+            except repo.Refused:
+                plan_read = "blocked"
+        ci = {"status": {"pass": "green", "fail": "red", "running": "running"}.get(checks, "none")}
+        if checks == "running":
+            starts = [c.get("startedAt") for c in _rollup(pr or {}) if _when(c.get("startedAt"))
+                      and (c.get("status") in ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED")
+                           or c.get("state") in ("PENDING", "EXPECTED"))]
+            ci["elapsed"] = elapsed(min(starts, key=_when)) if starts else None
+        elif checks == "unknown" and any(e.get("kind") == "ci" for e in active):
+            ci = {"status": "running", "elapsed": elapsed(next(e["at"] for e in active if e.get("kind") == "ci"))}
         return {"id": item, "kind": kind, "title": title, "stage": stage,
+                "activity": {"status": "running", "action": active[-1].get("kind")} if active else {"status": "idle"},
+                "idle_since": idle_since, "stalled": bool(idle_since and (elapsed(idle_since) or 0) > 86400),
+                "gates": {"plan_read": {"status": plan_read},
+                          "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
+                              {"status": "clean" if review else "none"}, "ci": ci},
+                "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
-                "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks},
-                "findings": {"count": len(findings), "titles": findings}, "round": round_number,
+                "worker": worker, "pr": {"number": (pr or {}).get("number"), "checks": checks, "failures": failures},
+                "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
+                             "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
                 "total_seconds": sum(r.get("seconds") or 0 for r in timings
                                      if r.get("item") == item and r.get("round") is not None)
                                  if round_number is not None else None,
@@ -338,7 +411,14 @@ def machine_board(top: Path) -> Item:
         if key not in items:
             items[key] = row(key, "story", "A story with missing state", {}, landed)
         items[key]["children"] = parts
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values())}
+    event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
+    recent = [{"time": e.get("at"), "item": e.get("item"), "line":
+               " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else
+               "Review " + e.get("outcome", "finished") if e.get("event") == "review result" else
+               {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
+                "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
+              for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
+    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()), "events": recent}
 
 
 def numbers_line(top: Path, checks: list[str]) -> str:

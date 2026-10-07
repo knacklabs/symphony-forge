@@ -177,6 +177,22 @@ def main() -> int:
                 state[hook["key"]] = {"trusted_hash": hook["currentHash"]}
         if state:  # nested: a hook's key holds dots, which a dotted override would split
             settings["config"] = {**(settings["config"] or {}), "hooks": {"state": state}}
+        # The SDK's high-level Thread discards these settings; null effort follows the model.
+        request_raw = client._request_raw
+        def selected_request(method, params=None):
+            response = request_raw(method, params)
+            if method in ("thread/start", "thread/resume"):
+                effort, cursor = response.get("reasoningEffort"), None
+                while effort is None:
+                    page = request_raw("model/list", {"includeHidden": True, "cursor": cursor})
+                    effort = next((model["defaultReasoningEffort"] for model in page["data"]
+                                   if model["model"] == response["model"]), None)
+                    cursor = page.get("nextCursor")
+                    if not cursor:
+                        break
+                emit(selection={"model": response["model"], "effort": effort})
+            return response
+        client._request_raw = selected_request
         resumed = None
         if request.get("thread"):
             try:

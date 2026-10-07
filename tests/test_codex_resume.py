@@ -102,8 +102,10 @@ def main():
             continue
         result = {}
         if method in ("thread/start", "thread/resume"):
+            config = params.get("config") or {}
             result = {"approvalPolicy": "never", "approvalsReviewer": "user", "cwd": saved["cwd"],
-                      "model": "stub-model", "modelProvider": "openai",
+                      "model": config.get("model", "stub-model"),
+                      "reasoningEffort": config.get("model_reasoning_effort"), "modelProvider": "openai",
                       "sandbox": {"type": "dangerFullAccess"}, "thread": thread(id, saved)}
         elif method == "thread/read":
             if os.environ.get("STUB_CODEX_STATUS") == "vanish":  # gone before it answers

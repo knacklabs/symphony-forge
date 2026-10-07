@@ -50,6 +50,9 @@ READER = """#!{python}
 import io, json, os, pathlib, sys
 here = pathlib.Path(__file__).resolve().parent
 prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()  # UTF-8 whatever the code page
+if "--input-format" in sys.argv:
+    input_events = [json.loads(line) for line in prompt.splitlines()]
+    prompt = next(event["message"]["content"] for event in input_events if event["type"] == "user")
 with open(here / "claude-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": sys.argv[1:], "cwd": os.getcwd(), "prompt": prompt}}) + "\\n")
 touch = here / "claude-touch"
