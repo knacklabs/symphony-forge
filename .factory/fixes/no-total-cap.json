@@ -3,12 +3,14 @@
   "branch": "fix/no-total-cap",
   "done_when": "A new decision record (owner, 2026-10-07) removes the total-lines ceiling and supersedes the earlier ceiling decisions; pyproject.toml has no line_ceiling and no test checks a total; the per-file limit of 1,200 lines, the 21-command limit and CI's net-lines report stay unchanged; Forge's own repo only, so new and existing client repos see no change",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-07T03:30:20+00:00",
       "step": "start"
     }
   ],
-  "why": "The owner removed the total-lines ceiling on Forge's Python: it had to be raised five times in two weeks and only stopped finished work late"
+  "why": "The owner removed the total-lines ceiling on Forge's Python: it had to be raised five times in two weeks and only stopped finished work late",
+  "worker": "codex"
 }
