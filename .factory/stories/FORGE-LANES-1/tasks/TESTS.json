@@ -1,11 +1,50 @@
 {
   "branch": "task/FORGE-LANES-1-TESTS",
+  "flagged": [
+    "tests/test_lanes_tests.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dadccf5b2365ae51db2219767b58a6b259b41fc4b39d929b6041df3928d2fb54",
+    "changed": "a4d5138ef55555726fd56b693ce603adc5f95462d59a29f1cd41c73a318a046d",
+    "commit": "614e6235080c4970a54a9047a4ac58cd7582949e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The full suite deterministically fails `tests/test_rules.py::test_4_one_test_per_rule`. That gate defaults files without `STORY` to `FORGE-NEXT-1` and rejects duplicate criterion numbers (tests/test_rules.py:29\u201349). This file has no `STORY`, four `test_2_*` functions, and a `test_5_*`, colliding both internally and with existing spec tests. Simply adding `STORY = \"FORGE-LANES-1\"` still collides with the new upgrade test's criterion 2 and the existing lane-view test's criterion 5. Assign valid, unique ownership or consolidate the proofs without weakening the gate; the passing related-test run does not establish that this suite-wide check passes.",
+        "file": "tests/test_lanes_tests.py",
+        "line": 104,
+        "priority": "P1",
+        "title": "Give the new lane tests unique rule ownership"
+      },
+      {
+        "body": "The TESTS-owned proof explicitly requires one `forge stop <item>` to end both a worker and its test run (plans/FORGE-LANES-1.md:132\u2013135). This test launches only two `forge test` processes and cancels the waiter before stopping the remaining test. `env.start_fix()` only creates a worktree and commits files (tests/test_close.py:170\u2013185); it does not start a worker. Existing agent-lane stop proofs contain no active test entry. Consequently, a regression that stops only one matching entry or one lane would pass all these checks. Extend the command-level proof with a running worker and its test, then verify one named stop ends both and releases both admissions.",
+        "file": "tests/test_lanes_tests.py",
+        "line": 222,
+        "priority": "P1",
+        "title": "Not done: forge stop ends a worker and its test run"
+      },
+      {
+        "body": "On Windows virtual-environment runs, `first.pid` can identify Python's redirector rather than the Forge interpreter. The existing agent-lane proof accounts for this by recording the interpreter's own PID (tests/test_lanes_agents.py:112\u2013119). Here, killing the redirector can leave Forge alive, allowing the test to pass even if admission incorrectly depends on the Forge parent instead of the test command. Record and kill the actual Forge interpreter, and confirm it has ended before checking that the test still holds the lane.",
+        "file": "tests/test_lanes_tests.py",
+        "line": 193,
+        "priority": "P2",
+        "title": "Kill the Forge interpreter rather than its Windows launcher"
+      }
+    ],
+    "id": "10acb7cc-08c2-49b2-9985-fde40102531b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-07T14:48:08+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-07T15:23:19+00:00",
+      "step": "review"
     }
   ],
   "worker": "codex"
