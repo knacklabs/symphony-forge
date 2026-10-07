@@ -6,12 +6,13 @@ import os
 import json
 import subprocess
 import shutil
+import threading
 import sys
 from pathlib import Path
 
 import pytest
 
-from conftest import _install, machine_cores
+from conftest import FORGE_SHIM, ROOT, _install, machine_cores
 from test_codex_worker import sdk_data, _running  # noqa: F401
 from test_close import env  # noqa: F401
 from test_story import worktree
@@ -81,11 +82,11 @@ def make_work(repo, name):
     return item, worktree(repo, "fix/" + item).name
 
 
-def start(where, directory, repo, *args):
+def start(where, directory, repo, *args, launcher=None):
     directory.mkdir(exist_ok=True)
     output = directory / f"{args[0]}.out"
     with output.open("w", encoding="utf-8") as sink:
-        process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), *args], cwd=where,
+        process = subprocess.Popen([sys.executable, str(launcher or repo.bin / "forge"), *args], cwd=where,
             stdin=subprocess.DEVNULL, stdout=sink, stderr=subprocess.STDOUT)
     return process, output
 
@@ -103,7 +104,8 @@ def finish(repo, processes):
             raise
 
 
-def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path, person, lane_adapter):
+@pytest.mark.parametrize("cancel_between", [False, True], ids=["nudge", "stop-between"])
+def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path, person, lane_adapter, cancel_between):
     repo = env.repo
     machine_cores(repo, 6)
     first, first_name = make_work(repo, "First typo")
@@ -117,6 +119,15 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
     read_name = worktree(other, "story/SHOP").name
     queued = [make_work(repo, name) for name in ("Fourth typo", "Fifth typo", "Sixth typo")]
     hold_agents(env)
+    legacy = None
+    if cancel_between and os.name != "nt":
+        # The supported base checker really launches an ungrouped reviewer.
+        source = tmp_path / "base-src"
+        shutil.copytree(ROOT / "src/forge", source / "forge", ignore=shutil.ignore_patterns("__pycache__"))
+        for name in ("close.py", "review.py", "prcheck.py"):
+            shutil.copy(ROOT / "tests/fixtures/pr-check-before-branch-diff" / name, source / "forge" / name)
+        legacy = tmp_path / "base-forge"
+        legacy.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)), "utf-8")
     # A dirty first turn forces a second model launch in the same work round.
     # Hold Git between launches: a per-launch reservation must not admit a waiter.
     for provider in ("claude", "codex-app-server"):
@@ -142,7 +153,8 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             (other.path, "read", "SHOP", read_name),
             (repo.path, "close", closing, "review"),
         ):
-            process, _ = start(where, tmp_path / str(len(processes)), repo, command, item)
+            process, _ = start(where, tmp_path / str(len(processes)), repo, command, item,
+                               launcher=legacy if command == "close" else None)
             processes.append(process)
             _until(lambda: started(marker), f"{command} agent")
         for place, (item, marker) in enumerate(queued, 1):
@@ -156,6 +168,9 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             return json.loads(board.stdout)["lanes"]["agents"]["entries"]
         rows = entries()
         admitted = next(e for e in rows if e["item"] == first)
+        if legacy:
+            old_review = next(e for e in rows if e["kind"] == "review")
+            assert os.getpgid(old_review["process"]["pid"]) != old_review["process"]["pid"]
         if lane_adapter == "codex" and os.name != "nt":
             # A process can exit between two queue liveness reads. Replay its last
             # real OS snapshot once at the gap, then let ps report that it is gone.
@@ -168,9 +183,13 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
         assert len(waiters) == len(queued) and all(start is None for _, start in waiters.values())
         real_git = shutil.which("git")
         _install(repo.bin, "git", f'''#!{sys.executable}
-import pathlib, subprocess, sys, time
+import os, pathlib, signal, subprocess, sys, time
 here = pathlib.Path(__file__).resolve().parent
 if sys.argv[1:] == ["status", "--porcelain", "-uall"] and pathlib.Path.cwd().name == {first_name!r} and (here / "first-ended").exists() and not (here / "between-launches").exists():
+    if {cancel_between!r}:
+        if os.name != "nt": signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        child = subprocess.Popen([sys.executable, "-c", "import os, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN) if os.name != 'nt' else None; time.sleep(600)"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        (here / "git-tree").write_text(str(os.getpid()) + " " + str(child.pid))
     (here / "between-launches").touch()
     while not (here / "go-between").exists() and not (here / "go-all").exists():
         time.sleep(0.05)
@@ -197,18 +216,28 @@ else:
         assert between["process"]["pid"] == processes[0].pid
         assert waiting(rows) == waiters
         assert all(not started(marker) for _, marker in queued)
-        (repo.bin / "go-between").touch()
-        _until(lambda: started(first_name + "-nudge"), "commit nudge model")
         (repo.bin / "git").unlink()
         (repo.bin / "git.cmd").unlink(missing_ok=True)
-        rows = entries()
-        nudging = next(e for e in rows if e["item"] == first)
-        assert nudging["id"] == admitted["id"] and nudging["joined_at"] == admitted["joined_at"]
-        assert nudging["process"]["pid"] != processes[0].pid
-        assert waiting(rows) == waiters
-        assert all(not started(marker) for _, marker in queued)
-        (repo.bin / f"go-{first_name}-nudge").touch()
-        assert processes[0].wait(timeout=30) == 0
+        if cancel_between:
+            tree = [int(pid) for pid in (repo.bin / "git-tree").read_text("utf-8").split()]
+            reaper = threading.Thread(target=processes[0].wait, daemon=True)
+            reaper.start()
+            stopped = repo.forge("stop", "--id", admitted["id"])
+            assert stopped.returncode == 0, stopped.stderr
+            assert all(not alive(pid) for pid in tree), "stop freed admission while Git or its hook still ran"
+            reaper.join(timeout=30)
+            assert not started(first_name + "-nudge")
+        else:
+            (repo.bin / "go-between").touch()
+            _until(lambda: started(first_name + "-nudge"), "commit nudge model")
+            rows = entries()
+            nudging = next(e for e in rows if e["item"] == first)
+            assert nudging["id"] == admitted["id"] and nudging["joined_at"] == admitted["joined_at"]
+            assert nudging["process"]["pid"] != processes[0].pid
+            assert waiting(rows) == waiters
+            assert all(not started(marker) for _, marker in queued)
+            (repo.bin / f"go-{first_name}-nudge").touch()
+            assert processes[0].wait(timeout=30) == 0
         _until(lambda: started(queued[0][1]), "the first waiting agent")
         assert not started(queued[1][1]) and not started(queued[2][1])
         stopped = repo.forge("stop", queued[1][0])
@@ -222,5 +251,16 @@ else:
         cancelled = (tmp_path / "waiting-2/work.out").read_text("utf-8")
         assert cancelled.splitlines()[-1] == "This run was stopped while waiting; it will not start."
         assert "Traceback" not in cancelled
+        if legacy:
+            stopped = repo.forge("stop", "--id", old_review["id"])
+            assert stopped.returncode == 0, stopped.stderr
+            assert not alive(old_review["process"]["pid"])
     finally:
+        if cancel_between and (repo.bin / "git-tree").exists():
+            for pid in map(int, (repo.bin / "git-tree").read_text("utf-8").split()):
+                if alive(pid):
+                    if os.name == "nt":
+                        subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True)
+                    else:
+                        os.kill(pid, 9)
         finish(repo, processes)

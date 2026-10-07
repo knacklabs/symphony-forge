@@ -631,10 +631,73 @@ def _group_alive(pid: int) -> bool | None:
                for line in listed.stdout.splitlines() if len(fields := line.split()) == 2)
 
 
+def _stop_tree(recorded: dict[str, Any]) -> bool:
+    """Stop an ungrouped run without signalling the terminal's shared process group."""
+    targets = {recorded["pid"]: recorded}
+    frozen = []
+    try:
+        deadline = time.monotonic() + 5
+        while True:
+            for pid, process in targets.items():
+                if pid not in frozen:
+                    live = _alive(process)
+                    if live is None:
+                        return False
+                    if live:
+                        os.kill(pid, signal.SIGSTOP)
+                        frozen.append(pid)
+            listed = repo.run("ps", "-axo", "pid=,ppid=,lstart=,stat=")
+            if listed.returncode:
+                return False
+            rows = [parts for line in listed.stdout.splitlines()
+                    if len(parts := line.split()) == 8 and not parts[7].startswith("Z")]
+            parents = {int(parts[0]) for parts in rows if int(parts[0]) in targets
+                       and " ".join(parts[2:7]) == targets[int(parts[0])].get("started")}
+            children = [parts for parts in rows if int(parts[1]) in parents and int(parts[0]) not in targets]
+            if not children:
+                break
+            if time.monotonic() > deadline:
+                return False
+            for parts in children:
+                targets[int(parts[0])] = {"pid": int(parts[0]), "started": " ".join(parts[2:7])}
+        # Keep identities after parents exit and their descendants are reparented.
+        # Kill while frozen: a termination handler must not fork an untracked child.
+        for pid, process in reversed(list(targets.items())):
+            if _alive(process) is True:
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(pid, signal.SIGKILL)
+        for _ in range(50):
+            listed = repo.run("ps", "-axo", "pid=,stat=")
+            if listed.returncode:
+                return False
+            live = {int(parts[0]) for line in listed.stdout.splitlines()
+                    if len(parts := line.split()) == 2 and not parts[1].startswith("Z")}
+            if all(pid not in live or _alive(process) is False for pid, process in targets.items()):
+                return True
+            time.sleep(0.1)
+        return False
+    except OSError:
+        return False
+    finally:
+        for pid in frozen:
+            if _alive(targets[pid]) is True:
+                with contextlib.suppress(OSError):
+                    os.kill(pid, signal.SIGCONT)
+
+
 def _stop(recorded: dict[str, Any], group: bool) -> bool:
     """Stop a process, with its process group when `group`, and wait until it has gone: SIGTERM,
     then SIGKILL five seconds on. On Windows taskkill ends it and everything it started."""
     pid = recorded["pid"]
+    if os.name != "nt":
+        try:
+            group = group and os.getpgid(pid) == pid
+        except ProcessLookupError:
+            pass  # A dedicated group can outlive its leader.
+        except OSError:
+            return False
+        if not group:
+            return _stop_tree(recorded)
     for sig in (signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)):
         with contextlib.suppress(OSError):  # it may have ended on its own meanwhile
             if os.name == "nt":
