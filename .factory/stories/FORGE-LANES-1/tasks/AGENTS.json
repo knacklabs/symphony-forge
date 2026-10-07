@@ -9,40 +9,41 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "618e2487d3165dc66d0152f396343cc571f59472307ce95fb9ff58949c038b8e",
-    "changed": "b31d47449beb57db34655cf8756bd0f1b0a78185f17595d9848bbf0119cf34bc",
-    "commit": "ef8322b10f179cb744a487f3494b84f6c4964e80",
+    "branch_diff": "aa2d89632c89e0b4fd3ca53056e068b199a1d0141cf0c324b370b4619e2200e4",
+    "changed": "87325e5f4b48f43319628668774c0f87c4f2ded085fa933235fc07bd9823d5cc",
+    "commit": "4f5b4f95bddfeb3e51a143bee540474765d131e1",
     "dismissals": [],
     "findings": [
       {
-        "body": "The standard requires: \"Touch only what the task needs.\" This repairs the unrelated close-test picker's lock-file fixture. The selected base already contains the same semantic lock comparison in src/forge/fasttest.py:112\u2013158 and 175\u2013180; this branch changes only its core budget. Consequently, the comment-only fixture was already incompatible with that existing behavior, rather than broken by agent lanes. The handoff explains preserving the full-suite assertion but establishes no dependency on this task. Move this test repair into a separate change.",
-        "file": "tests/test_close_runs_only_related_tests.py",
-        "line": 54,
+        "body": "The required latest-commit proof list is missing. Historical commit messages give broad coverage summaries, but no current list maps every covered Done-when detail to its code and named proof. Supply the complete list, including agent admission, shared entry lifecycle, machine view, cancellation, diagnostics, guidance and new/existing client behavior.",
+        "file": "tests/test_lanes_agents.py",
+        "line": 103,
         "priority": "P1",
-        "title": "Standard: Touch only what the task needs"
+        "title": "Not done: proof list"
       },
       {
-        "body": "The retained PR checker still launches Autoreview without process-group options, as verified at tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533. This stop path nevertheless requests group termination for that child. src/forge/codex.py:624\u2013631 signals and checks a group named by the child's pid, which does not exist for these launches; the child remains alive and stop refuses without freeing its place. Older Claude workers and readers have the same mismatch. Retaining the old signatures remains valid, but cancellation also needs to handle those ungrouped launches safely. The existing-queue test starts a newly grouped worker before converting its record, so it does not cover this case.",
+        "body": "The supported default-branch PR checker still launches Autoreview without process-group options (tests/fixtures/pr-check-before-branch-diff/review.py:531\u2013533). This path nevertheless requests group termination for that child. codex._stop signals a group named by the child's pid (src/forge/codex.py:624\u2013630), which does not exist for that launch; the child remains alive and stop refuses without freeing its place. Older ungrouped Claude workers and readers have the same problem. The existing-queue test converts a newly grouped worker's record, so it does not cover cancellation of an actual older launch.",
         "file": "src/forge/machine.py",
         "line": 233,
         "priority": "P2",
         "title": "Handle existing agents without a dedicated process group"
       },
       {
-        "body": "Review admission snapshots chosen here, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:570\u2013576. The running review's board entry therefore continues reporting null or the unavailable model. Split design workers likewise replace chosen when falling back to Codex at src/forge/worker.py:167\u2013191 without refreshing their lane entry. Update the active entry's model and effort whenever either caller changes its selection.",
+        "body": "Admission snapshots chosen here, but Autoreview defaults and unavailable-model fallback update only selected at src/forge/review.py:569\u2013575. The running review's board entry therefore continues reporting null or the unavailable model. Split design workers similarly replace chosen when falling back to Codex at src/forge/worker.py:165\u2013189 without updating their lane entry. Refresh the entry's model and effort when either caller changes its selection.",
         "file": "src/forge/review.py",
-        "line": 478,
+        "line": 477,
         "priority": "P2",
         "title": "Refresh lane metadata when the selected model changes"
       },
       {
-        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:222\u2013223 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. The board consequently cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so it remains deferred advice rather than an AGENTS blocker.",
+        "body": "Actual test commands still bypass the shared entries: src/forge/fasttest.py:271 launches directly, while close uses the separate ticket queue at src/forge/review.py:279\u2013288. Consequently, the board cannot expose their output or progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level checks to TESTS, so this remains deferred advice for that task.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
+    "id": "de035578-ae02-485c-b662-4512ced6ecc2",
     "status": "blocked"
   },
   "round": 18,
@@ -83,6 +84,10 @@
     {
       "at": "2026-10-06T06:40:38+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-07T03:30:31+00:00",
+      "step": "review"
     }
   ],
   "stop": {
@@ -92,6 +97,5 @@
     "reason": "Owner accepted the finding; the worker had already reverted the unrelated lockfile test change at 12:11, so the part now leaves that test alone. Close again for a fresh review.",
     "why": "Simplify src/forge/machine.py before FORGE-LANES-1/AGENTS carries on"
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest e0a69426160bd070bde91685de67ba977903690b` exited with status 1 on the machine running forge close.\n..........................                                               [100%]\n=================================== FAILURES ===================================\n___________________________ test_5_forge_stays_small ___________________________\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-FORGE-LANES-1-AGENTS/.venv/bin/python\n\nrepo = <conftest.Repo object at 0x10a5d8290>\n\n    def test_5_forge_stays_small(repo):\n        ceiling = tomllib.loads((ROOT / \"pyproject.toml\").read_text(encoding=\"utf-8\"))[\"tool\"][\"forge\"][\n            \"line_ceiling\"]\n        files = (ROOT / \"src\" / \"forge\").rglob(\"*.py\")\n        lines = {p.relative_to(ROOT).as_posix(): p.read_bytes().count(b\"\\n\") for p in files}\n        too_long = {path: n for path, n in lines.items() if n > 1200}\n        assert not too_long, f\"modules over 1,200 lines: {too_long}\"\n>       assert sum(lines.values()) <= ceiling, (\n            f\"src/forge/ has {sum(lines.values())} lines, over the {ceiling} ceiling in pyproject.toml\")\nE       AssertionError: src/forge/ has 11175 lines, over the 11000 ceiling in pyproject.toml\nE       assert 11175 <= 11000\nE        +  where 11175 = sum(dict_values([465, 166, 501, 870, 337, 280, 688, 193, 542, 790, 109, 47, 274, 92, 515, 206, 100, 4, 635, 225, 285, 167, 14, 167, 617, 271, 261, 97, 334, 614, 671, 407, 164, 67]))\nE        +    where dict_values([465, 166, 501, 870, 337, 280, 688, 193, 542, 790, 109, 47, 274, 92, 515, 206, 100, 4, 635, 225, 285, 167, 14, 167, 617, 271, 261, 97, 334, 614, 671, 407, 164, 67]) = <built-in method values of dict object at 0x10a3d5240>()\nE        +      where <built-in method values of dict object at 0x10a3d5240> = {'src/forge/sync.py': 465, 'src/forge/githooks.py': 166, 'src/forge/worker.py': 501, 'src/forge/story.py': 870, ...}.values\n\ntests/test_rules.py:67: AssertionError\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_fix_codex_test_home.py:42: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_codex_smoke.py:126: calls a real Codex model: runs only with FORGE_LIVE_CODEX=1 and the Codex SDK 0.159.2 installed in /Users/ravikiranvemula/.local/share/forge/codex-sdk/openai-codex-0.159.2 (forge doctor --fix installs it)\nSKIPPED [1] tests/test_fix_the_prototype_deploy_test_leaves_its_doc.py:21: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\nSKIPPED [1] tests/test_fix_windows_process_identity.py:17: Windows process handles are required\nSKIPPED [1] tests/test_proto_deploy.py:59: Needs FORGE_CONTAINERS=1 and Docker's Linux containers\n1 failed, 1316 passed, 5 skipped in 1107.40s (0:18:27)",
   "worker": "codex"
 }
