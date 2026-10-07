@@ -25,6 +25,10 @@ def real_claude_sync_installs_from_local_release_tag(repo, tmp_path, monkeypatch
     if not REAL_CLAUDE:
         pytest.skip("Real Claude Code is not installed; the plugin CI job installs its pinned version.")
     _on_a_branch_with_forge_toml(repo)
+    # Adapter generation is a separate pinned concern. Prepare it before the
+    # session so sync's creation of project settings cannot restart the user's
+    # settings watcher during its real plugin installation.
+    assert repo.forge("sync").returncode == 0
     _install(repo.bin, "claude", f'''#!{sys.executable}
 import os, sys
 os.execv({json.dumps(REAL_CLAUDE)}, [{json.dumps(REAL_CLAUDE)}, *sys.argv[1:]])
