@@ -672,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tForge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 26,
+      "text": "Forge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
@@ -1185,6 +1196,17 @@
       "text": "Not done: proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tThe review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 330,
+      "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
       "status": "open",
       "closed_by": null
     },

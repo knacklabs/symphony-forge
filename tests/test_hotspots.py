@@ -198,8 +198,8 @@ def test_6_new_and_previously_adopted_clients_get_hotspot_guidance(repo, gh, pre
     else:
         client, synced = _fresh_client(repo, gh, tmp_path)
     assert synced.returncode == 0, synced.stderr
-    template = (Path(__file__).parents[1] / "src/forge/templates/skill.md").read_text()
-    for text in [template, *[(client / host / "skills/forge/SKILL.md").read_text()
+    template = (Path(__file__).parents[1] / "src/forge/templates/skill.md").read_text(encoding="utf-8")
+    for text in [template, *[(client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
                             for host in (".claude", ".codex")]]:
         assert text.index("## Closing") < text.index("## Hotspots") < text.index("## Check-back")
         flat = " ".join(text.split())

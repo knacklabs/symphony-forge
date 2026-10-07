@@ -69,7 +69,7 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
     # Both branches refresh stale output. Their templates change far apart and merge cleanly;
     # the generated copies also replace the same stale line and therefore conflict.
     skill = ".codex/skills/forge/SKILL.md"
-    original = (repo.path / skill).read_text()
+    original = (repo.path / skill).read_text(encoding="utf-8")
     guide = (repo.path / "AGENTS.md").read_text()
     env.commit(repo.path, "AGENTS.md", guide.replace("Working here with Forge", "Old guide", 1))
     env.commit(repo.path, skill, original.replace("# Forge", "# Old Forge", 1))
@@ -81,7 +81,7 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
         template = "src/forge/templates/skill.md"
         if kind == "source CRLF":
             assert b"\r\n" in (where / template).read_bytes()
-        text = (where / template).read_text()
+        text = (where / template).read_text(encoding="utf-8")
         # write_text translates LF to CRLF on Windows. Keep these distant source edits LF;
         # close must resolve the generated copies, and must never discard a template conflict.
         for folder, content in ((where, text + "\nWorker guidance.\n"),
@@ -116,9 +116,9 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
     assert "Working here with Forge" in (where / "AGENTS.md").read_text()
     merge = repo.git("rev-list", "--merges", "-1", "HEAD", cwd=where)
     assert len(repo.git("rev-list", "--parents", "-1", merge, cwd=where).split()) == 3
-    assert (where / skill).read_text() != original.replace("# Forge", "# Default Forge", 1)
+    assert (where / skill).read_text(encoding="utf-8") != original.replace("# Forge", "# Default Forge", 1)
     if kind.startswith("source"):
-        output = (where / skill).read_text()
+        output = (where / skill).read_text(encoding="utf-8")
         assert "Worker guidance." in output and "Default guidance" in output
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stderr
