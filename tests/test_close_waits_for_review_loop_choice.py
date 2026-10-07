@@ -190,6 +190,6 @@ def test_4_clients_receive_the_human_choice_instructions(repo, gh, tmp_path, pre
         client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stderr
     for host in (".codex", ".claude"):
-        text = (client / host / "skills/forge/SKILL.md").read_text()
+        text = (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
         assert GUIDANCE in " ".join(text.split())
         assert '--resolve <narrow|split|accept> --reason "<human\'s choice>"' in text
