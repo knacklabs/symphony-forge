@@ -265,10 +265,15 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         # started. A reused child pid is dropped, never reassigned to its new owner.
         retained = []
         for run in runs:
-            if _running(run["process"]):
+            recorded = run["process"]
+            current = codex.identity(recorded["pid"])
+            # One OS observation decides both liveness and parent fallback. A second
+            # lookup could see a reused pid after the first already reported it gone.
+            if current is not None and ("started" not in recorded or "command" not in current
+                                        or current["started"] == recorded["started"]):
                 retained.append(run)
             elif (run["kind"] != "test"
-                    and codex.identity(run["process"]["pid"]) is None
+                    and current is None
                     and _running(run.get("forge"))):
                 run["process"] = run["forge"]
                 retained.append(run)
