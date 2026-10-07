@@ -969,6 +969,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
+      "kind": "bug",
+      "path": "tests/test_close_sync_conflicts.py",
+      "line": 102,
+      "text": "The new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "kind": "bug",
       "path": "tests/test_close_test_runs_wait_in_line.py",

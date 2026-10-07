@@ -8,24 +8,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "59769a06159b1ba22bef4aa5ae65af67f79e23536eabbf01a4a5bf87df6f4475",
-    "changed": "4e553bf7f2cb6bc3edc3ee4871a78082c09c79c5cffb86569288edf326e45849",
-    "commit": "e617d6d27d5daa860d202e39c0a7d8f10f1fcf39",
+    "branch_diff": "3ee43f643059030a25fb2d6db5c71f1261c3d2e206f543295bdd4a2b77e7e68c",
+    "changed": "4351e8b58c854fb6b72067db4f4b98ea8c5f258598d3cdbe2978aef33f4ae119",
+    "commit": "9712460f56c323ed8fe8d441c08ff52e7d13782d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "With current Forge on PATH and a client still pinning v1.2.2, `forge sync` never reaches this installation call: src/forge/cli.py:134 checks the pin before loading the handler, and src/forge/repo.py:534\u2013537 exits through the pinned release. That release's sync implementation (tests/fixtures/forge-v1.2.2/src/forge/sync.py:376) has no plugin installation step. Consequently, sync cannot install or update the machine-wide mod from that repo. The previously-adopted test changes its pin first (tests/test_mod_sync.py:163), and the old-session integration invokes sync in the current repo (tests/test_mod_install.py:95), so neither detects this gap. Perform machine-wide plugin maintenance before version delegation while retaining pinned adapter generation, and cover sync with an unchanged older repo pin.",
-        "file": "src/forge/sync.py",
-        "line": 467,
-        "priority": "P1",
-        "title": "Not done: forge sync turns the mod on whatever version a repo pins"
-      }
-    ],
-    "id": "294d5d23-8614-4156-81d0-fc8c10a59d63",
-    "status": "blocked"
+    "findings": [],
+    "id": "e0a9bf74-29ca-4e8c-8d07-94344800b67d",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T13:07:39+00:00",
@@ -37,6 +29,10 @@
     },
     {
       "at": "2026-10-07T18:12:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T20:09:15+00:00",
       "step": "review"
     }
   ],
