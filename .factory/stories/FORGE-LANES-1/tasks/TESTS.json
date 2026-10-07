@@ -6,24 +6,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6614b9d6d0e2addcb5a1a8a281fda7b01bb3b626cdc2d606c18da49148bab96a",
+    "branch_diff": "263d8e0e940312806eb335a8ec57f930a5ab4929a22f632d4f553e3b6cfa484a",
     "changed": "73d1970bfec06a3984f4f142b172b1e1fe9610f9e84c936b77537e86a6c9b405",
-    "commit": "6784df16dbb1088065403e22af69bbe7d0b5e1fd",
+    "commit": "76a0a5430693328f67bdf31982c8b6beeb3cc32d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The supplied handoff says the proof list is missing. The branch-head commit that changes this checksum also has no proof list in its body. Earlier commits contain detailed lists, but the contract requires the worker's latest commit to supply the complete list that Forge copies into the pull request. Carry forward the verified list and include the final checksum change's validation.",
-        "file": "tests/test_trim_skills.py",
-        "line": 27,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "aa0a7e7e-1940-4767-afa5-3e7e5bacc164",
-    "status": "blocked"
+    "findings": [],
+    "id": "98802410-1281-4b73-bbb2-a889978898b0",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T14:48:08+00:00",
@@ -47,6 +39,10 @@
     },
     {
       "at": "2026-10-07T16:31:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T16:39:39+00:00",
       "step": "review"
     }
   ],
