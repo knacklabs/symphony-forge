@@ -156,6 +156,12 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             return json.loads(board.stdout)["lanes"]["agents"]["entries"]
         rows = entries()
         admitted = next(e for e in rows if e["item"] == first)
+        if lane_adapter == "codex" and os.name != "nt":
+            # A process can exit between two queue liveness reads. Replay its last
+            # real OS snapshot once at the gap, then let ps report that it is gone.
+            real_ps = shutil.which("ps")
+            ps_args = ["-ww", "-o", "lstart=,command=", "-p", str(admitted["process"]["pid"])]
+            snapshot = subprocess.run([real_ps, *ps_args], capture_output=True, text=True, check=True).stdout
         waiting = lambda rows: {e["item"]: (e["id"], e["started_at"]) for e in rows
                                 if e["item"] in {q[0] for q in queued}}
         waiters = waiting(rows)
@@ -172,6 +178,19 @@ sys.exit(subprocess.call([{real_git!r}, *sys.argv[1:]]))
 ''')
         (repo.bin / f"go-{first_name}").touch()
         _until(lambda: (repo.bin / "between-launches").exists(), "between model launches")
+        if lane_adapter == "codex" and os.name != "nt":
+            _install(repo.bin, "ps", f'''#!{sys.executable}
+import pathlib, subprocess, sys
+here = pathlib.Path(__file__).resolve().parent
+if sys.argv[1:] == {ps_args!r} and not (here / "last-process-snapshot").exists():
+    (here / "last-process-snapshot").touch()
+    sys.stdout.write({snapshot!r})
+else:
+    sys.exit(subprocess.call([{real_ps!r}, *sys.argv[1:]]))
+''')
+            sampled = entries()
+            assert next(e for e in sampled if e["item"] == first)["id"] == admitted["id"]
+            assert waiting(sampled) == waiters
         rows = entries()
         between = next(e for e in rows if e["item"] == first)
         assert between["id"] == admitted["id"] and between["joined_at"] == admitted["joined_at"]

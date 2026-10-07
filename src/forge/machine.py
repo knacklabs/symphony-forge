@@ -263,12 +263,16 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         # A work round can launch a commit nudge, and a review can retry. Between those model
         # calls its live Forge process holds the admission. Tests hold only their command once
         # started. A reused child pid is dropped, never reassigned to its new owner.
+        retained = []
         for run in runs:
-            if (run["kind"] != "test" and not _running(run["process"])
+            if _running(run["process"]):
+                retained.append(run)
+            elif (run["kind"] != "test"
                     and codex.identity(run["process"]["pid"]) is None
                     and _running(run.get("forge"))):
                 run["process"] = run["forge"]
-        runs[:] = [run for run in runs if _running(run["process"])]
+                retained.append(run)
+        runs[:] = retained
         yield runs
         path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
         os.replace(path.with_suffix(".new"), path)
