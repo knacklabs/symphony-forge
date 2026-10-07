@@ -75,12 +75,14 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
         processes.append(test)
         _until(lambda: test.poll() is not None or (where / "test-started").exists(), "upgraded test")
         assert test.poll() is None, output.read_text("utf-8")
-        view = repo.forge("board", "--json")
-        assert view.returncode == 0, view.stderr
-        lanes = json.loads(view.stdout)["lanes"]
-        assert any(row["item"] == item for row in lanes["agents"]["entries"])
-        assert len(lanes["tests"]["entries"]) == 1
-        assert "budget=4/4" in Path(lanes["tests"]["entries"][0]["output_path"]).read_text("utf-8")
+        for command in ("board", "lanes"):
+            view = repo.forge(command, "--json")
+            assert view.returncode == 0, view.stderr
+            payload = json.loads(view.stdout)
+            lanes = payload["lanes"] if command == "board" else payload
+            assert any(row["item"] == item for row in lanes["agents"]["entries"])
+            assert len(lanes["tests"]["entries"]) == 1
+            assert "budget=4/4" in Path(lanes["tests"]["entries"][0]["output_path"]).read_text("utf-8")
         (where / "test-go").touch()
         assert test.wait(timeout=30) == 0, output.read_text("utf-8")
         (repo.bin / f"go-{name}").touch()

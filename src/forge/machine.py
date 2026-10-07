@@ -6,17 +6,22 @@ import sys
 import time
 import uuid
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 from subprocess import Popen
 from typing import Any
 
-from forge import repo
+from forge import __version__, repo
 
 # The Forge agent runs (work rounds, plan reads, close reviews) one machine runs at once, whatever
 # the repo, so several repos' agents can't run it out of memory.
 _agent_entry: dict[str, Any] | None = None
 
-COMMANDS = [{"words": "stop", "run": "stop", "changes_state": False,
+COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
+    "help": "Show this release's machine-wide runs", "position": 60,
+    "args": [(("--json",), {"action": "store_true"})],
+    "listing": "| `forge lanes --json` | Runs on this machine from repos on this Forge release |"},
+    {"words": "stop", "run": "stop", "changes_state": False,
     "help": "Stop a running or waiting run (only a person)", "position": 61,
     "args": [(("item",), {"nargs": "?"}), (("--repo",), {"metavar": "ROOT"}),
              (("--id",), {"dest": "entry_id", "metavar": "ID"})],
@@ -69,7 +74,8 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
-    entry = {"id": str(uuid.uuid4()), "kind": kind, "repo_root": root.as_posix(),
+    entry = {"id": str(uuid.uuid4()), "version": __version__, "kind": kind, "repo_root": root.as_posix(),
+             "checkout_root": repo.resolve().as_posix(),
              "repo_name": root.name, "item": item, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None,
@@ -147,18 +153,20 @@ def agent_slot(top: Path, kind: str, item: str | None = None, model: str | None 
         _agent_entry = None
 
 
-def agent_started(pid: int) -> None:
+def agent_started(pid: int, output_path: Path | None = None) -> None:
     """Register a model launch inside the current work/read/review admission."""
     if _agent_entry is not None:
+        if output_path is not None:
+            _agent_entry["output_path"] = output_path.as_posix()
         started(_agent_entry, pid)
 
 
 @contextlib.contextmanager
-def agent_process(process: Popen[Any]) -> Iterator[None]:
+def agent_process(process: Popen[Any], output_path: Path | None = None) -> Iterator[None]:
     """A model's separate process group must still end when its caller is interrupted."""
     from forge import codex
     try:
-        agent_started(process.pid)
+        agent_started(process.pid, output_path)
         yield
     except BaseException:
         if process.poll() is None:
@@ -177,6 +185,34 @@ def view() -> dict[str, Any]:
     return {name: {"size": size, "entries": [run for run in runs
             if (run["kind"] == "test") == (name == "tests")]}
             for name, size in (("agents", half_cores()), ("tests", 1))}
+
+
+def lanes(args: Any) -> int:
+    """Show this release, while older runs still count towards queue admission."""
+    result = view()
+    now = datetime.fromisoformat(repo.now())
+    for lane in result.values():
+        rows = []
+        for index, run in enumerate(lane["entries"]):
+            if run.get("version") != __version__:
+                continue
+            run["place"] = 0 if run["started_at"] else max(0, index - lane["size"] + 1)
+            at = run["started_at"] or run["joined_at"]
+            run["elapsed"] = max(0, (now - datetime.fromisoformat(at)).total_seconds())
+            rows.append(run)
+        lane["entries"] = rows
+    result.update(version=__version__, machine={**load(), "cores":
+                  getattr(os, "process_cpu_count", os.cpu_count)()})
+    if args.json:
+        print(json.dumps(result))
+    else:
+        for name in ("agents", "tests"):
+            for run in result[name]["entries"]:
+                state = f"waiting #{run['place']}" if run["place"] else "running"
+                print(f"{run['repo_name']}: {run['item']} ({run['kind']}, {state})")
+        if not any(result[name]["entries"] for name in ("agents", "tests")):
+            print("Nothing running")
+    return 0
 
 
 def load() -> dict[str, Any]:

@@ -34,7 +34,8 @@ export function register(on: On) {
   })
   on('command.run', { command: 'forge' }, async $ => {
     await $.ui.open({ id: 'forge', title: 'Forge', focus: true })
-    return { text: text(data, await $.clock.now()) }
+    const now = await $.clock.now()
+    return { text: [text(data, now), data.machineText?.(now)].filter(Boolean).join('\n') }
   })
   registerPane(on, data)
   registerApproval(on, data)

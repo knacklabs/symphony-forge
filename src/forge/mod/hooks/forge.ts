@@ -15,6 +15,7 @@ export type Data = {
   board: Board | null; next: Next | null; lanes: Record<string, unknown> | null
   error: string | null; refreshedAt: number | null
   onUpdate(fn: () => void): () => void
+  machineText?: (now: number) => string
 }
 
 export const TOO_OLD = 'Upgrade Forge in this repo to use the board.'
