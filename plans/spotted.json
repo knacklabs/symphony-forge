@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 517,
+      "text": "Not done: Git command counts still grow with old finished items",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: GitHub-unreachable board rows with unknown checks\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -672,6 +683,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: Git command counts still grow with old finished stories linked to specs\tfast-views",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 298,
+      "text": "Not done: Git command counts still grow with old finished stories linked to specs",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -1123,6 +1145,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: machine load and memory come from the OS\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 30,
+      "text": "Not done: machine load and memory come from the OS",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -1209,6 +1242,28 @@
       "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "done",
       "closed_by": "fast-views"
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: proof list\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 195,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: tests/test_machine_views.py stays within its time limit on Windows CI\tfast-views",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 107,
+      "text": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
@@ -1372,6 +1427,28 @@
       "text": "Classify stale completed checks as failed",
       "from": "review",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDisable signature output when reading the landed tree ID",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 566,
+      "text": "Disable signature output when reading the landed tree ID",
+      "from": "review",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDo not expire restarted tasks and fixes using reverted merge dates",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 532,
+      "text": "Do not expire restarted tasks and fixes using reverted merge dates",
+      "from": "review",
+      "item": "fast-views",
       "status": "open",
       "closed_by": null
     },
@@ -2109,61 +2186,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 517,
-      "text": "Not done: Git command counts still grow with old finished items",
-      "from": "blocking",
-      "item": "fast-views",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: Git command counts still grow with old finished stories linked to specs\tfast-views",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 298,
-      "text": "Not done: Git command counts still grow with old finished stories linked to specs",
-      "from": "blocking",
-      "item": "fast-views",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: tests/test_machine_views.py stays within its time limit on Windows CI\tfast-views",
-      "kind": "bug",
-      "path": "tests/test_machine_views_recent_finished_items.py",
-      "line": 107,
-      "text": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI",
-      "from": "blocking",
-      "item": "fast-views",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tDisable signature output when reading the landed tree ID",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 566,
-      "text": "Disable signature output when reading the landed tree ID",
-      "from": "review",
-      "item": "fast-views",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tDo not expire restarted tasks and fixes using reverted merge dates",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 532,
-      "text": "Do not expire restarted tasks and fixes using reverted merge dates",
-      "from": "review",
-      "item": "fast-views",
       "status": "open",
       "closed_by": null
     }
