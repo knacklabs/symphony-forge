@@ -672,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/register.ts\tForge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/register.ts",
+      "line": 26,
+      "text": "Forge-started sessions still refresh the board and register the pane because the worker guard suppresses event turns only.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/summary.ts\tNot done: /forge returns the summary of detail 2\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/summary.ts",
