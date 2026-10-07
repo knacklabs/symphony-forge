@@ -1,5 +1,5 @@
-"""A worker asked to commit is told to run the change's related tests: forge.toml's fast_test with
-{base} as the merge base with the default branch, not the whole suite CI runs."""
+"""Workers formerly received the raw test command; every round now uses forge test
+so the shared machine lane also covers their related tests."""
 from __future__ import annotations
 
 import shutil
@@ -25,13 +25,13 @@ def _related_test_skills(client):
         skill = (client / host / "skills/test-audit/SKILL.md").read_text("utf-8")
         validation = " ".join(skill.split("## Validation\n")[1].split("## Landing")[0].split())
         assert "run the change's related tests" in validation
-        assert "`fast_test` with `{base}` as the merge base with the default branch" in validation
-        assert "`test` command when it has no `fast_test`" in validation
+        assert "through `forge test`" in validation
+        assert "`fast_test`, or `test` when none is set" in validation
         assert "Run forge.toml's `test` command before you stop." not in validation
         _commit_test_fixes(validation)
 
 
-def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch):
+def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypatch):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
@@ -41,7 +41,6 @@ def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch)
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Pin Forge")
     repo.git("push", "-q", "origin", "main")
-    base = repo.git("rev-parse", "HEAD")
     assert repo.forge("fix", "start", "Fix the login typo", "--done",
                       "The login page says Log in").returncode == 0
     monkeypatch.setenv("STUB_CLAUDE_LEAVE", "login.txt")
@@ -51,7 +50,7 @@ def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch)
 
     assert built.returncode == 0, built.stdout + built.stderr
     nudged = calls(log)[1]
-    assert f"Run the change's related tests (`pytest -q --since {base}`)" in nudged["brief"]
+    assert "Run the change's related tests through `forge test`" in nudged["brief"]
     _commit_test_fixes(nudged["brief"])
 
     monkeypatch.delenv("STUB_CLAUDE_LEAVE")
@@ -60,7 +59,7 @@ def test_1_the_commit_nudge_names_the_fast_test_with_its_base(repo, monkeypatch)
     assert again.returncode == 0, again.stdout + again.stderr
     continued = calls(log)[-1]
     assert "--resume" in continued["args"]
-    assert f"Run the change's related tests (`pytest -q --since {base}`)" in continued["brief"]
+    assert "Run the change's related tests through `forge test`" in continued["brief"]
     _commit_test_fixes(continued["brief"])
 
 
@@ -103,9 +102,9 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = " ".join(calls(log)[0]["brief"].split())
-    assert "run the change's related tests: forge.toml's `fast_test`" in brief
-    assert "with `{base}` as the merge base with the default branch" in brief
-    assert "`test` command when it has no `fast_test`" in brief
+    assert "run the change's related tests through `forge test`" in brief
+    assert "`{base}` as the merge base with `origin/<default branch>`" in brief
+    assert "`fast_test`, or `test` when none is set" in brief
     _commit_test_fixes(brief.split("Use the test-audit skill", 1)[1])
 
 
@@ -114,7 +113,7 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     ('test = ""\n', 'fast_test = "pytest -q --since {base}"\n'),
     ("", ""),
 ], ids=["test-absent", "test-empty", "neither-command"])
-def test_3_the_commit_nudge_resolves_fast_test_without_a_full_test(repo, monkeypatch, full, fast):
+def test_3_the_commit_nudge_uses_the_lane_even_without_a_test_command(repo, monkeypatch, full, fast):
     log = install_claude(repo)
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n'
@@ -123,7 +122,6 @@ def test_3_the_commit_nudge_resolves_fast_test_without_a_full_test(repo, monkeyp
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure worker tests")
     repo.git("push", "-q", "origin", "main")
-    base = repo.git("rev-parse", "HEAD")
     started = repo.forge("fix", "start", "Fix the login typo", "--done", "The login page says Log in")
     assert started.returncode == 0, started.stdout + started.stderr
     monkeypatch.setenv("STUB_CLAUDE_LEAVE", "login.txt")
@@ -131,8 +129,4 @@ def test_3_the_commit_nudge_resolves_fast_test_without_a_full_test(repo, monkeyp
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = calls(log)[1]["brief"]
-    if fast:
-        assert f"Run the change's related tests (`pytest -q --since {base}`)" in brief
-    else:
-        assert "Run the change's related tests in the foreground" in brief
-        assert "(``)" not in brief
+    assert "Run the change's related tests through `forge test`" in brief

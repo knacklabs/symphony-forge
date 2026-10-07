@@ -8,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 from test_close import env  # noqa: F401
 from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 
@@ -73,15 +75,18 @@ class Close:
     def end(self) -> None:
         out, err = self.process.communicate(timeout=120)
         self.said += out
-        assert self.process.returncode == 0, (self.said, err)
+        if self.process.returncode != 0:
+            pytest.fail(f"forge close exited {self.process.returncode}\n{self.said}\n{err}",
+                        pytrace=False)
 
     def places(self) -> list[str]:
-        return [line for line in self.said.splitlines() if line.startswith("Waiting for ")]
+        return [line for line in self.said.splitlines() if "waits its turn" in line]
 
 
-ONE = "Waiting for 1 other close's test run on this machine."
-TWO = "Waiting for 2 other closes' test runs on this machine."
-THREE = "Waiting for 3 other closes' test runs on this machine."
+# Workers now share close's queue; the message counts places in the shared lane.
+ONE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 1 in line."
+TWO = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 2 in line."
+THREE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 3 in line."
 
 
 def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env):

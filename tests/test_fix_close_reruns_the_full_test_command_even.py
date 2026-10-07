@@ -88,7 +88,7 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
         time.sleep(0.05)
     two = _close(env, second)
     said = ""
-    while "Waiting for 1 other close's test run" not in said:  # the second close says it waits before its run starts
+    while "waits its turn: it is number 1 in line." not in said:  # the second close says it waits before its run starts
         line = two.stdout.readline()
         assert line, two.communicate()
         said += line
@@ -97,7 +97,7 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
     out_one, out_two = one.communicate(timeout=60), two.communicate(timeout=60)
     assert one.returncode == 0 and two.returncode == 0, (out_one, out_two)
     assert _runs(log) == ["start fix-tidy-readme", "end", "start fix-other-fix", "end"]
-    assert "Waiting for 1 other close's test run" not in out_one[0]
+    assert "waits its turn" not in out_one[0]
 
 
 def test_4_a_repeat_close_that_keeps_its_green_review_says_the_tests_already_passed(env):

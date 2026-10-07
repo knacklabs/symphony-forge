@@ -14,7 +14,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, repo, review, story, task
+from forge import codex, doctor, machine, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -28,7 +28,7 @@ NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit,
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
-                "the change's related tests{test} in the foreground and wait for them to finish; never "
+                "the change's related tests through `forge test` in the foreground and wait for them to finish; never "
                 "leave them running in the background. Then commit any fixes on this branch, and end "
                 "your turn only once nothing is left uncommitted.\n")
 
@@ -142,8 +142,7 @@ def work(args: argparse.Namespace) -> None:
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
         start, clock = repo.now(), time.monotonic()
-        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
-        nudge = COMMIT_NUDGE.format(test=f" (`{local}`)" if local else "")
+        nudge = COMMIT_NUDGE
         outcome = "failed"
         final = None
         nudged = ""
@@ -389,9 +388,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
-        local = review.close_test(top, f"origin/{repo.default_branch(top)}")
-        command = f" (`{local}`)" if local else ""
-        brief += (f"\nCommit your work on this branch first. Run the change's related tests{command}, "
+        brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
                   "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
         if note is not None:

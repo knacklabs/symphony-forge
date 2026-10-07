@@ -1145,6 +1145,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_tests.py\tGive the new lane tests unique rule ownership\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 104,
+      "text": "Give the new lane tests unique rule ownership",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_tests.py\tNot done: forge stop ends a worker and its test run\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 222,
+      "text": "Not done: forge stop ends a worker and its test run",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_lanes_view.py\tNot done: a process whose pid was reused is not terminated\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_view.py",
@@ -1418,6 +1440,17 @@
       "item": "simplify-ci-workflow",
       "status": "done",
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
+    },
+    {
+      "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_trim_skills.py",
+      "line": 27,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
@@ -2142,6 +2175,17 @@
       "text": "The cleanup test failed in the full parallel run and passed alone.",
       "from": "worker",
       "item": "FORGE-MOD-1/VIEWS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_lanes_tests.py\tKill the Forge interpreter rather than its Windows launcher",
+      "kind": "edge",
+      "path": "tests/test_lanes_tests.py",
+      "line": 193,
+      "text": "Kill the Forge interpreter rather than its Windows launcher",
+      "from": "review",
+      "item": "FORGE-LANES-1/TESTS",
       "status": "open",
       "closed_by": null
     },
