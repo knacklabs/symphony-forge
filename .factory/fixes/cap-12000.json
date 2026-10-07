@@ -1,0 +1,31 @@
+{
+  "base": "e0a69426160bd070bde91685de67ba977903690b",
+  "branch": "fix/cap-12000",
+  "done_when": "A new decision record raises Forge's Python line ceiling to 12,000 (owner, 2026-10-07) and names the follow-up: simplify fixes for the files Forge flags as keeps-breaking, each cutting lines, aiming back under 11,000; the ceiling check and its test use 12,000; Forge's own repo only, so new and existing client repos see no change",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fabf23495adcfba9d5fa5f9fb0a69fd0adc2ba1fbaaa26167276767c8cb227ee",
+    "changed": "87a30e17301f10e3455fcdcc58ba1a9801fcb8dc7239f1a667e8f9041f23a3b0",
+    "commit": "0db6c9ba8a1ac4f7522c0c5f189978a181cf3e9a",
+    "dismissals": [],
+    "findings": [],
+    "id": "679633e1-4471-472b-a3c5-7ae03223a098",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-07T02:00:13+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-07T02:38:56+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner chose to raise Forge's Python line ceiling from 11,000 to 12,000 so the live-status, lanes and lookup work can land, with simplify fixes to bring it back under 11,000 after the release",
+  "worker": "codex"
+}

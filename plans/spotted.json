@@ -1847,6 +1847,28 @@
       "item": "one-forge-close-looks-up-the-same-git-fa",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_close_reruns_the_full_test_command_even.py\tWindows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
+      "kind": "bug",
+      "path": "tests/test_fix_close_reruns_the_full_test_command_even.py",
+      "line": 98,
+      "text": "Windows concurrent close failed after a truncated Git error; full stderr is needed to diagnose it.",
+      "from": "worker",
+      "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tPreserve every changed path when module names collide",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 248,
+      "text": "Preserve every changed path when module names collide",
+      "from": "review",
+      "item": "picker-two-rules",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

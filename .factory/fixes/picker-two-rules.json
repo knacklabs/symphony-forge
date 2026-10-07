@@ -1,0 +1,43 @@
+{
+  "base": "79c54e6a83b06347ac3a8d935e8f9da310372bec",
+  "branch": "fix/picker-two-rules",
+  "done_when": "forge test --pytest selects only by two rules: changed test files, and tests that import or name the changed Python module (its dotted name or its file path); a change to a shared input (lockfiles, conftest.py, requirements, or pyproject.toml outside its safe list) runs the full command; every other selection rule and its code is removed; replaying the v1.2.6 release change selects fewer than 71 test files; one command test per rule; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2fd3f6c6cde661ede867e6fb1e1472bb7b1159f4abd630a1e5d6552bec1bfe08",
+    "changed": "70bbd021390316ec579cc5e44a067c3e47e7e7a4f3ac6d3253d6bc6c5640990e",
+    "commit": "8c61472446221e47863164ca2beca568b2a70297",
+    "dismissals": [],
+    "findings": [],
+    "id": "93079d9b-4575-4954-9910-34b8fb21fa6e",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-06T18:34:12+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-06T19:51:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-06T20:21:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T02:04:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T02:23:08+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The quick test picker has grown five selection rules and keeps breaking; the rule that selects any test naming a changed file picks most of the suite when a change touches forge.toml or README.md (182 of 257 test files for the v1.2.6 release)",
+  "worker": "codex"
+}

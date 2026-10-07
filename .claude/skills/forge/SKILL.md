@@ -618,11 +618,10 @@ When the pull request's `tests` check runs the full suite, recommend a fast clos
 fast checks, with `{base}` standing for the merge base with the default branch. Close runs it
 instead of `test`; the `tests` check keeps running the full `test`.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
-shipped picker too: changed
-test files, tests whose filenames contain a changed Python module name, and tests importing or
-mentioning its module path, such as `src/shop/prices.py` or `shop.prices`, including package-relative
-imports. It also selects tests naming any changed file's repository-relative path, including
-docs, shipped guides and workflows. It supports root packages and the `src/` layout, and pytest's
+shipped picker too. It selects only changed test files and tests importing or naming a changed
+Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
+including package-relative imports. Filenames and references to changed non-Python inputs
+do not select tests. It supports root packages and the `src/` layout, and pytest's
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
