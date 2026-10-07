@@ -14,10 +14,8 @@ from forge import machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
-             "help": "run a pytest repo's changed and module-related tests",
-             "listing": "| `forge test --pytest <base>` | Run related pytest tests with the repo's test command. |"}]
-
-REFUSALS = {"picker": ("Run forge test --pytest <base> to pick related pytest tests.", "")}
+             "help": "Run related tests in the machine test lane, or pick pytest tests with --pytest",
+             "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--pytest <base>` picks related pytest tests. |"}]
 
 
 def git_files(*args: str) -> list[str]:
@@ -118,10 +116,13 @@ def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
              ("tool", "hatch", "build", "targets", "sdist")}
     snapshots = []
     try:
-        for ref in (base, "HEAD"):
-            shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
-                                   capture_output=True, text=True)
-            text = shown.stdout if shown.returncode == 0 else ""
+        for ref in (base, None):
+            if ref is None:
+                text = path.read_text("utf-8") if path.is_file() else ""
+            else:
+                shown = subprocess.run(["git", "show", f"{ref}:{path.as_posix()}"],
+                                       capture_output=True, text=True)
+                text = shown.stdout if shown.returncode == 0 else ""
             tomllib.loads(text)
             section, statement, remaining = (), "", []
             for line in text.splitlines(keepends=True):
@@ -153,19 +154,20 @@ def manifest_test_inputs_unchanged(path: Path, base: str) -> bool:
             if statement:
                 return False
             snapshots.append(remaining)
-    except (ValueError, TypeError, AttributeError):
+    except (OSError, ValueError, TypeError, AttributeError):
         return False
     return snapshots[0] == snapshots[1]
 
 
 def own_version_only(path: Path, base: str) -> bool:
-    """Compare committed locks, ignoring only an identified root package's version."""
+    """Compare the base and current locks, ignoring only an identified root package's version."""
     snapshots = []
     try:
-        for ref in (base, "HEAD"):
+        for ref in (base, None):
             def read(name: str):
-                text = subprocess.run(["git", "show", f"{ref}:{path.with_name(name).as_posix()}"],
-                                      check=True, capture_output=True, text=True).stdout
+                text = (path.with_name(name).read_text("utf-8") if ref is None else
+                        subprocess.run(["git", "show", f"{ref}:{path.with_name(name).as_posix()}"],
+                                       check=True, capture_output=True, text=True).stdout)
                 return json.loads(text) if name.endswith(".json") or name == "Pipfile.lock" else tomllib.loads(text)
 
             lock = read(path.name)
@@ -202,15 +204,27 @@ def own_version_only(path: Path, base: str) -> bool:
                     return False
                 entry["version"] = None
             snapshots.append(lock)
-    except (subprocess.CalledProcessError, ValueError, KeyError, TypeError, AttributeError):
+    except (OSError, subprocess.CalledProcessError, ValueError, KeyError, TypeError, AttributeError):
         return False  # Missing or unrecognized inputs must retain the full-suite fallback.
     return snapshots[0] == snapshots[1]
 
 
 def test(args) -> int:
     if args.base is None:
-        repo.refuse(REFUSALS["picker"])
-    changed = git_files("diff", "--no-renames", "--name-only", args.base, "HEAD")
+        from forge import review
+        top = repo.root()
+        cfg = repo.config(top)
+        if not (cfg["fast_test"] or cfg["test"]):
+            print("forge.toml names no test command, so forge test ran none.")
+            return 0
+        base = f"origin/{repo.default_branch(top)}"
+        if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
+            raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
+        status, report = review.test_run(top, review.close_test(top, base), base, always=True)
+        print(report)
+        return status
+    changed = git_files("diff", "--no-renames", "--name-only", args.base)
+    changed += git_files("ls-files", "--others", "--exclude-standard")
     command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
@@ -220,6 +234,7 @@ def test(args) -> int:
     environment = dict(os.environ)
     workers = str(machine.half_cores())
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
+    environment["FORGE_TEST_CPUS"] = workers
     excluded = []
     shared = [name for name in changed
               if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}

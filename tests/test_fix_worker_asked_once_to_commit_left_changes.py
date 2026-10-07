@@ -25,7 +25,7 @@ def test_1_a_claude_worker_that_left_changes_uncommitted_is_asked_once_and_commi
     first, nudged = calls(log)
     assert _session(nudged, "--resume") == _session(first, "--session-id")
     assert NUDGE in " ".join(nudged["brief"].split())
-    assert "Run the change's related tests (`pytest -q`) in the foreground" in nudged["brief"]
+    assert "Run the change's related tests through `forge test` in the foreground" in nudged["brief"]
     assert repo.git("status", "--porcelain", "-uall", cwd=first["cwd"]) == ""
     assert repo.git("log", "-1", "--format=%s", "--name-only", cwd=first["cwd"]).split() == [
         "Worker", "round", "login.txt"]

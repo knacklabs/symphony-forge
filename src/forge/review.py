@@ -247,12 +247,11 @@ def close_test(top: Path, base: str) -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
     else its test. The pull request's tests check always runs test."""
     cfg = repo.config(top)
-    if not cfg["fast_test"]:
-        return cfg["test"]
-    return cfg["fast_test"].replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top))
+    command = cfg["fast_test"] or cfg["test"]
+    return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
 
 
-def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
+def test_run(top: Path, command: str, base: str, *, always: bool = False) -> tuple[int, str]:
     """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
     branch = repo.current_branch(top)
     item = (branch_item(branch, top) or (branch, {}))[0]
@@ -261,75 +260,95 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
     try:
         if not command:
             return 0, "forge.toml names no test command, so close ran none."
-        changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                           cwd=top).split("\0")
-        if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
-               for path in changed if path):
-            said = DOCS_ONLY.format(command=command)
-            print(said, flush=True)
-            return 0, said
+        if not always:
+            changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
+                               cwd=top).split("\0")
+            if all(path == "forge.toml" or path.startswith(DOCS) or path.endswith(".md")
+                   for path in changed if path):
+                said = DOCS_ONLY.format(command=command)
+                print(said, flush=True)
+                return 0, said
         from forge import codex  # codex imports review indirectly
 
-        passed = passed_record(top, command)
+        passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
         if passed and passed.exists():
             print(skipped, flush=True)
             return 0, skipped
-        # ponytail: one test run per machine, whatever the repo; a per-repo line if that proves slow.
-        with codex.in_line(machine._repos_file().parent / "test-runs", WAITING):
+        entry = machine.join("test", top, item, None, None)
+        try:
             if passed and passed.exists():  # the close this one waited for passed the same files
                 print(skipped, flush=True)
                 return 0, skipped
+            workers = str(machine.half_cores())
             env = {**os.environ, "FORGE_WORKER": "1",
+                   "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs".strip()}
             with repo.record_run(top, item, "test") as ran:
-                with subprocess.Popen(command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+                log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
+                entry.update(output_path=log.as_posix())
+                with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
+                                      command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                      encoding="utf-8", errors="replace") as process:
-                    output, total, completed, finished = [], None, 0, set()
-                    for line in process.stdout:
-                        output.append(line)
-                        found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
-                        if found:
-                            selected = re.search(r" / (\d+) selected", found[2] or "")
-                            total = int(selected[1] if selected else found[1] or found[3])
-                            completed = 0
-                            finished.clear()
-                        marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
-                        result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
-                        if not result and re.search(r"\[\s*\d+%\]", line):
-                            result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
-                        tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
-                        if tap and tap[2]:
-                            total = int(tap[2])
-                        if result:
-                            finished.add(result[1])  # teardown errors repeat the same test's id
-                            completed = len(finished)
-                        elif tap and tap[1]:
-                            completed = int(tap[1])
-                        elif marks:
-                            # A quiet error can be setup or a second report for teardown.
-                            # Keep done unknown until a percentage gives an exact count.
-                            completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
-                            if completed is None and total is not None:
-                                percent = int(re.search(r"(\d+)%", line)[1])
-                                lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
-                                completed = lower if lower == upper else None
-                        if found or marks or result or tap:
-                            repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
-                    done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
+                                      encoding="utf-8", errors="replace", **codex.GROUP) as process:
+                    try:
+                        machine.started(entry, process.pid)
+                        output, total, completed, finished = [], None, 0, set()
+                        for line in process.stdout:
+                            sink.write(line)
+                            sink.flush()
+                            output.append(line)
+                            found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
+                            if found:
+                                selected = re.search(r" / (\d+) selected", found[2] or "")
+                                total = int(selected[1] if selected else found[1] or found[3])
+                                completed = 0
+                                finished.clear()
+                            marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
+                            result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
+                            if not result and re.search(r"\[\s*\d+%\]", line):
+                                result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
+                            tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
+                            if tap and tap[2]:
+                                total = int(tap[2])
+                            if result:
+                                finished.add(result[1])  # teardown errors repeat the same test's id
+                                completed = len(finished)
+                            elif tap and tap[1]:
+                                completed = int(tap[1])
+                            elif marks:
+                                # A quiet error can be setup or a second report for teardown.
+                                # Keep done unknown until a percentage gives an exact count.
+                                completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
+                                if completed is None and total is not None:
+                                    percent = int(re.search(r"(\d+)%", line)[1])
+                                    lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
+                                    completed = lower if lower == upper else None
+                            if found or marks or result or tap:
+                                repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
+                                with machine._queue() as runs:
+                                    for run in runs:
+                                        if run["id"] == entry["id"]:
+                                            run["progress"] = {"done": completed, "total": total}
+                        done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
+                    except BaseException:
+                        if process.poll() is None:
+                            codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+                            process.wait()
+                        raise
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
             if done.returncode == 0 and passed:
                 passed.parent.mkdir(exist_ok=True)
                 passed.touch()
+        finally:
+            machine.leave(entry)
         out = [line.rstrip() for line in done.stdout.splitlines()]
         picked = sorted({i for n, line in enumerate(out) if "skip" in line.lower()
                          for i in (n - 1, n) if i >= 0} | set(range(max(0, len(out) - 30), len(out))))
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
-        return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on the machine running "
-                          "forge close.", *lines])
+        return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on this machine.", *lines])
     except BaseException:
         outcome = "failed"
         raise
@@ -337,9 +356,6 @@ def test_run(top: Path, command: str, base: str) -> tuple[int, str]:
         repo.record_timing(top, item, "test run", start, clock, outcome)
 
 
-WAITING = lambda ahead: (  # noqa: E731
-    "Waiting for 1 other close's test run on this machine." if ahead == 1
-    else f"Waiting for {ahead} other closes' test runs on this machine.")
 DOCS = ("docs/", "plans/", ".factory/")
 DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
              "did not run `{command}`.")

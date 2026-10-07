@@ -122,12 +122,14 @@ proven by the check the item names. Name a new test file after the behaviour it 
 after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
 delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
 decides proves nothing. Use the test-audit skill whenever you write or change a test. Before you
-stop, commit your work first, then run the change's related tests: forge.toml's `fast_test` with
-`{base}` as the merge base with the default branch, or its `test` command when it has no
-`fast_test`. Then commit any fixes. CI runs the full suite.
+stop, commit your work first, then run the change's related tests through `forge test` in the
+foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
+`fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
+base with `origin/<default branch>`. It always runs, including uncommitted changes. Then commit
+any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
-test command without installing Forge in the project. Bare `forge test` currently refuses and
-names `--pytest`; the approved test-lane story will give bare `forge test` its lane behavior.
+test command without installing Forge in the project. This picker belongs in `fast_test`;
+workers run bare `forge test` to enter the lane.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

@@ -3,10 +3,12 @@ the review when the test command fails, keeping the failing output for the next 
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+from conftest import patient
 
 from test_close import CLEAN, GREEN, env  # noqa: F401
 from test_land import ITEM, RUNS, _agent, _fix, _land, _queue, _runs, _steps, _workers, land  # noqa: F401
@@ -35,42 +37,41 @@ def _with_test_command(env) -> Path:
     return log
 
 
-# Holds the first place in the machine's test-run line, as another close running its tests does,
-# until stdin closes.
-HOLD = '''import os, sys
-guard = open(sys.argv[1], "ab")
-if os.name == "nt":
-    import msvcrt
-    guard.seek(0)
-    msvcrt.locking(guard.fileno(), msvcrt.LK_NBLCK, 1)
-else:
-    import fcntl
-    fcntl.flock(guard, fcntl.LOCK_EX | fcntl.LOCK_NB)
-print("held", flush=True)
-sys.stdin.read()
+# Hold the shared lane through its real command, replacing the old ticket-file lock fixture.
+HOLD = '''import pathlib, time
+tmp = pathlib.Path({tmp!r})
+(tmp / "held").touch()
+while not (tmp / "release").exists():
+    time.sleep(0.05)
 '''
 
 
 def test_1_a_conflicting_merge_stops_before_the_test_lock_any_test_run_or_review(env):
     log = _with_test_command(env)
+    script = env.tmp / "suite.py"
+    script.write_text(HOLD.format(tmp=env.tmp.as_posix()), "utf-8")
     # A code change too: a Markdown-only change skips the test command, lock and all.
     item, _ = env.start_fix({"README.md": "# Hello, shoppers\n", "app.py": "print('hello')\n"})
     env.commit(env.repo.path, "README.md", "# Welcome\n")
     env.repo.git("push", "-q", "origin", "main")
-    line = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge" / "test-runs"
-    line.mkdir(parents=True, exist_ok=True)
-    holder = subprocess.Popen([sys.executable, "-c", HOLD, str(line / "000000000001.ticket")],
-                              stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    holder = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "test"],
+                              cwd=env.repo.path, stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        assert holder.stdout.readline() == "held\n"
+        deadline = time.monotonic() + 30
+        while not (env.tmp / "held").exists():
+            assert time.monotonic() < deadline and holder.poll() is None
+            time.sleep(0.05)
         done = env.close(item)  # it would wait out the test's timeout if it took the lock
     finally:
-        holder.communicate("")
+        patient(lambda: (env.tmp / "release").touch())
+        out, err = holder.communicate(timeout=30)
+        assert holder.returncode == 0, out + err
     assert done.returncode == 1, done.stdout + done.stderr
     assert "Merging main into fix/tidy-readme conflicts in README.md." in done.stderr
     assert not log.exists()
     assert env.review_calls() == []
-    assert "Waiting for" not in done.stdout
+    assert "waits its turn" not in done.stdout
 
 
 def test_2_a_failing_test_command_stops_before_the_review_and_the_worker_gets_its_output(land):

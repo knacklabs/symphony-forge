@@ -91,13 +91,6 @@ def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
     assert "python -m forge.fasttest" in result.stdout
 
 
-def test_3_bare_test_names_the_picker_option_in_one_line(repo):
-    result = repo.forge("test")
-    assert result.returncode == 1
-    assert result.stdout == ""
-    assert result.stderr.splitlines() == ["Run forge test --pytest <base> to pick related pytest tests."]
-
-
 def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp_path, monkeypatch):
     # Reproduce close's cold PATH with the real earlier release, not a fake refusal.
     old = tmp_path / "release"
