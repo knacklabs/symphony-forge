@@ -116,7 +116,7 @@ other readers. The usual commands still print text or open the HTML board. Both 
 include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 
-The board's `items` has one row per story and fix, with tasks in the story's `children`.
+Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -142,6 +142,16 @@ live elapsed time comes from timestamps. Worker-owned tests belong to Build; clo
 `forge test` belong to Tests. A skipped test has status skipped. Run starts and ends
 provide live worker and reader metadata; completed timing durations supply stage end
 times. Values remain null where the producer has not recorded them.
+
+Live rows add `activity` (status and a running action), `idle_since` and `stalled`
+after 24 idle hours. A recorded worker adds tool, model, effort, round, start,
+elapsed seconds and its latest tool step; close's live `tests` adds elapsed and
+done/total where the runner reports progress. `gates` has plan_read, review and ci,
+each with status; blocked reviews add count and running CI adds elapsed seconds.
+PR failures list job and cause (timeout or failed); findings add items with title
+and priority and a dismissed count. Both views' `events` list the last 20 run,
+review and question records as time, item and one plain line, newest last.
+Queue places stay absent until the shared lane entries ship.
 
 The newest 25 open pull requests get checks in one GitHub request, cached for 60
 seconds in the shared Git directory. Older pull requests and unreachable GitHub

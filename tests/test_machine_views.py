@@ -274,17 +274,21 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert set(rows) == {"BOARD", "polish"}
     assert rows["polish"]["title"] == "Polish the guide"
     assert rows["polish"]["kind"] == "fix"
-    assert rows["polish"]["pr"] == {"number": 2, "checks": "pass"}
+    # Live adds failures and severity; the previous number/checks/count contract stays.
+    assert rows["polish"]["pr"] == {"number": 2, "checks": "pass", "failures": []}
     item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
     assert item["approval"] is None
     child = item["children"][0]
     assert child["title"] == "The page"
     assert child["stage"] == "working"
-    assert child["pr"] == {"number": 1, "checks": "pass"}
-    assert child["findings"] == {"count": 1, "titles": ["Missing empty state"]}
+    assert child["pr"] == {"number": 1, "checks": "pass", "failures": []}
+    assert child["findings"] == {"count": 1, "titles": ["Missing empty state"],
+                                 "items": [{"title": "Missing empty state", "priority": "P1"}],
+                                 "dismissed": 1}
     if os.name != "nt":
-        assert child["worker"] == {"kind": "build", "model": "gpt-6.1-sol", "started_at": None}
+        assert child["worker"] == {"kind": "build", "model": "gpt-6.1-sol", "started_at": None,
+                                   "elapsed": None}
     assert child["round"] is None
     assert all(s["started_at"] is None for s in child["stages"])
     assert snapshot(view(repo, "board", folder)) == snapshot(result)  # common repo root/cache
@@ -625,6 +629,15 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     assert closed.returncode == 0, closed.stderr
     # Close leaves saved state waiting for checks; the reviewed-head receipt makes it ready.
     child = next(r for r in view(repo, "board")["items"] if r["id"] == "SHOP")["children"][0]
+    # Live status ships through the same commands after init and earlier adoption.
+    for command in ("board", "next"):
+        live = view(repo, command)
+        current = next(r for r in live["items"] if r["id"] == "SHOP")["children"][0]
+        assert current["activity"] == {"status": "idle"}
+        assert current["idle_since"] is not None and current["stalled"] is False
+        assert current["findings"]["items"][0]["priority"] == "P2"
+        assert current["gates"]["review"] == {"status": "clean"}
+        assert live["events"][-1]["line"] == "Checks finished"
     assert child["stage"] == "ready"
     assert child["next"]["command"] == "forge merge SHOP/T1"
     assert any(o["kind"] == "run_finished" for o in child["occurrences"])

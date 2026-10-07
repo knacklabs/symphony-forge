@@ -7,21 +7,29 @@
   "next": {
     "version": "1.2.3",
     "repo_root": "/example/repo",
-    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it."}
+    "next": {"command": null, "line": "The fix polish is ready and waiting for someone to merge it."},
+    "items": [],
+    "events": []
   },
   "board": {
     "version": "1.2.3",
     "repo_root": "/example/repo",
+    "events": [],
     "items": [
       {
         "id": "polish",
         "kind": "fix",
         "title": "Polish the guide",
         "stage": "ready",
+        "activity": {"status": "idle"},
+        "idle_since": null,
+        "stalled": false,
+        "gates": {"plan_read": {"status": "none"}, "review": {"status": "none"}, "ci": {"status": "none"}},
+        "tests": null,
         "approval": null,
         "worker": null,
-        "pr": {"number": null, "checks": "unknown"},
-        "findings": {"count": 0, "titles": []},
+        "pr": {"number": null, "checks": "unknown", "failures": []},
+        "findings": {"count": 0, "titles": [], "items": [], "dismissed": 0},
         "round": null,
         "total_seconds": null,
         "stages": [
@@ -40,10 +48,15 @@
         "kind": "story",
         "title": "Board shows each story in plain English",
         "stage": "planning",
+        "activity": {"status": "idle"},
+        "idle_since": null,
+        "stalled": false,
+        "gates": {"plan_read": {"status": "none"}, "review": {"status": "none"}, "ci": {"status": "none"}},
+        "tests": null,
         "approval": {"doc": "/example/repo-WAIT/plans/WAIT.md"},
         "worker": null,
-        "pr": {"number": null, "checks": "unknown"},
-        "findings": {"count": 0, "titles": []},
+        "pr": {"number": null, "checks": "unknown", "failures": []},
+        "findings": {"count": 0, "titles": [], "items": [], "dismissed": 0},
         "round": null,
         "total_seconds": null,
         "stages": [
@@ -58,5 +71,17 @@
         "children": []
       }
     ]
+  },
+  "live": {
+    "activity": {"status": "running", "action": "worker"},
+    "idle_since": null,
+    "stalled": false,
+    "worker": {"kind": "build", "tool": "codex", "model": "gpt-6.1-sol", "effort": "medium", "round": 2,
+               "started_at": "2026-10-06T12:00:00Z", "elapsed": 10, "step": "editing src/forge/close.py"},
+    "tests": {"started_at": "2026-10-06T12:00:00Z", "elapsed": 10, "done": 1, "total": 4},
+    "gates": {"plan_read": {"status": "passed"}, "review": {"status": "blocked", "count": 2}, "ci": {"status": "running", "elapsed": 10}},
+    "pr": {"number": 7, "checks": "fail", "failures": [{"job": "tests", "cause": "timeout"}]},
+    "findings": {"count": 2, "titles": ["Input lost", "Copy unclear"], "items": [{"title": "Input lost", "priority": "P1"}, {"title": "Copy unclear", "priority": "P2"}], "dismissed": 1},
+    "events": [{"time": "2026-10-06T12:00:00Z", "item": "polish", "line": "Worker started"}]
   }
 }

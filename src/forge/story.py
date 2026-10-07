@@ -221,7 +221,7 @@ def read(args: Any) -> int:
             why, session = f"its session was started in another checkout, {session['checkout']}", None
         with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
-                                why)
+                                why, round_number)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -236,7 +236,7 @@ def read(args: Any) -> int:
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
-                            fresh=why or "first turn", fresh_prompt=fresh_prompt)
+                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number)
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
@@ -690,22 +690,43 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 
 
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
-                 resume: str | None, why: str) -> subprocess.CompletedProcess[str]:
+                 resume: str | None, why: str, round_number: int) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
     exe = shutil.which("claude")
     if exe is None:
         repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
 
     def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
-        with repo.record_run(top, target, "read", family="claude",
-                             model=models[models.index("--model") + 1] if models else None) as ran:
-            with subprocess.Popen([exe, "-p", *models, "--permission-mode", "plan", *args],
+        with repo.record_run(top, target, "read", family="claude", round=round_number,
+                             model=models[models.index("--model") + 1] if models else None,
+                             effort=models[models.index("--effort") + 1] if "--effort" in models else None) as ran:
+            with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors, subprocess.Popen(
+                                  [exe, "-p", *models, "--permission-mode", "plan",
+                                   "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", *args],
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                  stderr=errors, text=True, encoding="utf-8",
                                   errors="replace",
                                   env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader, \
                     machine.agent_process(reader):
-                out, err = reader.communicate(text)
+                events = ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
+                          {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
+                          {"type": "user", "message": {"role": "user", "content": text}})
+                # communicate's writer handles a provider closing stdin, including Windows EINVAL.
+                reader._stdin_write("".join(json.dumps(event) + "\n" for event in events))
+                lines, final = [], None
+                for line in reader.stdout:
+                    try:
+                        event = json.loads(line)
+                    except ValueError:
+                        event = None
+                    if isinstance(event, dict):
+                        line = repo.claude_output(top, target, ran["run_id"], event)
+                        if event.get("type") == "result":
+                            final = line
+                    lines.append(line)
+                reader.wait()
+                errors.seek(0)
+                out, err = final if final is not None else "".join(lines), errors.read()
             ran["outcome"] = "completed" if reader.returncode == 0 else "failed"
         return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
 

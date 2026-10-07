@@ -469,27 +469,38 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     log = repo.work_log(top, item)
     # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
     command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
+               "--output-format", "stream-json", "--verbose",
                "--add-dir", str(CONVENTIONS), *(session or [])]
-    lines = []
+    lines, final_result = [], None
     with repo.record_run(top, item, "worker", family="claude",
-                         model=models[models.index("--model") + 1]) as ran, \
+                         model=models[models.index("--model") + 1],
+                         effort=models[models.index("--effort") + 1]) as ran, \
             log.open("a", encoding="utf-8") as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
             env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker, \
             machine.agent_process(worker):
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        worker.stdin.write(brief)
-        worker.stdin.close()
+        worker._stdin_write(brief)
         for line in worker.stdout:
-            print(line, end="", flush=True)
-            out.write(line)
-            lines.append(line)
+            try:
+                event = json.loads(line)
+            except ValueError:
+                event = None
+            if isinstance(event, dict):
+                line = repo.claude_output(top, item, ran["run_id"], event)
+                if event.get("type") == "result":
+                    final_result = line.rstrip("\n")
+            if line:
+                if not isinstance(event, dict) or event.get("type") == "result":
+                    print(line, end="", flush=True)
+                out.write(line)
+                lines.append(line)
         worker.wait()
         ran["outcome"] = "completed" if worker.returncode == 0 else "failed"
     if worker.returncode:
         refuse(REFUSALS["failed"], status=worker.returncode, log=log, item=item)
-    return "".join(lines)
+    return final_result if final_result is not None else "".join(lines)
 
 
 COMMANDS = [{
