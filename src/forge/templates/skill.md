@@ -626,12 +626,12 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to commit first, run the change's related tests (`fast_test`, else
-`test`) in the foreground, wait for them and commit any fixes. Only
+once, telling the worker to commit first, run the change's related tests through `forge test`
+in the foreground, wait for them and commit any fixes. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
-Continued worker rounds repeat the current related-test command and the commit-first order,
+Continued worker rounds repeat `forge test` and the commit-first order,
 replacing any earlier full-suite instruction. The synced test-audit skill follows the same rule;
 CI runs the full suite.
 
@@ -748,7 +748,14 @@ upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor rep
 in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
-Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
+Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
+set, with `{base}` as the merge base with `origin/<default branch>`, in the same fair machine-wide
+test lane as close. It prints the report close keeps and always runs, including docs-only and
+uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
+names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pytest -n auto` honours
+the first; other runners may read the second. The lane stays taken until the test command ends,
+even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
