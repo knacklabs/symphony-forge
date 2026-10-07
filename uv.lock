@@ -110,7 +110,7 @@ wheels = [
 
 [[package]]
 name = "symphony-forge"
-version = "1.2.7"
+version = "1.2.6"
 source = { editable = "." }
 
 [package.dev-dependencies]
