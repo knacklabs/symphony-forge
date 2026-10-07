@@ -11,7 +11,8 @@ import pytest
 from conftest import ROOT
 from test_setup import _fresh_client, _version
 
-STORY = "FORGE-MOD-1"
+# Documentation delivery owns separate rules from the mod's runtime behavior.
+STORY = "FORGE-MOD-1-GUIDE"
 
 
 @pytest.fixture(params=["new", "previous adoption"])
