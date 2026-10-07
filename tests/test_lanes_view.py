@@ -17,6 +17,7 @@ from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start, person, lane_adapter  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
+from test_codex_record import _freeze
 from test_story import worktree
 
 STORY = "FORGE-LANES-1"
@@ -127,6 +128,10 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         assert alive(descendant)
         if adopted:
             # Killing Forge alone must leave the live model holding its admission.
+            # Codex normally handles closed stdin by ending its model; freeze its
+            # driver first to model a crash where that cleanup cannot run.
+            if lane_adapter == "codex":
+                _freeze(rows[0]["process"]["pid"])
             processes[0].kill()
             processes[0].wait(timeout=30)
             assert alive(rows[0]["process"]["pid"])
