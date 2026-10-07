@@ -1,20 +1,29 @@
 {
   "branch": "task/FORGE-LANES-1-TESTS",
   "flagged": [
-    "tests/test_lanes_tests.py"
+    "tests/test_lanes_tests.py",
+    "tests/test_trim_skills.py"
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "279f3d38bac87671e5b0612951a470fdefe40c3876e31e6d0d0e7711be1db221",
-    "changed": "567d5ecdc74b2d7a0093706c8076a5cc22759fd1ff24aca810765d8b6088ead8",
-    "commit": "6a371745e4da9c7306e4a7c268940d277116817d",
+    "branch_diff": "6614b9d6d0e2addcb5a1a8a281fda7b01bb3b626cdc2d606c18da49148bab96a",
+    "changed": "73d1970bfec06a3984f4f142b172b1e1fe9610f9e84c936b77537e86a6c9b405",
+    "commit": "6784df16dbb1088065403e22af69bbe7d0b5e1fd",
     "dismissals": [],
-    "findings": [],
-    "id": "b21edbce-11ae-49e3-be28-d221883c4773",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The supplied handoff says the proof list is missing. The branch-head commit that changes this checksum also has no proof list in its body. Earlier commits contain detailed lists, but the contract requires the worker's latest commit to supply the complete list that Forge copies into the pull request. Carry forward the verified list and include the final checksum change's validation.",
+        "file": "tests/test_trim_skills.py",
+        "line": 27,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "aa0a7e7e-1940-4767-afa5-3e7e5bacc164",
+    "status": "blocked"
   },
   "round": 4,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-07T14:48:08+00:00",
@@ -34,6 +43,10 @@
     },
     {
       "at": "2026-10-07T16:17:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T16:31:12+00:00",
       "step": "review"
     }
   ],

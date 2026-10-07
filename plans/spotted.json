@@ -1442,6 +1442,17 @@
       "closed_by": "several-tests-fail-on-main-in-a-full-loc"
     },
     {
+      "key": "bug\ttests/test_trim_skills.py\tNot done: proof list\tFORGE-LANES-1/TESTS",
+      "kind": "bug",
+      "path": "tests/test_trim_skills.py",
+      "line": 27,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_upgrade_command.py\tNot done: upgrade coverage for a repo adopted on the previous release\tFORGE-UPGRADECMD-1/UPGRADE",
       "kind": "bug",
       "path": "tests/test_upgrade_command.py",
