@@ -20,7 +20,8 @@ function host(on: On, surface: 'terminal' | 'desktop' | 'mobile') {
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.open', (_$, e) => { opens.push(e.id); return { value: undefined } })
   on('ui.toast', (_$, e) => { toasts.push(e); return { value: undefined } })
-  on('fs.read', () => state.unreadable ? { deny: 'Output file cannot be read' } : { value: state.output })
+  on('fs.read', (_$, e) => state.unreadable ? { deny: 'Output file cannot be read' } :
+    { value: e.path === '/logs/worker.txt' ? state.output : `Output for ${e.path}` })
   on('tool.call', { tool: /^AskUserQuestion$/ }, async (_$, e) => {
     questions.push(e)
     await state.beforeAnswer()
@@ -47,7 +48,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await clock.advance(5000)
     let drawn = JSON.stringify(await ui.drawn())
     for (const fact of ['plans + decides', 'Polish the guide', 'Make checkout clear', 'Plan the shop', 'model-waiting', 'other-shop', '3/8', 'high', 'round 2', 'editing the guide', '5s', 'passed', 'blocked', 'red']) expect(drawn).toContain(fact)
-    for (const fact of ['review · codex · sol · medium · round 2', 'read · claude · sol · medium · round 2', 'CI: running · 15s']) expect(drawn).toContain(fact)
+    for (const fact of ['review · codex · sol · medium · round 2', 'read · claude · sol · medium · round 2', 'CI: running · 15s', '[███░░░░░░░] 3/8', 'Review: blocked (2 findings)']) expect(drawn).toContain(fact)
     expect(drawn).not.toContain('Worker started')
     expect((await ui.find({ key: 'machine-log' }))?.props.hotkey).toBe('l')
     const runKeys = (await ui.findAll({ type: 'Button' })).map(b => b.key).filter(k => k?.startsWith('machine-run-'))
@@ -71,10 +72,24 @@ for (const surface of ['terminal', 'desktop'] as const) {
     } else {
       expect(await ui.find({ type: 'Raster' })).toBeDefined()
       expect((await ui.find({ type: 'Text', text: 'Load 5' }))?.props.color).toBe('yellow')
-      await clock.advance(310000)
-      expect((await ui.find({ type: 'Raster' }))?.props.columns).toBe(30)
+      for (let n = 1; n <= 31; n++) {
+        state.lanes.machine.load = [n, 2, 1]
+        await clock.advance(10000)
+      }
+      const raster = await ui.find({ type: 'Raster' })
+      expect(raster?.props.columns).toBe(30)
+      // Raster cells are the public glyph/foreground/background byte protocol.
+      const bytes = Uint8Array.from(atob(String(raster?.props.cells)), c => c.charCodeAt(0))
+      const cells = new DataView(bytes.buffer)
+      const glyphs = Array.from({ length: 30 }, (_, n) => String.fromCharCode(cells.getUint32(n * 12, true))).join('')
+      expect(glyphs).toBe('▁▁▁▂▂▂▂▃▃▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▇▇▇▇█')
+      expect(cells.getUint32(4, true)).toBe(0x93c5fd)
+      expect(cells.getUint32(29 * 12 + 4, true)).toBe(0xfbbf24)
+      expect(JSON.stringify(await ui.drawn())).toContain('└─ ')
+      expect((await ui.findAll({ type: 'Box' })).find(node => node.props.gap === 2)?.props.flexDirection).toBe('row')
       await ui.redraw({ ...pane, bodyColumns: 80 })
-      expect(await ui.find({ type: 'Svg' })).toBeUndefined()
+      expect(JSON.stringify(await ui.drawn())).not.toContain('└─ ')
+      expect((await ui.findAll({ type: 'Box' })).find(node => node.props.gap === 2)?.props.flexDirection).toBe('column')
       expect(JSON.stringify(await ui.drawn())).toContain('model-waiting')
       expect(JSON.stringify(await ui.drawn())).toContain('3/8')
     }
@@ -99,6 +114,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(drawn).not.toContain('editing the guide')
     expect(drawn).not.toContain('3/8')
     expect(await ui.find({ type: 'Raster' })).toBeUndefined()
+    expect(drawn).not.toContain('Load ')
     const foreign = await ui.find({ key: 'machine-run-foreign' })
     expect(foreign?.text).not.toContain('round')
     expect(foreign?.text).not.toContain('editing the guide')
@@ -140,6 +156,10 @@ for (const surface of ['terminal', 'desktop'] as const) {
     state.output += 'A new output line\n'
     await clock.advance(10000)
     expect(JSON.stringify(await output.drawn())).toContain('A new output line')
+    await ui.press({ key: 'machine-run-reviewer' }); await ui.press({ key: 'machine-output' })
+    drawn = JSON.stringify(await output.drawn())
+    expect(drawn).toContain('Output for /logs/reviewer.txt')
+    expect(drawn).not.toContain('output line')
     state.unreadable = true
     await clock.advance(10000)
     expect(JSON.stringify(await output.drawn()).toLowerCase()).toContain('output not available')
@@ -150,8 +170,15 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     await ui.press({ key: 'tab-Machine' }); await ui.press({ key: 'machine-run-worker' })
+    expect((await ui.find({ key: 'machine-run-worker' }))?.text).toContain('work')
+    expect((await ui.find({ key: 'machine-run-tests' }))?.text).toContain('test')
     await ui.press({ key: 'machine-stop' })
     expect(questions.length).toBe(1); expect(stops).toEqual([])
+    expect(JSON.stringify(questions.at(-1))).toContain('Stop work run')
+    await ui.press({ key: 'machine-run-tests' }); await ui.press({ key: 'machine-stop' })
+    expect(JSON.stringify(questions.at(-1))).toContain('Stop test run')
+    expect(stops).toEqual([])
+    await ui.press({ key: 'machine-run-worker' })
     state.answer = 'Stop'
     await ui.press({ key: 'machine-stop' })
     expect(stops).toEqual([['forge', 'stop', '--id', 'worker']])
@@ -169,6 +196,20 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(stops.at(-1)).toEqual(['forge', 'stop', '--id', 'reviewer'])
     expect(JSON.stringify(await ui.drawn())).toContain(state.stopFailure)
     expect(toasts).toEqual([])
+  })
+
+  test(`6: ${surface} Windows producer roots retain local titles and worker facts`, async ($, on) => {
+    const { state } = host(on, surface)
+    state.board.repo_root = 'C:\\Work\\Shop'
+    for (const run of [...state.lanes.agents.entries, ...state.lanes.tests.entries]) {
+      if (run.repo_root === '/repo') run.repo_root = 'c:/Work/Shop/'
+    }
+    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
+    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
+    await ui.press({ key: 'tab-Machine' })
+    const drawn = JSON.stringify(await ui.drawn())
+    for (const fact of ['Polish the guide · work · codex · sol · medium · round 2', 'editing the guide', 'Make checkout clear · review · codex', 'Plan the shop · read · claude']) expect(drawn).toContain(fact)
+    expect(drawn).toContain('model-waiting')
   })
 }
 
@@ -190,8 +231,13 @@ test('6: spinner names this session item place, not another repo with the same i
 })
 
 test('6: /forge includes full machine status where the surface draws nothing', async ($, on) => {
-  host(on, 'mobile')
+  const { state } = host(on, 'mobile')
+  state.board.repo_root = 'C:\\Work\\Shop'
+  for (const run of [...state.lanes.agents.entries, ...state.lanes.tests.entries]) {
+    if (run.repo_root === '/repo') run.repo_root = 'c:/Work/Shop/'
+  }
   await $.session.start({ cwd: '/repo', surface: 'mobile', isInteractive: true })
   const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
   for (const fact of ['Machine', 'Polish the guide', 'Make checkout clear', 'Plan the shop', 'other-shop', 'model-waiting', '3/8']) expect(reply.text).toContain(fact)
+  expect(reply.text).toContain('work · codex · sol · medium · round 2')
 })

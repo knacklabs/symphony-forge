@@ -8,6 +8,7 @@ from conftest import ROOT, machine_cores
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import finish, hold_agents, make_work, start, lane_adapter, sdk_data  # noqa: F401
+from test_lanes_tests import accepted, configure, reap, release_server  # noqa: F401
 from test_story import worktree
 from test_mod_plugin import HOST, node_run, packaged_mod  # noqa: F401
 
@@ -42,12 +43,14 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
             for key, value in example.items():
                 assert key in producer, f"Native fixture invents {key}"
                 fields(value, producer[key])
-        elif isinstance(example, list) and example and producer:
-            fields(example[0], producer[0])
+        elif isinstance(example, list) and example:
+            assert isinstance(producer, list) and producer, "Native fixture has no producer example"
+            for value in example:
+                fields(value, producer[0])
 
-    # Work entries have null progress; the test-lane owner proves done/total.
-    fields(result["lanes"]["agents"]["entries"][0], data["agents"]["entries"][0])
-    fields(result["lanes"]["machine"], data["machine"])
+    # Every native row must use its lane's real command fields, including the
+    # running test's reported progress. Later board items and events count too.
+    fields(result["lanes"], data)
     shared = json.loads((ROOT / "tests/fixtures/board.json").read_text("utf-8"))
     board_contract = {**shared["board"], "events": shared["live"]["events"],
                       "items": [{**shared["board"]["items"][0], **shared["live"]}]}
@@ -57,11 +60,13 @@ console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture
     assert "waiting #2" in machine and "Older second" not in machine
 
 
-def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(env, tmp_path, lane_adapter, packaged_mod):
+def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(env, tmp_path, lane_adapter, packaged_mod, release_server):
     # Existing board tests do not exercise the plugin's lanes command or release
     # filtering. Real work commands produce every row; only the model edge waits.
     repo = env.repo
     machine_cores(repo, 2)
+    server, connections = release_server
+    configure(env, server)
     other = _other_repo(tmp_path, repo.bin)
     items = [make_work(where, title) for where, title in
              ((repo, "Current first"), (other, "Older second"), (repo, "Current third"))]
@@ -77,6 +82,7 @@ def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(
     old_launcher.write_text((repo.bin / "forge").read_text("utf-8").replace(
         "from forge.cli import main", "import forge\nforge.__version__ = '0.0.0'\nfrom forge.cli import main"), "utf-8")
     processes = []
+    test_processes = []
 
     def view():
         result = repo.forge("lanes", "--json")
@@ -111,7 +117,15 @@ def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(
             assert row["elapsed"] >= 0
             assert row["progress"] is None
         assert rows[0]["started_at"] and rows[1]["started_at"] is None
+        first_folder = worktree(repo, "fix/" + items[0][0])
+        test_run, test_output = start(first_folder, tmp_path / "test-run", repo, "test")
+        test_processes.append(test_run)
+        connection, _ = accepted(server, connections, first_folder, test_run, test_output)
+        data = view()
+        assert data["tests"]["entries"][0]["progress"] == {"done": 1, "total": 2}
         check_machine_fixture_and_headless(repo, packaged_mod, tmp_path, data)
+        connection.sendall(b"x")
+        assert test_run.wait(timeout=30) == 0, test_output.read_text("utf-8")
         assert rows[1]["output_path"] is None
         assert rows[0]["output_path"], "Running agents publish their existing live output"
         assert f"forge work {items[0][0]}" in Path(rows[0]["output_path"]).read_text("utf-8")
@@ -124,5 +138,6 @@ def test_machine_tab_lanes_report_release_rows_and_keep_other_release_admission(
         _until(lambda: (repo.bin / f"started-{items[2][1]}").exists(), "current release admitted")
         assert view()["agents"]["entries"][0]["place"] == 0
     finally:
+        reap(test_processes, server, connections)
         finish(repo, processes)
     assert view()["agents"]["entries"] == []

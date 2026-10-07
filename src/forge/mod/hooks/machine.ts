@@ -32,7 +32,7 @@ function valid(value: unknown): value is Lanes {
     })
 }
 function local(data: Data, entry: Entry): Item | undefined {
-  return entry.repo_root === data.board?.repo_root ? rows(data.board.items).find(i => i.id === entry.item) : undefined
+  return data.board && path(entry.repo_root) === path(data.board.repo_root) ? rows(data.board.items).find(i => i.id === entry.item) : undefined
 }
 function path(value: string): string {
   const normal = value.replaceAll('\\', '/').replace(/\/$/, '')
@@ -140,7 +140,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
         children.push(t.Raster({ key: 'machine-load', columns: samples.length, rows: 1, cells }))
       }
     }
-    for (const run of runs) children.push(t.Button({ key: `machine-run-${run.id}`, label: `${run.id === selected ? '› ' : ''}${title(data, run)} · ${run.repo_name}`, onPress: () => { selected = run.id; status = ''; invalidate() } }))
+    for (const run of runs) children.push(t.Button({ key: `machine-run-${run.id}`, label: `${run.id === selected ? '› ' : ''}${title(data, run)} · ${run.kind} · ${run.repo_name}`, onPress: () => { selected = run.id; status = ''; invalidate() } }))
     children.push(t.Box({ flexDirection: 'row', gap: 1, children: [
       ...(selectedRun ? [t.Button({ key: 'machine-output', hotkey: 'o', label: 'Open output', onPress: () => openOutput?.(selectedRun) }),
         t.Button({ key: 'machine-stop', hotkey: 's', label: 'Stop run', onPress: () => stop?.(selectedRun) })] : []),
@@ -171,7 +171,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
       if (confirming) return
       confirming = true
       try {
-        if (await $.ui.ask(`Stop ${title(data, run)} in ${run.repo_name}?`, ['Stop', 'Keep running']) !== 'Stop') return
+        if (await $.ui.ask(`Stop ${run.kind} run for ${title(data, run)} in ${run.repo_name}?`, ['Stop', 'Keep running']) !== 'Stop') return
         const fresh = await $.process.run(['forge', 'lanes', '--json'], { cwd: e.cwd, timeoutMs: 20000 })
         if (fresh.exitCode !== 0) throw new Error(fresh.stderr || fresh.stdout || 'Forge did not answer. Refresh and try again.')
         const lanes: unknown = JSON.parse(fresh.stdout)
