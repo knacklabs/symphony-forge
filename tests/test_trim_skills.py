@@ -20,11 +20,11 @@ SOURCES = {
     ".codex/skills/forge/SKILL.md": "src/forge/templates/skill.md",
 }
 # SHA-256 of the four package copies before the trim, with LF endings as sync writes.
-# The test-audit pin includes commit-first related tests instead of the full-suite run step.
+# The test-audit pin includes commit-first related tests run through the shared test lane.
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
     ".codex/skills/forge/fde.md": "64caf8ac21317267c981a19dd5baa397ab066987989edb98ec43e18e3e49d6ff",
-    ".codex/skills/test-audit/SKILL.md": "6109f70ae82e9ae3a2e1cfbdefd603b223e78cbcd78c98121da608fcccc8d2e8",
+    ".codex/skills/test-audit/SKILL.md": "7a9817915071f48d4348f30d9d54b80adc0a52835105e8a855948a2a2c76d83c",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",
 }
