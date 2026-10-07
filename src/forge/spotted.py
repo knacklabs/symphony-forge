@@ -179,9 +179,7 @@ def record(top: Path, item: str, state: dict[str, Any], base: str,
         items.append(known[entry_key])
         changed = True
 
-    messages = repo.git("log", "--no-merges", "--reverse", "--format=%B%x00", f"{base}..HEAD",
-                        cwd=top)
-    for message in messages.split("\0"):
+    for _, message, _ in reversed(repo.commit_log(top, base)):
         for raw in message.split("\n"):
             if found := LINE.fullmatch(raw.rstrip()):
                 path = found[2].replace("\\", "/").removeprefix("./")
