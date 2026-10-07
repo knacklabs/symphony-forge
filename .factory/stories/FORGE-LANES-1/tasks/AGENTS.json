@@ -10,45 +10,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ab4c0162f0b5a1d5d7de3771b2dd5b04b6f6fd16fd3cdcb98c2f42ce4c0d203d",
-    "changed": "1832bb9c7b47b0f9e8665e71c25999c5af186eafddeb5ce53197ef3465ee6651",
-    "commit": "d3c47c46991a207bd7e21949c1d134c79ed7dd0a",
+    "branch_diff": "8e1ef8209b29bdb5dc3815d270acac551ac5ce8a378df4ab7d7c110508695dc8",
+    "changed": "80f9dad85373fb22065bba53a5b0288337569f899f8c05a4674bccb3978c4bce",
+    "commit": "feeca4218173caec957b2538737d2000c0669e3f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied proof list is missing, and the latest worker commit contains no `Proof list:` paragraph. The detailed list in an older commit does not satisfy the current-round requirement: src/forge/review.py:401\u2013407 deliberately reads only the latest non-bookkeeping worker commit. Restore the complete item-to-proof mapping in the latest commit, including the updated machine-view checks.",
-        "file": "tests/test_machine_views_recent_finished_items.py",
-        "line": 195,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      },
-      {
-        "body": "The machine-view proof checks only that `load` exists and that memory values are null or nonnegative integers. Replacing machine.load with a constant all-null dictionary would pass every assertion here; the other changed snapshot tests explicitly exclude these measurements. Done-when 4 requires OS-derived measurements, so extend the command-level proof to fail when available OS measurements are omitted or replaced with placeholders.",
-        "file": "tests/test_lanes_view.py",
-        "line": 30,
-        "priority": "P1",
-        "title": "Not done: machine load and memory come from the OS"
-      },
-      {
-        "body": "This previous gap remains open. Admission snapshots `chosen`, but Autoreview defaults and fallback update only `selected` and activity progress at review.py:603\u2013611. The worker fallback similarly replaces `chosen` at worker.py:165 without updating its entry. Both reader paths join using repo.models at story.py:222 and :230; repo.py:411\u2013419 returns an empty selection when unconfigured, and subsequent selection events at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Board lanes therefore retain null or obsolete model/effort values during actual runs. Refresh the shared entry across these selection paths.",
+        "body": "The previous metadata gap remains open. Admission snapshots `chosen`, but Autoreview selection and fallback update only `selected` and activity records at review.py:603\u2013611. Worker fallback replaces `chosen` at worker.py:165 without updating the lane entry. Both reader paths join using repo.models at story.py:222 and :230; repo.py:411\u2013419 can return an empty selection, while subsequent selection events at repo.py:278\u2013283 and codex.py:384\u2013386 update only activity records. Consequently, board lane entries can show null or obsolete model/effort values during actual runs. Refresh the shared entry across these selection paths.",
         "file": "src/forge/review.py",
         "line": 509,
         "priority": "P2",
         "title": "Refresh lane metadata when the provider selects its model and effort"
       },
       {
-        "body": "The previously deferred integration remains outstanding: fasttest.py:271 launches tests directly, while review.py:279\u2013288 uses the separate ticket queue. Board lanes consequently cannot expose running test output/progress, and stop cannot cancel tests or end an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level proofs to TESTS, so it remains advice for that task rather than an AGENTS blocker.",
+        "body": "The previously deferred integration remains outstanding. fasttest.py:271 launches tests directly, and review.py:279\u2013288 uses the separate ticket queue. Neither registers shared test entries, so the machine view cannot expose their output/progress and `forge stop` cannot cancel tests or stop an item's worker and test together. plans/FORGE-LANES-1.md:142 assigns this integration and its command-level proofs to TESTS; this remains advice for that task rather than an AGENTS blocker.",
         "file": "src/forge/machine.py",
         "line": 224,
         "priority": "P2",
         "title": "Later: connect test entries and cancellation in TESTS"
       }
     ],
-    "id": "0047e862-2d1f-4101-9d25-cd7771a4e430",
-    "status": "blocked"
+    "id": "8fa94164-f2e9-48e2-8df7-fd5c230012ad",
+    "status": "clean"
   },
   "round": 23,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-05T12:36:08+00:00",
@@ -100,6 +86,10 @@
     },
     {
       "at": "2026-10-07T08:05:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T08:54:49+00:00",
       "step": "review"
     }
   ],
