@@ -27,7 +27,7 @@ Each principle has a check; the check is an acceptance criterion, a CI check or 
 4. Fail loud, early, once: enforce at the command or commit, never silently. Check: a behaviour test for every refusal message.
 5. No rule without a test; no test without a rule. Check: the suite maps one test to one rule and tests no internal record format.
 6. Forge shrinks over time: every story removes at least as much process as it adds. Check: no module over 1,200 lines, a fixed ceiling on `forge` commands, refactor ratchet in CI.
-   The line ceiling counts only Python under `src/forge`, up to 7,000 lines (decision 0094).
+   There is no total Python line ceiling (decision 0106).
 7. Adapt to third parties, never mirror them (Autoreview, Codex, Claude, GitHub): read only used fields, tolerate new ones, pin versions. Check: one boundary contract test per external tool.
 8. The agent does the work; the human decides (approve a story, choose between options, merge). Check: human touches per story are counted; target three or fewer.
 9. Same result from any agent: logic in `forge` commands and git, thin host adapters. Check: the same behaviour tests run through both adapters.
@@ -589,9 +589,7 @@ already moved at the switch; the command tells the user to run `forge next`.
   (parametrised cases allowed). A CI check fails when:
   - a criterion has no test, or a test cites no criterion;
   - a module in `src/forge/` is over 1,200 lines;
-  - the command table has more than 20 commands;
-  - Python files under `src/forge/` exceed the 7,000-line ceiling in `pyproject.toml`
-    (decision 0094). Raising the ceiling needs an accepted decision.
+  - the command table has more than 21 commands (decision 0104);
 - CI prints each pull request's net lines added or removed.
 - The new suite runs on Linux, macOS and Windows runners, each in under 5 minutes.
 
@@ -643,8 +641,7 @@ already moved at the switch; the command tells the user to run `forge next`.
    recorded.
 5. **Forge stays small (principle 6).**
    - CI fails when a module in `src/forge/` is over 1,200 lines, when the command table has more
-     than 20 commands, or when Python files under `src/forge/` exceed the 7,000-line ceiling in
-     `pyproject.toml` (decision 0094).
+     than 21 commands (decision 0104). There is no total Python line ceiling (decision 0106).
    - CI prints each pull request's net lines.
 6. **Third-party contracts (principle 7).** Autoreview, the GitHub CLI, Claude Code (hook payloads
    and the headless worker) and Codex (hook payloads) each have one contract test. Each test feeds
