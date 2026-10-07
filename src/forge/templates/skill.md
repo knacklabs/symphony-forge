@@ -117,6 +117,8 @@ include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
+Finished stories, tasks and fixes older than seven days are left out of JSON;
+the HTML board keeps their history. Each call reads current state without a history cache.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,

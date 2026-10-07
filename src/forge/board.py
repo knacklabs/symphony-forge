@@ -10,6 +10,7 @@ none of those. Without gh the page shows the state and its dates only.
 from __future__ import annotations
 
 import html
+import io
 import json
 import os
 import re
@@ -179,15 +180,18 @@ def _rollup(pr: Item) -> list[Item]:
         return []
 
 
-def machine_board(top: Path) -> Item:
+def machine_board(top: Path, history: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
     from forge import nextstep
 
     trees = story.worktrees(top)
-    landed = story.landed_ref(top)
+    history = history if history is not None else _machine_history(top)
+    landed = history["landed"]
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
-    for rel, state, where in _copies(top, landed):
+    for rel, state, where in history["copies"]:
+        if rel in history["expired"]:
+            continue
         if where == landed:
             merged.add(rel)
         if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
@@ -218,14 +222,15 @@ def machine_board(top: Path) -> Item:
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
         checks, events, failures = _checks(pr, cfg["checks"])
-        try:
-            lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
-                     else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
-                                          title, trees, set(), by_branch, {})[0])
-        except (repo.Refused, subprocess.CalledProcessError):
-            lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
             lines = [f"{title} is finished."]
+        else:
+            try:
+                lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
+                         else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
+                                              title, trees, set(), by_branch, {}, history)[0])
+            except (repo.Refused, subprocess.CalledProcessError):
+                lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
                      if isinstance(d, dict)}
         findings = [{"title": f.get("title") or "Untitled finding", "priority": f.get("priority")} for n, f in
@@ -400,7 +405,7 @@ def machine_board(top: Path) -> Item:
             children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))
         else:
             key = match["key"]
-            completed = story.completed(top, key, landed)
+            completed = history["stories"].get(key, {})
             if state.get("status") != "done" and completed.get("status") == "done":
                 state = completed
             text = _read(top, where, f"plans/{key}.md")
@@ -489,28 +494,109 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     return stories, fixes, prs
 
 
-def _copies(top: Path, landed: str) -> list[tuple[str, Item, Path | str]]:
+def _blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+    """Read git objects in one process; sizes are bytes, including on Windows."""
+    if not specs:
+        return {}
+    done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                          input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True,
+                          check=True, env={**os.environ, "FORGE_WORKER": "1"})
+    contents, texts = io.BytesIO(done.stdout), {}
+    for spec in specs:
+        header = contents.readline()
+        if not header.endswith(b" missing\n"):
+            text = contents.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
+            contents.read(1)
+    return texts
+
+
+def _machine_history(top: Path) -> Item:
+    """A fresh bulk read: omit old completions before any per-item command work."""
+    landed = story.landed_ref(top)
+    history: Item = {"landed": landed}
+    copies = _copies(top, landed, history)
+    log = repo.git("log", "--first-parent", "--diff-filter=A", "--no-renames",
+                   "--format=%x00%cI%x00%B%x00", "--name-only", landed, "--",
+                   ".factory/stories", ".factory/fixes", cwd=top).split("\0")[1:]
+    dates, messages = {}, {}
+    for at, message, paths in zip(log[::3], log[1::3], log[2::3]):
+        for rel in paths.splitlines():
+            if STATE.fullmatch(rel) and rel not in dates:
+                dates[rel], messages[rel] = _when(at).isoformat(), message
+    landed_states = {rel: state for rel, state, where in copies if where == landed}
+    states = {STATE.fullmatch(rel)["key"]: state for rel, state in landed_states.items()
+              if STATE.fullmatch(rel)["key"] and not STATE.fullmatch(rel)["task"]}
+    history.update(copies=copies, stories=states, dates=dates, messages=messages, states=landed_states)
+    for key in states:
+        states[key] = story.completed(top, key, landed, history)
+    cutoff = (_when(repo.now()) or datetime.now(timezone.utc)) - timedelta(days=7)
+    expired = {rel for rel, at in dates.items() if not rel.endswith("/story.json")
+               and _when(at) is not None and _when(at) < cutoff}
+    best: dict[str, Item] = {}
+    for rel, state, _ in copies:
+        if rel not in best or len(_steps(state)) > len(_steps(best[rel])):
+            best[rel] = state
+    for rel, state in best.items():
+        match = STATE.fullmatch(rel)
+        if match["key"] and not match["task"] and states.get(match["key"], {}).get("status") == "done":
+            state = states[match["key"]]
+        if state.get("status") == "done" and (at := _when(state.get("finished"))) and at < cutoff:
+            expired.add(rel)
+    for rel in best:
+        match = STATE.fullmatch(rel)
+        if match["task"] and repo.state_path(match["key"]) in expired:
+            expired.add(rel)
+    return {**history, "expired": expired}
+
+
+def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[str, Item, Path | str]]:
     """Every copy of every state file as (path, state, where): local worktrees first (the freshest,
     so they win a tie), then Forge's branches on the remote, then the default branch."""
     found: list[tuple[str, Item, Path | str]] = []
-    for branch, path in story.worktrees(top).items():
+    trees = story.worktrees(top)
+    for branch, path in trees.items():
         if branch.startswith(PREFIXES):
             for file in sorted(path.glob(".factory/**/*.json")):
                 rel = file.relative_to(path).as_posix()
                 if STATE.fullmatch(rel):
                     found.append((rel, story.json_of(file.read_text(encoding="utf-8")), path))
-    refs = repo.git("for-each-ref", "--format=%(refname)",
-                    *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES), cwd=top).split()
-    blobs: dict[str, Item] = {}  # the same file sits on many branches; read each version once
-    for ref in [*refs, landed]:
-        listing = repo.git("ls-tree", "-r", ref, "--", ".factory/stories", ".factory/fixes", cwd=top)
-        for line in listing.splitlines():
-            meta, rel = line.split("\t", 1)
-            if STATE.fullmatch(rel):
-                blob = meta.split()[2]
-                if blob not in blobs:
-                    blobs[blob] = story.json_of(repo.git("cat-file", "blob", blob, cwd=top))
-                found.append((rel, blobs[blob], ref))
+    listing = repo.git("for-each-ref", "--format=%(refname) %(tree)",
+                       *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
+                       *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()), cwd=top)
+    refs = dict(line.split() for line in listing.splitlines())
+    refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
+    empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
+    empty.check_returncode()
+    # Comparing each unique tree with Git's empty tree lists all its blobs in one process.
+    snapshots: dict[str, dict[str, str]] = {tree: {} for tree in refs.values()}
+    # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
+    done = subprocess.run([shutil.which("git") or "git", "diff-tree", "--stdin", "-r", "--raw",
+                           "-z", "--no-abbrev", "--no-renames", "--", ".factory/stories",
+                           ".factory/fixes", "plans"], cwd=top,
+                          input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots).encode("utf-8"),
+                          capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
+    fields = iter(done.stdout.decode("utf-8", errors="replace").split("\0"))
+    for field in fields:
+        for line in field.splitlines():
+            if line.startswith(":"):
+                rel = next(fields)
+                if STATE.fullmatch(rel) or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*\.md", rel):
+                    snapshots[tree][rel] = line.split()[3]
+            elif line:
+                tree = line.split()[1]
+    texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
+    blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    for ref, tree in refs.items():
+        if ref == landed or ref.startswith("refs/remotes/"):
+            found.extend((rel, blobs[blob], ref) for rel, blob in snapshots[tree].items() if STATE.fullmatch(rel))
+    if history is not None:
+        history["worktrees"] = trees
+        history["ref_states"] = {ref: {rel: blobs[blob] for rel, blob in snapshots[tree].items()
+                                       if STATE.fullmatch(rel)} for ref, tree in refs.items()}
+        history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
+                           for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
+                           for rel, blob in snapshots[tree].items() if rel.startswith("plans/")}
     return found
 
 

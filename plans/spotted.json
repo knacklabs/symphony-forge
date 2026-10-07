@@ -1163,8 +1163,8 @@
       "text": "Not done: board command coverage with a story, fix, running worker and open pull request",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: command test for a human-only merge returning null\tFORGE-MOD-1/VIEWS",
@@ -1174,8 +1174,8 @@
       "text": "Not done: command test for a human-only merge returning null",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: command test for a non-runnable first Next line containing a placeholder\tFORGE-MOD-1/VIEWS",
@@ -1185,8 +1185,8 @@
       "text": "Not done: command test for a non-runnable first Next line containing a placeholder",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tNot done: machine-view tests for new and upgraded client repos\tFORGE-MOD-1/VIEWS",
@@ -1196,8 +1196,8 @@
       "text": "Not done: machine-view tests for new and upgraded client repos",
       "from": "blocking",
       "item": "FORGE-MOD-1/VIEWS",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_machine_views.py\tThe Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
@@ -1207,8 +1207,8 @@
       "text": "The Windows machine-view test exceeded its timeout and crashed its worker; no matching default-branch failure was found.",
       "from": "worker",
       "item": "several-tests-fail-on-main-in-a-full-loc",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
@@ -2054,8 +2054,8 @@
       "text": "The reported Windows worker crash still needs a Windows rerun.",
       "from": "worker",
       "item": "FORGE-MOD-1/LIVE",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "fast-views"
     },
     {
       "key": "edge\ttests/test_next_announces_new_forge_releases.py\tThe reported Windows timing assertion still needs a Windows rerun.",
@@ -2109,6 +2109,61 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 517,
+      "text": "Not done: Git command counts still grow with old finished items",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: Git command counts still grow with old finished stories linked to specs\tfast-views",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 298,
+      "text": "Not done: Git command counts still grow with old finished stories linked to specs",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: tests/test_machine_views.py stays within its time limit on Windows CI\tfast-views",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 107,
+      "text": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI",
+      "from": "blocking",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDisable signature output when reading the landed tree ID",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 566,
+      "text": "Disable signature output when reading the landed tree ID",
+      "from": "review",
+      "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tDo not expire restarted tasks and fixes using reverted merge dates",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 532,
+      "text": "Do not expire restarted tasks and fixes using reverted merge dates",
+      "from": "review",
+      "item": "fast-views",
       "status": "open",
       "closed_by": null
     }

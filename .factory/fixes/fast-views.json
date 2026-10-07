@@ -1,0 +1,70 @@
+{
+  "base": "39c22897865905b190a9ef0679919ec43368e5d3",
+  "branch": "fix/fast-views",
+  "done_when": "forge board --json and forge next --json leave out stories, tasks and fixes that were merged or done more than 7 days ago (they still show in the text board's history), with no cache; their output is otherwise unchanged; a command test on a repo with old finished items shows they are left out and that the number of git commands per call does not grow with them (no wall-clock timing); tests/test_machine_views.py stays within its time limit on Windows CI; new and earlier-adopted client repos get it, with a command test for each",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/nextstep.py",
+    "tests/test_machine_views_recent_finished_items.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "294013e439c66bde4a63d61c5b851c65c8ab0fcc5e9c663a41c6431dd7c96d03",
+    "changed": "18cd6030d55802f425a6bfcfa61e1db0b3c6790a3a5ce54c692a6801c2977787",
+    "commit": "9e8f6ab86a9912a1f0a2b4d46ad31b49e813e0ee",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previous advisory remains open. For a signed landed commit with log.showSignature=true, git show includes signature-verification output, per the [Git configuration contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-logshowSignature). src/forge/repo.py:144 returns the entire trimmed stdout, which board.py:576 inserts into diff-tree input as a tree ID. This corrupts the snapshot batch used by both JSON commands and the human board. Resolve the tree with rev-parse <ref>^{tree}, or explicitly disable signature output.",
+        "file": "src/forge/board.py",
+        "line": 567,
+        "priority": "P2",
+        "title": "Disable signature output when reading the landed tree ID"
+      },
+      {
+        "body": "The previous advisory remains open. This comprehension expires historical additions even when their files no longer exist in landed_states. After reverting an old merge and removing its refs, a task or fix can restart with the same identity: src/forge/task.py:219\u2013221 checks current file existence, and task.py:189,273 use that check when starting work. The ongoing replacement is consequently omitted from both JSON views, and nextstep.py:209 also suppresses restarted-fix guidance. Require the path to exist in landed_states before expiring it from a historical merge date.",
+        "file": "src/forge/board.py",
+        "line": 533,
+        "priority": "P2",
+        "title": "Do not expire restarted tasks and fixes using reverted merge dates"
+      }
+    ],
+    "id": "393855b7-398b-4ba9-a917-2db238eb9525",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-07T03:31:17+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-07T04:30:04+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:02:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:10:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:21:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T05:48:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T06:02:35+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge board --json takes about 45 seconds and forge next --json about 10, so the pane's 10-second refresh would keep a core busy in every open Claude Code session",
+  "worker": "codex"
+}
