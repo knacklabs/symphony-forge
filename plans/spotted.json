@@ -507,6 +507,39 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends a named running or waiting run in either lane and frees its place\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 233,
+      "text": "Not done: forge stop ends a named running or waiting run in either lane and frees its place",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: forge stop ends the running process tree before freeing its place\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 234,
+      "text": "Not done: forge stop ends the running process tree before freeing its place",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: unverifiable process identity refuses with one line\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 230,
+      "text": "Not done: unverifiable process identity refuses with one line",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -705,6 +738,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 74,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tNot done: each running reviewer's actual model and effort\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -844,6 +888,17 @@
       "text": "Not done: A suite test proves CI consumes the committed test durations",
       "from": "blocking",
       "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 54,
+      "text": "Standard: Touch only what the task needs",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
       "status": "open",
       "closed_by": null
     },
@@ -1046,6 +1101,61 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission survives sequential model launches\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_agents.py",
+      "line": 136,
+      "text": "Not done: agent admission survives sequential model launches",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission, machine view and stop are tested through both adapters\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_agents.py",
+      "line": 29,
+      "text": "Not done: agent admission, machine view and stop are tested through both adapters",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_agents.py\tNot done: proof list\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_agents.py",
+      "line": 103,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: a process whose pid was reused is not terminated\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 154,
+      "text": "Not done: a process whose pid was reused is not terminated",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: machine load and memory come from the OS\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 30,
+      "text": "Not done: machine load and memory come from the OS",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tNot done: activity actions and review-result events in both views\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -1132,6 +1242,17 @@
       "item": "several-tests-fail-on-main-in-a-full-loc",
       "status": "done",
       "closed_by": "fast-views"
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: proof list\tFORGE-LANES-1/AGENTS",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 195,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\ttests/test_machine_views_recent_finished_items.py\tNot done: tests/test_machine_views.py stays within its time limit on Windows CI\tfast-views",
@@ -1629,6 +1750,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/machine.py\tHandle existing agents without a dedicated process group",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 233,
+      "text": "Handle existing agents without a dedicated process group",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/merge.py\tPreserve completion when sibling tasks merge concurrently",
       "kind": "edge",
       "path": "src/forge/merge.py",
@@ -1823,6 +1955,50 @@
       "text": "Parse pytest's singular and selected test totals",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane metadata when the provider selects its model and effort",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 509,
+      "text": "Refresh lane metadata when the provider selects its model and effort",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane metadata when the selected model changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 478,
+      "text": "Refresh lane metadata when the selected model changes",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tRefresh lane model metadata after defaults or fallback selection",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 472,
+      "text": "Refresh lane model metadata after defaults or fallback selection",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tRefresh review lane metadata when Autoreview selects another model",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 472,
+      "text": "Refresh review lane metadata when Autoreview selects another model",
+      "from": "review",
+      "item": "FORGE-LANES-1/AGENTS",
       "status": "open",
       "closed_by": null
     },

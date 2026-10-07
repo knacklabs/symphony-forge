@@ -219,7 +219,7 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         elif session and session.get("checkout") != str(top):
             why, session = f"its session was started in another checkout, {session['checkout']}", None
-        with machine.agent_slot(top, "read"):
+        with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number)
         said, failed = done.stdout.strip(), done.returncode
@@ -227,7 +227,8 @@ def read(args: Any) -> int:
     else:
         thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
         # One read per item, nothing left running, and one of the machine's agent slots.
-        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read"):
+        with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read", target,
+                **repo.models(config, "grill", reader)):
             name = f"Read · {target}"
             if len(name) > 60:
                 prefix = name[:59]
@@ -714,8 +715,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=errors, text=True, encoding="utf-8",
                                   errors="replace",
-                                  env={**os.environ, "FORGE_WORKER": "1"}) as reader:
-                machine.started(reader.pid)
+                                  env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader, \
+                    machine.agent_process(reader):
                 events = ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
                           {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
                           {"type": "user", "message": {"role": "user", "content": text}})

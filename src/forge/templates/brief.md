@@ -7,6 +7,7 @@ nothing more.
 
 $delegation
 - Edit files only inside this checkout.
+- Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - Forge workers, readers and reviewers never act on mod events; those turns belong to the
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the

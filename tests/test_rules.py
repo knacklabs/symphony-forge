@@ -65,8 +65,8 @@ def test_5_forge_stays_small(repo):
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    # Decision 0104 adds one shared test command for the picker and the test lane.
-    assert len(commands) <= 21, f"{len(commands)} commands: {commands}"
+    # Decisions 0104 and 0105 add test and person-only stop; board owns the lane view.
+    assert len(commands) <= 22, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 

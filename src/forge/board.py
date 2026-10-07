@@ -24,7 +24,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import __version__, approval, codex, repo, story, task
+from forge import __version__, approval, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -423,7 +423,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()), "events": recent}
+    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()), "events": recent,
+            "lanes": machine.view(), "machine": machine.load()}
 
 
 def numbers_line(top: Path, checks: list[str]) -> str:

@@ -33,6 +33,19 @@ the install line to fix it.
   problem it finds. With Codex workers, it also checks the pinned Codex SDK, project trust and
   hook health; `forge doctor --fix` installs the SDK when needed.
 
+## Sharing this machine
+
+Forge gives half this machine's available cores to agents and half to tests, with at least one
+core in each budget. Work rounds, plan reads and close reviews across every repo share the agent
+line, first come first served; waiting agents say their place. The test lane holds one run at a
+time. `forge doctor` shows the split.
+
+`forge board --json` shows both machine-wide lanes and OS load and memory. Only a person can run
+`forge stop <item>` to stop all that item's runs in this repo, add `--repo <root>` for another repo,
+or use `forge stop --id <id>` for one board entry. The host's stop key asks first. Running process
+trees end before a place is freed; waiting runs leave the line and never start. If Forge cannot
+verify the recorded process, it refuses and terminates nothing. Workers never run this command.
+
 ## Where to start
 
 Run `forge next` whenever you're unsure. It says where things stand in one sentence and prints the
@@ -90,7 +103,7 @@ In a client repo, finish the prototype review and customer sign-off above before
    those repos automatically. `forge hook approval` records the approval in the story's repo.
 5. For each task `forge next` lists as ready: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`, then `forge close <KEY>/<TASK>`. Tasks with separate Scopes run at
-   the same time, but one machine runs at most 2 Forge agents at once (work rounds, plan reads and
+   the same time, but one machine runs agents on half its available cores (at least one; work rounds, plan reads and
    close reviews, across all its repos): the rest wait in line, first come, first served, and print
    their place when they start waiting and each time it changes; a run that dies frees its place
    once its agent ends.

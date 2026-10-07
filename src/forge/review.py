@@ -506,7 +506,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-        with machine.agent_slot(top, "review"):
+        with machine.agent_slot(top, "review", item, **chosen):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine, **chosen) as ran:
                     findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
@@ -588,26 +588,28 @@ def _attempt(argv: list[str], cwd: Path, out: Path,
              selected: dict[str, str], top: Path, item: str, run_id: str,
              strict: bool = False) -> tuple[list[dict[str, Any]], str]:
     """Run Autoreview once: its findings, or the reason the run doesn't count."""
+    from forge import codex  # importing it here avoids sync's hook-import cycle
     out.unlink(missing_ok=True)
     proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"})
-    machine.started(proc.pid)
-    last = ""
-    for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
-        line = line.replace(b"\0", b"")
-        sys.stderr.buffer.write(line)
-        sys.stderr.flush()
-        last = line.decode("utf-8", "replace").strip() or last
-        if last.startswith("model: "):
-            selected["model"] = last.removeprefix("model: ")
-        elif last.startswith("thinking: "):
-            selected["effort"] = last.removeprefix("thinking: ")
-        elif match := re.fullmatch(
-                r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
-            selected["model"] = match[1]
-        if line.strip():
-            repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
-    code = proc.wait()
+                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
+                            **codex.GROUP)
+    with proc, machine.agent_process(proc):
+        last = ""
+        for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
+            line = line.replace(b"\0", b"")
+            sys.stderr.buffer.write(line)
+            sys.stderr.flush()
+            last = line.decode("utf-8", "replace").strip() or last
+            if last.startswith("model: "):
+                selected["model"] = last.removeprefix("model: ")
+            elif last.startswith("thinking: "):
+                selected["effort"] = last.removeprefix("thinking: ")
+            elif match := re.fullmatch(
+                    r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
+                selected["model"] = match[1]
+            if line.strip():
+                repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
+        code = proc.wait()
     try:
         # Decode first: JSON represents null characters as escaped text.
         report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {

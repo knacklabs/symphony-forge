@@ -35,6 +35,15 @@ from forge.cli import main
 sys.exit(main())
 """
 
+
+def machine_cores(repo, count, system_count=None):
+    """Report a machine's CPU count at the command boundary, without a production test flag."""
+    shim = repo.bin / "forge"
+    source = shim.read_text("utf-8")
+    shim.write_text(source.replace("from forge.cli import main",
+        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
 import json, pathlib, sys

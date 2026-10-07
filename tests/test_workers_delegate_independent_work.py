@@ -19,6 +19,8 @@ STORY = "codex-spawns-subagents-only-when-explici"
 
 def _invitation(brief):
     guidance = " ".join(brief.split())
+    # New and resumed workers must learn the person-only stop rule after an upgrade.
+    assert "Never run `forge stop`" in guidance
     for invitation in ("spawn the repo's subagent roles", "independent parts",
                        "explorer to trace code paths", "tester to write tests while you build",
                        "separate files edited in parallel", "at most 3 subagents at a time",
