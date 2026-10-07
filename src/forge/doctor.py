@@ -283,7 +283,7 @@ def doctor(args: argparse.Namespace) -> int:
     if args.fix and needs_sdk and shutil.which("uv") and codex.sdk_problem():
         try: codex.install()
         except repo.Refused as refused: sdk_failed = str(refused).partition("\nNext: ")[0]
-    for tool in ("git", "gh", "uv") if cfg["workers"] == "codex" else ("git", "gh", "uv", "claude"):
+    for tool in ("git", "gh", "uv"):
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
@@ -403,5 +403,17 @@ def doctor(args: argparse.Namespace) -> int:
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and test runs on {budget} cores.")
+    claude = shutil.which("claude")
+    version = None
+    if claude:
+        try:
+            checked = subprocess.run([claude, "--version"], cwd=top, input="", capture_output=True,
+                                     text=True, encoding="utf-8", errors="replace", timeout=30)
+            if checked.returncode == 0:
+                version = re.search(r"(\d+)\.(\d+)\.(\d+)", checked.stdout)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    if not version or tuple(map(int, version.groups())) < (2, 1, 287):
+        print("- Warning: Claude Code is missing or older than v2.1.287; upgrade Claude Code to use the Forge pane.")
     if rows: repo.refuse(REFUSALS["problems"], count=len(rows))
     return 0

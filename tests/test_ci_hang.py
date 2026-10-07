@@ -13,7 +13,8 @@ def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
         for command in re.findall(r"pytest tests[^\n\"]*", text):
             seen += 1
             assert "-o faulthandler_timeout=120" in command, f"{name}: {command}"
-    assert seen == 2
+    # The plugin installation job adds a third pytest command to the two suite jobs.
+    assert seen == 3
 
 
 def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
@@ -26,7 +27,7 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
             uv_args = command.split("pytest tests", 1)[0]
             assert "--group" not in uv_args and "--with" not in uv_args, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
-    assert seen == 2
+    assert seen == 3
 
 
 def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow(repo):

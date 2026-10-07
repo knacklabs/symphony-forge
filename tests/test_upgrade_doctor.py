@@ -4,15 +4,15 @@ STORY = "FORGE-UPGRADE-1"
 Each test is named test_<n>_ after the story's Done-when item it proves.
 """
 import json
-import os
 import re
+import sys
 
 import pytest
 
-from conftest import machine_cores
+from conftest import _install, machine_cores
 
 from test_doctor_fix_files import _land, _set
-from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
+from test_setup import _autoreview, _fresh_client, _stub_forge, _version
 
 INSTALL = "uv tool install git+https://github.com/knacklabs/symphony-forge@{pin}"
 
@@ -64,9 +64,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         monkeypatch.setenv("CODEX_HOME", str(codex_home))
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
-        _executable(repo.bin / "claude", "#!/bin/sh\n")
-        if os.name == "nt":
-            (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
+        _install(repo.bin, "claude", f"#!{sys.executable}\nprint('2.1.291 (Claude Code)')\n")
         _stub_forge(tmp_path, monkeypatch)
     else:
         gh.respond("auth", "status", exit=1)  # another check fails too

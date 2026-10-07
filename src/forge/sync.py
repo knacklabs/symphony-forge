@@ -13,6 +13,8 @@ import json
 import os
 import pkgutil
 import re
+import sys
+import shutil
 import subprocess
 import tempfile
 import tomllib
@@ -463,3 +465,36 @@ def sync(args: argparse.Namespace) -> None:
         print("Installed the git hooks that check each commit and push.")
     elif not changed:
         print(f"Nothing to change: the adapters and git hooks already match Forge {cfg['version']}.")
+
+
+def install_mod(top: Path) -> None:
+    """Claude owns the one user-scoped install; no plugin files belong in the repo."""
+    claude = shutil.which("claude")
+    if not claude:
+        return
+
+    def run(*args: str) -> str:
+        done = subprocess.run([claude, "plugin", *args], cwd=top, input="",
+                              capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", timeout=30)
+        if done.returncode:
+            raise ValueError((done.stderr or done.stdout).strip() or f"exit code {done.returncode}")
+        return done.stdout
+
+    try:
+        markets = json.loads(run("marketplace", "list", "--json"))
+        installed = json.loads(run("list", "--json"))
+        if not isinstance(markets, list) or not isinstance(installed, list):
+            raise ValueError("Claude Code returned an unreadable plugin list")
+        if not any(isinstance(row, dict) and row.get("name") == "forge" for row in markets):
+            run("marketplace", "add", "knacklabs/symphony-forge")
+        run("marketplace", "update", "forge")
+        if any(isinstance(row, dict) and row.get("id") == "forge@forge"
+               and row.get("scope") == "user" for row in installed):
+            run("update", "forge@forge", "--scope", "user")
+        else:
+            run("install", "forge@forge", "--scope", "user")
+    except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+        detail = str(error).splitlines()[0]
+        print(f"- Warning: Could not update the Forge mod: {detail}; run forge sync to retry.", file=sys.stderr)
+        return

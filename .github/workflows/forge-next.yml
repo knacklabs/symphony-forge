@@ -12,6 +12,19 @@ permissions:
   actions: read
 
 jobs:
+  plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global @anthropic-ai/claude-code@2.1.291
+      - uses: astral-sh/setup-uv@v6
+      - name: Check and reload the plugin through the repository test entry
+        run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+
   tests:
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
