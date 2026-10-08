@@ -1,0 +1,42 @@
+{
+  "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
+  "branch": "fix/brief-close-pushes",
+  "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
+  "flagged": [
+    "src/forge/templates/brief.md",
+    "tests/test_workers_leave_ci_to_close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "747e11ad65fb7680c5f06c7eb296da2474b3ad45e50ee518ac61eae1a147b5e7",
+    "changed": "ce27f3bb2a9c5178cff94ee6553dabf9a5115192eee9f0d37d9acfc02551f4cc",
+    "commit": "d98af8a42b54d01f73dac01a4c14468fafe8f136",
+    "dismissals": [],
+    "findings": [],
+    "id": "903a74a5-c4ec-4adb-92fb-7669022b5078",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T12:27:03+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T12:31:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:17:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:21:00+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Workers stop with a question asking the coordinator to push their commit so CI can run, because the worker brief forbids pushing but never says close pushes the branch and runs CI; it cost a round twice on 2026-10-07/08",
+  "worker": "codex"
+}
