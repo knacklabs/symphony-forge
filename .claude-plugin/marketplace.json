@@ -5,13 +5,13 @@
   "plugins": [
     {
       "name": "forge",
-      "version": "1.2.6",
+      "version": "1.2.7",
       "description": "Forge's board and machine views inside Claude Code.",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/knacklabs/symphony-forge.git",
         "path": "src/forge/mod",
-        "ref": "v1.2.6"
+        "ref": "v1.2.7"
       }
     }
   ]

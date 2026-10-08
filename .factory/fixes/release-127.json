@@ -1,0 +1,42 @@
+{
+  "allow_large": "A version bump touches the version, the pin, the mod's plugin and marketplace entries, the install scripts, sync output and the tests that pin them",
+  "base": "c2ea7970b0e102f47151501d55fff615d4c4f82d",
+  "branch": "fix/release-127",
+  "done_when": "Forge's version is 1.2.7 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.7), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
+  "flagged": [
+    ".factory/fixes/release-127.json"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3cdef0889b75b8460a97ecc1176852ff64d36e6140d14055b5c4e3e51be22195",
+    "changed": "d3c5fb9e8075e606c3a30ce18e8db6409718dc996dd20a0ed29dfae3313c62df",
+    "commit": "6fb99a7854692a57d79e36433172412cfd5ae1d5",
+    "dismissals": [],
+    "findings": [],
+    "id": "2254871e-fa70-4b76-988f-a38d6502ddd8",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T07:06:02+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T07:07:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T07:15:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T07:39:23+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.7 for Forge inside Claude Code (pane, strip, Machine tab, event turns), the shared agent and test lanes, and the speed and simplification fixes merged since v1.2.6",
+  "worker": "codex"
+}

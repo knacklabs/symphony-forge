@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _source_repo(repo):
     repo.git("checkout", "-q", "-b", "fix/command-page")
-    repo.write("forge.toml", 'version = "v1.2.6"\nrepo = "forge-source"\n')
+    # Exercise this checkout's sync, rather than routing to a historical release.
+    repo.write("forge.toml", 'version = "v1.2.7"\nrepo = "forge-source"\n')
     return repo
 
 
