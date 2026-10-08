@@ -1,10 +1,12 @@
 {
   "branch": "task/FORGE-MOD-1-GUIDE2",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T04:35:16+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "worker": "codex"
 }
