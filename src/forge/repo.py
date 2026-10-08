@@ -517,8 +517,10 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     trees = story.worktrees(top)
     here = {path: _pin((path / "forge.toml").read_text(encoding="utf-8"))
             for path in trees.values() if (path / "forge.toml").is_file()}
-    landed = _pin(story.show(top, story.landed_ref(top), "forge.toml") or "")
-    if current_branch(top) == default_branch(top) and _older(pinned) and _older(landed):
+    landed_ref = story.landed_ref(top)
+    landed = _pin(story.show(top, landed_ref, "forge.toml") or "")
+    branch = current_branch(top)
+    if branch == default_branch(top) and _older(pinned) and _older(landed):
         upgrade = next((branch[4:] for branch, path in trees.items()
                         if branch.startswith("fix/") and here.get(path) == __version__), "")
         if upgrade:
@@ -532,8 +534,12 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
                pinned=f"v{pinned}", words=words)
     # Run the pinned release through uv instead, unless this already is that run (no loop).
     if shutil.which("uv") and os.environ.get("FORGE_PINNED_RUN") != f"v{pinned}":
+        advice = (f" Merge {default_branch(top)} into this branch to use Forge v{__version__} "
+                  "and its rules." if _older(pinned) and landed == __version__
+                  and landed_ref == f"origin/{default_branch(top)}"
+                  and branch and branch != default_branch(top) else "")
         print(f"Forge v{__version__} is installed, but this repo pins v{pinned}, so v{pinned} runs "
-              "through uv.", file=sys.stderr)
+              f"through uv.{advice}", file=sys.stderr)
         sys.exit(run_release(f"v{pinned}", sys.argv[1:], cwd))
     refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
 

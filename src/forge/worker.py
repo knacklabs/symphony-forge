@@ -22,6 +22,10 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 SERIOUS = ("P0", "P1")
+REVIEW_LOOP = (
+    "Close holds the fourth review after three consecutive rounds blocked by serious findings, "
+    "whatever files they were in. The existing same-file stop still applies from the third round. "
+    "Wait for the coordinator to record the human's narrow, split or accept choice before continuing.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
@@ -340,6 +344,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {
+        "review_loop": REVIEW_LOOP,
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
         on.add("coordinator")
@@ -388,9 +393,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
+        brief += "\n" + REVIEW_LOOP + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
                   "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
+        brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
+                  "CI output reaches you in your next round. If you need CI evidence, commit and "
+                  "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
+                  "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:

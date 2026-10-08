@@ -18,7 +18,7 @@ ITEM, BRANCH = "tidy-readme", "fix/tidy-readme"
 URL = "https://github.com/acme/shop/pull/7"
 RUNS = ["api", "--paginate", "--jq", ".check_runs[]"]
 # forge work's own "Building <item> with <worker> ..." line is not one of land's steps.
-STEPS = re.compile(r"(Building(?! \S+ with )|Closing|Checks are still|Fix round|Re-running"
+STEPS = re.compile(r"(Building(?! \S+ with )|Closing|Fix round|Re-running"
                    r"|Merging|Stopped"
                    r"|\S+ is ready; a human)")
 
@@ -146,9 +146,6 @@ def _refusal(done) -> list[str]:
     return done.stderr.splitlines()[-2:]
 
 
-PENDING = [run("tests", None, "in_progress"), run("forge-pr-check")]
-
-
 def _unbuilt_fix_built_once_then_merged(env):
     _agent(env)
     _fix(env)
@@ -173,30 +170,6 @@ def _made_by_forge_closes_without_a_worker(env, kind):
     assert done.returncode == 0, done.stderr
     assert _steps(done)[0] == f"Closing {ITEM}."
     assert not _workers(env)
-
-
-def _checks_pending_on_every_look(env):
-    _agent(env)
-    _fix(env, "working", worked=True)
-    _queue(env, RUNS, *_runs(PENDING))
-    done = _land(env)
-    assert done.returncode == 1
-    assert _steps(done) == [f"Closing {ITEM}.", "Checks are still running on the pushed head; waiting again."] * 2 + [
-        f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
-    assert _refusal(done) == ["The checks are not green yet: tests is still running.",
-                              f"Next: forge close {ITEM}"]
-    assert not env.gh_calls("pr", "merge")
-
-
-def _checks_pending_then_green(env):
-    _agent(env)
-    _fix(env, "working", worked=True)
-    _queue(env, RUNS, *_runs(PENDING, GREEN))
-    done = _land(env)
-    assert done.returncode == 0, done.stderr
-    assert _steps(done) == [f"Closing {ITEM}.", "Checks are still running on the pushed head; waiting again.",
-                            f"Closing {ITEM}.", f"Merging {ITEM}."]
-    assert len(env.gh_calls("pr", "merge")) == 1
 
 
 def _failed_worker_stops_then_builds_again(env, monkeypatch):
@@ -306,7 +279,6 @@ def _merge_conflict(env):
 
 
 ONE = [_unbuilt_fix_built_once_then_merged, _working_fix_closes_without_a_worker,
-       _checks_pending_on_every_look, _checks_pending_then_green,
        _failed_worker_stops_then_builds_again, _merged_while_close_looks,
        _merged_after_close_returned, _no_checks_named,
        _unsynced_upgrade, _already_merged, _story_key_and_malformed_item_refused,
@@ -348,18 +320,24 @@ def _blocked_once_then_clean(env):
     assert "Saving drops the greeting" in worker["brief"]
 
 
-def _blocked_four_times(env):
+def _three_blocked_reviews_hold_the_fourth(env):
+    # Previously land exhausted its fix budget after a fourth blocked review;
+    # now close's any-file hold stops that review before Autoreview runs.
     where = _fix(env, "working", worked=True)
     env.reviews(blocked(BLOCKER))
     done = _land(env)
     assert done.returncode == 1
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
     assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
-        f"Closing {ITEM}.", f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}."]
+        f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     assert _refusal(done) == [
-        "The review left serious findings open: finding 1 (Saving drops the greeting).",
-        f'Next: forge work {ITEM}, or forge close {ITEM} --dismiss <n> --because "<file:line> <reason>"']
+        f"Review round 4 of {ITEM} still finds serious problems in app.py, which an earlier "
+        "round flagged too, so Forge stops sending the worker back. Ask the human "
+        "to narrow the part, split it, or accept the remaining findings.",
+        f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
     assert len(_workers(env)) == 3
+    assert len(env.review_calls()) == 3
+    assert not env.gh_calls("pr", "merge")
     record = json.loads((where / f".factory/fixes/{ITEM}.json").read_text("utf-8"))
     assert record["review"]["dismissals"] == []
 
@@ -432,7 +410,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
     assert len(_sent(log, "turn/start")) == 1
 
 
-TWO = [_blocked_once_then_clean, _blocked_four_times, _red_check_gives_a_fix_round,
+TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
        _dismissed_before_land, _codex_question_stops]
 
