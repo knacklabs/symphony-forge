@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "000b7dcf37d3f3b9ddce49ec9045976cfb1fcc8b724071a5167184fcfbb4f8b7",
-    "changed": "957058211dca4544fdbc32612a46fc9d666823ad8282ee6d1b241513de5df757",
-    "commit": "c2fd2ab76f06a2b5d3e6a7906f6bb89d1538ea72",
+    "branch_diff": "cad26f902d19a69e432f23814bf88f6e1c0df938fd618d018d1b644df155a13b",
+    "changed": "2b95f968680d256cab99bb02777b9f88ef8296e473df41920729a7b396d1172a",
+    "commit": "09696372dc7a4ea859184845be7ea17a66bcba88",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. The condition reads the installed pin from `origin/main`, but the notice tells the user to merge local `main`. The new test demonstrates this exact state: after fetching the upgrade at lines 60\u201365, local main still pins v1.2.2. Following the notice then yields an already-up-to-date merge and leaves the old pin unchanged. `src/forge/story.py:585` explicitly distinguishes the fetched ref from the local default. Name `landed_ref` in the notice or explain that the local default must first be updated; align the guidance in `src/forge/templates/skill.md:566` and both generated host skills. The test updates local main separately at line 73 before following the advice, so it misses this failure.",
+        "body": "The previous P2 remains open. The condition checks `origin/main`, but the notice tells the user to merge local `main`. In the new test at lines 60\u201365, fetching updates `origin/main` while local `main` still pins v1.2.2; following the displayed advice then produces an already-up-to-date merge and leaves the old release active. `src/forge/story.py:585` explicitly distinguishes these refs. The test updates local `main` separately at line 73 before merging it, masking the ineffective advice. Name `landed_ref` in the notice or explain that the local default must first be updated, and align `src/forge/templates/skill.md:571` and both generated host skills.",
         "file": "src/forge/repo.py",
         "line": 537,
         "priority": "P2",
         "title": "Point the merge advice at the fetched default branch"
       }
     ],
-    "id": "1ebc44ec-eedc-45a4-8706-e400c997b1e5",
+    "id": "510bb6c2-ce59-401d-9d3f-9293c65bdf37",
     "status": "clean"
   },
   "round": 4,
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-10-08T15:16:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:48:55+00:00",
       "step": "review"
     }
   ],
