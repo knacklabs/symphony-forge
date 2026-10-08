@@ -1,0 +1,31 @@
+{
+  "base": "98a551b55023274debb33e61f2b1067f4c960e60",
+  "branch": "fix/pending-ci-proof",
+  "done_when": "The shipped review instructions say a Done-when item whose named proof is a pull request check that hasn't finished yet is not reported as Not done when the check is configured to run on the pull request, because close's checks gate holds the merge until it passes; a failed check or a proof with no check behind it is still P1; a review-prompt test shows the rule for a new repo and for one adopted on an earlier release after sync",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fea836d460be8dc40f8751d2989a9dc05488f4bff806017b1234573545086fe6",
+    "changed": "883ecd016c21488927d5f48e41223e2b987ad1637c92478fe438778d37914849",
+    "commit": "b4fc0c8cf2d5c4d37c71a6df685052d850610527",
+    "dismissals": [],
+    "findings": [],
+    "id": "486fc96c-eca0-4238-890c-71ee28438fe9",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T10:29:00+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T10:36:35+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Close reviews while CI runs, so a Done-when whose proof is a CI check that hasn't finished (a client's image scan) gets a P1 'Not done' and costs a close round, though close's checks gate already holds the merge until that check passes (reported by a client session on v1.2.7)",
+  "worker": "codex"
+}
