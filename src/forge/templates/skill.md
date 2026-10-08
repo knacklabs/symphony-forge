@@ -38,7 +38,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
-| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
+| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
@@ -893,7 +893,9 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
-When close stops an item because a file keeps breaking, run no more `forge work` on that item.
+Close holds the fourth review after three consecutive rounds blocked by serious findings,
+whatever files they were in. The existing same-file stop still applies from the third round.
+When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
 Never re-run close or land past this stop until their choice is recorded.
 After their answer, record it with

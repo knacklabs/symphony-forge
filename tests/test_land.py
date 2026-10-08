@@ -320,18 +320,24 @@ def _blocked_once_then_clean(env):
     assert "Saving drops the greeting" in worker["brief"]
 
 
-def _blocked_four_times(env):
+def _three_blocked_reviews_hold_the_fourth(env):
+    # Previously land exhausted its fix budget after a fourth blocked review;
+    # now close's any-file hold stops that review before Autoreview runs.
     where = _fix(env, "working", worked=True)
     env.reviews(blocked(BLOCKER))
     done = _land(env)
     assert done.returncode == 1
     rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
     assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
-        f"Closing {ITEM}.", f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}."]
+        f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     assert _refusal(done) == [
-        "The review left serious findings open: finding 1 (Saving drops the greeting).",
-        f'Next: forge work {ITEM}, or forge close {ITEM} --dismiss <n> --because "<file:line> <reason>"']
+        f"Review round 4 of {ITEM} still finds serious problems in app.py, which an earlier "
+        "round flagged too, so Forge stops sending the worker back. Ask the human "
+        "to narrow the part, split it, or accept the remaining findings.",
+        f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
     assert len(_workers(env)) == 3
+    assert len(env.review_calls()) == 3
+    assert not env.gh_calls("pr", "merge")
     record = json.loads((where / f".factory/fixes/{ITEM}.json").read_text("utf-8"))
     assert record["review"]["dismissals"] == []
 
@@ -404,7 +410,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
     assert len(_sent(log, "turn/start")) == 1
 
 
-TWO = [_blocked_once_then_clean, _blocked_four_times, _red_check_gives_a_fix_round,
+TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
        _dismissed_before_land, _codex_question_stops]
 

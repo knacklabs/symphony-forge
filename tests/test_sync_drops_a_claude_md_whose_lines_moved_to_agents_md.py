@@ -1,4 +1,4 @@
-"""A CLAUDE.md whose lines all moved to AGENTS.md is deleted, so Claude Code reads them once."""
+"""forge.sync deletes a CLAUDE.md whose lines all moved to AGENTS.md, so Claude reads them once."""
 from __future__ import annotations
 
 from test_setup import _on_a_branch_with_forge_toml

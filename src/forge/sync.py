@@ -164,7 +164,8 @@ def _span(text: str, rel: str) -> tuple[int, int]:
 
 def _block(top: Path, rel: str, template: str) -> str:
     """The file with its Forge block replaced, or appended when it has none."""
-    text = read(top / rel)
+    path = top / rel
+    text = path.read_bytes().decode("utf-8") if path.is_file() else ""
     block = f"{BEGIN}\n{(TEMPLATES / template).read_text(encoding='utf-8').rstrip()}\n{END}"
     start, end = _span(text, rel)
     if start == -1:
@@ -186,7 +187,8 @@ def _agents(top: Path) -> str:
     moved = "\n".join(line.rstrip() for line in rest.splitlines()
                       if not line.strip() or line.strip() not in have)
     moved = re.sub(r"\n{3,}", "\n\n", moved).strip("\n")
-    return f"{text.rstrip()}\n\n{moved}\n" if moved.strip() else text
+    if not moved.strip(): return text
+    return text + ("\n" if text.endswith("\n") else "\n\n") + moved + "\n"
 
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
@@ -395,8 +397,14 @@ def command_page() -> str:
 def differing(top: Path, wanted: dict[str, str]) -> list[str]:
     """The files write would change: text that differs, or an empty file that is there ("" means
     delete)."""
-    return [rel for rel, text in wanted.items()
-            if read(top / rel) != text or not text and (top / rel).exists()]
+    changed = []
+    for rel, text in wanted.items():
+        path = top / rel
+        current = path.read_bytes().decode("utf-8") if rel == "AGENTS.md" and path.is_file() else read(path)
+        if rel == "AGENTS.md":
+            current, text = current.replace("\r\n", "\n"), text.replace("\r\n", "\n")
+        if current != text or not text and path.exists(): changed.append(rel)
+    return changed
 
 
 def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) -> list[str]:
