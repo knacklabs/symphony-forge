@@ -41,14 +41,9 @@ Review this branch. It is a small fix.
 
 Why: $why
 Done when: $done_when
-Recorded allowance: $allowance
 
 Check the change against both lines. If the branch does not meet the Done-when line, report a P1
 finding titled `Not done: $done_when`.
-
-For an agent-recorded allowance to correct one kind of problem everywhere without changing an
-interface, check its reason against the whole diff. Report as P1 an allowance whose reason
-doesn't match the diff: more than one kind of problem, or an interface change.
 
 <!-- functional-check -->
 ## Functional check
@@ -70,18 +65,6 @@ This repo lists no interface paths. Report any change to an interface (an API ro
 schema or migration, a command table or a config schema) as a P1 finding titled
 `Promote: <the interface>`: a change like that needs a story, not a fix.
 
-<!-- proof-list -->
-## Proof list
-The worker's latest commit supplies this list, which Forge copies into the pull request:
-
-$proof_list
-
-On the first review, check the whole list, not a sample. Check every entry against the code and
-its named proof, including every Done-when detail; compare it with the covered items above so an
-omitted item or detail cannot hide a gap. Report every missing case you find in this first round,
-even when another finding already blocks. A missing list or entry is a P1 `Not done: proof list`;
-judge missing or hollow proof by the test-audit rules below. Repeat this full check on later rounds.
-
 <!-- rules -->
 ## Tests on the close run
 forge close ran the repo's test command before this review, outside your sandbox:
@@ -97,11 +80,6 @@ Extra edge-case tests, platform or hardening suggestions beyond what the item pr
 they never block the merge or start another round. So an edge case the Done-when doesn't ask for,
 where the item's purpose is already met, is a P2.
 
-A crash or interrupt window under a second, or a case a simple fail-closed rule in the change
-already covers, is at most P2 unless it loses data or weakens security, which stays P1.
-One command-level test per rule is enough. A request for more test variations is P2 unless it
-names a concrete scenario the current tests would pass while the code is broken.
-
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
   naming that task;
@@ -110,11 +88,6 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
-
-When a Done-when item's named proof is a pull request check that has not finished yet, do not
-report it as `Not done` if the check is configured to run on the pull request. Close's checks
-gate holds the merge until that check passes. A failed check or a proof with no check behind
-it is still P1 `Not done`.
 
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
