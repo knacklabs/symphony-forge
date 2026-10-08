@@ -1145,6 +1145,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_commands_load_only_their_owner.py",
+      "line": 90,
+      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_contracts.py",
@@ -1251,6 +1262,17 @@
       "text": "The orphan-server setup failed in the full suite but passed alone; this flaky failure remains unresolved.",
       "from": "worker",
       "item": "one-forge-close-looks-up-the-same-git-fa",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
+      "line": 24,
+      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     },
@@ -2234,6 +2256,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 217,
+      "text": "Invalidate cached reviews when the allowance reason changes",
+      "from": "review",
+      "item": "agent-allowance",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -2494,17 +2527,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 217,
-      "text": "Invalidate cached reviews when the allowance reason changes",
-      "from": "review",
-      "item": "agent-allowance",
       "status": "open",
       "closed_by": null
     }
