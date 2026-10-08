@@ -32,6 +32,7 @@
     "id": "34b46f40-109d-47ca-8506-27737a713bd0",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -43,5 +44,6 @@
       "step": "review"
     }
   ],
-  "why": "Clients and this repo need v1.2.7 for Forge inside Claude Code (pane, strip, Machine tab, event turns), the shared agent and test lanes, and the speed and simplification fixes merged since v1.2.6"
+  "why": "Clients and this repo need v1.2.7 for Forge inside Claude Code (pane, strip, Machine tab, event turns), the shared agent and test lanes, and the speed and simplification fixes merged since v1.2.6",
+  "worker": "codex"
 }
