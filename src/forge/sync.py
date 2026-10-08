@@ -411,12 +411,28 @@ def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) ->
 
 
 def install_shims(top: Path, cfg: dict[str, Any]) -> bool:
-    """Install the git hook shims; returns whether any changed. They are never committed.
+    """Install local shims or retire earlier Husky shims; returns whether any changed.
 
     A hook there that isn't Forge's moves to <hook>.pre-forge, and the shim runs it first.
     """
     common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
     changed = False
+    if folder := githooks.husky_folder(top):
+        for hook in ("pre-commit", "pre-push"):
+            path = folder / "_" / hook
+            kept = path.with_name(f"{hook}.pre-forge")
+            for candidate in (path, kept):
+                if not candidate.resolve().is_relative_to(top.resolve()):
+                    repo.refuse(REFUSALS["hook_link"], path=candidate)
+            current = read(path)
+            if kept.exists():
+                if current and githooks.SHIM_MARK not in current and current != read(kept):
+                    repo.refuse(REFUSALS["hook_kept"], path=path, kept=kept)
+                kept.replace(path)
+                changed = True
+            elif githooks.SHIM_MARK in current:
+                path.unlink()
+                changed = True
     for path, text in shims(top, cfg).items():
         if path.is_symlink() and not path.resolve().is_relative_to(common.resolve()):
             repo.refuse(REFUSALS["hook_link"], path=path)

@@ -46,10 +46,19 @@ exit 1
 """
 
 
+def husky_folder(top: Path) -> Path | None:
+    folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
+    if folder.name == "_" and folder.parent.name == ".husky":
+        return folder.parent
+    return None
+
+
 def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     """The two git hook shims, in the hooks folder every worktree shares."""
     from forge import sync
 
+    if husky_folder(top):
+        return {}
     folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
     wanted = {}
     for hook, what in (("pre-commit", "commit"), ("pre-push", "push")):
@@ -69,7 +78,19 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
+    hooks = {}
+    if folder := husky_folder(top):
+        if not folder.resolve().is_relative_to(top.resolve()):
+            repo.refuse(sync.REFUSALS["outside"], path=folder)
+        for hook in ("pre-commit", "pre-push"):
+            path = folder / hook
+            current = sync.read(path)
+            line = sync.command(hook) + "\n"
+            hooks[path.relative_to(top).as_posix()] = (
+                current if line.rstrip("\n") in current.splitlines()
+                else current + ("\n" if current and not current.endswith("\n") else "") + line)
     return {
+        **hooks,
         "AGENTS.md": sync._agents(top),
         **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() or (top / "CLAUDE.md").is_symlink()
            else {}),  # a dangling link counts too
