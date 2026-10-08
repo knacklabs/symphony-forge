@@ -540,28 +540,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/githooks.py\tKeep Forge checks reachable and preserve pre-push input\thusky-hooks",
-      "kind": "bug",
-      "path": "src/forge/githooks.py",
-      "line": 91,
-      "text": "Keep Forge checks reachable and preserve pre-push input",
-      "from": "blocking",
-      "item": "husky-hooks",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/githooks.py\tPreserve user hook edits when close resolves merge conflicts\thusky-hooks",
-      "kind": "bug",
-      "path": "src/forge/githooks.py",
-      "line": 93,
-      "text": "Preserve user hook edits when close resolves merge conflicts",
-      "from": "blocking",
-      "item": "husky-hooks",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -701,6 +679,17 @@
       "text": "Not done: Machine tests detect the behaviors claimed by the proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 45,
+      "text": "The native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "from": "worker",
+      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     },
@@ -1288,17 +1277,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_husky_hooks_survive_install.py\tNot done: launcher routing and generated-runtime exclusion proofs\thusky-hooks",
-      "kind": "bug",
-      "path": "tests/test_husky_hooks_survive_install.py",
-      "line": 76,
-      "text": "Not done: launcher routing and generated-runtime exclusion proofs",
-      "from": "blocking",
-      "item": "husky-hooks",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_lanes_agents.py\tNot done: agent admission survives sequential model launches\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_agents.py",
@@ -1350,6 +1328,17 @@
       "text": "Not done: forge stop ends a worker and its test run",
       "from": "blocking",
       "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tCI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 183,
+      "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "from": "worker",
+      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     },
@@ -2036,17 +2025,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
-      "kind": "edge",
-      "path": "src/forge/githooks.py",
-      "line": 83,
-      "text": "Handle absolute Husky paths during worktree-based upgrade and close",
-      "from": "review",
-      "item": "husky-hooks",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "edge\tsrc/forge/machine.py\tHandle existing agents without a dedicated process group",
       "kind": "edge",
       "path": "src/forge/machine.py",
@@ -2201,6 +2179,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/repo.py\tPoint the merge advice at the fetched default branch",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 537,
+      "text": "Point the merge advice at the fetched default branch",
+      "from": "review",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/repo.py\tPreserve missing-session recovery for structured Claude errors",
       "kind": "edge",
       "path": "src/forge/repo.py",
@@ -2267,17 +2256,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 217,
-      "text": "Invalidate cached reviews when the allowance reason changes",
-      "from": "review",
-      "item": "agent-allowance",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -2329,17 +2307,6 @@
       "text": "Refresh review lane metadata when Autoreview selects another model",
       "from": "review",
       "item": "FORGE-LANES-1/AGENTS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/sync.py\tPreserve Husky's PATH when running existing user hooks",
-      "kind": "edge",
-      "path": "src/forge/sync.py",
-      "line": 97,
-      "text": "Preserve Husky's PATH when running existing user hooks",
-      "from": "review",
-      "item": "husky-hooks",
       "status": "open",
       "closed_by": null
     },
@@ -2549,6 +2516,72 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 217,
+      "text": "Invalidate cached reviews when the allowance reason changes",
+      "from": "review",
+      "item": "agent-allowance",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tKeep Forge checks reachable and preserve pre-push input\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 91,
+      "text": "Keep Forge checks reachable and preserve pre-push input",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tPreserve user hook edits when close resolves merge conflicts\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 93,
+      "text": "Preserve user hook edits when close resolves merge conflicts",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_husky_hooks_survive_install.py\tNot done: launcher routing and generated-runtime exclusion proofs\thusky-hooks",
+      "kind": "bug",
+      "path": "tests/test_husky_hooks_survive_install.py",
+      "line": 76,
+      "text": "Not done: launcher routing and generated-runtime exclusion proofs",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
+      "kind": "edge",
+      "path": "src/forge/githooks.py",
+      "line": 83,
+      "text": "Handle absolute Husky paths during worktree-based upgrade and close",
+      "from": "review",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\tPreserve Husky's PATH when running existing user hooks",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 97,
+      "text": "Preserve Husky's PATH when running existing user hooks",
+      "from": "review",
+      "item": "husky-hooks",
       "status": "open",
       "closed_by": null
     },
