@@ -20,8 +20,12 @@ function host(on: On, surface: 'terminal' | 'desktop' | 'mobile') {
   on('command.register', () => ({ value: { command: 'forge' } }))
   on('ui.open', (_$, e) => { opens.push(e.id); return { value: undefined } })
   on('ui.toast', (_$, e) => { toasts.push(e); return { value: undefined } })
-  on('fs.read', (_$, e) => state.unreadable ? { deny: 'Output file cannot be read' } :
-    { value: e.path === '/logs/worker.txt' ? state.output : `Output for ${e.path}` })
+  on('fs.read', (_$, e) => {
+    // Claude resolves rooted fixture paths to a drive-qualified path on Windows.
+    const path = e.path.replace(/\\/g, '/').replace(/^[a-z]:/i, '')
+    return state.unreadable ? { deny: 'Output file cannot be read' } :
+      { value: path === '/logs/worker.txt' ? state.output : path === '/logs/reviewer.txt' ? 'Reviewer output' : `Output for ${e.path}` }
+  })
   on('tool.call', { tool: /^AskUserQuestion$/ }, async (_$, e) => {
     questions.push(e)
     await state.beforeAnswer()
@@ -158,7 +162,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(JSON.stringify(await output.drawn())).toContain('A new output line')
     await ui.press({ key: 'machine-run-reviewer' }); await ui.press({ key: 'machine-output' })
     drawn = JSON.stringify(await output.drawn())
-    expect(drawn).toContain('Output for /logs/reviewer.txt')
+    expect(drawn).toContain('Reviewer output')
     expect(drawn).not.toContain('output line')
     state.unreadable = true
     await clock.advance(10000)
