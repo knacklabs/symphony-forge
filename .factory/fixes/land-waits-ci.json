@@ -2,20 +2,30 @@
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/land-waits-ci",
   "done_when": "forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has shown no check progress for a long stretch, saying which; one unreadable or failed GitHub answer during the wait is retried rather than ending it; forge close on its own keeps its current wait; a command test with a faked GitHub shows land waiting through a long run, retrying a bad answer, and stopping on a stuck run; new and earlier-adopted client repos get it from this release on",
-  "flagged": [],
+  "flagged": [
+    "src/forge/land.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5a860bca1a68465f963bae3e315cdd4d101db1e89ab2d879a790e34c5ba9e4b0",
-    "changed": "03cd306efd5fcbdbc48871bf8f47d287f70e7db6ecfe397a64dbb3124f8bc330",
-    "commit": "bfcf1c6b244878847abaa6e22e7d959dd350db53",
+    "branch_diff": "e7a74b44547909de0ea7e408c776bd76319107758674b93f8b15981acc1b642f",
+    "changed": "bcd53134ffc5055ab56553253c4cf1c0fb3d87188ad95d40a05e8c8cfb4832ec",
+    "commit": "4287e6f042edcc8322ffdb9eaee662ce330b2968",
     "dismissals": [],
-    "findings": [],
-    "id": "80a0ca87-13b4-4fc7-bf54-fd72252a0975",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The progress flag reaches `close`, but land subsequently calls `merge.merge(argparse.Namespace(item=item))` at src/forge/land.py:81. That command performs another `checks.wait` without progress mode at src/forge/merge.py:74. Consequently, a single unreadable or nonzero GitHub answer during this final wait immediately aborts land, even after its long initial wait succeeded. Checks that become pending again also receive the old fixed deadline. The new-client command test leaves GREEN as its repeating final response, so this remaining failure path passes all supplied tests. Propagate progress waiting through land's merge revalidation and add a command regression with green checks during close, one bad answer during merge's check read, then green checks.",
+        "file": "src/forge/land.py",
+        "line": 34,
+        "priority": "P1",
+        "title": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO"
+      }
+    ],
+    "id": "fc147939-1e1a-44b0-ba75-14c8593b9202",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T12:47:22+00:00",
@@ -23,6 +33,10 @@
     },
     {
       "at": "2026-10-08T13:07:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:24:54+00:00",
       "step": "review"
     }
   ],
