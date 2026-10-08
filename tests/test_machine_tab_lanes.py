@@ -39,16 +39,19 @@ const reply = await fire('command.run', {{command:'forge'}}, api);
 console.log(JSON.stringify({{lanes:samples.fixture(), board:samples.boardFixture(), text:reply.text}}));
 """)
 
-    def fields(example, producer):
+    def fields(example, producer, path=()):
+        # Windows records no load average; only this documented field is nullable.
+        if path == ("machine", "load") and producer is None:
+            return
         if isinstance(example, dict):
             assert isinstance(producer, dict)
             for key, value in example.items():
                 assert key in producer, f"Native fixture invents {key}"
-                fields(value, producer[key])
+                fields(value, producer[key], (*path, key))
         elif isinstance(example, list) and example:
             assert isinstance(producer, list) and producer, "Native fixture has no producer example"
             for value in example:
-                fields(value, producer[0])
+                fields(value, producer[0], path)
 
     # Every native row must use its lane's real command fields, including the
     # running test's reported progress. Later board items and events count too.
