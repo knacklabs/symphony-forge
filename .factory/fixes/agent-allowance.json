@@ -2,13 +2,36 @@
   "base": "d73ab78ad47d3231210be7084b998cdef3834390",
   "branch": "fix/agent-allowance",
   "done_when": "The shipped coordinator guide says the agent may run forge fix allow-large itself, without asking the human, when the fix corrects one kind of problem in every place it appears and changes no interface, naming that problem in the reason; anything else still needs the human or a story; the shipped review instructions report as P1 an allowance whose reason doesn't match the diff (more than one kind of problem, or an interface change); a docs test covers both texts for a new repo and for one adopted on an earlier release after sync",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b7957e87541b8b2243b7d593e379485eb6d788721e2a808da97db6051d9e6e7d",
+    "changed": "386cc8205503c4711af0d1944a8a82081999d518c883fb810deefce4701de0ee",
+    "commit": "f939dadc2e8fb1c8be235ea1201ee4f8adcb0a18",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The allowance is now an input reviewers must judge, but `fingerprint()` still excludes it (`src/forge/review.py:170\u2013171`). After a clean review, rerunning `forge fix allow-large` with a different reason preserves that review (`src/forge/task.py:292\u2013295`). With no product changes, `forge close` reuses it (`src/forge/close.py:127\u2013139`), and the PR checker accepts it (`src/forge/prcheck.py:200\u2013205`). Consequently, a replacement reason that contradicts the diff never reaches the new audit rule. Include the allowance in both review fingerprints so changing it requires another review.",
+        "file": "src/forge/review.py",
+        "line": 217,
+        "priority": "P2",
+        "title": "Invalidate cached reviews when the allowance reason changes"
+      }
+    ],
+    "id": "a07d53c0-6db9-4128-9cc9-856fc37bfb64",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T09:10:19+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T09:18:25+00:00",
+      "step": "review"
     }
   ],
   "why": "Client fixes that correct one kind of problem everywhere it appears keep tripping the five-code-file limit, and each needs the owner's allowance (owner decision 2026-10-08: keep 5, the agent may record the allowance itself)",
