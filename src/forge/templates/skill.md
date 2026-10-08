@@ -554,6 +554,7 @@ repo, rewritten by that version. One command does all of it.
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
+   Its commit includes the upgrade's proof list; close supplies its test run result to the review.
    It changes only the version in `forge.toml`.
 3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
