@@ -3,12 +3,14 @@
   "branch": "fix/ci-cancel-superseded",
   "done_when": "Forge's own CI workflows and the forge.yml Forge ships to client repos cancel an in-progress or queued run for the same pull request and workflow when a newer commit is pushed, grouped so the pull_request tests and pull_request_target pr-check jobs never cancel each other and default-branch runs are never cancelled; a workflow test checks the setting for a new repo and for one adopted on an earlier release after sync",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T15:00:40+00:00",
       "step": "start"
     }
   ],
-  "why": "Every push to a pull request queues a full CI run while the run for the commit it replaced keeps going, so GitHub's run queue backs up (24 queued, 2 running on 2026-10-08; 20 were for superseded commits) and every close waits longer"
+  "why": "Every push to a pull request queues a full CI run while the run for the commit it replaced keeps going, so GitHub's run queue backs up (24 queued, 2 running on 2026-10-08; 20 were for superseded commits) and every close waits longer",
+  "worker": "codex"
 }
