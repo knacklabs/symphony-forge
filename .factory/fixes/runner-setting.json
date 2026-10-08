@@ -1,0 +1,14 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/runner-setting",
+  "done_when": "forge.toml has a runner setting (default ubuntu-latest, so nothing changes for repos that don't set it) that forge sync writes into every runs-on line of the generated forge.yml; forge init takes it as an option; the generated jobs' steps work on a plain self-hosted Linux runner (uv and Node installed by their setup actions, nothing assumed from GitHub's hosted image); forge doctor and close's check wait say plainly when a pull request's checks have stayed queued with no runner picking them up for several minutes, naming the runner setting; the coordinator guide documents the setting; command tests cover a new repo initialised with a self-hosted runner and an existing repo adopted on an earlier release that sets it and syncs, plus the queued-without-a-runner message with a faked GitHub",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T15:06:42+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The CI workflow Forge generates hard-codes runs-on: ubuntu-latest for both jobs, so in an organisation whose repos can only use self-hosted runners every new client repo's tests and forge-pr-check jobs stay queued forever, forge close waits on them indefinitely and no item can become ready; checks = [] is no way out because close refuses with no checks (owner report, 2026-10-08)"
+}
