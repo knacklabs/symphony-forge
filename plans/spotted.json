@@ -514,8 +514,8 @@
       "text": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block",
       "from": "blocking",
       "item": "agents-block-doctor",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
