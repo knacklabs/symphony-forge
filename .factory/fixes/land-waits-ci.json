@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e7a74b44547909de0ea7e408c776bd76319107758674b93f8b15981acc1b642f",
-    "changed": "bcd53134ffc5055ab56553253c4cf1c0fb3d87188ad95d40a05e8c8cfb4832ec",
-    "commit": "4287e6f042edcc8322ffdb9eaee662ce330b2968",
+    "branch_diff": "34165957fc35dd05e4e844f2760641f76603b5f1a78fe4ff4dfec94051b324d8",
+    "changed": "e37f98498988a12b4cbeb922ccd6aef15ee700106c61f2323d993d0587c81532",
+    "commit": "56874dc5ead3b28050e0cdba392875ee7bd02568",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The progress flag reaches `close`, but land subsequently calls `merge.merge(argparse.Namespace(item=item))` at src/forge/land.py:81. That command performs another `checks.wait` without progress mode at src/forge/merge.py:74. Consequently, a single unreadable or nonzero GitHub answer during this final wait immediately aborts land, even after its long initial wait succeeded. Checks that become pending again also receive the old fixed deadline. The new-client command test leaves GREEN as its repeating final response, so this remaining failure path passes all supplied tests. Propagate progress waiting through land's merge revalidation and add a command regression with green checks during close, one bad answer during merge's check read, then green checks.",
-        "file": "src/forge/land.py",
-        "line": 34,
-        "priority": "P1",
-        "title": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO"
-      }
-    ],
-    "id": "fc147939-1e1a-44b0-ba75-14c8593b9202",
-    "status": "blocked"
+    "findings": [],
+    "id": "b6faeb6e-c2da-4ffa-8e44-c8f4d5c82f6a",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T12:47:22+00:00",
@@ -37,6 +29,10 @@
     },
     {
       "at": "2026-10-08T13:24:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:40:03+00:00",
       "step": "review"
     }
   ],
