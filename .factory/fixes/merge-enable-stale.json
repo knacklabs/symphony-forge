@@ -3,12 +3,14 @@
   "branch": "fix/merge-enable-stale",
   "done_when": "When forge merge enable finds its earlier fix whose only change is forge.toml's merge setting and the default branch has moved on, it rebuilds that change on the current default branch (same fix, the default branch's forge.toml with only merge set to agent) instead of merging, so no conflict appears; it still never merges the change itself; a command test covers a repo adopted on an earlier release that upgraded after an interrupted merge enable",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
       "step": "start"
     }
   ],
-  "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)"
+  "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)",
+  "worker": "codex"
 }
