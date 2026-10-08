@@ -1,0 +1,39 @@
+{
+  "base": "d73ab78ad47d3231210be7084b998cdef3834390",
+  "branch": "fix/upgrade-proof",
+  "done_when": "The commit forge upgrade writes carries a Proof list paragraph that names the upgrade fix's Done-when and its evidence (the pinned release set in forge.toml, the release's own forge sync, and close's test run), so the upgrade's first review gets a proof list; a command test runs forge upgrade on a new repo and on one adopted on an earlier release and shows the commit's paragraph reaching close's review; new client repos get it on their first upgrade and existing ones on upgrades run from this release on",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "97ed4655a4f5dbe085eb19dc986f748ec1dee24d7e21b4623c5b7e55878c6d1c",
+    "changed": "539ad8c8ba885e31bdd408c31ebed46fcd0baca5127038661d7aac6722b90f81",
+    "commit": "23d4de5c521a3b7b5bac0946e230757593cbf24e",
+    "dismissals": [],
+    "findings": [],
+    "id": "45eae472-4a89-43dd-9911-6002f891c712",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T08:29:18+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T08:35:10+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T08:53:26+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T09:07:49+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A client's forge upgrade fix fails its first review with 'Not done: proof list', because the commit forge upgrade writes has no Proof list paragraph and nobody else commits to that fix (reported by a client session on v1.2.7)",
+  "worker": "codex"
+}
