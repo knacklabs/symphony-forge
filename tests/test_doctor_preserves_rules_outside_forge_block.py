@@ -17,8 +17,8 @@ def test_1_doctor_refreshes_only_forge_owned_block_and_keeps_client_rules(
     # Exercise real git history, index and working files; fake only external host tools.
     monkeypatch.setenv("FORGE_NOW", "2026-10-08T09:00:00+00:00")
     client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
-    _land(repo, client, "Upgrade Forge", lambda folder: _set(
-        folder, "AGENTS.md", "<!-- forge:begin -->\nOld Forge guidance.\n<!-- forge:end -->\n"),
+    _land(repo, client, "Upgrade Forge", lambda folder: (folder / "AGENTS.md").write_bytes(
+        b"<!-- forge:begin -->\nOld Forge guidance.\n<!-- forge:end -->\n"),
         forge=True)
     folder = client if state == "committed" else _start_fix(repo, client)
     agents = folder / "AGENTS.md"
@@ -104,3 +104,28 @@ def test_2_doctor_refreshes_a_repaired_block_despite_malformed_history(
     result = (folder / "AGENTS.md").read_bytes()
     assert result.endswith(suffix)
     assert b"Old Forge guidance." not in result and b"## Working here with Forge" in result
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+def test_3_current_crlf_guidance_needs_no_doctor_repair_or_sync_write(
+        repo, gh, tmp_path, monkeypatch, adoption):
+    client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
+    folder = _start_fix(repo, client)
+    synced = repo.forge("sync", cwd=folder)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    repo.git("add", "-A", cwd=folder)
+    repo.git("commit", "--allow-empty", "-qm", "Keep current Forge guidance", cwd=folder)
+    agents = folder / "AGENTS.md"
+    # Windows text writes can land CRLF blobs even without checkout conversion.
+    content = agents.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    agents.write_bytes(content)
+    for state in ("unstaged", "committed"):
+        if state == "committed":
+            repo.git("config", "core.autocrlf", "false", cwd=folder)
+            repo.git("add", "AGENTS.md", cwd=folder)
+            repo.git("commit", "-qm", "Keep CRLF guidance", cwd=folder)
+            assert repo.git("ls-files", "--eol", "--", "AGENTS.md", cwd=folder).split()[:2] == ["i/crlf", "w/crlf"]
+        for args in (("doctor",), ("doctor", "--fix"), ("sync",)):
+            done = repo.forge(*args, cwd=folder)
+            assert "AGENTS.md" not in done.stdout, done.stdout + done.stderr
+            assert agents.read_bytes() == content

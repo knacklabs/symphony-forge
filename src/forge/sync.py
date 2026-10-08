@@ -379,10 +379,14 @@ def command_page() -> str:
 def differing(top: Path, wanted: dict[str, str]) -> list[str]:
     """The files write would change: text that differs, or an empty file that is there ("" means
     delete)."""
-    return [rel for rel, text in wanted.items()
-            if ((top / rel).read_bytes().decode("utf-8")
-                 if rel == "AGENTS.md" and (top / rel).is_file() else read(top / rel)) != text
-            or not text and (top / rel).exists()]
+    changed = []
+    for rel, text in wanted.items():
+        path = top / rel
+        current = path.read_bytes().decode("utf-8") if rel == "AGENTS.md" and path.is_file() else read(path)
+        if rel == "AGENTS.md":
+            current, text = current.replace("\r\n", "\n"), text.replace("\r\n", "\n")
+        if current != text or not text and path.exists(): changed.append(rel)
+    return changed
 
 
 def write(top: Path, cfg: dict[str, Any], keep: frozenset[str] = frozenset()) -> list[str]:
