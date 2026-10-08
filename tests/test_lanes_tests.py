@@ -222,6 +222,9 @@ def check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path
         assert observed["cpus"] == observed["xdist"] == "4"
         forge_pid = int(parent_pid.read_text("utf-8"))
         assert forge_pid != first.pid and forge_pid != child_pid
+        # The client can connect before Forge records the child that owns its lane.
+        _until(lambda: any(row["started_at"] for row in rows(repo)),
+               "Forge to register the client test")
         if os.name == "nt":
             subprocess.run(["taskkill", "/F", "/PID", str(forge_pid)], check=True, capture_output=True)
         else:
