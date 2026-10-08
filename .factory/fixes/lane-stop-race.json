@@ -2,13 +2,38 @@
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/lane-stop-race",
   "done_when": "The real cause of the stop confirmation race is fixed (a stopped run's process is confirmed gone before the stop reports success, or the test waits on real process state instead of a fixed moment), with no longer timeout or looser assertion; both tests pass on every CI platform; if the cause is in forge's stop, new and earlier-adopted client repos get the fix with a command test for each",
+  "flagged": [
+    "tests/test_lanes_view.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98fc4325d920ce9d7842f2530c7e4e086bfe3f486b57d3c16b9dd4ee217de71c",
+    "changed": "7a6bdb1e93503a00b707687689e764cc53dc737a9f44d1b09574c26cdb98b94f",
+    "commit": "1c45cf95f43d6fd9b2fdb1325a9bfa2acbe1e5df",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The proof list explicitly says Windows and Linux execution is missing; the supplied successful close run establishes macOS results only. The matrix in `.github/workflows/forge-next.yml:36` includes Linux and Windows, and line 71 runs the suite, but configuration alone does not establish the promised passing results. Complete the branch's matrix and confirm test_4 and test_5 pass on both remaining platforms without increasing timeouts or weakening assertions. This leaves the explicit every-platform Done-when requirement unproven.",
+        "file": "tests/test_lanes_view.py",
+        "line": 187,
+        "priority": "P1",
+        "title": "Not done: Both lane-stop regression tests pass on every CI platform"
+      }
+    ],
+    "id": "0ade732c-6326-49c2-b48b-a2da36b3de6f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T12:13:37+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T12:28:12+00:00",
+      "step": "review"
     }
   ],
   "why": "Main's CI fails at random in the lane stop tests: tests/test_lanes_view.py test_4 (second stop could not confirm the Codex worker stopped) and test_5 (claude-worker-and-test, a process still alive) (main run 37768238587 and a pull request run)",

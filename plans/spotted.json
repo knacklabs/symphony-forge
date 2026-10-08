@@ -1321,6 +1321,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 187,
+      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
+      "from": "blocking",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_lanes_view.py\tNot done: a process whose pid was reused is not terminated\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_view.py",
