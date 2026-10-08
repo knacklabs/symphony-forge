@@ -85,10 +85,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         for hook in ("pre-commit", "pre-push"):
             path = folder / hook
             current = sync.read(path)
-            line = sync.command(hook) + "\n"
-            hooks[path.relative_to(top).as_posix()] = (
-                current if line.rstrip("\n") in current.splitlines()
-                else current + ("\n" if current and not current.endswith("\n") else "") + line)
+            command = (f'. "$(git rev-parse --show-toplevel)/{sync.LAUNCHER}" && '
+                       f'forge_husky "$0" {hook} <start> "$@"; exit $?')
+            owned = {sync.command(hook), *(command.replace("<start>", str(start)) for start in (2, 3))}
+            lines = [line for line in current.splitlines(keepends=True) if line.rstrip("\r\n") not in owned]
+            header = lines.pop(0) if lines and lines[0].startswith("#!") else ""
+            check = command.replace("<start>", "3" if header else "2") + "\n"
+            hooks[(folder.resolve().relative_to(top.resolve()) / hook).as_posix()] = header + check + "".join(lines)
     return {
         **hooks,
         "AGENTS.md": sync._agents(top),

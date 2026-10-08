@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, init, repo, review, spotted, story, sync
+from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -321,6 +321,10 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
         repo.git("worktree", "add", "-q", "--detach", str(base), f"origin/{default}", cwd=top)
         try:
             generated = {Path(path).as_posix() for path in sync.files(base, cfg)}
+            if folder := githooks.husky_folder(base):
+                # Sync adds Forge's line, but the rest of these hooks belongs to the user.
+                generated.difference_update((folder.resolve() / hook).relative_to(base.resolve()).as_posix()
+                                            for hook in ("pre-commit", "pre-push"))
             if cfg.get("repo") == "forge-source":
                 generated.add("docs/commands.md")
         finally:

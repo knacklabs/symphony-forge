@@ -85,6 +85,21 @@ elif command -v uvx >/dev/null 2>&1; then
 else
   forge() { echo "Forge isn't installed, so this hook can't run; install it with <install>, then run forge doctor." >&2; return 2; }
 fi
+
+# Isolate user exit/exec, and replay Git's input to both checks.
+forge_husky() {
+  forge_script=$1; forge_hook=$2; forge_start=$3; shift 3
+  forge_input=$(mktemp) || return 2
+  cat > "$forge_input" || { rm -f "$forge_input"; return 2; }
+  forge_body=$(tail -n +"$forge_start" "$forge_script") || { rm -f "$forge_input"; return 2; }
+  if sh -e -c "$forge_body" "$forge_script" "$@" < "$forge_input"; then
+    if forge hook "$forge_hook" "$@" < "$forge_input"; then forge_status=0; else forge_status=$?; fi
+  else
+    forge_status=$?
+  fi
+  rm -f "$forge_input"
+  return "$forge_status"
+}
 """
 
 

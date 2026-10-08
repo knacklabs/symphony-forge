@@ -5,9 +5,11 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+import conftest
 
 STORY = "FIX-HUSKY-HOOKS"
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -21,13 +23,13 @@ def _install(where):
     assert done.returncode == 0, done.stdout + done.stderr
 
 
-def _guards(repo, where):
+def _guards(repo, where, hook_env=None):
     commit = subprocess.run(["git", "commit", "--allow-empty", "-m", "Try a commit"],
-                            cwd=where, capture_output=True, text=True)
+                            cwd=where, env=hook_env, capture_output=True, text=True)
     assert commit.returncode != 0
     assert "was not started by Forge" in commit.stderr
     push = subprocess.run(["git", "push", "origin", "HEAD:main"], cwd=where,
-                          capture_output=True, text=True)
+                          env=hook_env, capture_output=True, text=True)
     assert push.returncode != 0
     assert "changes only through a merged pull request" in push.stderr
     assert (where / "existing-hooks.log").read_text("utf-8").splitlines()[-2:] == [
@@ -72,8 +74,9 @@ def test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(rep
     assert done.returncode == 0, done.stderr
     for hook, before in original.items():
         text = (repo.path / ".husky" / hook).read_text("utf-8")
-        assert text.startswith(before)
-        assert text.count("forge hook " + hook) == 1
+        assert "".join(line for line in text.splitlines(keepends=True)
+                       if ".forge/hooks.sh" not in line) == before
+        assert text.count(".forge/hooks.sh") == 1
         assert (repo.path / ".husky/_" / hook).read_bytes() == wrappers[hook]
         assert not (repo.path / ".husky/_" / (hook + ".pre-forge")).exists()
     again = repo.forge("sync")
@@ -87,11 +90,49 @@ def test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(rep
     subprocess.run(["git", "push", "-q", "origin", "client-hooks"], cwd=repo.path,
                    env=bootstrap, check=True)
     _install(repo.path)
-    _guards(repo, repo.path)
+    direct = tmp_path / "direct path"
+    direct.mkdir()
+    conftest._install(direct, "forge", f'#!{sys.executable}\nimport sys\n'
+                     'sys.stderr.write("Launcher was bypassed\\n")\nsys.exit(91)\n')
+    hook_env = dict(os.environ, PATH=f"{direct}{os.pathsep}{os.environ['PATH']}")
+    # The real Forge is reachable through XDG_BIN_HOME only after hooks.sh fixes PATH.
+    _guards(repo, repo.path, hook_env)
     worktree = tmp_path / "another worktree"
     repo.git("worktree", "add", "-qb", "another-client", str(worktree), "HEAD")
     clone = tmp_path / "fresh clone"
     repo.git("clone", "-qb", "client-hooks", repo.git("remote", "get-url", "origin"), str(clone))
     for where in (worktree, clone):
         _install(where)
-        _guards(repo, where)
+        _guards(repo, where, hook_env)
+
+
+@pytest.mark.parametrize("body", ["exit 0", "exec true", "cat > push-input.log",
+                                 "echo 'User hook refused' >&2; exit 7"],
+                         ids=["exit", "exec", "stdin-consumer", "failure"])
+def test_existing_husky_control_flow_and_push_input_cannot_bypass_checks(repo, body):
+    repo.git("checkout", "-qb", "client-hooks")
+    repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n'
+                             'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n')
+    shutil.copytree(FIXTURES / "husky-v9.1.7", repo.path / "husky")
+    repo.write("package.json", json.dumps({"private": True, "scripts": {
+        "prepare": 'node --input-type=module -e "import install from \'./husky/index.js\'; install()"'}}) + "\n")
+    for hook in ("pre-commit", "pre-push"):
+        repo.write(f".husky/{hook}", f'#!/bin/sh\necho {hook} >> existing-hooks.log\n{body}\n')
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Set up user hook control flow")
+    _install(repo.path)
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stderr
+    for command, problem in ((["commit", "--allow-empty", "-m", "Try a commit"],
+                              "was not started by Forge"),
+                             (["push", "origin", "HEAD:main"],
+                              "changes only through a merged pull request")):
+        done = subprocess.run(["git", *command], cwd=repo.path, capture_output=True, text=True)
+        assert done.returncode != 0
+        if body.endswith("exit 7"):
+            assert "User hook refused" in done.stderr
+            assert problem not in done.stderr
+        else:
+            assert problem in done.stderr
+    if body.startswith("cat"):
+        assert "refs/heads/main" in (repo.path / "push-input.log").read_text("utf-8")

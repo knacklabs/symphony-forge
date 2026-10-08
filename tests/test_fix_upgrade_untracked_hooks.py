@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import sys
+
+import conftest
 
 from test_close import env  # noqa: F401 (the shared fixture)
 
@@ -27,11 +31,34 @@ def test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_
     env.repo.git("add", "-A", "--", ".", ":!.husky/_", cwd=where)
     env.repo.git("commit", "-q", "-m", "Sync Forge's files", cwd=where)
 
+    # Install-time files can also appear in close's throwaway checkout, before its status check.
+    real_git = shutil.which("git")
+    runtime_status = env.repo.bin / "sync-runtime-status.txt"
+    conftest._install(env.repo.bin, "git", f'''#!{sys.executable}
+import pathlib, subprocess, sys
+args = sys.argv[1:]
+result = subprocess.call([{json.dumps(real_git)}, *args])
+if result == 0 and args[:2] == ["worktree", "add"] and "-b" in args:
+    branch = args[args.index("-b") + 1]
+    if branch.startswith("forge-synced-"):
+        checkout = pathlib.Path(args[args.index("-b") + 2])
+        runtime = checkout / ".husky" / "_" / "h"
+        runtime.parent.mkdir(parents=True, exist_ok=True)
+        runtime.write_text("husky\\n", encoding="utf-8")
+        status = subprocess.check_output([{json.dumps(real_git)}, "-C", str(checkout),
+            "status", "--porcelain", "--untracked-files=all"], text=True, encoding="utf-8")
+        pathlib.Path({json.dumps(runtime_status.as_posix())}).write_text(status, encoding="utf-8")
+sys.exit(result)
+''')
+
     done = env.repo.forge("close", item, cwd=where)
 
     assert done.returncode == 0, done.stdout + done.stderr
     assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
+    assert "?? .husky/_/h" in runtime_status.read_text("utf-8")
     assert (where / ".husky/_/h").read_text("utf-8").strip() == "husky"
+    # Later blanket commits must not adopt Husky's generated runtime file.
+    (where / ".husky/_/h").unlink()
 
     env.commit(where, ".claude/skills/forge/SKILL.md", "The old release's skill\n")
     done = env.repo.forge("close", item, cwd=where)

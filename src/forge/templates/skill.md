@@ -88,6 +88,8 @@ the local git hooks and refresh the generated files, followed by `forge doctor -
 In Husky repos, sync preserves the team's hooks and adds Forge's checks to the committed
 `.husky/pre-commit` and `.husky/pre-push`, through `.forge/hooks.sh`. Commit those additions;
 `npm install` can rebuild `.husky/_` without removing Forge's checks.
+The team's commands run first in a child shell; successful `exit` or `exec` cannot skip
+Forge, both pre-push checks receive Git's input, and a team hook failure still blocks Git.
 Resolve any remaining Doctor rows before starting work. An existing repo gets these
 instructions and the updated CI workflow on its next `forge sync` after upgrading.
 
