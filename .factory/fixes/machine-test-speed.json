@@ -1,0 +1,14 @@
+{
+  "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
+  "branch": "fix/machine-test-speed",
+  "done_when": "The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of its slowness (for example a long refresh loop or real waits) rather than raising the limit; tests/test_mod_sync.py native-plugin-checks and tests/test_session_wait_and_stop.py pass on every platform in CI; no change for client repos beyond the mod's own test files",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T12:13:35+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main's CI fails at random: the native mod test '6: terminal Machine shows lanes, local tree facts, gates, log and narrow list' takes about 5.0-5.1 seconds and hits bun's 5-second per-test limit on CI runners (main runs 37768238587 and 37747398216, and several pull requests)"
+}
