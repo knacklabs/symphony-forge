@@ -1,0 +1,54 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/agents-block-doctor",
+  "done_when": "forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines was edited outside Forge; edits outside those lines never hold it, and doctor --fix refreshes the block while keeping them byte for byte; a command test covers a new repo and one adopted on an earlier release, with a hand edit outside the block (refreshed) and one inside it (held)",
+  "flagged": [
+    "src/forge/doctor.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b959715147513157be3d0312670f697f59fd115d85e2f10fbcf0606be51df6d3",
+    "changed": "dcab16616ea84383ae4b99a7288be0b7198de48e96aebfeb5330fb0dd5b3724e",
+    "commit": "387b9dbe69404557a09aa0ba26040b52b983da0a",
+    "dismissals": [],
+    "findings": [],
+    "id": "a039b694-5245-4957-a213-0009e4424845",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T13:15:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T13:27:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:39:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T17:39:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:13:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:26:37+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "choice": "accept",
+    "file": "src/forge/doctor.py",
+    "reason": "Owner accepts: trimming trailing blank space when an old CLAUDE.md's lines are appended to AGENTS.md is harmless, since that migration already changes the file outside Forge's block."
+  },
+  "why": "forge doctor holds a client's whole AGENTS.md as 'changed by hand' when the last commit touching it added the repo's own Review rules outside the forge:begin and forge:end lines (where Forge asks for them), so doctor won't refresh Forge's own block (reported by a client session)",
+  "worker": "codex"
+}

@@ -1,4 +1,4 @@
-"""Forge writes AGENTS.md only: Claude Code reads it by itself when there is no CLAUDE.md."""
+"""forge.sync writes AGENTS.md only: Claude Code reads it by itself when there is no CLAUDE.md."""
 from __future__ import annotations
 
 from test_setup import _on_a_branch_with_forge_toml
