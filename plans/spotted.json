@@ -474,6 +474,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 168,
+      "text": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -1801,6 +1812,17 @@
       "text": "Respect explicit worktree distrust before inheriting repository trust",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tDo not reject a repaired file because an historical block was malformed",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 126,
+      "text": "Do not reject a repaired file because an historical block was malformed",
+      "from": "review",
+      "item": "agents-block-doctor",
       "status": "open",
       "closed_by": null
     },
