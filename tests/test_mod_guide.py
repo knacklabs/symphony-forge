@@ -1,4 +1,4 @@
-"""The shipped coordinator guide explains the pane, strip and event turns.
+"""The shipped coordinator guide explains the mod and its approval fallback.
 
 This docs-only contract is checked at init and at sync after an earlier adoption,
 for both hosts. Missing guidance is the regression; runtime behavior is owned by
@@ -43,7 +43,7 @@ def test_1_guide_explains_core_and_pane_on_every_surface(guide):
     for instruction in ("forge board --json", "forge next --json", "forge lanes --json",
                         "every 10 seconds", "skipped", "20 seconds", "last good rows",
                         "Couldn't refresh:", "next tick", "never edits repo files",
-                        "Upgrade Forge in this repo to use the board."):
+                        "This repo's Forge is too old for the pane: upgrade Forge here."):
         assert instruction in core, instruction
     pane = section(guide, "The pane and strip")
     for instruction in ("`/forge`", "144", "110", "80", "focus", "Desktop",
@@ -74,3 +74,32 @@ def test_3_guide_explains_event_turns_and_coordinator_action(guide):
                         "terminal or Desktop", "FORGE_WORKER=1", "never act on events",
                         "own repo", "Codex"):
         assert instruction in events, instruction
+
+
+def test_4_guide_explains_plan_mode_without_an_approve_button(guide):
+    approval = section(guide, "Approving with the pane")
+    for instruction in ("no Approve button", "cannot supply the story's exact text",
+                        "Plan Mode", "`forge next`", "Planning a story", "Codex",
+                        "VS Code", "without the mod", "approval hook", "unchanged"):
+        assert instruction in approval, instruction
+
+
+def test_5_guide_explains_installation_and_version_failures(guide):
+    install = section(guide, "Installing the mod")
+    for instruction in ("`forge sync`", "latest release", "user scope", "one per machine",
+                        "repo's pinned Forge version", "Claude Code v2.1.287",
+                        "on PATH", "claude plugin marketplace add knacklabs/symphony-forge",
+                        "claude plugin marketplace update forge",
+                        "claude plugin install forge@forge --scope user",
+                        "claude plugin update forge@forge --scope user",
+                        "no repo files for the mod", "Codex", "unchanged",
+                        "one warning line", "sync still succeeds", "`forge doctor`",
+                        "exit status 0", "`/reload-plugins`", "restart", "WSL",
+                        "argv", "no shell", "session's repo root"):
+        assert instruction in install, instruction
+    core = section(guide, "Claude Code plugin core")
+    # Replace GUIDE's earlier wording with SHIP's actual diagnostic and narrow
+    # refusal contract; ordinary refresh errors must not suggest an upgrade.
+    assert "This repo's Forge is too old for the pane: upgrade Forge here." in core
+    assert "non-zero" in core and "unrecognized arguments: --json" in core
+    assert "Only a non-zero command result" in core and "Other failures" in core

@@ -203,11 +203,45 @@ Drawing ticks advance live timers every second without fetching state.
 
 A failed or malformed refresh, or a command taking over 20 seconds, keeps the
 last good rows and adds a dim `Couldn't refresh: <first line of the error>`.
-It retries on the next tick. A Forge too old for JSON shows
-`Upgrade Forge in this repo to use the board.` The board command owns the
+It retries on the next tick. Only a non-zero command result containing
+`unrecognized arguments: --json` shows
+`This repo's Forge is too old for the pane: upgrade Forge here.`
+Other failures use the normal refresh error. The board command owns the
 60-second GitHub checks cache described above; a check changing without a local
 edit appears on the next refresh after that cache expires. Unknown checks stay
 unknown, including when GitHub is unreachable.
+
+## Installing the mod
+
+`forge sync` installs or updates the mod from Forge's latest release at user scope,
+one per machine, independently of each repo's pinned Forge version. It needs
+Claude Code v2.1.287 or newer on PATH. When the marketplace is missing, sync runs
+`claude plugin marketplace add knacklabs/symphony-forge`, then always runs
+`claude plugin marketplace update forge`. It runs
+`claude plugin install forge@forge --scope user` for a new user install, or
+`claude plugin update forge@forge --scope user` for an existing one.
+Sync writes no repo files for the mod; Codex's setup and workflow are unchanged.
+
+Without `claude`, sync skips the mod. A failed install or update (including no
+network or old Claude Code) prints one warning line and sync still succeeds;
+run `forge sync` to retry. `forge doctor` warns when Claude Code is missing or
+older than v2.1.287 and keeps exit status 0. In a running session, use
+`/reload-plugins` or restart to load the updated mod. Desktop's WSL sessions load
+no plugins; use the `forge` command there.
+
+The mod runs `forge` from PATH with argv and no shell, in the session's repo root.
+It does not change the repo's pin. If the pane or strip says that repo's Forge is
+too old, upgrade Forge in that repo; other refresh errors follow the core's retry
+behaviour above. Sessions without the mod keep using the commands as today.
+
+## Approving with the pane
+
+The pane has no Approve button: Claude Code's mod API cannot supply the story's exact text
+to its native plan-approval prompt. Use Plan Mode and the story doc `forge next`
+names, following Planning a story below. The existing approval hook and its trust
+checks are unchanged. Plan Mode remains the approval path in Claude Code, Codex,
+the VS Code chat panel and sessions without the mod; installing the mod changes
+no approval rule.
 
 ## The pane and strip
 
