@@ -1156,6 +1156,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 559,
+      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/test_codex_turns_trust_forge_hooks.py",
@@ -2245,6 +2256,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 217,
+      "text": "Invalidate cached reviews when the allowance reason changes",
+      "from": "review",
+      "item": "agent-allowance",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
       "kind": "edge",
       "path": "src/forge/review.py",
@@ -2505,17 +2527,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
-      "kind": "edge",
-      "path": "src/forge/review.py",
-      "line": 217,
-      "text": "Invalidate cached reviews when the allowance reason changes",
-      "from": "review",
-      "item": "agent-allowance",
       "status": "open",
       "closed_by": null
     }
