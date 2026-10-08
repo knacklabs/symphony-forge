@@ -2,13 +2,28 @@
   "base": "283ad40d9878bcdc7de9180c58a0512bdbcffbb1",
   "branch": "fix/spinner-place",
   "done_when": "While Claude works in a session whose item is waiting in the agent or test lane, the spinner line names that item's place in line, and shows nothing once it is admitted or when it has no Forge work; stopping a run that ended after the list was read shows the stop command's own 'nothing to stop' outcome; each is covered by a native mod test; new and earlier-adopted client repos get it with the mod through forge sync",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bc0318e331334c4d761920be3fd311409bfb09174be3f4493f1a2a592791ac50",
+    "changed": "906af1adccec9111bfcc6085f58d8c56dcba931fdae798e4e6092413bde8833c",
+    "commit": "7a8f014aa824c032f1d055dc9cb663ca1be1d9b1",
+    "dismissals": [],
+    "findings": [],
+    "id": "30d1257d-9dd8-4cb5-91cd-7b10cb5820d7",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T04:35:18+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T04:43:11+00:00",
+      "step": "review"
     }
   ],
   "why": "The Claude Code pane's spinner line should say where this session's work waits in line (Machine tab part left it undone; owner accepted it as a follow-up), and pressing s on a run that already finished shows 'Run stopped.' instead of the stop command's 'There is nothing to stop.'",
