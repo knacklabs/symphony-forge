@@ -43,7 +43,7 @@ def _guards(repo, where, hook_env=None):
 
 @pytest.mark.parametrize("adopted", [False, "old-shims", "reinstalled"],
                          ids=["new-repo", "adopted-on-v1.2.7", "v1.2.7-after-install"])
-def test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(repo, tmp_path, adopted):
+def test_1_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(repo, tmp_path, adopted):
     repo.git("checkout", "-q", "-b", "client-hooks")
     repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n'
                              'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n')
@@ -109,7 +109,7 @@ def test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(rep
 @pytest.mark.parametrize("body", ["exit 0", "exec true", "cat > push-input.log",
                                  "echo 'User hook refused' >&2; exit 7", "header-only"],
                          ids=["exit", "exec", "stdin-consumer", "failure", "header-without-newline"])
-def test_existing_husky_control_flow_and_push_input_cannot_bypass_checks(repo, body):
+def test_2_existing_husky_control_flow_and_push_input_cannot_bypass_checks(repo, body):
     repo.git("checkout", "-qb", "client-hooks")
     repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n'
                              'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n')

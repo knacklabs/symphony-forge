@@ -7,7 +7,7 @@ STORY = "FIX-HUSKY-HOOKS"
 
 
 @pytest.mark.parametrize("hook", ["pre-commit", "pre-push"])
-def test_close_refuses_user_husky_hook_conflicts_without_discarding_either_side(env, hook):
+def test_3_close_refuses_user_husky_hook_conflicts_without_discarding_either_side(env, hook):
     repo = env.repo
     repo.git("config", "core.hooksPath", ".husky/_")
     path = f".husky/{hook}"
