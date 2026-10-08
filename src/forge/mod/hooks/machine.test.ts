@@ -76,19 +76,6 @@ for (const surface of ['terminal', 'desktop'] as const) {
     } else {
       expect(await ui.find({ type: 'Raster' })).toBeDefined()
       expect((await ui.find({ type: 'Text', text: 'Load 5' }))?.props.color).toBe('yellow')
-      for (let n = 1; n <= 31; n++) {
-        state.lanes.machine.load = [n, 2, 1]
-        await clock.advance(10000)
-      }
-      const raster = await ui.find({ type: 'Raster' })
-      expect(raster?.props.columns).toBe(30)
-      // Raster cells are the public glyph/foreground/background byte protocol.
-      const bytes = Uint8Array.from(atob(String(raster?.props.cells)), c => c.charCodeAt(0))
-      const cells = new DataView(bytes.buffer)
-      const glyphs = Array.from({ length: 30 }, (_, n) => String.fromCharCode(cells.getUint32(n * 12, true))).join('')
-      expect(glyphs).toBe('▁▁▁▂▂▂▂▃▃▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▇▇▇▇█')
-      expect(cells.getUint32(4, true)).toBe(0x93c5fd)
-      expect(cells.getUint32(29 * 12 + 4, true)).toBe(0xfbbf24)
       expect(JSON.stringify(await ui.drawn())).toContain('└─ ')
       expect((await ui.findAll({ type: 'Box' })).find(node => node.props.gap === 2)?.props.flexDirection).toBe('row')
       await ui.redraw({ ...pane, bodyColumns: 80 })
@@ -240,6 +227,27 @@ for (const surface of ['terminal', 'desktop'] as const) {
     }
   })
 }
+
+test('6: terminal Machine load history keeps the last thirty refresh samples and their colours', async ($, on) => {
+  const { clock, state } = host(on, 'terminal')
+  // Sampling needs refresh ticks, not the interactive pane's 310 repaint ticks.
+  await $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: false })
+  const ui = await $.ui.mount({ plugin: 'forge', surface: 'terminal', component: 'Pane', requestId: 'forge', props: pane })
+  await ui.press({ key: 'tab-Machine' })
+  for (let n = 1; n <= 31; n++) {
+    state.lanes.machine.load = [n, 2, 1]
+    await clock.advance(10000)
+  }
+  const raster = await ui.find({ type: 'Raster' })
+  expect(raster?.props.columns).toBe(30)
+  // Raster cells are the public glyph/foreground/background byte protocol.
+  const bytes = Uint8Array.from(atob(String(raster?.props.cells)), c => c.charCodeAt(0))
+  const cells = new DataView(bytes.buffer)
+  const glyphs = Array.from({ length: 30 }, (_, n) => String.fromCharCode(cells.getUint32(n * 12, true))).join('')
+  expect(glyphs).toBe('▁▁▁▂▂▂▂▃▃▃▃▃▄▄▄▄▅▅▅▅▅▆▆▆▆▇▇▇▇█')
+  expect(cells.getUint32(4, true)).toBe(0x93c5fd)
+  expect(cells.getUint32(29 * 12 + 4, true)).toBe(0xfbbf24)
+})
 
 test('6: spinner names this session item place, not another repo with the same item', async ($, on) => {
   const { state, clock } = host(on, 'terminal')
