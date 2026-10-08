@@ -2,13 +2,28 @@
   "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
   "branch": "fix/merge-enable-stale",
   "done_when": "When forge merge enable finds its earlier fix whose only change is forge.toml's merge setting and the default branch has moved on, it rebuilds that change on the current default branch (same fix, the default branch's forge.toml with only merge set to agent) instead of merging, so no conflict appears; it still never merges the change itself; a command test covers a repo adopted on an earlier release that upgraded after an interrupted merge enable",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "89183909b5db7643a1128ce1aff7c3b4e607f7ea70a19e86a85514d530768da5",
+    "changed": "ead248be47590ba7b2e615a0a6992ee587ba86a357f3d4e953f0bc103fb131e9",
+    "commit": "7789bd13ad7696d0270c51fb38a5931be922a37f",
+    "dismissals": [],
+    "findings": [],
+    "id": "2f1c041a-df8f-4632-8beb-f67222cc542e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T15:20:03+00:00",
+      "step": "review"
     }
   ],
   "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)",
