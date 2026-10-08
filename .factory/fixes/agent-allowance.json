@@ -3,12 +3,14 @@
   "branch": "fix/agent-allowance",
   "done_when": "The shipped coordinator guide says the agent may run forge fix allow-large itself, without asking the human, when the fix corrects one kind of problem in every place it appears and changes no interface, naming that problem in the reason; anything else still needs the human or a story; the shipped review instructions report as P1 an allowance whose reason doesn't match the diff (more than one kind of problem, or an interface change); a docs test covers both texts for a new repo and for one adopted on an earlier release after sync",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T09:10:19+00:00",
       "step": "start"
     }
   ],
-  "why": "Client fixes that correct one kind of problem everywhere it appears keep tripping the five-code-file limit, and each needs the owner's allowance (owner decision 2026-10-08: keep 5, the agent may record the allowance itself)"
+  "why": "Client fixes that correct one kind of problem everywhere it appears keep tripping the five-code-file limit, and each needs the owner's allowance (owner decision 2026-10-08: keep 5, the agent may record the allowance itself)",
+  "worker": "codex"
 }
