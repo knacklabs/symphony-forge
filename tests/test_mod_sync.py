@@ -221,6 +221,7 @@ def test_5_sync_turns_on_the_mod(repo, gh, tmp_path, monkeypatch, case):
     elif case == 'real-local-install':
         real_claude_sync_installs_from_local_release_tag(repo, tmp_path, monkeypatch)
     elif case == 'native-plugin-checks':
+        # The native suite owns Machine layout and the separate rolling load-history check.
         run_native_plugin_checks(tmp_path)
     else:
         mod_reads_real_old_forge_refusal_and_spaced_working_directory(repo, tmp_path, monkeypatch)

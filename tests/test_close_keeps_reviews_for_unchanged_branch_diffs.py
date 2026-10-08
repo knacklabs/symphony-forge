@@ -111,7 +111,7 @@ def test_3_default_branch_checker_accepts_new_and_reused_reviews(env, review_bef
     source = env.tmp / "base-src"
     shutil.copytree(ROOT / "src/forge", source / "forge", ignore=shutil.ignore_patterns("__pycache__"))
     fixture = ROOT / "tests/fixtures/pr-check-before-branch-diff"
-    for name in ("close.py", "review.py", "prcheck.py"):
+    for name in ("close.py", "review.py", "prcheck.py", "templates/review.md"):
         shutil.copy(fixture / name, source / "forge" / name)
     command = env.tmp / "base-forge"
     command.write_text(FORGE_SHIM.format(python=sys.executable, src=str(source)), encoding="utf-8")
