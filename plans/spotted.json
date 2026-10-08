@@ -683,6 +683,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 45,
+      "text": "The native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "from": "worker",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/machine.ts\tDistinguish agent and test targets before confirming a stop\tFORGE-MOD-1/MACHINE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/machine.ts",
