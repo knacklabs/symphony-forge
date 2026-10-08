@@ -474,6 +474,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 168,
+      "text": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/doctor.py\tNot done: functional check\tFORGE-DOCTORFIX-1/FILES",
       "kind": "bug",
       "path": "src/forge/doctor.py",
@@ -494,6 +505,17 @@
       "item": "FORGE-DOCTORFIX-1/FILES",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: preserve outside AGENTS.md bytes when refreshing the Forge block\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 173,
+      "text": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\tsrc/forge/doctor.py\tNot done: the UI skills check covers both hosts\tFORGE-DOCTORFIX-1/FILES",
@@ -562,6 +584,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 34,
+      "text": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO",
+      "from": "blocking",
+      "item": "land-waits-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -602,6 +635,39 @@
       "text": "Not done: unverifiable process identity refuses with one line",
       "from": "blocking",
       "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 184,
+      "text": "Protect remote work before force-publishing the rebuilt fix",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tStandard: Data is protected against loss\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 166,
+      "text": "Standard: Data is protected against loss",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tWith no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 192,
+      "text": "With no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "from": "worker",
+      "item": "merge-enable-stale",
       "status": "open",
       "closed_by": null
     },
@@ -976,6 +1042,17 @@
       "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
       "from": "blocking",
       "item": "codex-spawns-subagents-only-when-explici",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 18,
+      "text": "Not done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting",
+      "from": "blocking",
+      "item": "brief-close-pushes",
       "status": "open",
       "closed_by": null
     },
@@ -1706,6 +1783,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_workers_leave_ci_to_close.py\tNot done: test_1_workers_commit_and_stop_when_they_need_ci_evidence\tbrief-close-pushes",
+      "kind": "bug",
+      "path": "tests/test_workers_leave_ci_to_close.py",
+      "line": 52,
+      "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
+      "from": "blocking",
+      "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tClassify stale completed checks as failed",
       "kind": "edge",
       "path": "src/forge/board.py",
@@ -1834,6 +1922,17 @@
       "text": "Respect explicit worktree distrust before inheriting repository trust",
       "from": "review",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tDo not reject a repaired file because an historical block was malformed",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 126,
+      "text": "Do not reject a repaired file because an historical block was malformed",
+      "from": "review",
+      "item": "agents-block-doctor",
       "status": "open",
       "closed_by": null
     },
@@ -2054,6 +2153,17 @@
       "text": "Handle existing agents without a dedicated process group",
       "from": "review",
       "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tOne forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 140,
+      "text": "One forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "from": "worker",
+      "item": "agents-block-doctor",
       "status": "open",
       "closed_by": null
     },
@@ -2553,50 +2663,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
-      "kind": "bug",
-      "path": "src/forge/land.py",
-      "line": 34,
-      "text": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO",
-      "from": "blocking",
-      "item": "land-waits-ci",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 184,
-      "text": "Protect remote work before force-publishing the rebuilt fix",
-      "from": "blocking",
-      "item": "merge-enable-stale",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\tStandard: Data is protected against loss\tmerge-enable-stale",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 166,
-      "text": "Standard: Data is protected against loss",
-      "from": "blocking",
-      "item": "merge-enable-stale",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/merge.py\tWith no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
-      "kind": "bug",
-      "path": "src/forge/merge.py",
-      "line": 192,
-      "text": "With no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
-      "from": "worker",
-      "item": "merge-enable-stale",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "improve\tsrc/forge/fasttest.py\tThe related-test picker omitted the existing command-level merge tests when merge.py changed.",
       "kind": "improve",
       "path": "src/forge/fasttest.py",
@@ -2604,50 +2670,6 @@
       "text": "The related-test picker omitted the existing command-level merge tests when merge.py changed.",
       "from": "worker",
       "item": "merge-enable-stale",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines\tagents-block-doctor",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 168,
-      "text": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines",
-      "from": "blocking",
-      "item": "agents-block-doctor",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/doctor.py\tNot done: preserve outside AGENTS.md bytes when refreshing the Forge block\tagents-block-doctor",
-      "kind": "bug",
-      "path": "src/forge/doctor.py",
-      "line": 173,
-      "text": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block",
-      "from": "blocking",
-      "item": "agents-block-doctor",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "edge\tsrc/forge/doctor.py\tDo not reject a repaired file because an historical block was malformed",
-      "kind": "edge",
-      "path": "src/forge/doctor.py",
-      "line": 126,
-      "text": "Do not reject a repaired file because an historical block was malformed",
-      "from": "review",
-      "item": "agents-block-doctor",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/machine.py\tOne forge test attempt refused at lane startup; an unchanged retry entered the lane.",
-      "kind": "edge",
-      "path": "src/forge/machine.py",
-      "line": 140,
-      "text": "One forge test attempt refused at lane startup; an unchanged retry entered the lane.",
-      "from": "worker",
-      "item": "agents-block-doctor",
       "status": "open",
       "closed_by": null
     }

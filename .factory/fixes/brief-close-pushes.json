@@ -2,20 +2,38 @@
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/brief-close-pushes",
   "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
-  "flagged": [],
+  "flagged": [
+    "src/forge/templates/brief.md",
+    "tests/test_workers_leave_ci_to_close.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3983f431d38771fd1ca584ae26546075ff4073a4a7ec456634619cbb26db681e",
-    "changed": "5790f5cb4d8562f350c7342d2ff31bcab4a1d1e117706c623c0622a010d7acf9",
-    "commit": "24a7e51ae736daece344ef3b6086cdf34b7a6cbb",
+    "branch_diff": "8d81d95ebee68e1a384e6c8862f7f0954c2fd785d25b67b1638c80ec4f7e6b4c",
+    "changed": "e23092b7a49d4c0bda6c9e6c60f77cddbab7bd91c23bb4b84521db626a22ef08",
+    "commit": "7bdecd12fd62dd52e72d233c54f577fe4585e636",
     "dismissals": [],
-    "findings": [],
-    "id": "ba3ebcf2-8fe7-479c-8469-0e21c82c8767",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The coordinator's revised Done-when adds two requirements that this sentence still omits: CI is the merge gate, and workers commit their local proof without waiting for CI results to complete their proof list. The current guidance addresses asking for a push, but does not address the second reported stall over CI timings. Update both the shipped template here and the resumed-round text in src/forge/worker.py:400\u2013402 to cover the revised requirement.",
+        "file": "src/forge/templates/brief.md",
+        "line": 18,
+        "priority": "P1",
+        "title": "Not done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting"
+      },
+      {
+        "body": "Both client cases exercise fresh and resumed briefs after sync, but their assertions check only the original wording. They pass while the revised requirements\u2014CI as the merge gate and committing local proof without waiting to record CI results\u2014are absent. The supplied successful close run demonstrates this gap. Extend the assertions in these existing cases to protect both added requirements, and include their evidence in the proof list.",
+        "file": "tests/test_workers_leave_ci_to_close.py",
+        "line": 52,
+        "priority": "P1",
+        "title": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence"
+      }
+    ],
+    "id": "82592214-9de3-4939-9ec2-ad7f7ed81843",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T12:27:03+00:00",
@@ -23,6 +41,10 @@
     },
     {
       "at": "2026-10-08T12:31:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:17:56+00:00",
       "step": "review"
     }
   ],
