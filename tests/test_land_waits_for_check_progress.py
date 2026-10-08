@@ -12,7 +12,7 @@ import pytest
 
 from conftest import GH_STUB, ROOT, _install
 from test_close import GREEN, env, run  # noqa: F401
-from test_land import GH, ITEM, RUNS, URL, _fix, _queue, _runs, land  # noqa: F401
+from test_land import GH, ITEM, RUNS, URL, _agent, _fix, _queue, _runs, land  # noqa: F401
 
 STORY = "land-waits-ci"
 
@@ -153,3 +153,39 @@ def test_4_close_keeps_its_fixed_wait(clock):
     assert "The checks are not green yet: tests is still running" in done.stderr
     assert "no check progress" not in done.stderr
     assert not env.gh_calls("pr", "merge")
+
+
+@pytest.mark.parametrize("answer", ["unreadable", "failed", "long", "stuck"])
+def test_5_land_keeps_progress_waiting_during_merge_revalidation(clock, answer):
+    # Close's green result cannot hide a bad answer or a restarted check during merge.
+    # The old merge caller drops the wait policy, refusing immediately or on a fixed deadline.
+    env = clock
+    _agent(env)
+    _fix(env, "working", worked=True)
+    if answer == "failed":
+        stub = env.repo.bin / "gh"
+        stub.write_text(stub.read_text().replace('        answer(out)',
+            '        if out == "failed-answer":\n'
+            '            answer("unexpected end of JSON input", 1)\n'
+            '        answer(out)'), encoding="utf-8")
+        answers = ["failed-answer", *_runs(GREEN)]
+    elif answer == "unreadable":
+        answers = ["{", *_runs(GREEN)]
+    elif answer == "long":
+        answers = _runs(*[look for stage in range(4) for look in [_pending(stage)] * 3], GREEN)
+    else:
+        answers = _runs(_pending())
+    _queue(env, RUNS, *_runs(GREEN), *answers)
+    done = env.repo.forge("land", ITEM)
+    assert "clean review and green checks" in done.stdout
+    assert f"Merging {ITEM}." in done.stdout
+    assert done.stdout.count(f"Closing {ITEM}.") == 1
+    if answer == "stuck":
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "GitHub has shown no check progress" in done.stderr
+        assert "tests is still running" in done.stderr
+        assert not env.gh_calls("pr", "merge")
+    else:
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert len(env.gh_calls("pr", "merge")) == 1
+        assert "Merged tidy-readme and removed its worktree" in done.stdout

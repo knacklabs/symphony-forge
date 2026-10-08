@@ -78,7 +78,7 @@ def land(args: argparse.Namespace) -> int:
             say(f"{item} is ready; a human merges its pull request: {url}")
             return 0
         say(f"Merging {item}.")
-        return merge.merge(argparse.Namespace(item=item))
+        return merge.merge(step)
     except repo.Refused:
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
