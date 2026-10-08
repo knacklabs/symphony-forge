@@ -111,12 +111,28 @@ both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confi
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
 
+In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
+repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
+an agent tree; narrow terminals use a list. Select a run, press `o` for its last 200 output lines
+or `s` to ask the person whether to stop that exact run. A run that ends or is replaced during
+confirmation is not stopped. Press `l` to show or hide recent events. The spinner names this
+session's place in line. `/forge` includes the machine summary where panes cannot draw.
+Lanes record each item's title when it joins, so other repos' stories and tasks keep their
+plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
+round, current step and gates.
+`forge lanes --json` supplies the Machine tab; other releases still count towards admission but
+are left out of its rows. New repos receive the mod on setup; existing repos receive it on
+upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
+failed refreshes keep the last rows. The mod adds no background work or dependencies.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
 other readers. The usual commands still print text or open the HTML board. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 
-The board's `items` has one row per story and fix, with tasks in the story's `children`.
+Both views' `items` has one row per story and fix, with tasks in the story's `children`.
+Finished stories, tasks and fixes older than seven days are left out of JSON;
+the HTML board keeps their history. Each call reads current state without a history cache.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -143,6 +159,16 @@ live elapsed time comes from timestamps. Worker-owned tests belong to Build; clo
 provide live worker and reader metadata; completed timing durations supply stage end
 times. Values remain null where the producer has not recorded them.
 
+Live rows add `activity` (status and a running action), `idle_since` and `stalled`
+after 24 idle hours. A recorded worker adds tool, model, effort, round, start,
+elapsed seconds and its latest tool step; close's live `tests` adds elapsed and
+done/total where the runner reports progress. `gates` has plan_read, review and ci,
+each with status; blocked reviews add count and running CI adds elapsed seconds.
+PR failures list job and cause (timeout or failed); findings add items with title
+and priority and a dismissed count. Both views' `events` list the last 20 run,
+review and question records as time, item and one plain line, newest last.
+Queue places stay absent until the shared lane entries ship.
+
 The newest 25 open pull requests get checks in one GitHub request, cached for 60
 seconds in the shared Git directory. Older pull requests and unreachable GitHub
 show unknown checks. Required checks, including matrix variants, must succeed;
@@ -164,6 +190,130 @@ item's step. Machine views do not grant approval or permission to merge.
 
 The shared mod contract fixture is `tests/fixtures/board.json`; command coverage
 in `tests/test_machine_views.py` checks both views against it.
+
+## Claude Code plugin core
+
+The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
+it never edits repo files or replaces the commands' approval and merge rules.
+All its consumers share one snapshot. On load, then every 10 seconds, one refresh
+runs `forge board --json`, `forge next --json` and `forge lanes --json` together.
+If that Forge has no lanes command, lane data is absent. A due refresh is skipped
+while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
+Drawing ticks advance live timers every second without fetching state.
+
+A failed or malformed refresh, or a command taking over 20 seconds, keeps the
+last good rows and adds a dim `Couldn't refresh: <first line of the error>`.
+It retries on the next tick. Only a non-zero command result containing
+`unrecognized arguments: --json` shows
+`This repo's Forge is too old for the pane: upgrade Forge here.`
+Other failures use the normal refresh error. The board command owns the
+60-second GitHub checks cache described above; a check changing without a local
+edit appears on the next refresh after that cache expires. Unknown checks stay
+unknown, including when GitHub is unreachable.
+
+## Installing the mod
+
+`forge sync` installs or updates the mod from Forge's latest release at user scope,
+one per machine, independently of each repo's pinned Forge version. It needs
+Claude Code v2.1.287 or newer on PATH. When the marketplace is missing, sync runs
+`claude plugin marketplace add knacklabs/symphony-forge`, then always runs
+`claude plugin marketplace update forge`. It runs
+`claude plugin install forge@forge --scope user` for a new user install, or
+`claude plugin update forge@forge --scope user` for an existing one.
+Sync writes no repo files for the mod; Codex's setup and workflow are unchanged.
+
+Without `claude`, sync skips the mod. A failed install or update (including no
+network or old Claude Code) prints one warning line and sync still succeeds;
+run `forge sync` to retry. `forge doctor` warns when Claude Code is missing or
+older than v2.1.287 and keeps exit status 0. In a running session, use
+`/reload-plugins` or restart to load the updated mod. Desktop's WSL sessions load
+no plugins; use the `forge` command there.
+
+The mod runs `forge` from PATH with argv and no shell, in the session's repo root.
+It does not change the repo's pin. If the pane or strip says that repo's Forge is
+too old, upgrade Forge in that repo; other refresh errors follow the core's retry
+behaviour above. Sessions without the mod keep using the commands as today.
+
+## Approving with the pane
+
+The pane has no Approve button: Claude Code's mod API cannot supply the story's exact text
+to its native plan-approval prompt. Use Plan Mode and the story doc `forge next`
+names, following Planning a story below. The existing approval hook and its trust
+checks are unchanged. Plan Mode remains the approval path in Claude Code, Codex,
+the VS Code chat panel and sessions without the mod; installing the mod changes
+no approval rule.
+
+## The pane and strip
+
+Type `/forge` at any width, including 80 columns, to open and focus the pane.
+The mod requests it at interactive session start too; Claude Code places it
+automatically at 144 columns, or 110 after the person has opened it once.
+The strip below that wide-screen threshold ends with `/forge for the board`.
+The terminal pane shows each story, its tasks and each fix with their stage,
+running worker's kind, model and elapsed time, pull request checks and open
+findings. Recorded details add tool, effort, round, current step, activity,
+idle time and stalled state, stage times, test progress, failed job and timeout
+cause, and findings' severity and dismissed count. Missing state or timing stays
+unknown. An empty board says `Nothing in progress.`
+
+The Desktop app's Code tab draws the same facts as tables and a stage timeline
+for each item, with hover times, equivalent alt text and native buttons for key
+actions. The strip stays text. `/forge` always returns the summary and full board
+as text, two lines per item, with tasks indented under their story, as well as
+opening the pane. Where mods draw nothing (the VS Code chat panel, `claude -p`
+and Remote Control from a phone or claude.ai), that text is the status reply.
+It uses the last completed snapshot, including any refresh error.
+
+The strip above the prompt uses at most three lines. Its first line shows
+`Agents N/M (W waiting) · Tests: <running item or idle> (K waiting) · 1: <next command>`.
+It also shows a recorded current worker step. The other lines show up to two active items
+from this repo, each with Build → Tests → Review → CI → Merge, its round and total
+time. A third active item replaces the last line with `+N more · /forge for all`.
+Finished stages show ✓ and their duration, the current stage ● and a live timer,
+and failed stages ✗ in red. Unreached stages have only their name; skipped tests
+show `Tests –`. Symbols carry the meaning without colour. The total adds recorded
+durations across rounds and live elapsed time without counting concurrent stages
+twice. At widths under 80 columns it is one line: running and waiting counts, the first
+active item's current stage and time, its total and the next step; without lane data,
+the first line is only the next step; the narrow strip has no item or lane summary.
+
+Press `1` on an empty prompt when Claude is idle to run the displayed next command
+as the user. Before submitting, the mod re-reads `forge next --json`: if the command
+changed it redraws and runs nothing. A failed re-read submits nothing and toasts
+`Couldn't check the next step: <reason>`; a failed submit toasts
+`Couldn't run the next step: <reason>`. A null command or busy Claude has no hotkey
+and shows the plain next-step line instead. Typing into a nonempty prompt stays typing.
+
+## Events
+
+The mod starts a session turn for new review findings, failed checks, a pull request
+ready to merge, worker questions and finished runs. Progress only updates the pane:
+starting a run or running checks never asks the agent for a status turn.
+Each event line names the plain item title, what happened and that item's own next command,
+or `forge next` when there is no runnable command. When the turn arrives, act on it
+straight away through Forge's commands: resolve findings with evidence or send a
+worker round, follow a failed check's next step, close finished work, and merge ready
+work only when allowed. Answer a worker question with
+`forge work <item> --note "<answer>"`; a choice the human owns still goes to them.
+Do not build another polling or watcher loop for an interactive mod session.
+
+Forge's occurrence ids distinguish events, never their text: review results, run
+ends and questions get fresh ids; failed check runs use GitHub's id and completion time,
+failed commit statuses use their own id, and readiness uses the review id and head commit.
+The same question in another round or a check failing again after a later completion
+therefore gets another turn, even if its wording is unchanged. A run that starts
+and finishes between refreshes still has its completion occurrence.
+
+Seen ids are stored for the repo root and session id together, so two sessions
+consume events independently. At session start or reload the current ids become
+seen without starting a turn. Several changes, including those found while Claude
+is busy, are combined in one turn after the current turn ends, one line per event.
+A failed submission leaves them unseen for the next refresh to retry; a successful
+one is not repeated. Only interactive sessions on terminal or Desktop receive
+event turns, and only for their own repo. Forge-started workers, readers and
+reviewers have `FORGE_WORKER=1` and never act on events. Headless sessions receive
+no event turns. Codex and sessions without the mod keep using `forge next` and the
+existing command flow.
 
 ## Handoff
 
@@ -524,12 +674,12 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to commit first, run the change's related tests (`fast_test`, else
-`test`) in the foreground, wait for them and commit any fixes. Only
+once, telling the worker to commit first, run the change's related tests through `forge test`
+in the foreground, wait for them and commit any fixes. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
-Continued worker rounds repeat the current related-test command and the commit-first order,
+Continued worker rounds repeat `forge test` and the commit-first order,
 replacing any earlier full-suite instruction. The synced test-audit skill follows the same rule;
 CI runs the full suite.
 
@@ -646,7 +796,14 @@ upgrade. Upgrade never rewrites their `test` or `fast_test` settings. Doctor rep
 in the project: it loads a temporary pytest hook to exclude unrelated files, including on pytest
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
-Until the test-lane story lands, bare `forge test` refuses in one line naming `--pytest`.
+Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
+set, with `{base}` as the merge base with `origin/<default branch>`, in the same fair machine-wide
+test lane as close. It prints the report close keeps and always runs, including docs-only and
+uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
+names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
+and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pytest -n auto` honours
+the first; other runners may read the second. The lane stays taken until the test command ends,
+even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. If the code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
