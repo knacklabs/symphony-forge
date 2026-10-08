@@ -563,6 +563,7 @@ repo, rewritten by that version. One command does all of it.
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
+   Its commit includes the upgrade's proof list; close supplies its test run result to the review.
    It changes only the version in `forge.toml`.
 3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
 4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
@@ -570,6 +571,9 @@ repo, rewritten by that version. One command does all of it.
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
+After it merges, older branches keep their pinned release and its rules. When Forge says the
+default branch already pins the installed release, merge the default branch into your branch to
+use that release and its rules.
 
 ## Refresh dependencies
 
@@ -761,6 +765,11 @@ request and the review prompt. The first review checks the whole list, not a sam
 entry against the code and its named proof, including every Done-when detail. Compare it with the
 covered items so omitted entries cannot hide gaps; report every missing case in that one round,
 even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
+When a Done-when item's named proof is a pull request check that has not finished yet, do not
+report it as `Not done` if the check is configured to run on the pull request. Close's checks
+gate holds the merge until that check passes. A failed check or a proof with no check behind
+it is still P1 `Not done`. New repos get these instructions at init; existing repos get them
+after upgrading Forge and running sync.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder. Close refuses added binary files under
 `tests/` before the review, naming the file to replace.

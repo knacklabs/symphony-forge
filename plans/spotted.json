@@ -2716,6 +2716,39 @@
       "item": "husky-hooks",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 45,
+      "text": "The native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "from": "worker",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tCI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 183,
+      "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "from": "worker",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tPoint the merge advice at the fetched default branch",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 537,
+      "text": "Point the merge advice at the fetched default branch",
+      "from": "review",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
