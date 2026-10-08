@@ -136,6 +136,13 @@ def close(args: argparse.Namespace) -> int:
         result.update(changed=changed, branch_diff=branch_diff)
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
+    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if (not fresh and round_number >= 3 and not state.get("stop") and
+            _three_blocked_reviews(top, item)):
+        file = review.blocking(previous)[0][1]["file"]
+        state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
+        _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
+        check_stop(item, state)
     if not fresh:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
@@ -259,6 +266,23 @@ def close(args: argparse.Namespace) -> int:
     return 0
 
 
+def _three_blocked_reviews(top: Path, item: str) -> bool:
+    """Use committed review results, including older releases and later dismissals."""
+    seen = set()
+    path = repo.state_path(item)
+    for commit in repo.git("log", "--first-parent", "--format=%H", "--", path,
+                           cwd=top).split():
+        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
+        if not result or not review.blocking(result):
+            return False
+        if result["commit"] in seen:
+            continue
+        seen.add(result["commit"])
+        if len(seen) == 3:
+            return True
+    return False
+
+
 def check_stop(item: str, state: dict[str, Any]) -> None:
     """A human choice or a later clean review releases a review loop stop."""
     result = state.get("review") or {}
@@ -267,8 +291,8 @@ def check_stop(item: str, state: dict[str, Any]) -> None:
         state.pop("stop", None)
     if state.get("stop") and not state["stop"].get("choice"):
         repo.refuse(REFUSALS["hotspot"], item=item,
-                    round=sum(step["step"] == "review" for step in state.get("steps", [])),
-                    **state["stop"])
+                    **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
+                       **state["stop"]})
 
 
 def merger(top: Path, state: dict[str, Any]) -> str:
