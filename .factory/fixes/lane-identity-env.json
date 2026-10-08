@@ -2,13 +2,38 @@
   "base": "a7ca33cb650f41e6fe1fda9503f786b848b1a603",
   "branch": "fix/lane-identity-env",
   "done_when": "A process's recorded start time is read the same way whatever the caller's TZ, LANG or LC_ALL, so every Forge process agrees whether a run is still alive; entries recorded by the previous release are not dropped just because their stored start text was written in another format (they keep their place while their pid runs); forge stop's verification uses the same reading; a command test starts a waiting run under one TZ and locale, reads the lanes from a Forge process under another, and shows the run keeps its place, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/codex.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "623ee6eb1a5067be6b00a5f8e4c845c91cfbd5d04ad472d77c338f47e958d4fe",
+    "changed": "8ab04459b9f6c8e0731dbd8369c387c31f6f0845c5cc87eed364aec9767aacba",
+    "commit": "7112da826a3da522d5b8d1e570ff6b375112d77b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The legacy check still drops genuine live records written under some locales. [Apple's ps implementation](https://github.com/apple-oss-distributions/adv_cmds/blob/main/ps/print.c#L649-L660) formats `lstart` with locale-dependent `%c`. New evidence beyond the ruling: this machine's `ko_KR.UTF-8` `%c` output is `2026\ub144 10\uc6d4 8\uc77c \ubaa9\uc694\uc77c 21\uc2dc 40\ubd84 33\ucd08`, so the previous release's five-token parser records `2026\ub144 10\uc6d4 8\uc77c \ubaa9\uc694\uc77c 21\uc2dc`, containing no colon. This predicate returns false, and `machine._queue` at lines 321\u2013323 compares that text against the new UTC identity and removes the entry while its PID still runs. `_alive` likewise reports it dead, affecting existing locks and cleanup callers. The previous-release command test exercises only `en_US.UTF-8`, so it misses this promised compatibility behavior. Recognize earlier parser output without requiring a colon and extend the command regression with this locale case.",
+        "file": "src/forge/codex.py",
+        "line": 596,
+        "priority": "P1",
+        "title": "Not done: Preserve previous-release start text from locales without colon-separated times"
+      }
+    ],
+    "id": "b0afcff2-d807-4a70-a932-964736822cf6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T21:20:08+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T21:41:53+00:00",
+      "step": "review"
     }
   ],
   "why": "Live runs vanish from the machine's shared agent and test lanes ('This run was stopped while waiting', twice on 2026-10-08/09) because codex.identity reads a process's start time from ps -o lstart, whose text depends on the caller's TZ and locale (e.g. 'Fri 9 Oct 02:49:51' vs 'Thu 8 Oct 21:19:51' under TZ=UTC vs 'Fri Oct 9' under LANG=C); any Forge process started with a different environment (the Claude Code mod's refresh, git hooks run with a bare PATH, a pinned release run through uv) sees a mismatch and prunes the live entry as a reused pid",
