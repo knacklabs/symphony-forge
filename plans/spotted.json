@@ -34,6 +34,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: command tests for new clients, earlier-release adoption and queued-without-a-runner diagnostics\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 5,
+      "text": "Not done: command tests for new clients, earlier-release adoption and queued-without-a-runner diagnostics",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: proof list\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 11,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/runner-setting.json\tNot done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation\trunner-setting",
+      "kind": "bug",
+      "path": ".factory/fixes/runner-setting.json",
+      "line": 5,
+      "text": "Not done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation",
+      "from": "blocking",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
