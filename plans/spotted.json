@@ -782,6 +782,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 45,
+      "text": "The native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
+      "from": "worker",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/machine.ts\tDistinguish agent and test targets before confirming a stop\tFORGE-MOD-1/MACHINE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/machine.ts",
@@ -1427,6 +1438,28 @@
       "text": "Not done: forge stop ends a worker and its test run",
       "from": "blocking",
       "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_tests.py\tThe Ubuntu suite cannot confirm the Codex worker stopped; the case passes alone on the default branch, and the suite failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 309,
+      "text": "The Ubuntu suite cannot confirm the Codex worker stopped; the case passes alone on the default branch, and the suite failure remains unresolved.",
+      "from": "worker",
+      "item": "stacked-fix-count",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tCI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 183,
+      "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "from": "worker",
+      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     },
@@ -2245,6 +2278,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/prcheck.py\tExclude both paths of renamed tests from the PR size gate",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 244,
+      "text": "Exclude both paths of renamed tests from the PR size gate",
+      "from": "review",
+      "item": "stacked-fix-count",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/quicktest.py\tForward the added filters through npm exec's argument separator",
       "kind": "edge",
       "path": "src/forge/quicktest.py",
@@ -2296,6 +2340,17 @@
       "text": "Handle Windows readers holding the progress file open",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tPoint the merge advice at the fetched default branch",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 537,
+      "text": "Point the merge advice at the fetched default branch",
+      "from": "review",
+      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     },
@@ -2659,39 +2714,6 @@
       "text": "The related-test picker omitted the existing command-level merge tests when merge.py changed.",
       "from": "worker",
       "item": "merge-enable-stale",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tThe native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/machine.test.ts",
-      "line": 45,
-      "text": "The native terminal Machine case exceeds its five-second timeout in CI on this branch and the default branch.",
-      "from": "worker",
-      "item": "old-branch-pin",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_lanes_view.py\tCI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_lanes_view.py",
-      "line": 183,
-      "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
-      "from": "worker",
-      "item": "old-branch-pin",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/repo.py\tPoint the merge advice at the fetched default branch",
-      "kind": "edge",
-      "path": "src/forge/repo.py",
-      "line": 537,
-      "text": "Point the merge advice at the fetched default branch",
-      "from": "review",
-      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     }

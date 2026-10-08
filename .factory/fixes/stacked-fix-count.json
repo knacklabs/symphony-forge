@@ -8,16 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "59a30e9303d1639dc84b9d0ab78388359715752ad6dfc1e531b2ad492ddc41ae",
+    "branch_diff": "e19738bda028771f6b6534e8dac7db7293bebdec63126df46f270294290148a5",
     "changed": "4de81caf82467679af290b8a07e02f5beada510e97b4c21019c9ee243aeb0790",
-    "commit": "0a6a480d63ace97aadb35b9bdd07e7c4bc8ffdcb",
+    "commit": "e284e8614c0072878fb7cb8e37fcafd2e4f82dec",
     "dismissals": [],
-    "findings": [],
-    "id": "3409ca10-70a2-4f66-9cf0-c35f6c64ab99",
+    "findings": [
+      {
+        "body": "A fix editing five source files and renaming `tests/test_old.py` to `tests/test_new.py` passes commit/push checks but now fails the PR check as six code files. The new diff at line 191 uses `--no-renames`, including both test paths, while this exclusion diff permits rename detection and returns only the destination ([Git diff contract](https://git-scm.com/docs/git-diff)). The old test path therefore survives the filter at line 245. Add `--no-renames` here, matching the hook exclusion in `src/forge/githooks.py:192`.",
+        "file": "src/forge/prcheck.py",
+        "line": 244,
+        "priority": "P2",
+        "title": "Exclude both paths of renamed tests from the PR size gate"
+      }
+    ],
+    "id": "bd9ca878-0bee-433f-8a80-f2a343ed4ac4",
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T22:29:48+00:00",
@@ -33,6 +41,10 @@
     },
     {
       "at": "2026-10-08T23:05:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T23:33:40+00:00",
       "step": "review"
     }
   ],
