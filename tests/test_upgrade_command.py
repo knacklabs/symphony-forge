@@ -357,8 +357,11 @@ def _hooks_inside_the_checkout(up):
     done = up.run(RELEASE)
 
     assert_ready(up, done, ours(up))
-    assert (up.folder / ".husky" / "_" / "pre-commit").is_file()  # sync wrote its shims there
-    assert not [line for line in up.upgrade_commit() if ".husky" in line]
+    # Upgrade now commits Forge's checks in Husky's user hooks, outside the rebuilt folder.
+    assert (up.folder / ".husky" / "pre-commit").is_file()
+    assert not (up.folder / ".husky" / "_" / "pre-commit").exists()
+    assert "A\t.husky/pre-commit" in up.upgrade_commit()
+    assert "A\t.husky/pre-push" in up.upgrade_commit()
     assert "M\tforge.toml" in up.upgrade_commit()
 
 
