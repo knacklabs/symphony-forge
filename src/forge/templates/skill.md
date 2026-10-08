@@ -742,8 +742,10 @@ named in the story. Untraced work: `Cut or defer: <item>`. An unmet Done-when it
 
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
 recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
-count, so an upgrade fix needs no allowance. If the work exceeds that boundary, promote it to a story or get the
-allowance recorded before editing.
+count, so an upgrade fix needs no allowance. You may run `forge fix allow-large "<reason>"`
+yourself, without asking the human, when the fix corrects one kind of problem in every place it
+appears and changes no interface. Name that problem in the reason and record the allowance
+before editing beyond the limit. Anything else needs the human's allowance or a story.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.

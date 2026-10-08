@@ -214,6 +214,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
+              "allowance": state.get("allow_large") or "No recorded allowance",
               "moving_parts": "New moving parts: none (a fix adds no new moving part)",
               "previous": _previous(previous), "rulings": _rulings(top, item, base),
               "test_run": tested,

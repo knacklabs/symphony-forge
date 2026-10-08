@@ -25,7 +25,7 @@ def test_4_one_test_per_rule():
     cited: dict[tuple[str, int], str] = {}
     for path in sorted((ROOT / "tests").glob("test_*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        # A story's own test file sets STORY = "<key>"; its numbers cite that story's Done when.
+        # Story and fix files set STORY = "<key>"; numbers stay unique across that item's files.
         story = next((node.value.value for node in tree.body if isinstance(node, ast.Assign)
                       and isinstance(node.value, ast.Constant)
                       and [getattr(target, "id", "") for target in node.targets] == ["STORY"]),
