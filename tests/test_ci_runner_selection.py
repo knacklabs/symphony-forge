@@ -11,8 +11,10 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_close import env, run  # noqa: F401
+from test_close import GREEN, env, run  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
+from test_land import ITEM, RUNS, _agent, _fix, _queue, _runs, _workers, land  # noqa: F401
+from test_land_waits_for_check_progress import clock  # noqa: F401
 from test_migrate import _copied_client
 
 STORY = "FIX-RUNNER-SETTING"
@@ -94,7 +96,7 @@ def test_2_earlier_release_adoption_sync_keeps_selected_runner_and_sets_up_unpin
 
 
 @pytest.mark.parametrize("runner", ["", "   "])
-def test_1_sync_refuses_blank_runner_label(repo, runner):
+def test_6_sync_refuses_blank_runner_label(repo, runner):
     repo.git("checkout", "-qb", "fix/select-ci-runner")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrunner = {json.dumps(runner)}\n')
@@ -174,3 +176,32 @@ def test_5_missing_check_queries_queued_runs_without_windows_batch_operators(env
     # Windows' gh.cmd shim interprets an unquoted & as a second command.
     # Pagination already follows every page without adding per_page to the URL.
     assert all("&" not in call[-1] for call in queries), queries
+
+
+@pytest.mark.parametrize("phase", ["close", "merge"])
+@pytest.mark.parametrize("answer", ["malformed", "failed"])
+def test_7_land_retries_queued_run_lookup_failures_without_a_worker_round(clock, phase, answer):
+    # The check-run lookup works; only the separate Actions lookup temporarily fails.
+    # Both land's close phase and its merge revalidation must keep their progress wait.
+    env = clock
+    _agent(env)
+    _fix(env, "working", worked=True)
+    queued = [run("tests", None, "queued"), run("forge-pr-check")]
+    looks = [queued, queued, GREEN] if phase == "close" else [GREEN, queued, queued, GREEN]
+    _queue(env, RUNS, *_runs(*looks))
+    actions = ["api", "--paginate", "--jq", ".workflow_runs[]"]
+    if answer == "failed":
+        stub = env.repo.bin / "gh"
+        stub.write_text(stub.read_text("utf-8").replace('        answer(out)',
+            '        if out == "failed-queued-answer":\n'
+            '            answer("GitHub Actions temporarily unavailable", 1)\n'
+            '        answer(out)'), encoding="utf-8")
+    _queue(env, actions, "{" if answer == "malformed" else "failed-queued-answer", "")
+    done = env.repo.forge("land", ITEM)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "Merged tidy-readme and removed its worktree" in done.stdout
+    assert done.stdout.count(f"Closing {ITEM}.") == 1
+    assert len(env.review_calls()) == 1
+    assert not _workers(env)
+    assert len(env.gh_calls("pr", "merge")) == 1
+    assert len(env.gh_calls(*actions)) >= 2

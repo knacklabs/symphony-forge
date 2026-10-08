@@ -32,22 +32,24 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
     while True:
         try:
             seen, snapshot = _seen(top, item, sha)
+            if progress and snapshot != previous:
+                previous = snapshot
+                deadline = time.monotonic() + timeout
+            reason = _pending(item, names, seen)
+            queued = ""
+            if (any(state == QUEUED for _, state in seen)
+                    or any(not any(name == want or name.startswith(want + " (")
+                                   for name, _ in seen) for want in names)):
+                queued = queued_reason(top, sha, item)
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
             reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
         else:
-            if progress and snapshot != previous:
-                previous = snapshot
-                deadline = time.monotonic() + timeout
-            reason = _pending(item, names, seen)
             if not reason:
                 return
-            if (any(state == QUEUED for _, state in seen)
-                    or any(not any(name == want or name.startswith(want + " (")
-                                   for name, _ in seen) for want in names)):
-                if queued := queued_reason(top, sha, item):
-                    repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
+            if queued:
+                repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
         left = deadline - time.monotonic()
         if left <= 0:
             if progress:
