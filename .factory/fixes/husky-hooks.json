@@ -9,38 +9,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "94a29b2aafc1faa5a885e0f509d51db6eedd66588fe48a2b422dacc2f591335d",
-    "changed": "8c8c61310c48fcbf5b693647eddff1b31f05056e18866d3dff76ad2bff7eeedc",
-    "commit": "9101765b9a5e741c0bb7af66fc0ca563ce9ffe3c",
+    "branch_diff": "983be22bba650247bbb8d9a64fa9c8a6d135e66ba925611a266bcad808d3058c",
+    "changed": "9a85b7d6cfeb029c297811945ef279dfd42cd08d5eea853b6ec0e9ec6da807d2",
+    "commit": "236f9a38b17258df49f05137ff1dfaa628ce346d",
     "dismissals": [],
     "findings": [
       {
-        "body": "Appending the check after arbitrary existing hook code can silently disable it. An existing `.husky/pre-commit` or `.husky/pre-push` ending in `exit 0` or a successful `exec` never reaches Forge. A pre-push hook that consumes stdin reaches Forge with EOF instead: `pre_push` at `src/forge/githooks.py:128` then checks no refs and returns success, bypassing both default-branch and fix-size checks. Git supplies those refs on stdin ([hook contract](https://git-scm.com/docs/githooks#_pre_push)). The previous shim preserved and replayed input; the new tests use only echo commands, which expose neither failure. Compose the checks so existing hook control flow cannot skip them and both consumers receive the push input.",
-        "file": "src/forge/githooks.py",
-        "line": 91,
-        "priority": "P1",
-        "title": "Keep Forge checks reachable and preserve pre-push input"
+        "body": "Both committed hooks source the launcher before running the user script. The launcher at src/forge/sync.py:78\u201381 prepends global executable folders, overriding Husky's deliberate `node_modules/.bin` priority (tests/fixtures/husky-v9.1.7/husky:16). This child shell inherits that modified PATH. Consequently, an existing `eslint .` hook runs a globally installed ESLint instead of the repository's pinned executable when both exist; similarly, global Node can override the version selected by Husky's initialization. Preserve the incoming PATH for user commands and apply Forge's launcher PATH only to Forge.",
+        "file": "src/forge/sync.py",
+        "line": 97,
+        "priority": "P2",
+        "title": "Preserve Husky's PATH when running existing user hooks"
       },
       {
-        "body": "Adding both user hooks to this inventory also makes them eligible for close's automatic generated-file conflict resolution. `src/forge/close.py:323` obtains that inventory, and line 329 restores every conflicting inventory file entirely from the default branch before running sync. If a Forge branch and main change the same existing command in either `.husky/pre-commit` or `.husky/pre-push`, close now silently discards the branch's hook changes and commits the default-branch version. Previously these user scripts produced an ordinary merge-conflict refusal. Exclude user hook contents from this overwrite path or preserve both sides through an explicit merge.",
+        "body": "An absolute core.hooksPath pointing to the original checkout's `.husky/_` passes this check there, but Git shares that configuration with linked worktrees. Upgrade creates another checkout at src/forge/upgrade.py:99 and runs sync there at line 146, where this guard now refuses the same configuration because its folder lies outside the new checkout. Close's verification checkout (src/forge/close.py:362\u2013364) and oversized-fix inventory (src/forge/sync.py:369) encounter the same problem. This is new operational evidence beyond the ruling about detecting absolute paths inside the checkout: those accepted configurations cannot complete routine worktree-based workflows. Handle that configuration explicitly while retaining protection against outside links.",
         "file": "src/forge/githooks.py",
-        "line": 93,
-        "priority": "P1",
-        "title": "Preserve user hook edits when close resolves merge conflicts"
-      },
-      {
-        "body": "Two claimed proof details are not protected by their named tests. In `test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone`, this assertion counts `forge hook` but never verifies `.forge/hooks.sh` is used; replacing the emitted command with a direct Forge invocation would still pass because Forge is already on the fixture's PATH. In `tests/test_fix_upgrade_untracked_hooks.py::test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_does`, the test command creates `.husky/_/h` in the working checkout only after the synced-file check. That check runs sync in a separate worktree (`src/forge/close.py:360`) and inspects it at line 364; the new sync creates no runtime files there. Removing the runtime exclusion at `src/forge/close.py:380` would therefore leave this proof passing. Add command-level assertions that detect bypassing the launcher and actually present untracked runtime files to the status check.",
-        "file": "tests/test_husky_hooks_survive_install.py",
-        "line": 76,
-        "priority": "P1",
-        "title": "Not done: launcher routing and generated-runtime exclusion proofs"
+        "line": 83,
+        "priority": "P2",
+        "title": "Handle absolute Husky paths during worktree-based upgrade and close"
       }
     ],
-    "id": "dc855dcf-d563-4f48-b861-bf21bd2b4dbb",
-    "status": "blocked"
+    "id": "0633c575-8a61-4f3b-8abf-597e70c235b4",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T13:24:47+00:00",
@@ -48,6 +41,10 @@
     },
     {
       "at": "2026-10-08T13:52:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T14:28:11+00:00",
       "step": "review"
     }
   ],
