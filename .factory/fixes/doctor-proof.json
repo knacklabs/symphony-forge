@@ -1,0 +1,31 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/doctor-proof",
+  "done_when": "The commit forge doctor --fix writes for its dated forge-files fix carries a Proof list paragraph naming that fix's Done-when and its evidence (the files it brought up to date from the pinned release's sync, and close's test run), so its first review gets a proof list; it reuses whatever forge upgrade's proof list uses rather than a second copy; a command test runs doctor --fix on a new repo and on one adopted on an earlier release and shows the paragraph reaching close's review; new and existing client repos get it from this release on",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8e16c5906a26ca2562b8b424e64394c15b39c5b47bf1d9c7a78b1f25c2114603",
+    "changed": "2d8b2ea7a7cf61e3e24ccfe42605070f1fd8feb1fb663418888ee09f0ccb7f8d",
+    "commit": "1d22c1b809c6bafa708e36c94f6b6db7f75bee25",
+    "dismissals": [],
+    "findings": [],
+    "id": "ded06692-605b-4fe1-b91a-0560364f4d71",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T14:34:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T14:49:42+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A client's forge doctor --fix fix fails its first review asking for a Proof list, because the commit doctor --fix writes has none, the same gap forge upgrade had (reported by a client session on v1.2.7)",
+  "worker": "codex"
+}

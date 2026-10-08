@@ -371,6 +371,13 @@ def _synced(top: Path, item: str) -> None:
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
 
 
+def generated_fix_proof(done: str, evidence: str, item: str) -> str:
+    """Generated fixes give their first review the same proof as a worker commit."""
+    return (f"Proof list:\n- {done} Evidence: {evidence} "
+            f"forge close {item} supplies its test run result to the review "
+            "(including any skip reason).")
+
+
 def synced_changes(top: Path) -> list[str]:
     """The files forge sync changed in a checkout, deletions included, without its new hook shims."""
     # No rename detection, so each entry is one plain path; a rename lists its deletion and addition.
