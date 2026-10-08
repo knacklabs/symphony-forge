@@ -3,12 +3,14 @@
   "branch": "fix/agents-block-doctor",
   "done_when": "forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines was edited outside Forge; edits outside those lines never hold it, and doctor --fix refreshes the block while keeping them byte for byte; a command test covers a new repo and one adopted on an earlier release, with a hand edit outside the block (refreshed) and one inside it (held)",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T13:15:15+00:00",
       "step": "start"
     }
   ],
-  "why": "forge doctor holds a client's whole AGENTS.md as 'changed by hand' when the last commit touching it added the repo's own Review rules outside the forge:begin and forge:end lines (where Forge asks for them), so doctor won't refresh Forge's own block (reported by a client session)"
+  "why": "forge doctor holds a client's whole AGENTS.md as 'changed by hand' when the last commit touching it added the repo's own Review rules outside the forge:begin and forge:end lines (where Forge asks for them), so doctor won't refresh Forge's own block (reported by a client session)",
+  "worker": "codex"
 }
