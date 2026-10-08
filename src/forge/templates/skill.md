@@ -546,6 +546,11 @@ On a live app, every story and fix also follows these:
 
 ## Upgrade Forge
 
+On the default branch, `forge doctor --fix` commits its dated Forge-files fix with a proof list
+of its Done-when and the files refreshed by the pinned release's sync. Run `forge close <name>`
+as doctor suggests; close supplies its test run result to the first review. New repos get this
+at setup, and existing repos get it when they move to this release.
+
 When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
 Never upgrade without the owner's agreement. The check runs at most once per UTC day,
 shares its cache across worktrees, and stays silent when GitHub cannot be reached.
