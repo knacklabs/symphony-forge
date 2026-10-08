@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import machine_cores
 from test_close import env  # noqa: F401
 from test_fix_close_reruns_the_full_test_command_even import _close, _runs
 
@@ -31,6 +32,8 @@ print("1 passed")
 
 
 def _with_test_command(env) -> Path:
+    # Four closes can review together after their tests; only the test lane should queue here.
+    machine_cores(env.repo, 8)
     script = env.tmp / "suite.py"
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
