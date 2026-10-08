@@ -129,3 +129,48 @@ def test_3_current_crlf_guidance_needs_no_doctor_repair_or_sync_write(
             done = repo.forge(*args, cwd=folder)
             assert "AGENTS.md" not in done.stdout, done.stdout + done.stderr
             assert agents.read_bytes() == content
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+@pytest.mark.parametrize("ending", ["LF", "CRLF", "no newline"])
+def test_4_doctor_fix_preserves_outside_bytes_while_migrating_claude_instructions(
+        repo, gh, tmp_path, monkeypatch, adoption, ending):
+    monkeypatch.setenv("FORGE_NOW", "2026-10-09T09:00:00+00:00")
+    client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
+    block = BEGIN + b"\nOld Forge guidance.\n" + END
+    claude = (b"@AGENTS.md\n\n<!-- forge:begin -->\nOld Claude Forge guidance.\n"
+              b"<!-- forge:end -->\n\n## Claude-only rules\n\n- Keep replies short.\n")
+    _land(repo, client, "Upgrade Forge", lambda folder: (
+        (folder / "AGENTS.md").write_bytes(block + b"\n"),
+        (folder / "CLAUDE.md").write_bytes(claude)), forge=True)
+    prefix = "# Client rules: café\n\n".encode("utf-8")
+    suffix = b"\n\n## Review rules\n\n- Preserve our API.  \n \t\n\n"
+    if ending == "CRLF":
+        prefix, suffix = prefix.replace(b"\n", b"\r\n"), suffix.replace(b"\n", b"\r\n")
+    elif ending == "no newline":
+        suffix = b"\n\n## Review rules\n\n- Preserve our API.  \t"
+    before = prefix + block + suffix
+    _land(repo, client, "Add our Review rules", lambda folder: (
+        folder / "AGENTS.md").write_bytes(before))
+    assert (client / "AGENTS.md").read_bytes() == before
+
+    repaired = repo.forge("doctor", "--fix", cwd=client)
+
+    assert "- Fixed: wrote" in repaired.stdout, repaired.stdout + repaired.stderr
+    assert "AGENTS.md was changed by hand" not in repaired.stdout
+    assert (client / "AGENTS.md").read_bytes() == before
+    assert (client / "CLAUDE.md").read_bytes() == claude
+    folder = _folder_of(repo, client, "fix/forge-files-20261009-0900")
+    result = (folder / "AGENTS.md").read_bytes()
+    assert result.startswith(prefix)
+    after = result.split(END, 1)[1]
+    assert after.startswith(suffix), after
+    assert b"## Working here with Forge" in result and b"Old Forge guidance." not in result
+    assert b"## Claude-only rules\n\n- Keep replies short.\n" in after
+    assert b"@AGENTS.md" not in result and b"Old Claude Forge guidance." not in result
+    assert not (folder / "CLAUDE.md").exists()
+    checked = repo.forge("doctor", cwd=folder)
+    assert "AGENTS.md differs" not in checked.stdout, checked.stdout + checked.stderr
+    synced = repo.forge("sync", cwd=folder)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert (folder / "AGENTS.md").read_bytes() == result

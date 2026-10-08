@@ -170,7 +170,8 @@ def _agents(top: Path) -> str:
     moved = "\n".join(line.rstrip() for line in rest.splitlines()
                       if not line.strip() or line.strip() not in have)
     moved = re.sub(r"\n{3,}", "\n\n", moved).strip("\n")
-    return f"{text.rstrip()}\n\n{moved}\n" if moved.strip() else text
+    if not moved.strip(): return text
+    return text + ("\n" if text.endswith("\n") else "\n\n") + moved + "\n"
 
 
 def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
