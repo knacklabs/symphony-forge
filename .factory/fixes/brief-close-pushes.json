@@ -1,21 +1,29 @@
 {
-  "amendments": [
-    {
-      "at": "2026-10-08T12:30:20+00:00",
-      "because": "A second worker asked to wait for CI timings to complete its proof list; the brief should cover both the push question and waiting for CI",
-      "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync"
-    }
-  ],
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/brief-close-pushes",
-  "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, that CI is the merge gate, and that CI output reaches the worker in its next round, so a worker commits its local proof and stops instead of asking someone to push or waiting for CI to record results; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
+  "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3983f431d38771fd1ca584ae26546075ff4073a4a7ec456634619cbb26db681e",
+    "changed": "5790f5cb4d8562f350c7342d2ff31bcab4a1d1e117706c623c0622a010d7acf9",
+    "commit": "24a7e51ae736daece344ef3b6086cdf34b7a6cbb",
+    "dismissals": [],
+    "findings": [],
+    "id": "ba3ebcf2-8fe7-479c-8469-0e21c82c8767",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T12:27:03+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T12:31:18+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers stop with a question asking the coordinator to push their commit so CI can run, because the worker brief forbids pushing but never says close pushes the branch and runs CI; it cost a round twice on 2026-10-07/08",
