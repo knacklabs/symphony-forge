@@ -758,6 +758,12 @@ yourself, without asking the human, when the fix corrects one kind of problem in
 appears and changes no interface. Name that problem in the reason and record the allowance
 before editing beyond the limit. Anything else needs the human's allowance or a story.
 
+For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
+The fix starts there, and its size and interface checks count only its own changes, including
+after the underlying item lands and the default branch is merged in. Otherwise it starts from
+the default branch. Merging default-branch updates before the underlying item lands needs Git
+2.38 or newer.
+
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
 reviews show them only as counts of changed lines.
 
