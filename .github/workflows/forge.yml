@@ -15,34 +15,39 @@ jobs:
     # skipped job would otherwise pass a required check of the same name.
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     env:
       UV_FROZEN: '1'
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
       - id: parent-tests
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
-      - uses: astral-sh/setup-uv@v6
-        if: steps.parent-tests.outputs.reuse != 'true'
       - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
         if: steps.parent-tests.outputs.reuse != 'true'
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
     name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
       - env:
           PR: ${{ github.event.pull_request.number }}

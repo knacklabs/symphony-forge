@@ -52,34 +52,39 @@ jobs:
     # skipped job would otherwise pass a required check of the same name.
     if: github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: <runner>
     env:
       UV_FROZEN: '1'
 <tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
       - id: parent-tests
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: python .forge/review-tests.py
-      - uses: astral-sh/setup-uv@v6
-        if: steps.parent-tests.outputs.reuse != 'true'
 <node>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
     name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
-    runs-on: ubuntu-latest
+    runs-on: <runner>
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
       - uses: astral-sh/setup-uv@v6
       - env:
           PR: ${{ github.event.pull_request.number }}
@@ -132,7 +137,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     from forge import sync
 
     node = ""
-    if (top / "package.json").is_file():
+    if (top / "package.json").is_file() or re.search(r"\b(?:npm|npx|pnpm|yarn|node)\b", cfg["test"]):
         node = ("      - uses: actions/setup-node@v7\n"
                 "        if: steps.parent-tests.outputs.reuse != 'true'\n")
         version_file = next((name for name in (".nvmrc", ".node-version")
@@ -140,10 +145,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         if version_file:
             node += f"        with:\n          node-version-file: {version_file}\n"
         else:
-            package = json.loads(sync.read(top / "package.json"))
+            package = json.loads(sync.read(top / "package.json") or "{}")
             version = package.get("engines", {}).get("node")
-            if isinstance(version, str) and version.strip():
-                node += f"        with:\n          node-version: {json.dumps(version)}\n"
+            version = version if isinstance(version, str) and version.strip() else "22"
+            node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
@@ -153,7 +158,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<node>", node)
-                .replace("<test>", json.dumps(cfg["test"])))
+                .replace("<test>", json.dumps(cfg["test"]))
+                .replace("<runner>", json.dumps(cfg["runner"])))
     if "tests" not in cfg.get("checks", []):
         start = workflow.index("  tests:\n")
         end = workflow.index("  forge-pr-check:\n")

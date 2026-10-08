@@ -12,7 +12,8 @@ STORY = "FIX-THE-CI-WORKFLOW-FORGE-GENERATES-RUNS-A-N"
     ({".node-version": "24\n", "package.json": '{"engines":{"node":"20"}}'},
      "node-version-file: .node-version"),
     ({"package.json": '{"engines":{"node":">=24"}}'}, 'node-version: ">=24"'),
-    ({"package.json": "{}"}, None),
+    # Plain self-hosted runners have no Node on PATH: install the client stack's default.
+    ({"package.json": "{}"}, 'node-version: "22"'),
 ])
 def test_1_sync_sets_up_node_before_package_tests(repo, files, expected):
     repo.git("checkout", "-q", "-b", "fix/node-tests")

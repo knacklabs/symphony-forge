@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ REFUSALS = {
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
 }
-PASS, PENDING, RED, SKIPPED = "pass", "pending", "red", "skipped"
+PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
 
 def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
@@ -44,28 +45,57 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
                 missing.append(want)
             elif RED in states:  # failed, cancelled or timed out (a named one skipped too): red
                 red.append(want)
-            elif PENDING in states:
+            elif PENDING in states or QUEUED in states:
                 pending.append(want)
         if red:
             repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
         if not missing and not pending:
             return
+        if (missing or any(state == QUEUED for _, state in seen)) and (
+                reason := queued_reason(top, sha, item)):
+            repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         left = deadline - time.monotonic()
         if left <= 0:
             reason = "; ".join(
                 [f"{name} has not reported" for name in missing]
-                + [f"{name} is still running" for name in pending])
+                + [f"{name} is still {'queued' if QUEUED in groups[name] else 'running'}"
+                   for name in pending])
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         time.sleep(min(15, left))
 
 
+def queued_reason(top: Path, sha: str, item: str = "") -> str:
+    """Diagnose an old queued workflow for this PR head, including target-event runs."""
+    runs = _ask(top, item, ".workflow_runs",
+                "repos/{owner}/{repo}/actions/runs?status=queued&per_page=100")
+    now = datetime.fromisoformat(repo.now())
+    for run in runs:
+        heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
+        if run.get("status") != "queued" or sha not in [run.get("head_sha"), *heads]:
+            continue
+        try:
+            # A rerun can queue an old workflow; age its latest update, not the original run.
+            queued = max(datetime.fromisoformat(run[key]) for key in ("created_at", "updated_at")
+                         if run.get(key))
+            old = (now - queued).total_seconds() >= 300
+        except (ValueError, TypeError):
+            continue
+        if old:
+            runner = json.dumps(repo.config(top)["runner"])
+            return ("Pull request checks have stayed queued for at least five minutes; "
+                    "no runner has picked them up. Check that a runner matching "
+                    f"runner = {runner} in forge.toml is available, then run forge sync")
+    return ""
+
+
 def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
-    """Each check run and commit status on sha, as (name, pass/pending/red/skipped)."""
+    """Each check run and commit status on sha, as (name, pass/queued/pending/red/skipped)."""
     # Every page: a failed matrix job on page two must still count.
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
     runs = _ask(top, item, ".check_runs", f"{endpoint}/check-runs?per_page=100")
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
-    return ([(str(run.get("name")), PENDING if run.get("status") != "completed"
+    return ([(str(run.get("name")), QUEUED if run.get("status") == "queued"
+              else PENDING if run.get("status") != "completed"
               else PASS if run.get("conclusion") == "success"
               else SKIPPED if run.get("conclusion") in ("skipped", "neutral") else RED)
              # A run GitHub reports for another head is an earlier push's result: until the
