@@ -593,7 +593,7 @@ def identity(pid: int) -> dict[str, Any] | None:
 def _legacy_identity(recorded: dict[str, Any]) -> bool:
     # Older POSIX text has no timezone: it cannot prove a PID was reused or is safe to signal.
     started = str(recorded.get("started", ""))
-    return os.name != "nt" and len(started.split()) == 5 and ":" in started
+    return os.name != "nt" and len(started.split()) == 5
 
 
 def _alive(recorded: dict[str, Any]) -> bool | None:

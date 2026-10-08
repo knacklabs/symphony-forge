@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -134,7 +135,10 @@ def test_waiting_run_keeps_its_place_across_timezone_and_locale(
             reap(processes, server, connections)
 
 
-@pytest.mark.parametrize("legacy", [False, True], ids=["canonical-stop", "previous-release"])
+@pytest.mark.parametrize("legacy", [None, "en_US.UTF-8",
+    pytest.param("ko_KR.UTF-8", marks=pytest.mark.skipif(
+        sys.platform != "darwin", reason="Apple ps locale output requires macOS"))],
+                         ids=["canonical-stop", "previous-release", "previous-release-ko"])
 def test_stop_verifies_the_same_identity_and_preserves_unverifiable_old_runs(
         env, tmp_path, monkeypatch, release_server, legacy):
     repo = client(env, "new")
@@ -142,7 +146,7 @@ def test_stop_verifies_the_same_identity_and_preserves_unverifiable_old_runs(
     configure(env, server)
     processes = []
     try:
-        environment(monkeypatch, "Asia/Kolkata", "en_US.UTF-8")
+        environment(monkeypatch, "Asia/Kolkata", legacy or "en_US.UTF-8")
         active, output = start(repo.path, tmp_path / "active", repo, "test")
         processes.append(active)
         connection, observed = accepted(server, connections, repo.path, active, output)
@@ -150,11 +154,15 @@ def test_stop_verifies_the_same_identity_and_preserves_unverifiable_old_runs(
         if legacy:
             # Previous releases persisted unqualified local ps text. Build that
             # record from the actual running process, rather than faking liveness.
-            ps = subprocess.run(["ps", "-o", "lstart=", "-p", str(observed["pid"])],
+            ps = subprocess.run(["ps", "-ww", "-o", "lstart=,command=", "-p", str(observed["pid"])],
                                 check=True, capture_output=True, text=True)
+            *start_text, command = ps.stdout.split(None, 5)
+            started = " ".join(start_text)
+            if legacy == "ko_KR.UTF-8":
+                assert ":" not in started, "Korean lstart must exercise a time without colons"
             queue = Path(os.environ["XDG_CONFIG_HOME"]) / "forge/agent-runs.json"
             saved = json.loads(queue.read_text("utf-8"))
-            saved[0]["process"]["started"] = " ".join(ps.stdout.split())
+            saved[0]["process"].update(started=started, command=command.strip())
             queue.write_text(json.dumps(saved), "utf-8")
         environment(monkeypatch, "UTC", "C")
         retained = lanes(repo)["tests"]["entries"]
