@@ -6,24 +6,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b7957e87541b8b2243b7d593e379485eb6d788721e2a808da97db6051d9e6e7d",
-    "changed": "386cc8205503c4711af0d1944a8a82081999d518c883fb810deefce4701de0ee",
-    "commit": "f939dadc2e8fb1c8be235ea1201ee4f8adcb0a18",
+    "branch_diff": "f5fcad2a48b600b2f886e03eabc43d18b6c9f7bc8018cc10d7fd29825b5ce2b4",
+    "changed": "617fab37ae0f7e13fda975a50d36a2408349866531009c0a22ead71183ccddfb",
+    "commit": "e28f77d3f10b2c61bcbe0e6466228184a7ca38cc",
     "dismissals": [],
     "findings": [
       {
-        "body": "The allowance is now an input reviewers must judge, but `fingerprint()` still excludes it (`src/forge/review.py:170\u2013171`). After a clean review, rerunning `forge fix allow-large` with a different reason preserves that review (`src/forge/task.py:292\u2013295`). With no product changes, `forge close` reuses it (`src/forge/close.py:127\u2013139`), and the PR checker accepts it (`src/forge/prcheck.py:200\u2013205`). Consequently, a replacement reason that contradicts the diff never reaches the new audit rule. Include the allowance in both review fingerprints so changing it requires another review.",
+        "body": "The previous P2 gap remains open. The allowance now reaches the reviewer, but neither fingerprint includes it: the fix inputs at src/forge/review.py:170\u2013171 still contain only why and done_when. After a clean review, `forge fix allow-large` replaces the reason while preserving that review (src/forge/task.py:292\u2013295). Without product changes, close reuses it (src/forge/close.py:127\u2013139), and the PR checker accepts it (src/forge/prcheck.py:200\u2013205). A replacement reason that contradicts the diff therefore bypasses the new audit rule. Include the allowance in both review fingerprints so changing it requires another review.",
         "file": "src/forge/review.py",
         "line": 217,
         "priority": "P2",
         "title": "Invalidate cached reviews when the allowance reason changes"
       }
     ],
-    "id": "a07d53c0-6db9-4128-9cc9-856fc37bfb64",
+    "id": "66cdc907-a09a-44b9-b317-0ab70963d29a",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T09:10:19+00:00",
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-10-08T09:18:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T09:41:57+00:00",
       "step": "review"
     }
   ],
