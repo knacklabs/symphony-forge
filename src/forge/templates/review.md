@@ -106,6 +106,11 @@ A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 a
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
 
+When a Done-when item's named proof is a pull request check that has not finished yet, do not
+report it as `Not done` if the check is configured to run on the pull request. Close's checks
+gate holds the merge until that check passes. A failed check or a proof with no check behind
+it is still P1 `Not done`.
+
 ## Test audit
 Every test the change needs must exist, run in the repository's test suite, and fail if the
 behaviour it names broke. Report a missing test, or a hollow one (it checks only a mock, asserts
