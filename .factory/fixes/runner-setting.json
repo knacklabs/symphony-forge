@@ -9,24 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c0e86f06d2a6a02b503904fa42fe48eb6b9102f456d14c891eeeba459a3eedc4",
-    "changed": "3a4aae498b31aeb251d8291c27166b0e4145ab64a9e3a6717a2a600cc773d9ee",
-    "commit": "cd2f10e4da1db096a2d80c98546f61026311f4c2",
+    "branch_diff": "e5d5fd774534b14b0498fe40fb1fe650a3c447eeb3bd3bc31edf028f94ec98f0",
+    "changed": "6e2c4b2f3410ab901466d001a261bfc664202b3b4dd56a40f68af20b5117bfb1",
+    "commit": "d9b98f765f2f93be9d240abe8c50675447d5acd7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "When checks are queued or missing, a transient failure from the new actions/runs query raises repo.Refused outside the retry handler around _seen. Consequently, forge land exits immediately instead of retrying until its progress deadline. This affects both its close phase and merge revalidation (src/forge/land.py:34 and src/forge/merge.py:75). The existing progress tests inject failures only into the check-run lookup, so they do not catch this path. Apply the same progress retry policy to queued-run lookup failures, while preserving the intentional refusal when an old queued run is successfully diagnosed.",
-        "file": "src/forge/checks.py",
-        "line": 49,
-        "priority": "P2",
-        "title": "Preserve progress retries when the queued-run lookup fails"
-      }
-    ],
-    "id": "64c7500e-3456-4e3a-b2a2-8eba54f58870",
+    "findings": [],
+    "id": "b3da8ae4-687f-4333-9f89-55a647096aa5",
     "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T15:06:42+00:00",
@@ -50,6 +42,10 @@
     },
     {
       "at": "2026-10-08T21:54:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:12:28+00:00",
       "step": "review"
     }
   ],
