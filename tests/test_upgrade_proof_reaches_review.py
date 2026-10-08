@@ -16,7 +16,7 @@ STORY = "FIX-UPGRADE-PROOF"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted):
+def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted):
     up = unsynced_up
     if adopted:
         shutil.copytree(conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client",
