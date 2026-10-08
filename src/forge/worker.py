@@ -397,6 +397,10 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
                   "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
+        brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
+                  "CI output reaches you in your next round. If you need CI evidence, commit and "
+                  "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
+                  "Commit your local proof in the `Proof list:` without waiting for CI results or timings.\n")
         if note is not None:
             brief += f"\n## From the coordinator\n\n{note}\n"
         if question:

@@ -2716,6 +2716,28 @@
       "item": "merge-enable-stale",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 18,
+      "text": "Not done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting",
+      "from": "blocking",
+      "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_workers_leave_ci_to_close.py\tNot done: test_1_workers_commit_and_stop_when_they_need_ci_evidence\tbrief-close-pushes",
+      "kind": "bug",
+      "path": "tests/test_workers_leave_ci_to_close.py",
+      "line": 52,
+      "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
+      "from": "blocking",
+      "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
