@@ -72,7 +72,8 @@ def merge(args: argparse.Namespace) -> int:
     if pr["state"] == "OPEN":
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
-        checks.wait(top, item, head, config["checks"])
+        checks.wait(top, item, head, config["checks"],
+                    progress=getattr(args, "wait_for_progress", False))
         completion = []
         body = None
         if "/" in item:

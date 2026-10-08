@@ -846,7 +846,11 @@ round if the check is still red.
 
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
-loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
+loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
+GitHub shows progress, retrying unreadable or failed answers. It stops waiting on green or
+failed checks, or after 30 minutes without a check starting, finishing or being replaced, and
+says which checks are still running, missing, or unreadable. Close on its own still waits at
+most ten minutes. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.

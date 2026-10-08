@@ -1,0 +1,49 @@
+{
+  "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
+  "branch": "fix/land-waits-ci",
+  "done_when": "forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has shown no check progress for a long stretch, saying which; one unreadable or failed GitHub answer during the wait is retried rather than ending it; forge close on its own keeps its current wait; a command test with a faked GitHub shows land waiting through a long run, retrying a bad answer, and stopping on a stuck run; new and earlier-adopted client repos get it from this release on",
+  "flagged": [
+    "src/forge/land.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c3b8a1095a3540854d466729fd0213f65fe96706f3551f1fbc73f64e5ded5ed0",
+    "changed": "c6ffec6663f7af302ff0c0944abdbb73282ffd1e58718956c8dcbffd5b6a5eda",
+    "commit": "f00689573cd7f00209fe741d2efbc955a5d65bc9",
+    "dismissals": [],
+    "findings": [],
+    "id": "00a45e29-165d-4928-943b-3eb31237aba6",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T12:47:22+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T13:07:59+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:24:54+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:40:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T17:31:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T17:46:36+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge land stops with 'The checks are not green yet: tests is still running' after close's 10-minute check wait and two more, though Windows CI often needs 20-25 minutes after the review commit; one unreadable GitHub answer ('unexpected end of JSON input') also ends the wait; the coordinator then has to wait and re-land by hand on most items (2026-10-07/08)",
+  "worker": "codex"
+}

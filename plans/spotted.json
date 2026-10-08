@@ -540,6 +540,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 34,
+      "text": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO",
+      "from": "blocking",
+      "item": "land-waits-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
