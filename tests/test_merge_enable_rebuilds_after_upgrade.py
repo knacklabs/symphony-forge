@@ -1,9 +1,9 @@
 """src/forge/merge.py rebuilds an interrupted owner switch on the upgraded default branch."""
 import json
-import os
 import shlex
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -39,8 +39,9 @@ def test_1_merge_enable_rebuilds_same_fix_on_upgraded_default(unsynced_up, monke
         settings = 'merge = "human"\n' + settings
     current = repo.forge("--version").stdout.split()[-1]
     up.on_main("forge.toml", settings.replace(current, "v1.2.2"))
-    installed = up.tmp / "uvbin" / ("forge.cmd" if os.name == "nt" else "forge")
-    subprocess.run(["uv", *install("v1.2.2")], check=True, capture_output=True)
+    installed = up.tmp / "uvbin" / "forge"
+    subprocess.run([sys.executable, str(repo.bin / "uv"), *install("v1.2.2")],
+                   check=True, capture_output=True)
     repo.git("switch", "-qc", "fix/adoption")
     repo.write(".factory/fixes/adoption.json", json.dumps({
         "kind": "fix", "branch": "fix/adoption", "status": "working",
@@ -55,7 +56,7 @@ def test_1_merge_enable_rebuilds_same_fix_on_upgraded_default(unsynced_up, monke
     repo.git("merge", "-q", "--ff-only", "origin/main")
 
     def owner_enable():
-        return subprocess.run([str(installed), "merge", "enable"], cwd=repo.path,
+        return subprocess.run([sys.executable, str(installed), "merge", "enable"], cwd=repo.path,
                               capture_output=True, text=True, timeout=60)
 
     if interruption == "before commit":
