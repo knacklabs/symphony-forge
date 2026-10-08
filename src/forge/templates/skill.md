@@ -888,7 +888,9 @@ A worker or review notes problems outside its change as spotted items, which For
 except a bug that blocks it. When `forge next` names a file that keeps breaking, start its fix
 command at once, like any ready item, without asking the owner.
 
-When close stops an item because a file keeps breaking, run no more `forge work` on that item.
+Close holds the fourth review after three consecutive rounds blocked by serious findings,
+whatever files they were in. The existing same-file stop still applies from the third round.
+When close stops an item on either review-loop hold, run no more `forge work` on that item.
 Ask the human to narrow the part, split it, or accept the remaining findings.
 Never re-run close or land past this stop until their choice is recorded.
 After their answer, record it with
