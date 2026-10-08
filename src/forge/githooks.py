@@ -168,7 +168,8 @@ def fix_base(top: Path, state: dict[str, Any], base: str, *tips: str) -> str:
     merged = run("git", "merge-tree", "--write-tree", start, fork, cwd=top)
     if merged.returncode not in (0, 1):
         merged.check_returncode()
-    return git("commit-tree", merged.stdout.splitlines()[0], "-m", "Fix size baseline", cwd=top)
+    return git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+               "commit-tree", merged.stdout.splitlines()[0], "-m", "Fix size baseline", cwd=top)
 
 
 def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, head: str) -> None:

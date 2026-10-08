@@ -37,8 +37,17 @@ def started(repo, why, cwd=None):
 
 
 def pr_check(repo, fix, head):
-    return repo.forge("hook", "pr-check", "--base", repo.git("rev-parse", "main"),
-                      "--head", head, "--branch", f"fix/{fix}")
+    # The shipped CI checkout has no commit identity; only setup and hook commits need one.
+    config = repo.path.parent / "runner-gitconfig"
+    config.write_text("[user]\n\tuseConfigOnly = true\n", "utf-8")
+    with pytest.MonkeyPatch.context() as identity:
+        identity.setenv("GIT_CONFIG_GLOBAL", str(config))
+        for ident in ("GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"):
+            missing = subprocess.run(["git", "var", ident], cwd=repo.path,
+                                     capture_output=True, text=True, encoding="utf-8")
+            assert missing.returncode != 0, missing.stdout
+        return repo.forge("hook", "pr-check", "--base", repo.git("rev-parse", "main"),
+                          "--head", head, "--branch", f"fix/{fix}")
 
 
 def land_on_default(repo, parent=None, path="src/unrelated.py"):
