@@ -157,11 +157,20 @@ def _enable(top: Path) -> int:
     path = story.worktrees(top).get(branch) or task._new_checkout(
         ENABLE, branch, f"fix-{ENABLE}", ref, {"kind": "fix", "why": close.WHY, "done_when": close.DONE},
         f"Start the fix: {close.WHY}")
-    diff = repo.git("diff", "-U0", repo.git("merge-base", "HEAD", ref, cwd=path), "--", ".", f":!{rel}", cwd=path)
+    base = repo.git("merge-base", "HEAD", ref, cwd=path)
+    diff = repo.git("diff", "-U0", base, "--", ".", f":!{rel}", cwd=path)
+    diff += repo.git("diff", "--cached", "-U0", base, "--", ".", f":!{rel}", cwd=path)
+    files = set(repo.git("diff", "--name-only", base, cwd=path).splitlines())
+    files.update(repo.git("diff", "--cached", "--name-only", base, cwd=path).splitlines())
     state = repo.read_state(ENABLE, path) or {}
-    if (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
+    if files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
             r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)", diff, re.M):  # anything but the merge line
         repo.refuse(REFUSALS["taken"])
+    if base != repo.git("rev-parse", ref, cwd=path):
+        # Save an interrupted edit before reset --keep, which refuses to overwrite local work.
+        repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+        repo.git("reset", "--keep", ref, cwd=path)
+        repo.write_state(ENABLE, {**state, "base": repo.git("rev-parse", ref, cwd=path)}, path)
     text = re.sub(r"""\A(?:(.*?^[ \t]*(?:merge|"merge"|'merge')[ \t]*=[ \t]*)(?:"[^"\n]*"|'[^'\n]*'|[^\s#]*)|((?:\#[^\n]*\n)*))""",
                   lambda m: m[1] + '"agent"' if m[1] else m[2] + 'merge = "agent"' + ("\r\n" if "\r\n" in m.string else "\n"),
                   (path / "forge.toml").read_bytes().decode("utf-8"), count=1, flags=re.S | re.M)  # bytes keep line endings
@@ -169,6 +178,10 @@ def _enable(top: Path) -> int:
         repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
     (path / "forge.toml").write_bytes(text.encode("utf-8"))
     repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
+    remote = f"refs/remotes/origin/{branch}"
+    if (repo.run("git", "show-ref", "--verify", remote, cwd=path).returncode == 0
+            and repo.run("git", "merge-base", "--is-ancestor", remote, "HEAD", cwd=path).returncode):
+        repo.git("push", "--force-with-lease", "origin", branch, cwd=path)
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")
     return 0

@@ -69,7 +69,9 @@ options, then make the change yourself in a fix: `forge fix start`, the edit, th
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
-in their own terminal; it opens the change for them to merge.
+in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
+contains only that setting and the default branch has moved, it rebuilds the same fix on the
+current default branch, preserving its other settings. The owner still merges the pull request.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
