@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1677d87ca2415f4b12f985e97ae1396da4024404b975f20d228fdbb1ca32929c",
-    "changed": "f242cf26eadb0b900212f0c4d1995b20a1a41681dc388fe1a841ca2dd8b02be0",
-    "commit": "70f53a40f4b06b035f83f376d8cd9623ca0e17c7",
+    "branch_diff": "a016915a792cd580df27c615ef9228ab07ac01770f4c548e51f58c9aec3a5e7d",
+    "changed": "67a5f0ca0cdc8fb8af405e17dea779353fb0f6627c83159d1ff24f607c339ae7",
+    "commit": "66057611fd7b198a545d87e51ef426d304fd7f3d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "After a stacked fix merges unrelated default-branch updates while its parent remains unmerged, this path creates a synthetic commit with `git commit-tree`. That command requires an author and committer identity, but the shipped PR-check workflow (`src/forge/prcheck.py:77\u2013100`) configures neither. In a clean GitHub Actions checkout without a usable Git identity, the required check therefore fails before evaluating the fix's size or interfaces. [Checkout's documentation](https://github.com/actions/checkout#push-a-commit-using-the-built-in-token) explicitly configures identity before creating commits. The command tests mask this dependency because `tests/conftest.py:277\u2013285` supplies a global test identity. Make baseline creation independent of the runner's identity and exercise the real PR-check command without that fixture identity; this affects both new and upgraded clients.",
-        "file": "src/forge/githooks.py",
-        "line": 171,
-        "priority": "P1",
-        "title": "Not done: Stacked-fix size/interface checks fail in the shipped pull request workflow"
-      }
-    ],
-    "id": "38cbc7a7-623a-489f-b8dc-496aed0cc9b2",
-    "status": "blocked"
+    "findings": [],
+    "id": "f823a649-d6ac-40bc-bb30-3c65da72fabf",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T22:29:48+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-08T22:48:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:53:36+00:00",
       "step": "review"
     }
   ],
