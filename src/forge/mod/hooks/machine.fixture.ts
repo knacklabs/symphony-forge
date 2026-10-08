@@ -1,6 +1,6 @@
 const at = '1970-01-01T00:00:00Z'
 export const entry = (id: string, item: string, kind: string, repo_root = '/repo', started_at: string | null = at) => ({
-  id, item, kind, repo_root, checkout_root: repo_root, repo_name: repo_root === '/repo' ? 'shop' : 'other-shop',
+  id, item, kind, title: 'Recorded run title', repo_root, checkout_root: repo_root, repo_name: repo_root === '/repo' ? 'shop' : 'other-shop',
   model: kind === 'test' ? null : 'model-' + id, effort: kind === 'test' ? null : 'high',
   joined_at: at, started_at, output_path: '/logs/' + id + '.txt', progress: null as { done: number | null; total: number | null } | null,
   place: started_at ? 0 : 1, elapsed: 0,

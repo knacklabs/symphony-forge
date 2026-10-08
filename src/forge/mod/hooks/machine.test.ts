@@ -211,6 +211,30 @@ for (const surface of ['terminal', 'desktop'] as const) {
     for (const fact of ['Polish the guide · work · codex · sol · medium · round 2', 'editing the guide', 'Make checkout clear · review · codex', 'Plan the shop · read · claude']) expect(drawn).toContain(fact)
     expect(drawn).toContain('model-waiting')
   })
+
+  test(`6: ${surface} foreign story and task titles reach rows, selectors and stop confirmation`, async ($, on) => {
+    const { state, questions } = host(on, surface)
+    state.lanes.agents.entries = [
+      { ...entry('foreign-story', 'SHOP', 'read', '/other'), title: 'Shoppers can save a basket' },
+      { ...entry('foreign-task', 'BASKET/SAVE', 'work', '/other'), title: 'Save baskets' },
+    ]
+    state.lanes.tests.entries = []
+    await $.session.start({ cwd: '/repo', surface, isInteractive: true })
+    const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
+    await ui.press({ key: 'tab-Machine' })
+    const drawn = JSON.stringify(await ui.drawn())
+    for (const name of ['Shoppers can save a basket', 'Save baskets']) expect(drawn).toContain(name)
+    const facts = surface === 'desktop' ? String((await ui.find({ type: 'Svg' }))?.props.alt) :
+      (await ui.findAll({ type: 'Text' })).map(node => node.text).filter(text => text?.startsWith('└─ ')).join('\n')
+    expect(facts).not.toContain('round')
+    expect(facts).not.toContain('editing the guide')
+    expect(facts).not.toContain('codex')
+    for (const [id, name, kind] of [['foreign-story', 'Shoppers can save a basket', 'read'], ['foreign-task', 'Save baskets', 'work']]) {
+      expect((await ui.find({ key: `machine-run-${id}` }))?.text).toContain(`${name} · ${kind} · other-shop`)
+      await ui.press({ key: `machine-run-${id}` }); await ui.press({ key: 'machine-stop' })
+      expect(JSON.stringify(questions.at(-1))).toContain(`Stop ${kind} run for ${name} in other-shop?`)
+    }
+  })
 }
 
 test('6: spinner names this session item place, not another repo with the same item', async ($, on) => {
@@ -236,8 +260,9 @@ test('6: /forge includes full machine status where the surface draws nothing', a
   for (const run of [...state.lanes.agents.entries, ...state.lanes.tests.entries]) {
     if (run.repo_root === '/repo') run.repo_root = 'c:/Work/Shop/'
   }
+  state.lanes.agents.entries[3] = { ...entry('foreign-story', 'SHOP', 'read', '/other', null), title: 'Shoppers can save a basket' }
   await $.session.start({ cwd: '/repo', surface: 'mobile', isInteractive: true })
   const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-  for (const fact of ['Machine', 'Polish the guide', 'Make checkout clear', 'Plan the shop', 'other-shop', 'model-waiting', '3/8']) expect(reply.text).toContain(fact)
+  for (const fact of ['Machine', 'Polish the guide', 'Make checkout clear', 'Plan the shop', 'other-shop', 'Shoppers can save a basket', '3/8']) expect(reply.text).toContain(fact)
   expect(reply.text).toContain('work · codex · sol · medium · round 2')
 })

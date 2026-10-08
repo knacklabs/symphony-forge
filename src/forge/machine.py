@@ -74,9 +74,22 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
     root = main_checkout(repo)
+    title = None
+    if item and (match := repository.ITEM.fullmatch(item)):
+        state = repository.read_state(item, repo) or {}
+        title = state.get("why") if match["fix"] else state.get("title")
+        if match["task"] or (not title and kind == "read"):
+            from forge import task
+
+            doc = (repo / "plans" / f"{match['key']}.md" if match["key"] else
+                   repo / "docs" / "specs" / f"{item}.md")
+            if doc.is_file():
+                sections = task.sections(doc.read_text(encoding="utf-8"))
+                title = (task.rows(sections).get(match["task"], {}).get("Name")
+                         if match["task"] else sections.get("#"))
     entry = {"id": str(uuid.uuid4()), "version": __version__, "kind": kind, "repo_root": root.as_posix(),
              "checkout_root": repo.resolve().as_posix(),
-             "repo_name": root.name, "item": item, "model": model, "effort": effort,
+             "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None,
              "output_path": None, "progress": None}

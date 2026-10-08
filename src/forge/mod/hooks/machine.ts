@@ -4,7 +4,7 @@ import type { addTab } from './pane.ts'
 import { elapsed, record, rows, seconds } from './summary.ts'
 
 type Entry = {
-  id: string; repo_root: string; checkout_root: string; repo_name: string; item: string | null; kind: string
+  id: string; repo_root: string; checkout_root: string; repo_name: string; item: string | null; title?: string | null; kind: string
   model: string | null; effort: string | null; joined_at: string; started_at: string | null
   output_path: string | null; progress: { done: number | null; total: number | null } | null
   place: number; elapsed: number
@@ -23,6 +23,7 @@ function valid(value: unknown): value is Lanes {
         const e = record(value), p = record(e.progress)
         return ['id', 'repo_root', 'checkout_root', 'repo_name', 'kind', 'joined_at'].every(k => typeof e[k] === 'string') && Number.isFinite(Date.parse(String(e.joined_at))) &&
           ['item', 'model', 'effort', 'output_path'].every(k => e[k] === null || typeof e[k] === 'string') &&
+          (e.title == null || typeof e.title === 'string') &&
           (e.started_at === null || (typeof e.started_at === 'string' && Number.isFinite(Date.parse(e.started_at)))) &&
           Number.isInteger(e.place) && Number(e.place) >= 0 && typeof e.elapsed === 'number' && Number.isFinite(e.elapsed) && e.elapsed >= 0 &&
           (e.progress === null || ((p.done === null || (Number.isInteger(p.done) && Number(p.done) >= 0)) &&
@@ -39,7 +40,7 @@ function path(value: string): string {
   return /^[a-z]:/i.test(normal) || normal.startsWith('//') ? normal.toLowerCase() : normal
 }
 function title(data: Data, entry: Entry): string {
-  return local(data, entry)?.title ?? entry.item?.replace(/[-/]/g, ' ') ?? entry.kind
+  return local(data, entry)?.title ?? entry.title ?? entry.kind
 }
 function worker(data: Data, entry: Entry): Record<string, unknown> {
   const current = record(local(data, entry)?.worker)

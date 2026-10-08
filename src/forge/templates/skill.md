@@ -117,6 +117,9 @@ an agent tree; narrow terminals use a list. Select a run, press `o` for its last
 or `s` to ask the person whether to stop that exact run. A run that ends or is replaced during
 confirmation is not stopped. Press `l` to show or hide recent events. The spinner names this
 session's place in line. `/forge` includes the machine summary where panes cannot draw.
+Lanes record each item's title when it joins, so other repos' stories and tasks keep their
+plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
+round, current step and gates.
 `forge lanes --json` supplies the Machine tab; other releases still count towards admission but
 are left out of its rows. New repos receive the mod on setup; existing repos receive it on
 upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
