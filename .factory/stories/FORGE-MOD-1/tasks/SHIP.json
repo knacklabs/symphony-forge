@@ -1,0 +1,44 @@
+{
+  "branch": "task/FORGE-MOD-1-SHIP",
+  "flagged": [
+    ".claude-plugin/marketplace.json",
+    ".github/workflows/forge-next.yml",
+    "src/forge/sync.py",
+    "tests/test_mod_install.py"
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29857ae11c6f2b5e61489b7c61e024cc1294491d14640cb18ad91a4cb33c8574",
+    "changed": "29885d6e7c840b3ac6851276182dcdaae1451b959aec024cb9575494aac996d1",
+    "commit": "589e3c50ff213249a0ecd6ee1d8ff03ef43ce40a",
+    "dismissals": [],
+    "findings": [],
+    "id": "01559d9f-727d-4c2c-889e-1b2de164c570",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-07T13:07:39+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-07T14:54:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T18:12:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T20:09:15+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-07T21:06:39+00:00",
+      "step": "review"
+    }
+  ],
+  "worker": "codex"
+}

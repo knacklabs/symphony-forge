@@ -135,7 +135,7 @@ test('1: empty and missing state stay readable; old Forge asks for an upgrade', 
   expect((await $.command.run(command)).text).toContain('Lost state · unknown')
   mode = 'old'
   await clock.advance(10000)
-  expect((await $.command.run(command)).text).toContain('Upgrade Forge in this repo')
+  expect((await $.command.run(command)).text).toContain("This repo's Forge is too old for the pane: upgrade Forge here.")
 })
 
 test('1, 6: one refresh at a time; the whole refresh expires after twenty seconds', async ($, on) => {

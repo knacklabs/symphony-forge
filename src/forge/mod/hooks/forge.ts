@@ -18,7 +18,7 @@ export type Data = {
   machineText?: (now: number) => string
 }
 
-export const TOO_OLD = 'Upgrade Forge in this repo to use the board.'
+export const TOO_OLD = "This repo's Forge is too old for the pane: upgrade Forge here."
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const nullable = (v: unknown, kind: string) => v == null || typeof v === kind
 const timestamp = (v: unknown) => v == null || (typeof v === 'string' && Number.isFinite(Date.parse(v)))
