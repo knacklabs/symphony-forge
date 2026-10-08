@@ -2540,6 +2540,105 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 168,
+      "text": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: preserve outside AGENTS.md bytes when refreshing the Forge block\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 173,
+      "text": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 34,
+      "text": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO",
+      "from": "blocking",
+      "item": "land-waits-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 184,
+      "text": "Protect remote work before force-publishing the rebuilt fix",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tStandard: Data is protected against loss\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 166,
+      "text": "Standard: Data is protected against loss",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tWith no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 192,
+      "text": "With no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "from": "worker",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tDo not reject a repaired file because an historical block was malformed",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 126,
+      "text": "Do not reject a repaired file because an historical block was malformed",
+      "from": "review",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tOne forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 140,
+      "text": "One forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "from": "worker",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/fasttest.py\tThe related-test picker omitted the existing command-level merge tests when merge.py changed.",
+      "kind": "improve",
+      "path": "src/forge/fasttest.py",
+      "line": 267,
+      "text": "The related-test picker omitted the existing command-level merge tests when merge.py changed.",
+      "from": "worker",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

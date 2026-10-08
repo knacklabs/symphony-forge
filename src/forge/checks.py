@@ -23,45 +23,62 @@ REFUSALS = {
 PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
 
-def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
-    """Return once every check on sha passed and every named one is there; refuse when one is red
-    or time runs out."""
+def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = False) -> None:
+    """Wait for green checks on sha; land renews its deadline on observed check progress."""
     # ponytail: an env override is the whole wait seam (tests set 0 to look once).
-    deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
+    timeout = float(os.environ.get("FORGE_CHECKS_WAIT", "1800" if progress else "600"))
+    deadline = time.monotonic() + timeout
+    previous = None
     while True:
-        seen = _seen(top, item, sha)
-        # A matrix job reports as "tests (ubuntu-latest)", and so on; each counts as its named
-        # check, and every one must pass. Checks forge.toml doesn't name go by their own name.
-        groups: dict[str, list[str]] = {want: [] for want in names}
-        for name, state in seen:
-            matches = [want for want in names if name == want or name.startswith(want + " (")]
-            if state == SKIPPED:
-                state = RED if matches else PASS
-            for want in matches or [name]:
-                groups.setdefault(want, []).append(state)
-        red, missing, pending = [], [], []
-        for want, states in groups.items():
-            if not states:
-                missing.append(want)
-            elif RED in states:  # failed, cancelled or timed out (a named one skipped too): red
-                red.append(want)
-            elif PENDING in states or QUEUED in states:
-                pending.append(want)
-        if red:
-            repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
-        if not missing and not pending:
-            return
-        if (missing or any(state == QUEUED for _, state in seen)) and (
-                reason := queued_reason(top, sha, item)):
-            repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
+        try:
+            seen, snapshot = _seen(top, item, sha)
+        except repo.Refused as error:
+            if not progress or error.entry is not REFUSALS["not_green"]:
+                raise
+            reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
+        else:
+            if progress and snapshot != previous:
+                previous = snapshot
+                deadline = time.monotonic() + timeout
+            reason = _pending(item, names, seen)
+            if not reason:
+                return
+            if any(not (states := [state for name, state in seen
+                                   if name == want or name.startswith(want + " (")])
+                   or QUEUED in states for want in names):
+                if queued := queued_reason(top, sha, item):
+                    repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
         left = deadline - time.monotonic()
         if left <= 0:
-            reason = "; ".join(
-                [f"{name} has not reported" for name in missing]
-                + [f"{name} is still {'queued' if QUEUED in groups[name] else 'running'}"
-                   for name in pending])
+            if progress:
+                reason = f"GitHub has shown no check progress for {timeout / 60:g} minutes: {reason}"
             repo.refuse(REFUSALS["not_green"], reason=reason, item=item)
         time.sleep(min(15, left))
+
+
+def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
+    # A matrix job reports as "tests (ubuntu-latest)", and so on; each counts as its named
+    # check, and every one must pass. Checks forge.toml doesn't name go by their own name.
+    groups: dict[str, list[str]] = {want: [] for want in names}
+    for name, state in seen:
+        matches = [want for want in names if name == want or name.startswith(want + " (")]
+        if state == SKIPPED:
+            state = RED if matches else PASS
+        for want in matches or [name]:
+            groups.setdefault(want, []).append(state)
+    red, missing, pending = [], [], []
+    for want, states in groups.items():
+        if not states:
+            missing.append(want)
+        elif RED in states:  # failed, cancelled or timed out (a named one skipped too): red
+            red.append(want)
+        elif PENDING in states or QUEUED in states:
+            pending.append(want)
+    if red:
+        repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
+    return "; ".join([f"{name} has not reported" for name in missing]
+                     + [f"{name} is still {'running' if PENDING in groups[name] else 'queued'}"
+                        for name in pending])
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
@@ -88,21 +105,27 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
     return ""
 
 
-def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
-    """Each check run and commit status on sha, as (name, pass/queued/pending/red/skipped)."""
+def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
+    """Check outcomes on sha and the fields that show a run starting, ending or being replaced."""
     # Every page: a failed matrix job on page two must still count.
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
     runs = _ask(top, item, ".check_runs", f"{endpoint}/check-runs?per_page=100")
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
-    return ([(str(run.get("name")), QUEUED if run.get("status") == "queued"
+    # Ignore earlier pushes for both readiness and progress; GitHub's ordering is not progress.
+    runs = [run for run in runs if run.get("head_sha", sha) == sha]
+    snapshot = sorted(json.dumps([entry.get(field) for field in fields])
+                      for entries, fields in (
+                          (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),
+                          (statuses, ("id", "context", "state", "created_at")))
+                      for entry in entries)
+    seen = ([(str(run.get("name")), QUEUED if run.get("status") == "queued"
               else PENDING if run.get("status") != "completed"
               else PASS if run.get("conclusion") == "success"
               else SKIPPED if run.get("conclusion") in ("skipped", "neutral") else RED)
-             # A run GitHub reports for another head is an earlier push's result: until the
-             # pushed head's own run arrives, the check counts as not reported yet.
-             for run in runs if run.get("head_sha", sha) == sha]
+             for run in runs]
             + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
                 status.get("state"), RED)) for status in statuses])
+    return seen, snapshot
 
 
 def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]]:

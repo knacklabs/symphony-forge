@@ -239,7 +239,8 @@ def close(args: argparse.Namespace) -> int:
     try:
         with repo.record_run(top, item, "ci") as ran:
             checks.wait(top, item, head, [name for name in cfg["checks"]
-                                          if not (migrating and name == "forge-pr-check")])
+                                          if not (migrating and name == "forge-pr-check")],
+                        progress=getattr(args, "wait_for_progress", False))
             outcome = ran["outcome"] = "passed"
     finally:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)
@@ -368,6 +369,13 @@ def _synced(top: Path, item: str) -> None:
     if stale:
         repo.refuse(REFUSALS["unsynced"], kind=kind, files=", ".join(stale),
                     verb="aren't" if len(stale) > 1 else "isn't", path=top, item=item)
+
+
+def generated_fix_proof(done: str, evidence: str, item: str) -> str:
+    """Generated fixes give their first review the same proof as a worker commit."""
+    return (f"Proof list:\n- {done} Evidence: {evidence} "
+            f"forge close {item} supplies its test run result to the review "
+            "(including any skip reason).")
 
 
 def synced_changes(top: Path) -> list[str]:

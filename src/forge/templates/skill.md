@@ -38,7 +38,7 @@ Start with `forge next`. It says where things stand and gives the exact next com
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
-| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again |
+| "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
 | "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change who builds" or "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
@@ -78,7 +78,11 @@ available or correct the setting and sync; keep the required checks enabled.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
-in their own terminal; it opens the change for them to merge.
+in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
+contains only that setting and the default branch has moved, it rebuilds the same fix on the
+current default branch, preserving its other settings. It leaves remote work outside that fix
+alone and refuses to replace a remote branch that changes after its check. The owner still
+merges the pull request.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
@@ -553,6 +557,11 @@ On a live app, every story and fix also follows these:
 
 ## Upgrade Forge
 
+On the default branch, `forge doctor --fix` commits its dated Forge-files fix with a proof list
+of its Done-when and the files refreshed by the pinned release's sync. Run `forge close <name>`
+as doctor suggests; close supplies its test run result to the first review. New repos get this
+at setup, and existing repos get it when they move to this release.
+
 When `forge next` says a newer Forge release is out, offer the upgrade to the owner.
 Never upgrade without the owner's agreement. The check runs at most once per UTC day,
 shares its cache across worktrees, and stays silent when GitHub cannot be reached.
@@ -846,7 +855,11 @@ round if the check is still red.
 
 Use `forge land <item>` for build, close, fix rounds and merge where agent merges are allowed;
 otherwise it hands the ready pull request to the human. It replaces private landing and CI-wait
-loops, with bounded check waiting and fix rounds. When it stops, follow its refusal and the
+loops, with bounded check waiting and fix rounds. Land waits for the pushed head's checks while
+GitHub shows progress, retrying unreadable or failed answers. It stops waiting on green or
+failed checks, or after 30 minutes without a check starting, finishing or being replaced, and
+says which checks are still running, missing, or unreadable. Close on its own still waits at
+most ten minutes. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
