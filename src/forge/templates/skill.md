@@ -753,6 +753,11 @@ request and the review prompt. The first review checks the whole list, not a sam
 entry against the code and its named proof, including every Done-when detail. Compare it with the
 covered items so omitted entries cannot hide gaps; report every missing case in that one round,
 even when a finding already blocks. Keep the whole list current and repeat the check on later rounds.
+When a Done-when item's named proof is a pull request check that has not finished yet, do not
+report it as `Not done` if the check is configured to run on the pull request. Close's checks
+gate holds the merge until that check passes. A failed check or a proof with no check behind
+it is still P1 `Not done`. New repos get these instructions at init; existing repos get them
+after upgrading Forge and running sync.
 Test fixtures are plain text files, never archives or other binary files. Build an old repo for
 an upgrade test in the test from a text fixture folder. Close refuses added binary files under
 `tests/` before the review, naming the file to replace.
