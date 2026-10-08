@@ -7,7 +7,8 @@ import sys
 import time
 from pathlib import Path
 
-from test_close import CLEAN, FAILED, env  # noqa: F401
+from conftest import Repo
+from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
 
@@ -78,15 +79,22 @@ def test_3_only_one_close_on_a_machine_runs_the_test_command_at_a_time(env):
     log = _with_test_command(env)
     (env.tmp / "gated").touch()
     first, _ = env.start_fix()
-    second, _ = env.start("other-fix", "fix/other-fix", ".factory/fixes/other-fix.json",
-                          {"kind": "fix", "why": "Other", "done_when": "Other is done"},
-                          {"other.py": "x = 2\n"})
+    # The lane is machine-wide; independent repos also avoid concurrent pushes
+    # rewriting the same Git config while another close reads it on Windows.
+    other = env.tmp / "other repo"
+    env.repo.git("clone", "-q", "--no-hardlinks", str(env.repo.path), str(other))
+    env.repo.git("remote", "set-url", "origin", env.repo.git("remote", "get-url", "origin"),
+                 cwd=other)
+    other_env = Forge(Repo(other, env.repo.bin), env.gh, env.tmp)
+    second, _ = other_env.start("other-fix", "fix/other-fix", ".factory/fixes/other-fix.json",
+                                {"kind": "fix", "why": "Other", "done_when": "Other is done"},
+                                {"other.py": "x = 2\n"})
     one = _close(env, first)
     deadline = time.monotonic() + 30
     while _runs(log) != ["start fix-tidy-readme"]:  # the first close is inside its test run
         assert time.monotonic() < deadline and one.poll() is None, one.communicate()
         time.sleep(0.05)
-    two = _close(env, second)
+    two = _close(other_env, second)
     said = ""
     while "waits its turn: it is number 1 in line." not in said:  # the second close says it waits before its run starts
         line = two.stdout.readline()
