@@ -84,7 +84,7 @@ def lanes(repo):
 
 @pytest.mark.parametrize("history", ["new", "earlier"])
 @pytest.mark.parametrize("kind", ["agents", "tests"])
-def test_waiting_run_keeps_its_place_across_timezone_and_locale(
+def test_1_waiting_run_keeps_its_place_across_timezone_and_locale(
         env, tmp_path, monkeypatch, release_server, history, kind):
     repo = client(env, history)
     server, connections = release_server
@@ -139,7 +139,7 @@ def test_waiting_run_keeps_its_place_across_timezone_and_locale(
     pytest.param("ko_KR.UTF-8", marks=pytest.mark.skipif(
         sys.platform != "darwin", reason="Apple ps locale output requires macOS"))],
                          ids=["canonical-stop", "previous-release", "previous-release-ko"])
-def test_stop_verifies_the_same_identity_and_preserves_unverifiable_old_runs(
+def test_2_stop_verifies_the_same_identity_and_preserves_unverifiable_old_runs(
         env, tmp_path, monkeypatch, release_server, legacy):
     repo = client(env, "new")
     server, connections = release_server
