@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "98fc4325d920ce9d7842f2530c7e4e086bfe3f486b57d3c16b9dd4ee217de71c",
-    "changed": "7a6bdb1e93503a00b707687689e764cc53dc737a9f44d1b09574c26cdb98b94f",
-    "commit": "1c45cf95f43d6fd9b2fdb1325a9bfa2acbe1e5df",
+    "branch_diff": "6537dcdeedb88f10b7bde8c25b851e2db884eccf1c1ce6f4fbeb531d8fe98d5a",
+    "changed": "4e66fb5b69285841340be74262c17ec7623fc4c6eae751af4d98ad47bdbe0e88",
+    "commit": "62c67c962d94e351a934ad9b05d56b01fc761f82",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The proof list explicitly says Windows and Linux execution is missing; the supplied successful close run establishes macOS results only. The matrix in `.github/workflows/forge-next.yml:36` includes Linux and Windows, and line 71 runs the suite, but configuration alone does not establish the promised passing results. Complete the branch's matrix and confirm test_4 and test_5 pass on both remaining platforms without increasing timeouts or weakening assertions. This leaves the explicit every-platform Done-when requirement unproven.",
-        "file": "tests/test_lanes_view.py",
-        "line": 187,
-        "priority": "P1",
-        "title": "Not done: Both lane-stop regression tests pass on every CI platform"
-      }
-    ],
-    "id": "0ade732c-6326-49c2-b48b-a2da36b3de6f",
-    "status": "blocked"
+    "findings": [],
+    "id": "08cb8b4e-2803-4abe-bc1f-c8b5eaae27b3",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T12:13:37+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-08T12:28:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:29:14+00:00",
       "step": "review"
     }
   ],
