@@ -2529,6 +2529,17 @@
       "item": "the-review-loop-stop-pauses-only-one-clo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/skill.md\tThe generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
+      "kind": "improve",
+      "path": "src/forge/templates/skill.md",
+      "line": 566,
+      "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
+      "from": "worker",
+      "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

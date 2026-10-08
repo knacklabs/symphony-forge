@@ -9,38 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c24ceae636a6eb591330dfbc8a401eaa1570e14993c3b85702d9d4bd809e55b6",
-    "changed": "faf660c84effc6dbac62d23b353ed264dde42e39964fcfd94f021bcca2ce6197",
-    "commit": "3547e2c22e606dc4c7275d48e8801fdf9a4e7a99",
+    "branch_diff": "4e3707687fb4b62bb2a406a3bc0293233171d09cd92be55a6ae262b0a3f23ea2",
+    "changed": "9a856b983d3fbfbd8910cea2fd77f24ddc547bbd8aa035e1c61f422fe8e906af",
+    "commit": "6907c163f3480e5cc57b040faf8d4d03892aef80",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The entire branch diff adds only this fix record; none of the promised implementation ships. Both generated jobs still hard-code `runs-on: ubuntu-latest` in src/forge/prcheck.py:55 and :76, and init's options have no runner option (src/forge/init.py:19\u201327). The workflow still assumes system Python before setup-uv (src/forge/prcheck.py:67) and system python3 with tomllib (:113\u2013118), so plain self-hosted Linux support is also unfinished. Close collapses queued and running checks into the same pending state (src/forge/checks.py:68\u201370), then says they are 'still running' (:57); doctor has no queued-runner diagnosis. Neither the coordinator guide nor shipped coordinator template is updated. Implement every Done-when detail, retaining ubuntu-latest as the default and applying the configured runner to both jobs. Otherwise the reported self-hosted-only organisation remains unable to run these checks.",
-        "file": ".factory/fixes/runner-setting.json",
-        "line": 5,
-        "priority": "P1",
-        "title": "Not done: runner setting, init option, self-hosted workflow support, queued-check diagnostics and coordinator documentation"
-      },
-      {
-        "body": "No tests are added for any of the required scenarios: a new repository initialised with a self-hosted runner; an existing client adopted on an earlier release that sets the runner and syncs; and several-minute queued checks reported through both doctor and close with GitHub faked at its boundary. Existing setup coverage checks the test command and PR-check invocation (tests/test_setup.py:128\u2013134), while the queued-check case explicitly expects only 'still running' (tests/test_close.py:299\u2013303). Those cases do not prove the promised behaviour. Add command-level coverage that verifies both generated jobs use the selected runner, preserves the default, checks the required tool setup, and verifies the runner-setting diagnosis from both commands.",
-        "file": ".factory/fixes/runner-setting.json",
-        "line": 5,
-        "priority": "P1",
-        "title": "Not done: command tests for new clients, earlier-release adoption and queued-without-a-runner diagnostics"
-      },
-      {
-        "body": "The supplied proof list is explicitly missing, and the branch provides only a start record. Supply the required complete list mapping every Done-when detail to its implementation and named proof, including new-client init, earlier-release adoption and sync, self-hosted tool setup, and doctor/close queued-runner diagnostics. There are currently no entries to audit.",
-        "file": ".factory/fixes/runner-setting.json",
-        "line": 11,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "4d1a34ad-d843-4dd3-ac87-ca66aaab6c85",
-    "status": "blocked"
+    "findings": [],
+    "id": "e3f80c48-60fd-4518-9a92-2121c7491ac6",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T15:06:42+00:00",
@@ -48,6 +26,10 @@
     },
     {
       "at": "2026-10-08T15:09:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T15:37:05+00:00",
       "step": "review"
     }
   ],
