@@ -562,6 +562,9 @@ repo, rewritten by that version. One command does all of it.
 A repo pinned to a release without `forge upgrade` runs it once through uv:
 `uvx --from git+https://github.com/knacklabs/symphony-forge@<release> forge upgrade <release>`.
 Until the upgrade merges, the default branch keeps working with the new release installed.
+After it merges, older branches keep their pinned release and its rules. When Forge says the
+default branch already pins the installed release, merge the default branch into your branch to
+use that release and its rules.
 
 ## Refresh dependencies
 
