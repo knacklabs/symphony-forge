@@ -578,7 +578,8 @@ def identity(pid: int) -> dict[str, Any] | None:
             return {"pid": pid, "started": started, "command": path.value}
         finally:
             kernel32.CloseHandle(handle)
-    done = repo.run("ps", "-ww", "-o", "lstart=,command=", "-p", str(pid))  # -ww: whole command
+    done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
+                    "lstart=,command=", "-p", str(pid))  # -ww: whole command
     gone = done.returncode == 1 and not (done.stdout + done.stderr).strip()
     *start, command = done.stdout.split(None, 5) or [""]  # lstart is five words
     started = " ".join(start)
@@ -586,7 +587,13 @@ def identity(pid: int) -> dict[str, Any] | None:
         return None
     if done.returncode or not started.strip() or not command.strip():
         return {"pid": pid}
-    return {"pid": pid, "started": started.strip(), "command": command.strip()}
+    return {"pid": pid, "started": "UTC " + started.strip(), "command": command.strip()}
+
+
+def _legacy_identity(recorded: dict[str, Any]) -> bool:
+    # Older POSIX text has no timezone: it cannot prove a PID was reused or is safe to signal.
+    started = str(recorded.get("started", ""))
+    return os.name != "nt" and len(started.split()) == 5 and ":" in started
 
 
 def _alive(recorded: dict[str, Any]) -> bool | None:
@@ -596,7 +603,7 @@ def _alive(recorded: dict[str, Any]) -> bool | None:
     command, so a record made right after it started must still match once it runs."""
     pid = recorded.get("pid")
     now = identity(pid) if isinstance(pid, int) else {}
-    if now is not None and "command" not in now:
+    if now is not None and ("command" not in now or _legacy_identity(recorded)):
         return None
     return now is not None and now["started"] == recorded.get("started")
 
@@ -647,20 +654,21 @@ def _stop_tree(recorded: dict[str, Any]) -> bool:
                     if live:
                         os.kill(pid, signal.SIGSTOP)
                         frozen.append(pid)
-            listed = repo.run("ps", "-axo", "pid=,ppid=,lstart=,stat=")
+            listed = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-axo",
+                              "pid=,ppid=,lstart=,stat=")
             if listed.returncode:
                 return False
             rows = [parts for line in listed.stdout.splitlines()
                     if len(parts := line.split()) == 8 and not parts[7].startswith("Z")]
             parents = {int(parts[0]) for parts in rows if int(parts[0]) in targets
-                       and " ".join(parts[2:7]) == targets[int(parts[0])].get("started")}
+                       and "UTC " + " ".join(parts[2:7]) == targets[int(parts[0])].get("started")}
             children = [parts for parts in rows if int(parts[1]) in parents and int(parts[0]) not in targets]
             if not children:
                 break
             if time.monotonic() > deadline:
                 return False
             for parts in children:
-                targets[int(parts[0])] = {"pid": int(parts[0]), "started": " ".join(parts[2:7])}
+                targets[int(parts[0])] = {"pid": int(parts[0]), "started": "UTC " + " ".join(parts[2:7])}
         # Keep identities after parents exit and their descendants are reparented.
         # Kill while frozen: a termination handler must not fork an untracked child.
         for pid, process in reversed(list(targets.items())):

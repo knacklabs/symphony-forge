@@ -319,6 +319,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
             # One OS observation decides both liveness and parent fallback. A second
             # lookup could see a reused pid after the first already reported it gone.
             if current is not None and ("started" not in recorded or "command" not in current
+                                        or codex._legacy_identity(recorded)
                                         or current["started"] == recorded["started"]):
                 retained.append(run)
             elif (run["kind"] != "test"
