@@ -41,9 +41,14 @@ Review this branch. It is a small fix.
 
 Why: $why
 Done when: $done_when
+Recorded allowance: $allowance
 
 Check the change against both lines. If the branch does not meet the Done-when line, report a P1
 finding titled `Not done: $done_when`.
+
+For an agent-recorded allowance to correct one kind of problem everywhere without changing an
+interface, check its reason against the whole diff. Report as P1 an allowance whose reason
+doesn't match the diff: more than one kind of problem, or an interface change.
 
 <!-- functional-check -->
 ## Functional check
