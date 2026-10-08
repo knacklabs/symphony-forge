@@ -1,0 +1,14 @@
+{
+  "base": "a7ca33cb650f41e6fe1fda9503f786b848b1a603",
+  "branch": "fix/lane-identity-env",
+  "done_when": "A process's recorded start time is read the same way whatever the caller's TZ, LANG or LC_ALL, so every Forge process agrees whether a run is still alive; entries recorded by the previous release are not dropped just because their stored start text was written in another format (they keep their place while their pid runs); forge stop's verification uses the same reading; a command test starts a waiting run under one TZ and locale, reads the lanes from a Forge process under another, and shows the run keeps its place, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T21:20:08+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Live runs vanish from the machine's shared agent and test lanes ('This run was stopped while waiting', twice on 2026-10-08/09) because codex.identity reads a process's start time from ps -o lstart, whose text depends on the caller's TZ and locale (e.g. 'Fri 9 Oct 02:49:51' vs 'Thu 8 Oct 21:19:51' under TZ=UTC vs 'Fri Oct 9' under LANG=C); any Forge process started with a different environment (the Claude Code mod's refresh, git hooks run with a bare PATH, a pinned release run through uv) sees a mismatch and prunes the live entry as a reused pid"
+}
