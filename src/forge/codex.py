@@ -121,7 +121,8 @@ def sdk_problem() -> str:
     if not installed():
         return f"The Codex SDK {SDK_PIN} isn't installed in {env}."
     done = repo.run(str(_python(env)), "-c", PROBE)
-    said = (done.stdout.strip() or done.stderr.strip() or "it printed nothing").splitlines()[-1]
+    said = (done.stdout.strip() or done.stderr.strip()
+            or f"it exited with status {done.returncode} without output").splitlines()[-1]
     if done.returncode or not GOOD.fullmatch(said):
         return f"The Codex SDK in {env} should be {WANTED}, but its Python says: {said}"
     return ""

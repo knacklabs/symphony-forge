@@ -300,17 +300,17 @@ def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_se
         assert agent["started_at"] and alive(agent["process"]["pid"])
         model_pid = int((repo.bin / "model-pid").read_text("utf-8"))
         assert alive(model_pid) and alive(int(worker_pid.read_text("utf-8")))
-        # A freed Windows pid can belong to a new process before these assertions.
-        # Confirm the processes we stopped, not whoever next receives their ids.
-        stopped_processes = {pid: _started(pid) for pid in (
+        # Windows can reuse a stopped PID before the other run's launcher exits.
+        tracked = {pid: _started(pid) for pid in (
             observed["pid"], agent["process"]["pid"], model_pid,
             int(worker_pid.read_text("utf-8")))}
-        assert all(started is not None for started in stopped_processes.values())
+        assert all(started is not None for started in tracked.values())
         stopped = repo.forge("stop", item)
         assert stopped.returncode == 0, stopped.stderr
         first.wait(timeout=30)
         worker.wait(timeout=30)
-        assert all(not alive(pid, before) for pid, before in stopped_processes.items())
+        for pid, started in tracked.items():
+            assert not alive(pid, started), f"Stopped process {pid} from {started} still runs"
         board = repo.forge("board", "--json")
         assert board.returncode == 0, board.stderr
         assert all(lane["entries"] == [] for lane in json.loads(board.stdout)["lanes"].values())

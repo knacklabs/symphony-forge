@@ -1,6 +1,7 @@
 """Machine board data, CPU diagnostics and identity-safe, person-only stop.
 
 Real workers produce the queue; only the model executable is held open.
+Stop checks track process start times so a reused PID cannot impersonate the stopped run.
 """
 import json
 import os
