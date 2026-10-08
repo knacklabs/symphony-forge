@@ -2,13 +2,38 @@
   "base": "5e7560e587f64c76dbf5d0dfdd6ff176643fb61f",
   "branch": "fix/stacked-fix-count",
   "done_when": "The five-code-file and interface check (commit hook, push hook and the pull request check) counts only the fix's own changes, measured from where the fix started when that point is on another unmerged item's branch, and still from the default branch otherwise; it stays correct after the underlying item merges and the default branch is merged in; a command test covers a stacked fix under and over the limit, before and after the underlying item merges, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/githooks.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1677d87ca2415f4b12f985e97ae1396da4024404b975f20d228fdbb1ca32929c",
+    "changed": "f242cf26eadb0b900212f0c4d1995b20a1a41681dc388fe1a841ca2dd8b02be0",
+    "commit": "70f53a40f4b06b035f83f376d8cd9623ca0e17c7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "After a stacked fix merges unrelated default-branch updates while its parent remains unmerged, this path creates a synthetic commit with `git commit-tree`. That command requires an author and committer identity, but the shipped PR-check workflow (`src/forge/prcheck.py:77\u2013100`) configures neither. In a clean GitHub Actions checkout without a usable Git identity, the required check therefore fails before evaluating the fix's size or interfaces. [Checkout's documentation](https://github.com/actions/checkout#push-a-commit-using-the-built-in-token) explicitly configures identity before creating commits. The command tests mask this dependency because `tests/conftest.py:277\u2013285` supplies a global test identity. Make baseline creation independent of the runner's identity and exercise the real PR-check command without that fixture identity; this affects both new and upgraded clients.",
+        "file": "src/forge/githooks.py",
+        "line": 171,
+        "priority": "P1",
+        "title": "Not done: Stacked-fix size/interface checks fail in the shipped pull request workflow"
+      }
+    ],
+    "id": "38cbc7a7-623a-489f-b8dc-496aed0cc9b2",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T22:29:48+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T22:48:01+00:00",
+      "step": "review"
     }
   ],
   "why": "A fix started on top of another item's unmerged branch (a follow-up to that item's findings) counts the other item's changed files against its own five-file limit, because the limit is measured from the merge base with the default branch rather than where the fix started, so stacked follow-ups trip the limit before writing anything (reported by a client session on v1.2.7)",
