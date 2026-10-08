@@ -6,24 +6,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d5d7631320756a9b4797415f3d26bd1b334272cbc6a5d2f4715fe47224724f79",
-    "changed": "34fedb2bc445b01f5f40a77bfb92c6f462025adb24ef6bf4b776473c435a5b2d",
-    "commit": "f2f4858c7c27d9fcb1f945b0a276c2a32c3f153c",
+    "branch_diff": "4b429fd9dba8f7cc638aad0bb62e9ac984db7c67b1776d71aadb940a7df3e7d0",
+    "changed": "bdd6cc2958d31367a483a0e9241d857cb12592b151b389f0714c6b2bf2b22c72",
+    "commit": "e8f68d8febb3cef41f52dcfaeb9730a531d4980f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported gap remains open. The prompt now includes `allow_large`, but both review fingerprints omit it (src/forge/review.py:171). `forge fix allow-large` replaces the reason without clearing the saved review (src/forge/task.py:292\u2013295). If product files remain unchanged, close reuses that review (src/forge/close.py:127\u2013139), and the PR checker accepts it (src/forge/prcheck.py:200\u2013205). Consequently, a replacement reason that contradicts the diff bypasses the new P1 audit instruction. Invalidate the saved review when the allowance changes, or track the reason in review freshness while preserving base-checker compatibility.",
+        "body": "The previous P2 gap remains open. The allowance now reaches the review prompt, but both fingerprints omit it (src/forge/review.py:171). Changing it through `forge fix allow-large` preserves the saved review (src/forge/task.py:292\u2013295). With unchanged product files, close reuses that review (src/forge/close.py:127\u2013139), and the PR checker accepts it (src/forge/prcheck.py:200\u2013205). Consequently, a replacement reason contradicting the diff bypasses the new P1 audit instruction. Invalidate the saved review when the reason changes, or include the reason in review freshness while preserving compatibility with older checkers.",
         "file": "src/forge/review.py",
         "line": 217,
         "priority": "P2",
         "title": "Invalidate cached reviews when the allowance reason changes"
       }
     ],
-    "id": "d427d9e4-6f79-4e6b-9d98-6ecf159338e3",
+    "id": "fd8f677e-1f02-4cbe-811c-71292340d118",
     "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T09:10:19+00:00",
@@ -51,6 +51,10 @@
     },
     {
       "at": "2026-10-08T11:52:06+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T12:16:28+00:00",
       "step": "review"
     }
   ],
