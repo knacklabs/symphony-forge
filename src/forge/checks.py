@@ -43,9 +43,9 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
             reason = _pending(item, names, seen)
             if not reason:
                 return
-            if any(not (states := [state for name, state in seen
-                                   if name == want or name.startswith(want + " (")])
-                   or QUEUED in states for want in names):
+            if (any(state == QUEUED for _, state in seen)
+                    or any(not any(name == want or name.startswith(want + " (")
+                                   for name, _ in seen) for want in names)):
                 if queued := queued_reason(top, sha, item):
                     repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
         left = deadline - time.monotonic()
@@ -84,7 +84,7 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
     """Diagnose an old queued workflow for this PR head, including target-event runs."""
     runs = _ask(top, item, ".workflow_runs",
-                "repos/{owner}/{repo}/actions/runs?status=queued&per_page=100")
+                "repos/{owner}/{repo}/actions/runs?status=queued")
     now = datetime.fromisoformat(repo.now())
     for run in runs:
         heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]

@@ -107,7 +107,7 @@ def test_1_sync_refuses_blank_runner_label(repo, runner):
 @pytest.mark.parametrize("command,state", [
     (command, state) for command in ("doctor", "close")
     for state in ("old-queued", "recent-queued", "recent-rerun", "running")
-] + [("doctor", "target-event"), ("doctor", "another-head")])
+] + [("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")])
 def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, command, state):
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
     env.commit(env.repo.path, "forge.toml", config, "Select the organisation runner")
@@ -118,7 +118,8 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
     now = datetime.now(timezone.utc)
     created = now - timedelta(minutes=10 if state != "recent-queued" else 1)
     status = "in_progress" if state == "running" else "queued"
-    env.checks([run("tests", None, status), run("forge-pr-check")])
+    env.checks([run("tests"), run("forge-pr-check"), run("lint", None, status)]
+               if state == "optional-queued" else [run("tests", None, status), run("forge-pr-check")])
     workflow_run = {
         "name": "forge", "status": status, "created_at": created.isoformat(),
         "updated_at": (now - timedelta(minutes=1) if state == "recent-rerun" else created).isoformat(),
@@ -146,7 +147,7 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
         _install(env.repo.bin, "gh", stub)
     result = env.repo.forge(command, *([item] if command == "close" else []), cwd=where)
     output = result.stdout + result.stderr
-    if state in ("old-queued", "target-event"):
+    if state in ("old-queued", "target-event", "optional-queued"):
         assert result.returncode != 0, output
         assert "queued" in output.lower(), output
         assert "no runner has picked" in output.lower(), output
@@ -159,3 +160,17 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
         if command == "close":
             expected = "still running" if state == "running" else "still queued"
             assert result.returncode != 0 and expected in output, output
+
+
+def test_5_missing_check_queries_queued_runs_without_windows_batch_operators(env):
+    item, _ = env.start_fix()
+    env.checks([run("tests")])
+    closed = env.close(item)
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "forge-pr-check has not reported" in closed.stderr
+    queries = [call for call in env.gh.calls()
+               if call[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]]
+    assert queries
+    # Windows' gh.cmd shim interprets an unquoted & as a second command.
+    # Pagination already follows every page without adding per_page to the URL.
+    assert all("&" not in call[-1] for call in queries), queries
