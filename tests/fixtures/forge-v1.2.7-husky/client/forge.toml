@@ -1,0 +1,3 @@
+version = "v1.2.7"
+test = "echo ok"
+checks = ["tests", "forge-pr-check"]

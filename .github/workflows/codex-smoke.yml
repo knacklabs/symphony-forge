@@ -15,6 +15,10 @@ on:
       - tests/conftest.py
       - .github/workflows/codex-smoke.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+
 permissions:
   contents: read
 

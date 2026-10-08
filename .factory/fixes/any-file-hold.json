@@ -1,0 +1,43 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/any-file-hold",
+  "done_when": "forge close holds an item at its fourth review round when the previous three rounds were all blocked by serious findings, whatever files they were in, with the same narrow, split or accept choices, wording and forge next guidance as the existing same-file hold; the same-file hold still works as today; the coordinator guide and worker brief say so; a command test covers both holds on a new repo and on one adopted on an earlier release",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "46a3d703930700d223f2b67f97a56658b059a61f66fa23f66924b34a27f55270",
+    "changed": "74bc27728385a02298da369a43794c736ee10cfe9d2548c6a91dc1fd6ab3d5bc",
+    "commit": "3de1c0b5cc291ed25c2e85c13b2b619797148872",
+    "dismissals": [],
+    "findings": [],
+    "id": "f0a4ab5b-f853-45a4-8dda-0a648f9157c6",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T17:09:33+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T17:36:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:21:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:44:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:59:27+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Review loops on one item can run 7 rounds when each round finds one more rare case of the same bug in a different file, because close's review-loop hold stops only at the third blocked round in the same file (reported by a client session on v1.2.7). Owner decision 2026-10-08: hold after 3 blocked rounds in any file",
+  "worker": "codex"
+}

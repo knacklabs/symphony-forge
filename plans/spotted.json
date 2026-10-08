@@ -540,6 +540,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/githooks.py\tKeep Forge checks reachable and preserve pre-push input\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 91,
+      "text": "Keep Forge checks reachable and preserve pre-push input",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tPreserve user hook edits when close resolves merge conflicts\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 93,
+      "text": "Preserve user hook edits when close resolves merge conflicts",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/machine.py\tKeep reservations until interrupted agents have actually ended\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/machine.py",
@@ -1262,6 +1284,17 @@
       "text": "Not done: test_4_only_a_fix_closes_its_named_files_entries",
       "from": "blocking",
       "item": "FORGE-SPOTTED-1/HOT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_husky_hooks_survive_install.py\tNot done: launcher routing and generated-runtime exclusion proofs\thusky-hooks",
+      "kind": "bug",
+      "path": "tests/test_husky_hooks_survive_install.py",
+      "line": 76,
+      "text": "Not done: launcher routing and generated-runtime exclusion proofs",
+      "from": "blocking",
+      "item": "husky-hooks",
       "status": "open",
       "closed_by": null
     },
@@ -2003,6 +2036,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
+      "kind": "edge",
+      "path": "src/forge/githooks.py",
+      "line": 83,
+      "text": "Handle absolute Husky paths during worktree-based upgrade and close",
+      "from": "review",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/machine.py\tHandle existing agents without a dedicated process group",
       "kind": "edge",
       "path": "src/forge/machine.py",
@@ -2289,6 +2333,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/sync.py\tPreserve Husky's PATH when running existing user hooks",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 97,
+      "text": "Preserve Husky's PATH when running existing user hooks",
+      "from": "review",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/sync.py\tSpecify user scope when updating an existing installation",
       "kind": "edge",
       "path": "src/forge/sync.py",
@@ -2494,6 +2549,105 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO\tland-waits-ci",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 34,
+      "text": "Not done: forge land keeps waiting while the pushed head's checks are still running and stops only when they finish, fail, or GitHub has NO",
+      "from": "blocking",
+      "item": "land-waits-ci",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 184,
+      "text": "Protect remote work before force-publishing the rebuilt fix",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tStandard: Data is protected against loss\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 166,
+      "text": "Standard: Data is protected against loss",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tWith no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 192,
+      "text": "With no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "from": "worker",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/fasttest.py\tThe related-test picker omitted the existing command-level merge tests when merge.py changed.",
+      "kind": "improve",
+      "path": "src/forge/fasttest.py",
+      "line": 267,
+      "text": "The related-test picker omitted the existing command-level merge tests when merge.py changed.",
+      "from": "worker",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 168,
+      "text": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/doctor.py\tNot done: preserve outside AGENTS.md bytes when refreshing the Forge block\tagents-block-doctor",
+      "kind": "bug",
+      "path": "src/forge/doctor.py",
+      "line": 173,
+      "text": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block",
+      "from": "blocking",
+      "item": "agents-block-doctor",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "edge\tsrc/forge/doctor.py\tDo not reject a repaired file because an historical block was malformed",
+      "kind": "edge",
+      "path": "src/forge/doctor.py",
+      "line": 126,
+      "text": "Do not reject a repaired file because an historical block was malformed",
+      "from": "review",
+      "item": "agents-block-doctor",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/machine.py\tOne forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "kind": "edge",
+      "path": "src/forge/machine.py",
+      "line": 140,
+      "text": "One forge test attempt refused at lane startup; an unchanged retry entered the lane.",
+      "from": "worker",
+      "item": "agents-block-doctor",
       "status": "open",
       "closed_by": null
     }
