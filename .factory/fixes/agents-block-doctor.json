@@ -8,31 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f587b793950b920bafb23ba2243881897f27acd548dfe4e7f2f00b09cb499f3c",
-    "changed": "d1f218d37a2a0948642adf60e80abb29e23410f221ecc94607a6b44229830823",
-    "commit": "4f495526456a02ee3d91254b46a6a94068899494",
+    "branch_diff": "983570052f2e3f190496b2d9a8a6783924909a8667e9d97267f5828541154136",
+    "changed": "633ed7ecc74c87ae139822cd669d9c2b7f4cf6e7a7c4f1d11cbb85791ff35549",
+    "commit": "f4a28474b9c0b19821c65b1572df7dc7032beecd",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "An outside-only edit is still held when Git checks AGENTS.md out with CRLF, for example with core.autocrlf=true. HEAD and index blobs contain LF, but the working block is read without newline conversion, so working == head fails even though the client edited only the suffix. Both doctor commands then report uncommitted changes and --fix skips the block. Git documents this checkout/index distinction in its [configuration contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-coreautocrlf). Client attributes shipped by src/forge/sync.py:278 add only merge rules, so they do not prevent this configuration. The new test's CRLF case changes only the prefix and suffix while constructing an LF block (tests/test_doctor_preserves_rules_outside_forge_block.py:27\u201329); it therefore passes despite this failure. Compare the working block and Git blobs in the same Git-normalized representation while retaining raw outside bytes for writing, and cover an outside-only edit after a real CRLF checkout.",
-        "file": "src/forge/doctor.py",
-        "line": 168,
-        "priority": "P1",
-        "title": "Not done: forge doctor and doctor --fix treat AGENTS.md as changed by hand only when the text between the forge:begin and forge:end lines"
-      },
-      {
-        "body": "This loop validates every historical AGENTS.md blob using _agents_block, which calls sync._span. That validator refuses unmatched or duplicated markers (src/forge/sync.py:143\u2013144). Consequently, a repository that once committed a broken marker and subsequently repaired it cannot run doctor or doctor --fix successfully, even after a later Forge upgrade supplied a valid block. The command stops with a broken-block refusal referring to the current file, which is already valid; editing it cannot remove the offending historical blob. Validate the current file normally, but handle malformed historical versions conservatively without aborting the entire doctor command.",
-        "file": "src/forge/doctor.py",
-        "line": 126,
-        "priority": "P2",
-        "title": "Do not reject a repaired file because an historical block was malformed"
-      }
-    ],
-    "id": "0e3e6462-a138-4334-9e80-f9f69672c8ce",
-    "status": "blocked"
+    "findings": [],
+    "id": "1fca91d8-e885-48d7-a886-c6d8c03f928d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T13:15:15+00:00",
@@ -40,6 +25,10 @@
     },
     {
       "at": "2026-10-08T13:27:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:39:20+00:00",
       "step": "review"
     }
   ],
