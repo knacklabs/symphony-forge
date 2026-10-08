@@ -111,6 +111,20 @@ both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confi
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
 
+In Claude Code's Forge pane, the Machine tab shows this release's agents and test lane across
+repos, who waits next, local item gates, and machine load when the OS provides it. Desktop draws
+an agent tree; narrow terminals use a list. Select a run, press `o` for its last 200 output lines
+or `s` to ask the person whether to stop that exact run. A run that ends or is replaced during
+confirmation is not stopped. Press `l` to show or hide recent events. The spinner names this
+session's place in line. `/forge` includes the machine summary where panes cannot draw.
+Lanes record each item's title when it joins, so other repos' stories and tasks keep their
+plain names in rows, selectors and stop confirmation. Only this repo's board adds tool,
+round, current step and gates.
+`forge lanes --json` supplies the Machine tab; other releases still count towards admission but
+are left out of its rows. New repos receive the mod on setup; existing repos receive it on
+upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
+failed refreshes keep the last rows. The mod adds no background work or dependencies.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
 other readers. The usual commands still print text or open the HTML board. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main

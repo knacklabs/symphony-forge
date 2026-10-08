@@ -1,13 +1,14 @@
-import type { On, RenderInput, RenderNode, Timer } from 'claude-code'
+import type { Elements, On, RenderInput, RenderNode, Timer } from 'claude-code'
 import type { Data, Item, Next } from './forge.ts'
 import { TOO_OLD } from './forge.ts'
 import { activeRows, itemLines, itemTime, laneCounts, record, rows, stageText, stages, summary, total } from './summary.ts'
 
-const tabs = new Map<string, (e: RenderInput<'Pane'>) => RenderNode>()
+type Tab = (e: RenderInput<'Pane'>, t: Elements['terminal'] | Elements['desktop'], now: number) => RenderNode
+const tabs = new Map<string, Tab>()
 const actions = new Map<string, ((item: Item, e: RenderInput<'Pane'>) => RenderNode)[]>()
 const MIN_TITLE_COLUMNS = 4
 
-export function addTab(name: string, render: (e: RenderInput<'Pane'>) => RenderNode) {
+export function addTab(name: string, render: Tab) {
   tabs.set(name, render)
 }
 
@@ -47,7 +48,7 @@ export function registerPane(on: On, data: Data) {
     const children: RenderNode[] = []
     if (tabs.size) children.push(t.Box({ flexDirection: 'row', gap: 1, children: ['Board', ...tabs.keys()].map(name => t.Button({ key: `tab-${name}`, label: name, onPress: () => { selected = name; $.ui.invalidate('ui.render') } })) }))
     const tab = tabs.get(selected)
-    if (tab) children.push(tab(e))
+    if (tab) children.push(tab(e, t, now))
     else if (data.error === TOO_OLD) children.push(t.Text({ children: TOO_OLD }))
     else {
       if (!data.board) children.push(t.Text({ dimColor: true, children: 'Loading Forge…' }))

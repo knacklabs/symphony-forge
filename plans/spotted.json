@@ -573,6 +573,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/approval.test.ts\tThe approval fixture lacks the session and environment host methods its assembled plugin calls, and the same three native failures occur on the default branch.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/approval.test.ts",
+      "line": 6,
+      "text": "The approval fixture lacks the session and environment host methods its assembled plugin calls, and the same three native failures occur on the default branch.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/core.test.ts\tNot done: elapsed time advances between refreshes\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/core.test.ts",
@@ -624,6 +635,72 @@
       "text": "Accept unknown worker start times from the board contract",
       "from": "blocking",
       "item": "FORGE-MOD-1/CORE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: Machine rendering tests cover the claimed facts\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 70,
+      "text": "Not done: Machine rendering tests cover the claimed facts",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: Machine tests detect the behaviors claimed by the proof list\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 77,
+      "text": "Not done: Machine tests detect the behaviors claimed by the proof list",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tDistinguish agent and test targets before confirming a stop\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 143,
+      "text": "Distinguish agent and test targets before confirming a stop",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: Machine rows name items in plain words\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 42,
+      "text": "Not done: Machine rows name items in plain words",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: local Machine run facts on Windows\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 35,
+      "text": "Not done: local Machine run facts on Windows",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: this session's spinner queue place\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 199,
+      "text": "Not done: this session's spinner queue place",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
       "status": "open",
       "closed_by": null
     },
@@ -1922,6 +1999,28 @@
       "text": "Bound persisted seen history before Claude's store limit",
       "from": "review",
       "item": "FORGE-MOD-1/EVENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/machine.ts\tAccept zero-test progress without rejecting the entire snapshot",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 29,
+      "text": "Accept zero-test progress without rejecting the entire snapshot",
+      "from": "review",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/machine.ts\tPreserve the stop command's no-target outcome",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 183,
+      "text": "Preserve the stop command's no-target outcome",
+      "from": "review",
+      "item": "FORGE-MOD-1/MACHINE",
       "status": "open",
       "closed_by": null
     },

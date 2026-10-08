@@ -23,7 +23,7 @@ REFUSALS = {
 # descriptions and handlers still belong to their owners.
 ROUTES = {
     "init": "init", "sync": "sync", "doctor": "doctor", "test": "fasttest",
-    "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board", "stop": "machine",
+    "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board", "lanes": "machine", "stop": "machine",
     "story new": "story", "story done": "story", "read": "story",
     "task start": "task", "fix start": "task", "fix allow-large": "task", "fix amend": "task",
     "work": "worker", "ask": "ask", "close": "close", "merge": "merge", "land": "land",

@@ -472,11 +472,11 @@ def _run(item: str, top: Path, brief: str, models: list[str],
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],
                          effort=models[models.index("--effort") + 1]) as ran, \
-            log.open("a", encoding="utf-8") as out, subprocess.Popen(
+            log.open("a", encoding="utf-8", buffering=1) as out, subprocess.Popen(
             command, cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
             env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as worker, \
-            machine.agent_process(worker):
+            machine.agent_process(worker, log):
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker._stdin_write(brief)
         for line in worker.stdout:

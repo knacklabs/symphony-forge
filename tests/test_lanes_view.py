@@ -152,7 +152,13 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
             assert row["model"] and row["effort"]
             assert row["joined_at"] and row["process"]["pid"]
             assert row["process"]["started"]
-            assert row["output_path"] is None and row["progress"] is None
+            # Running workers now publish their existing live log; waiting
+            # entries still have no output before their command starts.
+            if row["started_at"]:
+                assert f"forge work {row['item']}" in Path(row["output_path"]).read_text("utf-8")
+            else:
+                assert row["output_path"] is None
+            assert row["progress"] is None
         assert rows[-1]["started_at"] is None and rows[0]["started_at"]
         _until(lambda: (repo.bin / "tree-pid").exists(), "the model's descendant")
         descendant = int((repo.bin / "tree-pid").read_text("utf-8"))
