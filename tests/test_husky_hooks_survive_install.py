@@ -107,8 +107,8 @@ def test_committed_husky_checks_survive_install_in_worktrees_and_fresh_clone(rep
 
 
 @pytest.mark.parametrize("body", ["exit 0", "exec true", "cat > push-input.log",
-                                 "echo 'User hook refused' >&2; exit 7"],
-                         ids=["exit", "exec", "stdin-consumer", "failure"])
+                                 "echo 'User hook refused' >&2; exit 7", "header-only"],
+                         ids=["exit", "exec", "stdin-consumer", "failure", "header-without-newline"])
 def test_existing_husky_control_flow_and_push_input_cannot_bypass_checks(repo, body):
     repo.git("checkout", "-qb", "client-hooks")
     repo.write("forge.toml", f'version = "{repo.forge("--version").stdout.split()[-1]}"\n'
@@ -117,7 +117,9 @@ def test_existing_husky_control_flow_and_push_input_cannot_bypass_checks(repo, b
     repo.write("package.json", json.dumps({"private": True, "scripts": {
         "prepare": 'node --input-type=module -e "import install from \'./husky/index.js\'; install()"'}}) + "\n")
     for hook in ("pre-commit", "pre-push"):
-        repo.write(f".husky/{hook}", f'#!/bin/sh\necho {hook} >> existing-hooks.log\n{body}\n')
+        user = "#!/bin/sh" if body == "header-only" else (
+            f'#!/bin/sh\necho {hook} >> existing-hooks.log\n{body}\n')
+        repo.write(f".husky/{hook}", user)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Set up user hook control flow")
     _install(repo.path)
