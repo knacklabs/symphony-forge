@@ -606,6 +606,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/merge.py\tWith no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 192,
+      "text": "With no top-level merge key, the setting writer matches a merge assignment inside a multiline value and refuses the valid configuration.",
+      "from": "worker",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
       "kind": "bug",
       "path": "src/forge/merge.py",

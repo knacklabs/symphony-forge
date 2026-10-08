@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "21aec64678771bdeca895874c6d87def6cf4629661efdcdd6d0e8fb4ca192453",
-    "changed": "5fd2ae20bd80989def9f5214e6fa3c434b56e6f1bcff5c19b5640cc0f8c878c4",
-    "commit": "eb93b3677228cef5bb5347d0b29a84e63bb9a662",
+    "branch_diff": "b3defa70ef136c39a0d11d227ed351568ef566f860bde66c6f0aba18e20fefd0",
+    "changed": "b1df45ee60e5e969c00680f77a3ecf92ba7208dd994429645a4e0822f89cc24e",
+    "commit": "392c24c6ce364b340160e6f15fe772b0d063a69c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The shared filter accepts every changed line beginning with `merge =`, even inside a TOML multiline string. A valid multiline `test` command containing a Python assignment such as `merge = [...]` can therefore be edited locally or in another checkout and still pass both the local check and remote-history validation. Multiline command strings are supported by `src/forge/repo.py:311` and its TOML parser at line 390. When the default advances, reset at line 189 discards the local command edit; force-publication at line 199 overwrites the remote edit because its tip was incorrectly classified as safe. This violates the rule that \"data is protected against loss.\" Validate that changes affect the actual top-level merge setting, including each remote revision, and add a command regression covering an unrelated edit inside a multiline setting.",
-        "file": "src/forge/merge.py",
-        "line": 166,
-        "priority": "P1",
-        "title": "Standard: Data is protected against loss"
-      }
-    ],
-    "id": "7d6b8740-29f4-4154-8885-6ddb0a7e9f7b",
-    "status": "blocked"
+    "findings": [],
+    "id": "c8c0264f-9e32-410b-9628-0891d9551cd2",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
@@ -41,6 +33,10 @@
     },
     {
       "at": "2026-10-08T18:13:25+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:35:58+00:00",
       "step": "review"
     }
   ],
