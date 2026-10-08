@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import tomllib
 from pathlib import Path
 from forge import checks, close, codex, repo, story, task
 
@@ -158,14 +159,13 @@ def _enable(top: Path) -> int:
         ENABLE, branch, f"fix-{ENABLE}", ref, {"kind": "fix", "why": close.WHY, "done_when": close.DONE},
         f"Start the fix: {close.WHY}")
     base = repo.git("merge-base", "HEAD", ref, cwd=path)
-    diff = repo.git("diff", "-U0", base, "--", ".", f":!{rel}", cwd=path)
-    diff += repo.git("diff", "--cached", "-U0", base, "--", ".", f":!{rel}", cwd=path)
     files = set(repo.git("diff", "--name-only", base, cwd=path).splitlines())
     files.update(repo.git("diff", "--cached", "--name-only", base, cwd=path).splitlines())
     state = repo.read_state(ENABLE, path) or {}
-    other_change = r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)"
-    if files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
-            other_change, diff, re.M):  # anything but the merge line
+    settings = _other_settings(repo.git("show", f"{base}:forge.toml", cwd=path))
+    if (files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE)
+            or _other_settings((path / "forge.toml").read_bytes().decode("utf-8")) != settings
+            or _other_settings(repo.git("show", ":forge.toml", cwd=path)) != settings):
         repo.refuse(REFUSALS["taken"])
     remote_ref = f"refs/heads/{branch}"
     remote_tip = None
@@ -177,11 +177,12 @@ def _enable(top: Path) -> int:
         remote_state = story.json_of(story.show(path, remote_tip, rel))
         remote_files = repo.git("log", "-m", "--format=", "--name-only", history,
                                 "--", ".", f":!{rel}", ":!forge.toml", cwd=path)
-        remote_diff = repo.git("log", "-m", "--format=", "-p", "-U0", history,
-                               "--", "forge.toml", cwd=path)
+        remote_settings = _other_settings(repo.git("show", f"{remote_base}:forge.toml", cwd=path))
         if (remote_files or (remote_state.get("why"), remote_state.get("done_when"),
                              remote_state.get("kind"), remote_state.get("branch")) !=
-                (close.WHY, close.DONE, "fix", branch) or re.search(other_change, remote_diff, re.M)):
+                (close.WHY, close.DONE, "fix", branch) or any(
+                    _other_settings(repo.git("show", f"{revision}:forge.toml", cwd=path)) != remote_settings
+                    for revision in repo.git("rev-list", history, cwd=path).splitlines())):
             repo.refuse(REFUSALS["taken"])
     if base != repo.git("rev-parse", ref, cwd=path):
         # Save an interrupted edit before reset --keep, which refuses to overwrite local work.
@@ -200,6 +201,13 @@ def _enable(top: Path) -> int:
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")
     return 0
+
+
+def _other_settings(text: str) -> dict:
+    try:
+        return {key: value for key, value in tomllib.loads(text).items() if key != "merge"}
+    except tomllib.TOMLDecodeError as exc:
+        repo.refuse(repo.REFUSALS["bad_config"], problem=exc)
 
 
 def _save_ready(path: Path, receipt: dict) -> None:

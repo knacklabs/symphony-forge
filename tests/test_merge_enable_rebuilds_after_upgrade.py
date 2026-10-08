@@ -106,7 +106,7 @@ def test_2_merge_enable_leaves_other_work_untouched_before_rebuilding(owner, oth
     if other_work == "another file":
         owner.commit(where, "other.toml", 'merge = "agent"\n')
     else:
-        (where / "forge.toml").write_bytes(config + b"# A separate settings edit\n")
+        (where / "forge.toml").write_bytes(config.replace(b'workers = "claude"', b'workers = "codex"'))
         repo.git("add", "forge.toml", cwd=where)
         (where / "forge.toml").write_bytes(config)
     set_main(owner, (repo.path / "forge.toml").read_text("utf-8") + "# Default moved\n")
@@ -190,3 +190,43 @@ def test_4_merge_enable_publishes_only_against_the_validated_remote_tip(owner, r
         assert raw(owner, f"origin/{BRANCH}") == b'merge = "agent"' + ending + before
     assert repo.git("rev-parse", "origin/main") == default_head
     assert not owner.gh_calls("pr", "merge")
+
+
+@pytest.mark.parametrize("location", ["working tree", "index", "remote", "reverted remote"])
+def test_5_merge_enable_preserves_merge_text_inside_a_multiline_setting(owner, location):
+    repo = owner.repo
+    settings = 'merge = "human"\n' + (repo.path / "forge.toml").read_text("utf-8")
+    settings += "test = '''python -c \"\nmerge = [1]\nprint(merge)\n\"'''\n"
+    set_main(owner, settings)
+    owner.gh.respond("pr", "create", stderr="GitHub is down", exit=1)
+    stopped = enable(owner)
+    assert stopped.returncode != 0
+    assert "GitHub is down" in stopped.stderr
+    where = worktree(owner)
+    original = (where / "forge.toml").read_bytes()
+    edited = original.replace(b"merge = [1]", b"merge = [2]")
+    if location in ("remote", "reverted remote"):
+        other = owner.tmp / "multiline-checkout"
+        repo.git("worktree", "add", "-qb", "multiline-work", str(other), BRANCH)
+        owner.commit(other, "forge.toml", edited.decode("utf-8"))
+        if location == "reverted remote":
+            repo.git("revert", "--no-edit", "HEAD", cwd=other)
+        repo.git("push", "-q", "origin", f"multiline-work:{BRANCH}", cwd=other)
+        repo.git("fetch", "-q", "origin")
+    else:
+        (where / "forge.toml").write_bytes(edited)
+        if location == "index":
+            repo.git("add", "forge.toml", cwd=where)
+            (where / "forge.toml").write_bytes(original)
+    set_main(owner, settings + "# Default moved\n")
+    before = (repo.git("rev-parse", BRANCH), (where / "forge.toml").read_bytes(),
+              repo.git("diff", "--cached", cwd=where),
+              repo.git("ls-remote", "--heads", "origin", BRANCH))
+
+    refused = enable(owner)
+
+    assert refused.returncode != 0
+    assert refused.stderr == TAKEN
+    assert before == (repo.git("rev-parse", BRANCH), (where / "forge.toml").read_bytes(),
+                      repo.git("diff", "--cached", cwd=where),
+                      repo.git("ls-remote", "--heads", "origin", BRANCH))
