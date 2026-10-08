@@ -11,7 +11,13 @@
     "branch_diff": "21ee8233014ea4bf16faf12a44083262bc0e9b94140ab477921995dc8d69d5f4",
     "changed": "262419a2437251c05ebdd3330a91f20d08971b2494bec70b230f804ccb410b76",
     "commit": "a996b1b263f7f5cb7a41f62f9059807f64bf2f8d",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: trimming trailing blank space when an old CLAUDE.md's lines are appended to AGENTS.md is harmless, since that migration already changes the file outside Forge's block.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "An earlier-release client can still have a CLAUDE.md containing its own instructions. After an outside-only AGENTS.md edit, this change releases AGENTS.md for repair, but the repair calls sync._agents through src/forge/githooks.py:73. In src/forge/sync.py:173, importing unique CLAUDE.md lines uses text.rstrip(), deleting the existing AGENTS.md suffix's trailing spaces and CRLF/blank lines before appending those instructions. Thus doctor --fix changes client-owned bytes outside the markers, contrary to the Done-when guarantee. The new preservation cases have no CLAUDE.md and cannot detect this upgrade scenario. Preserve the original suffix bytes when appending migrated instructions and cover this through the doctor command.",
@@ -22,10 +28,10 @@
       }
     ],
     "id": "af390b0e-119c-41a4-bded-715c184742fd",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T13:15:15+00:00",
@@ -45,7 +51,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/doctor.py"
+    "choice": "accept",
+    "file": "src/forge/doctor.py",
+    "reason": "Owner accepts: trimming trailing blank space when an old CLAUDE.md's lines are appended to AGENTS.md is harmless, since that migration already changes the file outside Forge's block."
   },
   "why": "forge doctor holds a client's whole AGENTS.md as 'changed by hand' when the last commit touching it added the repo's own Review rules outside the forge:begin and forge:end lines (where Forge asks for them), so doctor won't refresh Forge's own block (reported by a client session)",
   "worker": "codex"
