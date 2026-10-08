@@ -10,7 +10,7 @@ BEGIN, END = b"<!-- forge:begin -->", b"<!-- forge:end -->"
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release"])
 @pytest.mark.parametrize("location", ["outside", "inside"])
-@pytest.mark.parametrize("state", ["committed", "unstaged", "staged"])
+@pytest.mark.parametrize("state", ["committed", "unstaged", "staged", "CRLF checkout"])
 def test_1_doctor_refreshes_only_forge_owned_block_and_keeps_client_rules(
         repo, gh, tmp_path, monkeypatch, adoption, location, state):
     # Existing whole-file protection mistook the required Review rules for Forge edits.
@@ -22,11 +22,20 @@ def test_1_doctor_refreshes_only_forge_owned_block_and_keeps_client_rules(
         forge=True)
     folder = client if state == "committed" else _start_fix(repo, client)
     agents = folder / "AGENTS.md"
+    if state == "CRLF checkout":
+        repo.git("config", "core.autocrlf", "true", cwd=folder)
+        agents.unlink()
+        repo.git("checkout", "HEAD", "--", "AGENTS.md", cwd=folder)
+        checkout = agents.read_bytes()
+        assert b"\r\n" in checkout and b"\n" not in checkout.replace(b"\r\n", b"")
+        assert repo.git("ls-files", "--eol", "--", "AGENTS.md", cwd=folder).split()[:2] == ["i/lf", "w/crlf"]
     prefix = "# Client rules: café\n\n".encode("utf-8")
     suffix = b"\n\n## Review rules\n\n- Keep our API stable.  \n\n"
-    if state == "unstaged":
+    if state in ("unstaged", "CRLF checkout"):
         prefix, suffix = prefix.replace(b"\n", b"\r\n"), suffix.replace(b"\n", b"\r\n")
     block = BEGIN + b"\nOld Forge guidance.\n" + END
+    if state == "CRLF checkout":
+        block = checkout.rstrip(b"\r\n")
     edited = block.replace(b"Old Forge guidance.", b"Our hand-edited Forge guidance.") if location == "inside" else block
     content = prefix + edited + suffix
     if state == "committed":
@@ -67,3 +76,31 @@ def test_1_doctor_refreshes_only_forge_owned_block_and_keeps_client_rules(
         assert b"## Working here with Forge" in result
         checked = repo.forge("doctor", cwd=folder)
         assert "AGENTS.md differs" not in checked.stdout, checked.stdout + checked.stderr
+
+
+@pytest.mark.parametrize("adoption", ["new init", "previous release"])
+def test_2_doctor_refreshes_a_repaired_block_despite_malformed_history(
+        repo, gh, tmp_path, monkeypatch, adoption):
+    # A malformed past version must not prevent repair of today's valid Forge block.
+    monkeypatch.setenv("FORGE_NOW", "2026-10-08T09:00:00+00:00")
+    client = _adopted_client(repo, gh, tmp_path, monkeypatch, adoption)
+    _land(repo, client, "Break the marker", lambda folder: _set(
+        folder, "AGENTS.md", "<!-- forge:begin -->\nBroken old guidance.\n"))
+    _land(repo, client, "Upgrade Forge", lambda folder: _set(
+        folder, "AGENTS.md", "<!-- forge:begin -->\nOld Forge guidance.\n<!-- forge:end -->\n"),
+        forge=True)
+    suffix = b"\n## Review rules\n\n- Keep our API stable.  \n"
+    _land(repo, client, "Add our Review rules", lambda folder: (
+        folder / "AGENTS.md").write_bytes((folder / "AGENTS.md").read_bytes() + suffix))
+    before = (client / "AGENTS.md").read_bytes()
+
+    listed = repo.forge("doctor", cwd=client)
+    assert "AGENTS.md differs" in listed.stdout, listed.stdout + listed.stderr
+    assert "broken Forge block" not in listed.stdout + listed.stderr
+    repaired = repo.forge("doctor", "--fix", cwd=client)
+    assert "- Fixed: wrote" in repaired.stdout, repaired.stdout + repaired.stderr
+    assert (client / "AGENTS.md").read_bytes() == before
+    folder = _folder_of(repo, client, "fix/forge-files-20261008-0900")
+    result = (folder / "AGENTS.md").read_bytes()
+    assert result.endswith(suffix)
+    assert b"Old Forge guidance." not in result and b"## Working here with Forge" in result

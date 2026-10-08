@@ -97,7 +97,11 @@ def _pin_changes(top: Path, commits: set[str]) -> set[str]:
     pins = {spec: repo._pin(text) for spec, text in _contents(top, specs).items()}  # pyright: ignore[reportPrivateUsage]
     return {commit for commit in commits if pins[f"{commit}:forge.toml"] != pins[f"{commit}^:forge.toml"]}
 def _agents_block(text: str) -> str:
-    start, end = sync._span(text, "AGENTS.md")  # pyright: ignore[reportPrivateUsage]
+    text = text.replace("\r\n", "\n")
+    try:
+        start, end = sync._span(text, "AGENTS.md")  # pyright: ignore[reportPrivateUsage]
+    except repo.Refused:
+        return text  # A broken historical block stays distinct; today's file is validated by sync.
     return text[start:end] if start != -1 else ""
 def _history(top: Path, wanted: dict[str, str], ref: str) -> dict[str, str]:
     history = repo.git("log", "--format=commit %H%x00%P%x00%s", "-z", "--raw", "--no-renames",
