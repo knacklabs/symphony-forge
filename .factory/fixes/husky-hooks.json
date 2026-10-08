@@ -1,0 +1,14 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/husky-hooks",
+  "done_when": "When core.hooksPath is husky's folder, forge sync puts one line that runs Forge's pre-commit and pre-push checks (through .forge/hooks.sh) into the repo's committed .husky/pre-commit and .husky/pre-push, keeping their existing lines, and writes no shims into the folder husky rebuilds; the checks still run after npm install rebuilds that folder, in every worktree and a fresh clone; doctor reports the hooks installed in that setup; repos without husky keep today's shims; command tests cover a new husky repo and a husky repo adopted on an earlier release (including its earlier .pre-forge shims cleaned up)",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T13:24:47+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "In client repos that use husky, every npm install rebuilds husky's hooks folder (core.hooksPath .husky/_) and wipes Forge's pre-commit and pre-push shims, so doctor reports the git hooks missing in every worktree after install (reported by a client session on v1.2.7). Owner decision 2026-10-08: add Forge to husky's own committed hooks"
+}
