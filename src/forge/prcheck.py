@@ -163,7 +163,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          else "")
                 .replace("<node>", node)
                 .replace("<test>", json.dumps(cfg["test"]))
-                .replace("<runner>", json.dumps(cfg["runner"])))
+                .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if "tests" not in cfg.get("checks", []):
         start = workflow.index("  tests:\n")
         end = workflow.index("  forge-pr-check:\n")

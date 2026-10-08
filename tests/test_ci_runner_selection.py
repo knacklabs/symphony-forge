@@ -13,8 +13,20 @@ import pytest
 from conftest import ROOT, _install
 from test_close import env, run  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
+from test_migrate import _copied_client
 
 STORY = "FIX-RUNNER-SETTING"
+
+
+def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, monkeypatch):
+    # Migration inventories generated adapters before forge.toml exists, then writes the jobs.
+    _copied_client(repo, tmp_path, monkeypatch)
+    migrated = repo.forge("migrate")
+    assert migrated.returncode == 0, migrated.stdout + migrated.stderr
+    workflow = repo.git("show", "forge/migrate-v1:.github/workflows/forge.yml")
+    labels = re.findall(r"^    runs-on: (.+)$", workflow, re.M)
+    assert [json.loads(label) if label.startswith('"') else label for label in labels] == [
+        "ubuntu-latest", "ubuntu-latest"]
 
 
 def _jobs(client: Path) -> tuple[str, str]:
