@@ -6,31 +6,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ad7b831b651ff8e5fc983014db25d78bdc86ffc78f544726e3a954abd7db9410",
-    "changed": "4be9b9318e4a7d7e2bf27ac2ca600195a3a4ce4f22a53e5781afb709255f72a0",
-    "commit": "f565aa8d6730e952e9a12623237310424dfe5f46",
+    "branch_diff": "de9743f9ce10696e7a8b386dd89ebb74f12a3f5dc9d1db9d2269902e77ea3944",
+    "changed": "fd0ec879b687d72b4de3b1d3eee0de3a83d440b2799f4451e9253cd8bc91e26a",
+    "commit": "76590c289d9b73c96c1bc9273fb471cdc53455a4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains unresolved: this validator still rejects a recorded total of zero. src/forge/review.py:301\u2013305 accepts pytest's zero-item collection, and lines 311\u2013332 accept a zero TAP plan and publish its progress. A legitimate {done: 0, total: 0} therefore rejects the entire Machine refresh and also prevents confirmed stops while that snapshot exists. Accept zero totals and render elapsed time without a progress bar, avoiding division by zero in label().",
+        "body": "The previously reported P2 remains: this validator rejects total=0. The producer in src/forge/review.py:301\u2013305 accepts zero-item pytest collection, and lines 311\u2013332 accept and publish a zero TAP plan. Consequently, legitimate {done: 0, total: 0} progress rejects the entire Machine refresh and prevents confirmed stops. Accept zero totals and display elapsed time without a progress bar, guarding label() against division by zero.",
         "file": "src/forge/mod/hooks/machine.ts",
         "line": 30,
         "priority": "P2",
         "title": "Accept zero-test progress without rejecting the entire snapshot"
       },
       {
-        "body": "If the selected run finishes after the fresh lanes read but before the stop command executes, src/forge/machine.py:286\u2013287 prints \"There is nothing to stop.\" and returns zero. This line discards that outcome and tells the person \"Run stopped.\" even though Forge stopped nothing. Preserve or distinguish the command's no-target response and show the ended/replaced message with its next action. The existing stale-target tests remove the entry before the lanes read, so they do not exercise this final race.",
+        "body": "The previously reported P2 remains: if the run finishes after the fresh lanes read but before stop executes, src/forge/machine.py:286\u2013287 returns zero with \"There is nothing to stop.\" This line discards that response and incorrectly displays \"Run stopped.\" Preserve the no-target outcome and display the ended/replaced message with its next action. The existing stale-target tests remove the entry before the fresh lanes read, so they do not catch this race.",
         "file": "src/forge/mod/hooks/machine.ts",
         "line": 183,
         "priority": "P2",
         "title": "Preserve the stop command's no-target outcome"
       }
     ],
-    "id": "6d15e398-e128-4862-81ff-5cef3ffa8af8",
+    "id": "89a30433-f940-4eb0-b410-26df965b4a16",
     "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T17:39:11+00:00",
@@ -54,6 +54,10 @@
     },
     {
       "at": "2026-10-08T03:13:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T03:38:40+00:00",
       "step": "review"
     }
   ],
