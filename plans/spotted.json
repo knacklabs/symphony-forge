@@ -1332,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_lanes_view.py\tCI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 183,
+      "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
+      "from": "worker",
+      "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_lanes_view.py\tNot done: a process whose pid was reused is not terminated\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_lanes_view.py",
@@ -2164,6 +2175,17 @@
       "text": "Handle Windows readers holding the progress file open",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/repo.py\tPoint the merge advice at the fetched default branch",
+      "kind": "edge",
+      "path": "src/forge/repo.py",
+      "line": 537,
+      "text": "Point the merge advice at the fetched default branch",
+      "from": "review",
+      "item": "old-branch-pin",
       "status": "open",
       "closed_by": null
     },
