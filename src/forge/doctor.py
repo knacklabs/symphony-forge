@@ -76,23 +76,33 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
                 line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
-def _pin_changes(top: Path, commits: set[str]) -> set[str]:
-    if not commits: return set()
-    specs = [f"{commit}{parent}:forge.toml" for commit in sorted(commits) for parent in ("", "^")]
+def _contents(top: Path, specs: list[str]) -> dict[str, str]:
+    if not specs: return {}
     done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
                           input=("\n".join(specs) + "\n").encode("utf-8"), capture_output=True, check=True,
                           env={**os.environ, "FORGE_WORKER": "1"})
     contents = io.BytesIO(done.stdout)
-    pins = {}
+    texts = {}
     for spec in specs:
         header = contents.readline()
-        if header.endswith(b" missing\n"): pins[spec] = ""
+        if header.endswith(b" missing\n"): texts[spec] = ""
         else:
             size = int(header.split()[-1])
             text = contents.read(size).decode("utf-8", errors="replace")
             contents.read(1)  # cat-file adds a newline after each blob's bytes.
-            pins[spec] = repo._pin(text)  # pyright: ignore[reportPrivateUsage]
+            texts[spec] = text
+    return texts
+def _pin_changes(top: Path, commits: set[str]) -> set[str]:
+    specs = [f"{commit}{parent}:forge.toml" for commit in sorted(commits) for parent in ("", "^")]
+    pins = {spec: repo._pin(text) for spec, text in _contents(top, specs).items()}  # pyright: ignore[reportPrivateUsage]
     return {commit for commit in commits if pins[f"{commit}:forge.toml"] != pins[f"{commit}^:forge.toml"]}
+def _agents_block(text: str) -> str:
+    text = text.replace("\r\n", "\n")
+    try:
+        start, end = sync._span(text, "AGENTS.md")  # pyright: ignore[reportPrivateUsage]
+    except repo.Refused:
+        return text  # A broken historical block stays distinct; today's file is validated by sync.
+    return text[start:end] if start != -1 else ""
 def _history(top: Path, wanted: dict[str, str], ref: str) -> dict[str, str]:
     history = repo.git("log", "--format=commit %H%x00%P%x00%s", "-z", "--raw", "--no-renames",
                        "--no-abbrev", "--full-history", "--sparse", "--diff-merges=first-parent",
@@ -112,6 +122,12 @@ def _history(top: Path, wanted: dict[str, str], ref: str) -> dict[str, str]:
             _, mode, _, blob, _ = field.split()
             rel = next(fields)
             changes[commit, rel] = (mode, blob) if mode != "000000" else ("", "")
+    # Follow changes to Forge's block, rather than later commits to the client's rules.
+    blobs = _contents(top, sorted({blob for (_, rel), (_, blob) in changes.items()
+                                  if rel == "AGENTS.md" and blob}))
+    for key, (mode, blob) in changes.items():
+        if key[1] == "AGENTS.md" and blob:
+            changes[key] = mode, _agents_block(blobs[blob])
     def entry(at: str, rel: str) -> tuple[str, str]:
         trail = []
         while at and (at, rel) not in changes:
@@ -149,6 +165,13 @@ def _changes(top: Path, cfg: dict[str, Any], wanted: dict[str, str],
             rel = entry.split(" ", 10)[-1]
             dirty.add(rel)
             staged.add(rel)
+    if "AGENTS.md" in dirty and (top / "AGENTS.md").is_file():
+        texts = _contents(top, ["HEAD:AGENTS.md", ":AGENTS.md"])
+        head = _agents_block(texts["HEAD:AGENTS.md"])
+        working = _agents_block((top / "AGENTS.md").read_bytes().decode("utf-8"))
+        if working == head and _agents_block(texts[":AGENTS.md"]) == head:
+            dirty.remove("AGENTS.md")
+            staged.discard("AGENTS.md")
     latest = _history(top, wanted, ref)
     landed = (set(repo.git("rev-list", story.landed_ref(top), cwd=top).splitlines())
               if cfg["repo"] != "forge-source" else set())

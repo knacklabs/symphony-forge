@@ -1,4 +1,4 @@
-"""Doctor preserves hand changes with a fixed number of real git processes.
+"""forge.doctor preserves hand changes with a fixed number of real git processes.
 
 The logger delegates every command to git; only external tools use the existing fakes.
 """
