@@ -3,12 +3,14 @@
   "branch": "fix/brief-close-pushes",
   "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-08T12:27:03+00:00",
       "step": "start"
     }
   ],
-  "why": "Workers stop with a question asking the coordinator to push their commit so CI can run, because the worker brief forbids pushing but never says close pushes the branch and runs CI; it cost a round twice on 2026-10-07/08"
+  "why": "Workers stop with a question asking the coordinator to push their commit so CI can run, because the worker brief forbids pushing but never says close pushes the branch and runs CI; it cost a round twice on 2026-10-07/08",
+  "worker": "codex"
 }
