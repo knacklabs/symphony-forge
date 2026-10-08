@@ -1,0 +1,14 @@
+{
+  "base": "98a551b55023274debb33e61f2b1067f4c960e60",
+  "branch": "fix/pending-ci-proof",
+  "done_when": "The shipped review instructions say a Done-when item whose named proof is a pull request check that hasn't finished yet is not reported as Not done when the check is configured to run on the pull request, because close's checks gate holds the merge until it passes; a failed check or a proof with no check behind it is still P1; a review-prompt test shows the rule for a new repo and for one adopted on an earlier release after sync",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T10:29:00+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close reviews while CI runs, so a Done-when whose proof is a CI check that hasn't finished (a client's image scan) gets a P1 'Not done' and costs a close round, though close's checks gate already holds the merge until that check passes (reported by a client session on v1.2.7)"
+}
