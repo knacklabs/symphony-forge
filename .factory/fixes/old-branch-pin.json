@@ -2,13 +2,28 @@
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/old-branch-pin",
   "done_when": "When a branch pins an older Forge than the installed one and the default branch as last fetched already pins the installed release, the line that says the pinned release runs through uv also says to merge the default branch into this branch to use the installed release; it says nothing new otherwise; a command test on a repo adopted on an earlier release and upgraded shows the line on an old branch and its absence on the default branch and on an up-to-date branch; new and existing client repos get it from this release on",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a9b48532f5a240bcdd3af3d855705385d2dad5135fc3848645c92a8e682a2b13",
+    "changed": "4ee9492af64e16f0994e13632ea9cf64eef3c7cde5c2be60a9b62e8860b78453",
+    "commit": "3013ddef2c85e6ff4d7164b685dd9dcd5909217d",
+    "dismissals": [],
+    "findings": [],
+    "id": "1f7f8363-f0b8-46ac-80b9-49d386a3c3e7",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T11:29:03+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T11:38:52+00:00",
+      "step": "review"
     }
   ],
   "why": "After a client repo upgrades, Forge on a branch made before the upgrade runs the old pinned release through uv and says only that; nothing says the branch keeps the old release's rules until it merges the default branch (reported by a client session on v1.2.7)",
