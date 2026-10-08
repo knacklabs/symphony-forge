@@ -6,31 +6,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3c064168f7ec762601edb671c4e3cf9a4c45914220d05a501b2c3ee3d32dd156",
-    "changed": "43b1503ff2a9ade749b3f392208df3119e88389e8ed0a875db93e2ddba375218",
-    "commit": "148e24009b6425ca2ab6cf6efa59528cbfa2f537",
+    "branch_diff": "ad7b831b651ff8e5fc983014db25d78bdc86ffc78f544726e3a954abd7db9410",
+    "changed": "4be9b9318e4a7d7e2bf27ac2ca600195a3a4ce4f22a53e5781afb709255f72a0",
+    "commit": "f565aa8d6730e952e9a12623237310424dfe5f46",
     "dismissals": [],
     "findings": [
       {
-        "body": "For another repo, `local()` returns undefined, so this fallback displays an identifier with punctuation removed instead of the item's recorded title. This affects both drawn surfaces, `/forge` text, selectors and stop confirmations. A concrete producer case exists in `tests/test_lanes_agents.py:166\u2013168`: another current-release repo runs reader `SHOP`, whose title is \u201cShoppers can save a basket\u201d (`tests/test_fix_agent_runs_wait_in_line.py:54`). `src/forge/story.py:222\u2013231` admits that identifier, and the new lane producer carries no display title. Task identifiers similarly become strings such as \u201cFORGE MOD 1 MACHINE\u201d. Done-when 6 explicitly requires items in plain words. Preserve the local-only enrichment ruling by recording the existing display title in the lane entry alongside its identity, and cover a current-release foreign story/task in the owning tests.",
+        "body": "The previous P2 remains unresolved: this validator still rejects a recorded total of zero. src/forge/review.py:301\u2013305 accepts pytest's zero-item collection, and lines 311\u2013332 accept a zero TAP plan and publish its progress. A legitimate {done: 0, total: 0} therefore rejects the entire Machine refresh and also prevents confirmed stops while that snapshot exists. Accept zero totals and render elapsed time without a progress bar, avoiding division by zero in label().",
         "file": "src/forge/mod/hooks/machine.ts",
-        "line": 42,
-        "priority": "P1",
-        "title": "Not done: Machine rows name items in plain words"
-      },
-      {
-        "body": "Forge's existing runner can publish `{done: 0, total: 0}`: `src/forge/review.py:301\u2013305` accepts `collected 0 items`, and lines 311\u2013332 accept a zero TAP plan and persist its progress. This validator rejects that legitimate producer output, causing the whole Machine refresh to retain stale rows and report malformed output; stop confirmation also rejects the same snapshot. The nullable-progress ruling covered unknown counts, whereas these producer paths record a known zero. Accept zero totals and omit the bar for them, retaining elapsed-only rendering.",
-        "file": "src/forge/mod/hooks/machine.ts",
-        "line": 29,
+        "line": 30,
         "priority": "P2",
         "title": "Accept zero-test progress without rejecting the entire snapshot"
+      },
+      {
+        "body": "If the selected run finishes after the fresh lanes read but before the stop command executes, src/forge/machine.py:286\u2013287 prints \"There is nothing to stop.\" and returns zero. This line discards that outcome and tells the person \"Run stopped.\" even though Forge stopped nothing. Preserve or distinguish the command's no-target response and show the ended/replaced message with its next action. The existing stale-target tests remove the entry before the lanes read, so they do not exercise this final race.",
+        "file": "src/forge/mod/hooks/machine.ts",
+        "line": 183,
+        "priority": "P2",
+        "title": "Preserve the stop command's no-target outcome"
       }
     ],
-    "id": "b31b915b-47cf-427d-8758-6df35f5d8449",
-    "status": "blocked"
+    "id": "6d15e398-e128-4862-81ff-5cef3ffa8af8",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-07T17:39:11+00:00",
@@ -50,6 +50,10 @@
     },
     {
       "at": "2026-10-08T02:54:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T03:13:32+00:00",
       "step": "review"
     }
   ],

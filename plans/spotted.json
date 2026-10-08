@@ -2014,6 +2014,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/machine.ts\tPreserve the stop command's no-target outcome",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 183,
+      "text": "Preserve the stop command's no-target outcome",
+      "from": "review",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
