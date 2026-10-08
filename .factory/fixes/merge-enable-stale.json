@@ -25,7 +25,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
@@ -45,7 +45,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/merge.py"
+    "choice": "narrow",
+    "file": "src/forge/merge.py",
+    "reason": "Owner chose narrow: decide 'only the merge setting changed' by comparing the parsed forge.toml settings (every key except the top-level merge must be equal), locally and for each remote revision, with a command test where a multiline setting's text contains 'merge ='; nothing else changes in this round."
   },
   "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)",
   "worker": "codex"
