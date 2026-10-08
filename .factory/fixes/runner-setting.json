@@ -39,6 +39,7 @@
     "id": "4d1a34ad-d843-4dd3-ac87-ca66aaab6c85",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -50,5 +51,6 @@
       "step": "review"
     }
   ],
-  "why": "The CI workflow Forge generates hard-codes runs-on: ubuntu-latest for both jobs, so in an organisation whose repos can only use self-hosted runners every new client repo's tests and forge-pr-check jobs stay queued forever, forge close waits on them indefinitely and no item can become ready; checks = [] is no way out because close refuses with no checks (owner report, 2026-10-08)"
+  "why": "The CI workflow Forge generates hard-codes runs-on: ubuntu-latest for both jobs, so in an organisation whose repos can only use self-hosted runners every new client repo's tests and forge-pr-check jobs stay queued forever, forge close waits on them indefinitely and no item can become ready; checks = [] is no way out because close refuses with no checks (owner report, 2026-10-08)",
+  "worker": "codex"
 }
