@@ -11,7 +11,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, codex, init, machine, quicktest, repo, review, story, sync, task
+from forge import __version__, close, codex, init, machine, quicktest, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
@@ -220,7 +220,10 @@ def _in_fix(top: Path, cfg: dict[str, Any], wanted: dict[str, str]) -> list[tupl
         if free:
             free = sync.write(path, fixed, keep)
             repo.git("add", "-A", "-f", "--", *free, cwd=path)
-            repo.git("commit", "-q", "-m", WHY, "--", *free, cwd=path)
+            proof = close.generated_fix_proof(DONE,
+                f"Forge {fixed['version']}'s forge sync brought these files up to date: "
+                + ", ".join(free) + ".", name)
+            repo.git("commit", "-q", "-m", WHY, "-m", proof, "--", *free, cwd=path)
     except (repo.Refused, OSError, subprocess.CalledProcessError) as failed:
         return [(f"Doctor couldn't bring Forge's files up to date in fix {name}: "
                         f"{_last(failed)}", _unfinished(name, branch, path)[1]), *held]
