@@ -31,8 +31,8 @@ def land(args: argparse.Namespace) -> int:
     top = close._worktree(item)
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     close.check_stop(item, state)
-    step = argparse.Namespace(item=item, dismiss=None, because=None)  # for close and work alike
-    rounds = waits = 0
+    step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
+    rounds = 0
     try:
         merged = _merged(top, branch)
         status = state.get("status", "started")
@@ -49,10 +49,6 @@ def land(args: argparse.Namespace) -> int:
             try:
                 close.close(step)
             except repo.Refused as error:
-                if error.entry is checks.REFUSALS["not_green"] and waits < 2:
-                    waits += 1
-                    say("Checks are still running on the pushed head; waiting again.")
-                    continue
                 red = error.entry is checks.REFUSALS["red"]
                 if red and _rerun(top, item, branch):
                     continue
@@ -65,7 +61,7 @@ def land(args: argparse.Namespace) -> int:
                     rounds += 1  # this stop says why itself, so no stop line
                     say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
                     raise
-                rounds, waits = rounds + 1, 0
+                rounds += 1
                 say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
                 worker.work(step)
                 continue
