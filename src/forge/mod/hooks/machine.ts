@@ -76,7 +76,7 @@ function gates(data: Data, now: number): string[] {
 }
 
 export function registerMachine(on: On, data: Data, add: typeof addTab) {
-  let snapshot: Lanes | null = null, error = '', selected = '', cwd = ''
+  let snapshot: Lanes | null = null, error = '', selected = ''
   let showLog = false, outputPath: string | null = null, output: string | null = null, status = '', confirming = false
   const samples: number[] = []
   let invalidate = () => {}
@@ -161,7 +161,6 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
   on('session.start', { isInteractive: true }, async ($, e, next) => {
     if (e.surface !== 'terminal' && e.surface !== 'desktop') return next(e)
     invalidate = () => { $.ui.invalidate('ui.render') }
-    cwd = path(e.cwd)
     openOutput = async run => {
       outputPath = run.output_path
       output = null
@@ -180,7 +179,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
         if (!entries(lanes).some(entry => entry.id === run.id)) status = 'That run ended or was replaced. Refresh to choose the current run.'
         else {
           const result = await $.process.run(['forge', 'stop', '--id', run.id], { cwd: e.cwd, timeoutMs: 20000 })
-          status = result.exitCode === 0 ? 'Run stopped.' : `Could not stop the run: ${result.stderr || result.stdout || 'Refresh and try again.'}`
+          status = result.exitCode === 0 ? result.stdout.trim() : `Could not stop the run: ${result.stderr || result.stdout || 'Refresh and try again.'}`
         }
       } catch (error) { status = `Could not stop the run: ${error instanceof Error ? error.message : String(error)}` }
       finally { confirming = false; $.ui.invalidate('ui.render') }
@@ -196,7 +195,8 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
     const t = $.ui.resolve(e)
     return t.Text({ wrap: 'wrap', children: output ?? 'Output not available. Choose another run or try again after it starts.' })
   })
-  on('ui.render', { component: 'Spinner' }, (_$, e, next) => {
+  on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
+    const cwd = path(await $.session.cwd())
     const run = snapshot && entries(snapshot).find(entry => entry.place > 0 && path(entry.checkout_root) === cwd)
     return run ? next({ ...e, props: { ...e.props, suffix: `${e.props.suffix} · in line #${run.place} (${run.kind === 'test' ? 'tests' : 'agents'})` } }) : next(e)
   })
