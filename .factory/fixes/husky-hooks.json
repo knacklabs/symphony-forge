@@ -9,31 +9,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "983be22bba650247bbb8d9a64fa9c8a6d135e66ba925611a266bcad808d3058c",
-    "changed": "9a85b7d6cfeb029c297811945ef279dfd42cd08d5eea853b6ec0e9ec6da807d2",
-    "commit": "236f9a38b17258df49f05137ff1dfaa628ce346d",
+    "branch_diff": "22e113fdad0b6b3d2369bc9d45ee74d1b47034cbdc0cd1eeb2a540d45484ec47",
+    "changed": "eb06fed00bdca0523b8a6ed5b5f116debea726d8a22e9259649dfe539a07df5a",
+    "commit": "eba7a62bc1005a6c19a83a59843cb62369112226",
     "dismissals": [],
     "findings": [
       {
-        "body": "Both committed hooks source the launcher before running the user script. The launcher at src/forge/sync.py:78\u201381 prepends global executable folders, overriding Husky's deliberate `node_modules/.bin` priority (tests/fixtures/husky-v9.1.7/husky:16). This child shell inherits that modified PATH. Consequently, an existing `eslint .` hook runs a globally installed ESLint instead of the repository's pinned executable when both exist; similarly, global Node can override the version selected by Husky's initialization. Preserve the incoming PATH for user commands and apply Forge's launcher PATH only to Forge.",
+        "body": "This previously reported gap remains open for both hooks. The generated line sources hooks.sh before calling forge_husky, so the child at this line inherits the PATH modifications at src/forge/sync.py:78\u201381. Husky deliberately puts node_modules/.bin first (tests/fixtures/husky-v9.1.7/husky:16), but Forge's launcher moves global executable directories ahead of it. An existing `eslint .` hook consequently runs global ESLint instead of the repository's pinned executable when both exist. The isolation ruling addresses exit/exec and stdin, but does not require changing the user commands' environment. Preserve the incoming PATH for the user script and apply the launcher PATH only to Forge.",
         "file": "src/forge/sync.py",
         "line": 97,
         "priority": "P2",
         "title": "Preserve Husky's PATH when running existing user hooks"
       },
       {
-        "body": "An absolute core.hooksPath pointing to the original checkout's `.husky/_` passes this check there, but Git shares that configuration with linked worktrees. Upgrade creates another checkout at src/forge/upgrade.py:99 and runs sync there at line 146, where this guard now refuses the same configuration because its folder lies outside the new checkout. Close's verification checkout (src/forge/close.py:362\u2013364) and oversized-fix inventory (src/forge/sync.py:369) encounter the same problem. This is new operational evidence beyond the ruling about detecting absolute paths inside the checkout: those accepted configurations cannot complete routine worktree-based workflows. Handle that configuration explicitly while retaining protection against outside links.",
+        "body": "This previously reported gap remains open. An absolute core.hooksPath pointing to the original checkout's .husky/_ is accepted there, but Git shares that configuration with linked worktrees. The operational evidence beyond the absolute-path detection ruling is that upgrade creates another checkout at src/forge/upgrade.py:99 and runs sync there at line 146: this guard rejects the configured folder because it lies outside that checkout. Close's verification checkout (src/forge/close.py:362\u2013364), merge-conflict inventory (src/forge/close.py:321\u2013323), and oversized-fix inventory (src/forge/sync.py:369) encounter the same rejection. Handle this accepted configuration explicitly in these workflows while retaining protection against writes outside the checkout.",
         "file": "src/forge/githooks.py",
         "line": 83,
         "priority": "P2",
         "title": "Handle absolute Husky paths during worktree-based upgrade and close"
       }
     ],
-    "id": "0633c575-8a61-4f3b-8abf-597e70c235b4",
+    "id": "b93ab823-0b9e-4a65-bd26-16216c8a1c28",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T13:24:47+00:00",
@@ -45,6 +45,10 @@
     },
     {
       "at": "2026-10-08T14:28:11+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T16:33:55+00:00",
       "step": "review"
     }
   ],
