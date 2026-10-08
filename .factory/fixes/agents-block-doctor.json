@@ -8,30 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "21ee8233014ea4bf16faf12a44083262bc0e9b94140ab477921995dc8d69d5f4",
-    "changed": "262419a2437251c05ebdd3330a91f20d08971b2494bec70b230f804ccb410b76",
-    "commit": "a996b1b263f7f5cb7a41f62f9059807f64bf2f8d",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepts: trimming trailing blank space when an old CLAUDE.md's lines are appended to AGENTS.md is harmless, since that migration already changes the file outside Forge's block.",
-        "finding": 1
-      }
-    ],
+    "branch_diff": "552679630d735f32026f60b6521942fe27b77671d6a75bf401e912e6d40c43ce",
+    "changed": "be171d8c79d72f7057efb8bb750a448400678c5ab8f71aaac20b439b02457b70",
+    "commit": "04ce1bc1703c3021701b4cb0580e099e952d6e97",
+    "dismissals": [],
     "findings": [
       {
-        "body": "An earlier-release client can still have a CLAUDE.md containing its own instructions. After an outside-only AGENTS.md edit, this change releases AGENTS.md for repair, but the repair calls sync._agents through src/forge/githooks.py:73. In src/forge/sync.py:173, importing unique CLAUDE.md lines uses text.rstrip(), deleting the existing AGENTS.md suffix's trailing spaces and CRLF/blank lines before appending those instructions. Thus doctor --fix changes client-owned bytes outside the markers, contrary to the Done-when guarantee. The new preservation cases have no CLAUDE.md and cannot detect this upgrade scenario. Preserve the original suffix bytes when appending migrated instructions and cover this through the doctor command.",
+        "body": "The previous preservation gap remains. When an earlier-release client retains CLAUDE.md instructions not already in AGENTS.md, releasing AGENTS.md for repair reaches sync._agents through src/forge/githooks.py:73. src/forge/sync.py:173 still applies text.rstrip() before appending those instructions, removing client-owned trailing spaces, blank lines and CRLF bytes outside the markers. This violates the Done-when requirement to preserve those bytes. The new command tests and their earlier-release fixture contain no CLAUDE.md, so the passing preservation cases cannot detect this scenario. Preserve the existing outside bytes when appending migrated instructions and cover that upgrade through doctor --fix.",
         "file": "src/forge/doctor.py",
         "line": 173,
         "priority": "P1",
         "title": "Not done: preserve outside AGENTS.md bytes when refreshing the Forge block"
       }
     ],
-    "id": "af390b0e-119c-41a4-bded-715c184742fd",
-    "status": "clean"
+    "id": "c74a50a2-cebb-4e94-ab49-924eba475fef",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T13:15:15+00:00",
@@ -47,6 +41,10 @@
     },
     {
       "at": "2026-10-08T17:39:23+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T20:13:24+00:00",
       "step": "review"
     }
   ],
