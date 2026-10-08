@@ -44,8 +44,8 @@ def lane_adapter(env, tmp_path, monkeypatch, request, sdk_data):
     return family
 
 
-def alive(pid):
-    return _running(pid) and (os.name == "nt" or not subprocess.run(
+def alive(pid, before=None):
+    return _running(pid, before) and (os.name == "nt" or not subprocess.run(
         ["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip().startswith("Z"))
 
 

@@ -12,6 +12,7 @@ import pytest
 
 from conftest import machine_cores
 from test_close import Forge, env  # noqa: F401
+from test_codex_worker import _started
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start
 
@@ -299,14 +300,17 @@ def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_se
         assert agent["started_at"] and alive(agent["process"]["pid"])
         model_pid = int((repo.bin / "model-pid").read_text("utf-8"))
         assert alive(model_pid) and alive(int(worker_pid.read_text("utf-8")))
+        # A freed Windows pid can belong to a new process before these assertions.
+        # Confirm the processes we stopped, not whoever next receives their ids.
+        stopped_processes = {pid: _started(pid) for pid in (
+            observed["pid"], agent["process"]["pid"], model_pid,
+            int(worker_pid.read_text("utf-8")))}
+        assert all(started is not None for started in stopped_processes.values())
         stopped = repo.forge("stop", item)
         assert stopped.returncode == 0, stopped.stderr
         first.wait(timeout=30)
         worker.wait(timeout=30)
-        assert not alive(observed["pid"])
-        assert not alive(agent["process"]["pid"])
-        assert not alive(model_pid)
-        assert not alive(int(worker_pid.read_text("utf-8")))
+        assert all(not alive(pid, before) for pid, before in stopped_processes.items())
         board = repo.forge("board", "--json")
         assert board.returncode == 0, board.stderr
         assert all(lane["entries"] == [] for lane in json.loads(board.stdout)["lanes"].values())
