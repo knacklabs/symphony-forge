@@ -9,27 +9,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "22e113fdad0b6b3d2369bc9d45ee74d1b47034cbdc0cd1eeb2a540d45484ec47",
-    "changed": "eb06fed00bdca0523b8a6ed5b5f116debea726d8a22e9259649dfe539a07df5a",
-    "commit": "eba7a62bc1005a6c19a83a59843cb62369112226",
+    "branch_diff": "e3ca1b032ace852df193a55aca9df8f40deeae8d67e21d854855c614fafd9dd8",
+    "changed": "df41c2384df28aeefcfb0fa3875eb5560730f72a14ac7125f925aa825b80226c",
+    "commit": "aaf0b790f5276c0b5a7f2bfa6938438f82469ee2",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previously reported gap remains open for both hooks. The generated line sources hooks.sh before calling forge_husky, so the child at this line inherits the PATH modifications at src/forge/sync.py:78\u201381. Husky deliberately puts node_modules/.bin first (tests/fixtures/husky-v9.1.7/husky:16), but Forge's launcher moves global executable directories ahead of it. An existing `eslint .` hook consequently runs global ESLint instead of the repository's pinned executable when both exist. The isolation ruling addresses exit/exec and stdin, but does not require changing the user commands' environment. Preserve the incoming PATH for the user script and apply the launcher PATH only to Forge.",
+        "body": "This previously reported gap remains open for both hooks. The generated line at src/forge/githooks.py:88\u201389 sources the launcher before calling forge_husky. Its PATH changes at src/forge/sync.py:78\u201381 therefore reach the user script launched here, overriding Husky's node_modules/.bin precedence (tests/fixtures/husky-v9.1.7/husky:16). An existing `eslint .` hook can run global ESLint instead of the repository's pinned executable. The isolation ruling covers exit/exec and stdin, but does not require changing command resolution. Preserve the incoming PATH for user checks and apply the launcher PATH only to Forge.",
         "file": "src/forge/sync.py",
         "line": 97,
         "priority": "P2",
         "title": "Preserve Husky's PATH when running existing user hooks"
       },
       {
-        "body": "This previously reported gap remains open. An absolute core.hooksPath pointing to the original checkout's .husky/_ is accepted there, but Git shares that configuration with linked worktrees. The operational evidence beyond the absolute-path detection ruling is that upgrade creates another checkout at src/forge/upgrade.py:99 and runs sync there at line 146: this guard rejects the configured folder because it lies outside that checkout. Close's verification checkout (src/forge/close.py:362\u2013364), merge-conflict inventory (src/forge/close.py:321\u2013323), and oversized-fix inventory (src/forge/sync.py:369) encounter the same rejection. Handle this accepted configuration explicitly in these workflows while retaining protection against writes outside the checkout.",
+        "body": "This previously reported gap remains open. An absolute core.hooksPath pointing to the original checkout's .husky/_ is detected successfully, but linked worktrees share that configuration and this guard rejects it there. Beyond the absolute-path detection ruling, the affected callers are verified: src/forge/upgrade.py:99 creates another checkout and line 146 runs sync there; src/forge/close.py:362\u2013364 does the same for verification. Conflict inventory at src/forge/close.py:321\u2013323 and oversized-fix inventory at src/forge/sync.py:369 also encounter the rejection. Consequently, this accepted configuration prevents upgrade and these close/commit workflows. Resolve the configuration explicitly for linked worktrees while retaining protection against writes outside the checkout.",
         "file": "src/forge/githooks.py",
         "line": 83,
         "priority": "P2",
         "title": "Handle absolute Husky paths during worktree-based upgrade and close"
       }
     ],
-    "id": "b93ab823-0b9e-4a65-bd26-16216c8a1c28",
+    "id": "b6b46fc5-7dad-486a-9d4f-d0122d8afdc8",
     "status": "clean"
   },
   "round": 3,
@@ -49,6 +49,10 @@
     },
     {
       "at": "2026-10-08T16:33:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T17:57:23+00:00",
       "step": "review"
     }
   ],
