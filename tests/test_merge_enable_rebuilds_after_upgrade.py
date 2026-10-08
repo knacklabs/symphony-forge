@@ -1,8 +1,10 @@
 """src/forge/merge.py rebuilds an interrupted owner switch on the upgraded default branch."""
 import json
 import os
+import shlex
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -121,3 +123,70 @@ def test_2_merge_enable_leaves_other_work_untouched_before_rebuilding(owner, oth
                       repo.git("diff", "--cached", cwd=where))
     assert (where / "forge.toml").read_bytes() == config
     assert not owner.gh_calls("pr", "create")
+
+
+@pytest.mark.parametrize("default_moved", [False, True], ids=["without-rebuild", "with-rebuild"])
+@pytest.mark.parametrize("remote_work", ["file", "reverted file"])
+def test_3_merge_enable_preserves_fetched_remote_work(owner, default_moved, remote_work):
+    owner.gh.respond("pr", "create", stderr="GitHub is down", exit=1)
+    assert enable(owner).returncode != 0
+    repo, where = owner.repo, worktree(owner)
+    other = owner.tmp / "another-checkout"
+    repo.git("worktree", "add", "-qb", "remote-work", str(other), BRANCH)
+    owner.commit(other, "remote.txt", "Work from another checkout\n")
+    if remote_work == "reverted file":
+        repo.git("revert", "--no-edit", "HEAD", cwd=other)
+    repo.git("push", "-q", "origin", f"remote-work:{BRANCH}", cwd=other)
+    repo.git("fetch", "-q", "origin")
+    remote_head = repo.git("rev-parse", f"origin/{BRANCH}")
+    if default_moved:
+        set_main(owner, (repo.path / "forge.toml").read_text("utf-8") + "# Default moved\n")
+    before = (repo.git("rev-parse", BRANCH), repo.git("status", "--porcelain", cwd=where),
+              (where / "forge.toml").read_bytes())
+
+    refused = enable(owner)
+
+    assert refused.returncode != 0
+    assert refused.stderr == TAKEN
+    assert before == (repo.git("rev-parse", BRANCH), repo.git("status", "--porcelain", cwd=where),
+                      (where / "forge.toml").read_bytes())
+    assert repo.git("ls-remote", "--heads", "origin", BRANCH).split()[0] == remote_head
+
+
+@pytest.mark.parametrize("race", [False, True], ids=["safe-remote-history", "remote-moves-after-validation"])
+def test_4_merge_enable_publishes_only_against_the_validated_remote_tip(owner, race):
+    owner.gh.respond("pr", "create", stderr="GitHub is down", exit=1)
+    assert enable(owner).returncode != 0
+    owner.gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
+    repo = owner.repo
+    other = owner.tmp / "another-checkout"
+    repo.git("worktree", "add", "-qb", "remote-work", str(other), BRANCH)
+    repo.git("commit", "-q", "--allow-empty", "-m", "Retry the merge switch", cwd=other)
+    repo.git("push", "-q", "origin", f"remote-work:{BRANCH}", cwd=other)
+    set_main(owner, (repo.path / "forge.toml").read_text("utf-8") + "# Default moved\n")
+    default_head = repo.git("rev-parse", "origin/main")
+    if race:
+        racing_head = owner.commit(other, "remote.txt", "Keep this remote work\n")
+        repo.git("push", "-q", "origin", "remote-work", cwd=other)
+        remote = shlex.quote(Path(repo.git("remote", "get-url", "origin")).as_posix())
+        # The real commit hook moves and fetches the remote after validation, before push.
+        hook(owner, "pre-commit", f"#!/bin/sh\ngit --git-dir={remote} update-ref "
+             f"refs/heads/{BRANCH} {racing_head}\ngit fetch -q origin {BRANCH}\n")
+
+    resumed = enable(owner)
+
+    if race:
+        assert resumed.returncode != 0
+        assert "stale info" in resumed.stderr, resumed.stdout + resumed.stderr
+        assert not owner.review_calls()
+        assert repo.git("ls-remote", "--heads", "origin", BRANCH).split()[0] == racing_head
+        assert repo.git("show", f"{racing_head}:remote.txt") == "Keep this remote work"
+    else:
+        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+        assert resumed.stdout.splitlines()[-2:] == READY
+        assert repo.git("merge-base", BRANCH, "origin/main") == default_head
+        before = raw(owner, "origin/main")
+        ending = b"\r\n" if b"\r\n" in before else b"\n"
+        assert raw(owner, f"origin/{BRANCH}") == b'merge = "agent"' + ending + before
+    assert repo.git("rev-parse", "origin/main") == default_head
+    assert not owner.gh_calls("pr", "merge")

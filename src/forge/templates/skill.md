@@ -71,7 +71,9 @@ The `merge` setting is the owner's, because it is a gate on your own work: never
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
 in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
 contains only that setting and the default branch has moved, it rebuilds the same fix on the
-current default branch, preserving its other settings. The owner still merges the pull request.
+current default branch, preserving its other settings. It leaves remote work outside that fix
+alone and refuses to replace a remote branch that changes after its check. The owner still
+merges the pull request.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 

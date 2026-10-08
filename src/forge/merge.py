@@ -163,9 +163,26 @@ def _enable(top: Path) -> int:
     files = set(repo.git("diff", "--name-only", base, cwd=path).splitlines())
     files.update(repo.git("diff", "--cached", "--name-only", base, cwd=path).splitlines())
     state = repo.read_state(ENABLE, path) or {}
+    other_change = r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)"
     if files - {rel, "forge.toml"} or (state.get("why"), state.get("done_when")) != (close.WHY, close.DONE) or re.search(
-            r"^[+-](?!\+\+ |-- |[ \t]*[\"']?merge[\"']?[ \t]*=)", diff, re.M):  # anything but the merge line
+            other_change, diff, re.M):  # anything but the merge line
         repo.refuse(REFUSALS["taken"])
+    remote_ref = f"refs/heads/{branch}"
+    remote_tip = None
+    if repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=path):
+        repo.git("fetch", "-q", "origin", remote_ref, cwd=path)
+        remote_tip = repo.git("rev-parse", "FETCH_HEAD", cwd=path)
+        remote_base = repo.git("merge-base", remote_tip, ref, cwd=path)
+        history = f"{remote_base}..{remote_tip}"
+        remote_state = story.json_of(story.show(path, remote_tip, rel))
+        remote_files = repo.git("log", "-m", "--format=", "--name-only", history,
+                                "--", ".", f":!{rel}", ":!forge.toml", cwd=path)
+        remote_diff = repo.git("log", "-m", "--format=", "-p", "-U0", history,
+                               "--", "forge.toml", cwd=path)
+        if (remote_files or (remote_state.get("why"), remote_state.get("done_when"),
+                             remote_state.get("kind"), remote_state.get("branch")) !=
+                (close.WHY, close.DONE, "fix", branch) or re.search(other_change, remote_diff, re.M)):
+            repo.refuse(REFUSALS["taken"])
     if base != repo.git("rev-parse", ref, cwd=path):
         # Save an interrupted edit before reset --keep, which refuses to overwrite local work.
         repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
@@ -178,10 +195,8 @@ def _enable(top: Path) -> int:
         repo.refuse(repo.REFUSALS["bad_config"], problem='Forge could not set merge = "agent" in it, so it left it alone')
     (path / "forge.toml").write_bytes(text.encode("utf-8"))
     repo.commit_state('Set merge = "agent" in forge.toml', rel, "forge.toml", top=path)
-    remote = f"refs/remotes/origin/{branch}"
-    if (repo.run("git", "show-ref", "--verify", remote, cwd=path).returncode == 0
-            and repo.run("git", "merge-base", "--is-ancestor", remote, "HEAD", cwd=path).returncode):
-        repo.git("push", "--force-with-lease", "origin", branch, cwd=path)
+    if remote_tip and repo.run("git", "merge-base", "--is-ancestor", remote_tip, "HEAD", cwd=path).returncode:
+        repo.git("push", f"--force-with-lease={remote_ref}:{remote_tip}", "origin", branch, cwd=path)
     close.close(argparse.Namespace(item=ENABLE, dismiss=None, because=None))
     print("Next: merge its pull request to switch on agent merges.")
     return 0
