@@ -2223,6 +2223,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/review.py\tInvalidate cached reviews when the allowance reason changes",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 217,
+      "text": "Invalidate cached reviews when the allowance reason changes",
+      "from": "review",
+      "item": "agent-allowance",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/review.py\tParse pytest's singular and selected test totals",
       "kind": "edge",
       "path": "src/forge/review.py",
