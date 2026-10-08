@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-08T12:30:20+00:00",
+      "because": "A second worker asked to wait for CI timings to complete its proof list; the brief should cover both the push question and waiting for CI",
+      "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync"
+    }
+  ],
   "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
   "branch": "fix/brief-close-pushes",
-  "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, and that CI output reaches the worker in its next round, so a worker needing CI evidence commits and stops instead of asking; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
+  "done_when": "The shipped worker brief says that close pushes the committed branch and runs CI on every platform, that CI is the merge gate, and that CI output reaches the worker in its next round, so a worker commits its local proof and stops instead of asking someone to push or waiting for CI to record results; a brief test checks the sentence for a new repo and for one adopted on an earlier release after sync",
   "kind": "fix",
   "round": 1,
   "status": "working",
