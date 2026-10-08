@@ -2661,6 +2661,61 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tKeep Forge checks reachable and preserve pre-push input\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 91,
+      "text": "Keep Forge checks reachable and preserve pre-push input",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tPreserve user hook edits when close resolves merge conflicts\thusky-hooks",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 93,
+      "text": "Preserve user hook edits when close resolves merge conflicts",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_husky_hooks_survive_install.py\tNot done: launcher routing and generated-runtime exclusion proofs\thusky-hooks",
+      "kind": "bug",
+      "path": "tests/test_husky_hooks_survive_install.py",
+      "line": 76,
+      "text": "Not done: launcher routing and generated-runtime exclusion proofs",
+      "from": "blocking",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/githooks.py\tHandle absolute Husky paths during worktree-based upgrade and close",
+      "kind": "edge",
+      "path": "src/forge/githooks.py",
+      "line": 83,
+      "text": "Handle absolute Husky paths during worktree-based upgrade and close",
+      "from": "review",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\tPreserve Husky's PATH when running existing user hooks",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 97,
+      "text": "Preserve Husky's PATH when running existing user hooks",
+      "from": "review",
+      "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

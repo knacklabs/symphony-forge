@@ -93,6 +93,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
 
 
 def test_28_sync(repo, tmp_path, monkeypatch):
+    """Repos without Husky keep local shims and commit only the generated adapters."""
     _on_a_branch_with_forge_toml(repo)
     repo.write("AGENTS.md", "# Our agents\n\nOur own rules.\n")
     repo.write(".claude/settings.json", json.dumps({
