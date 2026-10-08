@@ -6,49 +6,31 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "76e0376c69d183decc072fea3675afd65ea34d95677592117df14476a06eb38c",
-    "changed": "e5a50a7606f4c054a4558d0d414a15fee94cdb8431f0f7026eeb90e1561ea4d2",
-    "commit": "4661996902deff1bac71ad901b6bd68a5a0bbbf9",
-    "dismissals": [
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepts: the spinner's place-in-line ships as a separate small fix next; the extra drawing-test coverage is dismissed per the one-test-per-rule direction.",
-        "finding": 1
-      },
-      {
-        "accepted": true,
-        "because": "Human accepted the remaining finding: Owner accepts: the spinner's place-in-line ships as a separate small fix next; the extra drawing-test coverage is dismissed per the one-test-per-rule direction.",
-        "finding": 2
-      }
-    ],
+    "branch_diff": "3c064168f7ec762601edb671c4e3cf9a4c45914220d05a501b2c3ee3d32dd156",
+    "changed": "43b1503ff2a9ade749b3f392208df3119e88389e8ed0a875db93e2ddba375218",
+    "commit": "148e24009b6425ca2ab6cf6efa59528cbfa2f537",
+    "dismissals": [],
     "findings": [
       {
-        "body": "When a coordinator launches `forge work <item>` from the main checkout, this comparison cannot find its queued worker. `worker.py:58\u201359` resolves the item's worktree and `worker.py:97` passes that checkout to admission, while `cwd` here remains the coordinator's session directory. New evidence beyond the checkout-identity ruling is the real command test: `tests/test_machine_tab_lanes.py:96` launches from the main checkout, but line 116 asserts that `checkout_root` is the separate item worktree. Consequently the normal coordinator spinner shows no queue position. The native spinner test hides this mismatch by assigning both directories `/repo`. Associate the session's invoked run with its lane entry and test this real directory arrangement.",
+        "body": "For another repo, `local()` returns undefined, so this fallback displays an identifier with punctuation removed instead of the item's recorded title. This affects both drawn surfaces, `/forge` text, selectors and stop confirmations. A concrete producer case exists in `tests/test_lanes_agents.py:166\u2013168`: another current-release repo runs reader `SHOP`, whose title is \u201cShoppers can save a basket\u201d (`tests/test_fix_agent_runs_wait_in_line.py:54`). `src/forge/story.py:222\u2013231` admits that identifier, and the new lane producer carries no display title. Task identifiers similarly become strings such as \u201cFORGE MOD 1 MACHINE\u201d. Done-when 6 explicitly requires items in plain words. Preserve the local-only enrichment ruling by recording the existing display title in the lane entry alongside its identity, and cover a current-release foreign story/task in the owning tests.",
         "file": "src/forge/mod/hooks/machine.ts",
-        "line": 199,
+        "line": 42,
         "priority": "P1",
-        "title": "Not done: this session's spinner queue place"
+        "title": "Not done: Machine rows name items in plain words"
       },
       {
-        "body": "The proof list claims complete Desktop alt text, per-run tooltips and the tool/lane legend, but these tests do not protect those required behaviors. Replacing every tooltip with `<title>Run</title>` still satisfies line 70 while losing model, round and elapsed. Omitting the final queued test run from SVG alt text still satisfies the subset checked at line 67. Removing the legend entirely also passes every native assertion. Similarly, line 55 checks selector order rather than tree/list row order. Strengthen the existing mounted tests to verify every run's accessible facts, tooltip facts, displayed queue order and colour/symbol legend; these are explicit Done-when details rather than additional edge cases.",
-        "file": "src/forge/mod/hooks/machine.test.ts",
-        "line": 70,
-        "priority": "P1",
-        "title": "Not done: Machine rendering tests cover the claimed facts"
-      },
-      {
-        "body": "The previously reported automation gap remains open. `forge.toml:6` and `.github/workflows/forge-next.yml:58` run Python tests; `tests/test_mod_plugin.py:45\u201357` typechecks the hooks without executing their native interaction tests. The reported manual run verifies this revision, but automated checks still cannot detect regressions in Machine selection, confirmation, output or surface rendering. `plans/FORGE-MOD-1.md:284` assigns the plugin test job to SHIP, so that task should wire these cases into the suite.",
-        "file": "src/forge/mod/hooks/machine.test.ts",
-        "line": 40,
+        "body": "Forge's existing runner can publish `{done: 0, total: 0}`: `src/forge/review.py:301\u2013305` accepts `collected 0 items`, and lines 311\u2013332 accept a zero TAP plan and persist its progress. This validator rejects that legitimate producer output, causing the whole Machine refresh to retain stale rows and report malformed output; stop confirmation also rejects the same snapshot. The nullable-progress ruling covered unknown counts, whereas these producer paths record a known zero. Accept zero totals and omit the bar for them, retaining elapsed-only rendering.",
+        "file": "src/forge/mod/hooks/machine.ts",
+        "line": 29,
         "priority": "P2",
-        "title": "Later: SHIP must include the Machine native tests in CI"
+        "title": "Accept zero-test progress without rejecting the entire snapshot"
       }
     ],
-    "id": "996c2b63-d028-478e-b0e8-d21061828b4b",
-    "status": "clean"
+    "id": "b31b915b-47cf-427d-8758-6df35f5d8449",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-07T17:39:11+00:00",
@@ -64,6 +46,10 @@
     },
     {
       "at": "2026-10-07T19:30:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T02:54:31+00:00",
       "step": "review"
     }
   ],

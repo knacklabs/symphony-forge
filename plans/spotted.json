@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.claude-plugin/marketplace.json\tNot done: delivery from the release tag\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": ".claude-plugin/marketplace.json",
+      "line": 14,
+      "text": "Not done: delivery from the release tag",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -21,6 +32,17 @@
       "item": "ubuntu-two",
       "status": "done",
       "closed_by": "simplify-ci-workflow"
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tStandard: forge.toml's test command runs everything CI needs\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 30,
+      "text": "Standard: forge.toml's test command runs everything CI needs",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
     },
     {
       "key": "bug\tAGENTS.md\tNot done: Put 'Building Forge (this repo only)' outside the unchanged forge block\tbuilding-forge",
@@ -650,6 +672,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: Machine rows name items in plain words\tFORGE-MOD-1/MACHINE",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 42,
+      "text": "Not done: Machine rows name items in plain words",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/machine.ts\tNot done: local Machine run facts on Windows\tFORGE-MOD-1/MACHINE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/machine.ts",
@@ -881,6 +914,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 467,
+      "text": "Not done: forge sync turns the mod on whatever version a repo pins",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -998,6 +1042,17 @@
       "text": "The uv.lock case fails on the default branch too because its comment-only change does not run the unrelated test.",
       "from": "worker",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
+      "kind": "bug",
+      "path": "tests/test_close_sync_conflicts.py",
+      "line": 102,
+      "text": "The new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     },
@@ -1288,6 +1343,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_live_status.py\tThe close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 348,
+      "text": "The close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_live_status.py\tThe review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "kind": "bug",
       "path": "tests/test_live_status.py",
@@ -1376,6 +1442,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 163,
+      "text": "Not done: real installation, reload, and native-pane integration proof",
+      "from": "blocking",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_plugin.py\tStandard: TypeScript in strict mode\tFORGE-MOD-1/CORE",
       "kind": "bug",
       "path": "tests/test_mod_plugin.py",
@@ -1398,6 +1475,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py",
+      "line": 220,
+      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_pytest_picker_runs_in_the_clients_environment.py\tNot done: New and previously adopted clients run the proposed picker through close\tthe-shipped-python-test-picker-uv-run-py",
       "kind": "bug",
       "path": "tests/test_pytest_picker_runs_in_the_clients_environment.py",
@@ -1405,6 +1493,17 @@
       "text": "Not done: New and previously adopted clients run the proposed picker through close",
       "from": "blocking",
       "item": "the-shipped-python-test-picker-uv-run-py",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_quick_test_suggestions.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_quick_test_suggestions.py",
+      "line": 202,
+      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     },
@@ -1904,6 +2003,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/machine.ts\tAccept zero-test progress without rejecting the entire snapshot",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/machine.ts",
+      "line": 29,
+      "text": "Accept zero-test progress without rejecting the entire snapshot",
+      "from": "review",
+      "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -2124,6 +2234,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/sync.py\tSpecify user scope when updating an existing installation",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 494,
+      "text": "Specify user scope when updating an existing installation",
+      "from": "review",
+      "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
       "kind": "edge",
       "path": "src/forge/templates/review-tests.py",
@@ -2318,105 +2439,6 @@
       "text": "The picker omits consumers of changed test helpers, so updating the help fixture skips the command test that imports it.",
       "from": "worker",
       "item": "the-review-loop-stop-pauses-only-one-clo",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.claude-plugin/marketplace.json\tNot done: delivery from the release tag\tFORGE-MOD-1/SHIP",
-      "kind": "bug",
-      "path": ".claude-plugin/marketplace.json",
-      "line": 14,
-      "text": "Not done: delivery from the release tag",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.github/workflows/forge-next.yml\tStandard: forge.toml's test command runs everything CI needs\tFORGE-MOD-1/SHIP",
-      "kind": "bug",
-      "path": ".github/workflows/forge-next.yml",
-      "line": 30,
-      "text": "Standard: forge.toml's test command runs everything CI needs",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
-      "kind": "bug",
-      "path": "src/forge/sync.py",
-      "line": 467,
-      "text": "Not done: forge sync turns the mod on whatever version a repo pins",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_close_sync_conflicts.py\tThe new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
-      "kind": "bug",
-      "path": "tests/test_close_sync_conflicts.py",
-      "line": 102,
-      "text": "The new-client close case timed out after Autoreview completed in the sibling run; no cause or default-branch equivalence is established.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_live_status.py\tThe close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_live_status.py",
-      "line": 348,
-      "text": "The close-run CI case timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_mod_install.py\tNot done: real installation, reload, and native-pane integration proof\tFORGE-MOD-1/SHIP",
-      "kind": "bug",
-      "path": "tests/test_mod_install.py",
-      "line": 163,
-      "text": "Not done: real installation, reload, and native-pane integration proof",
-      "from": "blocking",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_pyproject_changes_keep_tests_related_and_locks_frozen.py",
-      "line": 220,
-      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_quick_test_suggestions.py\tThe adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_quick_test_suggestions.py",
-      "line": 202,
-      "text": "The adopted upgrade timed out in the suite and passed in the focused rerun; the failure remains unresolved.",
-      "from": "worker",
-      "item": "FORGE-MOD-1/SHIP",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/sync.py\tSpecify user scope when updating an existing installation",
-      "kind": "edge",
-      "path": "src/forge/sync.py",
-      "line": 494,
-      "text": "Specify user scope when updating an existing installation",
-      "from": "review",
-      "item": "FORGE-MOD-1/SHIP",
       "status": "open",
       "closed_by": null
     }
