@@ -1,0 +1,14 @@
+{
+  "base": "c2ea7970b0e102f47151501d55fff615d4c4f82d",
+  "branch": "fix/release-127",
+  "done_when": "Forge's version is 1.2.7 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.7), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-08T07:06:02+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients and this repo need v1.2.7 for Forge inside Claude Code (pane, strip, Machine tab, event turns), the shared agent and test lanes, and the speed and simplification fixes merged since v1.2.6"
+}
