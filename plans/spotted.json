@@ -694,6 +694,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/mod/hooks/machine.ts\tDistinguish agent and test targets before confirming a stop\tFORGE-MOD-1/MACHINE",
       "kind": "bug",
       "path": "src/forge/mod/hooks/machine.ts",
