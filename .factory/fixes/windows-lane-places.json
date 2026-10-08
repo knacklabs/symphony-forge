@@ -2,13 +2,38 @@
   "base": "e8242309dc5f6965fa04bbc1cba7d261be6ce8a8",
   "branch": "fix/windows-lane-places",
   "done_when": "On every CI platform the test proves closes run their tests in arrival order and each says its test-lane place, with the real cause fixed (an agent-lane wait the test didn't expect on a small Windows runner, or a real lane bug) rather than a looser assertion or a longer timeout; Windows CI passes that test; new and earlier-adopted client repos see no behaviour change unless the cause is a real lane bug, which then gets a command test for each",
+  "flagged": [
+    "tests/test_close_test_runs_wait_in_line.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "defeb20c1995fdfe53c9dc72e124d6e2e1ede3df868de42155d5bda87c293336",
+    "changed": "f1fdef1ef727ab23616454f9ffc99747c6b5ac15c77345e9e16a0678ba72562a",
+    "commit": "ee64f8d09607ff3517e1d8b29055da158d9ac70f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The proof list explicitly states that native Windows CI passing is missing. The supplied close run proves both tests passed on its machine, but does not establish the required Windows result. The eight-core setup preserves every arrival-order and exact-place assertion and follows the coordinator's ruling; no evidence indicates a runtime lane defect. Publish this branch and obtain a passing native Windows CI run of test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place before marking the Done-when complete.",
+        "file": "tests/test_close_test_runs_wait_in_line.py",
+        "line": 36,
+        "priority": "P1",
+        "title": "Not done: On every CI platform the test proves closes run their tests in arrival order and each says its test-lane place, with the realcause"
+      }
+    ],
+    "id": "ec24b1a8-0a6f-4538-9083-1458c7f702cc",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T04:14:54+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T04:18:56+00:00",
+      "step": "review"
     }
   ],
   "why": "On Windows CI, tests/test_close_test_runs_wait_in_line.py test_1 fails on the default branch: the closes' output gains an extra '2 Forge agents already run on this machine, so this one waits its turn: it is number 2 in line.' line, so the expected test-lane places don't match (runs 37689175323 and the MOD/MACHINE PR, group 7)",

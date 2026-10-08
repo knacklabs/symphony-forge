@@ -980,6 +980,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tNot done: On every CI platform the test proves closes run their tests in arrival order and each says its test-lane place, with the realcause\twindows-lane-places",
+      "kind": "bug",
+      "path": "tests/test_close_test_runs_wait_in_line.py",
+      "line": 36,
+      "text": "Not done: On every CI platform the test proves closes run their tests in arrival order and each says its test-lane place, with the realcause",
+      "from": "blocking",
+      "item": "windows-lane-places",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_test_runs_wait_in_line.py\tThe Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "kind": "bug",
       "path": "tests/test_close_test_runs_wait_in_line.py",
