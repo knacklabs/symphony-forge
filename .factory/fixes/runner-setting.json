@@ -9,16 +9,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "55a3f9d535688da4ffd7652d5e423e5efb9fa5caf4e4dd33256e1eb67380f0c0",
-    "changed": "53d1af29b549991efe703771caf29283e317bfc4221b4f086e6a5b4197776dbe",
-    "commit": "bfeaef79b06bf6be7ae319433d14239a043d97c8",
+    "branch_diff": "2061b32da093f8f743217272574c91994ca18b061fb9c1e961662b8c304275c7",
+    "changed": "63d5b5263a7b4ebc0deae98130ff26a3ed58338dca7f903a999db85a41674560",
+    "commit": "7e85ae58fea830bae14386378826fe68b4142476",
     "dismissals": [],
-    "findings": [],
-    "id": "f1369b6e-5fc2-41e6-8d4d-0fb9c7549c0e",
+    "findings": [
+      {
+        "body": "The wait still blocks on every reported check, but this guard considers only names listed in forge.toml. When `tests` and `forge-pr-check` are green while an additional `lint` check has been queued for over five minutes, `queued_reason` is never called. Close waits until its timeout and reports only that lint is queued, omitting the runner guidance. The changed `_pending_check_not_named` case already establishes that additional queued checks block close. Include those queued states when deciding whether to request the diagnostic.",
+        "file": "src/forge/checks.py",
+        "line": 46,
+        "priority": "P2",
+        "title": "Diagnose queued checks outside the configured check names"
+      }
+    ],
+    "id": "d94fd9a6-1835-4e31-b030-9fc683370532",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T15:06:42+00:00",
@@ -34,6 +42,10 @@
     },
     {
       "at": "2026-10-08T21:08:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T21:31:43+00:00",
       "step": "review"
     }
   ],
