@@ -3,12 +3,44 @@
   "base": "c2ea7970b0e102f47151501d55fff615d4c4f82d",
   "branch": "fix/release-127",
   "done_when": "Forge's version is 1.2.7 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.7), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
+  "flagged": [
+    ".factory/fixes/release-127.json"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "634222a78c16eed12a8a48240761d88b3fc8a001b7b4f748938d9bc45164688d",
+    "changed": "0c1ff6c6fb399db8bc52d2de91c36583d75a38acd38f24b87668b649244f92b1",
+    "commit": "f39067fec50d13b2fa3a1efe2a338bba22928477",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The branch adds only the fix record; none of the required release updates are implemented. The package remains 1.2.6 at src/forge/__init__.py:4 and uv.lock:113; forge.toml:2 still pins v1.2.6; the mod manifest at src/forge/mod/.claude-plugin/plugin.json:3 and marketplace version/ref at .claude-plugin/marketplace.json:8 and :14 remain 1.2.6/v1.2.6. Both installers still select 1.2.6 (scripts/install-mac.sh:4 and scripts/install-windows.ps1:4), as does README.md:123. The hooks launcher still installs v1.2.6 at .forge/hooks.sh:8, and the generated workflow still records v1.2.6 at .github/workflows/forge.yml:1. Sync reports the unchanged configured pin (src/forge/sync.py:467). Current-release assertions also remain at 1.2.6 in tests/test_release_version.py:12\u201328, tests/test_version.py:10, tests/test_switch.py:11, tests/test_fix_clients_pin_forge_v1_0_2_but_main_has_28.py:12\u201313, tests/test_fix_clients_pin_forge_v1_1_0_but_main_has_th.py:12\u201313, tests/test_fix_forge_close_base_commit_release.py:12\u201316, tests/test_fix_forge_v1_release.py:10\u201311, and tests/test_sales_install.py:66 and :198. Implement the complete release bump and update its current-release checks while preserving historical fixtures; otherwise clients continue receiving v1.2.6.",
+        "file": ".factory/fixes/release-127.json",
+        "line": 5,
+        "priority": "P1",
+        "title": "Not done: Forge's version is 1.2.7 everywhere it is recorded"
+      },
+      {
+        "body": "The supplied proof list is explicitly missing, and neither branch commit supplies one. There is no entry identifying verification for the package/pin, mod and marketplace version/ref, installers and README, hooks/workflow, sync output, current-release assertions, or preservation of historical fixtures. Supply the complete proof list with named checks and actual results for every Done-when detail. The close run skipped tests because this branch changes only Forge's record, so it provides no release validation.",
+        "file": ".factory/fixes/release-127.json",
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "34b46f40-109d-47ca-8506-27737a713bd0",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T07:06:02+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-08T07:07:53+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients and this repo need v1.2.7 for Forge inside Claude Code (pane, strip, Machine tab, event turns), the shared agent and test lanes, and the speed and simplification fixes merged since v1.2.6"
