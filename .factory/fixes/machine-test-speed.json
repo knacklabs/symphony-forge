@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9546c817896911fcfb14e2f84d94037d9ae7b48ad1d936f80287161ce3021e53",
+    "branch_diff": "58741b8fae10b73ca230d0e56048b7161d4601c4f19d02089b7d95a88c815e2e",
     "changed": "c7609765de24fb429ea8134e7dc7fba198242eefa4baf04ca5c156acd3064966",
-    "commit": "62b74a6ccc87732876294a8c4a679375b88615d2",
+    "commit": "881157b41d6e8cddd0160f6bd017b2c8f628f705",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The previous CI-proof gap remains open: the latest proof list explicitly says every-platform results and CI-runner timings are missing, and the queued run predates the reporting change. The supplied close run now passes the timing-report test, and the named local checks support the implementation, but neither establishes the required CI outcome. Before completing this Done-when item, provide timings for both Machine cases and passing results for tests/test_mod_sync.py::test_5_sync_turns_on_the_mod[native-plugin-checks] and every tests/test_session_wait_and_stop.py case on Linux, macOS and Windows. Those platforms are configured in .github/workflows/forge-next.yml:36, :39 and :45; configuration alone does not demonstrate successful results.",
-        "file": "src/forge/mod/hooks/machine.test.ts",
-        "line": 231,
-        "priority": "P1",
-        "title": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026"
-      }
-    ],
-    "id": "2b844176-dabf-42df-be6d-1d2078eb4fbc",
-    "status": "blocked"
+    "findings": [],
+    "id": "28b5c2ec-95db-46da-a64d-799310741899",
+    "status": "clean"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T12:13:35+00:00",
@@ -37,6 +29,10 @@
     },
     {
       "at": "2026-10-08T12:29:19+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T12:33:41+00:00",
       "step": "review"
     }
   ],
