@@ -2,20 +2,30 @@
   "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
   "branch": "fix/merge-enable-stale",
   "done_when": "When forge merge enable finds its earlier fix whose only change is forge.toml's merge setting and the default branch has moved on, it rebuilds that change on the current default branch (same fix, the default branch's forge.toml with only merge set to agent) instead of merging, so no conflict appears; it still never merges the change itself; a command test covers a repo adopted on an earlier release that upgraded after an interrupted merge enable",
-  "flagged": [],
+  "flagged": [
+    "src/forge/merge.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "89183909b5db7643a1128ce1aff7c3b4e607f7ea70a19e86a85514d530768da5",
-    "changed": "ead248be47590ba7b2e615a0a6992ee587ba86a357f3d4e953f0bc103fb131e9",
-    "commit": "7789bd13ad7696d0270c51fb38a5931be922a37f",
+    "branch_diff": "84d3abe69ab8e2a8800b52d3c218259a85dc0ac4402fa0ee56e5bc454c423c6a",
+    "changed": "4f286acd5893c1f907980f9e538fff85c20e7b84905a17107c04a539bd6417f9",
+    "commit": "f564bfa252e862edd21527a1bb7c8b1d003902fc",
     "dismissals": [],
-    "findings": [],
-    "id": "2f1c041a-df8f-4632-8beb-f67222cc542e",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "If an interrupted fix was already pushed, another checkout adds work to that branch, and the owner fetches it before resuming, this force-push deletes the remote-only commits. The checks at lines 160\u2013168 validate only the local checkout. Bare `--force-with-lease` accepts the fetched remote-tracking tip as its expected value, even though that tip was never validated or incorporated ([Git documentation](https://git-scm.com/docs/git-push)). This publication path also runs when no rebuild occurred. Validate the remote history before replacing it, refuse remote work outside the merge-setting fix, and use an explicit lease tied to the validated tip.",
+        "file": "src/forge/merge.py",
+        "line": 184,
+        "priority": "P1",
+        "title": "Protect remote work before force-publishing the rebuilt fix"
+      }
+    ],
+    "id": "2b0d4665-5c30-4115-a5a0-63b9b021794b",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
@@ -23,6 +33,10 @@
     },
     {
       "at": "2026-10-08T15:20:03+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:01:07+00:00",
       "step": "review"
     }
   ],

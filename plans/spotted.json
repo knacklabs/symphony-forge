@@ -584,6 +584,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 184,
+      "text": "Protect remote work before force-publishing the rebuilt fix",
+      "from": "blocking",
+      "item": "merge-enable-stale",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\t[P1] Preserve the default outcome for forge land callers\trecording-that-a-story-is-done-opens-a-s",
       "kind": "bug",
       "path": "src/forge/merge.py",
