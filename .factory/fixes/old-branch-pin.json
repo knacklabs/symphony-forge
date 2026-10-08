@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cad26f902d19a69e432f23814bf88f6e1c0df938fd618d018d1b644df155a13b",
-    "changed": "2b95f968680d256cab99bb02777b9f88ef8296e473df41920729a7b396d1172a",
-    "commit": "09696372dc7a4ea859184845be7ea17a66bcba88",
+    "branch_diff": "cc532b6aa636e1c4ff192fa94844260d62614898cf3793d57f13343582dbb79b",
+    "changed": "82cfaa19cd406a20d15b8da2d03f98c02b3c771713156db0e4ad11d098d157a0",
+    "commit": "dfb1e90c00eecf5f9c6ef75b4e96b81f16958454",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. The condition checks `origin/main`, but the notice tells the user to merge local `main`. In the new test at lines 60\u201365, fetching updates `origin/main` while local `main` still pins v1.2.2; following the displayed advice then produces an already-up-to-date merge and leaves the old release active. `src/forge/story.py:585` explicitly distinguishes these refs. The test updates local `main` separately at line 73 before merging it, masking the ineffective advice. Name `landed_ref` in the notice or explain that the local default must first be updated, and align `src/forge/templates/skill.md:571` and both generated host skills.",
+        "body": "The previous P2 remains open. The condition checks `origin/main`, but the notice tells the user to merge local `main`. The new test fetches the upgrade at lines 60\u201361 while local `main` still pins v1.2.2, so following the advice then yields an already-up-to-date merge and leaves the old release active. `src/forge/story.py:580\u2013585` explicitly distinguishes the fetched and local refs. The test separately updates local `main` at line 73 before following the advice, masking this problem. Name `landed_ref` in the notice or explain that the local default must first be updated; align `src/forge/templates/skill.md:580` and both generated host skills.",
         "file": "src/forge/repo.py",
         "line": 537,
         "priority": "P2",
         "title": "Point the merge advice at the fetched default branch"
       }
     ],
-    "id": "510bb6c2-ce59-401d-9d3f-9293c65bdf37",
+    "id": "3248b424-50c5-4fec-ae45-3011d3964c60",
     "status": "clean"
   },
   "round": 4,
@@ -47,6 +47,10 @@
     },
     {
       "at": "2026-10-08T18:48:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:17:37+00:00",
       "step": "review"
     }
   ],
