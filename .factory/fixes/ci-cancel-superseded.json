@@ -1,0 +1,35 @@
+{
+  "base": "2c9a90f4218d3f8e05253ba6f407a99861986f67",
+  "branch": "fix/ci-cancel-superseded",
+  "done_when": "Forge's own CI workflows and the forge.yml Forge ships to client repos cancel an in-progress or queued run for the same pull request and workflow when a newer commit is pushed, grouped so the pull_request tests and pull_request_target pr-check jobs never cancel each other and default-branch runs are never cancelled; a workflow test checks the setting for a new repo and for one adopted on an earlier release after sync",
+  "flagged": [],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2ea231e9a246ac46dd590367dccb6fc070d9277381353a3c957f8188a56bff1a",
+    "changed": "c84d92ae091b86dced4f47160c1c58137e975d5ba3f324a76ef54f08d81e7f4d",
+    "commit": "8c6e0cefcb6a48a7c256b19abd70711d746d9eef",
+    "dismissals": [],
+    "findings": [],
+    "id": "22268366-518b-43b5-be50-9ac31ae301a9",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T15:00:40+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T15:08:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T16:40:03+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every push to a pull request queues a full CI run while the run for the commit it replaced keeps going, so GitHub's run queue backs up (24 queued, 2 running on 2026-10-08; 20 were for superseded commits) and every close waits longer",
+  "worker": "codex"
+}
