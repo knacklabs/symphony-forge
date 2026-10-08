@@ -10,7 +10,7 @@ from test_codex_worker import PIN, _codex_repo, sdk_data  # noqa: F401
 STORY = "agent-allowance"
 
 
-def test_1_work_reports_the_sdk_interpreters_silent_exit_status(repo, monkeypatch, sdk_data,
+def test_2_work_reports_the_sdk_interpreters_silent_exit_status(repo, monkeypatch, sdk_data,
                                                              tmp_path):
     _, calls = _codex_repo(repo, monkeypatch, sdk_data)
     sdk = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
