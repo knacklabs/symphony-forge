@@ -156,7 +156,12 @@ def upgrade(args: argparse.Namespace) -> int:
     if adding:
         repo.git("add", "--", *adding, cwd=path)
     if changed and repo.run("git", "diff", "--cached", "--quiet", "--", *changed, cwd=path).returncode:
-        repo.git("commit", "-q", "-m", f"Upgrade Forge to {release}", "--", *changed, cwd=path)
+        proof = (f"Proof list:\n- {done} Evidence: forge.toml sets version = \"{release}\"; "
+                 f"Forge {release}'s forge sync completed successfully in this fix. "
+                 f"forge close {name} supplies its test run result to the review "
+                 "(including any skip reason).")
+        repo.git("commit", "-q", "-m", f"Upgrade Forge to {release}", "-m", proof,
+                 "--", *changed, cwd=path)
         print(f"Committed the upgrade to Forge {release}.", flush=True)
     else:
         print("Nothing new to commit.", flush=True)
