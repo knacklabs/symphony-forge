@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "84d3abe69ab8e2a8800b52d3c218259a85dc0ac4402fa0ee56e5bc454c423c6a",
-    "changed": "4f286acd5893c1f907980f9e538fff85c20e7b84905a17107c04a539bd6417f9",
-    "commit": "f564bfa252e862edd21527a1bb7c8b1d003902fc",
+    "branch_diff": "21aec64678771bdeca895874c6d87def6cf4629661efdcdd6d0e8fb4ca192453",
+    "changed": "5fd2ae20bd80989def9f5214e6fa3c434b56e6f1bcff5c19b5640cc0f8c878c4",
+    "commit": "eb93b3677228cef5bb5347d0b29a84e63bb9a662",
     "dismissals": [],
     "findings": [
       {
-        "body": "If an interrupted fix was already pushed, another checkout adds work to that branch, and the owner fetches it before resuming, this force-push deletes the remote-only commits. The checks at lines 160\u2013168 validate only the local checkout. Bare `--force-with-lease` accepts the fetched remote-tracking tip as its expected value, even though that tip was never validated or incorporated ([Git documentation](https://git-scm.com/docs/git-push)). This publication path also runs when no rebuild occurred. Validate the remote history before replacing it, refuse remote work outside the merge-setting fix, and use an explicit lease tied to the validated tip.",
+        "body": "The shared filter accepts every changed line beginning with `merge =`, even inside a TOML multiline string. A valid multiline `test` command containing a Python assignment such as `merge = [...]` can therefore be edited locally or in another checkout and still pass both the local check and remote-history validation. Multiline command strings are supported by `src/forge/repo.py:311` and its TOML parser at line 390. When the default advances, reset at line 189 discards the local command edit; force-publication at line 199 overwrites the remote edit because its tip was incorrectly classified as safe. This violates the rule that \"data is protected against loss.\" Validate that changes affect the actual top-level merge setting, including each remote revision, and add a command regression covering an unrelated edit inside a multiline setting.",
         "file": "src/forge/merge.py",
-        "line": 184,
+        "line": 166,
         "priority": "P1",
-        "title": "Protect remote work before force-publishing the rebuilt fix"
+        "title": "Standard: Data is protected against loss"
       }
     ],
-    "id": "2b0d4665-5c30-4115-a5a0-63b9b021794b",
+    "id": "7d6b8740-29f4-4154-8885-6ddb0a7e9f7b",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-08T15:00:42+00:00",
@@ -38,8 +38,15 @@
     {
       "at": "2026-10-08T18:01:07+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:13:25+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/merge.py"
+  },
   "why": "forge merge enable resumes a fix branch made before the repo upgraded Forge (its forge.toml still pins the old release plus merge = agent), so merging the default branch always conflicts on forge.toml's version line (reported by a client session after upgrading to v1.2.7)",
   "worker": "codex"
 }
