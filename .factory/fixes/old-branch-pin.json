@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dc0eb8271c1a7ee790276625a596f8773978dea388c26b335a0be2de8f97eb86",
-    "changed": "4ee9492af64e16f0994e13632ea9cf64eef3c7cde5c2be60a9b62e8860b78453",
-    "commit": "5ba48fe3b8256732aaa8462b277a20dd05dfb177",
+    "branch_diff": "000b7dcf37d3f3b9ddce49ec9045976cfb1fcc8b724071a5167184fcfbb4f8b7",
+    "changed": "957058211dca4544fdbc32612a46fc9d666823ad8282ee6d1b241513de5df757",
+    "commit": "c2fd2ab76f06a2b5d3e6a7906f6bb89d1538ea72",
     "dismissals": [],
     "findings": [
       {
-        "body": "The condition checks the pin on `origin/main`, but the notice tells the user to merge local `main`. After fetching a landed upgrade, local `main` can still pin the old release\u2014the new test itself has this state at lines 60\u201365. Following the advice then produces an already-up-to-date merge and leaves the branch running the old Forge. `src/forge/story.py:585` explicitly distinguishes the fetched ref from the local default. Name `landed_ref` in the notice, or explain that local main must first be updated. The test currently updates main separately at line 73 before following the advice, so it misses this failure.",
+        "body": "The previous P2 remains open. The condition reads the installed pin from `origin/main`, but the notice tells the user to merge local `main`. The new test demonstrates this exact state: after fetching the upgrade at lines 60\u201365, local main still pins v1.2.2. Following the notice then yields an already-up-to-date merge and leaves the old pin unchanged. `src/forge/story.py:585` explicitly distinguishes the fetched ref from the local default. Name `landed_ref` in the notice or explain that the local default must first be updated; align the guidance in `src/forge/templates/skill.md:566` and both generated host skills. The test updates local main separately at line 73 before following the advice, so it misses this failure.",
         "file": "src/forge/repo.py",
         "line": 537,
         "priority": "P2",
         "title": "Point the merge advice at the fetched default branch"
       }
     ],
-    "id": "df8ac3da-d0da-4677-9ea7-165804501129",
+    "id": "1ebc44ec-eedc-45a4-8706-e400c997b1e5",
     "status": "clean"
   },
   "round": 4,
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-10-08T12:34:32+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T15:16:27+00:00",
       "step": "review"
     }
   ],
