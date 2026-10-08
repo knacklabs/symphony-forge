@@ -51,3 +51,7 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
         assert "CI output reaches you in your next round." in brief
         assert ("If you need CI evidence, commit and stop instead of asking the coordinator "
                 "to push or run CI.") in brief
+        # CI gates merging; workers record local proof without waiting for CI timings or results.
+        assert "CI is the merge gate." in brief
+        assert ("Commit your local proof in the `Proof list:` without waiting for CI results "
+                "or timings.") in brief
