@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c9b20d1a68773515d9c892d748d440fec1d752cd3f3f01f0461df849d7b3049c",
-    "changed": "1cdf590927a4d579dd0b0971365587bfc234063531de6fc93d53745e555bd27f",
-    "commit": "d064cb59166ecbd6494eaf37353abaf95f013eed",
+    "branch_diff": "a79f092c8386a7bc3b48d977bf19eab8820543872bd5ac00a47bb23d618b65e5",
+    "changed": "a7205a193dc307c6709b3038e04f9d26506374a26e3b0d3021cc51d92bb3d870",
+    "commit": "71a98405c8993a6eeca533061d682b73e8e9494f",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 gap remains open. The allowance now reaches the review prompt, but both freshness fingerprints omit it: src/forge/review.py:171 includes only why and done_when for fixes. After a clean review, `forge fix allow-large` can replace the reason while preserving the review (src/forge/task.py:292\u2013295). With unchanged product files, close reuses that review (src/forge/close.py:127\u2013139), and the PR checker accepts it (src/forge/prcheck.py:200\u2013205). Consequently, a replacement reason that contradicts the diff bypasses the new audit instruction. Invalidate the recorded review when the allowance changes, or include the allowance in freshness tracking while preserving compatibility with the base checker.",
+        "body": "The previously reported P2 gap remains open. The new prompt reads `allow_large`, but both review fingerprints omit it (src/forge/review.py:171). `forge fix allow-large` replaces the reason while retaining the saved review (src/forge/task.py:292\u2013295). With unchanged product files, close reuses that review (src/forge/close.py:127\u2013139), and the PR checker accepts it (src/forge/prcheck.py:200\u2013205). A replacement reason that contradicts the diff therefore bypasses the new audit instruction. Invalidate the saved review when the allowance changes, or include the reason in freshness tracking while retaining compatibility with the base checker.",
         "file": "src/forge/review.py",
         "line": 217,
         "priority": "P2",
         "title": "Invalidate cached reviews when the allowance reason changes"
       }
     ],
-    "id": "485b2e0a-81ee-4af4-9f11-a9e760823129",
+    "id": "9e1cdfc8-75f9-4677-94e4-649d84ff1f03",
     "status": "clean"
   },
   "round": 4,
@@ -43,6 +43,10 @@
     },
     {
       "at": "2026-10-08T10:37:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T11:19:47+00:00",
       "step": "review"
     }
   ],
