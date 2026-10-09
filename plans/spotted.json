@@ -144,6 +144,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.html",
+      "line": 76,
+      "text": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -184,6 +195,17 @@
       "text": "Not done: a running plan reader's actual round",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: dependency maps and readiness must use the current story plan\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 234,
+      "text": "Not done: dependency maps and readiness must use the current story plan",
+      "from": "blocking",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },
@@ -309,6 +331,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: roadmap-wide dependency map, can-start-now states and six stage counts\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 438,
+      "text": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tPreserve commit-status timestamps when adapting the GraphQL rollup\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -360,6 +393,17 @@
       "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
       "from": "blocking",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 135,
+      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
+      "from": "blocking",
+      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -1024,6 +1068,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: include merge-ready stories in the stage totals\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 418,
+      "text": "Not done: include merge-ready stories in the stage totals",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -1251,6 +1306,28 @@
       "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
+      "kind": "bug",
+      "path": "tests/test_board_dependency_timelines.py",
+      "line": 217,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: test_dependency_map_and_stage_timelines_use_the_command_data\tboard-visuals",
+      "kind": "bug",
+      "path": "tests/test_board_dependency_timelines.py",
+      "line": 153,
+      "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
+      "from": "blocking",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },
@@ -1959,6 +2036,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
+      "kind": "bug",
+      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "line": 71,
+      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_steer_question.py",
@@ -2069,6 +2157,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board.py\tNormalize Markdown-formatted task IDs before constructing map nodes",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 435,
+      "text": "Normalize Markdown-formatted task IDs before constructing map nodes",
+      "from": "review",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tPreserve part names in timelines for backtick task IDs",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 895,
+      "text": "Preserve part names in timelines for backtick task IDs",
+      "from": "review",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tPreserve the live stage's start across attempts in one round",
       "kind": "edge",
       "path": "src/forge/board.py",
@@ -2098,6 +2208,17 @@
       "text": "Respect terminal check states when projecting the CI gate",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tUpdate the history-invariance test for the expanded JSON payload",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 475,
+      "text": "Update the history-invariance test for the expanded JSON payload",
+      "from": "review",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },
@@ -3000,105 +3121,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/board.html",
-      "line": 76,
-      "text": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: dependency maps and readiness must use the current story plan\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 234,
-      "text": "Not done: dependency maps and readiness must use the current story plan",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: roadmap-wide dependency map, can-start-now states and six stage counts\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 438,
-      "text": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: include merge-ready stories in the stage totals\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 418,
-      "text": "Not done: include merge-ready stories in the stage totals",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
-      "kind": "bug",
-      "path": "tests/test_board_dependency_timelines.py",
-      "line": 217,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: test_dependency_map_and_stage_timelines_use_the_command_data\tboard-visuals",
-      "kind": "bug",
-      "path": "tests/test_board_dependency_timelines.py",
-      "line": 153,
-      "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tNormalize Markdown-formatted task IDs before constructing map nodes",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 435,
-      "text": "Normalize Markdown-formatted task IDs before constructing map nodes",
-      "from": "review",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tPreserve part names in timelines for backtick task IDs",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 895,
-      "text": "Preserve part names in timelines for backtick task IDs",
-      "from": "review",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tUpdate the history-invariance test for the expanded JSON payload",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 475,
-      "text": "Update the history-invariance test for the expanded JSON payload",
-      "from": "review",
-      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     }
