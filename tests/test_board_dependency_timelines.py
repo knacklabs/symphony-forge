@@ -10,7 +10,7 @@ import pytest
 from conftest import ROOT, _install
 from test_board import DOC, seen
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
-from test_story import GRILL, READER, claude_plan, hook, ready, worktree
+from test_story import GRILL, READER, claude_plan, hook, new_story, ready, worktree
 
 STORY = "FIX-BOARD-VISUALS"
 
@@ -77,7 +77,7 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     repo.path = worktree(repo, "fix/configure-client")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
-    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}, {"key": "PACK"}]}))
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure the client")
     _install(repo.bin, "claude", READER.format(python=sys.executable))
@@ -85,8 +85,12 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")
+    packing = DOC.replace("Shoppers can save a basket", "Baskets can be packed").replace(
+        "Save a basket |", "Prepare packaging |")
+    packing_tree = new_story(repo, "PACK", "Baskets can be packed")
+    (packing_tree / "plans/PACK.md").write_text(packing, encoding="utf-8")
     doc = DOC.replace("`tests/test_share.py` | SAVE | yes |",
-                      "`tests/test_share.py` | SHOW | yes |")
+                      "`tests/test_share.py` | SHOW, PACK/SAVE | yes |")
     doc = doc.replace("\nNew moving parts:",
                       "\n| EXTRA | Print a basket | Paper copy | 1 | `print.py` | "
                       "`tests/test_print.py` | none | no |\n\nNew moving parts:")
@@ -145,7 +149,8 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     parts = {r["id"]: r for r in maps["SHOP"]["parts"]}
     assert set(parts) == {"SHOP/SAVE", "SHOP/SHOW", "SHOP/SHARE", "SHOP/EXTRA"}
     assert parts["SHOP/SHOW"]["waits_for"] == ["SHOP/SAVE"]
-    assert parts["SHOP/SHARE"]["waits_for"] == ["SHOP/SHOW"]
+    assert parts["SHOP/SHARE"]["waits_for"] == ["SHOP/SHOW", "PACK/SAVE"]
+    assert parts["SHOP/EXTRA"]["waits_for"] == [], "This unstarted part can start now"
     assert {key: part["status"] for key, part in parts.items()} == {
         "SHOP/SAVE": "Merged", "SHOP/SHOW": "Running",
         "SHOP/SHARE": "Waiting", "SHOP/EXTRA": "Not started"}
@@ -160,7 +165,9 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
                    "Share a basket: Waiting", "Print a basket: Not started"}
     assert node_titles <= titles
     assert {"Show when it was saved waits for Save a basket",
-            "Share a basket waits for Show when it was saved"} <= titles
+            "Share a basket waits for Show when it was saved",
+            "Share a basket waits for Prepare packaging (other story)",
+            "Prepare packaging (other story): Not started"} <= titles
     shapes = []
     for group in drawing.iter():
         if any(n.tag.rsplit("}", 1)[-1] == "title" and n.text in node_titles for n in group):
@@ -183,6 +190,21 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
                                                  "2 minutes", "30 seconds", "1 minute", "unknown", "current"))
     text = seen(out)
     assert all(section in text for section in ("Parts", "Small fixes", "How the factory is doing"))
+    assert "In progress: 1 of 4 parts finished." in text
+    assert len(re.findall(r"<svg\b", page)) == 4, "Two maps and two active-item timelines"
+    numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
+    assert len(re.findall(r"<li>", numbers)) == 3, "The three factory measures stay"
+    # These are the shipped, script-free theme and responsive-page contracts.
+    assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in page
+    css = re.search(r"<style>(.*?)</style>", page, re.S).group(1)
+    assert "@media (prefers-color-scheme: dark)" in css
+    for token in ("paper", "ink", "muted"):
+        colors = re.findall(rf"--{token}:\s*(#[0-9a-f]+)", css)
+        assert len(set(colors)) == 2, f"{token} has light and dark values"
+    picture_css = re.search(r"\.board-picture\s*\{([^}]+)\}", css).group(1)
+    assert "width: 100%" in picture_css and "color: var(--ink)" in picture_css
+    assert "fill: currentColor" in css and "fill: var(--muted)" in css
+    assert drawing.attrib["viewBox"].split()[:3] == ["0", "0", "260"]
     assert "<script" not in page.lower()
     assert not re.search(r"<(?:img|link|script)\b|<svg[^>]*\bsrc=|<image\b|<use\b", page, re.I)
 
