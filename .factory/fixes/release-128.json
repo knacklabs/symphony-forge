@@ -1,0 +1,14 @@
+{
+  "base": "dbd8a58964476cd2046c44f5aeddad2073b8efd0",
+  "branch": "fix/release-128",
+  "done_when": "Forge's version is 1.2.8 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.8), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T04:48:40+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.8 for the dropped-run fix, the runner setting for self-hosted CI, husky-safe git hooks, merge-enable rebuilds, the any-file review stop, land waiting for long CI, cancelled superseded CI runs and the other fixes merged since v1.2.7"
+}
