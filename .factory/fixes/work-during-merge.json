@@ -1,0 +1,14 @@
+{
+  "base": "58fd944d4d383807318db51b727e00fc15c810fa",
+  "branch": "fix/work-during-merge",
+  "done_when": "forge work on a branch with an unfinished merge either hands the worker the conflicts to resolve and records its start without a partial commit (so the record lands with the merge commit), or, if that can't be done safely, refuses with a plain next step (resolve and commit the merge, then rerun) instead of a git error and a doctor hint; command tests cover a conflicted default-branch merge on a task and a fix, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T13:06:47+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge work fails before the worker starts on a branch with a merge in progress ('git commit failed: fatal: cannot do a partial commit during a merge. Next: forge doctor'), because its 'is working' record is a partial commit; this traps branches whose default-branch merge left conflicts for a worker to resolve (reported by a client session on v1.2.8)"
+}
