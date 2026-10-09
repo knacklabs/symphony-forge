@@ -81,7 +81,7 @@ export function registerPane(on: On, data: Data) {
     else if (narrow && data.error !== TOO_OLD) {
       const n = laneCounts(data), first = activeRows(data)[0]
       const stage = first && stages(first).find(s => s.status === 'running')
-      const counts = data.lanes ? `${n.agentsRunning + (n.test ? 1 : 0)} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · ` : ''
+      const counts = data.lanes ? `${n.agentsRunning + n.testsRunning} running, ${n.agentsWaiting}+${n.testsWaiting} waiting · Tests ${n.testsRunning}/${n.testSize} · ` : ''
       const step = record(first?.worker).step
       lines = [`${counts}${command ? `1: ${command}` : data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}`]
       compact = { title: first?.title ?? '', counts, timing: first ? `: ${stage ? stageText(stage, now) : first.stage ?? 'unknown'} (${total(first, now)}) · ` : '', tail: `${data.next?.next.line ?? 'Loading Forge…'}${typeof step === 'string' ? ` · ${step}` : ''}` }
@@ -94,7 +94,7 @@ export function registerPane(on: On, data: Data) {
     const firstChildren: RenderNode[] = []
     const first = lines[0] ?? ''
     const lanes = laneCounts(data)
-    const counts = !narrow && data.lanes && data.error !== TOO_OLD ? `Agents ${lanes.agentsRunning}/${lanes.size} (${lanes.agentsWaiting} waiting) · Tests: ${lanes.test ? 1 : 0} running (${lanes.testsWaiting} waiting) · ` : ''
+    const counts = !narrow && data.lanes && data.error !== TOO_OLD ? `Agents ${lanes.agentsRunning}/${lanes.size} (${lanes.agentsWaiting} waiting) · Tests ${lanes.testsRunning}/${lanes.testSize} (${lanes.testsWaiting} waiting) · ` : ''
     const testTitle = `${lanes.testTitle ?? lanes.test?.item ?? 'idle'} · `
     const titleWidth = Math.min(testTitle.length, Math.max(0, e.props.bodyColumns - counts.length - MIN_TITLE_COLUMNS))
     const nextWidth = Math.max(0, e.props.bodyColumns - counts.length - titleWidth)
