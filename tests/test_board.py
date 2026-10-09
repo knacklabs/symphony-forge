@@ -176,10 +176,10 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     for line in (
             "Shoppers can save a basket Finished on 18 September 2026.",
             "Planning took 1 hour. A person stepped in 3 times, plus accepting 3 finished parts.",
-            "Save a basket : Finished on 14 September 2026. Built in 1 hour 10 minutes; reviewed and "
+            "Save a basket : Finished on 14 September 2026. Approved by Forge Test. Built in 1 hour 10 minutes; reviewed and "
             "checked in 20 minutes; waited 30 minutes to be accepted.",
-            "Show when it was saved : Finished on 15 September 2026.",
-            "Share a basket : Finished on 18 September 2026. This part was open for 3 working days, which is "
+            "Show when it was saved : Finished on 15 September 2026. Approved by Forge Test.",
+            "Share a basket : Finished on 18 September 2026. Approved by Forge Test. This part was open for 3 working days, which is "
             "slow.",
             "Shoppers can keep a wish list Not started yet.",
             "Readme greets new readers : In progress. This fix has been open for 3 working days, which "
@@ -213,7 +213,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     offline = seen(out)
     assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
     for line in ("Shoppers can save a basket Finished on 18 September 2026.",
-                 "Share a basket : Finished on 18 September 2026. This part was open "
+                 "Share a basket : Finished on 18 September 2026. Approved by Forge Test. This part was open "
                  "for 3 working days, which is slow.",
                  "14 September 2026 Forge Test approved the plan. 18 September 2026 The story was "
                  "finished. Shoppers keep their basket between visits."):

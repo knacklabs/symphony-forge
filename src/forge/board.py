@@ -53,6 +53,8 @@ Item = dict[str, Any]
 
 def board(args: Any) -> int:
     top = repo.root()
+    if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
+        print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
     if args.json:
         print(json.dumps(machine_board(top)))
         return 0
@@ -217,6 +219,7 @@ def machine_board(top: Path, history: Item | None = None,
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     landed = history["landed"]
+    starters = task.starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -426,11 +429,12 @@ def machine_board(top: Path, history: Item | None = None,
                and approval.waiting_digest(item, tree) else None)
         review = state.get("review") or {}
         read_key = item.split("/")[0] if kind != "fix" else None
-        read_where = trees.get(f"story/{read_key}") or next((ref for ref in (
-            f"story/{read_key}", f"origin/story/{read_key}", landed)
-            if story.show(top, ref, f"plans/{read_key}.md") is not None), where) if read_key else where
+        read_where = story.plan_ref(top, read_key, history) if read_key else where
+        if read_key and read_where == f"story/{read_key}":
+            read_where = trees.get(f"story/{read_key}") or read_where
         notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""
         read_record, _ = story._record(notes)
+        assignments = task.rows(task.sections(story._plan(top, read_key, history=history))) if read_key else {}
         plan_read = "none"
         if read_record:
             text = _read(top, read_where, f"plans/{read_key}.md")
@@ -461,6 +465,9 @@ def machine_board(top: Path, history: Item | None = None,
                 status += " for " + board_visuals.duration(worker["elapsed"])
         idle_seconds = elapsed(idle_since)
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
+                "started_by": starters.get(repo.state_path(item)),
+                "approved_by": _approver(top, read_key) if read_key else None,
+                "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
                          + board_visuals.stage_duration(s) for s in stages
                          if board_visuals.stage_seconds(s) is not None],
@@ -521,15 +528,25 @@ def machine_board(top: Path, history: Item | None = None,
         if key not in items and repo.state_path(key) not in history["expired"]:
             items[key] = row(key, "story", state.get("title") or "A story with no title yet",
                              completed.get(key, {}), landed)
+    for key, item in items.items():
+        if item["kind"] != "story" or item["stage"] == "done":
+            continue
+        for tid, spec in task.rows(task.sections(story._plan(top, key, history=history))).items():
+            if task.developer(spec) and not any(child["id"] == f"{key}/{tid}" for child in item["children"]):
+                child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
+                child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
+                item["children"].append(child)
     # Maps keep the whole plan, including dependencies too old for the active rows.
     maps = []
-    active_parts = {p["id"]: p for parts in children.values() for p in parts}
+    active_parts = {p["id"]: p for parts in children.values() for p in parts if p["stage"] != "unstarted"}
     for rel, (state, where) in best.items():
         match = STATE.fullmatch(rel)
         if not match["key"] or match["task"]:
             continue
         key = match["key"]
-        specs = task.rows(task.sections(_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)))
+        text = (_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)
+                if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+        specs = task.rows(task.sections(text))
         parts = []
         for tid, spec in specs.items():
             tid = tid.strip("` ")
@@ -605,6 +622,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
     requests (None without a working gh)."""
     landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
+    starters = task.starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged: set[str] = set()
     for rel, state, where in _copies(top, landed):
@@ -625,7 +643,11 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
         result = _part(top, landed, rel, state, rel in merged, pr, checks, now, noun)
         match = STATE.fullmatch(rel)
         result["id"] = f"{match['key']}/{match['task']}" if match["task"] else match["fix"]
-        return result
+        return {**result,
+                "started_by": starters.get(rel),
+                "approved_by": _approver(top, match["key"]) if match["key"] else None,
+                "developer": task.developer(task.rows(task.sections(story._plan(top, match["key"]))).get(
+                    match["task"], {})) if match["task"] else None}
 
     found: dict[str, tuple[Item, Path | str]] = {}
     tasks: dict[str, dict[str, Item]] = {}
@@ -658,12 +680,18 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
             state = completed
         if roadmap.get(key, {}).get("status") == "done":
             state = {**state, **roadmap[key]}
-        rows = task.rows(task.sections(_read(top, where, f"plans/{key}.md")))
+        rows = task.rows(task.sections(story._plan(top, key)))
         names = {cell.strip("` "): row.get("Name") or "" for cell, row in rows.items()}
         mine = tasks.get(key, {})
+        for tid, spec in rows.items():
+            if task.developer(spec) and tid not in mine:
+                mine[tid] = {**part(repo.state_path(f"{key}/{tid}"), {}, f"task/{key}-{tid}", "part"),
+                             "status": "Not started yet"}
         parts = [(names.get(tid) or "A part with no name yet", mine.get(tid))
                  for tid in [*names, *sorted(set(mine) - set(names))]]
-        stories.append(_story(top, key, state, state.get("title") or titles.get(key), parts, display_names))
+        stories.append({**_story(top, key, state, state.get("title") or titles.get(key), parts, display_names),
+                        "started_by": starters.get(repo.state_path(key)),
+                        "approved_by": _approver(top, key), "developer": None})
     stories.sort(key=lambda item: item["finished"])
     fixes.sort(key=lambda fix: fix["start"] or now, reverse=True)
     return stories, fixes, prs
@@ -816,7 +844,7 @@ def _read(top: Path, where: Path | str, rel: str, history: Item | None = None) -
 def _story(top: Path, key: str, state: Item, title: str | None,
            parts: list[tuple[str, Item | None]], display_names: dict[str, str]) -> Item:
     """A story's state sentence, planning time, human touches and dated timeline."""
-    started = [part for _, part in parts if part]
+    started = [part for _, part in parts if part and part["status"] != "Not started yet"]
     finished = [part for part in started if part["finished"]]
     waiting = [part for part in started if part["status"] == WAITING]
     approved = _when((state.get("approval") or {}).get("at"))
@@ -841,7 +869,9 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     if state:
         meta.append(f"A person stepped in {_times(touches)}, plus accepting "
                     f"{_n(len(finished), 'finished part')}.")
-    timeline = [(approved, _approver(top, key, display_names), "")] if approved else []
+    approver = _approver(top, key, display_names)
+    headline = f"{approver} approved the plan." if approver else "The plan was approved."
+    timeline = [(approved, headline, "")] if approved else []
     timeline += sorted((part["finished"], part["pr"].get("title") or name, _summary(part["pr"]))
                        for name, part in parts if part and part["pr"] and part["pr"].get("mergedAt")
                        and part["finished"])
@@ -918,13 +948,21 @@ def _green_at(pr: Item | None, names: list[str]) -> datetime | None:
     return max(times, default=None)
 
 
-def _approver(top: Path, key: str, display_names: dict[str, str]) -> str:
+def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:
     """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
-    author = repo.git("log", "--all", "-1", "--format=%aN%x00%aE", "-F", "--grep=Approve the plan: ", "--",
-                      repo.state_path(key), cwd=top)
+    if display_names is None:
+        display_names = {}
+        authors = repo.command_fact("display_names", top, lambda: repo.git(
+            "log", "--all", "--date-order", "--format=%aN%x00%aE", cwd=top))
+        for author in authors.splitlines():
+            name, _, email = author.partition("\0")
+            display_names.setdefault(email.casefold(), name)
+    author = repo.command_fact(("approver", key), top, lambda: repo.git(
+        "log", "--all", "-1", "--format=%aN%x00%aE", "-F", "--grep=Approve the plan: ", "--",
+        repo.state_path(key), cwd=top))
     name, _, email = author.partition("\0")
     name = display_names.get(email.casefold(), name)
-    return f"{name} approved the plan." if name else "The plan was approved."
+    return name or None
 
 
 # --- plain English ---------------------------------------------------------------------------
@@ -992,6 +1030,11 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
     esc = html.escape
     rows = {r["id"]: r for parent in view["items"] for r in [parent, *parent["children"]]}
 
+    def people(item: Item) -> str:
+        return " ".join(f"{label} {item[field]}." for field, label in
+                        (("started_by", "Started by"), ("approved_by", "Approved by"),
+                         ("developer", "Assigned to")) if item.get(field))
+
     def part(name: str, item: Item | None, summary: str = "", finished_story: bool = False) -> str:
         if item is None:
             return f'<li><b>{esc(name)}</b>: <span class="status">{"Finished" if finished_story else "Not started yet"}.</span></li>'
@@ -1001,6 +1044,7 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
         took = current["took"] if current else item["took"]
         name = current["title"] if current else shorten(name, width=70, placeholder="…")
         lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
+        lines += [f'<p class="meta">{esc(people(item))}</p>'] if people(item) else []
         lines += [f'<p class="took">{esc(_cap("; ".join(took)))}.</p>'] if took else []
         lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]
                   if (not finished_story or item["finished"]) and (not current or line.startswith("This "))]
@@ -1020,6 +1064,7 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
         if current and current["stalled"]:
             body.append(f'<p class="slow">Stalled; idle for {esc(board_visuals.duration(current["idle_seconds"]))}. '
                         f'{esc(current["waits_on"] or "")}</p>')
+        body += [f'<p class="meta">{esc(people(s))}</p>'] if people(s) else []
         body += [f'<p class="meta">{esc(" ".join(s["meta"]))}</p>'] if s["meta"] else []
         if s["parts"]:
             body.append("<h4>Parts</h4><ul>" + "".join(part(n, p, finished_story=s["finished"])

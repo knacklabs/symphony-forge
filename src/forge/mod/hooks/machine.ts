@@ -27,7 +27,7 @@ function valid(value: unknown): value is Lanes {
           (e.started_at === null || (typeof e.started_at === 'string' && Number.isFinite(Date.parse(e.started_at)))) &&
           Number.isInteger(e.place) && Number(e.place) >= 0 && typeof e.elapsed === 'number' && Number.isFinite(e.elapsed) && e.elapsed >= 0 &&
           (e.progress === null || ((p.done === null || (Number.isInteger(p.done) && Number(p.done) >= 0)) &&
-            (p.total === null || (Number.isInteger(p.total) && Number(p.total) > 0)) &&
+            (p.total === null || (Number.isInteger(p.total) && Number(p.total) >= 0)) &&
             (p.done === null || p.total === null || Number(p.done) <= Number(p.total))))
       })
     })
@@ -57,7 +57,7 @@ function label(data: Data, entry: Entry, now: number): string {
   const symbol = entry.kind === 'test' ? '■' : tool === 'codex' ? '◆' : tool === 'claude' ? '●' : '◇'
   const reported = entry.progress
   const p = reported?.done != null && reported.total != null ? { done: reported.done, total: reported.total } : null
-  const filled = p ? Math.floor(p.done / p.total * 10) : 0
+  const filled = p && p.total > 0 ? Math.floor(p.done / p.total * 10) : 0
   const bar = p ? ` [${'█'.repeat(filled)}${'░'.repeat(10 - filled)}] ${p.done}/${p.total}` : ''
   const model = current.model ?? entry.model, effort = current.effort ?? entry.effort
   return `${symbol} ${entry.repo_name} · ${title(data, entry)} · ${entry.kind}${tool ? ` · ${tool}` : ''}${model ? ` · ${model}` : ''}${effort ? ` · ${effort}` : ''}${current.round != null ? ` · round ${current.round}` : ''} · ${seconds(elapsed(entry.started_at ?? entry.joined_at, now))}${entry.started_at === null ? entry.place > 0 ? ` · waiting #${entry.place}` : ' · starting' : ''}${bar}${current.step ? ` · ${current.step}` : ''}`
@@ -197,7 +197,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
   })
   on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
     const cwd = path(await $.session.cwd())
-    const run = snapshot && entries(snapshot).find(entry => entry.place > 0 && path(entry.checkout_root) === cwd)
+    const run = snapshot && entries(snapshot).find(entry => entry.place > 0 && (path(entry.repo_root) === cwd || path(entry.checkout_root) === cwd))
     return run ? next({ ...e, props: { ...e.props, suffix: `${e.props.suffix} · in line #${run.place} (${run.kind === 'test' ? 'tests' : 'agents'})` } }) : next(e)
   })
   data.machineText = (now: number) => snapshot ? ['Machine · this session plans + decides', ...(entries(snapshot).length ? entries(snapshot).map(e => label(data, e, now)) : ['Nothing running']), ...gates(data, now), ...(snapshot.machine.load ? [`Load ${snapshot.machine.load[0]} · ${snapshot.machine.cores ?? 'unknown'} cores`] : []), ...(error ? [`Couldn't refresh: ${error}`] : [])].join('\n') : ''

@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
@@ -688,6 +694,10 @@ story's work, using the same overlap rule as `forge task start`.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
+  kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
+  the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
+  disproves it, or the human's `Decided:` line.
 - `Disputed keep <n>: <why>`: the reader still disagrees with a finding you kept. Put it to the
   human as one question with options, record the answer in the doc's Notes as
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
@@ -877,9 +887,11 @@ and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pyte
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
-before anything else. If the code proves the finding wrong, dismiss it with
-`forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
-`forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+before anything else. The review's "What counts" list is the boundary: every P0 or P1 finding
+inside it gets a fix round with `forge work <item>`, never a dismissal for being unnecessary, rare
+or low value. Dismiss only a finding outside the boundary or factually wrong, with
+`forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
+out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
@@ -907,6 +919,9 @@ failed checks, or after 30 minutes without a check starting, finishing or being 
 says which checks are still running, missing, or unreadable. Close on its own still waits at
 most ten minutes. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
+GitHub reads also retry unreadable answers and server errors three times, pausing for one,
+two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
+permission refusals stop immediately; writes are never replayed by these read retries.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
@@ -930,6 +945,31 @@ If close refuses a conflicted merge, it has aborted the merge. In the item's wor
 4. Check the diff and remaining conflicts, stage only resolved paths with `git add <paths>`,
    and commit once every conflict is resolved. Then rerun `forge close <item>` or
    `forge land <item>`.
+
+Starting is the claim: `forge story new`, `forge task start` and `forge fix start` push the
+new branch to GitHub after committing its start. The author of that start commit is the person
+who started the work; the board page and `forge board --json` show them next to the plan's
+approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
+record. Git keeps a start tag pointing at the original commit, so its author survives squash
+merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+start push failed. A second checkout's
+task start names the person who already started that part on GitHub. A failed push says so
+and leaves the work local: teammates cannot see that claim until its branch is pushed.
+New repos get this at init; existing repos get it when upgraded and synced, including repos
+adopted on an earlier release.
+
+A story's Tasks table may have an optional Developer column containing a GitHub username.
+The lead adds or changes assignments below For the builders without another approval.
+`forge next` offers ready parts assigned to the caller's GitHub login, plus unassigned parts.
+Someone else may start an assigned part: task start goes ahead and names its assigned
+developer in a warning. Both boards show assignments alongside the starter and approver,
+including assigned parts not started yet. Documents without Developer work as before.
+After fetching, teammates can discover the published story before its first part merges.
+If publishing its approval failed, the approved plan on the default branch after its first
+part merges takes precedence over the story's initial published draft.
+Next, start and both boards reconcile published assignments with local builder edits;
+a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
+This column is the only assignment record; there is no other assignee field or roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to

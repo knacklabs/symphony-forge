@@ -1,0 +1,53 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-09T16:55:59+00:00",
+      "because": "Owner (2026-10-09): Forge's default is Sonnet xhigh, but for now this repo overrides all Claude work to Opus 5.5 medium",
+      "done_when": "forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-opus-5-5, high) and everything else stays on Codex; nothing else in forge.toml changes"
+    },
+    {
+      "at": "2026-10-09T17:28:07+00:00",
+      "because": "Owner (2026-10-09): cold reads on Claude use Opus 5.5 high",
+      "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex; for now every Claude implementation and plan-read entry (build, fix, lite, design and grill) uses claude-opus-5-5 at medium effort, overriding Forge's Sonnet default; reviews and sign-off settings are unchanged; this repo's settings test pins them"
+    }
+  ],
+  "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
+  "branch": "fix/workers-split",
+  "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex; for now every Claude implementation entry (build, fix, lite and design) uses claude-opus-5-5 at medium effort, overriding Forge's Sonnet default, and plan reads on Claude (grill) use claude-opus-5-5 at high; reviews and sign-off settings are unchanged; this repo's settings test pins them",
+  "flagged": [
+    "forge.toml"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ff9740a7a69d58acc60d02fec924580b8d73baebe3281ed180360c6937e30757",
+    "changed": "4c62dc1ee86a2711cd68512818f33351ca17910f1d74d4ec9310b0a70c48d986",
+    "commit": "28bd60e751a34cf4a72a6dfba94cbd1061b3d048",
+    "dismissals": [],
+    "findings": [],
+    "id": "9cc21179-fbfe-4c10-aa53-53b3537d9f21",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T16:18:16+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T16:54:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:44:49+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T19:10:10+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants frontend code built by Claude Opus, not Codex (2026-10-09); this repo's forge.toml sends every task and fix to Codex",
+  "worker": "codex"
+}

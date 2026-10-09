@@ -203,6 +203,13 @@
       "title": "Forge runs agents and test suites on one machine with no plan for its cores, so parallel suites time out, overload the machine and cost extra rounds",
       "status": "pending",
       "order": 74
+    },
+    {
+      "key": "FORGE-BOARD-2",
+      "title": "The board tells a team what's happening, what needs them and when it goes live",
+      "spec": "docs/specs/board-for-the-team.md",
+      "status": "pending",
+      "order": 75
     }
   ],
   "epics": [

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
-from forge.task import _overlap, _started, start_base
+from forge.task import _overlap, _started, developer, github_login, start_base
 
 COMMANDS = [
     {
@@ -380,6 +380,17 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
+    for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
+                           "refs/remotes/origin/story/", cwd=top).splitlines():
+        key = branch.removeprefix("story/")
+        if history is not None and repo.state_path(key) in history["expired"]:
+            continue
+        if found.get(key, (None, {}, ""))[1].get("status") == "done":
+            continue
+        ref = story.plan_ref(top, key, history)
+        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if state:
+            found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
 
 
@@ -393,19 +404,15 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         readiness.update(stage="planning", parts={}, waits={})
     if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
         return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], []
-    notes, doc_hash, required = "", "", False
-    if path is None:  # like forge task start: the story branch's copy while it exists
-        for ref in (f"story/{key}", story.landed_ref(top)):
-            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-            required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
-            if required:
-                text = story.show(top, ref, f"plans/{key}.md") or text
-                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
-                break
-    elif (path / "plans" / f"{key}.md").is_file():
+    ref = story.plan_ref(top, key, history)
+    if ref != story.landed_ref(top):
+        text = story._plan(top, key, history=history)
+    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
+    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
     try:
         doc = story.parse(text, top, history=history)
     except ValueError as exc:
@@ -426,7 +433,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
+    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
@@ -458,6 +465,11 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
+    if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
+        login = github_login(top)
+        if login:
+            ready = [task["id"] for task in doc["tasks"] if task["id"] in ready
+                     and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)

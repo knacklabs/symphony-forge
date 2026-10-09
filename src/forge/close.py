@@ -134,7 +134,8 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
-    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept")
+    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
+                    before=getattr(args, "pin_before", None))
     if switch:
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
                              "HEAD", cwd=top).splitlines())
@@ -514,9 +515,16 @@ def synced_changes(top: Path) -> list[str]:
 
 def _push(top: Path, branch: str) -> None:
     """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
+                    "refs/tags/forge-start/", cwd=top).splitlines()
+    # Replay and copied plans can detach ownership history from the work branch.
+    retained = repo.git("for-each-ref", "--format=%(refname)",
+                        f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
+                        cwd=top).splitlines()
+    tags = list(dict.fromkeys(tags + retained))
     for wait in (1, 2, 4, None):
         try:
-            repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+            repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
         except subprocess.CalledProcessError:
             if wait is None:
@@ -532,6 +540,8 @@ def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
+        if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
         raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
                                             done.stderr)
     return done.stdout
