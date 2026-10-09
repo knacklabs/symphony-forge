@@ -1,10 +1,8 @@
 ---
 slug: board-for-the-team
 title: The board tells a team what's happening, what needs them and when it goes live
-status: confirmed
-saved: 2026-10-09T15:57:55+00:00
-confirmed_by: "Ravi Kiran Vemula"
-confirmed_hash: f8f5d1e4866e4fc8b2e4245cace4f0dc05901f37256943c66d4d7868ea8945b8
+status: draft
+saved: 2026-10-09T20:52:05+00:00
 ---
 
 # The board tells a team what's happening, what needs them and when it goes live
@@ -45,14 +43,15 @@ The board answers those questions in order on the team's own machines (each pers
 2. **Below the fold:** a full-width dependency map of building stories only (finished parts collapsed to "N done", stories with no plan collapsed to one "Backlog (N)" row), then story and fix cards sorted needs-you, blocked, in progress, planned, no plan yet, done, with done work folded away.
 3. **Each item:** its time split into working (a worker, reviewer or reader running, or Forge's own tests) and waiting (for CI, for the machine's queue, or for a person), each interval counted once by its recorded start and end; time with no record either way shows as unknown rather than as waiting. One line per review round says what the round did and whether its findings were new or repeated from an earlier round (the same requirement named again). Who started it and who approved it are shown as recorded, or unknown.
 4. **Words a newcomer understands:** plain labels and a one-line key for the map's shapes and the words part, fix and plan.
-5. **After an upgrade** nothing needs writing: the board reads who started, approved and merged each older item, and its review results, straight from git and GitHub, so items from earlier releases show those facts at once; time breakdowns from before the release, and anything when GitHub can't be reached, show as unknown. The upgrade guide tells the agent to open the board once and report anything still missing.
+5. **Team and per-person trends:** below the fold, merged pull requests per week for the last six full weeks, for the team and for each person (the pull request's author on GitHub), each week split into *through Forge* (from a story, part or fix branch) and *around Forge* (any other merged pull request). People are listed by name in alphabetical order with no totals ranking, scores or comparison between them; the trend shows each person's own weeks only.
+6. **After an upgrade** nothing needs writing: the board reads who started, approved and merged each older item, and its review results, straight from git and GitHub, so items from earlier releases show those facts at once; time breakdowns from before the release, and anything when GitHub can't be reached, show as unknown. The upgrade guide tells the agent to open the board once and report anything still missing.
 
 Options weighed: **Don't build** (the board stays unusable for a team; rejected by the owner); **Smallest slice** (fix the wrong data only: counts and statuses become right, but nobody sees what needs them or can forecast; this is the first part, already in flight); **Rebuild the board around the questions above** (chosen by the owner, 2026-10-09: a project manager must see the total status and estimate go-live). On sharing time records across machines the owner chose the pull request over committing records to git or keeping them local.
 
 ## Out of scope
 
 - Showing the board to people outside the team's machines (a phone link or a client view); a narrow window still gets one column.
-- Who is free or overloaded beyond counting each person's started, unmerged items.
+- Ranking, scoring or comparing people; per-person trends show each person's own weeks only.
 
 ## Acceptance criteria
 
@@ -62,7 +61,8 @@ Options weighed: **Don't build** (the board stays unusable for a team; rejected 
 4. The go-live estimate gives a date range from recent pace for planned parts (or "about" one date when the two pace estimates agree, "not enough history", or "planned work done") and names the stories with no plan as the unknown.
 5. Each item shows where its time went (working versus waiting), one line per review round, and who started and approved it.
 6. The page uses the full width of a laptop, reads in light and dark mode, and stacks to one column in a narrow window.
-7. Right after an upgrade, older items show who started, approved and merged them and their review results from git and GitHub; what can't be found is unknown, never invented.
+7. Below the fold, the team and each person show merged pull requests per week for the last six full weeks, split into through Forge and around Forge, with people in alphabetical order and no ranking.
+8. Right after an upgrade, older items show who started, approved and merged them and their review results from git and GitHub; what can't be found is unknown, never invented.
 
 ## Roadmap
 
