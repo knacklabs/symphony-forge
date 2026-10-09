@@ -9,13 +9,53 @@
   "base": "58fd944d4d383807318db51b727e00fc15c810fa",
   "branch": "fix/worker-no-settings",
   "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml, not even temporarily, and that to run an extra suite they run its command directly alongside forge test; when a worker round ends with forge.toml changed but uncommitted, Forge restores it from the branch and says so in the round's hand-back, unless the Done-when names forge.toml; command tests cover a refused worker commit, an allowed settings fix, a coordinator commit outside a worker run, and a round that leaves forge.toml edited, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/worker.py",
+    "tests/test_workers_leave_settings_to_coordinator.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6fe5ddcd70fb32c58e00c56dff0211b6d561894ed926f60770ff228fda0b8e28",
+    "changed": "b3c14b4f7a062138e1f03b5596a12211243348f9f42bcd2b9f10a228d2dc1f55",
+    "commit": "afe6d04d7efb8ef358f9b5020f85489b4a5ba8da",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The amended Done-when requires Forge to restore uncommitted forge.toml changes from the branch and report that restoration, unless the item's Done-when permits settings edits. No restoration is implemented. In src/forge/worker.py, both the Claude path at line 196 and the Codex path at line 216 merely nudge the worker to commit; the finalizer at lines 234\u2013236 only warns about remaining changes. An unrelated worker that leaves settings edited therefore hands back a checkout containing those edits. Add the permission-aware restoration and hand-back message for both worker paths.",
+        "file": "src/forge/worker.py",
+        "line": 32,
+        "priority": "P1",
+        "title": "Not done: Restore unauthorized forge.toml edits when a worker round ends"
+      },
+      {
+        "body": "SETTINGS still contains the instruction from before the recorded amendment. It does not explicitly prohibit temporary edits or tell workers to run an extra suite's command directly alongside forge test. This same text reaches fresh briefs through $settings and resumed briefs through line 398, so both delivery paths omit the new guidance intended to address the reported temporary-edit workaround. Update the shared instruction with both required details.",
+        "file": "src/forge/worker.py",
+        "line": 33,
+        "priority": "P1",
+        "title": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs"
+      },
+      {
+        "body": "The proof list omits the amended round-cleanup requirement, and the tests contain no corresponding command-level case for either client history. test_2 invokes forge work with a stub that leaves no settings edit and asserts only the older brief wording. Consequently, all 14 tests pass while restoration, its hand-back message, the named-Done-when exception, and the temporary-edit/extra-suite guidance are absent. Add real forge work cases that leave forge.toml uncommitted and verify restoration plus the message, and preservation when permission is named, for new and previously adopted clients. Extend the delivered-prompt assertions to cover both new instructions and record these proofs in the list.",
+        "file": "tests/test_workers_leave_settings_to_coordinator.py",
+        "line": 83,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "faee988a-8ead-46d8-a3ef-55332fa444c4",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T12:58:57+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T17:11:38+00:00",
+      "step": "review"
     }
   ],
   "why": "Workers sometimes edit forge.toml while building an unrelated task or fix (a client worker added a command to fast_test because a note mentioned it; earlier a worker moved the version pin), though forge.toml is the coordinator's to change, through a settings fix the owner asked for (reported by a client session, 2026-10-09)",

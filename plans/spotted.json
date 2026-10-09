@@ -1332,6 +1332,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Explain temporary settings edits and direct extra-suite commands in worker briefs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 33,
+      "text": "Not done: Explain temporary settings edits and direct extra-suite commands in worker briefs",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tNot done: Restore unauthorized forge.toml edits when a worker round ends\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 32,
+      "text": "Not done: Restore unauthorized forge.toml edits when a worker round ends",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -2219,6 +2241,17 @@
       "text": "Not done: test_1_workers_commit_and_stop_when_they_need_ci_evidence",
       "from": "blocking",
       "item": "brief-close-pushes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_workers_leave_settings_to_coordinator.py\tNot done: proof list\tworker-no-settings",
+      "kind": "bug",
+      "path": "tests/test_workers_leave_settings_to_coordinator.py",
+      "line": 83,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "worker-no-settings",
       "status": "open",
       "closed_by": null
     },
