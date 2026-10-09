@@ -40,7 +40,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
@@ -68,7 +68,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/board.py"
+    "choice": "narrow",
+    "file": "src/forge/board.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the three remaining findings: distinct test criterion numbers, unknown finish date for roadmap-done stories without completion evidence, a 25-hour stalled assertion"
   },
   "why": "The forge board page shows wrong or contradicting data (Opus review of a real client board, 2026-10-09): stories the roadmap marks done show as 'Not started yet' and count as needing a spec; items idle for days aren't shown as stalled while finished stories are flagged stalled; running workers and reviews show as 'Needs fixes'; a card says Ready to merge while the header counts none; a story in a plan-read round shows as 'Waiting for approval'; a finished story's part says 'In progress'; prose times disagree with the timeline; header counts mix stories and fixes unlabelled; one person appears under two names; fix titles are cut mid-word",
   "worker": "codex"
