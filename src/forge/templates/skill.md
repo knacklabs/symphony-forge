@@ -162,6 +162,8 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
+task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
 external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
 parts, plain titles, labelled states and `waits_for` item references, including old merged
@@ -786,6 +788,7 @@ from the other tool is omitted so the role uses the session's model.
 ## Build simple
 
 Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+Edits to different fields of an item merge; competing edits to the same field need a manual resolution.
 New repos get this rule at init; existing repos get it with `forge sync` or
 `forge doctor --fix`. The shared rule keeps working after a worktree is removed.
 Doctor repairs both paths in Git's shared local attributes, including when an older
