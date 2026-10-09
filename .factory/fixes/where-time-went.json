@@ -13,34 +13,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3090f1bd5e6098b5cd5dcb2c6c5f625752080c6d60d049f24554325e8514efa1",
-    "changed": "a9407fc97f13b2b88d103968d9d28fe98d7f9237a2585ff5827378e3bb896449",
-    "commit": "a375d648d39a45db7f8bfd34529c40c4ef206a57",
+    "branch_diff": "be182d3fcf2150bf09dec2e0b06b7bd6c3d1b7d74b6ae978856442b0810497b8",
+    "changed": "63d330b5632339b45c9fc4233509e4196334d3ecf5754236ab56970f87d69fb4",
+    "commit": "68267463f639a72fd14249ddb6cf2628f8242969",
     "dismissals": [],
     "findings": [
       {
-        "body": "This previously reported gap remains. The older producer creates tasks and fixes with status `started` and only a start step (tests/fixtures/forge-v1.2.2/src/forge/task.py:116). Their first modern lane admission therefore sets `history_complete=True`, and time_records.py:68\u201369 backdates complete recording to their original start. Unrecorded pre-upgrade time is consequently reported as `nothing_running`. This concrete older-producer state is the evidence beyond the legacy-history ruling; the existing proofs do not exercise it. Establish completeness from recorded lifecycle evidence and cover an outstanding older item through the command.",
-        "file": "src/forge/machine.py",
-        "line": 82,
-        "priority": "P1",
-        "title": "Not done: keep pre-upgrade time unknown for items still marked started"
-      },
-      {
-        "body": "This previously reported exclusion remains: unknown-round activity enters `attempts` only when an unknown-round review-result event exists. The older producer writes review timings without a round field (tests/fixtures/forge-v1.2.2/src/forge/repo.py:120 and close.py:102), so observed reviews disappear from `rounds` and How it went. A first modern close before any worker turn also loses its round-line lane wait: machine.py:84 records round=None, while repo.py:264 and 282 default timings and results to round 0. These are recorded intervals, distinct from the ruled requirement to leave unrecorded history unknown. Retain unknown-round timings and associate admission waits with their attempts; the supplied proofs omit these producer formats.",
+        "body": "Two upgrade transitions still lose recorded round history. New evidence beyond the previous unknown-history ruling is a timing-only review followed by a modern review in the same worker turn. The earlier close at tests/fixtures/pr-check-before-branch-diff/close.py:129 writes review timing without a review-result event; src/forge/repo.py:263 assigns its worker round. After a changed branch is closed again without another worker turn, `reviews` is nonempty, so this loop creates attempts only for those results and pairs the modern result with the first legacy timing. An earlier clean 10-second review and a new blocked 5-second review therefore become one `review clean (15s)` line carrying the new blocking findings. One observed attempt disappears from both board JSON and How it went.\n\nResumed older workers also lose their new lane wait from the corresponding round line. The raw older worker at tests/fixtures/forge-v1.2.2/src/forge/worker.py:115 saves `working` or `fixing` without a round. machine.py:81\u201384 records its next work admission with round=null, while worker.py:133\u2013153 subsequently establishes an integer turn. The recorded queue interval is consequently attached to legacy unknown-round history, or omitted from round lines when that history is absent, despite appearing in the breakdown.\n\nTest 20 covers timing-only reviews in a separate unknown-round group, and test 22 covers only the older `started` state; both pass these failures. Retain timing-only attempts alongside result-bearing attempts and associate work admission with the turn it starts, while leaving historical ordinals unknown.",
         "file": "src/forge/time_records.py",
-        "line": 123,
+        "line": 132,
         "priority": "P1",
-        "title": "Not done: retain timing history and lane waits with unknown worker rounds"
-      },
-      {
-        "body": "This previously reported gap remains. The inner substitution replaces an existing How it went heading but never inserts one. Earlier ready pull requests have Forge's managed block without that section (tests/fixtures/pr-check-before-branch-diff/close.py:399\u2013403), and their ready receipts use the still-accepted format (line 205). After upgrading, `forge merge` therefore computes history and records final CI but publishes and squashes the unchanged body, losing the requested section. Insert it inside the managed block when absent, preserving handwritten text. Both current squash proofs first publish through modern close, so neither covers an already-ready legacy PR.",
-        "file": "src/forge/merge.py",
-        "line": 90,
-        "priority": "P1",
-        "title": "Not done: add How it went when merging a pre-upgrade pull request"
+        "title": "Not done: preserve review attempts and lane waits across mixed legacy history"
       }
     ],
-    "id": "6c098745-39cb-4de8-8460-cef4204c34c4",
+    "id": "e9c4b995-90fc-49bf-905a-30406bae7ae1",
     "status": "blocked"
   },
   "round": 6,
@@ -72,6 +58,10 @@
     },
     {
       "at": "2026-10-09T18:38:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:29:41+00:00",
       "step": "review"
     }
   ],
