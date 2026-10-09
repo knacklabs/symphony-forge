@@ -1,4 +1,4 @@
-"""Machine JSON keeps seven days of finished work; the human board keeps history.
+"""Active machine rows keep seven days of finished work; maps and counts keep history.
 
 Real dated git commits model landed work. Git Trace2 counts command starts,
 without replacing git or making a wall-clock timing assertion.
@@ -191,8 +191,24 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     (tmp_path / "old-fix-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
     (tmp_path / "old-task-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
     second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
-    # The machine's load is a live OS reading, not part of the board's history.
-    assert {**second, "machine": None} == {**first, "machine": None}
+    # Active rows and advice still ignore archived inventory. Maps and counts now
+    # retain that history; verify their additions separately from the live OS load.
+    changing = {"machine", "dependency_maps", "stage_counts"}
+    assert {key: value for key, value in second.items() if key not in changing} == {
+        key: value for key, value in first.items() if key not in changing}
+    first_maps = {entry["id"]: entry for entry in first["dependency_maps"]}
+    expected_maps = {**first_maps, "LIVE": {
+        **first_maps["LIVE"], "parts": first_maps["LIVE"]["parts"] + [
+            {"id": f"LIVE/PAST-{n}", "title": f"Archived task {n}", "status": "Merged",
+             "waits_for": [f"PAST-{n}/SAVE"]} for n in range(12)]}}
+    expected_maps.update({f"PAST-{n}": {
+        "id": f"PAST-{n}", "title": f"Finished story PAST-{n}", "stage": "done", "parts": [
+            {"id": f"PAST-{n}/SAVE", "title": "Save baskets", "status": "Merged", "waits_for": []},
+            {"id": f"PAST-{n}/SHOW", "title": "Show the saved time", "status": "Not started",
+             "waits_for": [f"PAST-{n}/SAVE"]}]} for n in range(12)})
+    assert {entry["id"]: entry for entry in second["dependency_maps"]} == expected_maps
+    assert len(second["dependency_maps"]) == len(first["dependency_maps"]) + 12
+    assert second["stage_counts"] == {**first["stage_counts"], "done": first["stage_counts"]["done"] + 24}
     assert more_count == count, f"Old finished inventory added {more_count - count} git commands"
     # Bulk dependency lookup keeps the real validator and local plan precedence.
     live_plans = [repo.path / "plans/LIVE.md", tmp_path / "old-fix-worktree/plans/LIVE.md",
