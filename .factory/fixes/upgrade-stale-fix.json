@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c73f5ce913c7744f6b046f21368c630e9afe07401f128496739176014dae11c",
-    "changed": "d0e5abd0651fdbe716061554de114333aa5178fef0a2e19ab178425871f47741",
-    "commit": "76027a31b5a9d1cfd6f2bcb9d27f892f6527e685",
+    "branch_diff": "66091d0a720b59a2fb2970fe8be4b99f6cd114098df3cd0b1017611841d741c2",
+    "changed": "1ae5fee942fb02861c284f89a91f1c865a816529702da5f3e0620675ec9a3336",
+    "commit": "fee88a5f14c7062b80f24d59b9ee07160af3a876",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The cleanliness check omits ignored files. If a merged upgrade checkout contains an ignored `.env` or `data/rows.csv`, it passes this guard and is deleted, losing local data that was never pushed. Omitting `--force` does not protect it: [Git's implementation](https://github.com/git/git/blob/v2.48.0/builtin/worktree.c#L1182-L1281) checks ordinary status and then recursively deletes the directory. This violates \u201cdata is protected against loss.\u201d Existing cleanup in `src/forge/doctor.py:74\u201377` includes ignored files and permits only recognised caches. Apply equivalent protection here and extend the command refusal test to preserve ignored configuration and data files; the current untracked-file case cannot detect this loss.",
-        "file": "src/forge/upgrade.py",
-        "line": 97,
-        "priority": "P1",
-        "title": "Standard: data is protected against loss"
-      }
-    ],
-    "id": "87037889-5c76-4952-8d0b-790e6dd4feca",
-    "status": "blocked"
+    "findings": [],
+    "id": "eeb88b8c-ba89-45f3-8d06-86173dfcc848",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T08:00:11+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-09T08:33:31+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:11:14+00:00",
       "step": "review"
     }
   ],
