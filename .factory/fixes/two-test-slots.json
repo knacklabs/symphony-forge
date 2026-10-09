@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "37eaa11f33597613d2ba57e46815e7ed722fdc8a447d2f2f72e086b283749ca2",
-    "changed": "09e4aaf9e1242c29d39f9cac628054e8c2e8be986448b52fd8b16d58e7af485d",
-    "commit": "bb6f4911daca9f6399dac8a4912ad35bf1194871",
+    "branch_diff": "1946fd805c747b4f61790468296db7c3cc7b8dcabd1b4661e0597e6f56b1b46e",
+    "changed": "9eb5e3e7b17b32c97f2c7e02e439f309c8b8d79166e5e242d5e3c7a68fe5f76e",
+    "commit": "d367448dcaeb16577e4541f3743de3ca1e856641",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. With two running tests, the expanded counts occupy 37 columns. After 100 seconds, an active Tests stage and total time add 28 columns. In the compact renderer, pane.ts:137\u2013143 reserves both boxes with flexShrink: 0, requiring 65 columns in a 60-column prompt and clipping timing on terminal and desktop surfaces. The command-backed test concatenates node text without checking allocated widths; native compact checks cover 79 columns. Budget counts and timing together so their reserved widths fit the prompt.",
+        "body": "The previous P2 remains open. With two running tests, the expanded counts require 37 columns. An active Tests stage and total time at 100 seconds require another 28 columns. The renderer at pane.ts:137\u2013143 reserves both boxes with flexShrink: 0, requiring 65 columns in a 60-column prompt and clipping timing on both terminal and desktop surfaces. Shorten the compact counts or budget counts and timing together. The command-backed test concatenates node text without checking allocated widths, while the native compact checks cover 79 columns, so the passing tests do not detect this overflow.",
         "file": "src/forge/mod/hooks/pane.ts",
         "line": 84,
         "priority": "P2",
         "title": "Keep expanded compact counts within the prompt width"
       }
     ],
-    "id": "53e673f2-c6b0-440a-b33b-2c2818bcbd8e",
+    "id": "587c1787-83a7-4313-9285-22956a855d27",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T17:43:41+00:00",
@@ -41,6 +41,10 @@
     },
     {
       "at": "2026-10-09T21:21:22+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:54:12+00:00",
       "step": "review"
     }
   ],
