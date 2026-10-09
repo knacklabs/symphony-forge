@@ -2,13 +2,38 @@
   "base": "174309504707d88f8a475eed5ec52dc38b24158a",
   "branch": "fix/codex-project-roots",
   "done_when": "Forge reads Codex's project list whether each root is a plain path or an object carrying its path, so a worker's chat lands in the matching Codex project again, and close links the pull request in the item's Codex chat without the warning; unknown shapes are skipped with the existing one-line note rather than an exception; the Codex boundary contract test covers both shapes; new and earlier-adopted client repos get it from this release on",
+  "flagged": [
+    "tests/test_codex_project_paths_and_pr_links.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b7d720b9c0a539db96771e7ca08ed51b322fdd46bfd0032e4359fdce4bc129fe",
+    "changed": "3241941d74ef8d97ec699b8de04ba8906aa3a8226e9305b90ed938f4577679be",
+    "commit": "8d11f305ad0fc400b91a5a92c969659b5956d496",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Both new tests, at lines 23 and 51, omit the required criterion number. `tests/test_rules.py:44\u201345` requires every test name to match `test_(\\d+)_\\w+`, so `test_4_one_test_per_rule` will deterministically fail when the full suite runs in PR CI (`.github/workflows/forge-next.yml:75`). The supplied 23-test run excludes that gate. Rename both functions with distinct criterion numbers under this file's STORY key, and update their proof-list references.",
+        "file": "tests/test_codex_project_paths_and_pr_links.py",
+        "line": 23,
+        "priority": "P1",
+        "title": "Not done: full-suite test compatibility"
+      }
+    ],
+    "id": "1fd79ccd-46dd-4a46-9ce9-f7ebc28ad87b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T11:29:58+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T11:56:58+00:00",
+      "step": "review"
     }
   ],
   "why": "Every Codex worker run logs 'Codex could not update the chat project: expected str, bytes or os.PathLike object, not dict' and every close prints 'Could not link the pull request in its Codex chat', because the current Codex app server returns project roots (and related records) as objects rather than plain paths, and Forge reads them as paths",
