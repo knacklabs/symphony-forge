@@ -3,12 +3,14 @@
   "branch": "fix/gh-retry",
   "done_when": "Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say plainly that GitHub didn't answer and to rerun; answers GitHub refuses on purpose (not found, no permission) are not retried; a command test with a faked gh covers one bad answer then a good one (close carries on) and a lasting outage (plain stop)",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T08:00:16+00:00",
       "step": "start"
     }
   ],
-  "why": "One unreadable GitHub answer (an HTML error page: 'invalid character < looking for beginning of value') stops forge close outright outside the checks wait, so a GitHub blip costs a whole rerun (reported by a client session on v1.2.8)"
+  "why": "One unreadable GitHub answer (an HTML error page: 'invalid character < looking for beginning of value') stops forge close outright outside the checks wait, so a GitHub blip costs a whole rerun (reported by a client session on v1.2.8)",
+  "worker": "codex"
 }
