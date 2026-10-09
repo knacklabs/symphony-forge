@@ -22,7 +22,7 @@ REFUSALS = {
     "not_approved": ("Story {key} is not approved yet.", "forge next"),
     "changed": ('"What changes for you" or "Done when" of story {key} changed after its approval, '
                 "so it needs a new approval.", "forge next"),
-    "started": ("{item} is already started on {branch}.", "forge work {item}"),
+    "started": ("{item} is already started on {branch}{person}.", "forge work {item}"),
     "waiting": ("{item} waits for {deps} to merge first.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
                 "forge close {other}"),
@@ -94,7 +94,7 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
 
 def main_ref() -> str:
     """The default branch as the remote has it, freshly fetched: merged work lives there."""
-    git("fetch", "-q", "--prune", "origin")
+    git("fetch", "-q", "--prune", "--tags", "origin")
     return f"origin/{repo.default_branch()}"
 
 
@@ -119,10 +119,53 @@ def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[st
     rel = repo.write_state(item, repo.add_step({**state, "status": "started", "branch": branch},
                                                "start"), path)
     if carry:  # after the state, so the git hooks know the branch
+        # Copying files alone would lose the story's starter and approval after cleanup.
+        git("update-ref", f"refs/tags/forge-plan/{branch}", carry[0], "", cwd=path)
         git("checkout", carry[0], "--", *carry[1], cwd=path)
         repo.commit_state(f"Bring in the approved plan from {carry[0]}", *carry[1], top=path)
     repo.commit_state(message, rel, top=path)
+    publish_start(path, branch)
     return path
+
+
+def publish_start(top: Path, branch: str) -> None:
+    """Create the remote claim only if nobody else has made it."""
+    # Keep the original commit reachable after squash merges and branch cleanup.
+    tag = f"refs/tags/forge-start/{branch}"
+    git("update-ref", tag, "HEAD", "", cwd=top)
+    pushed = run("git", "push", "-q", "--atomic", "--set-upstream",
+                 f"--force-with-lease=refs/heads/{branch}:", f"--force-with-lease={tag}:",
+                 "origin", branch, tag, cwd=top)
+    if pushed.returncode:
+        print(f"Could not push {branch} to GitHub; the work stays local.\n{pushed.stderr.strip()}",
+              file=sys.stderr)
+
+
+def starters(top: Path, ref: str = "--all") -> dict[str, str]:
+    """Names from the commits that started items, never from their later contributors."""
+    log = git("log", ref, "--reverse", "--diff-filter=A", "--no-renames", "--grep=^Start ",
+              "--format=%x00%an%x00", "--name-only", "--", ".factory/stories", ".factory/fixes",
+              cwd=top).split("\0")[1:]
+    found: dict[str, str] = {}
+    for name, paths in zip(log[::2], log[1::2]):
+        for rel in paths.splitlines():
+            if rel.endswith(".json"):
+                found.setdefault(rel, name)
+    return found
+
+
+def github_login(top: Path) -> str | None:
+    def read() -> str | None:
+        result = run("gh", "api", "user", "--jq", ".login", cwd=top)
+        if not result.returncode and result.stdout.strip():
+            return result.stdout.strip()
+        print("Could not read your GitHub login; assignment matching is unavailable.", file=sys.stderr)
+        return None
+    return repo.command_fact("GitHub login", top, read)
+
+
+def developer(row: dict[str, Any]) -> str | None:
+    return (row.get("Developer") or "").strip("` ") or None
 
 
 # --- forge task start ------------------------------------------------------------------
@@ -137,11 +180,15 @@ def start(args: argparse.Namespace) -> None:
     from forge import story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
-    behind = story.plan_behind(top, key, main)
-    old_pin = repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
-                          repo._pin(show(main, "forge.toml") or ""))
-    if old_pin or (show(story_branch, doc_rel) is not None and
-            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0"):
+    published = story.plan_ref(top, key)
+    if (published != main and not git("branch", "--list", story_branch)
+            and show(f"origin/{story_branch}", doc_rel) is not None):
+        git("branch", "--track", story_branch, f"origin/{story_branch}")
+    behind = story.plan_behind(top, key, main) if published != main else ""
+    old_pin = published != main and repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
+                                                 repo._pin(show(main, "forge.toml") or ""))
+    if published != main and (old_pin or (show(story_branch, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0")):
         folder = story.stories_here(top).get(key)
         if folder is None:
             folder = _folder(f"story-{key}")
@@ -170,17 +217,13 @@ def start(args: argparse.Namespace) -> None:
     if behind:
         sys.exit(behind)  # the same one line forge next prints
     notes_rel = f"plans/{key}.read.md"
-    # The story doc lands on the default branch with its first merged task; until then the
-    # story branch holds it, and tasks start from there. After that, a story read in rounds is
-    # read from its story branch while it exists, and its doc, notes and state are carried over.
-    base = main if show(main, doc_rel) is not None else story_branch
+    # Published builder assignments stay current even after the first part lands.
     state_rel = repo.state_path(key)
-    source = (story_branch if base == main and story.rounds(show(story_branch, notes_rel),
-                                                             show(story_branch, state_rel))
-              else base)
+    source = story.plan_ref(top, key)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
+    text = story._plan(top, key)
     try:
         story.parse(text, repo.root())
     except ValueError as exc:
@@ -188,9 +231,10 @@ def start(args: argparse.Namespace) -> None:
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
-        if checkout:  # edits not committed yet count too
+        if checkout and source == story_branch:  # edits not committed yet count too
             story.check_read(key, checkout)
-        story.gate(key, doc_rel, notes or "", git("rev-parse", f"{source}:{doc_rel}"), text)
+        digest = run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+        story.gate(key, doc_rel, notes or "", digest, text)
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)
@@ -203,7 +247,9 @@ def start(args: argparse.Namespace) -> None:
     branch = f"task/{key}-{task}"
     started = _started(main)
     if item in started or _merged(main, item):
-        refuse(REFUSALS["started"], item=item, branch=branch)
+        ref = f"origin/{branch}" if show(f"origin/{branch}", repo.state_path(item)) else "--all"
+        name = starters(top, ref).get(repo.state_path(item))
+        refuse(REFUSALS["started"], item=item, branch=branch, person=f" by {name}" if name else "")
     waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
     waiting = [dep for dep in waiting if not _merged(main, dep)]
     if waiting:
@@ -214,6 +260,9 @@ def start(args: argparse.Namespace) -> None:
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
+    assigned = developer(tasks[task])
+    if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
+        print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None
@@ -229,7 +278,8 @@ def start_base(main: str, key: str, row: dict[str, str]) -> str:
     if (any("/" in dep for dep in cell_list(row.get("After", "")))
             or show(main, f"plans/{key}.md") is not None):
         return main
-    return f"story/{key}"
+    from forge import story
+    return story.plan_ref(repo.root(), key)
 
 
 def _merged(main: str, item: str, top: Path | None = None) -> bool:
