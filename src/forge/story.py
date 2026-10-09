@@ -249,11 +249,11 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    lines = [re.sub(r"^(?:\d+[.)]|[-*])\s+", "", line.strip()).strip(" *`_.!")
+    lines = [re.sub(r"^(?:\d+[.)]|[-*])\s+", "", line.strip()).strip(" *`_.!?,:;")
              for line in said.splitlines() if line.strip()]
-    empty = re.compile(r"(?:no (?:(?:new|remaining|additional|actionable) )?"
-                       r"(?:findings|issues|gaps|problems|blockers)"
-                       r"(?: (?:(?:were )?(?:found|identified|raised|detected)|remain|to report))?"
+    empty = re.compile(r"(?:(?:(?:there are|i found|found) )?no (?:\w+ )?"
+                       r"(?:findings|issues|problems|bugs|defects|gaps|blockers)"
+                       r"(?: (?:(?:were )?(?:found|reported|identified|raised|detected)|remain|to report))?"
                        r"|nothing to report)", re.I)
     note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
                       r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)

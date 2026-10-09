@@ -19,6 +19,9 @@ STORY = "FIX-READ-NO-FINDINGS"
 @pytest.mark.parametrize("reply, clean", [
     ("6. No findings.\n\nTests were not run (read-only review).", True),
     ("6. No issues detected.", True),
+    ("6. There are no findings.", True),
+    ("6. No bugs found.", True),
+    ("6. No findings reported.", True),
     ("6. No findings.\n\nTests were not run (not requested).", True),
     ("6. No findings.\nTests weren't run (not required).", True),
     ("No findings.", True),
