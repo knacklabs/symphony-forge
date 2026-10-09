@@ -1,4 +1,5 @@
 {
+  "allow_large": "Owner asked for this change (2026-10-09): pushing at start plus an optional Developer column in the story doc's parts table, read by task start, forge next and the board",
   "amendments": [
     {
       "at": "2026-10-09T07:49:54+00:00",
