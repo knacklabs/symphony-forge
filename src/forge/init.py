@@ -93,8 +93,8 @@ model = "gpt-6.1-sol"
 effort = "high"
 
 [models.grill.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "high"
 
 [models.design.claude]
 model = "claude-sonnet-5-5"
@@ -109,7 +109,7 @@ model = "gpt-6.1-sol"
 effort = "high"
 
 [models.review.claude]
-model = "opus"
+model = "claude-opus-5-5"
 effort = "high"
 """
 

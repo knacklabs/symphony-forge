@@ -758,20 +758,23 @@ tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` t
 review its engine's, and `forge ask` Codex's. Claude workers and plan readers with no entry
 use Forge's defaults; other tools use their own settings.
 
-Claude implementation (build, fix, lite and design, including frontend) and plan reads
-(grill) default to `claude-sonnet-5-5` at `xhigh` effort. `forge init` writes each Claude
-entry explicitly; omitted Claude implementation and plan-read entries use the same built-in
-defaults. Reviews and client sign-off keep their models.
+Claude implementation (build, fix, lite and design, including frontend) defaults to
+`claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) and Autoreview default to
+`claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
+`forge init` writes each Claude entry explicitly; omitted entries use the same built-in
+defaults. Client sign-off keeps its pinned model.
 
 Existing model entries stay unchanged on upgrade. To opt in, set each of
 `[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
-`[models.design.claude]` and `[models.grill.claude]` to Sonnet at xhigh. For a missing entry,
+`[models.design.claude]` to Sonnet at xhigh. Set `[models.grill.claude]` and
+`[models.review.claude]` to Opus at high. For a missing implementation entry,
 add a top-level line before the first table, replacing `build` with each kind:
 `models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
-If build, fix or lite has a single entry, move it to its family's table before adding the
-Claude entry. Before changing grill, preserve its previous Claude model and effort in
-`[models.review.claude]` when there is no Claude review entry; Claude reviews otherwise use
-the configured Claude grill entry. Then run `forge sync` to refresh subagent roles.
+For plan reads and reviews, use this line, replacing `grill` with `review` for reviews:
+`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+If build, fix, lite or review has a single entry, move it to its family's table before
+adding the Claude entry. A Claude review with no explicit entry uses its configured Claude
+grill entry, or Opus at high when neither is set. Then run `forge sync` to refresh subagent roles.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:

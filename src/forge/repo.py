@@ -334,6 +334,7 @@ WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "medium"}}
 DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
+CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -411,10 +412,10 @@ def ready_path(item: str, top: Path) -> Path:
 def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
     own entry, or a single entry whose model is that family's; Claude plan reads default to
-    the Claude worker model, and other missing entries return {}."""
+    Opus at high effort, and other missing entries return {}."""
     chosen = cfg["models"].get(kind) or {}
     if "model" not in chosen:
-        return chosen.get(family) or (WORKER_DEFAULTS["claude"]
+        return chosen.get(family) or (CLAUDE_GRILL_DEFAULT
                                      if kind == "grill" and family == "claude" else {})
     # ponytail: gpt models are Codex's and every other model Claude's; name the family's entry
     # when another Codex model family arrives.

@@ -17,21 +17,32 @@ from test_close import GREEN, env  # noqa: F401
 
 STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
+OPUS = {"model": "claude-opus-5-5", "effort": "high"}
 
 
-def test_init_names_sonnet_xhigh_for_all_claude_implementation_and_plan_reads(repo, gh, tmp_path):
+def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_read_and_review(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
-    models = tomllib.loads((client / "forge.toml").read_text("utf-8"))["models"]
-    for kind in ("build", "fix", "lite", "design", "grill"):
+    settings = client / "forge.toml"
+    # Init writes both hosts. Choose Claude for this new client through its existing setting.
+    settings.write_text(settings.read_text("utf-8").replace('workers = "split"',
+                                                          'workers = "claude"'), "utf-8")
+    synced = repo.forge("sync", cwd=client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    config = tomllib.loads(settings.read_text("utf-8"))
+    assert config["workers"] == "claude"
+    models = config["models"]
+    for kind in ("build", "fix", "lite", "design"):
         assert models[kind]["claude"] == SONNET
+    assert models["grill"]["claude"] == OPUS
     assert models["review"] == {
         "codex": {"model": "gpt-6.1-sol", "effort": "high"},
-        "claude": {"model": "opus", "effort": "high"}}
+        "claude": OPUS}
     frontend = (client / ".claude/agents/frontend.md").read_text("utf-8")
     assert 'model: "claude-sonnet-5-5"' in frontend and 'effort: "xhigh"' in frontend
     guide = (client / ".codex/skills/forge/SKILL.md").read_text("utf-8")
     assert "claude-sonnet-5-5" in guide and "xhigh" in guide
+    assert "claude-opus-5-5" in guide and "high" in guide
 
 
 def test_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(unsynced_up):
@@ -44,20 +55,24 @@ def test_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(
         notes = up.show(f"{host}/skills/forge/SKILL.md")
         assert "claude-sonnet-5-5" in notes and "xhigh" in notes
         assert 'model = "claude-sonnet-5-5", effort = "xhigh"' in notes
+        assert 'model = "claude-opus-5-5", effort = "high"' in notes
         assert "Existing model entries stay unchanged" in notes
 
 
-def test_plan_read_with_no_claude_entry_uses_builtin_sonnet_xhigh(repo):
+def test_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path, monkeypatch):
     setup(repo)
     shop = new_story(repo, "SHOP")
     toml = shop / "forge.toml"
-    toml.write_text(toml.read_text("utf-8").replace(GRILL, ""), "utf-8")
+    toml.write_text(toml.read_text("utf-8").replace(GRILL, 'workers = "claude"\n'), "utf-8")
     (shop / "plans/SHOP.md").write_text(DOC, "utf-8")
     log = install_claude(repo)
+    _claude_only(tmp_path, monkeypatch, repo.bin)
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
     result = repo.forge("read", "SHOP")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
-    assert "reader: claude (claude-sonnet-5-5)" in (shop / "plans/SHOP.read.md").read_text("utf-8")
+    assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-opus-5-5", "--effort", "high"]
+    assert "reader: claude (claude-opus-5-5)" in (shop / "plans/SHOP.read.md").read_text("utf-8")
 
 
 def test_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
@@ -76,7 +91,7 @@ def test_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
 
 
 @pytest.mark.parametrize("new_settings", [False, True], ids=["omitted", "init"])
-def test_claude_reviews_keep_their_model_instead_of_inheriting_new_read_defaults(
+def test_claude_reviews_use_opus_high_with_init_or_omitted_settings(
         env, gh, tmp_path, monkeypatch, new_settings):
     if new_settings:
         client, result = _fresh_client(env.repo, gh, tmp_path)
@@ -97,8 +112,5 @@ def test_claude_reviews_keep_their_model_instead_of_inheriting_new_read_defaults
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "claude"
-    if new_settings:
-        assert options["--model"] == "claude=opus"
-        assert options["--thinking"] == "claude=high"
-    else:
-        assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "claude=claude-opus-5-5"
+    assert options["--thinking"] == "claude=high"

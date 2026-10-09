@@ -175,11 +175,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
-                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+                  "claude": {"model": "claude-opus-5-5", "effort": "high"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
         "review": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
-                   "claude": {"model": "opus", "effort": "high"}}}
+                   "claude": {"model": "claude-opus-5-5", "effort": "high"}}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml is not usable: 'model' is not a forge.toml key.\n"

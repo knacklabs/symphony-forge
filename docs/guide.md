@@ -133,19 +133,22 @@ Autoreview. Build, fix, lite and grill set a model and reasoning effort; review 
 Building and fixing can also set the subagents' model and effort. Build, fix, lite and review may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no Claude implementation or plan-read entry, Forge uses `claude-sonnet-5-5` at
-xhigh effort. Other tools use their own settings; a review on Claude
-uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
+kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
+Claude plan reads and Autoreview default to `claude-opus-5-5` at high effort, including when
+Claude is the only installed tool. A Claude review with no explicit entry uses the configured
+Claude grill entry, or Opus at high when neither is set. Other tools use their own settings.
+Ask your agent to change these settings in a fix.
 
-`forge init` writes Sonnet at xhigh for Claude build, fix, lite, design (frontend included)
-and grill. Existing model entries stay unchanged on upgrade. To opt in, set `model` to
-`"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those five Claude entries. A missing entry
+`forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
+and Opus at high for Claude grill and review. Existing model entries stay unchanged on
+upgrade. To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those
+four implementation entries, and `"claude-opus-5-5"` at `"high"` in grill and review. A missing implementation entry
 can be added before the first table with one line per kind, replacing `build` below:
 `models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
-Move a single build, fix or lite entry to its family's table first. Preserve the old Claude
-grill model and effort in `[models.review.claude]` before changing grill if no Claude review
-entry exists. Reviews and client sign-off keep their models. Run `forge sync` after changing
-settings to refresh subagent roles.
+For plan reads and reviews, use this line, replacing `grill` with `review` for reviews:
+`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+Move a single build, fix, lite or review entry to its family's table first. Client sign-off
+keeps its pinned model. Run `forge sync` after changing settings to refresh subagent roles.
 
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
 uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-sonnet-5-5` at
