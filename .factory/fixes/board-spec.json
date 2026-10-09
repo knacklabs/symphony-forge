@@ -2,12 +2,37 @@
   "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
   "branch": "fix/board-spec",
   "done_when": "docs/specs/board-for-the-team.md is saved, cold-read until a round finds nothing, confirmed by the owner, and added to the roadmap as the story that will rebuild the board",
+  "flagged": [
+    ".factory/fixes/board-spec.json"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "55ebd214adba4de774d9c3f6c7a31230559e28a6f144eb61d0ae03925b865f96",
+    "changed": "97cc7854417ecc64ec6e392cb237e471a6ebf3c466c09128250700ad460c7cf6",
+    "commit": "809b9b51aa89520baee452cddbd335c8586028e9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The supplied proof list is explicitly missing, and the latest commit contains no `Proof list:` paragraph. Add entries covering every Done-when detail: the saved spec, the final cold-read round with no findings, owner confirmation, and the roadmap entry, each naming its evidence. The committed artifacts support these steps but do not replace the required proof list copied into the pull request.",
+        "file": ".factory/fixes/board-spec.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "fa1ca41b-cc47-428e-bf01-120d21da99f5",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T15:43:43+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T16:24:02+00:00",
+      "step": "review"
     }
   ],
   "why": "A project manager or team lead opening the forge board for the first time cannot tell what is happening, what needs them, what is blocked, how the team is doing or when the project can go live (first-time-user and PM reviews of a real client board, 2026-10-09); the owner chose one board story, and its spec and roadmap entry come first"
