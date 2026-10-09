@@ -218,7 +218,11 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     assert resumed == expected
     if failing_test:
         assert done.returncode == 1, done.stdout + done.stderr
-        assert "The upgraded client test fails" in done.stdout + done.stderr
+        assert "`python verify.py` failed on this machine, so close stopped before the review" in done.stderr
+        # Close keeps the test output for the next worker instead of printing its traceback.
+        logs = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-common-dir")) / "forge"
+        assert any("The upgraded client test fails" in log.read_text("utf-8")
+                   for log in logs.glob("test-*.log"))
         assert len(attempts) == 1
         assert len(env.review_calls()) == before_reviews
         assert where.is_dir()
