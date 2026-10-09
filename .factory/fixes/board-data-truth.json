@@ -9,38 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1398a27a7dd67fd263d93abe6bd862bf6585cb2bbbb953f4e281db5e1457bacc",
-    "changed": "f7f20ba9637e854a39c0eea6dc75cb82d7395fddad1304bd4654cc69b39e2573",
-    "commit": "5c3bcb0ff704f6d6c591388ca6e505ff6d5bf2e4",
+    "branch_diff": "57fe379bfd63b06c3647e892314f0f3e0700cc5d6e1fc3c7b9fdc8c0434d6a51",
+    "changed": "eaeacfdfb2e86cdaf34079d3f1c02d6d4b3cd6981973d8762acc81cdc478f1d6",
+    "commit": "47c28e78590a12b247240299949daded8835fa15",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate \u2014 The new test file deterministically fails the repository\u2019s required test-naming check. Both functions at lines 125 and 143 claim criterion 3 under STORY=\"FIX-BOARD-DATA-TRUTH\"; functions at lines 193 and 226 likewise duplicate criterion 4. tests/test_rules.py:47\u201350 rejects duplicate (story, criterion) pairs. The full suite configured in forge.toml includes that check; the supplied 69-case related run does not. Give both pairs distinct criterion numbers while retaining their assertions.",
-        "file": "tests/test_board_status_and_times.py",
-        "line": 143,
-        "priority": "P1",
-        "title": "Not done: required tests check"
-      },
-      {
-        "body": "Raise: Not done \u2014 The previously reported completion-date defect remains open: a story marked done by the roadmap, with historical state but no recorded completion timestamp, displays its creation date as \u201cFinished on\u201d. This fallback accepts history[\"dates\"] for stories, but src/forge/board.py:720\u2013727 populates those dates from the state file\u2019s first addition, potentially weeks before completion. Both JSON and the current card therefore report an invented completion date. The named roadmap-only proof has neither historical state nor a Git creation date, so it misses this case. Preserve unknown completion dates for stories without completion evidence; retain the first-addition fallback for tasks and fixes.",
-        "file": "src/forge/board.py",
-        "line": 459,
-        "priority": "P1",
-        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
-      },
-      {
-        "body": "Raise: Test \u2014 The proof list claims this test protects the one-day stalled threshold, but its only unfinished idle item has been idle for four days. Changing the threshold from one day to three days would leave this test and the other supplied idle assertions green, while ordinary items idle for 25 hours would incorrectly remain unstalled. Add a command-level assertion just beyond the promised one-day threshold to the existing test, covering both client histories.",
-        "file": "tests/test_board_status_and_times.py",
-        "line": 135,
-        "priority": "P1",
-        "title": "Not done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not"
-      }
-    ],
-    "id": "bc1213da-bcb1-4b28-bdbc-bb414366e797",
-    "status": "blocked"
+    "findings": [],
+    "id": "53740b5c-1fe8-4820-acd6-a8ceffe7ba1d",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
@@ -64,6 +42,10 @@
     },
     {
       "at": "2026-10-09T22:44:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:53:36+00:00",
       "step": "review"
     }
   ],
