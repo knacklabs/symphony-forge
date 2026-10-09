@@ -3,12 +3,14 @@
   "branch": "fix/start-is-claim",
   "done_when": "forge task start, forge fix start and forge story new push the new branch to GitHub as soon as it is made, so the branch is the claim and the author of its start commit is its owner; when the push fails the command says so plainly and the work stays local; task start's existing already-started refusal names the person who started the part on GitHub; the board page and forge board --json show who started each story, part and fix (from that start commit), next to the approver; no assignee field or roster is added; the coordinator guide says so; command tests cover a new repo and one adopted on an earlier release, including a second checkout refused with the first starter's name",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T07:48:02+00:00",
       "step": "start"
     }
   ],
-  "why": "On a team, started work stays on the laptop where it began until its first close, so teammates can't see who is working on what and two developers can start the same part; no person is shown on any item. Owner decision 2026-10-09: starting is the claim, with git as the one record"
+  "why": "On a team, started work stays on the laptop where it began until its first close, so teammates can't see who is working on what and two developers can start the same part; no person is shown on any item. Owner decision 2026-10-09: starting is the claim, with git as the one record",
+  "worker": "codex"
 }
