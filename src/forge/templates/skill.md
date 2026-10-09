@@ -891,7 +891,8 @@ its dismissals, including `--dismiss` given in that close command. A changed dif
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
-the pull request's Done when line. Upgrade verification leaves the repo's local git hooks alone.
+the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
+including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
 After upgrading, run `forge sync` to receive
 the tests workflow's quick pass: it reuses a successful parent tests workflow only when the

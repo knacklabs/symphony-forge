@@ -452,14 +452,21 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
             repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
                      *files, cwd=top)
             release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+            # Keep argv on one line for uv's Windows .cmd shims.
+            script = ("from forge import repo, sync; "
+                      "top = repo.root(); cfg = repo.config(top); sync.write(top, cfg); "
+                      "sync.write_file(top, 'docs/commands.md', sync.command_page()) "
+                      "if cfg.get('repo') == 'forge-source' else None")
             if release != cfg["version"] and repo.VERSION.fullmatch(release):
-                done = subprocess.CompletedProcess(["forge", "sync"],
-                                                   repo.run_release(release, ["sync"], top))
+                # Isolate Python imports too: the old checkout may have set PYTHONPATH.
+                done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
+                                f"git+https://github.com/knacklabs/symphony-forge@{release}",
+                                "python", "-I", "-c", script, cwd=top)
             else:
-                done = repo.run("forge", "sync", cwd=top)
-            if done.returncode:
-                raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
-                                                    done.stderr)
+                package = json.dumps(Path(__file__).resolve().parent.parent.as_posix())
+                done = repo.run(sys.executable, "-c",
+                                f"import sys; sys.path.insert(0, {package}); {script}", cwd=top)
+            done.check_returncode()
             changed = [path for path in synced_changes(top) if path in generated]
             if changed:
                 repo.git("add", "-A", "--", *changed, cwd=top)

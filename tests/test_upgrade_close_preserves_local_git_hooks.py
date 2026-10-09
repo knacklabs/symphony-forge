@@ -8,13 +8,16 @@ import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_close import GREEN, env  # noqa: F401
+from test_running_commands_follow_changed_forge_pin import _earlier_release
 from test_setup import _fresh_client
 
 STORY = "skipped-close"
 
 
 @pytest.mark.parametrize("history", ["new", "previously-adopted"])
-def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hooks(env, history):
+@pytest.mark.parametrize("merge", ["no-conflict", "generated-conflict", "changed-pin-conflict"])
+def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hooks(
+        env, history, merge, monkeypatch):
     repo = env.repo
     version = repo.forge("--version").stdout.split()[-1]
     old = env.tmp / "previous-release"
@@ -50,16 +53,35 @@ def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hook
                                                  f'version = "{version}"'))
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    env.commit(where, "app.py", "print('upgraded client')\n")
     hooks = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=where))
     custom = b"#!/bin/sh\n# The client's own local hook.\nexit 0\n"
     for name in ("pre-commit", "pre-push"):
         (hooks / name).write_bytes(custom)
         (hooks / name).chmod(0o755)
+    guide = ".codex/skills/forge/SKILL.md"
+    if merge != "no-conflict":
+        env.commit(where, guide, (where / guide).read_text("utf-8").replace(
+            "# Forge", "# Worker's Forge", 1))
+    if merge == "changed-pin-conflict":
+        env.commit(where, "forge.toml", config)
+    env.commit(where, "app.py", "print('upgraded client')\n")
+    if merge != "no-conflict":
+        env.commit(repo.path, guide, (repo.path / guide).read_text("utf-8").replace(
+            "# Forge", "# Default branch's Forge", 1))
+        if merge == "changed-pin-conflict":
+            env.commit(repo.path, "forge.toml", config.replace('version = "v1.2.2"',
+                f'version = "{version}"\nfast_test = ""'))
+            _earlier_release(env)
+            monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
+        repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
     closed = repo.forge("close", item, cwd=where)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
+    repo.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=where)
+    if merge != "no-conflict":
+        assert (where / guide).read_text("utf-8") == (
+            ROOT / "src/forge/templates/skill.md").read_text("utf-8")
     for name in ("pre-commit", "pre-push"):
         assert (hooks / name).read_bytes() == custom
         assert not (hooks / f"{name}.pre-forge").exists()

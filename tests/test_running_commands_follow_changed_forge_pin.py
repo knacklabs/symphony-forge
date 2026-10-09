@@ -47,10 +47,14 @@ args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
-assert args[:3] == ["tool", "run", "--from"], args
-assert args[4] == "forge", args
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
+if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
+    assert args[5:8] == ["python", "-I", "-c"], args
+    exec(args[8])
+    sys.exit(0)
+assert args[:3] == ["tool", "run", "--from"], args
+assert args[4] == "forge", args
 from forge.cli import main
 sys.argv = ["forge", *args[5:]]
 sys.exit(main())
@@ -147,14 +151,17 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     dispatches = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
     if guide_conflict:
-        sync_dispatch, hook_dispatch, dispatch = dispatches
-        assert sync_dispatch["args"] == ["tool", "run", "--from",
-            f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", "sync"]
+        sync_dispatch, dispatch = dispatches
+        # Conflict regeneration uses the new release's files, keeping the repo's hooks.
+        assert sync_dispatch["args"][:8] == ["run", "--isolated", "--no-project", "--with",
+            f"git+https://github.com/knacklabs/symphony-forge@{current}", "python", "-I", "-c"]
         assert Path(sync_dispatch["cwd"]) == where
-        # Sync installs real hooks: finishing the merge must validate with the new schema too.
-        assert hook_dispatch["args"] == ["tool", "run", "--from",
-            f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", "hook", "pre-commit"]
-        assert Path(hook_dispatch["cwd"]) == where
+        # Full sync used to install hooks here. File-only regeneration must leave this
+        # unsynced fixture's local hooks absent, as well as preserve hooks that already exist.
+        hooks = Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-path",
+                                  "hooks", cwd=where))
+        assert not (hooks / "pre-commit").exists()
+        assert not (hooks / "pre-push").exists()
         assert (where / guide).read_text("utf-8") == (
             ROOT / "src" / "forge" / "templates" / "skill.md").read_text("utf-8")
     else:
