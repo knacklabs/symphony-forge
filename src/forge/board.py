@@ -229,7 +229,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         else:
             try:
                 lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
-                         else nextstep._story(top, item, tree, story._plan(top, item, history=history),
+                         else nextstep._story(top, item, tree, _read(top, tree or where, f"plans/{item}.md"),
                                               title, trees, merged_prs, by_branch, {}, history,
                                               readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
@@ -413,7 +413,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             completed = history["stories"].get(key, {})
             if state.get("status") != "done" and completed.get("status") == "done":
                 state = completed
-            text = story._plan(top, key, history=history)
+            text = _read(top, trees.get(f"story/{key}", where), f"plans/{key}.md")
             title = state.get("title") or next((s.removeprefix("# ") for s in text.splitlines()
                                                 if s.startswith("# ")), "A story with no title yet")
             items[key] = row(key, "story", title, state, where)
@@ -429,7 +429,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         if not match["key"] or match["task"]:
             continue
         key = match["key"]
-        specs = task.rows(task.sections(story._plan(top, key, history=history)))
+        specs = task.rows(task.sections(_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md")))
         parts = []
         for tid, spec in specs.items():
             tid = tid.strip("` ")
