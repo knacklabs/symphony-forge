@@ -10,7 +10,7 @@
   "branch": "fix/board-visuals",
   "done_when": "The forge board page draws, with inline SVG and no scripts or outside files: one dependency map across the roadmap showing each story's parts and which part waits for which, including waits on another story's part, with parts that can start now marked (merged, running, waiting, can start now and not started told apart by label and shape, never colour alone); for every active story part and fix a stage timeline across build, tests, review, CI and merge with each finished stage's recorded time and the current stage marked; and one line counting items at each stage (needs a spec, planning, waiting for approval, building, ready to merge, done); all from the same data as forge board --json and forge next's readiness (unrecorded values shown as unknown, never invented), readable in light and dark mode and at phone width; the existing text sections stay and board.py stays under the per-file limit; a command test renders the page for a new repo and one adopted on an earlier release and checks a cross-story wait, a can-start-now part, a timeline's stage times and the counts",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
