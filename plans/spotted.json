@@ -1332,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_status_and_times.py\tNot done: test_3_story_idle_time_tracks_its_parts\tboard-data-truth",
+      "kind": "bug",
+      "path": "tests/test_board_status_and_times.py",
+      "line": 174,
+      "text": "Not done: test_3_story_idle_time_tracks_its_parts",
+      "from": "blocking",
+      "item": "board-data-truth",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
