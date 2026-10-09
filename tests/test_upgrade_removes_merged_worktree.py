@@ -42,6 +42,11 @@ def completed_upgrade(unsynced_up, request):
 
 def test_1_next_upgrade_removes_merged_worktree_and_local_branch(completed_upgrade):
     up, _ = completed_upgrade
+    excluded = Path(up.repo.git("rev-parse", "--path-format=absolute", "--git-path", "info/exclude"))
+    excluded.write_text("node_modules/\n", "utf-8")
+    cache = up.folder / "node_modules" / "cached.txt"
+    cache.parent.mkdir()
+    cache.write_text("Disposable dependency cache\n", "utf-8")
 
     done = up.run(NEXT)
 
@@ -52,7 +57,8 @@ def test_1_next_upgrade_removes_merged_worktree_and_local_branch(completed_upgra
     assert f'version = "{NEXT}"' in up.show("forge.toml", f"fix/{NEXT_NAME}")
 
 
-@pytest.mark.parametrize("held", ["commit", "unstaged", "staged", "untracked", "open", "closed", "unreadable"])
+@pytest.mark.parametrize("held", ["commit", "unstaged", "staged", "untracked", "ignored config",
+                                  "ignored data", "ignored cache-named file", "open", "closed", "unreadable"])
 def test_2_next_upgrade_refuses_open_or_unpushed_work(completed_upgrade, held):
     up, pr = completed_upgrade
     branch = f"fix/{NAME}"
@@ -63,6 +69,14 @@ def test_2_next_upgrade_refuses_open_or_unpushed_work(completed_upgrade, held):
         up.env.gh.respond("pr", "view", branch, stderr="GitHub is unreachable", exit=1)
     elif held == "commit":
         up.env.commit(up.folder, "README.md", "Keep this local commit\n")
+    elif held.startswith("ignored"):
+        rel = {"ignored config": ".env", "ignored data": "data/rows.csv",
+               "ignored cache-named file": "node_modules"}[held]
+        excluded = Path(up.repo.git("rev-parse", "--path-format=absolute", "--git-path", "info/exclude"))
+        excluded.write_text(".env\ndata/\nnode_modules\n", "utf-8")
+        path = up.folder / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("Keep this ignored local work\n", "utf-8")
     else:
         path = up.folder / ("local.txt" if held == "untracked" else "README.md")
         path.write_text("Keep this local work\n", "utf-8")
@@ -81,3 +95,5 @@ def test_2_next_upgrade_refuses_open_or_unpushed_work(completed_upgrade, held):
         f"{up.folder} && git branch -D fix/{NAME}\n")
     assert up.snapshot() == before
     assert up.repo.git("status", "--porcelain", cwd=up.folder) == status
+    if held.startswith("ignored"):
+        assert path.read_text("utf-8") == "Keep this ignored local work\n"
