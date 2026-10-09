@@ -22,16 +22,22 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("6. There are no findings.", True),
     ("6. No bugs found.", True),
     ("6. No findings reported.", True),
+    ("6. There were no findings.", True),
+    ("6. I have no findings to report.", True),
     ("6. No findings.\n\nTests were not run (not requested).", True),
     ("6. No findings.\nTests weren't run (not required).", True),
     ("No findings.", True),
     ("no findings", True),
     ("1. No actionable findings.\n2. No issues found.\n3. No findings to report.\nTests not run.", True),
-    ("1) Nothing to report.\n2) No remaining findings identified.", True),
+    ("1) No findings.\n2) No remaining findings identified.", True),
     ("**No findings.**\nNote: tests weren't run.", True),
     ("No findings.\n6. The saved time has no time zone.", False),
     ("6. No findings.\n7. Tests were not run, so the required proof is missing.", False),
     ("6. No findings.\nTests were not run (required proof is missing).", False),
+    ("6. No findings but the required proof is missing.", False),
+    ("6. No findings however the required proof is missing.", False),
+    ("6. No findings except the required proof is missing.", False),
+    ("6. No findings. The required proof is missing.", False),
 ])
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         repo, gh, tmp_path, previous, reply, clean):
