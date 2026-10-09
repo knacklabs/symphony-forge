@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
@@ -156,6 +162,19 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
+parts, plain titles, labelled states and `waits_for` item references, including old merged
+dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
+distinguish merged, running, waiting, can start now and not started. Startability and scope
+blockers come from the same rules as `forge next`, including approval and required rereads.
+`stage_counts` counts each roadmap story and fix once, including recorded completed items;
+parts belong to their parent story's count. The page shows those six totals in one line:
+needs a spec, planning, waiting for approval, building, ready to merge and done.
+Active parts and fixes show recorded
+Build, Tests, Review, CI and Merge times for their current round, with the current stage
+marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
+get it after upgrading Forge and syncing.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
