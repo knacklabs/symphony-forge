@@ -43,7 +43,7 @@ IDS = ("SHOP", "WISH", "SAVE", "SHOW", "SHARE", "shop-done", "upgrade-forge", "r
 
 
 class _Text(HTMLParser):
-    """The words a person sees on the page: everything outside <style>."""
+    """Painted words, excluding styles and SVG accessibility metadata."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -51,10 +51,10 @@ class _Text(HTMLParser):
         self.hidden = 0
 
     def handle_starttag(self, tag, attrs):
-        self.hidden += tag == "style"
+        self.hidden += tag in ("style", "title", "desc")
 
     def handle_endtag(self, tag):
-        self.hidden -= tag == "style"
+        self.hidden -= tag in ("style", "title", "desc")
 
     def handle_data(self, data):
         if not self.hidden:

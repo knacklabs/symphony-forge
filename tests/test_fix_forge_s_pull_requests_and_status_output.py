@@ -97,6 +97,7 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
     assert "Ready to merge" in page
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
+    # SVG and text share the board snapshot; neither doubles the bulk requests.
     assert len(calls) == 2
     assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
