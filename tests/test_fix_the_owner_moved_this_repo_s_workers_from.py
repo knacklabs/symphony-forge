@@ -13,7 +13,7 @@ from test_subagent_roles import _settings
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
-OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
+SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -36,10 +36,10 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     assert config["workers"] == "split"
     # Codex builds and fixes; each Claude entry preserves the previous Opus settings.
     assert config["models"]["build"] == config["models"]["fix"] == {
-        "codex": SOL, "claude": OPUS}
+        "codex": SOL, "claude": SONNET}
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
-        "claude": OPUS}
+        "claude": SONNET}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
 
     log = _codex(repo, monkeypatch, sdk_data)
@@ -73,7 +73,7 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     # A sync that silently drops both nested entries must not make doctor appear healthy.
     for name in ("worker", "coder", "frontend", "tester", "refactorer", "explorer"):
         assert _settings(repo.path, name) == (
-            ("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium")), name
+            ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh")), name
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)
