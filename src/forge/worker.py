@@ -104,7 +104,7 @@ def work(args: argparse.Namespace) -> None:
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
     # The round then waits for one of the machine's agent slots.
     with codex.hold(top, item, kind), machine.agent_slot(top, "work", item,
-            chosen.get("model"), chosen.get("effort")):
+            chosen.get("model"), chosen.get("effort")) as admission:
         if on_codex:
             codex.recover(top, item)
         question = codex.record(top, item).get("question")
@@ -148,9 +148,11 @@ def work(args: argparse.Namespace) -> None:
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
+        admission["round"] = round_number
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
-        repo.record_event(top, item, "work phase", phase="fixing_findings" if findings or failing else "building")
+        repo.record_event(top, item, "work phase", lane_id=admission["id"],
+                          phase="fixing_findings" if findings or failing else "building")
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE
         outcome = "failed"

@@ -50,6 +50,11 @@ def item(top: Path, key: str, state: dict[str, Any], *,
          ended_at: str | None = None) -> dict[str, Any]:
     events = [e for e in (read(top, "events") if events is None else events) if e.get("item") == key]
     timings = [t for t in (read(top, "timings") if timings is None else timings) if t.get("item") == key]
+    lane_rounds = {e["lane_id"]: e["round"] for e in events if e.get("event") == "work phase"
+                   and e.get("lane_id") and isinstance(e.get("round"), int)}
+    events = [{**e, "round": lane_rounds[e["lane_id"]]}
+              if e.get("event", "").startswith("lane ") and e.get("lane_id") in lane_rounds
+              else e for e in events]
     now = when(repo.now())
     merged = state.get("status") in ("merged", "done")
     finished = next((e.get("at") for e in reversed(events) if e.get("event") == "item finished"), None)
@@ -129,19 +134,38 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         reviewed = [t for t in timings if t.get("round") == worker_round and t.get("step") == "review"]
         records = [r for r in [*events, *timings] if r.get("round") == worker_round]
         began = min((at for r in records if (at := when(r.get("at") or r.get("start")))), default=start)
-        for position, (index, result) in enumerate(reviews or [(None, {})] * max(1, len(reviewed))):
-            if position:
-                previous = reviews[position - 1][0] if reviews else None
-                trigger = next((e for e in events[previous + 1:index]
+        observed = [{"index": None, "result": {}, "timing": timing} for timing in reviewed]
+        # Results were added after timing-only releases; match recorded starts, never positions.
+        for index, result in reversed(reviews):
+            at = when(result.get("at"))
+            match = next((one for one in reversed(observed) if not one["result"]
+                          and at and (a := when(one["timing"].get("start"))) and a <= at), None)
+            if match is None:
+                observed.append({"index": index, "result": result, "timing": {}})
+            else:
+                match.update(index=index, result=result)
+        observed.sort(key=lambda one: (when(one["timing"].get("start"))
+                      or when(one["result"].get("at")) or began,
+                      one["index"] if one["index"] is not None else -1))
+        previous = None
+        for current in observed or [{"index": None, "result": {}, "timing": {}}]:
+            index, result, timing = current["index"], current["result"], current["timing"]
+            if previous is not None:
+                prior = previous["index"]
+                prior_at = when(previous["result"].get("at"))
+                if prior_at is None and (a := when(previous["timing"].get("start"))):
+                    prior_at = a + timedelta(seconds=previous["timing"].get("seconds", 0))
+                trigger = next((e for e in events[prior + 1 if prior is not None else 0:index]
                                 if e.get("round") == worker_round and e.get("kind") in ("test", "review")
-                                and e.get("event") in ("lane joined", "run start")), {}) if reviews else {}
-                began = when(trigger.get("at"))
-                if began is None and position < len(reviewed):
-                    began = when(reviewed[position].get("start"))
-                began = began or when(result.get("at"))
+                                and e.get("event") in ("lane joined", "run start")
+                                and (at := when(e.get("at"))) and (prior_at is None or at >= prior_at)), {})
+                starts = [at for value in (trigger.get("at"), timing.get("start"), result.get("at"))
+                          if (at := when(value))]
+                began = min(starts) if starts else None
             attempts.append({"worker_round": worker_round, "number": result.get("review_round"),
                              "result": result, "start": began,
-                             "review_timings": reviewed[position:position + 1]})
+                             "review_timings": [timing] if timing else []})
+            previous = current
 
     def attempt(number: int | None, at: datetime) -> int | None:
         choices = [(index, r) for index, r in enumerate(attempts) if r["worker_round"] == number]
@@ -199,7 +223,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                         owner_open.add(index)
     totals = {k: round(v, 3) if v is not None else None for k, v in totals.items()}
     rounds, seen = [], set()
-    first_review = next((r for r in attempts if r["result"]), {})
+    first_review = next((r for r in attempts if r["result"] or r["review_timings"]), {})
     known_history = first_review.get("number") == 1
     for index, current in enumerate(attempts):
         number, worker_round, result = current["number"], current["worker_round"], current["result"]
@@ -210,7 +234,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         observed_repeats = sum((f.get("file"), f.get("title")) in seen for f in findings or [])
         repeats = observed_repeats if comparable or observed_repeats else None
         seen.update((f.get("file"), f.get("title")) for f in findings or [])
-        if result and findings is None:
+        if (result or current["review_timings"]) and findings is None:
             known_history = False
         steps = []
         for step, label in (("worker round", "work"), ("test run", "tests"), ("review", "review"), ("CI wait", "CI")):
