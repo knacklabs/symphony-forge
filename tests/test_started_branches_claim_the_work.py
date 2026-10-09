@@ -6,6 +6,7 @@ The only external stand-in is a bare GitHub-edge remote (test-audit gate).
 """
 import json
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -293,6 +294,56 @@ def test_conflicting_local_and_published_builder_edits_refuse_without_changing_t
     assert ("Local and published edits to plans/SHOP.md conflict; reconcile them before continuing."
             in listing.stderr)
     assert local_doc.read_text("utf-8") == local_text
+
+
+def test_first_merged_part_supplies_assignments_when_the_published_story_is_still_its_initial_plan(
+        client, claude_payload, gh, tmp_path):
+    doc = _developer_doc().replace("| none | yes |", "| SAVE | yes |")
+    # GitHub accepts initial creation, then refuses approval publication for this story only.
+    reject = Path(client.git("remote", "get-url", "origin")) / "hooks/pre-receive"
+    reject.write_text(
+        '#!/bin/sh\nwhile read old new ref; do\n'
+        '  if [ "$ref" = refs/heads/story/SHOP ] && '
+        '[ "$old" != 0000000000000000000000000000000000000000 ]; then\n'
+        '    echo "GitHub refuses the updated story" >&2\n    exit 1\n  fi\ndone\n', "utf-8")
+    reject.chmod(0o755)
+    try:
+        plan = _approve(client, claude_payload, doc)
+        published = client.git("ls-remote", "origin", "refs/heads/story/SHOP").split()[0]
+        assert published != client.git("rev-parse", "HEAD", cwd=plan)
+    finally:
+        reject.unlink(missing_ok=True)
+    # The approved plan reaches teammates only through the first part's squash merge.
+    gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
+    started = client.forge("task", "start", "SHOP/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    github = tmp_path / "github-squash"
+    client.git("clone", "-q", client.git("remote", "get-url", "origin"), str(github))
+    client.git("fetch", "-q", "origin", "task/SHOP-SAVE", cwd=github)
+    client.git("merge", "--squash", "FETCH_HEAD", cwd=github)
+    client.git("-c", "user.name=GitHub Merger", "-c", "user.email=merger@example.test",
+               "commit", "-qm", "Save shoppers' baskets", cwd=github)
+    client.git("push", "-q", "origin", "main", cwd=github)
+    teammate = _teammate(client, tmp_path)
+    gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
+    listing = teammate.forge("next")
+    assert listing.returncode == 0, listing.stdout + listing.stderr
+    assert "Next: forge task start SHOP/SHOW" in listing.stdout
+    assert "Next: forge task start SHOP/SAVE" not in listing.stdout
+    listing = teammate.forge("board", "--json")
+    assert listing.returncode == 0, listing.stdout + listing.stderr
+    story = next(row for row in json.loads(listing.stdout)["items"] if row["id"] == "SHOP")
+    parts = {row["id"]: row for row in story["children"]}
+    assert parts["SHOP/SAVE"]["developer"] == "basket-dev"
+    assert parts["SHOP/SHOW"]["developer"] == "page-dev"
+    page = teammate.forge("board")
+    assert page.returncode == 0, page.stdout + page.stderr
+    words = seen(teammate.path / ".git" / "forge" / "board.html")
+    assert "Assigned to basket-dev." in words, words
+    assert "Assigned to page-dev." in words, words
+    started = teammate.forge("task", "start", "SHOP/SHOW")
+    assert started.returncode == 0, started.stdout + started.stderr
+    assert "starting it anyway" not in started.stderr
 
 
 def test_board_shows_start_commit_authors_beside_the_plan_approver(client, claude_payload, tmp_path):

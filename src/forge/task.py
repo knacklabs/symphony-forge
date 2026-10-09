@@ -178,14 +178,15 @@ def start(args: argparse.Namespace) -> None:
     from forge import story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
-    if (not git("branch", "--list", story_branch)
+    published = story.plan_ref(top, key)
+    if (published != main and not git("branch", "--list", story_branch)
             and show(f"origin/{story_branch}", doc_rel) is not None):
         git("branch", "--track", story_branch, f"origin/{story_branch}")
-    behind = story.plan_behind(top, key, main)
-    old_pin = repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
-                          repo._pin(show(main, "forge.toml") or ""))
-    if old_pin or (show(story_branch, doc_rel) is not None and
-            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0"):
+    behind = story.plan_behind(top, key, main) if published != main else ""
+    old_pin = published != main and repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
+                                                 repo._pin(show(main, "forge.toml") or ""))
+    if published != main and (old_pin or (show(story_branch, doc_rel) is not None and
+            run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0")):
         folder = story.stories_here(top).get(key)
         if folder is None:
             folder = _folder(f"story-{key}")

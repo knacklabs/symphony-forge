@@ -388,10 +388,17 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
 def plan_ref(top: Path, key: str) -> str:
     """The published story unless the local story already includes it."""
     local, remote = f"story/{key}", f"origin/story/{key}"
+    landed = landed_ref(top)
+    source = local if show(top, local, f"plans/{key}.md") is not None else landed
     if show(top, remote, f"plans/{key}.md") is not None:
         if repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
-            return remote
-    return local if show(top, local, f"plans/{key}.md") is not None else landed_ref(top)
+            source = remote
+    state = json_of(show(top, source, repo.state_path(key)))
+    # A failed approval push leaves the initial claim behind the first merged part.
+    if (not state.get("approval") and all(step.get("step") == "start" for step in state.get("steps", []))
+            and json_of(show(top, landed, repo.state_path(key))).get("approval")):
+        return landed
+    return source
 
 
 def _with_developers(text: str, assignments: dict[str, str | None], include: bool) -> str:
@@ -420,6 +427,8 @@ def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] |
     rel = f"plans/{key}.md"
     if ref:
         return show(top, ref, rel) or ""
+    if plan_ref(top, key) == landed_ref(top):
+        return show(top, landed_ref(top), rel) or ""
     tree = ((history["worktrees"].get(f"story/{key}") if KEY.fullmatch(key) else None)
             if history is not None else stories_here(top).get(key))
     local_ref, remote = f"story/{key}", f"origin/story/{key}"

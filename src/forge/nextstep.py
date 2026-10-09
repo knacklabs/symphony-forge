@@ -421,7 +421,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
+    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())

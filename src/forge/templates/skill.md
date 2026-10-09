@@ -929,6 +929,8 @@ Someone else may start an assigned part: task start goes ahead and names its ass
 developer in a warning. Both boards show assignments alongside the starter and approver,
 including assigned parts not started yet. Documents without Developer work as before.
 After fetching, teammates can discover the published story before its first part merges.
+If publishing its approval failed, the approved plan on the default branch after its first
+part merges takes precedence over the story's initial published draft.
 Next, start and both boards reconcile published assignments with local builder edits;
 a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
 This column is the only assignment record; there is no other assignee field or roster.
