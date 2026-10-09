@@ -66,7 +66,7 @@
     "status": "blocked"
   },
   "round": 6,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T07:40:38+00:00",
@@ -86,7 +86,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/board.html",
+    "reason": "Owner chose narrow: this round fixes stories ready to merge being counted as building, its test for both client kinds, and a proof-list entry for the impeccable/emil-design-eng pass; the project-manager summary moves to a separate fix (the Done-when is amended).",
     "round": 4
   },
   "why": "The forge board page lost the old board's visuals in the lean rebuild: there is no picture of what waits for what between stories and their parts, and no view of where each item's time went across its stages; the owner wants both back (2026-10-09)",
