@@ -2,7 +2,7 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: architect
 description: "Weighs design choices against the repo's decisions and standards."
-model: "opus"
+model: "claude-opus-5-5"
 effort: "high"
 ---
 
