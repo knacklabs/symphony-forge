@@ -20,38 +20,52 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4414150dd60d524cbcdb42131ad5b0cfa68164f0ca66c8ee362898b83e322660",
-    "changed": "95acd11c00fa287da02d7ed438ecef5b208009860276eb43820266fa61ade1ab",
-    "commit": "b8d7d54141a306f970c3dff136f56e62c9eba9d3",
+    "branch_diff": "7c7e6ee9fe5783da390511ab2013c313b467822ca5d95c35690177b71551a322",
+    "changed": "acaa7f615427887babf306526f5ce5980133d6e2d61d2703cc7d95a11fe33b75",
+    "commit": "d40bbd1e9f29f3c1c589e366e9b1e8304e315d95",
     "dismissals": [],
     "findings": [
       {
-        "body": "The supplied full-suite check remains failed: 9 failed, 1613 passed, 7 skipped. One failure is directly verifiable: tests/test_rules.py:44\u201345 requires test_<n>_<rule>, but all 12 tests in this file and the test in tests/test_starter_names_survive_branch_cleanup.py have unnumbered names. The required workflow runs the entire suite (.github/workflows/forge.yml:39). Resolve this naming incompatibility and the reported board-text, approval/start-publication, machine-view-count and merge-enable failures before claiming the required check passes. The 83 passing related tests do not clear these failures.",
-        "file": "tests/test_started_branches_claim_the_work.py",
-        "line": 86,
-        "priority": "P1",
-        "title": "Not done: required tests check"
-      },
-      {
-        "body": "The previous P2 remains open. A teammate without a local story worktree skips this approval check, even when the published plan has a passing cold read but has not been approved. Consequently, next offers assigned parts as able to start, while task start refuses them at src/forge/task.py:241\u2013245. Published plans awaiting renewed approval have the same mismatch. Check the selected published state's approval hash against the reconciled plan before offering starts. The assignment-discovery tests approve their plans and therefore do not catch this case.",
-        "file": "src/forge/nextstep.py",
-        "line": 413,
-        "priority": "P2",
-        "title": "Check approval before offering starts from a published draft"
-      },
-      {
-        "body": "The previous P2 remains open. Removing an unmerged item's branches and worktree leaves its immutable start tag. Fix name selection considers only branches and merged state (src/forge/task.py:336\u2013339), so restarting the same slug creates a worktree and commits its state before this update-ref fails because the tag already exists. Reusing removed story or task names has the same problem. Copied-plan tasks can also collide with the retained forge-plan tag at task.py:123, leaving an unfinished checkout. Reserve retained names during selection or detect both tag collisions before creating work, while preserving the original references.",
+        "body": "The previous P2 remains open. Fix name selection at src/forge/task.py:336\u2013341 considers branches and merged state, but not retained tags. After removing an unmerged branch and worktree, restarting its slug creates and commits a new checkout before this create-only update-ref fails on the existing tag. Story and task name reuse have the same failure; copied-plan tasks can fail earlier on the forge-plan tag at line 123. Check or reserve both retained tag names before creating work, preserving the original references.",
         "file": "src/forge/task.py",
         "line": 135,
         "priority": "P2",
         "title": "Account for retained tags before reusing an abandoned branch name"
+      },
+      {
+        "body": "A Tasks row with a backtick-formatted ID such as `SAVE` is accepted and normalized by src/forge/story.py:362\u2013374, but task.rows preserves the raw ID at src/forge/task.py:53\u201362. When that row has a Developer, this loop passes SHOP/`SAVE` to row(), which calls repo.state_path and refuses the invalid item (src/forge/repo.py:635\u2013639). The human board has the same problem at board.py:569\u2013572. Both board commands therefore fail for an accepted assigned plan. Normalize IDs before synthetic-row creation and assignment lookup in both board paths.",
+        "file": "src/forge/board.py",
+        "line": 443,
+        "priority": "P2",
+        "title": "Normalize task IDs before adding assigned board rows"
+      },
+      {
+        "body": "For forge story new --from-fix, src/forge/story.py:905\u2013912 renames the fix branch and moves its state into the first task in a commit named \u201cTurn the fix into the first part of its story\u201d. This new attribution query excludes that commit because it only matches Start messages, while the original start commit records only the old fix-state path. Consequently, the promoted part has started_by=null on both boards, including after close and cleanup. Preserve the association with the original fix starter when promotion changes the item's path.",
+        "file": "src/forge/task.py",
+        "line": 146,
+        "priority": "P2",
+        "title": "Preserve starter attribution when promoting a fix into a story part"
+      },
+      {
+        "body": "The previous P2 remains open. The selected published plan is read here, but approval is checked only through approval.waiting_digest(key, path) at nextstep.py:419. A teammate without a local story worktree skips that check entirely; a stale local worktree can also check its old plan instead of the selected published plan. If the published plan has a passing cold read but lacks approval or awaits renewed approval, next offers assigned parts as able to start, while task start refuses them at src/forge/task.py:241\u2013245. Validate the selected state's approval hash against the reconciled text before offering starts.",
+        "file": "src/forge/nextstep.py",
+        "line": 405,
+        "priority": "P2",
+        "title": "Check approval before offering starts from a published draft"
+      },
+      {
+        "body": "For an ongoing story, a merged assigned part older than seven days is omitted from children by board.py:413\u2013414 and the expiry calculation at board.py:620\u2013635. This loop then treats its absence as evidence that it never started, recreates it, and unconditionally overrides its stage to unstarted\u2014even though row() detects its merged state. Both board --json and next --json consequently resurrect archived completed work as unstarted assignments. Check merged/expired state before synthesizing an unstarted row.",
+        "file": "src/forge/board.py",
+        "line": 444,
+        "priority": "P2",
+        "title": "Do not recreate expired merged assignments as unstarted parts"
       }
     ],
-    "id": "d7fa23d2-dfe4-48b2-a852-2c4403c60c67",
-    "status": "blocked"
+    "id": "424dc3ef-0d29-4937-9f82-c2330a4c82a9",
+    "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T07:48:02+00:00",
@@ -71,6 +85,10 @@
     },
     {
       "at": "2026-10-09T11:50:35+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T16:03:31+00:00",
       "step": "review"
     }
   ],
