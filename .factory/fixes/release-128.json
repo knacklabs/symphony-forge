@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump touches the version, the pin, the mod's plugin and marketplace entries, the install scripts, sync output and the tests that pin them",
   "base": "dbd8a58964476cd2046c44f5aeddad2073b8efd0",
   "branch": "fix/release-128",
   "done_when": "Forge's version is 1.2.8 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.8), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
