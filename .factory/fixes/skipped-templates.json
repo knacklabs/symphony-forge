@@ -8,16 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3fbad8d54f6810b153cab59aad4f3fb619df19be5ccfb4defdf32766a1acf3a9",
-    "changed": "e4f62a14a5e58671154059d2093c55ba5aad63df006d67b029b4ecb7f4cf15d6",
-    "commit": "01b82d12a1b61aadd967c3b5ba18dcadb672f9ad",
+    "branch_diff": "6b41462d7228c9903c990f66e5296ecad5ceef625a57ebecaa7e3aa200620d44",
+    "changed": "4ca3d2ecc8f5a23f85995aefa95498f49a5787611bf6df81bf13fd80307bd898",
+    "commit": "de5246b6eae8d97cfe8b7d76c47d5dc872b888ed",
     "dismissals": [],
-    "findings": [],
-    "id": "df1bd4de-fc30-4436-b7d7-09db05243b49",
+    "findings": [
+      {
+        "body": "The new command silently leaves scoped dependencies such as `@nestjs/core` and `@playwright/test` at their existing resolutions. New evidence beyond the coordinator's ruling: [Yarn's recursive implementation](https://github.com/yarnpkg/berry/blob/master/packages/plugin-essentials/sources/commands/up.ts#L111-L128) passes identifiers directly to micromatch; its special handling of `'*'` as all packages exists only in the nonrecursive implementation. [Micromatch's default matching](https://github.com/micromatch/micromatch#optionsbasename) excludes identifiers containing `/` from this pattern. Keep `-R` to preserve manifest ranges, but use patterns covering both scoped and unscoped packages, such as `yarn up -R '*' '@*/*'`. Apply the correction to this template and both changed host guides; the current guide test merely asserts the incomplete command.",
+        "file": "src/forge/templates/skill.md",
+        "line": 623,
+        "priority": "P2",
+        "title": "Include scoped packages in the recursive Yarn refresh"
+      }
+    ],
+    "id": "a63b648a-5939-4e84-8cbe-60caca699fc6",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:24+00:00",
@@ -29,6 +37,10 @@
     },
     {
       "at": "2026-10-09T20:38:50+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:33:08+00:00",
       "step": "review"
     }
   ],
