@@ -13,7 +13,7 @@ from test_subagent_roles import _settings
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
-SONNET = {"model": "claude-opus-5-5", "effort": "medium"}  # owner override for now (2026-10-09)
+OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -34,13 +34,17 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
     assert config["workers"] == "split"
-    # Codex builds and fixes; each Claude entry preserves the previous Opus settings.
+    # Ordinary work stays on Codex; all Claude work overrides the shipped defaults for now.
     assert config["models"]["build"] == config["models"]["fix"] == {
-        "codex": SOL, "claude": SONNET}
+        "codex": SOL, "claude": OPUS}
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
-        "claude": SONNET}
+        "claude": OPUS}
+    for kind in ("design", "grill"):
+        assert config["models"][kind] == {
+            "codex": {"model": "gpt-6.1-sol", "effort": "high"}, "claude": OPUS}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
+    assert "stage" not in config and "signoff" not in config
 
     log = _codex(repo, monkeypatch, sdk_data)
     repo.write("forge.toml", text)
