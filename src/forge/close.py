@@ -1,6 +1,6 @@
 """forge close: close a task or fix by the close rule.
 
-Merge the default branch in, push and open the pull request so CI runs during review. Commit and
+Bring the default branch in, push and open the pull request so CI runs during review. Commit and
 publish the result, then wait for the checks forge.toml names on exactly that pushed head.
 Nothing is committed after the checks: GitHub holds when they finished. A human merges.
 """
@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync
+from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -27,6 +27,15 @@ REFUSALS = {
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
                  "then forge close {item}"),
+    "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
+                        "in {path}, run git rebase --rebase-merges=rebase-cousins --onto origin/{default} {base}, "
+                        "resolve the conflicts and run git rebase --continue, preserve any earlier "
+                        "merge edits, publish with git push --force-with-lease=refs/heads/{branch}:{lease} "
+                        "origin {branch}, then forge close {item}"),
+    "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
+                      "fetch and reconcile {branch}, then forge close {item}"),
+    "replay_push": ("Git refused the replayed push, so Forge restored the original commits in this checkout.",
+                    "check the remote branch and reconcile {branch}, then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
@@ -362,6 +371,53 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
+    state = repo.read_state(item, top) or {}
+    base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
+    target = f"origin/{default}"
+    if (state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
+            and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
+            and task._merged(target, parent, top)
+            and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0
+            and repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode):
+        target = repo.git("rev-parse", target, cwd=top)
+        original = repo.git("rev-parse", "HEAD", cwd=top)
+        remote_ref = f"refs/heads/{branch}"
+        remote = repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=top)
+        lease = remote.split()[0] if remote else ""
+        if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
+            repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
+        # Rebase recreates merges but drops their hand edits; retain the fix's complete own diff.
+        # Both parents exclude inherited commits and default updates already merged into the fix.
+        baseline = repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+                            "commit-tree", f"{target}^{{tree}}", "-p", base, "-p", target,
+                            "-m", "Follow-up replay baseline", cwd=top)
+        merged = repo.run("git", "merge-tree", "--write-tree", "--name-only", "-z",
+                          "--no-messages", baseline, original, cwd=top)
+        if merged.returncode not in (0, 1):
+            merged.check_returncode()
+        tree, *files = merged.stdout.rstrip("\0").split("\0")
+        if merged.returncode:
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+        done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
+                        baseline, cwd=top)
+        if done.returncode:
+            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+            repo.run("git", "rebase", "--abort", cwd=top)
+            if not files:
+                done.check_returncode()
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+        if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
+            proof = review.commit_paragraph(top, baseline, "Proof list:", original)
+            repo.git("read-tree", "-u", "-m", tree, cwd=top)
+            repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", proof, cwd=top)
+        published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
+                             "origin", branch, cwd=top)
+        if published.returncode:
+            repo.git("reset", "--keep", original, cwd=top)
+            repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
         return
