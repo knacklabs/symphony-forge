@@ -1,0 +1,14 @@
+{
+  "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
+  "branch": "fix/board-spec",
+  "done_when": "docs/specs/board-for-the-team.md is saved, cold-read until a round finds nothing, confirmed by the owner, and added to the roadmap as the story that will rebuild the board",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T15:43:43+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A project manager or team lead opening the forge board for the first time cannot tell what is happening, what needs them, what is blocked, how the team is doing or when the project can go live (first-time-user and PM reviews of a real client board, 2026-10-09); the owner chose one board story, and its spec and roadmap entry come first"
+}
