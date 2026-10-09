@@ -51,7 +51,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T07:48:02+00:00",
@@ -71,7 +71,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/close.py",
+    "reason": "Owner chose narrow (2026-10-09): keep who started an item through a stacked fix replayed onto the default branch and through a story's first part that starts from the default branch and copies the plan, with a test for each; nothing else changes.",
     "round": 4
   },
   "why": "On a team, started work stays on the laptop where it began until its first close, so teammates can't see who is working on what and two developers can start the same part; no person is shown on any item. Owner decision 2026-10-09: starting is the claim, with git as the one record",
