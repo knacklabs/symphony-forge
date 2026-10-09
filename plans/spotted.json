@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -151,6 +162,39 @@
       "text": "The guide tells the agent to enable merging although the shipped skill reserves that setting for the owner.",
       "from": "worker",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
       "status": "open",
       "closed_by": null
     },
@@ -2795,6 +2839,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 115,
+      "text": "Preserve the close continuation when recovery changes the Forge pin",
+      "from": "review",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
       "kind": "edge",
       "path": "src/forge/mod/hooks/events.ts",
@@ -3323,6 +3378,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "from": "worker",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tChecked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -3374,61 +3440,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
-      "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Update the repository test that still requires Codex workers",
-      "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 115,
-      "text": "Preserve the close continuation when recovery changes the Forge pin",
-      "from": "review",
-      "item": "merge-behind-base",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
-      "kind": "improve",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 75,
-      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
-      "from": "worker",
-      "item": "merge-behind-base",
       "status": "open",
       "closed_by": null
     }

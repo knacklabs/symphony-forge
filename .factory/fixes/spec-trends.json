@@ -2,12 +2,37 @@
   "base": "d7e1517ebe0975bcd836134c108424b09f125921",
   "branch": "fix/spec-trends",
   "done_when": "docs/specs/board-for-the-team.md describes team and per-person weekly merged pull requests split into through-Forge and around-Forge, with an acceptance criterion; out of scope says no ranking; the spec passes a read and is re-confirmed",
+  "flagged": [
+    ".factory/fixes/spec-trends.json"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f81b1e7dfe53f79b0fd97246eea94890ce2a81e765a998b2e4c64114bde8ab64",
+    "changed": "e39ee0afb4c6768874ad0f8880f5f3e384215803c5078f378d122187c236662d",
+    "commit": "d6ff906c6b5eb24e5c41d989c8a194d8c75e668f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Gate. The supplied proof list is missing, and the branch's latest commit supplies none. The required list therefore does not map the Done-when details\u2014team and per-person weekly splits, acceptance criterion, no ranking, passed read and re-confirmation\u2014to their named evidence. Add the complete proof list to the worker's latest commit so Forge can include it in the pull request.",
+        "file": ".factory/fixes/spec-trends.json",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "716b5ee4-6282-47b9-881a-275abdfc34cc",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T20:51:55+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T21:43:46+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner wants the board spec to show team and per-person weekly trends, through Forge and around it, without ranking anyone"
