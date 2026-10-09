@@ -3530,6 +3530,17 @@
       "item": "two-test-slots",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
