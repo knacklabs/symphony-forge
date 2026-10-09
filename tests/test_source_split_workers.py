@@ -6,7 +6,7 @@ from test_worker import calls, install_claude
 STORY = "workers-split"
 
 
-def test_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
+def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
         repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data)
     text = (ROOT / "forge.toml").read_text("utf-8")
