@@ -54,13 +54,13 @@ def test_installers_check_docker_engine_and_explain_starting_desktop(
         (bin_dir / "wsl.cmd").write_text("@echo Default Version: 2\n", encoding="utf-8")
         docker = tmp_path / "docker.cmd" if new_install else bin_dir / "docker.cmd"
         docker.write_text(
-            f'@echo off\necho %* >> "{calls.as_posix()}"\n'
+            f'@echo off\n>> "{calls.as_posix()}" echo %*\n'
             'if "%DOCKER_RUNNING%"=="1" exit /b 0\n'
             'echo Docker daemon unavailable 1>&2\nexit /b 1\n', encoding="utf-8")
         if new_install:
             (bin_dir / "winget.cmd").write_text(
-                f'@echo off\ncopy /Y "{docker.as_posix()}" '
-                f'"{(bin_dir / "docker.cmd").as_posix()}" >nul\nexit /b 0\n', encoding="utf-8")
+                '@echo off\ncopy /Y "%~dp0..\\docker.cmd" "%~dp0docker.cmd" >nul\n'
+                'exit /b %errorlevel%\n', encoding="utf-8")
         cache = tmp_path / "ms-playwright"
         command = [powershell, "-NoProfile", "-File",
                    str(ROOT / "scripts/install-windows.ps1")]
