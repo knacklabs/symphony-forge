@@ -16,7 +16,7 @@ STORY = "FIX-TWO-TEST-SLOTS"
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
 @pytest.mark.parametrize("cores,size", [(8, 2), (4, 1), (None, 1)])
-def test_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
+def test_1_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
         env, tmp_path, release_server, adopted, cores, size):
     # The old contract serialized even eight-core machines. Now two real commands
     # may run there; four-core and unknown machines still admit only one.

@@ -59,7 +59,7 @@ console.log(JSON.stringify({{headless, wide, compact, machine}}));
 
 
 @pytest.mark.parametrize("cores,capacity", [(8, 2), (4, 1)])
-def test_pane_and_machine_show_test_lane_capacity_and_every_running_test(
+def test_2_pane_and_machine_show_test_lane_capacity_and_every_running_test(
         env, tmp_path, packaged_mod, release_server, cores, capacity):
     # Admission is covered separately. This guards transport and rendering:
     # a first-running-entry shortcut must not hide a second real running test.
