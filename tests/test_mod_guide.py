@@ -55,7 +55,8 @@ def test_1_guide_explains_core_and_pane_on_every_surface(guide):
 
 def test_2_guide_explains_strip_and_safe_next_step(guide):
     pane = section(guide, "The pane and strip")
-    for instruction in ("at most three lines", "Agents N/M", "Tests:", "two active items",
+    # Test counts now include lane capacity, rather than the earlier single-run label.
+    for instruction in ("at most three lines", "Agents N/M", "Tests N/M (K waiting)", "two active items",
                         "+N more", "Build → Tests → Review → CI → Merge", "✓", "●", "✗",
                         "Tests –", "round", "total", "under 80 columns", "without lane data",
                         "empty prompt", "Claude is idle", "re-reads `forge next --json`",
