@@ -64,7 +64,7 @@ def queued_first_close(env, item, where):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_history(
+def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_history(
         env, tmp_path, previous, monkeypatch):
     # Review reports are third-party inputs; Forge itself must retain and classify the history.
     item, where = client_item(env, tmp_path, previous)
@@ -180,7 +180,7 @@ def test_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_hi
     ("completed", "failure", ("failed",)),
     ("completed", "success", ("passed",)),
 ])
-def test_ci_round_distinguishes_giving_up_from_red_tests(env, status, conclusion, words):
+def test_2_ci_round_distinguishes_giving_up_from_red_tests(env, status, conclusion, words):
     item, _ = env.start_fix(round=1)
     env.checks([run("tests", conclusion, status), run("forge-pr-check")])
     closed = env.close(item)
@@ -195,7 +195,7 @@ def test_ci_round_distinguishes_giving_up_from_red_tests(env, status, conclusion
         assert word in line
 
 
-def test_real_lane_wait_is_retained_after_the_lane_is_released(env):
+def test_3_real_lane_wait_is_retained_after_the_lane_is_released(env):
     log = _with_test_command(env)
     for name in ("held", "waiting"):
         _fix(env, name)
@@ -223,7 +223,7 @@ def test_real_lane_wait_is_retained_after_the_lane_is_released(env):
     assert {event["event"] for event in lane_events} >= {"lane joined", "lane left"}
 
 
-def test_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fixes(env):
+def test_4_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fixes(env):
     # Independent timestamps prove arithmetic at the public boundary; real producers are above.
     task, _ = env.start_task()
     fix, _ = env.start_fix()
@@ -266,7 +266,7 @@ def test_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fixes
     assert "rounds" not in parent
 
 
-def test_legacy_item_without_recorded_times_or_findings_stays_unknown(env):
+def test_5_legacy_item_without_recorded_times_or_findings_stays_unknown(env):
     item, _ = env.start_fix(round=2)
     current = row(env.repo, item)
     assert current["total_seconds"] is None
@@ -276,7 +276,7 @@ def test_legacy_item_without_recorded_times_or_findings_stays_unknown(env):
 
 
 @pytest.mark.parametrize("legacy", [False, True], ids=["missing-earlier-rounds", "legacy-finding-details"])
-def test_an_earlier_round_without_finding_details_leaves_repeat_counts_unknown(env, legacy):
+def test_6_an_earlier_round_without_finding_details_leaves_repeat_counts_unknown(env, legacy):
     item, where = env.start_fix(round=2 if legacy else 3)
     top = env.repo.path / ".git/forge"
     top.mkdir(exist_ok=True)
@@ -308,7 +308,7 @@ def test_an_earlier_round_without_finding_details_leaves_repeat_counts_unknown(e
     assert (later[-1]["new_findings"], later[-1]["repeat_findings"]) == (0, 1)
 
 
-def test_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(env):
+def test_7_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(env):
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8") + 'merge = "agent"\n')
     env.repo.git("push", "-q", "origin", "main")
@@ -331,7 +331,7 @@ def test_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(env)
     assert "CI passed, then passed" in committed
 
 
-def test_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env):
+def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env):
     install_claude(env.repo)
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8")
@@ -363,7 +363,7 @@ def test_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(en
     assert datetime.fromisoformat(ended["at"]) >= datetime.fromisoformat(question_event["at"])
 
 
-def test_closes_without_another_worker_turn_keep_separate_review_rounds(env):
+def test_9_closes_without_another_worker_turn_keep_separate_review_rounds(env):
     item, where = env.start_fix(round=1)
     env.reviews(blocked(finding("P1", "Basket disappears", "app.py")))
     first = env.close(item)
@@ -377,7 +377,7 @@ def test_closes_without_another_worker_turn_keep_separate_review_rounds(env):
         (1, 0), (0, 1)]
 
 
-def test_adopted_item_time_before_its_first_new_log_is_not_invented_as_idle(env):
+def test_10_adopted_item_time_before_its_first_new_log_is_not_invented_as_idle(env):
     began = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(seconds=60)
     at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
     item, _ = env.start_fix(round=1, steps=[{"step": "start", "at": at(0)}])
@@ -401,7 +401,7 @@ def test_adopted_item_time_before_its_first_new_log_is_not_invented_as_idle(env)
     ("review", "clean", "reviewing"),
     ("CI wait", "failed", "waiting_for_ci"),
 ], ids=["review", "legacy-ci-outcome"])
-def test_merged_item_with_unknown_end_keeps_observed_step_time(env, step, outcome, category):
+def test_11_merged_item_with_unknown_end_keeps_observed_step_time(env, step, outcome, category):
     item, _ = env.start_fix(round=1, status="merged")
     top = env.repo.path / ".git/forge"
     top.mkdir(exist_ok=True)

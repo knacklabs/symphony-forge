@@ -182,6 +182,8 @@ def close(args: argparse.Namespace) -> int:
         state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         check_stop(item, state)
+    evidence = (review.functional_check(top, f"origin/{default}"),
+                review.commit_paragraph(top, f"origin/{default}", "Proof list:"))
     if not fresh:
         if pending := time_records.pending_merge_wait(top, item):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
@@ -195,7 +197,7 @@ def close(args: argparse.Namespace) -> int:
         state.pop("tests", None)
         _push(top, branch)
         pr = _publish(top, item, state, branch, default, pr,
-                      {"status": "reviewing", "findings": [], "dismissals": []})
+                      {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
@@ -273,7 +275,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
-    pr = _publish(top, item, state, branch, default, pr, result)
+    pr = _publish(top, item, state, branch, default, pr, result, evidence)
     _attach(top, item, branch)
 
     for number, finding in serious:
@@ -297,7 +299,7 @@ def close(args: argparse.Namespace) -> int:
                                      if not (migrating and name == "forge-pr-check")],
                     progress=getattr(args, "wait_for_progress", False))
     finally:
-        pr = _publish(top, item, state, branch, default, pr, result)
+        pr = _publish(top, item, state, branch, default, pr, result, evidence)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     merge = merger(top, state)
@@ -307,7 +309,7 @@ def close(args: argparse.Namespace) -> int:
         pending = time_records.pending_merge_wait(top, item)
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
-        _publish(top, item, state, branch, default, pr, result)
+        _publish(top, item, state, branch, default, pr, result, evidence)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -567,11 +569,11 @@ def _pull_request(top: Path, branch: str) -> dict[str, Any] | None:
 
 
 def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: str,
-             pr: dict[str, Any] | None, result: dict[str, Any]) -> dict[str, Any]:
+             pr: dict[str, Any] | None, result: dict[str, Any],
+             evidence: tuple[str, str]) -> dict[str, Any]:
     """Open the pull request, or replace only Forge's block in its body. While the review is
     blocked, the pull request is a draft."""
-    check = review.functional_check(top, f"origin/{default}")
-    proof = review.commit_paragraph(top, f"origin/{default}", "Proof list:")
+    check, proof = evidence
     history = time_records.how_it_went(top, item, state)
     block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")

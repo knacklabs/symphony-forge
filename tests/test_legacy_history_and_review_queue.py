@@ -24,7 +24,7 @@ def history(env, monkeypatch, events, timings):
     return row(env.repo, item)
 
 
-def test_legacy_internal_gaps_stay_unknown_until_complete_activity_recording(env, monkeypatch):
+def test_12_legacy_internal_gaps_stay_unknown_until_complete_activity_recording(env, monkeypatch):
     # Earlier releases recorded only these timings: neither gap establishes idle or owner time.
     current = history(env, monkeypatch, lambda at: [
         {"event": "work phase", "round": 3, "phase": "building", "at": at(60)},
@@ -43,7 +43,7 @@ def test_legacy_internal_gaps_stay_unknown_until_complete_activity_recording(env
     assert sum(value or 0 for value in current["time_breakdown"].values()) == 25
 
 
-def test_mixed_legacy_report_retains_observed_repeat_beside_an_unclassified_finding(env, monkeypatch):
+def test_13_mixed_legacy_report_retains_observed_repeat_beside_an_unclassified_finding(env, monkeypatch):
     first = {"priority": "P1", "title": "Basket disappears", "file": "app.py"}
     unseen = {"priority": "P1", "title": "Quantity disappears", "file": "app.py"}
     current = history(env, monkeypatch, lambda at: [
@@ -58,7 +58,7 @@ def test_mixed_legacy_report_retains_observed_repeat_beside_an_unclassified_find
     assert latest["findings"] == [first, unseen]
 
 
-def test_review_round_separates_lane_wait_from_review_time(env, monkeypatch):
+def test_14_review_round_separates_lane_wait_from_review_time(env, monkeypatch):
     current = history(env, monkeypatch, lambda at: [
         {"event": "run start", "kind": "review", "round": 3, "id": "review", "at": at(0)},
         {"event": "lane joined", "kind": "review", "round": 3, "lane_id": "queue", "at": at(0)},
@@ -74,7 +74,7 @@ def test_review_round_separates_lane_wait_from_review_time(env, monkeypatch):
     assert "in line 60s" in current["rounds"][0]["line"]
 
 
-def test_pre_upgrade_run_records_do_not_establish_complete_activity_history(env, monkeypatch):
+def test_15_pre_upgrade_run_records_do_not_establish_complete_activity_history(env, monkeypatch):
     current = history(env, monkeypatch, lambda at: [
         {"event": "run start", "kind": "review", "round": 1, "id": "old-review", "at": at(0)},
         {"event": "run end", "kind": "review", "round": 1, "run_id": "old-review", "at": at(10)},
@@ -89,7 +89,7 @@ def test_pre_upgrade_run_records_do_not_establish_complete_activity_history(env,
 
 
 @pytest.mark.parametrize("upgraded", [False, True], ids=["historical-only", "after-upgrade"])
-def test_historical_worker_question_without_end_stays_unknown(env, monkeypatch, upgraded):
+def test_16_historical_worker_question_without_end_stays_unknown(env, monkeypatch, upgraded):
     current = history(env, monkeypatch, lambda at: [
         {"event": "worker question", "round": 1, "question": "May I reuse the parser?", "at": at(0)},
         *([
@@ -104,7 +104,7 @@ def test_historical_worker_question_without_end_stays_unknown(env, monkeypatch, 
 
 
 @pytest.mark.parametrize("kind", ["task", "fix"])
-def test_item_elapsed_time_uses_real_creation_before_any_activity_logs(env, monkeypatch, kind):
+def test_17_item_elapsed_time_uses_real_creation_before_any_activity_logs(env, monkeypatch, kind):
     began = datetime(2026, 1, 1, tzinfo=timezone.utc)
     monkeypatch.setenv("FORGE_NOW", began.isoformat())
     if kind == "task":

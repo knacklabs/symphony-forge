@@ -5,7 +5,7 @@ from test_last_task_records_story_outcome import github_merge
 STORY = "FIX-WHERE-TIME-WENT"
 
 
-def test_merge_refreshes_only_managed_history_and_keeps_handwritten_sections(env):
+def test_18_merge_refreshes_only_managed_history_and_keeps_handwritten_sections(env):
     # A handwritten heading identical to Forge's must survive both the PR edit and squash.
     # Existing squash coverage has no owner text surrounding the managed block.
     config = env.repo.path / "forge.toml"
