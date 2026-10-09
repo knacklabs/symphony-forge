@@ -9,24 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e3dcf26aa8e131e79b50e5200d8db599237ee9c0a2b2390d92f06f586f097a9e",
-    "changed": "992a6f7232eac96ec826b4b05e1a614682425bda384a92386a6e9c49cf481799",
-    "commit": "6f0efa0e61017261718c02676cecc411f164ab50",
+    "branch_diff": "8a5e9f1f5d076f6991abd80ca85eff84b980ca349e53b3e80f951e5c86e02c64",
+    "changed": "b44c3e42668e18e3f7d79c5eac6dd6d0e61daccdb4600104caf7f710087a81dc",
+    "commit": "18daba31f2d06bf66b9b2f85c58c988be3ae20f4",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Both parametrizations force `LC_ALL=C` while disabling UTF-8 mode and locale coercion. On Linux/Python 3.11 this also makes subprocess argument encoding ASCII, unlike macOS ([Python encoding contract](https://docs.python.org/3.11/c-api/init_config.html#c.PyConfig.filesystem_encoding)). After successfully reading the title, `_publish` passes its non-ASCII character through `--title` at `src/forge/close.py:600`; `repo.run` passes that string directly to subprocess at `src/forge/repo.py:118`, causing `UnicodeEncodeError`. Its `encoding=\"utf-8\"` controls streams, not argument encoding. Thus both cases fail the Ubuntu suite configured at `.github/workflows/forge-next.yml:80` despite the reported macOS pass. Keep the regression sensitive to implicit file decoding while ensuring the complete command can publish the title on Linux.",
-        "file": "tests/test_close_refreshes_pull_request_contract.py",
-        "line": 46,
-        "priority": "P1",
-        "title": "Not done: test_2_close_reads_story_title_as_utf8_in_a_legacy_locale"
-      }
-    ],
-    "id": "c2ac7dd0-d23d-4469-bb45-1dd3e31ba0af",
-    "status": "blocked"
+    "findings": [],
+    "id": "a095339a-b026-4663-a47e-c6a9d59f5c4d",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
@@ -38,6 +30,10 @@
     },
     {
       "at": "2026-10-09T21:09:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:38:49+00:00",
       "step": "review"
     }
   ],
