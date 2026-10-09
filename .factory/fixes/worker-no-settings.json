@@ -3,12 +3,14 @@
   "branch": "fix/worker-no-settings",
   "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml and should report a needed settings change in their last message instead; command tests cover a refused worker commit, an allowed settings fix, and a coordinator commit outside a worker run, for a new repo and one adopted on an earlier release",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T12:58:57+00:00",
       "step": "start"
     }
   ],
-  "why": "Workers sometimes edit forge.toml while building an unrelated task or fix (a client worker added a command to fast_test because a note mentioned it; earlier a worker moved the version pin), though forge.toml is the coordinator's to change, through a settings fix the owner asked for (reported by a client session, 2026-10-09)"
+  "why": "Workers sometimes edit forge.toml while building an unrelated task or fix (a client worker added a command to fast_test because a note mentioned it; earlier a worker moved the version pin), though forge.toml is the coordinator's to change, through a settings fix the owner asked for (reported by a client session, 2026-10-09)",
+  "worker": "codex"
 }
