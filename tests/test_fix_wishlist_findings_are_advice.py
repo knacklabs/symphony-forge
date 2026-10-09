@@ -10,11 +10,12 @@ def test_1_review_blocks_only_on_real_gaps_and_wishlists_are_p2(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
     prompt = " ".join(env.prompt().split())
-    for blocker in ("a defect that would ship", "a security, data-loss or accessibility gap",
-                    "an unmet Done-when item", "a missing test for a Done-when item's own behaviour"):
+    for blocker in ("Functional: a defect on a path people or agents normally hit",
+                    "Security: a security gap", "Data loss: data lost, corrupted or exposed",
+                    "Not done: an unmet Done-when item",
+                    "Test: a missing or hollow test for a Done-when item's own behaviour"):
         assert blocker in prompt
-    assert ("Extra edge-case tests, platform or hardening suggestions beyond what the item "
-            "promises are P2") in prompt
+    assert "- hardening beyond what the item promises;" in prompt
     assert "never block the merge or start another round" in prompt
     # The rules against dropping validation, security, data-loss protection and accessibility stay.
     assert ("validation, authorization, secrets handling, data-loss protection and accessibility "
