@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-09T16:01:13+00:00
-read_hash: 1be892b0e988991404e1dfd559c276871d0b6940
-round: 6
+read_at: 2026-10-09T21:26:27+00:00
+read_hash: 18428dcdfb6aaac8e85c107425195c0a6d3208ca
+round: 8
 passed: yes
-doc_seen: 1be892b0e988991404e1dfd559c276871d0b6940
+doc_seen: 18428dcdfb6aaac8e85c107425195c0a6d3208ca
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: fd2a891623212c31a8f7a3cfae8aab69b1b9c2b9
+notes_seen: 657d3a5dc9b2d68f37aac01fa54abfa58df11596
 ---
 # Cold read notes
 
@@ -112,5 +112,15 @@ Only a genuine trade-off goes to the human, as a question with options.
 No findings.
 
 ## Round 6
+
+No findings.
+
+## Round 7
+
+20. Cut or defer: per-person merged pull request trends.
+    Raise: Plan gap. Behaviour 5 and acceptance criterion 7 add six weeks of historical throughput for each author. The Why asks who owns current work and what waits on them; historical merge counts answer neither. The success measure and recorded owner decision require team status and a planned-work forecast, neither of which needs per-person throughput.
+   Disposition: keep: owner chose (2026-10-09) to show team and per-person weekly merged work through Forge and around it, each person's own trend with no ranking, so a team sees how much ships outside Forge; the Why and Options weighed now record it.
+
+## Round 8
 
 No findings.
