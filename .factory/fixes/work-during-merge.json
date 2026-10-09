@@ -22,8 +22,8 @@
     "id": "0f7ecb71-954a-48fb-8486-03110bc9710d",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T13:06:47+00:00",
