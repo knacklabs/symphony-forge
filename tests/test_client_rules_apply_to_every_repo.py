@@ -52,6 +52,8 @@ def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, m
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert config.read_text(encoding="utf-8") == text
+    repo.git("add", "-A", cwd=client)
+    repo.git("commit", "-q", "-m", "Configure general guidance", cwd=client)
 
     built = repo.forge("work", "check-general-rules" if setup == "new" else "adopt-forge",
                        cwd=client)

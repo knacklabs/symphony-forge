@@ -1,5 +1,6 @@
 """Worker commits leave settings to an explicitly scoped settings fix."""
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -11,6 +12,8 @@ from test_codex_worker import MODELS, _toml, sdk_data  # noqa: F401
 from test_setup import _fresh_client
 from test_task import DOC, story
 from test_worker import calls, install_claude
+from test_close import env  # noqa: F401
+from test_upgrade_command import RELEASE, Upgrade, unsynced_up  # noqa: F401
 
 STORY = "worker-no-settings"
 
@@ -175,3 +178,40 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
         assert client.git("status", "--porcelain", "--", "forge.toml", cwd=folder) == ""
         assert message in worked.stdout
     assert (folder / "product.txt").read_text("utf-8") == "Product work\n"
+
+
+def test_5_coordinator_upgrade_commits_settings_through_installed_hooks(unsynced_up, client):
+    # Unlike a raw git commit, upgrade uses Forge's subprocess environment and new-release hooks.
+    up = Upgrade(unsynced_up.env, unsynced_up.tmp)
+    settings = (client.path / "forge.toml").read_text("utf-8")
+    settings = re.sub(r'^(?:test|fast_test) = .*\n', '', settings, flags=re.M)
+    up.on_main("forge.toml", 'test = "echo ok"\nfast_test = "echo ok"\n' + settings)
+    upgraded = up.run(RELEASE)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    assert "Ready:" in upgraded.stdout
+    assert json.loads(up.show(".factory/fixes/upgrade-forge-to-v9-9-9.json"))["done_when"] == (
+        f"This repo pins and runs Forge {RELEASE}.")
+    assert f'version = "{RELEASE}"' in up.show("forge.toml")
+    assert up.upgrade_commit()
+
+
+def test_6_coordinator_generated_merge_commits_incoming_settings(env, client):
+    # Close resolves a generated-guide conflict while an incoming settings edit is staged.
+    setup = Upgrade(env, env.tmp)
+    settings = (client.path / "forge.toml").read_text("utf-8")
+    settings = re.sub(r'^(?:test|fast_test) = .*\n', '', settings, flags=re.M)
+    settings = 'test = "echo ok"\nfast_test = "echo ok"\n' + settings
+    setup.on_main("forge.toml", settings)
+    guide = ".codex/skills/forge/SKILL.md"
+    original = (client.path / guide).read_text("utf-8")
+    item, folder = env.start_fix({guide: original.replace("# Forge", "# Worker Forge", 1),
+                                 "app.py": "print('hello')\n"})
+    setup.on_main(guide, original.replace("# Forge", "# Default Forge", 1))
+    setup.on_main("forge.toml", settings + "\n# Incoming coordinator settings\n")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Ready:" in closed.stdout
+    assert "Incoming coordinator settings" in (folder / "forge.toml").read_text("utf-8")
+    assert (folder / guide).read_text("utf-8") == (ROOT / "src/forge/templates/skill.md").read_text("utf-8")
+    client.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=folder)
+    assert client.git("status", "--porcelain", cwd=folder) == ""
