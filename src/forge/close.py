@@ -447,9 +447,11 @@ def synced_changes(top: Path) -> list[str]:
 
 def _push(top: Path, branch: str) -> None:
     """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
+                    "refs/tags/forge-start/", cwd=top).splitlines()
     for wait in (1, 2, 4, None):
         try:
-            repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+            repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
         except subprocess.CalledProcessError:
             if wait is None:

@@ -360,7 +360,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             if story.show(top, ref, f"plans/{read_key}.md") is not None), where) if read_key else where
         notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""
         read_record, _ = story._record(notes)
-        assignments = task.rows(task.sections(_read(top, read_where, f"plans/{read_key}.md"))) if read_key else {}
+        assignments = task.rows(task.sections(story._plan(top, read_key, history=history))) if read_key else {}
         plan_read = "none"
         if read_record:
             text = _read(top, read_where, f"plans/{read_key}.md")
@@ -504,7 +504,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
         completed = story.completed(top, key, landed)
         if state.get("status") != "done" and completed.get("status") == "done":
             state = completed
-        rows = task.rows(task.sections(_read(top, where, f"plans/{key}.md")))
+        rows = task.rows(task.sections(story._plan(top, key)))
         names = {cell.strip("` "): row.get("Name") or "" for cell, row in rows.items()}
         mine = tasks.get(key, {})
         for tid, spec in rows.items():

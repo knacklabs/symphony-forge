@@ -910,7 +910,8 @@ new branch to GitHub after committing its start. The author of that start commit
 who started the work; the board page and `forge board --json` show them next to the plan's
 approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
 record. Git keeps a start tag pointing at the original commit, so its author survives squash
-merges and work-branch cleanup. A second checkout's
+merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+start push failed. A second checkout's
 task start names the person who already started that part on GitHub. A failed push says so
 and leaves the work local: teammates cannot see that claim until its branch is pushed.
 New repos get this at init; existing repos get it when upgraded and synced, including repos
@@ -922,6 +923,9 @@ The lead adds or changes assignments below For the builders without another appr
 Someone else may start an assigned part: task start goes ahead and names its assigned
 developer in a warning. Both boards show assignments alongside the starter and approver,
 including assigned parts not started yet. Documents without Developer work as before.
+After fetching, teammates can discover the published story before its first part merges.
+Next, start and both boards reconcile published assignments with local builder edits;
+a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
 This column is the only assignment record; there is no other assignee field or roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,

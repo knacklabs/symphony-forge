@@ -380,6 +380,15 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
+    for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
+                           "refs/remotes/origin/story/", cwd=top).splitlines():
+        key = branch.removeprefix("story/")
+        if found.get(key, (None, {}, ""))[1].get("status") == "done":
+            continue
+        ref = story.plan_ref(top, key)
+        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if state:
+            found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
 
 
@@ -388,19 +397,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            refusals: dict[Path, str], history: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
-    notes, doc_hash, required = "", "", False
-    if path is None:  # like forge task start: the story branch's copy while it exists
-        for ref in (f"story/{key}", story.landed_ref(top)):
-            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-            required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
-            if required:
-                text = story.show(top, ref, f"plans/{key}.md") or text
-                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
-                break
-    elif (path / "plans" / f"{key}.md").is_file():
+    ref = story.plan_ref(top, key)
+    text = story._plan(top, key, history=history)
+    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
+    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
     try:
         doc = story.parse(text, top, history=history)
     except ValueError as exc:

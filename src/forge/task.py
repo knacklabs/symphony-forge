@@ -219,12 +219,15 @@ def start(args: argparse.Namespace) -> None:
     # read from its story branch while it exists, and its doc, notes and state are carried over.
     base = main if show(main, doc_rel) is not None else story_branch
     state_rel = repo.state_path(key)
-    source = (story_branch if base == main and story.rounds(show(story_branch, notes_rel),
-                                                             show(story_branch, state_rel))
+    story_source = story.plan_ref(top, key)
+    source = (story_source if base == story_branch or story.rounds(show(story_source, notes_rel),
+                                                                  show(story_source, state_rel))
               else base)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
+    if source == story_source:
+        text = story._plan(top, key)
     try:
         story.parse(text, repo.root())
     except ValueError as exc:
@@ -232,9 +235,10 @@ def start(args: argparse.Namespace) -> None:
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
-        if checkout:  # edits not committed yet count too
+        if checkout and source == story_branch:  # edits not committed yet count too
             story.check_read(key, checkout)
-        story.gate(key, doc_rel, notes or "", git("rev-parse", f"{source}:{doc_rel}"), text)
+        digest = run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
+        story.gate(key, doc_rel, notes or "", digest, text)
     tasks = rows(sections(text))
     if task not in tasks:
         refuse(REFUSALS["no_task"], key=key, task=task)
@@ -278,7 +282,8 @@ def start_base(main: str, key: str, row: dict[str, str]) -> str:
     if (any("/" in dep for dep in cell_list(row.get("After", "")))
             or show(main, f"plans/{key}.md") is not None):
         return main
-    return f"story/{key}"
+    from forge import story
+    return story.plan_ref(repo.root(), key)
 
 
 def _merged(main: str, item: str, top: Path | None = None) -> bool:

@@ -7,14 +7,35 @@ or production seam (test-audit authoring gate).
 import json
 import shutil
 import sys
+from pathlib import Path
+
+import pytest
 
 from conftest import GH_STUB, ROOT, Repo, _install
 from test_board import seen
 from test_close import CLEAN, CODEX_STUB, GREEN, PIN, Forge
 from test_started_branches_claim_the_work import client  # noqa: F401
-from test_story import DOC, claude_plan, hook, ready, worktree
+from test_story import DOC, claude_plan, hook, worktree
 
 STORY = "start-is-claim"
+
+
+def _start(repo, branch, args, rejected):
+    remote = Path(repo.git("remote", "get-url", "origin"))
+    reject = remote / "hooks/pre-receive"
+    if rejected:
+        reject.write_text('#!/bin/sh\necho "GitHub refuses this start" >&2\nexit 1\n', "utf-8")
+        reject.chmod(0o755)
+    try:
+        started = repo.forge(*args)
+        assert started.returncode == 0, started.stdout + started.stderr
+        if rejected:
+            assert f"Could not push {branch} to GitHub; the work stays local." in started.stderr
+            assert repo.git("ls-remote", "origin", f"refs/heads/{branch}") == ""
+    finally:
+        if rejected:
+            reject.unlink(missing_ok=True)
+    return worktree(repo, branch)
 
 
 def _github_squash(repo, branch, tmp_path):
@@ -63,8 +84,9 @@ if args[:2] == ["pr", "merge"]:
     _install(repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
 
+@pytest.mark.parametrize("rejected", [False, True], ids=["published-start", "recovered-start"])
 def test_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
-        client, gh, tmp_path, monkeypatch, claude_payload):
+        client, gh, tmp_path, monkeypatch, claude_payload, rejected):
     # Enable merges as historical client configuration, before the claims begin.
     client.git("config", "core.hooksPath", (tmp_path / "historical-merge-hooks").as_posix())
     client.git("switch", "-qc", "fix/enable-merges")
@@ -97,14 +119,16 @@ def test_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     doc = DOC.replace("2. The basket page says when it was saved.\n", "")
     doc = "\n".join(line for line in doc.splitlines() if not line.startswith("| SHOW |")) + "\n"
     client.git("config", "user.name", "Original Story Starter")
-    plan = ready(client, "SHOP", doc)
+    plan = _start(client, "story/SHOP", ("story", "new", "SHOP", "Shoppers can save a basket"),
+                  rejected)
+    (plan / "plans/SHOP.md").write_text(doc, "utf-8")
+    read = client.forge("read", "SHOP")
+    assert read.returncode == 0, read.stdout + read.stderr
     client.git("config", "user.name", "Plan Approver")
     approved = hook(client, claude_plan(claude_payload, doc, cwd=plan))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     client.git("config", "user.name", "Original Part Starter")
-    started = client.forge("task", "start", "SHOP/SAVE")
-    assert started.returncode == 0, started.stdout + started.stderr
-    part = worktree(client, "task/SHOP-SAVE")
+    part = _start(client, "task/SHOP-SAVE", ("task", "start", "SHOP/SAVE"), rejected)
     client.git("config", "user.name", "Later Contributor")
     flow.commit(part, "src/basket.py", "saved = True\n", "Save the basket")
     gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/7\n")
@@ -121,7 +145,8 @@ def test_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     # Completed story branches are no longer needed by any participant.
     client.git("worktree", "remove", str(plan))
     client.git("branch", "-D", "story/SHOP")
-    client.git("push", "-q", "origin", "--delete", "story/SHOP")
+    if client.git("ls-remote", "origin", "refs/heads/story/SHOP"):
+        client.git("push", "-q", "origin", "--delete", "story/SHOP")
     client.git("fetch", "-q", "--prune", "origin")
     client.git("merge", "-q", "--ff-only", "origin/main")
 
@@ -129,10 +154,8 @@ def test_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     _install(client.bin, "gh", GH_STUB.format(python=sys.executable))
     gh.respond("pr", "list", stdout="[]")
     client.git("config", "user.name", "Original Fix Starter")
-    fixed = client.forge("fix", "start", "Readers see a greeting", "--done",
-                         "The greeting is visible", "--slug", "greeting")
-    assert fixed.returncode == 0, fixed.stdout + fixed.stderr
-    fix = worktree(client, "fix/greeting")
+    fix = _start(client, "fix/greeting", ("fix", "start", "Readers see a greeting", "--done",
+                                          "The greeting is visible", "--slug", "greeting"), rejected)
     client.git("config", "user.name", "Later Contributor")
     flow.commit(fix, "greeting.txt", "Hello readers\n", "Greet readers")
     closed = client.forge("close", "greeting")
