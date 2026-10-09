@@ -2,7 +2,7 @@
 slug: board-for-the-team
 title: The board tells a team what's happening, what needs them and when it goes live
 status: draft
-saved: 2026-10-09T20:52:35+00:00
+saved: 2026-10-09T21:10:04+00:00
 ---
 
 # The board tells a team what's happening, what needs them and when it goes live
@@ -22,7 +22,7 @@ The people who open the board and what they need:
 
 | Who | Needs |
 |---|---|
-| Owner or project manager | Are we on track, when can it go live and how sure, what needs me, what's at risk, what shipped |
+| Owner or project manager | Are we on track, when can it go live and how sure, what needs me, what's at risk, what shipped, and how much of the team's work goes through Forge versus around it |
 | Lead | What can start now, who is working on what, what blocks the most, which plans wait for approval |
 | Developer | What's mine, what waits on me, what to pick up next |
 
@@ -46,7 +46,7 @@ The board answers those questions in order on the team's own machines (each pers
 5. **Team and per-person trends:** below the fold, merged pull requests per week for the last six full weeks, for the team and for each person (the pull request's author on GitHub), each week split into *through Forge* (from a story, part or fix branch) and *around Forge* (any other merged pull request). People are listed by name in alphabetical order with no totals ranking, scores or comparison between them; the trend shows each person's own weeks only. Beside it, a list of the pull requests merged around Forge in the last 7 days, each with its title, author and merge day.
 6. **After an upgrade** nothing needs writing: the board reads who started, approved and merged each older item, and its review results, straight from git and GitHub, so items from earlier releases show those facts at once; time breakdowns from before the release, and anything when GitHub can't be reached, show as unknown. The upgrade guide tells the agent to open the board once and report anything still missing.
 
-Options weighed: **Don't build** (the board stays unusable for a team; rejected by the owner); **Smallest slice** (fix the wrong data only: counts and statuses become right, but nobody sees what needs them or can forecast; this is the first part, already in flight); **Rebuild the board around the questions above** (chosen by the owner, 2026-10-09: a project manager must see the total status and estimate go-live). On sharing time records across machines the owner chose the pull request over committing records to git or keeping them local.
+Options weighed: **Don't build** (the board stays unusable for a team; rejected by the owner); **Smallest slice** (fix the wrong data only: counts and statuses become right, but nobody sees what needs them or can forecast; this is the first part, already in flight); **Rebuild the board around the questions above** (chosen by the owner, 2026-10-09: a project manager must see the total status and estimate go-live). On sharing time records across machines the owner chose the pull request over committing records to git or keeping them local. The owner also chose (2026-10-09) team and per-person weekly trends of merged work through Forge and around it, each person shown against their own weeks only, never ranked.
 
 ## Out of scope
 
