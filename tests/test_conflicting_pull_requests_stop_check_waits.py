@@ -129,8 +129,10 @@ def test_1_close_explains_conflicts_without_waiting_for_missing_checks(client):
     _advance_during_ci(env, remote, conflict=True)
     done = env.repo.forge("close", ITEM)
     assert done.returncode == 1, done.stdout + done.stderr
-    assert "GitHub runs no checks on a conflicting pull request" in done.stderr
-    assert f"Next: forge close {ITEM}" in done.stderr
+    assert done.stderr.endswith(
+        "GitHub runs no checks on a conflicting pull request. "
+        "Merge the default branch through close before waiting for checks.\n"
+        f"Next: forge close {ITEM}\n")
     assert "has not reported" not in done.stderr
     assert len(env.gh_calls(*RUNS)) == 1
 
