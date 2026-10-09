@@ -1,4 +1,4 @@
-"""Only the owner's generated merge switch gets a mechanical close review."""
+"""src/forge/merge.py keeps the owner's mechanically reviewed merge switch owner-only."""
 import json
 import os
 import re
@@ -90,6 +90,10 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
     assert not client.review_calls()
     assert not client.gh_calls("pr", "merge")
     assert raw(client, "origin/main") == before
+    client.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefOid": client.repo.git("rev-parse", f"fix/{FIX}"),
+        "headRefName": f"fix/{FIX}", "title": "Let the agent merge", "isDraft": False}))
     refused = client.repo.forge("merge", FIX)
     assert refused.stderr == OWNER_MERGES
 

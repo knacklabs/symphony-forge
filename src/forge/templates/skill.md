@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
