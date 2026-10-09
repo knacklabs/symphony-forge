@@ -52,7 +52,7 @@ def _client(repo, gh, tmp_path, adopted):
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_failed_checks_override_next_only_for_the_current_local_head(repo, gh, tmp_path, adopted):
+def test_4_failed_checks_override_next_only_for_the_current_local_head(repo, gh, tmp_path, adopted):
     _client(repo, gh, tmp_path, adopted)
     made = repo.forge("fix", "start", "Repair the page", "--done", "The page works", "--slug", "page")
     assert made.returncode == 0, made.stderr
@@ -81,7 +81,7 @@ def test_failed_checks_override_next_only_for_the_current_local_head(repo, gh, t
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_next_requires_fetch_before_recording_a_remotely_merged_story(repo, gh, tmp_path, adopted):
+def test_5_next_requires_fetch_before_recording_a_remotely_merged_story(repo, gh, tmp_path, adopted):
     _client(repo, gh, tmp_path, adopted)
     doc = "\n".join(line for line in DOC.splitlines()
                     if not line.startswith("| ") or line.startswith(("| PAGE |", "| ID |")))

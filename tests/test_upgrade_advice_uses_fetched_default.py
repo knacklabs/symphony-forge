@@ -15,7 +15,7 @@ STORY = "skipped-next"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_upgrade_advice_merges_the_fetched_default(repo, gh, tmp_path, adopted):
+def test_6_upgrade_advice_merges_the_fetched_default(repo, gh, tmp_path, adopted):
     version = _version(repo)
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
