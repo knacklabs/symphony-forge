@@ -9,11 +9,16 @@
       "at": "2026-10-09T16:56:10+00:00",
       "because": "Owner (2026-10-09): Forge's default for every client using Claude is Sonnet 5.5 at xhigh, frontend and cold reads included",
       "done_when": "forge init writes claude-sonnet-5-5 at xhigh for the Claude entries of build, fix, lite and grill, and claude-opus-5-5 at medium for the Claude design entry (user-facing work), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade"
+    },
+    {
+      "at": "2026-10-09T17:28:01+00:00",
+      "because": "Owner (2026-10-09): with only Claude, cold reads and Autoreview use Opus 5.5 high; implementation Sonnet 5.5 xhigh",
+      "done_when": "forge init writes claude-sonnet-5-5 at xhigh for every Claude implementation and plan-read entry (build, fix, lite, design and grill), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade"
     }
   ],
   "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
   "branch": "fix/claude-sonnet-default",
-  "done_when": "forge init writes claude-sonnet-5-5 at xhigh for every Claude implementation and plan-read entry (build, fix, lite, design and grill), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade",
+  "done_when": "For repos whose workers are claude: forge init writes claude-sonnet-5-5 at xhigh for the Claude entries of build, fix, lite and design, and claude-opus-5-5 at high for plan reads (grill) and for Autoreview (review), and Forge's built-in Claude defaults match; sign-off keeps its pinned model; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new Claude-only repo and an earlier-adopted repo left unchanged on upgrade",
   "kind": "fix",
   "round": 1,
   "status": "working",

@@ -13,7 +13,7 @@ from test_story import DOC, GRILL, new_story, setup
 from test_worker import calls, install_claude
 from test_upgrade_command import (_repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 
 STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
@@ -87,6 +87,7 @@ def test_claude_reviews_keep_their_model_instead_of_inheriting_new_read_defaults
         head = toml.read_text("utf-8").split("models.", 1)[0]
         env.commit(env.repo.path, "forge.toml", head + "\n[models." + tables)
         env.repo.git("push", "-q", "origin", "main")
+        env.checks(GREEN)  # init uses a broad API response; restore the close fixture checks.
     _claude_only(tmp_path, monkeypatch, env.repo.bin,
                  (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     item, _ = env.start_fix()
