@@ -532,7 +532,8 @@ def machine_board(top: Path, history: Item | None = None,
         if item["kind"] != "story" or item["stage"] == "done":
             continue
         for tid, spec in task.rows(task.sections(story._plan(top, key, history=history))).items():
-            if task.developer(spec) and not any(child["id"] == f"{key}/{tid}" for child in item["children"]):
+            if (task.developer(spec) and repo.state_path(f"{key}/{tid}") not in history["expired"]
+                    and not any(child["id"] == f"{key}/{tid}" for child in item["children"])):
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
                 item["children"].append(child)
