@@ -3,12 +3,14 @@
   "branch": "fix/skipped-close",
   "done_when": "An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line after an amend; a commit changing only close's test-state record counts as bookkeeping for CI reuse; story titles are read as UTF-8; an error during close's conflicted-merge handling aborts the merge and says so; command tests cover each, for a new repo and one adopted on an earlier release",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
       "step": "start"
     }
   ],
-  "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active"
+  "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active",
+  "worker": "codex"
 }
