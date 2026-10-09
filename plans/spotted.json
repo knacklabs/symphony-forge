@@ -2146,6 +2146,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board.py\tPreserve part names in timelines for backtick task IDs",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 895,
+      "text": "Preserve part names in timelines for backtick task IDs",
+      "from": "review",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tPreserve the live stage's start across attempts in one round",
       "kind": "edge",
       "path": "src/forge/board.py",

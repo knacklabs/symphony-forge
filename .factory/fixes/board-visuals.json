@@ -28,45 +28,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6ada80356d36d1c8d4c6ac064d3fab0134ee317f3ae2c58d19e124be8a4049a1",
-    "changed": "8da74e8675374ed23776fe1cb155ec22d7003475965f751b2522f85bc5d6fb15",
-    "commit": "387d05dc12f3da3c27ddb542885bee4b29327c03",
+    "branch_diff": "7284a9fd808ed3ad1363c7ea8db92550d9e69bde219600e30968a07db41eb255",
+    "changed": "f44e1b62576f9c9a2a5b38c93cc3728c2b3842c3ccaa2f3759f5d48ea8a506d7",
+    "commit": "efb15c344f4ee142b9fb92ee7229c7c680dde4ec",
     "dismissals": [],
     "findings": [
       {
-        "body": "The page begins with stage counts followed by the dependency map. It has no plain-English summary naming what is moving, what is waiting and its blockers, stalled items and their idle durations, the part blocking the most others, or the stage consuming the most recorded time. The renderer in board.py:907\u2013915 supplies only counts, map and existing sections; none computes these required bottleneck lines. Add the requested summary above the map, deriving it from the shared command data and preserving unknown values.",
-        "file": "src/forge/board.html",
-        "line": 76,
-        "priority": "P1",
-        "title": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening"
-      },
-      {
-        "body": "An approved story is assigned \"building\" here, and no subsequent path assigns it \"ready to merge\", even when its only remaining part has a valid close receipt and forge next reports that part ready to merge. board.py:449\u2013460 consumes this value directly, so the summary incorrectly reports Building: 1 and Ready to merge: 0 for that story. The positive readiness test at tests/test_board_dependency_timelines.py:242\u2013257 exercises only a fix. This finding preserves the ruling to count each story once; the new evidence is that the story-stage producer never emits the ready-to-merge stage. Derive that stage from the remaining parts' readiness and cover the story case through the command.",
-        "file": "src/forge/nextstep.py",
-        "line": 418,
-        "priority": "P1",
-        "title": "Not done: include merge-ready stories in the stage totals"
-      },
-      {
-        "body": "Neither parametrized client case checks the required top summary or its bottleneck lines. The page assertions check maps, timelines, existing sections and counts, but never assert a stalled item's duration, the largest blocking part, or the stage where most time goes. Consequently, the supplied nine-test run passes with the entire required summary absent. Extend the real board-command test for both new and earlier-adopted clients with deterministic summary data and assertions above the roadmap.",
-        "file": "tests/test_board_dependency_timelines.py",
-        "line": 203,
-        "priority": "P1",
-        "title": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data"
-      },
-      {
-        "body": "The complete latest proof list omits an entry covering the required impeccable shaping, audit and polish pass with emil-design-eng's checklist. Its visual-proof entry names SVG metadata, palette tokens and responsive CSS checks, which do not document that required design pass. The coordinator's ruling permits command-rendered SVG/CSS proof and defers live browser checking; this finding does not request browser tooling. Add a verifiable entry for the required skill work and checking pass.",
-        "file": "tests/test_board_dependency_timelines.py",
-        "line": 217,
-        "priority": "P1",
-        "title": "Not done: proof list"
+        "body": "When a valid plan quotes task IDs with backticks before starting its parts, these timeline headings and SVG names become \"A part with no name yet\". The child producer at board.py:415\u2013416 looks up the plain task ID in task.rows(), which preserves quoted keys (task.py:63). Unlike the dependency map and existing Parts list, that lookup does not normalize IDs. Multiple active parts therefore receive indistinguishable timeline labels, obscuring which part each recorded duration belongs to. Normalize the child-title lookup and verify the rendered timeline names through the board command.",
+        "file": "src/forge/board.py",
+        "line": 895,
+        "priority": "P2",
+        "title": "Preserve part names in timelines for backtick task IDs"
       }
     ],
-    "id": "e3a3ec1f-8438-4495-820b-c88e7dc5e3df",
-    "status": "blocked"
+    "id": "360ccdee-2b73-4b77-879e-b23e6b525a26",
+    "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T07:40:38+00:00",
@@ -82,6 +61,10 @@
     },
     {
       "at": "2026-10-09T10:09:39+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T11:23:42+00:00",
       "step": "review"
     }
   ],
