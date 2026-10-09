@@ -1,10 +1,13 @@
 """Worker commits leave settings to an explicitly scoped settings fix."""
+import json
 import shutil
 import subprocess
+import sys
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
+from test_codex_worker import MODELS, _toml, sdk_data  # noqa: F401
 from test_setup import _fresh_client
 from test_task import DOC, story
 from test_worker import calls, install_claude
@@ -87,6 +90,8 @@ def test_2_fresh_and_resumed_workers_report_needed_settings_changes(client):
         brief = " ".join(call["brief"].split())
         assert "Workers never edit `forge.toml`." in brief
         assert "Report a needed settings change in your last message instead." in brief
+        assert "Never edit it even temporarily." in brief
+        assert "To run an extra suite, run its command directly alongside `forge test`." in brief
 
 
 @pytest.mark.parametrize("covered", [False, True], ids=["context-only", "covered-item"])
@@ -107,3 +112,66 @@ def test_3_task_permission_comes_from_its_current_covered_done_when(client, monk
     assert (committed.returncode == 0) == covered, committed.stdout + committed.stderr
     if not covered:
         assert "settings change in their own fix" in committed.stderr
+
+
+@pytest.mark.parametrize("family", ["claude", "codex"])
+@pytest.mark.parametrize("case", ["unstaged", "staged", "named", "failed"])
+def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_them(
+        client, monkeypatch, sdk_data, tmp_path, family, case):
+    # The fake model edits files; real forge work owns restoration, permission and hand-back.
+    if family == "claude":
+        install_claude(client)
+        worker = client.bin / "claude"
+        source = worker.read_text("utf-8")
+        insertion = 'print("stub claude: built it")'
+        cwd = "pathlib.Path.cwd()"
+        if case == "failed":
+            monkeypatch.setenv("STUB_CLAUDE_EXIT", "1")
+    else:
+        client.git("switch", "-q", "fix/settings-setup")
+        client.write("forge.toml", _toml(client.forge("--version").stdout.split()[-1],
+                                        "codex", MODELS, "client"))
+        client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qam", "Use Codex")
+        client.git("switch", "-q", "main")
+        client.git("merge", "-q", "--ff-only", "fix/settings-setup")
+        client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+        worker = client.bin / "codex-app-server"
+        source = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
+        insertion = '                if os.environ.get("STUB_CODEX_TOUCH"):'
+        cwd = "pathlib.Path(cwd)"
+        monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+        home = tmp_path / "settings-codex-home"
+        home.mkdir()
+        (home / "config.toml").write_text(
+            f'[projects.{json.dumps(str(client.path))}]\ntrust_level = "trusted"\n', "utf-8")
+        monkeypatch.setenv("CODEX_HOME", str(home))
+        monkeypatch.setenv("CODEX_BIN", str(worker.with_suffix(".cmd") if sys.platform == "win32" else worker))
+        if case == "failed":
+            monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
+    edit = f'''settings = {cwd} / "forge.toml"
+settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker settings\\n", encoding="utf-8")
+({cwd} / "product.txt").write_text("Product work\\n", encoding="utf-8")
+'''
+    if case == "staged":
+        edit += f'import subprocess\nsubprocess.run(["git", "add", "forge.toml"], cwd={cwd}, check=True)\n'
+    indent = " " * 16 if family == "codex" else ""
+    edit = "".join(indent + line + "\n" for line in edit.splitlines())
+    _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
+    named = case == "named"
+    started = client.forge("fix", "start", "Correct spelling", "--done",
+                           "Update forge.toml" if named else "Correct the spelling")
+    assert started.returncode == 0, started.stdout + started.stderr
+    folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
+    before = (folder / "forge.toml").read_bytes()
+    worked = client.forge("work", "correct-spelling")
+    assert worked.returncode == (1 if case == "failed" else 0), worked.stdout + worked.stderr
+    message = "Restored uncommitted forge.toml changes from this branch; settings change in their own fix."
+    if named:
+        assert (folder / "forge.toml").read_bytes().startswith(before)
+        assert (folder / "forge.toml").read_bytes() != before
+        assert message not in worked.stdout
+    else:
+        assert (folder / "forge.toml").read_bytes() == before
+        assert client.git("status", "--porcelain", "--", "forge.toml", cwd=folder) == ""
+        assert message in worked.stdout
+    assert (folder / "product.txt").read_text("utf-8") == "Product work\n"

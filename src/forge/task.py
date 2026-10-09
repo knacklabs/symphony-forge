@@ -92,6 +92,20 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     return None
 
 
+def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
+    """Only this item's own Done-when can permit forge.toml edits."""
+    done = state.get("done_when", "")
+    if (match := repo.ITEM.fullmatch(item))["task"]:
+        from forge import story
+
+        text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
+        row = rows(sections(text)).get(match["task"], {})
+        covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
+        parsed = story.parse(text)
+        done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
+    return "forge.toml" in done
+
+
 def main_ref() -> str:
     """The default branch as the remote has it, freshly fetched: merged work lives there."""
     git("fetch", "-q", "--prune", "--tags", "origin")

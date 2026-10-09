@@ -127,16 +127,7 @@ def pre_commit(args: argparse.Namespace) -> None:
     item, state = found
     if os.environ.get("FORGE_WORKER") and git(
             "diff", "--cached", "--name-only", "--no-renames", "--", "forge.toml", cwd=top):
-        done = state.get("done_when", "")
-        if (match := repo.ITEM.fullmatch(item))["task"]:
-            from forge import story
-
-            text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
-            row = task.rows(task.sections(text)).get(match["task"], {})
-            covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
-            parsed = story.parse(text)
-            done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
-        if "forge.toml" not in done:
+        if not task.settings_allowed(item, top, state):
             refuse(REFUSALS["worker_settings"])
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.

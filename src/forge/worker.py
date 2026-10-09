@@ -29,8 +29,10 @@ REVIEW_LOOP = (
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
-SETTINGS = ("Workers never edit `forge.toml`. It belongs to the coordinator, through a settings "
-            "fix the owner asked for. Report a needed settings change in your last message instead.")
+SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It belongs to the "
+            "coordinator, through a settings fix the owner asked for. Report a needed settings "
+            "change in your last message instead. To run an extra suite, run its command directly "
+            "alongside `forge test`.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -193,6 +195,7 @@ def work(args: argparse.Namespace) -> None:
                         brief += _changes(top, saved.get("head") or saved["start"])
                     on_codex = True
                 else:
+                    _restore_settings(item, top, state)
                     if git("status", "--porcelain", "-uall", cwd=top):
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
@@ -213,6 +216,7 @@ def work(args: argparse.Namespace) -> None:
                                design=design)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
+            _restore_settings(item, top, state)
             if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
@@ -222,6 +226,7 @@ def work(args: argparse.Namespace) -> None:
                 else:
                     nudged = (again.get("text") or "").strip()
         finally:
+            _restore_settings(item, top, state)
             if final is not None:
                 asked = "\n\n".join(dict.fromkeys(match[1] for answer in (final, nudged)
                     if (match := re.search(r"(?:\A|\n\s*\n)(Question:.*)\Z", answer.strip(), re.S))))
@@ -238,6 +243,14 @@ def work(args: argparse.Namespace) -> None:
             why = (f"Codex reported it {result['status']}" if result["status"]
                    else "Codex never reported its end")
             refuse(REFUSALS["turn"], why=why, log=repo.work_log(top, item), item=item)
+
+
+def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
+    if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
+            and not task.settings_allowed(item, top, state)):
+        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+              flush=True)
 
 
 def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
