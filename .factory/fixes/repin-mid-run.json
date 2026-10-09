@@ -1,0 +1,14 @@
+{
+  "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
+  "branch": "fix/repin-mid-run",
+  "done_when": "forge land and forge close notice when the item's forge.toml pins a different release after a worker round and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; a command test covers a land started on an earlier release whose worker merges an upgraded default branch, for a repo adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T08:00:19+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a running forge land or close started under one pinned Forge release and the branch's forge.toml changes its pin mid-run (a worker merges the default branch after an upgrade), the old release keeps running and fails on the new forge.toml ('fast_test is not a forge.toml key'), stopping the item (reported by a client session on v1.2.8)"
+}
