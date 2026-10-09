@@ -386,6 +386,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tPreserve ownership references across copied plans and follow-up replay\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 506,
+      "text": "Preserve ownership references across copied plans and follow-up replay",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -2571,6 +2582,17 @@
       "text": "Keep timer redraws active after clearing or resuming a session",
       "from": "review",
       "item": "FORGE-MOD-1/PANE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tCheck approval before offering starts from a published draft",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 413,
+      "text": "Check approval before offering starts from a published draft",
+      "from": "review",
+      "item": "start-is-claim",
       "status": "open",
       "closed_by": null
     },

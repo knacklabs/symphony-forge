@@ -12,6 +12,7 @@
   "done_when": "forge task start, forge fix start and forge story new push the new branch to GitHub as soon as it is made, so the branch is the claim and the author of its start commit is its owner; when the push fails the command says so plainly and the work stays local; task start's existing already-started refusal names the person who started the part on GitHub. A story's parts table may carry an optional Developer column (a GitHub username) that the lead fills or changes below For the builders without a new approval; forge next shows a developer the parts assigned to them that can start, matched by their GitHub login; when someone other than the assigned developer starts a part, task start goes ahead and says who it was assigned to; the board page and forge board --json show for each story, part and fix its approver, its assigned developer when set, and who started it; story docs without the column work as today; no other assignee field or roster is added; the story template and coordinator guide describe the column; command tests cover a new repo and one adopted on an earlier release, including a second checkout refused with the first starter's name, an assigned part shown in that developer's forge next, and a warned start by someone else",
   "flagged": [
     "src/forge/board.py",
+    "src/forge/close.py",
     "src/forge/nextstep.py",
     "src/forge/task.py",
     "tests/test_started_branches_claim_the_work.py"
@@ -19,34 +20,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2a8a2e796cde57966ea800d2b284e5d132657768c1ede02280a8bc41a9c62067",
-    "changed": "4451a78aa236ce08a52ac554668f698550b5361dc94fd018e810fed48fbfdcb7",
-    "commit": "9de05029b341e314be2d979190a458c4622a269c",
+    "branch_diff": "b0eb8d3764b15b99612733f1aeefe4a206ff497f0a6ef49777c254000e70cd50",
+    "changed": "7ccb5ad13c9b56781c6503c017c365c4fec6aee8a5dc6f4755d9a93a4c1fb300",
+    "commit": "f4c0751fd7df5cef49dba370e051cef3b127c266",
     "dismissals": [],
     "findings": [
       {
-        "body": "A teammate cannot discover their assigned ready parts before the first part merges, even after fetching the approved story branch. nextstep.py:363\u2013383 discovers stories only from the default branch and local story worktrees, so the new login filter never sees that published plan. There is also a stale-assignment path: task start creates a local story branch only once (task.py:181\u2013183), then reads it at lines 220\u2013238 without incorporating subsequent updates pushed by the lead. Both boards likewise prefer that stale local plan (board.py:358\u2013363 and story.py:388\u2013398), so reassignment can leave next offering the previous developer's work, start warning about the previous developer, and the boards displaying the previous assignment. Read published story plans for teammate discovery and reconcile subsequent published assignments while preserving local edits. The assignment tests all run in the lead's checkout; cover discovery and published reassignment from a separate checkout for both client histories.",
+        "body": "New evidence beyond the retained-start recovery ruling: filtering tags by branch ancestry misses two supported recovery paths. Close rebases a stacked fix after its parent merges (close.py:402\u2013416), so an initially rejected start's original tag is no longer an ancestor and never gets published. Likewise, a story's first task with a cross-story dependency starts from main (task.py:276\u2013278) and copies the plan files instead of retaining story ancestry; close therefore omits an unpublished story-start tag. After squash merging and branch cleanup, a fresh observer loses these starters. The copied-plan path also loses the approval commit even when start publication succeeded: the story tag predates approval, and board.py:775\u2013777 cannot find the approver once the story branch disappears. Publish the relevant retained references independently of ancestry and preserve the carried plan's approval history. The cleanup proof exercises story-descended tasks and unstacked fixes, and checks starters without checking approvers, so it passes despite these gaps.",
+        "file": "src/forge/close.py",
+        "line": 506,
+        "priority": "P1",
+        "title": "Preserve ownership references across copied plans and follow-up replay"
+      },
+      {
+        "body": "Published stories now enter next's discovery without a local worktree. If the lead pushes a completed cold read and Developer assignments before human approval, a teammate reaches this line with path=None, skips the approval check, and receives 'can start now' commands for the assigned parts. Task start then refuses because the story is not approved (task.py:239\u2013243). Check the selected published state's approval against the plan before offering starts; the same check should cover published plans awaiting renewed approval. The assignment-discovery tests approve every plan before publication, so they do not detect this mismatch.",
         "file": "src/forge/nextstep.py",
-        "line": 448,
-        "priority": "P1",
-        "title": "Not done: Developer assignments must be discoverable and current in teammate checkouts"
+        "line": 413,
+        "priority": "P2",
+        "title": "Check approval before offering starts from a published draft"
       },
       {
-        "body": "New evidence beyond the start-tag retention ruling: a rejected initial push leaves the retention tag exclusively local. When the user subsequently runs the normal close flow, close.py:448\u2013453 pushes only the branch, so the original start tag never reaches GitHub. After squash merging and branch cleanup (merge.py:118\u2013138), a fresh observer has no reference to the original task or fix start commit, and both boards lose its started_by value. Story attribution can also disappear when its failed publication is recovered without another published reference retaining its start. Ensure later publication also publishes the retained original start reference. The rejected-push tests stop immediately after the failure, while the cleanup test starts with successful publication, so neither detects this supported recovery path.",
-        "file": "src/forge/task.py",
-        "line": 137,
-        "priority": "P1",
-        "title": "Publish the retained start reference when a failed start is later recovered"
-      },
-      {
-        "body": "After an unmerged fix is abandoned and its worktree and branches are deleted, its immutable start tag remains. fix_start's name selection at task.py:335\u2013340 considers only branches and merged state, so starting the same slug selects the old name and creates a new worktree and commit. This update-ref then fails because its empty expected old value requires the tag to be absent. The command consequently aborts before publication and leaves newly created work behind. Restarting a removed story or task with the same branch name hits the same failure. Reserve retained names during name selection, or handle the collision before creating work, while preserving the original tags.",
+        "body": "The previous P2 remains open. After an unmerged fix's worktree and branches are removed, its immutable start tag remains. Fix name selection still considers only branches and merged state (task.py:334\u2013339), so restarting the same slug creates a new worktree and commit before this update-ref fails because the tag already exists. Restarting removed stories or tasks with the same branch name has the same failure. Reserve retained names during selection or detect the collision before creating work, while preserving the original tags.",
         "file": "src/forge/task.py",
         "line": 133,
         "priority": "P2",
         "title": "Account for retained start tags before reusing an abandoned branch name"
       }
     ],
-    "id": "cb8d1af4-bddc-4894-a53d-274f6e6921a6",
+    "id": "3650d846-4009-4763-b214-038e79925f77",
     "status": "blocked"
   },
   "round": 3,
@@ -62,6 +63,10 @@
     },
     {
       "at": "2026-10-09T09:11:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T10:46:09+00:00",
       "step": "review"
     }
   ],
