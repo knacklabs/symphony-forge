@@ -3343,6 +3343,28 @@
       "item": "start-is-claim",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 183,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 187,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
