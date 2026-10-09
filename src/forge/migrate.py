@@ -439,7 +439,7 @@ def _tasks(top: Path, ref: str, old: str, key: str, items: dict[int, str],
     shipped = shipped if story.show(top, ref, shipped) is not None else ""
     stages = [stage for path in (".factory/stages.json", f"{base}/stages.json")
               for stage in story.json_of(story.show(top, ref, path)).get("stages", [])
-              if isinstance(stage, dict)]
+              if isinstance(stage, dict) and stage.get("story", old) == old]
     rows: list[str] = []
     states: dict[str, Any] = {}
     needs = [] if tasks else ["the old plan has no tasks to carry over"]
