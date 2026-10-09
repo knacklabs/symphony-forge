@@ -218,7 +218,8 @@ An earlier release's failed CI timing without an explicit result also stays unkn
 Old records are not filled in with guessed findings, durations or zeroes. A known original start
 can give an elapsed total even when some earlier activity is unknown; that unknown time is not
 called idle and the known breakdown need not add up to the elapsed total. Gaps between legacy
-timings stay unknown until complete activity recording begins.
+timings stay unknown until complete activity recording begins. Earlier run and question events
+do not establish completeness; historical questions without a recorded end stay unknown.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The pane and `/forge` show these same

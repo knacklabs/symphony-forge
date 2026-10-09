@@ -234,6 +234,9 @@ def test_board_subtracts_nested_tests_and_includes_idle_time_for_tasks_and_fixes
     timings, events = [], []
     for item in (task, fix):
         events.extend([
+            # A work phase is new lifecycle evidence; run starts alone predate complete recording.
+            {"id": item + "-phase", "item": item, "round": 1, "event": "work phase",
+             "phase": "building", "at": at(0)},
             {"id": item + "-start", "item": item, "round": 1, "event": "run start",
              "kind": "worker", "at": at(0)},
             {"id": item + "-end", "item": item, "round": 1, "event": "run end",

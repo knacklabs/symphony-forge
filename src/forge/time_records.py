@@ -56,14 +56,14 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     end = when(ended_at or finished) if merged else now
     starts = [at for r in [*events, *timings] if (at := when(r.get("at") or r.get("start")))]
     start = min(starts) if starts else None
-    if start and (began := next((when(s.get("at")) for s in state.get("steps", [])
-                                if s.get("step") == "start"), None)):
-        start = min(start, began)
+    if began := next((when(s.get("at")) for s in state.get("steps", [])
+                      if s.get("step") == "start"), None):
+        start = min(start, began) if start else began
     # Intervals overlap: tests, lane and CI waits take precedence over their enclosing worker.
     spans: list[tuple[datetime, datetime, str, int | None]] = []
-    # Old timing-only logs establish work intervals, never what happened between them.
+    # Only the new lifecycle records establish complete activity recording.
     complete_since = min((at for e in events if e.get("event") in (
-        "work phase", "lane joined", "run start", "owner wait start", "worker question")
+        "work phase", "lane joined", "owner wait start")
         and (at := when(e.get("at")))), default=None)
     if any(e.get("event") == "lane joined" and e.get("history_complete") for e in events):
         complete_since = start
@@ -114,6 +114,9 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             finish = next((f for f in events if f.get("event") == "owner wait end"
                            and f.get("wait_id") == e.get("id")), None)
             a, b = when(e.get("at")), when(finish.get("at")) if finish else end
+            if e.get("event") == "worker question" and not finish and (
+                    not a or not complete_since or a < complete_since):
+                continue  # Earlier workers answered questions without recording their end.
             if a and b:
                 spans.append((a, b, "waiting_for_owner", e.get("round")))
     # A worker turn can contain several closes. Each review result keeps its own line.
@@ -154,6 +157,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         if (not merged and event.get("event") in ("owner wait start", "worker question")
                 and not any(e.get("event") == "owner wait end" and e.get("wait_id") == event.get("id") for e in events)
                 and (at := when(event.get("at")))
+                and (event.get("event") == "owner wait start" or complete_since and at >= complete_since)
                 and (index := attempt(event.get("round"), at)) is not None):
             owner_open.add(index)
     for a, b, category, number in spans:

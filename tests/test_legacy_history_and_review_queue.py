@@ -2,7 +2,9 @@
 import json
 from datetime import datetime, timedelta, timezone
 
-from test_close import env  # noqa: F401
+import pytest
+
+from test_close import STORY_DOC, env  # noqa: F401
 from test_item_time_history import row
 
 STORY = "FIX-WHERE-TIME-WENT"
@@ -70,3 +72,49 @@ def test_review_round_separates_lane_wait_from_review_time(env, monkeypatch):
     assert current["time_breakdown"]["waiting_in_line"] == 60
     assert "review clean (5s)" in current["rounds"][0]["line"]
     assert "in line 60s" in current["rounds"][0]["line"]
+
+
+def test_pre_upgrade_run_records_do_not_establish_complete_activity_history(env, monkeypatch):
+    current = history(env, monkeypatch, lambda at: [
+        {"event": "run start", "kind": "review", "round": 1, "id": "old-review", "at": at(0)},
+        {"event": "run end", "kind": "review", "round": 1, "run_id": "old-review", "at": at(10)},
+        {"event": "work phase", "round": 3, "phase": "building", "at": at(60)},
+        {"event": "run start", "kind": "worker", "round": 3, "id": "new-work", "at": at(60)},
+        {"event": "run end", "kind": "worker", "round": 3, "run_id": "new-work", "at": at(65)},
+    ], lambda at: [])
+    assert current["total_seconds"] == 70
+    assert current["time_breakdown"]["reviewing"] == 10
+    assert current["time_breakdown"]["building"] == 5
+    assert current["time_breakdown"]["nothing_running"] == 5
+
+
+@pytest.mark.parametrize("upgraded", [False, True], ids=["historical-only", "after-upgrade"])
+def test_historical_worker_question_without_end_stays_unknown(env, monkeypatch, upgraded):
+    current = history(env, monkeypatch, lambda at: [
+        {"event": "worker question", "round": 1, "question": "May I reuse the parser?", "at": at(0)},
+        *([
+            {"event": "work phase", "round": 3, "phase": "building", "at": at(60)},
+            {"event": "run start", "kind": "worker", "round": 3, "id": "new-work", "at": at(60)},
+            {"event": "run end", "kind": "worker", "round": 3, "run_id": "new-work", "at": at(65)},
+        ] if upgraded else []),
+    ], lambda at: [])
+    assert current["time_breakdown"]["waiting_for_owner"] is None
+    assert current["time_breakdown"]["nothing_running"] == (5 if upgraded else None)
+    assert all("waiting for the owner" not in round_["line"] for round_ in current["rounds"])
+
+
+@pytest.mark.parametrize("kind", ["task", "fix"])
+def test_item_elapsed_time_uses_real_creation_before_any_activity_logs(env, monkeypatch, kind):
+    began = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    monkeypatch.setenv("FORGE_NOW", began.isoformat())
+    if kind == "task":
+        item, _ = env.start_approved_task(STORY_DOC)
+    else:
+        created = env.repo.forge("fix", "start", "Measure idle", "--done", "Idle time is visible")
+        assert created.returncode == 0, created.stderr
+        item = "measure-idle"
+    monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=70)).isoformat())
+    current = row(env.repo, item)
+    assert current["total_seconds"] == 70
+    assert all(value is None for value in current["time_breakdown"].values())
+    assert current["rounds"] == []
