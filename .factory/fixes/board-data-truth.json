@@ -9,24 +9,38 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "62f196e719591ffd8b51715b0bc83b5378489258204b4a158e396134138a33fc",
-    "changed": "53eeafb93ce83509e0f08cd1b1083d6fb6832038dac0c1bb328ff43583984426",
-    "commit": "9c0f4afd496e89a223146e0f63853ddc8d4fabe7",
+    "branch_diff": "1398a27a7dd67fd263d93abe6bd862bf6585cb2bbbb953f4e281db5e1457bacc",
+    "changed": "f7f20ba9637e854a39c0eea6dc75cb82d7395fddad1304bd4654cc69b39e2573",
+    "commit": "5c3bcb0ff704f6d6c591388ca6e505ff6d5bf2e4",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous finding remains open: when the roadmap marks an existing story done but its saved state has no `finished` timestamp, this fallback reports its creation date as \u201cFinished on\u201d. `history[\"dates\"]` is populated from the file's first addition by `git log --diff-filter=A` at src/forge/board.py:694\u2013701, which can precede completion by weeks. Both JSON and the page therefore display an invented completion date. Restrict this fallback to tasks and fixes; leave a story's completion date unknown without completion evidence. The named roadmap-only test creates no historical story record and does not exercise this case.",
+        "body": "Raise: Gate \u2014 The new test file deterministically fails the repository\u2019s required test-naming check. Both functions at lines 125 and 143 claim criterion 3 under STORY=\"FIX-BOARD-DATA-TRUTH\"; functions at lines 193 and 226 likewise duplicate criterion 4. tests/test_rules.py:47\u201350 rejects duplicate (story, criterion) pairs. The full suite configured in forge.toml includes that check; the supplied 69-case related run does not. Give both pairs distinct criterion numbers while retaining their assertions.",
+        "file": "tests/test_board_status_and_times.py",
+        "line": 143,
+        "priority": "P1",
+        "title": "Not done: required tests check"
+      },
+      {
+        "body": "Raise: Not done \u2014 The previously reported completion-date defect remains open: a story marked done by the roadmap, with historical state but no recorded completion timestamp, displays its creation date as \u201cFinished on\u201d. This fallback accepts history[\"dates\"] for stories, but src/forge/board.py:720\u2013727 populates those dates from the state file\u2019s first addition, potentially weeks before completion. Both JSON and the current card therefore report an invented completion date. The named roadmap-only proof has neither historical state nor a Git creation date, so it misses this case. Preserve unknown completion dates for stories without completion evidence; retain the first-addition fallback for tasks and fixes.",
         "file": "src/forge/board.py",
-        "line": 455,
-        "priority": "P2",
-        "title": "Do not use a story's creation date as its completion date"
+        "line": 459,
+        "priority": "P1",
+        "title": "Not done: Every status, count and time on the board page and in forge board --json comes from one shared derivation"
+      },
+      {
+        "body": "Raise: Test \u2014 The proof list claims this test protects the one-day stalled threshold, but its only unfinished idle item has been idle for four days. Changing the threshold from one day to three days would leave this test and the other supplied idle assertions green, while ordinary items idle for 25 hours would incorrectly remain unstalled. Add a command-level assertion just beyond the promised one-day threshold to the existing test, covering both client histories.",
+        "file": "tests/test_board_status_and_times.py",
+        "line": 135,
+        "priority": "P1",
+        "title": "Not done: test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not"
       }
     ],
-    "id": "1e55dc53-eee3-4055-aca7-96883bb845af",
-    "status": "clean"
+    "id": "bc1213da-bcb1-4b28-bdbc-bb414366e797",
+    "status": "blocked"
   },
   "round": 5,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T12:16:18+00:00",
@@ -47,8 +61,15 @@
     {
       "at": "2026-10-09T16:59:53+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:44:46+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/board.py"
+  },
   "why": "The forge board page shows wrong or contradicting data (Opus review of a real client board, 2026-10-09): stories the roadmap marks done show as 'Not started yet' and count as needing a spec; items idle for days aren't shown as stalled while finished stories are flagged stalled; running workers and reviews show as 'Needs fixes'; a card says Ready to merge while the header counts none; a story in a plan-read round shows as 'Waiting for approval'; a finished story's part says 'In progress'; prose times disagree with the timeline; header counts mix stories and fixes unlabelled; one person appears under two names; fix titles are cut mid-word",
   "worker": "codex"
 }
