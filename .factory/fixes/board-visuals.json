@@ -3,12 +3,14 @@
   "branch": "fix/board-visuals",
   "done_when": "The forge board page draws, with inline SVG and no scripts or outside files: a dependency map per story showing its parts and which part waits for which (merged, running, waiting and not started told apart by label and shape, never colour alone), and for every active story part and fix a stage timeline across build, tests, review, CI and merge with each finished stage's recorded time and the current stage marked; both use the same data as forge board --json (unrecorded values shown as unknown, never invented), read in light and dark mode and at phone width; the existing text sections stay; a command test renders the page for a new repo and one adopted on an earlier release and checks the map's parts and waits and a timeline's stage times",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T07:40:38+00:00",
       "step": "start"
     }
   ],
-  "why": "The forge board page lost the old board's visuals in the lean rebuild: there is no picture of what waits for what between stories and their parts, and no view of where each item's time went across its stages; the owner wants both back (2026-10-09)"
+  "why": "The forge board page lost the old board's visuals in the lean rebuild: there is no picture of what waits for what between stories and their parts, and no view of where each item's time went across its stages; the owner wants both back (2026-10-09)",
+  "worker": "codex"
 }
