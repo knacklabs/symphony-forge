@@ -40,9 +40,10 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
         "claude": OPUS}
-    for kind in ("design", "grill"):
+    for kind, effort in (("design", "medium"), ("grill", "high")):
         assert config["models"][kind] == {
-            "codex": {"model": "gpt-6.1-sol", "effort": "high"}, "claude": OPUS}
+            "codex": {"model": "gpt-6.1-sol", "effort": "high"},
+            "claude": {**OPUS, "effort": effort}}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
     assert "stage" not in config and "signoff" not in config
 
