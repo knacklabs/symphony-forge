@@ -24,6 +24,7 @@
     "id": "fa1ca41b-cc47-428e-bf01-120d21da99f5",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -35,5 +36,6 @@
       "step": "review"
     }
   ],
-  "why": "A project manager or team lead opening the forge board for the first time cannot tell what is happening, what needs them, what is blocked, how the team is doing or when the project can go live (first-time-user and PM reviews of a real client board, 2026-10-09); the owner chose one board story, and its spec and roadmap entry come first"
+  "why": "A project manager or team lead opening the forge board for the first time cannot tell what is happening, what needs them, what is blocked, how the team is doing or when the project can go live (first-time-user and PM reviews of a real client board, 2026-10-09); the owner chose one board story, and its spec and roadmap entry come first",
+  "worker": "codex"
 }
