@@ -581,7 +581,8 @@ repo, rewritten by that version. One command does all of it.
 
 Before starting another upgrade, it removes an earlier upgrade's leftover worktree and local
 branch when its pull request has merged and the checkout has no unpushed or uncommitted work.
-An open upgrade or local work still refuses and stays in place.
+An open upgrade or local work still refuses and stays in place. Ignored configuration and data
+also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
 2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the

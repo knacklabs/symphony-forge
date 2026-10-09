@@ -94,7 +94,10 @@ def upgrade(args: argparse.Namespace) -> int:
             if (isinstance(pr, dict) and pr.get("state") == "MERGED"
                     and pr.get("headRefName") == other and pr.get("baseRefName") == default
                     and pr.get("headRefOid") == repo.git("rev-parse", other, cwd=top)
-                    and not repo.git("status", "--porcelain", "--untracked-files=all", cwd=path)):
+                    and all(line[:2] == "!!" and line.endswith("/")
+                            and Path(line[3:]).name in repo.CACHES for line in repo.git(
+                                "status", "--porcelain", "--ignored", "--untracked-files=normal",
+                                cwd=path).splitlines())):
                 repo.git("worktree", "remove", str(path), cwd=top)
                 repo.git("branch", "-D", other, cwd=top)
                 print("Removed the finished upgrade's worktree and local branch.", flush=True)
