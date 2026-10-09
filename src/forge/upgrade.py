@@ -219,9 +219,10 @@ def _newest(top: Path, timeout: float | None = None) -> str:
     gh = shutil.which("gh")
     if gh is None:
         repo.refuse(REFUSALS["no_newest"], reason="gh is not installed")
-    done = subprocess.run([gh, "release", "view", "--repo", SOURCE, "--json", "tagName"],
-                          cwd=top, input="", capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", timeout=timeout)
+    args = ("gh", "release", "view", "--repo", SOURCE, "--json", "tagName")
+    done = repo._github_read(args, lambda: subprocess.run(  # pyright: ignore[reportPrivateUsage]
+        [gh, *args[1:]], cwd=top, input="", capture_output=True, text=True, encoding="utf-8",
+        errors="replace", timeout=timeout))
     try:
         tag = json.loads(done.stdout).get("tagName") if done.returncode == 0 else None
     except (ValueError, AttributeError):
