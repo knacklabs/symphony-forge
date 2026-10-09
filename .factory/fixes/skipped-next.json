@@ -2,20 +2,30 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-next",
   "done_when": "forge next lets a failed check decide the next step only when the pull request head equals the local head; upgrade advice names origin/<default>; next fetches before recommending story done or says to fetch; blank answers count as unanswered; the approval hook prints its pin notice only after recording succeeds and names the pinned release when it is newer; command tests cover each, for a new repo and one adopted on an earlier release",
-  "flagged": [],
+  "flagged": [
+    "tests/test_next_local_progress.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9f0995fe35bb460c5041bb83e4890e031c5a2a27589d6ef95e9ef814aaef0931",
-    "changed": "e685799a775125a4ae45dd1e91384f223870c90814f4665de1850ad74931507c",
-    "commit": "d93bb80ad6461a95c3e6c78428d21b7d8fe6ab90",
+    "branch_diff": "2b0595d5fee83b3b631cfb31efff01e63f5f6427f979ba968c3ded6ba5edda58",
+    "changed": "c8515774d42b06e2b5430386f35530edd7def02be932098344c1e78eb52a91a1",
+    "commit": "bca3bd20cbe97bcf82983dad7335ec02e1bb09bb",
     "dismissals": [],
-    "findings": [],
-    "id": "896b3233-3f18-4d6e-a4e7-efb8732f760d",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "`tests/test_rules.py:45\u201346` requires every test function to match `test_<number>_<rule>`. This function, the function at `tests/test_next_local_progress.py:84`, and `tests/test_upgrade_advice_uses_fetched_default.py:18` lack that number, so the configured full suite and PR checks will fail deterministically. The supplied 61-test run omitted this gate. Give all three unique criterion numbers under `STORY = \"skipped-next\"`, avoiding 1\u20133 already used by the approval tests, and update their proof-list references.",
+        "file": "tests/test_next_local_progress.py",
+        "line": 55,
+        "priority": "P1",
+        "title": "Number all three new tests to satisfy the full-suite gate"
+      }
+    ],
+    "id": "76b00f82-4e04-465d-881b-d3947ccced30",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:29+00:00",
@@ -23,6 +33,10 @@
     },
     {
       "at": "2026-10-09T19:38:13+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:35:48+00:00",
       "step": "review"
     }
   ],
