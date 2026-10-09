@@ -25,7 +25,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T15:43:09+00:00",
@@ -45,7 +45,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/story.py"
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the one remaining Not-done finding: accept the three named no-findings wordings"
   },
   "why": "A cold read that found nothing is recorded as not passed when the reader writes 'No findings' as a numbered item (for example '6. No findings.' plus a note that tests weren't run), so forge next asks for a disposition on it and the plan pays an extra read round (reported by a client session, 2026-10-09)",
   "worker": "codex"
