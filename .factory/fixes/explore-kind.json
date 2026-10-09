@@ -1,8 +1,15 @@
 {
   "allow_large": "Owner asked (2026-10-09): a new explore kind in forge.toml for read-only work (explorer role and forge ask), on Haiku 4.5 high by default",
+  "amendments": [
+    {
+      "at": "2026-10-09T17:26:36+00:00",
+      "because": "Owner (2026-10-09): the read-only model is Haiku 5.5 (claude-haiku-5-5), not 4.5",
+      "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-4-5-20251001 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry"
+    }
+  ],
   "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
   "branch": "fix/explore-kind",
-  "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-4-5-20251001 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry",
+  "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-5-5 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry",
   "kind": "fix",
   "status": "started",
   "steps": [
