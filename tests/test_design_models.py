@@ -5,8 +5,6 @@ import subprocess
 import tomllib
 from pathlib import Path
 
-from conftest import ROOT
-
 STORY = "FORGE-DESIGN-1"
 
 
@@ -27,8 +25,7 @@ def test_2_forge_init_writes_design_models(repo, gh, tmp_path: Path) -> None:
         "claude": {"model": "claude-opus-5-5", "effort": "high"},
         "codex": {"model": "gpt-6.1-sol", "effort": "high"},
     }
-    own = tomllib.loads((ROOT / "forge.toml").read_text(encoding="utf-8"))
-    assert own["models"]["design"] == models["design"]
+    # Forge's source repo can override these client defaults; its settings test owns that contract.
     toml = repo.write("forge.toml", 'version = "v1.1.0"\n'
                       '[models.design.claude]\nmodel = "custom-claude"\neffort = "high"\n'
                       '[models.design.codex]\nmodel = "custom-codex"\neffort = "high"\n')
