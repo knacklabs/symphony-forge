@@ -44,7 +44,7 @@ def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hook
             repo.git("fetch", "-q", str(repo.path), "main:main", cwd=remote)
     finally:
         _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
-    item, where = env.start_fix()
+    item, where = env.start_fix(allow_large="Fixture upgrade replaces the earlier generated files")
     config = (where / "forge.toml").read_text("utf-8")
     env.commit(where, "forge.toml", config.replace('version = "v1.2.2"',
                                                  f'version = "{version}"'))
@@ -57,7 +57,7 @@ def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hook
         (hooks / name).write_bytes(custom)
         (hooks / name).chmod(0o755)
     env.checks(GREEN)
-    closed = env.close(item)
+    closed = repo.forge("close", item, cwd=where)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "Ready:" in closed.stdout
     for name in ("pre-commit", "pre-push"):
