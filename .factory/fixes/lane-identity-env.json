@@ -11,7 +11,13 @@
     "branch_diff": "c468a25b224aa5ec52c7b65f802a4fba41193c5b6dab4104ee34eebf3fca50b7",
     "changed": "7d47678b3bdcaa721bbe8317b56f42904d2060856b69dffb0b9f8680a34e2a4a",
     "commit": "244aff8212b380ccd79dff0ba1decdcee2fdee59",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepts: processes still running v1.2.7 can drop entries made by the new release until every repo on the machine upgrades; the old release cannot be patched from the new one, and the release notes say to upgrade all repos on a machine together.",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "The new `UTC ` prefix is incompatible with readers still running the previous release. Raw base `7800830d4e71e532bafbeda348ac126057e94ad1` confirms that its `codex.identity` returns unprefixed text and its `_queue` compares that text against every stored entry before rewriting the shared queue. Thus, an older waiting process, `forge lanes` invocation, or finishing predecessor (`src/forge/machine.py:145`; `src/forge/review.py:345`) removes live entries created by this branch\u2014even when both callers use UTC/C. This affects both agent and test lanes: newer waiters receive \u201cThis run was stopped while waiting,\u201d and running commands lose their reservations. The legacy tests only rewrite records belonging to commands launched with the new implementation, so they miss this interaction. Preserve newer records against previous-release readers and cover an actual old-process/new-waiter scenario. This raw-parent reader evidence is separate from the ruling to retain unverifiable old start text while its PID runs.",
@@ -22,10 +28,10 @@
       }
     ],
     "id": "9b925553-a9b6-49e5-bc85-4a1554fb3245",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-08T21:20:08+00:00",
@@ -49,7 +55,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/codex.py"
+    "choice": "accept",
+    "file": "src/forge/codex.py",
+    "reason": "Owner accepts: processes still running v1.2.7 can drop entries made by the new release until every repo on the machine upgrades; the old release cannot be patched from the new one, and the release notes say to upgrade all repos on a machine together."
   },
   "why": "Live runs vanish from the machine's shared agent and test lanes ('This run was stopped while waiting', twice on 2026-10-08/09) because codex.identity reads a process's start time from ps -o lstart, whose text depends on the caller's TZ and locale (e.g. 'Fri 9 Oct 02:49:51' vs 'Thu 8 Oct 21:19:51' under TZ=UTC vs 'Fri Oct 9' under LANG=C); any Forge process started with a different environment (the Claude Code mod's refresh, git hooks run with a bare PATH, a pinned release run through uv) sees a mismatch and prunes the live entry as a reused pid",
   "worker": "codex"
