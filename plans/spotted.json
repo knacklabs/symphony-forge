@@ -177,6 +177,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -1299,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/review.py\tNot done: keep timing-only legacy review ordinals and finding counts unknown\twhere-time-went",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 471,
+      "text": "Not done: keep timing-only legacy review ordinals and finding counts unknown",
+      "from": "blocking",
+      "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tPreserve compatibility with the default-branch PR checker\tafter-forge-close-merges-the-latest-defa",
       "kind": "bug",
       "path": "src/forge/review.py",
@@ -1416,6 +1460,17 @@
       "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
       "status": "open",
       "closed_by": null
     },
@@ -3528,50 +3583,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 109,
-      "text": "Not done: one identical written boundary in review and cold read",
-      "from": "blocking",
-      "item": "lean-review-prompts",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
-      "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Update the repository test that still requires Codex workers",
-      "from": "blocking",
-      "item": "workers-split",
       "status": "open",
       "closed_by": null
     }

@@ -7,26 +7,27 @@
     ".factory/fixes/where-time-went.json",
     "src/forge/machine.py",
     "src/forge/merge.py",
+    "src/forge/review.py",
     "src/forge/time_records.py",
     "tests/test_item_time_history.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "be182d3fcf2150bf09dec2e0b06b7bd6c3d1b7d74b6ae978856442b0810497b8",
-    "changed": "63d330b5632339b45c9fc4233509e4196334d3ecf5754236ab56970f87d69fb4",
-    "commit": "68267463f639a72fd14249ddb6cf2628f8242969",
+    "branch_diff": "4f3fb5e3979cc712586ab76577277403b73d35f829a62ee63f6929a3dd7c5932",
+    "changed": "89afdf2355feb4a10650d0e192efd7b08fe5f4f48a18df61fc04cd2138ff5f8e",
+    "commit": "637bb670320144b3015ae5c235dd0a0c1ef45674",
     "dismissals": [],
     "findings": [
       {
-        "body": "Two upgrade transitions still lose recorded round history. New evidence beyond the previous unknown-history ruling is a timing-only review followed by a modern review in the same worker turn. The earlier close at tests/fixtures/pr-check-before-branch-diff/close.py:129 writes review timing without a review-result event; src/forge/repo.py:263 assigns its worker round. After a changed branch is closed again without another worker turn, `reviews` is nonempty, so this loop creates attempts only for those results and pairs the modern result with the first legacy timing. An earlier clean 10-second review and a new blocked 5-second review therefore become one `review clean (15s)` line carrying the new blocking findings. One observed attempt disappears from both board JSON and How it went.\n\nResumed older workers also lose their new lane wait from the corresponding round line. The raw older worker at tests/fixtures/forge-v1.2.2/src/forge/worker.py:115 saves `working` or `fixing` without a round. machine.py:81\u201384 records its next work admission with round=null, while worker.py:133\u2013153 subsequently establishes an integer turn. The recorded queue interval is consequently attached to legacy unknown-round history, or omitted from round lines when that history is absent, despite appearing in the breakdown.\n\nTest 20 covers timing-only reviews in a separate unknown-round group, and test 22 covers only the older `started` state; both pass these failures. Retain timing-only attempts alongside result-bearing attempts and associate work admission with the turn it starts, while leaving historical ordinals unknown.",
-        "file": "src/forge/time_records.py",
-        "line": 132,
+        "body": "A failed review on an earlier release leaves timing evidence without a review step or result event. This is a normal failure path: tests/fixtures/forge-v1.2.2/src/forge/review.py:459 raises when review fails, while close.py:102 records its timing and consequently never reaches the review-step update at line 103. After upgrading and retrying, this helper ignores that timing, sees zero steps/events, and assigns review_round=1 despite the observed earlier attempt. Both ordinary and mechanical closes use this helper. For v1.2.2 history, time_records.py:126\u2013129 also appends the earlier unknown-worker attempt after modern attempts; its first-review completeness check therefore classifies the modern findings as known new findings instead of unknown. Board JSON and How it went publish the invented ordinal and counts. This is new evidence beyond the previous mixed-history ruling: an ordinary failed legacy review, rather than a successful timing-only review. Tests 20 and 23 retain timings but do not assert these classifications after that failure path. Account for timing-only reviews when establishing ordinal certainty, and process attempts chronologically before classifying findings.",
+        "file": "src/forge/review.py",
+        "line": 471,
         "priority": "P1",
-        "title": "Not done: preserve review attempts and lane waits across mixed legacy history"
+        "title": "Not done: keep timing-only legacy review ordinals and finding counts unknown"
       }
     ],
-    "id": "e9c4b995-90fc-49bf-905a-30406bae7ae1",
+    "id": "4f431423-4dc3-41c8-aa54-0dee6e7c918e",
     "status": "blocked"
   },
   "round": 7,
@@ -62,6 +63,10 @@
     },
     {
       "at": "2026-10-09T20:29:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:23:17+00:00",
       "step": "review"
     }
   ],
