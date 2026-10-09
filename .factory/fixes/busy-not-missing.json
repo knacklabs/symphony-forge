@@ -3,12 +3,14 @@
   "branch": "fix/busy-not-missing",
   "done_when": "Close and land report the no-runner problem, naming the runner setting, only when no job for this repo needing that runner has started during the wait window (runners missing), and otherwise keep waiting as they do for running checks (runners busy); forge doctor's warning follows the same rule; a command test with a faked GitHub covers a busy pool (keeps waiting, then passes) and a missing runner (stops with the message), for a new repo and one adopted on an earlier release",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T05:14:44+00:00",
       "step": "start"
     }
   ],
-  "why": "Close's new 'checks stayed queued for five minutes; no runner has picked them up' stop fires whenever the organisation's shared runner pool is merely busy (it fired on Forge's own repo during the v1.2.8 bump, where ubuntu-latest runners exist), so busy periods stop close and land with a misleading runner message, undoing land's wait for long CI"
+  "why": "Close's new 'checks stayed queued for five minutes; no runner has picked them up' stop fires whenever the organisation's shared runner pool is merely busy (it fired on Forge's own repo during the v1.2.8 bump, where ubuntu-latest runners exist), so busy periods stop close and land with a misleading runner message, undoing land's wait for long CI",
+  "worker": "codex"
 }
