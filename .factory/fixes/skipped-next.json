@@ -3,12 +3,14 @@
   "branch": "fix/skipped-next",
   "done_when": "forge next lets a failed check decide the next step only when the pull request head equals the local head; upgrade advice names origin/<default>; next fetches before recommending story done or says to fetch; blank answers count as unanswered; the approval hook prints its pin notice only after recording succeeds and names the pinned release when it is newer; command tests cover each, for a new repo and one adopted on an earlier release",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T18:34:29+00:00",
       "step": "start"
     }
   ],
-  "why": "Real issues the coordinator skipped, still in forge next and its advice (audit, 2026-10-09): a failed pull request check overrides the next step even after a local repair, upgrade advice says to merge the local default branch instead of origin's, next recommends story done before the fetch it needs, an answer with only whitespace counts as settled, and the approval hook says recorded anyway before sign-off can still refuse and gives wrong advice when the repo pins a newer release"
+  "why": "Real issues the coordinator skipped, still in forge next and its advice (audit, 2026-10-09): a failed pull request check overrides the next step even after a local repair, upgrade advice says to merge the local default branch instead of origin's, next recommends story done before the fetch it needs, an answer with only whitespace counts as settled, and the approval hook says recorded anyway before sign-off can still refuse and gives wrong advice when the repo pins a newer release",
+  "worker": "codex"
 }
