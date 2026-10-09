@@ -2,17 +2,35 @@
   "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
   "branch": "fix/queued-not-stop",
   "done_when": "forge land and forge close never stop just because checks are queued: land keeps waiting, and close's wait line says plainly that the checks are queued, for how long, and that the shared runners may be busy or no runner may match the runner setting; only forge doctor reports a likely missing runner, and only when no job of this repo needing that runner has run in the last several days; the no-runner advice no longer tells people to run forge sync unless they changed the runner setting; command tests with a faked GitHub cover a long busy queue that then passes and a repo whose runner never picks anything up, for a new repo and one adopted on an earlier release",
-  "flagged": [],
+  "flagged": [
+    "src/forge/checks.py",
+    "src/forge/templates/skill.md"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "63202e515e6b619bd5de37d6f61c7cfd19781accf29502aeeced2a74a34edf1c",
-    "changed": "4bd86279551a9ad3f4a4bb9c36d02ce9a4b5659cc2b740605a6b54ecf4f3a464",
-    "commit": "84d2ff3e0c68478a3fc11878d0412325b0aa9f6d",
+    "branch_diff": "4100b4fd2f862a66dca0c412abfc9ce20bbb5c808a912822a37de1c1b4db0d72",
+    "changed": "50785e29cd3f664299d1a41e667ff61f5ea693acf58ad9f4b9a221d6673b29fd",
+    "commit": "811c98f979aa8f8ed4829e726b199be6f5582572",
     "dismissals": [],
-    "findings": [],
-    "id": "fec08e82-ee4a-4f20-b07d-2444e1a29e86",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "New evidence not considered by the seven-day-queue ruling: [GitHub's runner contract](https://docs.github.com/en/actions/reference/runners/self-hosted-runners#routing-precedence-for-self-hosted-runners) says unmatched self-hosted jobs fail after 24 hours. Requiring a currently queued workflow whose latest update is seven days old therefore prevents doctor from diagnosing the ordinary missing-runner scenario: its jobs have already failed, and rerunning them resets the timestamp. The positive cases in test_queued_checks_keep_waiting.py::test_2_only_doctor_reports_likely_missing_runner_after_days and the sibling doctor tests fabricate eight-day live queues, masking this failure for both client histories. Base the diagnosis on several days of unmet runner demand and absent matching activity, including expired attempts, and cover GitHub's actual cancellation lifecycle.",
+        "file": "src/forge/checks.py",
+        "line": 113,
+        "priority": "P1",
+        "title": "Not done: doctor detects a runner that never picks up jobs"
+      },
+      {
+        "body": "The standard requires: \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\" Although the shipped skill is corrected here, docs/guide.md:34\u201336 still says doctor and close diagnose queues after five minutes and advises making a runner available, \"then sync\" unconditionally. This leaves the user-facing guide recommending the ineffective recovery action this fix promises to remove. Update that paragraph with doctor-only diagnosis after the observation window and sync only after changing the runner setting.",
+        "file": "src/forge/templates/skill.md",
+        "line": 86,
+        "priority": "P1",
+        "title": "Standard: Delete before adding"
+      }
+    ],
+    "id": "ddcef889-f483-4613-932e-7297b4944f15",
+    "status": "blocked"
   },
   "round": 2,
   "status": "fixing",
@@ -23,6 +41,10 @@
     },
     {
       "at": "2026-10-09T13:44:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:15:55+00:00",
       "step": "review"
     }
   ],
