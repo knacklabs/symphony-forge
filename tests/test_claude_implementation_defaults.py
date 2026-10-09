@@ -17,7 +17,7 @@ SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
 OPUS = {"model": "claude-opus-5-5", "effort": "high"}
 
 
-def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo, gh, tmp_path):
+def test_1_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     settings = client / "forge.toml"
@@ -40,7 +40,7 @@ def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo, g
     assert "claude-opus-5-5" in guide and "high" in guide
 
 
-def test_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(unsynced_up):
+def test_2_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(unsynced_up):
     up = unsynced_up
     _repo_adopted_on_the_previous_release(up)
     models = tomllib.loads(up.show("forge.toml"))["models"]
@@ -54,7 +54,7 @@ def test_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(
         assert "Existing model entries stay unchanged" in notes
 
 
-def test_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path, monkeypatch):
+def test_3_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path, monkeypatch):
     setup(repo)
     shop = new_story(repo, "SHOP")
     toml = shop / "forge.toml"
@@ -70,7 +70,7 @@ def test_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path, m
     assert "reader: claude (claude-opus-5-5)" in (shop / "plans/SHOP.read.md").read_text("utf-8")
 
 
-def test_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
+def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n')
     repo.git("add", "forge.toml")

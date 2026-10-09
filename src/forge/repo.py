@@ -467,7 +467,7 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """One kind's entry for a family ("codex" or "claude") from forge.toml's [models] table: its
     own entry, or a single entry whose model is that family's; Claude plan reads default to
     Opus at high effort, and other missing entries return {}."""
-    chosen = cfg["models"].get(kind) or {}
+    chosen = cfg.get("models", {}).get(kind) or {}
     if "model" not in chosen:
         return chosen.get(family) or (CLAUDE_GRILL_DEFAULT
                                      if kind == "grill" and family == "claude" else {})

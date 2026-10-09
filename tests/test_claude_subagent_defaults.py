@@ -46,7 +46,7 @@ effort = "low"
     (CODEX_MODELS, ("claude-opus-5-5", "high")),
     (CODEX_MODELS + CLAUDE_MODELS, ("custom-opus", "medium")),
 ], ids=["new-repo", "missing-claude-entries", "configured-grill-and-old-review"])
-def test_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
+def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
         repo, gh, tmp_path, models, planning):
     # Building stays on Sonnet. Planning follows grill rather than design, while diagnostic
     # roles use Opus independently of obsolete review pins owned by the external reviewer.

@@ -11,7 +11,7 @@ STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 
 @pytest.mark.parametrize("family", ["claude", "codex"])
 @pytest.mark.parametrize("light", [False, True], ids=["normal", "light"])
-def test_close_uses_repository_tool_without_model_or_effort_overrides(env, family, light):
+def test_6_close_uses_repository_tool_without_model_or_effort_overrides(env, family, light):
     toml = env.repo.path / "forge.toml"
     text = toml.read_text("utf-8").replace('workers = "claude"', f'workers = "{family}"')
     # Legacy configured pins must not become overrides of the external program's defaults.
@@ -32,7 +32,7 @@ def test_close_uses_repository_tool_without_model_or_effort_overrides(env, famil
 
 
 @pytest.mark.parametrize("family", ["claude", "codex"])
-def test_signoff_uses_repository_tool_and_accepts_autoreview_default_selection(
+def test_7_signoff_uses_repository_tool_and_accepts_autoreview_default_selection(
         repo, tmp_path, monkeypatch, family):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     toml = fix / "forge.toml"
