@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-09T22:43:09+00:00",
+      "because": "'Any common wording' had no end: each review round named one more phrasing. One general sentence rule replaces the word lists.",
+      "done_when": "forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered 'No findings' form, the plain form and a real finding, for a new repo and one adopted on an earlier release"
+    }
+  ],
   "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
   "branch": "fix/read-no-findings",
-  "done_when": "forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered 'No findings' form, the plain form and a real finding, for a new repo and one adopted on an earlier release",
+  "done_when": "forge read records a round as passed when every numbered item (or the whole reply) is one sentence that says 'no' followed by findings, issues, problems, bugs or defects (for example 'No findings.', 'There were no findings.', 'I have no findings to report.'), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered form, the plain form, those wordings and a real finding, for a new repo and one adopted on an earlier release",
   "flagged": [
     "src/forge/story.py"
   ],
