@@ -9,12 +9,37 @@
   "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
   "branch": "fix/lean-review-prompts",
   "done_when": "One written boundary of what counts, word for word the same in the shipped review and cold-read instructions: Raise (a functional defect on a normally used path, security, data loss, scale at a named realistic size or unbounded or per-run cost, an unmet Done-when item or a doc contradicting itself or a recorded decision, a missing or hollow test for an item's own behaviour, an unnamed new moving part, plus the review's existing gates and the cold read's plan gaps) and Leave out (rare combinations, cases a fail-closed rule covers, test variations with no concrete broken scenario, hardening beyond the promise, style, duplicates), with a realistic named scenario, security or data loss always winning; every raised finding names its Raise line; review findings inside the boundary are P0/P1 and only named Simpler and Later advice remains; the shipped coordinator guide says every P0/P1 inside the boundary gets a fix round and a dismissal or cold-read keep is allowed only outside the boundary or when factually wrong, citing the line; existing gates, the proof-list check and the previous-findings carry-over stay; a rules evaluation over the recorded findings since 2026-09-18 in Forge and a client repo shows every real issue still raised; prompt-content tests cover a new repo and one adopted on an earlier release after sync",
+  "flagged": [
+    "src/forge/templates/review.md"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e56b354e000d29d657536f5424ce2d054588c3d477a559e925f61d2ea1486831",
+    "changed": "19b8d191032dcedb68a6a62b72682dd3be461ad0ca875a73ce2e9da12865a5ec",
+    "commit": "9e4e368bdf8370301606fcb5e0031fb77614ad9a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Not done. The required word-for-word boundary differs between the delivered prompts: review.md includes the Gate line here, while cold-read.md:41 includes a different Plan gap line. The named proof in tests/test_fix_lean_review_prompts.py:59\u201362 removes everything between Moving part and Leave out before comparing, so both client cases pass despite this unmet requirement. Ship the same complete boundary, including both context-specific Raise lines, and compare that entire boundary in the test.",
+        "file": "src/forge/templates/review.md",
+        "line": 109,
+        "priority": "P1",
+        "title": "Not done: one identical written boundary in review and cold read"
+      }
+    ],
+    "id": "f040b8e2-6e62-42f0-9287-797ec4e38e89",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T17:49:26+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:12:45+00:00",
+      "step": "review"
     }
   ],
   "why": "Cold reads and Autoreview reviews keep finding one more rare edge case per round (items ran 4 to 9 rounds on 2026-10-08/09), which slows shipping without improving what users get; the owner wants both prompts to ask for only what's needed, ignore very rare cases by likelihood, and never compromise on scale, security or functional correctness (2026-10-09)"
