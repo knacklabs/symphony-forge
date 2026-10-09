@@ -12,7 +12,7 @@ from test_codex_worker import MODELS, _toml, sdk_data  # noqa: F401
 from test_setup import _fresh_client
 from test_task import DOC, story
 from test_worker import calls, install_claude
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_upgrade_command import RELEASE, Upgrade, unsynced_up  # noqa: F401
 
 STORY = "worker-no-settings"
@@ -183,6 +183,7 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
 def test_5_coordinator_upgrade_commits_settings_through_installed_hooks(unsynced_up, client):
     # Unlike a raw git commit, upgrade uses Forge's subprocess environment and new-release hooks.
     up = Upgrade(unsynced_up.env, unsynced_up.tmp)
+    up.env.checks(GREEN)
     settings = (client.path / "forge.toml").read_text("utf-8")
     settings = re.sub(r'^(?:test|fast_test) = .*\n', '', settings, flags=re.M)
     up.on_main("forge.toml", 'test = "echo ok"\nfast_test = "echo ok"\n' + settings)
@@ -198,6 +199,7 @@ def test_5_coordinator_upgrade_commits_settings_through_installed_hooks(unsynced
 def test_6_coordinator_generated_merge_commits_incoming_settings(env, client):
     # Close resolves a generated-guide conflict while an incoming settings edit is staged.
     setup = Upgrade(env, env.tmp)
+    env.checks(GREEN)
     settings = (client.path / "forge.toml").read_text("utf-8")
     settings = re.sub(r'^(?:test|fast_test) = .*\n', '', settings, flags=re.M)
     settings = 'test = "echo ok"\nfast_test = "echo ok"\n' + settings

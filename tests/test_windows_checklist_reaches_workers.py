@@ -17,7 +17,6 @@ def test_1_sync_and_worker_brief_carry_the_windows_checklist(repo, gh, tmp_path,
     # This guards delivery of the checklist, not whether a model follows it. The only fake
     # is Claude at its process boundary; Forge generates and sends the actual brief.
     log = install_claude(repo)
-    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
     if setup == "new":
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr

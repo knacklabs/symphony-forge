@@ -20,7 +20,6 @@ def flat(text):
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "sync-after-earlier-adoption"])
 def test_1_clients_receive_proof_list_instructions(repo, gh, tmp_path, monkeypatch, adopted):
     log = install_claude(repo)
-    monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
     version = repo.forge("--version").stdout.split()[-1]
     if adopted:
         shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
