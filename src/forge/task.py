@@ -214,20 +214,13 @@ def start(args: argparse.Namespace) -> None:
     if behind:
         sys.exit(behind)  # the same one line forge next prints
     notes_rel = f"plans/{key}.read.md"
-    # The story doc lands on the default branch with its first merged task; until then the
-    # story branch holds it, and tasks start from there. After that, a story read in rounds is
-    # read from its story branch while it exists, and its doc, notes and state are carried over.
-    base = main if show(main, doc_rel) is not None else story_branch
+    # Published builder assignments stay current even after the first part lands.
     state_rel = repo.state_path(key)
-    story_source = story.plan_ref(top, key)
-    source = (story_source if base == story_branch or story.rounds(show(story_source, notes_rel),
-                                                                  show(story_source, state_rel))
-              else base)
+    source = story.plan_ref(top, key)
     text = show(source, doc_rel)
     if text is None:
         refuse(REFUSALS["no_doc"], key=key, default=repo.default_branch())
-    if source == story_source:
-        text = story._plan(top, key)
+    text = story._plan(top, key)
     try:
         story.parse(text, repo.root())
     except ValueError as exc:

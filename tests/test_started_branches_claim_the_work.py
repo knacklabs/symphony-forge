@@ -271,6 +271,30 @@ def test_published_reassignment_reaches_teammate_commands_without_losing_local_b
     assert teammate.git("status", "--porcelain", cwd=local_plan)
 
 
+def test_conflicting_local_and_published_builder_edits_refuse_without_changing_the_local_plan(
+        client, claude_payload, tmp_path):
+    base_doc = _developer_doc() + "\nBuild the basket storage first.\n"
+    plan = _approve(client, claude_payload, base_doc)
+    client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
+    teammate = _teammate(client, tmp_path)
+    local_plan = tmp_path / "teammate-plan"
+    teammate.git("worktree", "add", "-q", "-b", "story/SHOP", str(local_plan), "origin/story/SHOP")
+    local_doc = local_plan / "plans/SHOP.md"
+    local_text = base_doc.replace("Build the basket storage first.", "Build the basket page first.")
+    local_doc.write_text(local_text, "utf-8")
+    (plan / "plans/SHOP.md").write_text(
+        base_doc.replace("Build the basket storage first.", "Build both basket parts together."), "utf-8")
+    client.git("add", "plans/SHOP.md", cwd=plan)
+    client.git("commit", "-qm", "Change the builder guidance", cwd=plan)
+    client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
+    teammate.git("fetch", "-q", "origin")
+    listing = teammate.forge("next")
+    assert listing.returncode == 1, listing.stdout + listing.stderr
+    assert ("Local and published edits to plans/SHOP.md conflict; reconcile them before continuing."
+            in listing.stderr)
+    assert local_doc.read_text("utf-8") == local_text
+
+
 def test_board_shows_start_commit_authors_beside_the_plan_approver(client, claude_payload, tmp_path):
     # A teammate already has this checkout when the others claim their work.
     observer = tmp_path / "observer"
