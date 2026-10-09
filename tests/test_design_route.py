@@ -54,9 +54,10 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert len(_sent(codex_log, "turn/start")) == 1
     assert len(calls(claude_log)) == 2
 
-    # Forge's own repository keeps its configured worker even for a user-facing row.
+    # Forge's source repo with explicit Codex workers keeps its ordinary worker model.
     config.write_text(config.read_text("utf-8").replace('repo = "client"',
-                                                     'repo = "forge-source"'), encoding="utf-8")
+                                                     'repo = "forge-source"').replace(
+        'workers = "split"', 'workers = "codex"'), encoding="utf-8")
     repo.git("commit", "-qam", "Use the source repo", cwd=folder)
     source = repo.forge("work", "BOARD/PAGE")
     assert source.returncode == 0, source.stdout + source.stderr
@@ -64,7 +65,8 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert len(calls(claude_log)) == 2
 
     config.write_text(config.read_text("utf-8").replace('repo = "forge-source"',
-                                                     'repo = "client"') +
+                                                     'repo = "client"').replace(
+        'workers = "codex"', 'workers = "split"') +
                       '\n[models.design.claude]\nmodel = "custom-opus"\neffort = "high"\n',
                       encoding="utf-8")
     repo.git("commit", "-qam", "Use a custom design model", cwd=folder)

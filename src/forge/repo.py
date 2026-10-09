@@ -474,8 +474,9 @@ def models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
 
 
 def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
-    """Whether a story's task row is design work: a client repo's User-facing row."""
-    return cfg["repo"] == "client" and row.get("User-facing", "").lower() in ("yes", "true")
+    """A User-facing row is design work in clients, or when the source repo opts into split."""
+    return (cfg["repo"] == "client" or cfg["workers"] == "split") and row.get(
+        "User-facing", "").lower() in ("yes", "true")
 
 
 def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
