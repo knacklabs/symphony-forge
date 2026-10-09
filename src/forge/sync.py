@@ -67,7 +67,7 @@ def command(hook: str) -> str:
     If forge can't launch, the inner guard turns that into exit 2; if sh itself can't, the outer
     one does. Exit 2 is the code both hosts treat as blocking.
     """
-    return (f"sh -c '. \"$(git rev-parse --show-toplevel)/{LAUNCHER}\" && forge hook {hook} || exit 2'"
+    return (f"sh -c '. \"$(git -C \"${{CLAUDE_PROJECT_DIR:-.}}\" rev-parse --show-toplevel)/{LAUNCHER}\" && forge hook {hook} || exit 2'"
             " || exit 2")
 
 
@@ -132,7 +132,6 @@ shims = githooks.shims
 ROADMAP_RULE = "plans/roadmap.json merge=forge-roadmap"
 # The spotted list grows on every branch too, and merges by the same rule.
 SPOTTED_RULE = "plans/spotted.json merge=forge-roadmap"
-RANK = {"pending": 0, "done": 2, "superseded": 2}  # planning, started and the rest sit between
 
 def install_line(version: str) -> str:
     """The command that installs the pinned Forge (the pin refusal's own Next line)."""
@@ -299,19 +298,32 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 def merge_roadmap(base: str, ours: str, theirs: str) -> int:
     """Git's merge driver for the roadmap: writes the merge over ours; 1 leaves git's conflict.
 
-    Every item on either side stays, in ours' order then theirs' new ones. When both sides changed
-    an item, the one whose status is further along wins, otherwise ours.
+    Every item on either side stays, in ours' order then theirs' new ones. Independent field edits
+    merge; competing edits to one field leave git's conflict for a person to resolve.
     """
     try:
         old, mine, other = (json.loads(Path(path).read_text(encoding="utf-8") or "{}")
                             for path in (base, ours, theirs))
         was = {item["key"]: item for item in old.get("items", [])}
         items = {item["key"]: item for item in mine["items"]}
-        rank = lambda entry: RANK.get(entry.get("status"), 1)  # noqa: E731
+        missing = object()
         for item in other["items"]:
             key, kept = item["key"], items.get(item["key"])
-            if kept is None or kept == was.get(key) or (item != was.get(key) and rank(item) > rank(kept)):
+            if kept is None:
                 items[key] = item
+                continue
+            before = was.get(key, {})
+            for name in kept.keys() | item.keys() | before.keys():
+                mine_value, other_value = kept.get(name, missing), item.get(name, missing)
+                old_value = before.get(name, missing)
+                if mine_value == other_value or other_value == old_value:
+                    continue
+                if mine_value != old_value:
+                    return 1
+                if name in item:
+                    kept[name] = item[name]
+                else:
+                    kept.pop(name, None)
         # The other top-level fields: theirs only where ours left the base's value alone.
         merged = {**mine, **{name: value for name, value in other.items()
                              if name != "items" and mine.get(name) == old.get(name)}}

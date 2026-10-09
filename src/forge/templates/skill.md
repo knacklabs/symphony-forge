@@ -162,6 +162,8 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
+task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
 external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
 parts, plain titles, labelled states and `waits_for` item references, including old merged
@@ -694,6 +696,10 @@ story's work, using the same overlap rule as `forge task start`.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
+  kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
+  the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
+  disproves it, or the human's `Decided:` line.
 - `Disputed keep <n>: <why>`: the reader still disagrees with a finding you kept. Put it to the
   human as one question with options, record the answer in the doc's Notes as
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
@@ -756,6 +762,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -788,6 +795,7 @@ from the other tool is omitted so the role uses the session's model.
 ## Build simple
 
 Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+Edits to different fields of an item merge; competing edits to the same field need a manual resolution.
 New repos get this rule at init; existing repos get it with `forge sync` or
 `forge doctor --fix`. The shared rule keeps working after a worktree is removed.
 Doctor repairs both paths in Git's shared local attributes, including when an older
@@ -892,9 +900,11 @@ and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pyte
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
-before anything else. If the code proves the finding wrong, dismiss it with
-`forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
-`forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+before anything else. The review's "What counts" list is the boundary: every P0 or P1 finding
+inside it gets a fix round with `forge work <item>`, never a dismissal for being unnecessary, rare
+or low value. Dismiss only a finding outside the boundary or factually wrong, with
+`forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
+out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
@@ -954,7 +964,9 @@ new branch to GitHub after committing its start. The author of that start commit
 who started the work; the board page and `forge board --json` show them next to the plan's
 approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
 record. Git keeps a start tag pointing at the original commit, so its author survives squash
-merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+merges and work-branch cleanup. A retained fix start tag reserves its name even after its
+branch is abandoned; another start says the name is taken and uses the next numbered name.
+Close also publishes retained start commits when an earlier
 start push failed. A second checkout's
 task start names the person who already started that part on GitHub. A failed push says so
 and leaves the work local: teammates cannot see that claim until its branch is pushed.
