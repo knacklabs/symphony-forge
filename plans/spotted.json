@@ -3442,6 +3442,17 @@
       "item": "merge-behind-base",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
