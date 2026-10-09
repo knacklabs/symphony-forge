@@ -318,8 +318,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
 
     # The kind's models, subagents included, reach the new conversation as its settings. They are
     # read again on every call, from the item's checkout; the caller's forge.toml is another. The
-    # second call is a fix round, on the fix kind's models; this stub can't resume a conversation,
-    # so it starts a new one.
+    # second call is a fix round, on the fix kind's models, in the same conversation.
     toml.write_text(_toml(version, "codex", MODELS), encoding="utf-8")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _sent(calls, "thread/start")[-1]["config"] == BUILD
@@ -328,7 +327,7 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
     again = repo.forge("work", "BOARD/PAGE")
     assert again.returncode == 0, again.stdout + again.stderr
     config = {**QUIET, "features.multi_agent": True, "model": "gpt-6-nova", "model_reasoning_effort": "high"}
-    assert _sent(calls, "thread/start")[-1]["config"] == config
+    assert _sent(calls, "thread/resume")[-1]["config"] == config
     assert f"stub codex: built it with {json.dumps(config, sort_keys=True)}" in again.stdout
     assert "gpt-6-nova" not in (repo.path / "forge.toml").read_text(encoding="utf-8")
 
@@ -384,8 +383,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert not _left(repo.path / ".git" / "forge" / "work-fix-the-login-typo.log", calls)
 
     # A failed turn is logged as Codex reported it, with blank tokens when it reports none, and
-    # forge work stops with the log's path. It is a fix round, and this stub can't resume the
-    # conversation, so it started a new one and says why.
+    # forge work stops with the log's path. It is a fix round on the same conversation.
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     monkeypatch.setenv("STUB_CODEX_NO_USAGE", "1")
     failed = repo.forge("work", "BOARD/PAGE")
@@ -394,8 +392,7 @@ def test_4_turn_log(repo, monkeypatch, sdk_data):
     assert "Codex ended the turn: failed (stub codex: the model gave up)" in failed.stdout
     assert not _left(work_log, calls)
     started, ended = {**started, "kind": "Fix"}, {
-        **ended, "kind": "Fix",
-        "fresh_start": "Codex couldn't resume its conversation: stub: no thread/resume"}
+        **ended, "kind": "Fix", "continued": True, "fresh_start": None}
     assert _lines(turns)[2:] == [started, {**ended, "status": "failed", "input_tokens": None,
                                            "cached_input_tokens": None, "output_tokens": None}]
 

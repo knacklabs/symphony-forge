@@ -198,7 +198,7 @@ def remember(checkout: Path, item: str) -> None:
     if state["chat"]["claude"]:
         state["chat"]["claude"] = {key: value for key, value in state["chat"]["claude"].items()
                                   if key != "checkout"}
-    repo.commit_state("Keep the worker conversation", repo.write_state(item, state, checkout),
+    repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, checkout),
                       top=checkout)
 
 
