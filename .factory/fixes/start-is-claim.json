@@ -20,34 +20,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b0eb8d3764b15b99612733f1aeefe4a206ff497f0a6ef49777c254000e70cd50",
-    "changed": "7ccb5ad13c9b56781c6503c017c365c4fec6aee8a5dc6f4755d9a93a4c1fb300",
-    "commit": "f4c0751fd7df5cef49dba370e051cef3b127c266",
+    "branch_diff": "4414150dd60d524cbcdb42131ad5b0cfa68164f0ca66c8ee362898b83e322660",
+    "changed": "95acd11c00fa287da02d7ed438ecef5b208009860276eb43820266fa61ade1ab",
+    "commit": "b8d7d54141a306f970c3dff136f56e62c9eba9d3",
     "dismissals": [],
     "findings": [
       {
-        "body": "New evidence beyond the retained-start recovery ruling: filtering tags by branch ancestry misses two supported recovery paths. Close rebases a stacked fix after its parent merges (close.py:402\u2013416), so an initially rejected start's original tag is no longer an ancestor and never gets published. Likewise, a story's first task with a cross-story dependency starts from main (task.py:276\u2013278) and copies the plan files instead of retaining story ancestry; close therefore omits an unpublished story-start tag. After squash merging and branch cleanup, a fresh observer loses these starters. The copied-plan path also loses the approval commit even when start publication succeeded: the story tag predates approval, and board.py:775\u2013777 cannot find the approver once the story branch disappears. Publish the relevant retained references independently of ancestry and preserve the carried plan's approval history. The cleanup proof exercises story-descended tasks and unstacked fixes, and checks starters without checking approvers, so it passes despite these gaps.",
-        "file": "src/forge/close.py",
-        "line": 506,
+        "body": "The supplied full-suite check remains failed: 9 failed, 1613 passed, 7 skipped. One failure is directly verifiable: tests/test_rules.py:44\u201345 requires test_<n>_<rule>, but all 12 tests in this file and the test in tests/test_starter_names_survive_branch_cleanup.py have unnumbered names. The required workflow runs the entire suite (.github/workflows/forge.yml:39). Resolve this naming incompatibility and the reported board-text, approval/start-publication, machine-view-count and merge-enable failures before claiming the required check passes. The 83 passing related tests do not clear these failures.",
+        "file": "tests/test_started_branches_claim_the_work.py",
+        "line": 86,
         "priority": "P1",
-        "title": "Preserve ownership references across copied plans and follow-up replay"
+        "title": "Not done: required tests check"
       },
       {
-        "body": "Published stories now enter next's discovery without a local worktree. If the lead pushes a completed cold read and Developer assignments before human approval, a teammate reaches this line with path=None, skips the approval check, and receives 'can start now' commands for the assigned parts. Task start then refuses because the story is not approved (task.py:239\u2013243). Check the selected published state's approval against the plan before offering starts; the same check should cover published plans awaiting renewed approval. The assignment-discovery tests approve every plan before publication, so they do not detect this mismatch.",
+        "body": "The previous P2 remains open. A teammate without a local story worktree skips this approval check, even when the published plan has a passing cold read but has not been approved. Consequently, next offers assigned parts as able to start, while task start refuses them at src/forge/task.py:241\u2013245. Published plans awaiting renewed approval have the same mismatch. Check the selected published state's approval hash against the reconciled plan before offering starts. The assignment-discovery tests approve their plans and therefore do not catch this case.",
         "file": "src/forge/nextstep.py",
         "line": 413,
         "priority": "P2",
         "title": "Check approval before offering starts from a published draft"
       },
       {
-        "body": "The previous P2 remains open. After an unmerged fix's worktree and branches are removed, its immutable start tag remains. Fix name selection still considers only branches and merged state (task.py:334\u2013339), so restarting the same slug creates a new worktree and commit before this update-ref fails because the tag already exists. Restarting removed stories or tasks with the same branch name has the same failure. Reserve retained names during selection or detect the collision before creating work, while preserving the original tags.",
+        "body": "The previous P2 remains open. Removing an unmerged item's branches and worktree leaves its immutable start tag. Fix name selection considers only branches and merged state (src/forge/task.py:336\u2013339), so restarting the same slug creates a worktree and commits its state before this update-ref fails because the tag already exists. Reusing removed story or task names has the same problem. Copied-plan tasks can also collide with the retained forge-plan tag at task.py:123, leaving an unfinished checkout. Reserve retained names during selection or detect both tag collisions before creating work, while preserving the original references.",
         "file": "src/forge/task.py",
-        "line": 133,
+        "line": 135,
         "priority": "P2",
-        "title": "Account for retained start tags before reusing an abandoned branch name"
+        "title": "Account for retained tags before reusing an abandoned branch name"
       }
     ],
-    "id": "3650d846-4009-4763-b214-038e79925f77",
+    "id": "d7fa23d2-dfe4-48b2-a852-2c4403c60c67",
     "status": "blocked"
   },
   "round": 5,
@@ -67,6 +67,10 @@
     },
     {
       "at": "2026-10-09T10:46:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T11:50:35+00:00",
       "step": "review"
     }
   ],

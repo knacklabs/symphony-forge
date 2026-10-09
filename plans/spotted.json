@@ -2036,6 +2036,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: required tests check\tstart-is-claim",
+      "kind": "bug",
+      "path": "tests/test_started_branches_claim_the_work.py",
+      "line": 86,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_steer_question.py",
@@ -2866,6 +2877,17 @@
       "path": "src/forge/task.py",
       "line": 133,
       "text": "Account for retained start tags before reusing an abandoned branch name",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tAccount for retained tags before reusing an abandoned branch name",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 135,
+      "text": "Account for retained tags before reusing an abandoned branch name",
       "from": "review",
       "item": "start-is-claim",
       "status": "open",
