@@ -789,8 +789,12 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands and the default branch is merged in. Otherwise it starts from
-the default branch. Merging default-branch updates before the underlying item lands needs Git
+after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+onto the current default branch and publishes with a lease. It preserves earlier merge edits,
+leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
+conflict. Follow the printed replay and leased publication commands before closing again.
+Otherwise it starts from the default branch and close keeps merging default updates.
+Follow-up replay and merging default-branch updates before the underlying item lands need Git
 2.38 or newer.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
@@ -815,7 +819,7 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
-Close merges the default branch before it tests or reviews. If only files `forge sync` writes
+Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. When the
 test command fails, close stops before the review and keeps the output for the worker: run
