@@ -69,8 +69,8 @@ def _client(env, history):
     (command, activity) for command in ("close", "land", "land-merge", "doctor")
     for activity in ("busy", "missing")
 ] + [("doctor", activity) for activity in (
-    "busy-running", "wrong-label", "old-job", "future-job", "unassigned")])
-def test_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
+    "busy-running", "busy-rerun", "wrong-label", "old-job", "future-job", "unassigned")])
+def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
     env = clock
     _client(env, history)
     if command == "land-merge":
@@ -97,6 +97,8 @@ def test_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command
         other.update(status="in_progress", updated_at=other["created_at"])
         job["status"] = "in_progress"
         # A running workflow's update time need not advance for each job start.
+    elif activity == "busy-rerun":
+        other.update(status="queued", run_attempt=2)
     elif activity == "wrong-label":
         job["labels"] = ["self-hosted"]
     elif activity == "old-job":
@@ -106,9 +108,12 @@ def test_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command
     elif activity == "unassigned":
         job.update(status="queued", runner_id=0)
     _queue(env, ACTIONS, *_runs([queued, other]))
-    _queue(env, JOBS + ["repos/{owner}/{repo}/actions/runs/101/jobs?per_page=100"], "")
-    _queue(env, JOBS + ["repos/{owner}/{repo}/actions/runs/102/jobs?per_page=100"],
-           *_runs([] if activity == "missing" else [job]))
+    for run_id, jobs in ((101, []), (102, [] if activity == "missing" else [job])):
+        endpoint = f"repos/{{owner}}/{{repo}}/actions/runs/{run_id}/jobs"
+        # GitHub defaults to the latest attempt; a queued rerun hides older jobs.
+        _queue(env, JOBS + [endpoint + "?per_page=100"],
+               *_runs([] if activity == "busy-rerun" else jobs))
+        _queue(env, JOBS + [endpoint + "?filter=all"], *_runs(jobs))
     pending = [run("tests", None, "queued"), run("forge-pr-check")]
     looks = [pending, pending, GREEN]
     if command == "land-merge":
