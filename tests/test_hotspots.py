@@ -207,6 +207,9 @@ def test_6_new_and_previously_adopted_clients_get_hotspot_guidance(repo, gh, pre
             "A worker or review notes problems outside its change as spotted items, which Forge keeps in `plans/spotted.json` and nobody edits by hand.",
             "A spotted item never widens the change in hand, except a bug that blocks it.",
             "When `forge next` names a file that keeps breaking, start its fix command at once, like any ready item, without asking the owner.",
-            "When `forge merge` fails because the pull request no longer merges cleanly, run `forge close <item>` again, which merges the default branch with Forge's own rule for the spotted list and the roadmap.",
+            # Recovery now runs close automatically; both hosts must teach that flow.
+            "When GitHub refuses because the branch is behind the default branch, `forge merge` and `forge land` say so in one line, run close again to merge the default branch and run the tests, review and checks as close decides, then retry the merge.",
+            "A real conflict stops with close's existing resolution steps.",
+            "Other GitHub refusals keep their next action.",
             "Count the story's items' entries per file in `plans/spotted.json` on the default branch, open or done; each file with three or more, or one a task was stopped on (its state's `stop`), gets one trap line naming the file and the kind of problem that kept coming back."):
             assert sentence in flat
