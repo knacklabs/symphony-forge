@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
@@ -742,7 +748,8 @@ ask the human to review it in Codex's /hooks, then run the command again.
 For a quick question about the code that needs no fix, run `forge ask "<question>"`. It asks
 Codex read-only in this checkout and prints the answer. Use `--model <model>` and
 `--effort <effort>` to choose for this question; without them it uses the Codex entry of
-`[models.lite]` in `forge.toml`. Its records stay under `.git/forge/`; the conversation is temporary and does not
+`[models.explore]` in `forge.toml`, falling back to `[models.lite]` when explore is absent.
+Its records stay under `.git/forge/`; the conversation is temporary and does not
 appear in the Codex chat list. If a tracked or untracked file changes during the turn, Forge
 discards the answer.
 
@@ -769,6 +776,12 @@ The diagnosing and planning roles change no files. Building an item still goes t
 `forge work`. To change a role's model or effort, change `forge.toml` and run `forge sync`.
 Roles use their host's entry when the kind has per-tool entries. With a single entry, a model
 from the other tool is omitted so the role uses the session's model.
+
+The explorer role and `forge ask` use the read-only `explore` kind; `lite` keeps a fix's first
+build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
+`[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
+without explore keep using lite for read-only work after upgrading and syncing. To choose
+separate read-only settings there, add the explore entries in a fix and run `forge sync`.
 
 ## Build simple
 

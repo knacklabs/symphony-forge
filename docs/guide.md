@@ -127,10 +127,11 @@ merging when the repo allows agent merges.
 
 Ask your agent to set `workers = "codex"` in `forge.toml` if you want Codex to build tasks and fixes.
 The same file holds a `[models]` table: `[models.build]` for the first task build,
-`[models.fix]` for later fix rounds, `[models.lite]` for quick fixes,
+`[models.fix]` for later fix rounds, `[models.lite]` for a fix's first build round,
+`[models.explore]` for the explorer role on both hosts and quick read-only questions,
 `[models.grill.codex]` and `[models.grill.claude]` for cold reads, and `[models.review]` for
-Autoreview. Build, fix, lite and grill set a model and reasoning effort; review sets its model.
-Building and fixing can also set the subagents' model and effort. Build, fix, lite and review may
+Autoreview. Build, fix, lite, explore and grill set a model and reasoning effort; review sets its model.
+Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite, explore and review may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
 kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
@@ -165,11 +166,17 @@ question and answer in the answering brief and resumes the worker's conversation
 If that round fails or is interrupted, answer again with `--note`; the question remains open.
 
 Use `forge ask "<question>"` for a quick read-only look at this checkout without starting a
-fix. It uses `[models.lite]` in `forge.toml` by default; pass `--model <model>` or
+fix. It uses the Codex entry of `[models.explore]` in `forge.toml` by default, falling back to
+`[models.lite]` when explore is absent; pass `--model <model>` or
 `--effort <effort>` to override either setting for the question. Forge prints the answer and
 keeps its records under `.git/forge/`. The Codex conversation is temporary and does not appear
 in the chat list. If a tracked or untracked file changes during the turn, Forge discards the
 answer and tells you to check `git status` before asking again.
+
+New repos get explore on Claude with `claude-haiku-5-5` at high effort and on Codex with the
+initial lite settings. Upgrading and syncing an existing repo preserves its settings: without
+explore, its read-only work keeps using lite. Add explore entries in a fix and sync to separate
+read-only work from implementation.
 
 ## The two lanes
 
