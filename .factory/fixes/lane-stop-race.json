@@ -1,0 +1,41 @@
+{
+  "base": "d7de4f8a345391d2f98697766a714d30d5222b0c",
+  "branch": "fix/lane-stop-race",
+  "done_when": "The real cause of the stop confirmation race is fixed (a stopped run's process is confirmed gone before the stop reports success, or the test waits on real process state instead of a fixed moment), with no longer timeout or looser assertion; both tests pass on every CI platform; if the cause is in forge's stop, new and earlier-adopted client repos get the fix with a command test for each",
+  "flagged": [
+    "tests/test_lanes_view.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "35be92f7c7a1024b3eea2242f5bb4686a5a10728a3ebe3be50ccd02e15984661",
+    "changed": "4e66fb5b69285841340be74262c17ec7623fc4c6eae751af4d98ad47bdbe0e88",
+    "commit": "c95875c9fdf090d0777524d2ba27383705a07dcc",
+    "dismissals": [],
+    "findings": [],
+    "id": "f6523aec-80e4-483d-aff6-adda37a0a0b5",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T12:13:37+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T12:28:12+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T13:29:14+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T18:27:54+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Main's CI fails at random in the lane stop tests: tests/test_lanes_view.py test_4 (second stop could not confirm the Codex worker stopped) and test_5 (claude-worker-and-test, a process still alive) (main run 37768238587 and a pull request run)",
+  "worker": "codex"
+}
