@@ -657,6 +657,12 @@ so with the command that merges it into the story branch; run it, then carry on.
 content history, never commit dates: an older copy on the default branch does not block a start.
 When only the story doc differs, `forge task start` merges the default branch into the clean
 story branch itself and says so; conflicting edits still need the printed merge command.
+When a story pins an older Forge release than the fetched default branch, `forge task start`
+first merges that default branch into the clean story branch so the task uses the upgraded
+release and rules. Resolve any merge conflicts in the named story folder, commit the merge,
+then retry task start. Matching release pins need no upgrade merge.
+This also works from an older story checkout or a stale default checkout: task start handles
+the upgrade before Forge can forward the command to the checkout's older release.
 `forge next` names the unmerged item a part waits on for overlapping files, including another
 story's work, using the same overlap rule as `forge task start`.
 

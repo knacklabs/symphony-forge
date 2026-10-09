@@ -521,6 +521,10 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
             for path in trees.values() if (path / "forge.toml").is_file()}
     landed_ref = story.landed_ref(top)
     landed = _pin(story.show(top, landed_ref, "forge.toml") or "")
+    # Task start must update its story before an old checkout can hand it to the old release.
+    if (words == "task start" and (task := ITEM.fullmatch(item)) and task["task"]
+            and landed_ref == f"origin/{default_branch(top)}" and _older(pinned, landed)):
+        return
     branch = current_branch(top)
     if branch == default_branch(top) and _older(pinned) and _older(landed):
         upgrade = next((branch[4:] for branch, path in trees.items()
@@ -586,9 +590,9 @@ def _pin(text: str) -> str:
     return version.removeprefix("v") if isinstance(version, str) else ""
 
 
-def _older(version: str) -> bool:
-    """The version is a release older than the installed Forge."""
-    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, __version__))
+def _older(version: str, target: str = __version__) -> bool:
+    """The version is a release older than the target (the installed Forge by default)."""
+    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, target))
     return bool(release and installed and
                 tuple(map(int, release.groups())) < tuple(map(int, installed.groups())))
 

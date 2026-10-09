@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
 from typing import Any
@@ -137,18 +138,33 @@ def start(args: argparse.Namespace) -> None:
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     behind = story.plan_behind(top, key, main)
-    if (show(story_branch, doc_rel) is not None and
+    old_pin = repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
+                          repo._pin(show(main, "forge.toml") or ""))
+    if old_pin or (show(story_branch, doc_rel) is not None and
             run("git", "diff", "--name-only", "-z", story_branch, main).stdout == doc_rel + "\0"):
         folder = story.stories_here(top).get(key)
         if folder is None:
             folder = _folder(f"story-{key}")
             git("worktree", "add", "-q", str(folder), story_branch)
+        retry = f"forge task start {item}"
+        if old_pin:
+            if not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
+                raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+            if git("status", "--porcelain", cwd=folder):
+                raise repo.Refused(f"Commit or stash the changes in {folder} before updating its Forge release.", retry)
         if (not git("status", "--porcelain", cwd=folder) and
                 run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode):
             merged = run("git", "merge", "-q", "--no-edit", main, cwd=folder)
             if not merged.returncode:
-                print(f"Merged {main} into {story_branch}; only the story doc differs.")
+                reason = "updated its Forge release" if old_pin else "only the story doc differs"
+                print(f"Merged {main} into {story_branch}; {reason}.")
                 behind = ""
+            elif old_pin:
+                if git("diff", "--name-only", "--diff-filter=U", cwd=folder):
+                    raise repo.Refused(f"Resolve the merge conflicts, if any, in {folder}, then commit the merge.", retry)
+                raise repo.Refused(f"Could not update {story_branch}'s Forge release: {merged.stderr.strip()}",
+                                   f"git -C {shlex.quote(str(folder))} status; fix the reported problem "
+                                   f"and finish the merge, then {retry}")
             elif not run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=folder).returncode:
                 git("merge", "--abort", cwd=folder)
     if behind:
