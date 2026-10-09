@@ -1,0 +1,14 @@
+{
+  "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
+  "branch": "fix/merge-guard-base",
+  "done_when": "forge merge treats an item as changing the merge setting only when its own change (from its merge base with the default branch to its head) changes forge.toml's merge value; a branch that merely predates a merge-setting change on the default branch merges normally once ready; an item whose pull request has already merged is tidied without the merge-setting check, and leftover untracked files Forge itself generated (such as husky's rebuilt hook folder) don't block removing its worktree; command tests cover a repo adopted on an earlier release that enables agent merges with an older branch open (merges), a branch that really changes the merge setting (still refused), and tidying an already-merged item",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T10:03:27+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge merge refuses any branch made before the repo switched to merge = agent, saying it 'changes the merge setting in forge.toml, so only the repo owner merges', because it compares the branch's merge setting with the default branch's current one instead of with what the branch itself changed; it even refuses to tidy an item whose pull request already merged (reported by a client session right after enabling agent merges)"
+}
