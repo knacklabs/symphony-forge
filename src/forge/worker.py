@@ -247,9 +247,6 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
                                                                            "claude")
-        if "subagents" in chosen:
-            refuse(repo.REFUSALS["models"], problem=f"Claude workers take model and effort, so "
-                                                     f"[models.{kind.lower()}] can't set subagents")
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = codex.sdk_problem()  # includes the declining handler's place in the SDK
     if problem:
@@ -447,8 +444,8 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 return _run(item, top, brief, models, ["--resume", resume])
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
-                output = log.read_bytes()[size:].decode("utf-8", "replace").split("\n", 1)[-1]
-                if not output.startswith("No conversation found"):
+                output = log.read_bytes()[size:].decode("utf-8", "replace")
+                if "No conversation found" not in output:
                     raise
             why = f"Claude no longer has session {resume}"
         if why:
@@ -490,6 +487,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
         out.write(f"--- forge work {item} at {repo.now()}\n")
         worker._stdin_write(brief)
         for line in worker.stdout:
+            out.write(line)
             try:
                 event = json.loads(line)
             except ValueError:
@@ -501,7 +499,6 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             if line:
                 if not isinstance(event, dict) or event.get("type") == "result":
                     print(line, end="", flush=True)
-                out.write(line)
                 lines.append(line)
         worker.wait()
         ran["outcome"] = "completed" if worker.returncode == 0 else "failed"

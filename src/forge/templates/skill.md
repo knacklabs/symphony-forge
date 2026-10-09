@@ -762,6 +762,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
 review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+Claude workers use model and effort and ignore the Codex-only subagents and subagent_effort keys.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
@@ -961,7 +962,9 @@ new branch to GitHub after committing its start. The author of that start commit
 who started the work; the board page and `forge board --json` show them next to the plan's
 approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
 record. Git keeps a start tag pointing at the original commit, so its author survives squash
-merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+merges and work-branch cleanup. A retained fix start tag reserves its name even after its
+branch is abandoned; another start says the name is taken and uses the next numbered name.
+Close also publishes retained start commits when an earlier
 start push failed. A second checkout's
 task start names the person who already started that part on GitHub. A failed push says so
 and leaves the work local: teammates cannot see that claim until its branch is pushed.
