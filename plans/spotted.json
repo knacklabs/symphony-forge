@@ -727,6 +727,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tRepeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 106,
+      "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
+      "from": "worker",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -1024,6 +1035,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 448,
+      "text": "Not done: Developer assignments must be discoverable and current in teammate checkouts",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: Git command counts still grow with old finished stories linked to specs\tfast-views",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1183,6 +1205,17 @@
       "path": "src/forge/task.py",
       "line": 140,
       "text": "Preserve starter attribution through normal squash merges and branch cleanup",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tPublish the retained start reference when a failed start is later recovered\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 137,
+      "text": "Publish the retained start reference when a failed start is later recovered",
       "from": "blocking",
       "item": "start-is-claim",
       "status": "open",
@@ -2802,6 +2835,17 @@
       "text": "Specify user scope when updating an existing installation",
       "from": "review",
       "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tAccount for retained start tags before reusing an abandoned branch name",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 133,
+      "text": "Account for retained start tags before reusing an abandoned branch name",
+      "from": "review",
+      "item": "start-is-claim",
       "status": "open",
       "closed_by": null
     },
