@@ -13,9 +13,9 @@ STORY = "FORGE-CHATVIEW-1"
 URL = "https://github.com/acme/board/pull/12"
 
 
-def _closable(repo, gh, monkeypatch, tmp_path, sdk_data):
+def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     """BOARD/PAGE after one Codex round, with a stub Autoreview, green checks and its pull request."""
-    folder, calls = _ready(repo, monkeypatch, sdk_data)
+    folder, calls = _ready(repo, monkeypatch, sdk_data, client=client)
     toml = folder / "forge.toml"
     toml.write_text(toml.read_text("utf-8").replace(
         'workers = "codex"', 'workers = "codex"\nchecks = ["tests"]', 1), encoding="utf-8")
@@ -63,7 +63,8 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     assert ["pr", "view", "task/BOARD-PAGE", "--json", "number,url,headRefName"] in gh.calls()
     assert _sent(calls, "thread/attachment/add") == [{
         "threadId": "thr-stub-1", "attachmentType": "pull_request",
-        "identityKey": ["github.com", "acme", "board", 12],
+        # Codex takes opaque text, not the old array; the serialized identity stays stable.
+        "identityKey": json.dumps(["github.com", "acme", "board", 12]),
         "payload": {"url": URL, "root": str(repo.path.resolve()),
                     "headBranch": "task/BOARD-PAGE"}}]
 
