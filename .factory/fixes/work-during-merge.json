@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "592d9dc786bdd658d779592b592d2072b6c7e0326bf05366fbd66ed2fa67d5f2",
-    "changed": "9cc68a47daed3019e29e9c55a157774f02755d22de17a4c444bae901b01514b0",
-    "commit": "4525fa24cf7fe3d91b953419697448820db5ec18",
+    "branch_diff": "1c26987828d9748b70f470db011e3f40bdb01b0457da6a465d3657a1d77010c5",
+    "changed": "1ca7c5bd0519f082fa6a97e5bd019879da9df686348fc3ddb24c76782ab7142b",
+    "commit": "c689848b9a9d3256b050d9e19e272f56e8d3d0b8",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported gap remains: when the default-branch merge conflicts in `forge.toml` and `forge work` runs inside the item's checkout, this guard is never reached. `src/forge/cli.py:138` calls `check_pin` first, and `src/forge/repo.py:568` parses the caller's configuration. Conflict markers cause the configuration refusal with `Next: forge doctor`, rather than the resolve-and-commit guidance. This affects both task and fix checkouts. Detect the pending merge before that parse. The added tests conflict only in `merge.txt`, so they pass while this path remains broken.",
+        "body": "The previously reported gap remains for both task and fix checkouts: when the merge conflicts in `forge.toml` and `forge work` runs inside that checkout, `src/forge/cli.py:138` calls `check_pin` before this guard. `src/forge/repo.py:569` parses the caller's configuration; conflict markers trigger the configuration refusal with `Next: forge doctor` rather than the resolve-and-commit guidance. Detect the pending merge before that parse. The four added cases conflict only in `merge.txt`, so they pass while this path remains broken.",
         "file": "src/forge/worker.py",
         "line": 68,
         "priority": "P2",
         "title": "Check for a pending merge before parsing a conflicted forge.toml"
       }
     ],
-    "id": "25719d3c-907d-4af8-b73b-e181a148bcca",
+    "id": "569a27ce-07c8-4ce3-ba06-ed4dbe09b392",
     "status": "clean"
   },
   "round": 1,
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-10-09T19:52:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:47:44+00:00",
       "step": "review"
     }
   ],
