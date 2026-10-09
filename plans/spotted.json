@@ -1277,6 +1277,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 813,
+      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "from": "worker",
+      "item": "skipped-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -1365,17 +1376,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 109,
-      "text": "Not done: one identical written boundary in review and cold read",
-      "from": "blocking",
-      "item": "lean-review-prompts",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -1394,6 +1394,17 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 250,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
@@ -2795,6 +2806,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 115,
+      "text": "Preserve the close continuation when recovery changes the Forge pin",
+      "from": "review",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
       "kind": "edge",
       "path": "src/forge/mod/hooks/events.ts",
@@ -3323,6 +3345,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "from": "worker",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\t.codex/skills/forge/SKILL.md\tChecked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
       "kind": "improve",
       "path": ".codex/skills/forge/SKILL.md",
@@ -3378,6 +3411,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
       "kind": "bug",
       "path": "forge.toml",
@@ -3407,28 +3451,6 @@
       "text": "Update the repository test that still requires Codex workers",
       "from": "blocking",
       "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 115,
-      "text": "Preserve the close continuation when recovery changes the Forge pin",
-      "from": "review",
-      "item": "merge-behind-base",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
-      "kind": "improve",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 75,
-      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
-      "from": "worker",
-      "item": "merge-behind-base",
       "status": "open",
       "closed_by": null
     }
