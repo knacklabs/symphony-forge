@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
+      "kind": "bug",
+      "path": ".factory/fixes/board-spec.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-spec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.factory/fixes/release-127.json\tNot done: Forge's version is 1.2.7 everywhere it is recorded\trelease-127",
       "kind": "bug",
       "path": ".factory/fixes/release-127.json",
@@ -705,6 +716,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/githooks.py\tNot done: Keep coordinator commits and release upgrades working outside worker runs\tworker-no-settings",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 128,
+      "text": "Not done: Keep coordinator commits and release upgrades working outside worker runs",
+      "from": "blocking",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/githooks.py\tNot done: Stacked-fix size/interface checks fail in the shipped pull request workflow\tstacked-fix-count",
       "kind": "bug",
       "path": "src/forge/githooks.py",
@@ -1152,6 +1174,28 @@
       "text": "Not done: mixed repos get one part per kind",
       "from": "blocking",
       "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 183,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 187,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
+      "from": "blocking",
+      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     },
@@ -3363,39 +3407,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 183,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
-      "from": "blocking",
-      "item": "gh-retry",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 187,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
-      "from": "blocking",
-      "item": "gh-retry",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
-      "kind": "bug",
-      "path": ".factory/fixes/board-spec.json",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "board-spec",
       "status": "open",
       "closed_by": null
     }
