@@ -9,16 +9,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8a5e9f1f5d076f6991abd80ca85eff84b980ca349e53b3e80f951e5c86e02c64",
-    "changed": "b44c3e42668e18e3f7d79c5eac6dd6d0e61daccdb4600104caf7f710087a81dc",
-    "commit": "18daba31f2d06bf66b9b2f85c58c988be3ae20f4",
+    "branch_diff": "18253c07ab87d0603cbd5f365ec9e2152fa45664ee7f06a0fdeeb1909ebe450e",
+    "changed": "15e5235ac37b239942a5a80d1780b40637144273d4e8ac59c32916d317bba8c6",
+    "commit": "dece8ab6c56a53654ec2c907fd04d7522eb25762",
     "dismissals": [],
-    "findings": [],
-    "id": "a095339a-b026-4663-a47e-c6a9d59f5c4d",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Conflict regeneration still rewrites user-owned Husky hooks. With `core.hooksPath = .husky/_`, `sync.write(top, cfg)` includes `.husky/pre-commit` and `.husky/pre-push`: `src/forge/githooks.py:84-96` inserts Forge's check into these files, and `src/forge/sync.py:437-444` writes them. Thus, when a generated guide conflicts and a committed custom Husky hook lacks that check, close modifies the hook. Removing these paths from `generated` only excludes them from conflict resolution and staging; it does not prevent the writes, which can leave unstaged hook changes after the merge. Both release-selection branches execute this script. Preserve these user-owned paths during regeneration and cover the case through close; the new hook-preservation tests exercise only the default hooks directory.",
+        "file": "src/forge/close.py",
+        "line": 458,
+        "priority": "P1",
+        "title": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks"
+      }
+    ],
+    "id": "7775cce9-247f-407a-859c-7238e1c7b627",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
@@ -35,8 +43,15 @@
     {
       "at": "2026-10-09T22:38:49+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:35:56+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/close.py"
+  },
   "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active",
   "worker": "codex"
 }

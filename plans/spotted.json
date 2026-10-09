@@ -441,6 +441,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks\tskipped-close",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 458,
+      "text": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks",
+      "from": "blocking",
+      "item": "skipped-close",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line\tskipped-close",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1321,6 +1332,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "kind": "bug",
+      "path": "src/forge/story.py",
+      "line": 813,
+      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "from": "worker",
+      "item": "skipped-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -1409,6 +1431,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -1427,6 +1460,17 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 250,
+      "text": "Standard: Delete before adding",
+      "from": "blocking",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
@@ -3440,39 +3484,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 109,
-      "text": "Not done: one identical written boundary in review and cold read",
-      "from": "blocking",
-      "item": "lean-review-prompts",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 813,
-      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
-      "from": "worker",
-      "item": "skipped-workers",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 250,
-      "text": "Standard: Delete before adding",
-      "from": "blocking",
-      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     }
