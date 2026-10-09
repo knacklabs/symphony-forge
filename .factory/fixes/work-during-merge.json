@@ -2,13 +2,36 @@
   "base": "58fd944d4d383807318db51b727e00fc15c810fa",
   "branch": "fix/work-during-merge",
   "done_when": "forge work on a branch with an unfinished merge either hands the worker the conflicts to resolve and records its start without a partial commit (so the record lands with the merge commit), or, if that can't be done safely, refuses with a plain next step (resolve and commit the merge, then rerun) instead of a git error and a doctor hint; command tests cover a conflicted default-branch merge on a task and a fix, for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b604f18f6d70609f001a9b0af2425be57e3e126f402cb7adbdb81fa9126678d0",
+    "changed": "01620234201cc7a42a214f03fe9c934103b008aca5ef8a2d4526b2eb6ea9fb46",
+    "commit": "04c423725b7492af636471a183bdde964c053bc4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When a default-branch merge conflicts in `forge.toml` and `forge work` runs inside the item's checkout, this guard is never reached. `src/forge/cli.py:138` first calls `check_pin`, which parses the caller's configuration at `src/forge/repo.py:568`; conflict markers trigger the configuration refusal and `Next: forge doctor`. This affects both task and fix checkouts. Detect the pending merge before that parse so this case also receives the resolve-and-commit guidance. The new tests conflict only in `merge.txt`, so they pass while this path remains broken.",
+        "file": "src/forge/worker.py",
+        "line": 68,
+        "priority": "P2",
+        "title": "Check for a pending merge before parsing a conflicted forge.toml"
+      }
+    ],
+    "id": "e26f4b25-7f42-4847-99aa-48c020bfcc85",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T13:06:47+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T18:40:16+00:00",
+      "step": "review"
     }
   ],
   "why": "forge work fails before the worker starts on a branch with a merge in progress ('git commit failed: fatal: cannot do a partial commit during a merge. Next: forge doctor'), because its 'is working' record is a partial commit; this traps branches whose default-branch merge left conflicts for a worker to resolve (reported by a client session on v1.2.8)",
