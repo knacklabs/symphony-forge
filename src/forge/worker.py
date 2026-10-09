@@ -75,12 +75,6 @@ def work(args: argparse.Namespace) -> None:
         design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
     family = repo.worker(config, "build", design)[0]
     on_codex = family == "codex"
-    # The item's state records the worker each round used. A round continues a conversation only
-    # when the round before used the same worker; otherwise it starts fresh with the whole brief.
-    last = state.get("worker")
-    previous = state.get("status", "started") != "started"
-    moved = (f"its last round ran on {last.title()}" if last else
-             "Forge has no record of which worker its last round ran on")
     if note is None and (question := codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
     # On Codex, any forge work after the item's first turn, here or on another machine, is a fix
@@ -102,21 +96,25 @@ def work(args: argparse.Namespace) -> None:
             chosen.get("model"), chosen.get("effort")):
         if on_codex:
             codex.recover(top, item)
-        question = codex.record(top, item).get("question")
+        saved = codex.record(top, item)
+        state = repo.read_state(item, top) or {}
+        last = state.get("worker") or ("codex" if saved.get("conversation") else
+                                      "claude" if saved.get("claude") else None)
+        previous = bool(last) or state.get("status", "started") != "started"
+        moved = (f"its last round ran on {last.title()}" if last else
+                 "Forge has no record of which worker its last round ran on")
+        question = saved.get("question")
         if question and note is None:
             refuse(REFUSALS["question"], item=item, question=question)
         if previous and last != family:  # a failed start leaves nothing of the other to resume
             codex._record(codex._item_file(top, item, ".json", kind), conversation=None,
                           start=None, head=None, claude=None)
-        thread, fresh = (codex.conversation(top, item, approval) if on_codex and later
+        thread, fresh = (codex.conversation(top, item, approval) if on_codex
                          and last == family else (None, "first turn"))
-        # A Claude worker, design ones too, continues the session its item's last round ran in, in
-        # this checkout. Without one, a round after the first starts fresh and says why.
+        # A Claude worker continues the item's last session, including in a replacement checkout.
         session = None if on_codex else codex.record(top, item).get("claude")
         if last != family:
             fresh = moved if previous else fresh
-        elif session and session["checkout"] != str(top):
-            fresh = f"its session was started in another checkout, {session['checkout']}"
         elif session:
             thread = session["id"]
         elif not on_codex and previous:
@@ -289,7 +287,11 @@ def _changes(top: Path, start: str) -> str:
     """For a continued conversation: the commits since its last turn ended, and every change git
     sees in the checkout since then, untracked files included through a temporary index, so git's
     own index stays as it is. A very large change is listed by file."""
-    commits = git("log", "--oneline", f"{start}..HEAD", cwd=top) or "None."
+    if repo.run("git", "cat-file", "-e", f"{start}^{{commit}}", cwd=top).returncode:
+        start = git("hash-object", "-w", "-t", "tree", "--stdin", cwd=top)
+        commits = "The previous commit is unavailable, so the full current checkout follows."
+    else:
+        commits = git("log", "--oneline", f"{start}..HEAD", cwd=top) or "None."
     with tempfile.TemporaryDirectory() as folder:
         env = {**os.environ, "GIT_INDEX_FILE": str(Path(folder) / "index")}
         shutil.copy(git("rev-parse", "--path-format=absolute", "--git-path", "index", cwd=top),
@@ -442,6 +444,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
     rounds = session["rounds"] if session else 0
     try:
         if resume:
+            codex.remember(top, item)
             size = log.stat().st_size if log.exists() else 0
             try:
                 return _run(item, top, brief, models, ["--resume", resume])
@@ -460,6 +463,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         session = {"id": str(uuid.uuid4()), "checkout": str(top),
                    "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
         codex._record(path, claude=session)
+        codex.remember(top, item)
         return _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
     finally:
         if session:

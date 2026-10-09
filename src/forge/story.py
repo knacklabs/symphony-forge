@@ -70,7 +70,8 @@ TEMPLATES = Path(__file__).parent / "templates"
 KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
-RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen")
+RECORD = ("reader", "read_at", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
+          "conversation", "session")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -168,7 +169,10 @@ def read(args: Any) -> int:
     other = "claude" if here == "codex" else "codex"
     # The other app reads when it is installed, else a separate conversation of this one. A later
     # round stays with the recorded reader while its app is installed.
-    recorded = record.get("reader", "").split(" ")[0]
+    saved = codex.record(top, target, "Grill")
+    recorded = record.get("reader", "").split(" ")[0] or (
+        "codex" if record.get("conversation") else "claude" if record.get("session") else
+        "codex" if saved.get("conversation") else "claude" if saved.get("claude") else "")
     gone = recorded in NAMES and not installed[recorded]
     if recorded == here and installed[other] and not gone:
         repo.refuse(REFUSALS["wrong_app"], doc=rel, reader=NAMES[here], app=NAMES[other],
@@ -199,7 +203,6 @@ def read(args: Any) -> int:
         diff = _diff(seen["doc_seen"].stdout, text.decode("utf-8"), rel)
         spec_diff = _diff(seen["spec_seen"].stdout, spec_text, spec[0] if spec else "spec")
         if any(done.returncode for done in seen.values()):
-            why = why or "Forge has no copy of what its last round read"
             diff = spec_diff = "(not available)"
         saw = _findings(_record(seen["notes_seen"].stdout)[1])
         old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
@@ -214,19 +217,23 @@ def read(args: Any) -> int:
         # The last round's findings are the ones its reader hadn't seen; older ones only if changed.
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(
             block for n, block in blocks.items() if saw.get(n, "").split() != block.split()) or "None.")
-    session = codex.record(top, target, "Grill").get("claude") if later and not why else None
+        if any(done.returncode for done in seen.values()):
+            prompt = fresh_prompt
+    session = saved.get("claude")
+    if gone and (session if reader == "claude" else saved.get("conversation")):
+        prompt, why = fresh_prompt, ""
     if reader == "claude":
         if later and not why and not session:
             why = "Forge has no record of its Claude session on this machine"
-        elif session and session.get("checkout") != str(top):
-            why, session = f"its session was started in another checkout, {session['checkout']}", None
         with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
                                 why, round_number)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
-        thread, why = codex.conversation(top, target, None, "Grill") if later and not why else (None, why)
+        thread, why = codex.conversation(top, target, None, "Grill") if not why else (None, why)
+        if not thread and not later and not gone:
+            why = ""
         # One read per item, nothing left running, and one of the machine's agent slots.
         with codex.hold(top, target, "Grill"), machine.agent_slot(top, "read", target,
                 **repo.models(config, "grill", reader)):
@@ -243,9 +250,7 @@ def read(args: Any) -> int:
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
-        # Nothing is recorded, and the retry starts a fresh conversation.
-        codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
-                      conversation=None, start=None, claude=None)
+        # Keep the chat for the retry; only accepted findings change the notes.
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
@@ -263,17 +268,11 @@ def read(args: Any) -> int:
               "read_at": repo.now(), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
-              "notes_seen": _store(top, old.encode("utf-8"))}
+              "notes_seen": _store(top, old.encode("utf-8")),
+              "conversation": ran["conversation"] if reader == "codex" else "",
+              "session": codex.record(top, target, "Grill")["claude"]["id"] if reader == "claude" else ""}
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
-    if reader == "codex" and clean and ran.get("conversation"):
-        try:
-            archived = codex.archive(top, target, "Grill", ran["conversation"])
-        except Exception:
-            archived = False
-        if not archived:
-            print(f"Forge could not archive the cold read's Codex conversation for {target}; "
-                  "archive it in Codex when it is available.")
     if clean and left:
         print(f"The cold read's earlier {NAMES[recorded]} conversation for {target}, {left}, is left "
               f"as it is, because {NAMES[recorded]} is no longer installed.")
@@ -818,6 +817,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     session = str(uuid.uuid4())
     codex._record(codex._item_file(top, target, ".json", "Grill"),  # pyright: ignore[reportPrivateUsage]
                   claude={"id": session, "checkout": str(top)})
+    codex._append(codex._item_file(top, target, ".log", "Grill"),
+                  {"claude": {"id": session}, "status": None})
     return run("--session-id", session, text=fresh_prompt)
 
 

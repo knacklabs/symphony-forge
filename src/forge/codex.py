@@ -164,7 +164,42 @@ def installed() -> bool:
 def record(checkout: Path, item: str, kind: str = "Fix") -> dict[str, Any]:
     """The item's record: its Codex processes, conversation, checkout, approval, the commit its
     last turn started from, and HEAD when a turn last ended. A cold read's (Grill) is its own."""
-    return _json(_item_file(checkout, item, ".json", kind))
+    saved = _json(_item_file(checkout, item, ".json", kind))
+    if kind == "Grill":
+        from forge import story
+        _, _, notes, _ = story._paths(item, checkout)
+        fields, _ = story._record(sync.read(notes))
+        chat = {"conversation": fields.get("conversation") or None,
+                "claude": {"id": fields["session"], "checkout": str(checkout)}
+                if fields.get("session") else None}
+    else:
+        chat = (repo.read_state(item, checkout) or {}).get("chat", {})
+    if not any(key in saved for key in ("conversation", "claude")) and (
+            kind == "Grill" or not (chat.get("conversation") or chat.get("claude"))):
+        lines = sync.read(_item_file(checkout, item, ".log", kind)).splitlines()
+        if lines:
+            logged = json.loads(lines[-1])
+            chat.update({key: logged[key] for key in ("conversation", "claude", "head")
+                         if logged.get(key)})
+            chat["start"] = logged.get("start") or repo.git("rev-parse", "HEAD", cwd=checkout)
+    return {**chat, **saved}
+
+
+def remember(checkout: Path, item: str) -> None:
+    """Keep the worker's identity in its existing committed state, before it can start work."""
+    saved = record(checkout, item)
+    state = repo.read_state(item, checkout) or {}
+    chat = state.get("chat", {})
+    if (chat.get("conversation"), (chat.get("claude") or {}).get("id")) == (
+            saved.get("conversation"), (saved.get("claude") or {}).get("id")):
+        return
+    state["chat"] = {key: saved.get(key) for key in
+                     ("conversation", "claude", "start", "head", "approval")}
+    if state["chat"]["claude"]:
+        state["chat"]["claude"] = {key: value for key, value in state["chat"]["claude"].items()
+                                  if key != "checkout"}
+    repo.commit_state("Keep the worker conversation", repo.write_state(item, state, checkout),
+                      top=checkout)
 
 
 def archive(checkout: Path, item: str, kind: str, thread: str) -> bool:
@@ -191,15 +226,8 @@ def conversation(checkout: Path, item: str, approval: str | None,
                  kind: str = "Fix") -> tuple[str | None, str]:
     """The item's conversation to continue and "", or None and why Forge starts a new one."""
     saved = record(checkout, item, kind)
-    if not saved.get("start"):
+    if not saved.get("conversation"):
         return None, "Forge has no record of its conversation on this machine"
-    if saved.get("checkout") != str(checkout):
-        return None, f"its conversation was started in another checkout, {saved.get('checkout')}"
-    if saved.get("approval") != approval:
-        return None, "the story's approval changed after its conversation started"
-    for commit in {saved["start"], saved.get("head") or saved["start"]}:
-        if repo.run("git", "merge-base", "--is-ancestor", commit, "HEAD", cwd=checkout).returncode:
-            return None, "the branch's history was rewritten under its conversation"
     return saved["conversation"], ""
 
 
@@ -213,7 +241,7 @@ def recover(checkout: Path, item: str) -> None:
     lines = sync.read(turns).splitlines()
     last = json.loads(lines[-1]) if lines else {"status": None}
     path = _item_file(checkout, item, ".json", "Fix")
-    saved = _json(path)
+    saved = record(checkout, item)
     pending = saved.get("pending")  # a turn about to start, until its "started" line is logged
     if "status" in last and not pending:
         return
@@ -399,7 +427,10 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                     pending = {"kind": kind, "start": begun, **continued,
                                **({"note": note} if note is not None else {})}
                     _record(record, conversation=said["thread"], checkout=str(checkout),
-                            approval=approval, pending=pending, **ended)
+                            approval=approval, pending=pending, **ended,
+                            **({"start": begun} if not said["continued"] else {}))
+                    if kind in ("Build", "Fix", "Lite"):
+                        remember(checkout, item)
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":

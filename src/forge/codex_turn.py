@@ -206,6 +206,10 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
+                    if reason not in (f"no rollout found for {request['thread']}",
+                                      f"thread not found: {request['thread']}",
+                                      f"thread not loaded: {request['thread']}"):
+                        raise
                     emit(fresh=f"Codex couldn't resume its conversation: {reason}")
         if request.get("ephemeral"):
             settings["ephemeral"] = True

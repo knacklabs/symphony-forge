@@ -28,6 +28,7 @@ COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the
 
 
 def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_data, tmp_path):
+    monkeypatch.setenv("STUB_CODEX_RESUME", "1")
     monkeypatch.setenv("FORGE_NOW", NOW)
     setup(repo, keys=("SHOP", "WISH"))
     _install(repo.bin, "codex-app-server",
@@ -101,7 +102,8 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0, read.stdout + read.stderr
     starts, turns = _sent(stub, "thread/start"), _sent(stub, "turn/start")
-    assert len(starts) == len(turns) == 3
+    assert len(starts) == 1 and len(turns) == 3
+    assert all(resume["threadId"] == "thr-stub-1" for resume in _sent(stub, "thread/resume"))
     assert all((start["sandbox"], start["approvalPolicy"]) == ("read-only", "never")
                and start["config"] == {**QUIET, "model": "gpt-6-sol", "model_reasoning_effort": "high"}
                and Path(start["cwd"]).resolve() == shop.resolve() for start in starts)

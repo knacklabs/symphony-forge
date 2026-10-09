@@ -114,7 +114,7 @@ def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(rep
     assert resumed["brief"].startswith("Fix round 3 on Fix the login typo.")
     assert EARLIER in resumed["brief"] and FRESH not in kept.stdout
 
-    # A checkout moved since its session started: the session is left alone and a new one starts.
+    # The new contract keeps the explicit session ID after a checkout moves.
     folder = Path(fresh["cwd"])
     moved = tmp_path / "moved-checkout"
     repo.git("worktree", "move", str(folder), str(moved))
@@ -123,13 +123,12 @@ def test_3_a_resume_claude_rejects_starts_fresh_in_the_same_round_saying_why(rep
 
     assert elsewhere.returncode == 0, elsewhere.stdout + elsewhere.stderr
     [*_, restarted] = calls(log)
-    assert len(calls(log)) == 5 and "--resume" not in restarted["args"]
-    assert _session(restarted, "--session-id") not in (first, second)
+    assert len(calls(log)) == 5 and "--session-id" not in restarted["args"]
+    assert _session(restarted, "--resume") == second
     assert Path(restarted["cwd"]).resolve() == moved.resolve()
     assert restarted["brief"].startswith("Fix round 4 on Fix the login typo.")
-    assert "# Worker brief" in restarted["brief"]
-    assert (f"{FRESH}its session was started in another checkout, {folder}"
-            in elsewhere.stdout)
+    assert EARLIER in restarted["brief"]
+    assert FRESH not in elsewhere.stdout
 
 
 def test_5_failed_turns_in_a_session_claude_still_has_keep_that_session(repo, gh, monkeypatch):
@@ -157,7 +156,7 @@ def test_5_failed_turns_in_a_session_claude_still_has_keep_that_session(repo, gh
     assert FRESH not in again.stdout
 
 
-def test_4_a_round_without_forge_s_local_session_record_starts_fresh_and_says_so(repo, gh):
+def test_4_a_round_without_forge_s_local_session_record_recovers_its_chat(repo, gh):
     log = _started(repo)
     assert repo.forge("work", FIX).returncode == 0
     # The item's committed state shows a round ran, but this machine has no record of its session,
@@ -168,8 +167,7 @@ def test_4_a_round_without_forge_s_local_session_record_starts_fresh_and_says_so
 
     assert again.returncode == 0, again.stdout + again.stderr
     [first, fresh] = calls(log)
-    assert "--resume" not in fresh["args"]
-    assert _session(fresh, "--session-id") != _session(first, "--session-id")
-    assert "# Worker brief" in fresh["brief"] and EARLIER not in fresh["brief"]
-    assert (f"{FRESH}Forge has no record of its Claude session on this machine."
-            in again.stdout)
+    assert "--session-id" not in fresh["args"]
+    assert _session(fresh, "--resume") == _session(first, "--session-id")
+    assert EARLIER in fresh["brief"]
+    assert FRESH not in again.stdout
