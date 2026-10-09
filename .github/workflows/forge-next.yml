@@ -1,11 +1,12 @@
 name: forge-next
 
-# The new Forge's own suite (src/forge, tests/) on every platform Forge supports.
+# Forge's own suite: Linux on pull requests, every supported platform on main and release tags.
 
 on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
@@ -36,24 +37,28 @@ jobs:
       fail-fast: false
       matrix:
         # Slower platforms need more runners as the suite grows.
-        include:
-          - {os: ubuntu-latest, group: 1, groups: 3}
-          - {os: ubuntu-latest, group: 2, groups: 3}
-          - {os: ubuntu-latest, group: 3, groups: 3}
-          - {os: macos-latest, group: 1, groups: 6}
-          - {os: macos-latest, group: 2, groups: 6}
-          - {os: macos-latest, group: 3, groups: 6}
-          - {os: macos-latest, group: 4, groups: 6}
-          - {os: macos-latest, group: 5, groups: 6}
-          - {os: macos-latest, group: 6, groups: 6}
-          - {os: windows-latest, group: 1, groups: 8}
-          - {os: windows-latest, group: 2, groups: 8}
-          - {os: windows-latest, group: 3, groups: 8}
-          - {os: windows-latest, group: 4, groups: 8}
-          - {os: windows-latest, group: 5, groups: 8}
-          - {os: windows-latest, group: 6, groups: 8}
-          - {os: windows-latest, group: 7, groups: 8}
-          - {os: windows-latest, group: 8, groups: 8}
+        include: >-
+          ${{ github.event_name == 'pull_request' &&
+            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+            {"os":"ubuntu-latest","group":2,"groups":3},
+            {"os":"ubuntu-latest","group":3,"groups":3}]') ||
+            fromJSON('[{"os":"ubuntu-latest","group":1,"groups":3},
+            {"os":"ubuntu-latest","group":2,"groups":3},
+            {"os":"ubuntu-latest","group":3,"groups":3},
+            {"os":"macos-latest","group":1,"groups":6},
+            {"os":"macos-latest","group":2,"groups":6},
+            {"os":"macos-latest","group":3,"groups":6},
+            {"os":"macos-latest","group":4,"groups":6},
+            {"os":"macos-latest","group":5,"groups":6},
+            {"os":"macos-latest","group":6,"groups":6},
+            {"os":"windows-latest","group":1,"groups":8},
+            {"os":"windows-latest","group":2,"groups":8},
+            {"os":"windows-latest","group":3,"groups":8},
+            {"os":"windows-latest","group":4,"groups":8},
+            {"os":"windows-latest","group":5,"groups":8},
+            {"os":"windows-latest","group":6,"groups":8},
+            {"os":"windows-latest","group":7,"groups":8},
+            {"os":"windows-latest","group":8,"groups":8}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}

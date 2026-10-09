@@ -37,7 +37,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, repo, worker
+from forge import codex, machine, repo, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -140,6 +140,7 @@ def new(args: Any) -> int:
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))
     repo.commit_state(f"Start the story: {title}", *changed, top=path)
+    task.publish_start(path, f"story/{key}")
     print(f"Started the story {key} in {path}.")
     if fix_top:
         print(_promote(fix_top, fix, key, fix_state))
@@ -384,17 +385,85 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
     return {"done": done, "details": notes, "tasks": list(tasks.values())}
 
 
-def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] | None = None) -> str:
-    """Story KEY's plan: at `ref` when given, else its worktree's copy; else its story branch's,
-    local or fetched, else the default branch's."""
+def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
+    """The published story unless the local story already includes it."""
+    local, remote = f"story/{key}", f"origin/story/{key}"
+    landed = landed_ref(top)
     rel = f"plans/{key}.md"
+    local_doc = history["docs"].get(f"{local}:{rel}") if history is not None else show(top, local, rel)
+    remote_doc = history["docs"].get(f"{remote}:{rel}") if history is not None else show(top, remote, rel)
+    source = local if local_doc is not None else landed
+    if remote_doc is not None:
+        if local_doc is None or repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
+            source = remote
+    def state_at(ref: str) -> dict[str, Any]:
+        if history is None:
+            return json_of(show(top, ref, repo.state_path(key)))
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        return history["ref_states"].get(full, {}).get(repo.state_path(key), {})
+    state = state_at(source)
+    # A failed approval push leaves the initial claim behind the first merged part.
+    if (not state.get("approval") and all(step.get("step") == "start" for step in state.get("steps", []))
+            and state_at(landed).get("approval")):
+        return landed
+    return source
+
+
+def _with_developers(text: str, assignments: dict[str, str | None], include: bool) -> str:
+    """Normalize the optional column so independent row assignments merge independently."""
+    lines, column, table = [], None, False
+    for line in text.splitlines(keepends=True):
+        if line.startswith("## "):
+            table = line.strip() == "## Tasks"
+        if table and line.lstrip().startswith("|"):
+            cells = line.strip().strip("|").split("|")
+            if cells[0].strip() == "ID":
+                column = next((i for i, cell in enumerate(cells) if cell.strip() == "Developer"), None)
+            if column is not None and column < len(cells):
+                cells.pop(column)
+            if include:
+                value = ("Developer" if cells[0].strip() == "ID" else "---"
+                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip()) or "")
+                cells.append(f" {value} ")
+            line = "|" + "|".join(cells) + "|\n"
+        lines.append(line)
+    return "".join(lines)
+
+
+def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] | None = None) -> str:
+    """Read the published plan with local edits, without changing either checkout."""
+    rel = f"plans/{key}.md"
+    def read(one: str) -> str | None:
+        return history["docs"].get(f"{one}:{rel}") if history is not None else show(top, one, rel)
+    if ref and (text := read(ref)) is not None:
+        return text
+    if plan_ref(top, key, history) == landed_ref(top):
+        return read(landed_ref(top)) or ""
     tree = ((history["worktrees"].get(f"story/{key}") if KEY.fullmatch(key) else None)
             if history is not None else stories_here(top).get(key))
-    if not ref and tree and (tree / rel).is_file():
-        return _text(tree / rel)
-    refs = ([ref] if ref else []) + [f"story/{key}", f"origin/story/{key}", landed_ref(top)]
-    return next((text for one in refs if (text := history["docs"].get(f"{one}:{rel}")
-                 if history is not None else show(top, one, rel)) is not None), "")
+    local_ref, remote = f"story/{key}", f"origin/story/{key}"
+    local = _text(tree / rel) if tree and (tree / rel).is_file() else read(local_ref)
+    published = read(remote)
+    if local is None or published is None or local == published:
+        return local if local is not None else published or read(landed_ref(top)) or ""
+    base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
+    base = show(top, base_ref, rel) or ""
+    tables = [task.rows(task.sections(text)) for text in (base, local, published)]
+    before, ours, theirs = tables
+    assignments = {tid: task.developer(ours.get(tid, {}))
+                   if task.developer(ours.get(tid, {})) != task.developer(before.get(tid, {}))
+                   else task.developer(theirs.get(tid, {})) for tid in ours.keys() | theirs.keys()}
+    columns = [any("Developer" in row for row in table.values()) for table in tables]
+    include = columns[1] if columns[1] != columns[0] else columns[2]
+    with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
+        files = [Path(folder) / name for name in ("local", "base", "published")]
+        for file, text in zip(files, (local, base, published)):
+            file.write_text(_with_developers(text, assignments, include), encoding="utf-8")
+        merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
+    if merged.returncode:
+        raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
+                           f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
+    return merged.stdout
 
 
 def _task_ids(text: str) -> set[str]:

@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
@@ -156,6 +162,19 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
+parts, plain titles, labelled states and `waits_for` item references, including old merged
+dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
+distinguish merged, running, waiting, can start now and not started. Startability and scope
+blockers come from the same rules as `forge next`, including approval and required rereads.
+`stage_counts` counts each roadmap story and fix once, including recorded completed items;
+parts belong to their parent story's count. The page shows those six totals in one line:
+needs a spec, planning, waiting for approval, building, ready to merge and done.
+Active parts and fixes show recorded
+Build, Tests, Review, CI and Merge times for their current round, with the current stage
+marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
+get it after upgrading Forge and syncing.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -788,8 +807,12 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands and the default branch is merged in. Otherwise it starts from
-the default branch. Merging default-branch updates before the underlying item lands needs Git
+after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+onto the current default branch and publishes with a lease. It preserves earlier merge edits,
+leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
+conflict. Follow the printed replay and leased publication commands before closing again.
+Otherwise it starts from the default branch and close keeps merging default updates.
+Follow-up replay and merging default-branch updates before the underlying item lands need Git
 2.38 or newer.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
@@ -814,7 +837,11 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
-Close merges the default branch before it tests or reviews. If only files `forge sync` writes
+When a worker round or close's merge changes the item's Forge pin, land and close say so in one
+line and continue through uv under that release before reading its new settings.
+Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
+before the original land or close command continues.
+Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. When the
 test command fails, close stops before the review and keeps the output for the worker: run
@@ -914,6 +941,31 @@ If close refuses a conflicted merge, it has aborted the merge. In the item's wor
 4. Check the diff and remaining conflicts, stage only resolved paths with `git add <paths>`,
    and commit once every conflict is resolved. Then rerun `forge close <item>` or
    `forge land <item>`.
+
+Starting is the claim: `forge story new`, `forge task start` and `forge fix start` push the
+new branch to GitHub after committing its start. The author of that start commit is the person
+who started the work; the board page and `forge board --json` show them next to the plan's
+approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
+record. Git keeps a start tag pointing at the original commit, so its author survives squash
+merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+start push failed. A second checkout's
+task start names the person who already started that part on GitHub. A failed push says so
+and leaves the work local: teammates cannot see that claim until its branch is pushed.
+New repos get this at init; existing repos get it when upgraded and synced, including repos
+adopted on an earlier release.
+
+A story's Tasks table may have an optional Developer column containing a GitHub username.
+The lead adds or changes assignments below For the builders without another approval.
+`forge next` offers ready parts assigned to the caller's GitHub login, plus unassigned parts.
+Someone else may start an assigned part: task start goes ahead and names its assigned
+developer in a warning. Both boards show assignments alongside the starter and approver,
+including assigned parts not started yet. Documents without Developer work as before.
+After fetching, teammates can discover the published story before its first part merges.
+If publishing its approval failed, the approved plan on the default branch after its first
+part merges takes precedence over the story's initial published draft.
+Next, start and both boards reconcile published assignments with local builder edits;
+a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
+This column is the only assignment record; there is no other assignee field or roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to

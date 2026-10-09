@@ -41,6 +41,7 @@ def test_4_one_test_per_rule():
             assert not (isinstance(node, ast.ClassDef) and node.name.startswith("Test")), (
                 f"{path.name}: {node.name} hides tests in a class; use test functions")
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test"):
+                # A fix's command renderer test carries its own numbered criterion too.
                 match = re.fullmatch(r"test_(\d+)_\w+", node.name)
                 assert match, f"{path.name}: {node.name} cites no criterion; name it test_<n>_<rule>"
                 number = (story, int(match[1]))

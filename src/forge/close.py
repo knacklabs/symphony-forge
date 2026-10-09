@@ -1,6 +1,6 @@
 """forge close: close a task or fix by the close rule.
 
-Merge the default branch in, push and open the pull request so CI runs during review. Commit and
+Bring the default branch in, push and open the pull request so CI runs during review. Commit and
 publish the result, then wait for the checks forge.toml names on exactly that pushed head.
 Nothing is committed after the checks: GitHub holds when they finished. A human merges.
 """
@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync
+from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -27,6 +27,15 @@ REFUSALS = {
                  "git -C {path} merge origin/{default}, follow Keeping work moving in "
                  ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
                  "then forge close {item}"),
+    "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
+                        "in {path}, run git rebase --rebase-merges=rebase-cousins --onto origin/{default} {base}, "
+                        "resolve the conflicts and run git rebase --continue, preserve any earlier "
+                        "merge edits, publish with git push --force-with-lease=refs/heads/{branch}:{lease} "
+                        "origin {branch}, then forge close {item}"),
+    "replay_remote": ("The remote branch has commits this checkout does not have, so Forge left it alone.",
+                      "fetch and reconcile {branch}, then forge close {item}"),
+    "replay_push": ("Git refused the replayed push, so Forge restored the original commits in this checkout.",
+                    "check the remote branch and reconcile {branch}, then forge close {item}"),
     "bad_dismiss": ("Each --dismiss needs a finding number from the latest review and its own "
                     "--because that starts with the file:line proving that finding wrong.",
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
@@ -74,27 +83,32 @@ def close(args: argparse.Namespace) -> int:
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    continued = (os.environ.pop("FORGE_CLOSE_ACCEPTED", "") == "1" and choice == "accept"
+                 and reason and (state.get("stop") or {}).get("choice") == choice
+                 and state["stop"].get("reason") == reason.strip())
     if choice or reason is not None:
         if (not choice or not reason or not reason.strip() or
-                not state.get("stop") or state["stop"].get("choice") or
+                not state.get("stop") or (state["stop"].get("choice") and not continued) or
                 args.dismiss or args.because):
             repo.refuse(REFUSALS["bad_choice"], item=item)
-        result = state["review"]
-        if choice == "accept":
-            dismissed = {d["finding"] for d in result["dismissals"]}
-            result["dismissals"].extend(
-                {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
-                 "accepted": True}
-                for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
-            result["status"] = "clean"
-        state["stop"].update(choice=choice, reason=reason.strip())
-        state["status"] = "waiting for checks" if choice == "accept" else "fixing"
-        _save(top, item, state, f"Record the human's review loop choice: {choice}")
+        if not continued:
+            result = state["review"]
+            if choice == "accept":
+                dismissed = {d["finding"] for d in result["dismissals"]}
+                result["dismissals"].extend(
+                    {"finding": number, "because": f"Human accepted the remaining finding: {reason}",
+                     "accepted": True}
+                    for number, _ in enumerate(result["findings"], 1) if number not in dismissed)
+                result["status"] = "clean"
+            state["stop"].update(choice=choice, reason=reason.strip())
+            state["status"] = "waiting for checks" if choice == "accept" else "fixing"
+            _save(top, item, state, f"Record the human's review loop choice: {choice}")
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
             return 0
-        print("Recorded the human's choice.")
+        if not continued:
+            print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
     if not switch:
         check_stop(item, state)
@@ -120,6 +134,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept")
     if switch:
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
                              "HEAD", cwd=top).splitlines())
@@ -362,6 +377,53 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
+    state = repo.read_state(item, top) or {}
+    base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
+    target = f"origin/{default}"
+    if (state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
+            and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
+            and task._merged(target, parent, top)
+            and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0
+            and repo.run("git", "merge-base", "--is-ancestor", target, "HEAD", cwd=top).returncode):
+        target = repo.git("rev-parse", target, cwd=top)
+        original = repo.git("rev-parse", "HEAD", cwd=top)
+        remote_ref = f"refs/heads/{branch}"
+        remote = repo.git("ls-remote", "--heads", "origin", remote_ref, cwd=top)
+        lease = remote.split()[0] if remote else ""
+        if lease and repo.run("git", "merge-base", "--is-ancestor", lease, original, cwd=top).returncode:
+            repo.refuse(REFUSALS["replay_remote"], branch=branch, item=item)
+        # Rebase recreates merges but drops their hand edits; retain the fix's complete own diff.
+        # Both parents exclude inherited commits and default updates already merged into the fix.
+        baseline = repo.git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+                            "commit-tree", f"{target}^{{tree}}", "-p", base, "-p", target,
+                            "-m", "Follow-up replay baseline", cwd=top)
+        merged = repo.run("git", "merge-tree", "--write-tree", "--name-only", "-z",
+                          "--no-messages", baseline, original, cwd=top)
+        if merged.returncode not in (0, 1):
+            merged.check_returncode()
+        tree, *files = merged.stdout.rstrip("\0").split("\0")
+        if merged.returncode:
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+        done = repo.run("git", "rebase", "--rebase-merges=rebase-cousins", "--onto", target,
+                        baseline, cwd=top)
+        if done.returncode:
+            files = repo.git("diff", "--name-only", "--diff-filter=U", cwd=top).splitlines()
+            repo.run("git", "rebase", "--abort", cwd=top)
+            if not files:
+                done.check_returncode()
+            repo.refuse(REFUSALS["replay_conflict"], default=default, files=", ".join(files),
+                        path=top, base=baseline, branch=branch, lease=lease, item=item)
+        if repo.git("rev-parse", "HEAD^{tree}", cwd=top) != tree:
+            proof = review.commit_paragraph(top, baseline, "Proof list:", original)
+            repo.git("read-tree", "-u", "-m", tree, cwd=top)
+            repo.git("commit", "-q", "-m", "Keep the follow-up's merge edits", "-m", proof, cwd=top)
+        published = repo.run("git", "push", "-q", "-u", f"--force-with-lease={remote_ref}:{lease}",
+                             "origin", branch, cwd=top)
+        if published.returncode:
+            repo.git("reset", "--keep", original, cwd=top)
+            repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
+        return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
     if done.returncode == 0:
         return
@@ -386,7 +448,12 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if set(files) <= generated:
         repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
                  *files, cwd=top)
-        done = repo.run("forge", "sync", cwd=top)
+        release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+        if release != cfg["version"] and repo.VERSION.fullmatch(release):
+            done = subprocess.CompletedProcess(["forge", "sync"],
+                                               repo.run_release(release, ["sync"], top))
+        else:
+            done = repo.run("forge", "sync", cwd=top)
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)
@@ -447,9 +514,16 @@ def synced_changes(top: Path) -> list[str]:
 
 def _push(top: Path, branch: str) -> None:
     """Push the branch, retrying a failed push after 1, 2 and 4 seconds before giving up."""
+    tags = repo.git("for-each-ref", "--format=%(refname)", "--merged", branch,
+                    "refs/tags/forge-start/", cwd=top).splitlines()
+    # Replay and copied plans can detach ownership history from the work branch.
+    retained = repo.git("for-each-ref", "--format=%(refname)",
+                        f"refs/tags/forge-start/{branch}", f"refs/tags/forge-plan/{branch}",
+                        cwd=top).splitlines()
+    tags = list(dict.fromkeys(tags + retained))
     for wait in (1, 2, 4, None):
         try:
-            repo.git("push", "-q", "-u", "origin", branch, cwd=top)
+            repo.git("push", "-q", "--atomic", "-u", "origin", branch, *tags, cwd=top)
             return
         except subprocess.CalledProcessError:
             if wait is None:

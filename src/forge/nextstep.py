@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
-from forge.task import _overlap, _started, start_base
+from forge.task import _overlap, _started, developer, github_login, start_base
 
 COMMANDS = [
     {
@@ -380,35 +380,49 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
+    for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
+                           "refs/remotes/origin/story/", cwd=top).splitlines():
+        key = branch.removeprefix("story/")
+        if history is not None and repo.state_path(key) in history["expired"]:
+            continue
+        if found.get(key, (None, {}, ""))[1].get("status") == "done":
+            continue
+        ref = story.plan_ref(top, key, history)
+        state = story.json_of(story.show(top, ref, repo.state_path(key)))
+        if state:
+            found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
     return found
 
 
 def _story(top: Path, key: str, path: Path | None, text: str,
            title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
-           refusals: dict[Path, str], history: dict[str, Any] | None = None
+           refusals: dict[Path, str], history: dict[str, Any] | None = None,
+           readiness: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
-    notes, doc_hash, required = "", "", False
-    if path is None:  # like forge task start: the story branch's copy while it exists
-        for ref in (f"story/{key}", story.landed_ref(top)):
-            notes = story.show(top, ref, f"plans/{key}.read.md") or ""
-            required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
-            if required:
-                text = story.show(top, ref, f"plans/{key}.md") or text
-                doc_hash = repo.run("git", "rev-parse", f"{ref}:plans/{key}.md", cwd=top).stdout.strip()
-                break
-    elif (path / "plans" / f"{key}.md").is_file():
+    if readiness is not None:
+        readiness.update(stage="planning", parts={}, waits={})
+    ref = story.plan_ref(top, key, history)
+    if ref != story.landed_ref(top):
+        text = story._plan(top, key, history=history)
+    notes = story.show(top, ref, f"plans/{key}.read.md") or ""
+    required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
+    if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-        doc_hash = repo.git("hash-object", "--", f"plans/{key}.md", cwd=path)
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
+    doc_hash = repo.run("git", "hash-object", "--stdin", cwd=top, input=text).stdout.strip()
     try:
         doc = story.parse(text, top, history=history)
     except ValueError as exc:
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
+    if readiness is not None:
+        readiness["parts"] = {task["id"]: "Not started" for task in doc["tasks"]}
     if digest:
-        return _approval(top, key, path, title, digest, refusals, text), []
+        return _approval(top, key, path, title, digest, refusals, text, readiness), []
+    if readiness is not None:
+        readiness["stage"] = "building"
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -417,19 +431,23 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                and (history is None or repo.state_path(f"{key}/{task['id']}") not in history["expired"])
                for line in _item(f"{key}/{task['id']}", f"{key}/{task['id']}",
                                  states[task["id"]], top, tree, prs, refusals)]
-    behind = story.plan_behind(top, key, story.landed_ref(top))  # the rows here are old
+    behind = story.plan_behind(top, key, story.landed_ref(top)) if ref != story.landed_ref(top) else ""
     if states and len(merged) == len(states) and not behind:
         if f"fix/{key.lower()}-done" in trees:  # its outcome fix is open; the fix's lines say so
             return cleanup, list(states.values())
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
                 f'Next: forge story done {key} "<outcome sentence>"'], list(states.values())
     lines: list[str] = cleanup
+    part_statuses: dict[str, str] = {}
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
-                           trees.get(f"task/{key}-{task['id']}"), prs, refusals)
+                           trees.get(f"task/{key}-{task['id']}"), prs, refusals,
+                           part_statuses if readiness is not None else None)
     if behind:
+        if readiness is not None:
+            readiness["stage"] = "planning"
         return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
                and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
@@ -445,11 +463,26 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
+    if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
+        login = github_login(top)
+        if login:
+            ready = [task["id"] for task in doc["tasks"] if task["id"] in ready
+                     and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)
+    if readiness is not None:
+        readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
+        if readiness is not None:
+            readiness["stage"] = "planning"
         return lines + reread, list(states.values())
+    if readiness is not None:
+        readiness["parts"].update({name: "Waiting" if deps else "Can start now"
+                                   for name, deps in waits.items()})
+        remaining = [f"{key}/{name}" for name in states if name not in merged]
+        if remaining and all(part_statuses.get(item) == "ready" for item in remaining):
+            readiness["stage"] = "ready to merge"
     if ready:
         rows = {task["id"]: task for task in doc["tasks"]}
         landed = story.landed_ref(top)
@@ -475,7 +508,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
-              refusals: dict[Path, str], text: str) -> list[str]:
+              refusals: dict[Path, str], text: str, readiness: dict[str, Any] | None = None) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
@@ -493,6 +526,8 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     why = story._text(approval.last_refusal(top)).strip().rstrip(".")  # pyright: ignore[reportPrivateUsage]
     shown = f"plans/{key}.md" + (" from its title down to ## For the builders"
                                  if story.BUILDERS.search(text) else "")
+    if readiness is not None:
+        readiness["stage"] = "waiting for approval"
     return [f"{title} is waiting for approval" + (f" (the last answer was not recorded: {why})." if why
                                                   else "."),
             f"Next: in Claude Code, show {shown} in Plan Mode and exit Plan Mode with it as the plan",
@@ -565,11 +600,13 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
 
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
-          refusals: dict[Path, str]) -> list[str]:
+          refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
+    if statuses is not None:
+        statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "
