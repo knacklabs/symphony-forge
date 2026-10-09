@@ -17,7 +17,7 @@ from conftest import ROOT, _install, machine_cores
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start, person, lane_adapter  # noqa: F401
-from test_codex_worker import sdk_data  # noqa: F401
+from test_codex_worker import _started, sdk_data  # noqa: F401
 from test_codex_record import _freeze
 from test_story import worktree
 from test_lanes_tests import release_server  # noqa: F401
@@ -180,8 +180,12 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         assert not alive(descendant), "stop freed admission while a group member still ran"
         _until(lambda: (repo.bin / f"started-{waiting[-1][1]}").exists(), "freed place")
         assert all(r["id"] != rows[0]["id"] for r in lanes(repo)["agents"]["entries"])
+        last = next(r for r in lanes(repo)["agents"]["entries"] if r["item"] == waiting[-1][0])
+        before = _started(last["process"]["pid"])
+        assert before is not None
         stopped = repo.forge("stop", "--repo", str(other.path), waiting[-1][0])
         assert stopped.returncode == 0, stopped.stderr
+        assert not alive(last["process"]["pid"], before)
         assert all(r["item"] != waiting[-1][0] for r in lanes(repo)["agents"]["entries"])
         assert lanes(repo)["tests"]["entries"] == []
         assert repo.forge("stop", "missing-item").returncode == 0
