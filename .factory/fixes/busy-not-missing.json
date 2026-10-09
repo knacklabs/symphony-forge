@@ -6,20 +6,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "94d6c1626bfb984c8fd51849fa0184b871ab7f1e3530fac6de3293da4bfc9263",
-    "changed": "b64053a365703feee7f5d73dafe9e5cab0dcf0ca0fc6ec74e181d3f93c580b24",
-    "commit": "fb11f9312ac7644ff221e59aeb0549e2443e3b8f",
+    "branch_diff": "9c9727974ea26ce6b0cd62dda643445526becb123b761be7f3302dd8adcf7e67",
+    "changed": "4e2bada8e0c7a1142c7042388c42411e2f62c3f34ef50a39ec0a030171cdd8ca",
+    "commit": "192737e301d196ccd38f86dacc82ce80a05d093f",
     "dismissals": [],
     "findings": [
       {
-        "body": "With `runner = \"GPU\"`, a job in another workflow requesting `gpu` can start during the queue window on the matching pool, but this comparison discards it. [GitHub runner labels are case-insensitive](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/apply-labels); Forge accepts either casing without normalization (`src/forge/repo.py:495`). Consequently, close and both land wait phases still stop with a false missing-runner message, and doctor emits the same warning. Compare normalized label values while retaining the configured spelling in the message.",
+        "body": "The previous finding remains open: with `runner = \"GPU\"`, an assigned job requesting `gpu` and starting inside the queue window is discarded by this comparison. [GitHub runner labels are case-insensitive](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/apply-labels), and `src/forge/repo.py:495` accepts either spelling without normalization. Consequently, close, both land wait phases, and doctor still report missing runners for this busy-pool case. Normalize the configured label and job labels for comparison, retaining the configured spelling in the message.",
         "file": "src/forge/checks.py",
         "line": 115,
         "priority": "P2",
         "title": "Match runner labels without case sensitivity"
       }
     ],
-    "id": "7c8194e2-871a-48f2-a59f-0efe172f77ce",
+    "id": "979a0362-7ed6-42a3-90a6-24fd4047440d",
     "status": "clean"
   },
   "round": 2,
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-10-09T05:58:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T06:25:41+00:00",
       "step": "review"
     }
   ],
