@@ -66,7 +66,7 @@
     "status": "blocked"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T07:40:38+00:00",
@@ -85,6 +85,10 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/board.html",
+    "round": 4
+  },
   "why": "The forge board page lost the old board's visuals in the lean rebuild: there is no picture of what waits for what between stories and their parts, and no view of where each item's time went across its stages; the owner wants both back (2026-10-09)",
   "worker": "codex"
 }
