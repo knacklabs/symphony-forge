@@ -167,15 +167,19 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert "model" not in written
     # Lite used to omit helpers; first fix rounds now get Luna max from init's config.
     assert written["models"] == {
-        "build": {"model": "gpt-6.1-sol", "effort": "medium"},
-        "fix": {"model": "gpt-6.1-sol", "effort": "medium"},
-        "lite": {"model": "gpt-6.1-sol", "effort": "medium",
-                 "subagents": "gpt-6-luna", "subagent_effort": "max"},
+        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+                "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+                           "subagents": "gpt-6-luna", "subagent_effort": "max"},
+                 "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
-                  "claude": {"model": "opus", "effort": "high"}},
-        "design": {"claude": {"model": "claude-opus-5-5", "effort": "high"},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+        "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
-        "review": {"model": "gpt-6.1-sol", "effort": "high"}}
+        "review": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
+                   "claude": {"model": "opus", "effort": "high"}}}
     toml.write_text(f'version = "{version}"\nmodel = "opus"\n', encoding="utf-8")
     old = repo.forge("doctor", cwd=shop)
     assert old.stderr == ("forge.toml is not usable: 'model' is not a forge.toml key.\n"

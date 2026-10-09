@@ -133,12 +133,23 @@ Autoreview. Build, fix, lite and grill set a model and reasoning effort; review 
 Building and fixing can also set the subagents' model and effort. Build, fix, lite and review may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no entry for a family, that tool runs on its own settings, except that a review on Claude
+kind has no Claude implementation or plan-read entry, Forge uses `claude-sonnet-5-5` at
+xhigh effort. Other tools use their own settings; a review on Claude
 uses `[models.grill.claude]`. Ask your agent to change these settings in a fix.
 
+`forge init` writes Sonnet at xhigh for Claude build, fix, lite, design (frontend included)
+and grill. Existing model entries stay unchanged on upgrade. To opt in, set `model` to
+`"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those five Claude entries. A missing entry
+can be added before the first table with one line per kind, replacing `build` below:
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+Move a single build, fix or lite entry to its family's table first. Preserve the old Claude
+grill model and effort in `[models.review.claude]` before changing grill if no Claude review
+entry exists. Reviews and client sign-off keep their models. Run `forge sync` after changing
+settings to refresh subagent roles.
+
 In a client repo, a story task marked User-facing or a fix allowed as "Prototype before sign-off"
-uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-opus-5-5` at
-high effort. If the `claude` command is missing, or Claude fails before changing the checkout,
+uses `[models.design.claude]` even when `workers = "codex"`. Its default is `claude-sonnet-5-5` at
+xhigh effort. If the `claude` command is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
 failure without a Codex retry. Other work, including all work in Forge's own repo, keeps its

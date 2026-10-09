@@ -516,7 +516,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # for the engine's family, and on Claude with no Claude review entry, its Claude cold-read model.
         chosen = ({"model": "gpt-6.1-sol", "effort": "medium"} if light and engine == "codex" else
                   repo.models(cfg, "review", engine)
-                  or (repo.models(cfg, "grill", "claude") if engine == "claude" else {}))
+                  or (cfg["models"].get("grill", {}).get("claude", {}) if engine == "claude" else {}))
         if chosen:
             argv += ["--model", f"{engine}={chosen['model']}"]
             argv += ["--thinking", f"{engine}={chosen['effort']}"] if "effort" in chosen else []

@@ -62,38 +62,54 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # The model and effort each kind of work runs on; the review kind's model goes to Autoreview. The
 # cold read (grill) runs on the family that isn't coordinating, so it has an entry for each.
 MODELS = """
-[models.build]
+[models.build.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 
-[models.fix]
+[models.build.claude]
+model = "claude-sonnet-5-5"
+effort = "xhigh"
+
+[models.fix.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 
-[models.lite]
+[models.fix.claude]
+model = "claude-sonnet-5-5"
+effort = "xhigh"
+
+[models.lite.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
+
+[models.lite.claude]
+model = "claude-sonnet-5-5"
+effort = "xhigh"
 
 [models.grill.codex]
 model = "gpt-6.1-sol"
 effort = "high"
 
 [models.grill.claude]
-model = "opus"
-effort = "high"
+model = "claude-sonnet-5-5"
+effort = "xhigh"
 
 [models.design.claude]
-model = "claude-opus-5-5"
-effort = "high"
+model = "claude-sonnet-5-5"
+effort = "xhigh"
 
 [models.design.codex]
 model = "gpt-6.1-sol"
 effort = "high"
 
-[models.review]
+[models.review.codex]
 model = "gpt-6.1-sol"
+effort = "high"
+
+[models.review.claude]
+model = "opus"
 effort = "high"
 """
 

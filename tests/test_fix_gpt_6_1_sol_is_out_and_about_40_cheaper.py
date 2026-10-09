@@ -19,10 +19,10 @@ def test_1_forge_init_defaults_work_to_gpt_6_1_sol_and_reviews_to_gpt_6_sol(repo
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]
-    assert models["build"] == models["fix"] == {"model": NEW, "effort": "medium"}
-    assert models["lite"] == {"model": NEW, "effort": "medium", **HELPERS}
+    assert models["build"]["codex"] == models["fix"]["codex"] == {"model": NEW, "effort": "medium"}
+    assert models["lite"]["codex"] == {"model": NEW, "effort": "medium", **HELPERS}
     assert models["grill"]["codex"] == models["design"]["codex"] == {"model": NEW, "effort": "high"}
-    assert models["review"] == REVIEW
+    assert models["review"]["codex"] == REVIEW
 
 
 def test_2_this_repos_cold_reader_and_design_run_on_gpt_6_1_sol(repo):

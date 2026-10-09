@@ -755,7 +755,23 @@ discards the answer.
 Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry, such as
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their `workers` tool's entry, the
-review its engine's, and `forge ask` Codex's; a tool with no entry runs on its own settings.
+review its engine's, and `forge ask` Codex's. Claude workers and plan readers with no entry
+use Forge's defaults; other tools use their own settings.
+
+Claude implementation (build, fix, lite and design, including frontend) and plan reads
+(grill) default to `claude-sonnet-5-5` at `xhigh` effort. `forge init` writes each Claude
+entry explicitly; omitted Claude implementation and plan-read entries use the same built-in
+defaults. Reviews and client sign-off keep their models.
+
+Existing model entries stay unchanged on upgrade. To opt in, set each of
+`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
+`[models.design.claude]` and `[models.grill.claude]` to Sonnet at xhigh. For a missing entry,
+add a top-level line before the first table, replacing `build` with each kind:
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+If build, fix or lite has a single entry, move it to its family's table before adding the
+Claude entry. Before changing grill, preserve its previous Claude model and effort in
+`[models.review.claude]` when there is no Claude review entry; Claude reviews otherwise use
+the configured Claude grill entry. Then run `forge sync` to refresh subagent roles.
 
 `forge.toml`'s `workers` says who builds each task and fix, and `forge work` prints the worker,
 model and effort it starts with, and why; `forge next` names the worker beside each ready task:
