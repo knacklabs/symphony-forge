@@ -66,6 +66,15 @@ questions; write for the human's choice.
 
 The human never edits `forge.toml`; you keep it. When a setting must change, ask first with
 options, then make the change yourself in a fix: `forge fix start`, the edit, then `forge close`.
+`runner` selects the GitHub Actions runner label for both jobs in the generated `forge.yml`;
+it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
+`forge init --runner self-hosted`, or set `runner = "self-hosted"` (or a custom label) in an
+existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
+it after upgrading Forge and syncing. The jobs set up uv and Python, and install
+Node for Node tests, respecting version files or engines with Node 22 as the fallback.
+If the current branch's pull request checks stay queued for at least five minutes without
+starting, `forge doctor` and close's check wait name the runner setting. Make a matching runner
+available or correct the setting and sync; keep the required checks enabled.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`

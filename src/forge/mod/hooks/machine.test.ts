@@ -228,13 +228,12 @@ for (const surface of ['terminal', 'desktop'] as const) {
   })
 }
 
-test('6: terminal Machine retains thirty load samples with their glyphs and colors', async ($, on) => {
+test('6: terminal Machine load history keeps the last thirty refresh samples and their colours', async ($, on) => {
   const { clock, state } = host(on, 'terminal')
-  await $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: true })
-  await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 120 } })
+  // Sampling needs refresh ticks, not the interactive pane's 310 repaint ticks.
+  await $.session.start({ cwd: '/repo', surface: 'terminal', isInteractive: false })
   const ui = await $.ui.mount({ plugin: 'forge', surface: 'terminal', component: 'Pane', requestId: 'forge', props: pane })
   await ui.press({ key: 'tab-Machine' })
-  await clock.advance(5000)
   for (let n = 1; n <= 31; n++) {
     state.lanes.machine.load = [n, 2, 1]
     await clock.advance(10000)

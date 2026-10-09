@@ -30,3 +30,8 @@ def run_native_plugin_checks(tmp_path):
              "claude", "plugin", *args],
             cwd=ROOT, env=environment, capture_output=True, encoding="utf-8", timeout=120)
         assert checked.returncode == 0, checked.stdout + checked.stderr
+        summary = environment.get("GITHUB_STEP_SUMMARY")
+        if args[0] == "test" and summary:
+            with patient(lambda: open(summary, "a", encoding="utf-8")) as report:
+                report.write("\n### Native plugin checks and timings\n\n```text\n"
+                             + checked.stdout + checked.stderr + "\n```\n")
