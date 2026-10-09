@@ -273,10 +273,15 @@ def fix_start(args: argparse.Namespace) -> None:
     while name in taken or _merged(main, name):
         n += 1
         name = f"{slug}-{n}"
-    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", main)}
+    top = repo.root()
+    parent = branch_item(repo.current_branch(top), top)
+    base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base)}
+    if base == "HEAD":
+        state["stacked_on"] = parent[0]
     if (repo.root() / "forge.toml").is_file() and repo.is_prototype(repo.root()):
         state["allow_large"] = "Prototype before sign-off"
-    path = _new_checkout(name, f"fix/{name}", f"fix-{name}", main, state, f"Start the fix: {why}")
+    path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
     print(f"Next: forge work {name}")
 

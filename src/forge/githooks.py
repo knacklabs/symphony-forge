@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -123,7 +124,7 @@ def pre_commit(args: argparse.Namespace) -> None:
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
-        _promote(item, state, repo.config(top), _base("HEAD", *merging), "")
+        _promote(item, state, repo.config(top), _base(state, "HEAD", *merging), "")
 
 
 def pre_push(args: argparse.Namespace) -> None:
@@ -139,16 +140,36 @@ def pre_push(args: argparse.Namespace) -> None:
         match = repo.ITEM.fullmatch(fix)
         state = task.show(sha, repo.state_path(fix)) if match and match["fix"] else None
         # The pushed commit's own state decides; without one there is no allow-large reason.
-        _promote(fix, json.loads(state) if state else {}, repo.config(), _base(sha), sha)
+        state = json.loads(state) if state else {}
+        _promote(fix, state, repo.config(), _base(state, sha), sha)
 
 
-def _base(*tips: str) -> str:
-    """Where a fix's own changes start: its merge base with the default branch."""
+def _base(state: dict[str, Any], *tips: str) -> str:
+    """Where a fix's own changes start, including an in-progress default-branch merge."""
     default = repo.default_branch()
     remote = f"origin/{default}"
     main = remote if run("git", "rev-parse", "-q", "--verify", remote).returncode == 0 else default
+    return fix_base(repo.root(), state, main, *tips)
+
+
+def fix_base(top: Path, state: dict[str, Any], base: str, *tips: str) -> str:
+    """Exclude the unmerged parent and incoming default changes from a stacked fix's size."""
     # With several tips, git takes the merge base with a merge of all of them.
-    return git("merge-base", main, *tips)
+    fork = git("merge-base", base, *tips, cwd=top)
+    start, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
+    if not (repo.ITEM.fullmatch(parent) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", start)
+            and run("git", "merge-base", "--is-ancestor", start, tips[0], cwd=top).returncode == 0
+            and not task._merged(fork, parent, top)):
+        return fork
+    if run("git", "merge-base", "--is-ancestor", fork, start, cwd=top).returncode == 0:
+        return start
+    # Default-only merges need both inherited trees; conflict resolutions count as own changes.
+    # shortcut: this merge order needs Git 2.38+, add a fallback if older Git clients need it.
+    merged = run("git", "merge-tree", "--write-tree", start, fork, cwd=top)
+    if merged.returncode not in (0, 1):
+        merged.check_returncode()
+    return git("-c", "user.name=Forge", "-c", "user.email=forge@localhost",
+               "commit-tree", merged.stdout.splitlines()[0], "-m", "Fix size baseline", cwd=top)
 
 
 def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, head: str) -> None:

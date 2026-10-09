@@ -408,28 +408,6 @@
       "closed_by": "dismissed"
     },
     {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 590,
-      "text": "Not done: Live previous-release processes can still prune newer lane entries",
-      "from": "blocking",
-      "item": "lane-identity-env",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 596,
-      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
-      "from": "blocking",
-      "item": "lane-identity-env",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -624,6 +602,17 @@
       "text": "Keep Forge checks reachable and preserve pre-push input",
       "from": "blocking",
       "item": "husky-hooks",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/githooks.py\tNot done: Stacked-fix size/interface checks fail in the shipped pull request workflow\tstacked-fix-count",
+      "kind": "bug",
+      "path": "src/forge/githooks.py",
+      "line": 171,
+      "text": "Not done: Stacked-fix size/interface checks fail in the shipped pull request workflow",
+      "from": "blocking",
+      "item": "stacked-fix-count",
       "status": "open",
       "closed_by": null
     },
@@ -1053,6 +1042,17 @@
       "text": "Standard: Touch only what the task needs",
       "from": "blocking",
       "item": "FORGE-LANES-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tConcurrent closes can lose a temporary Git object while a local review clone copies it; the CI suite failed and the focused local command cases pass.",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 483,
+      "text": "Concurrent closes can lose a temporary Git object while a local review clone copies it; the CI suite failed and the focused local command cases pass.",
+      "from": "worker",
+      "item": "stacked-fix-count",
       "status": "open",
       "closed_by": null
     },
@@ -1559,6 +1559,17 @@
       "text": "Not done: forge stop ends a worker and its test run",
       "from": "blocking",
       "item": "FORGE-LANES-1/TESTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_tests.py\tThe Ubuntu suite cannot confirm the Codex worker stopped; the case passes alone on the default branch, and the suite failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_lanes_tests.py",
+      "line": 309,
+      "text": "The Ubuntu suite cannot confirm the Codex worker stopped; the case passes alone on the default branch, and the suite failure remains unresolved.",
+      "from": "worker",
+      "item": "stacked-fix-count",
       "status": "open",
       "closed_by": null
     },
@@ -2454,6 +2465,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/prcheck.py\tExclude both paths of renamed tests from the PR size gate",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 244,
+      "text": "Exclude both paths of renamed tests from the PR size gate",
+      "from": "review",
+      "item": "stacked-fix-count",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/quicktest.py\tForward the added filters through npm exec's argument separator",
       "kind": "edge",
       "path": "src/forge/quicktest.py",
@@ -2890,6 +2912,28 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 590,
+      "text": "Not done: Live previous-release processes can still prune newer lane entries",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 596,
+      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
+      "from": "blocking",
+      "item": "lane-identity-env",
       "status": "open",
       "closed_by": null
     }

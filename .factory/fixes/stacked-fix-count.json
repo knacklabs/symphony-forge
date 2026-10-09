@@ -1,0 +1,49 @@
+{
+  "base": "5e7560e587f64c76dbf5d0dfdd6ff176643fb61f",
+  "branch": "fix/stacked-fix-count",
+  "done_when": "The five-code-file and interface check (commit hook, push hook and the pull request check) counts only the fix's own changes, measured from where the fix started when that point is on another unmerged item's branch, and still from the default branch otherwise; it stays correct after the underlying item merges and the default branch is merged in; a command test covers a stacked fix under and over the limit, before and after the underlying item merges, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/githooks.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a4225f2684ea0f60601ca3695542386490d67df73ff4620fdc3049c20d42c43a",
+    "changed": "6d49d557720bad26ca35d6a81fee17ed20a43cf4d2c0ea894ce66b4dd9481ed6",
+    "commit": "af5398dd49170b6f561313eaf6c5898eb63cee7c",
+    "dismissals": [],
+    "findings": [],
+    "id": "9ab024ce-b0bd-42d8-a93e-85cda4d0975b",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-08T22:29:48+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-08T22:48:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T22:53:36+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T23:05:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-08T23:33:40+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T04:05:46+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A fix started on top of another item's unmerged branch (a follow-up to that item's findings) counts the other item's changed files against its own five-file limit, because the limit is measured from the merge base with the default branch rather than where the fix started, so stacked follow-ups trip the limit before writing anything (reported by a client session on v1.2.7)",
+  "worker": "codex"
+}

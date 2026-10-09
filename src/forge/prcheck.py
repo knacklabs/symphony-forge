@@ -191,8 +191,12 @@ def pr_check(args: argparse.Namespace) -> int:
                    if not str(state.get(key) or "").strip()]
         if missing:
             repo.refuse(REFUSALS["fix_line"], branch=branch, line=" or ".join(missing))
+        from forge import githooks
+
+        fix_base = githooks.fix_base(top, state, base, head)
+        own = repo.git("diff", "--name-only", "--no-renames", fix_base, head, cwd=top).splitlines()
         problem = "" if state.get("allow_large") else promote_problem(
-            changed, cfg["interfaces"], top, base, head)
+            own, cfg["interfaces"], top, fix_base, head)
         if problem:
             repo.refuse(REFUSALS["promote"], branch=branch, problem=problem, fix=item)
     from forge import story
@@ -243,13 +247,12 @@ def promote_problem(changed: list[str], interfaces: list[str], top: Path, base: 
             return f"changes the interface path {path}"
     from forge import story, sync, worker
 
-    tests = repo.git("diff", "--name-only", f"{base}...{head}", "--", *worker.TEST_PATHS, cwd=top)
+    tests = repo.git("diff", "--name-only", "--no-renames", base, head, "--", *worker.TEST_PATHS, cwd=top)
     code = [path for path in code if path not in tests.splitlines()]
     if len(code) > CODE_LIMIT:
         # Sync's output for the forge.toml the change pins: an upgrade's check runs that release.
         cfg = repo._config_text(story.show(top, head, "forge.toml") or "")
-        fork = repo.git("merge-base", base, head, cwd=top)
-        output = sync.synced(top, cfg, fork, head, code)
+        output = sync.synced(top, cfg, base, head, code)
         code = [path for path in code if path not in output]
     if len(code) > CODE_LIMIT:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
