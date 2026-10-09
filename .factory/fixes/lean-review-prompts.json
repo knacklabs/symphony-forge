@@ -31,6 +31,7 @@
     "id": "f040b8e2-6e62-42f0-9287-797ec4e38e89",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -42,5 +43,6 @@
       "step": "review"
     }
   ],
-  "why": "Cold reads and Autoreview reviews keep finding one more rare edge case per round (items ran 4 to 9 rounds on 2026-10-08/09), which slows shipping without improving what users get; the owner wants both prompts to ask for only what's needed, ignore very rare cases by likelihood, and never compromise on scale, security or functional correctness (2026-10-09)"
+  "why": "Cold reads and Autoreview reviews keep finding one more rare edge case per round (items ran 4 to 9 rounds on 2026-10-08/09), which slows shipping without improving what users get; the owner wants both prompts to ask for only what's needed, ignore very rare cases by likelihood, and never compromise on scale, security or functional correctness (2026-10-09)",
+  "worker": "codex"
 }
