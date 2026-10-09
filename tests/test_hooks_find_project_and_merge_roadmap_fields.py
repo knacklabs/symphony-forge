@@ -31,7 +31,7 @@ def client(repo, gh, tmp_path, request):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Claude shell hooks run through POSIX sh")
-def test_claude_hook_finds_project_before_current_folder(client, tmp_path):
+def test_1_claude_hook_finds_project_before_current_folder(client, tmp_path):
     hooks = json.loads((client.path / ".claude/settings.json").read_text("utf-8"))["hooks"]
     command = hooks["PreToolUse"][0]["hooks"][0]["command"]
     outside = tmp_path / "outside project"
@@ -49,7 +49,7 @@ def test_claude_hook_finds_project_before_current_folder(client, tmp_path):
 
 
 @pytest.mark.parametrize("conflicting_field", [None, "title", "spec", "status"])
-def test_roadmap_merges_fields_and_conflicts_on_shared_changes(client, conflicting_field):
+def test_2_roadmap_merges_fields_and_conflicts_on_shared_changes(client, conflicting_field):
     base = {"key": "SYNC-1", "title": "Original title", "spec": "docs/specs/original.md",
             "status": "pending", "order": 1}
     client.write("plans/roadmap.json", json.dumps({"items": [base]}, indent=2) + "\n")

@@ -6,7 +6,7 @@ import pytest
 from test_board import DOC, seen
 from test_machine_views_recent_finished_items import client, landed, NOW, OLD
 
-STORY = "FIX-SKIPPED-SYNC-BOARD"
+STORY = "skipped-sync-board"
 
 
 def assigned_doc():
@@ -15,7 +15,7 @@ def assigned_doc():
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-def test_merged_assignment_older_than_seven_days_is_never_unstarted(
+def test_3_merged_assignment_older_than_seven_days_is_never_unstarted(
         repo, gh, monkeypatch, tmp_path, history):
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)
@@ -36,7 +36,7 @@ def test_merged_assignment_older_than_seven_days_is_never_unstarted(
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-def test_backticked_task_ids_render_on_both_boards(repo, gh, monkeypatch, tmp_path, history):
+def test_4_backticked_task_ids_render_on_both_boards(repo, gh, monkeypatch, tmp_path, history):
     client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW)
     doc = assigned_doc()
