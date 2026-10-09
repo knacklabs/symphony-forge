@@ -6,24 +6,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a505ab93d74d69a3d0979be56dd78c832812bb1ff5649d567c5ae137fd22fe1c",
-    "changed": "178fb8abbce14a725907218dc07bd6a8fdd987532bed144c69b9cf1adc036734",
-    "commit": "5c53967e22164a7500a7efb0343418289b37e3d5",
+    "branch_diff": "838ebb6f92efd134c91fac920d45e5063c991a6c0356708a59f5447ccd7b04db",
+    "changed": "139a04060b08a9adec6505977b1569ca0ad97dcfe22ced373d4ee4f6ea8312ff",
+    "commit": "10e2452ef4f7841db05620a6f0c3444d74e37c2f",
     "dismissals": [],
     "findings": [
       {
-        "body": "After `forge close`, deleting or temporarily invalidating `forge.toml` in the item's worktree now makes `forge merge`, run from the main checkout, fail during cleanup. `repo.config(worktree)` requires a valid local file (`src/forge/repo.py:339\u2013347`), even though these uncommitted changes should simply retain the worktree. GitHub merging and remote-branch deletion have already happened, but Forge never reaches the retained-worktree message or marks the receipt tidied. The unconditional shim calculation similarly reads both hook files and their `.pre-forge` backups as UTF-8 (`src/forge/githooks.py:67`, `src/forge/sync.py:142\u2013143`), so non-UTF-8 local hook edits can abort cleanup too. Treat inputs that cannot establish an unchanged generated shim as protected local work and finish cleanup bookkeeping.",
+        "body": "The previous P2 remains open. After `forge close`, deleting or invalidating the item's local `forge.toml` makes `forge merge`, run from the main checkout, abort here: `repo.config(worktree)` requires a valid file (`src/forge/repo.py:339\u2013347`). Non-UTF-8 edits to either hook or its `.pre-forge` backup likewise abort the unconditional shim calculation (`src/forge/githooks.py:67`, `src/forge/sync.py:142\u2013143`). The pull request and remote-branch cleanup have already completed, but Forge never prints the retained-worktree message or marks the receipt tidied. Treat inputs that cannot establish an unchanged generated shim as protected local work, retain the worktree, and finish cleanup bookkeeping.",
         "file": "src/forge/merge.py",
         "line": 132,
         "priority": "P2",
-        "title": "Preserve dirty worktrees without requiring their mutable config to parse"
+        "title": "Preserve dirty worktrees without parsing mutable cleanup inputs"
       }
     ],
-    "id": "dfc40577-a264-4d13-8d6c-c2d80a68a2a8",
+    "id": "da80d3e2-ced6-4bc4-bdcf-37bf5a7e657a",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T10:03:27+00:00",
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-10-09T11:18:05+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T11:53:50+00:00",
       "step": "review"
     }
   ],
