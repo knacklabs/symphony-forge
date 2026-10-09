@@ -108,7 +108,7 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
     (command, state) for command in ("doctor", "close")
     for state in ("recent-queued", "recent-rerun", "running")
 ] + [("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")])
-def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, state):
+def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, state, monkeypatch):
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
     env.commit(env.repo.path, "forge.toml", config, "Select the organisation runner")
     item, where = env.start_fix()
@@ -116,6 +116,8 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, 
     env.gh.respond("pr", "list", stdout=json.dumps([
         {"number": 7, "state": "OPEN", "body": "", "isDraft": True, "headRefOid": head}]))
     now = datetime.now(timezone.utc)
+    # Keep job timestamps before the fixed, second-resolution observation clock.
+    monkeypatch.setenv("FORGE_NOW", now.replace(microsecond=0).isoformat())
     created = now - (timedelta(days=8) if state == "recent-rerun" else timedelta(minutes=1))
     status = "in_progress" if state == "running" else "queued"
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, status)]
@@ -143,7 +145,7 @@ def test_3_only_doctor_names_a_likely_missing_runner_after_a_week(env, command, 
                    "repos/{owner}/{repo}/actions/runs/101/jobs?filter=all",
                    stdout=json.dumps({"status": status, "labels": ["self-hosted"],
                                       "runner_id": 9 if status == "in_progress" else 0,
-                                      "started_at": now.isoformat()}) + "\n")
+                                      "started_at": (now - timedelta(minutes=1)).isoformat()}) + "\n")
     env.gh.respond("api", "--paginate", "--jq", ".jobs[]",
                    "repos/{owner}/{repo}/actions/runs/102/jobs?filter=all",
                    stdout=json.dumps({"status": "completed", "conclusion": "failure",
