@@ -53,6 +53,18 @@
                          height: 10px; border-radius: 50%; background: var(--accent); }
   .timeline time { display: block; color: var(--muted); font-size: .8rem; }
   .detail { display: block; }
+  .board-picture { display: block; width: 100%; max-width: 340px; margin: .7rem 0 1.2rem;
+                   color: var(--ink); font: 15px var(--sans); }
+  .board-picture text { fill: currentColor; }
+  .board-picture .picture-detail { fill: var(--muted); font-size: 14px; }
+  .dependency-node circle, .dependency-node rect, .dependency-node polygon,
+  .dependency-node ellipse { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5;
+                             vector-effect: non-scaling-stroke; }
+  .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5;
+                     vector-effect: non-scaling-stroke; }
+  .arrow { fill: var(--muted); }
+  .recorded-time { fill: var(--accent); }
+  .unknown-time { stroke: var(--muted); stroke-dasharray: 3 3; }
 </style>
 </head>
 <body>

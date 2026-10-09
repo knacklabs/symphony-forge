@@ -156,6 +156,14 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+The HTML page also draws inline dependency maps and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
+parts, plain titles, labelled states and `waits_for` item references, including old merged
+dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
+distinguish merged, running, waiting and not started. Active parts and fixes show recorded
+Build, Tests, Review, CI and Merge times for their current round, with the current stage
+marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
+get it after upgrading Forge and syncing.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,

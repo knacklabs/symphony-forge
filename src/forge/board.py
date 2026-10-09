@@ -24,7 +24,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import __version__, approval, codex, machine, repo, story, task
+from forge import __version__, approval, board_visuals, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -58,7 +58,7 @@ def board(args: Any) -> int:
     stories, fixes, prs = _gather(top)
     out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(_page(stories, fixes, prs).encode("utf-8"))  # bytes: the same file on Windows
+    out.write_bytes(_page(stories, fixes, prs, machine_board(top)).encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(out.resolve().as_uri())
@@ -190,8 +190,6 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
-        if rel in history["expired"]:
-            continue
         if where == landed:
             merged.add(rel)
         if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
@@ -393,6 +391,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
 
     items, children = {}, {}
     for rel, (state, where) in best.items():
+        if rel in history["expired"]:
+            continue
         match = STATE.fullmatch(rel)
         if match["fix"]:
             if state.get("kind") != "story-done":
@@ -416,6 +416,34 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         if key not in items:
             items[key] = row(key, "story", "A story with missing state", {}, landed)
         items[key]["children"] = parts
+    # Maps keep the whole plan, including dependencies too old for the active rows.
+    maps = []
+    active_parts = {p["id"]: p for parts in children.values() for p in parts}
+    for rel, (state, where) in best.items():
+        match = STATE.fullmatch(rel)
+        if not match["key"] or match["task"]:
+            continue
+        key = match["key"]
+        specs = task.rows(task.sections(_read(top, where, f"plans/{key}.md")))
+        parts = []
+        for tid, spec in specs.items():
+            item = f"{key}/{tid}"
+            waits = [dep if "/" in dep else f"{key}/{dep}"
+                     for dep in task.cell_list(spec.get("After", ""))]
+            current = active_parts.get(item, {})
+            status = ("Merged" if repo.state_path(item) in merged else
+                      "Running" if current.get("activity", {}).get("status") == "running"
+                      or current.get("worker") or current.get("tests")
+                      or current.get("gates", {}).get("ci", {}).get("status") == "running" else
+                      "Waiting" if current or any(repo.state_path(dep) not in merged for dep in waits) else
+                      "Not started")
+            parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
+                          "status": status, "waits_for": waits})
+        maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
+                     or "A story with no title yet", "parts": parts})
+    mapped = {m["id"] for m in maps}
+    maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet", "parts": []}
+                for s in repo.roadmap(top) if s["key"] not in mapped and s.get("status") != "superseded")
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else
@@ -423,7 +451,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()), "events": recent,
+    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
+            "dependency_maps": maps, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
 
 
@@ -468,7 +497,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
         if match["fix"]:
             if state.get("kind") != "story-done":  # a story's outcome shows in its own timeline
                 fix = part(rel, state, f"fix/{match['fix']}", "fix")
-                fixes.append({**fix, "name": (fix["pr"] or {}).get("title") or state.get("why")
+                fixes.append({**fix, "id": match["fix"], "name": (fix["pr"] or {}).get("title") or state.get("why")
                               or "A small fix"})
         elif match["task"]:
             tasks.setdefault(match["key"], {})[match["task"]] = part(
@@ -671,7 +700,7 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     ended = _when(state.get("finished"))
     if state.get("status") == "done" and ended:
         timeline.append((ended, "The story was finished.", state.get("outcome") or ""))
-    return {"title": title or "A story with no title yet", "sentence": sentence, "meta": meta,
+    return {"id": key, "title": title or "A story with no title yet", "sentence": sentence, "meta": meta,
             "parts": parts, "timeline": timeline, "touches": touches, "approved": bool(approved),
             "finished": state.get("status") == "done"}
 
@@ -809,8 +838,11 @@ def _cap(text: str) -> str:
 # --- the page --------------------------------------------------------------------------------
 
 
-def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str:
+def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: Item) -> str:
     esc = html.escape
+    maps = {m["id"]: m for m in view["dependency_maps"]}
+    rows = {r["id"]: r for r in view["items"]}
+    all_parts = {p["id"]: p for m in maps.values() for p in m["parts"]}
 
     def part(name: str, item: Item | None, summary: str = "") -> str:
         if item is None:
@@ -818,6 +850,9 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
         lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
         lines += [f'<p class="took">{esc(_cap("; ".join(item["took"])))}.</p>'] if item["took"] else []
         lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]]
+        current = rows.get(item.get("id"))
+        if current and current["stage"] not in ("merged", "done"):
+            lines.append(board_visuals.timeline(current))
         url = (item.get("pr") or {}).get("url")
         label = (f'<a href="{esc(url, quote=True)}">{esc(name)}</a>' if url else esc(name))
         return f'<li><b>{label}</b>: <span class="status">{esc(item["status"])}.</span>{"".join(lines)}</li>'
@@ -825,8 +860,13 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
     def card(s: Item) -> str:
         body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(s["sentence"])}</p>']
         body += [f'<p class="meta">{esc(" ".join(s["meta"]))}</p>'] if s["meta"] else []
+        if s["id"] in maps:
+            body.append(board_visuals.dependencies(maps[s["id"]], all_parts))
         if s["parts"]:
             body.append("<h4>Parts</h4><ul>" + "".join(part(n, p) for n, p in s["parts"]) + "</ul>")
+        for current in rows.get(s["id"], {}).get("children", []):
+            if current["stage"] not in ("merged", "done"):
+                body.append(f'<h4>{esc(current["title"])}</h4>' + board_visuals.timeline(current))
         if s["timeline"]:
             body.append("<h4>What happened</h4><ol class=\"timeline\">" + "".join(
                 f'<li><time datetime="{when:%Y-%m-%d}">{_day(when)}</time><b>{esc(headline)}</b>'
