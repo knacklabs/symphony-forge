@@ -2,13 +2,28 @@
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/stacked-replay",
   "done_when": "When forge close finds that a fix was started on another item's branch and that item has since merged into the default branch, it moves only the fix's own commits onto the current default branch and pushes with a lease (never discarding commits it didn't make, stopping with a plain next step if its own commits conflict), so no hand resolution is needed; fixes started on the default branch keep today's merge of the default branch; a command test covers a stacked fix after its base item squash-merges, for a new repo and one adopted on an earlier release, plus a real conflict in the fix's own commits",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0b8d1a14aa375a0bcf464cf4777792b784fb4cfceda03211aab5c6f8dd896561",
+    "changed": "6e77492690ad690fe94c15c00fbd95da9ed83af60bf7751e70eadc9fdf6e0bb8",
+    "commit": "79ec853471fbf6daf7bff57cb8f9be0e02be3fa4",
+    "dismissals": [],
+    "findings": [],
+    "id": "65bfd545-ff2c-4a2e-a4ca-30b3d12337bf",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T07:29:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T09:35:59+00:00",
+      "step": "review"
     }
   ],
   "why": "A follow-up fix started on another item's unmerged branch conflicts in every file that item touched once the item is squash-merged, because the follow-up still carries the item's original commits, so someone resolves it by hand (reported by a client session). Owner decision 2026-10-09: replay the follow-up onto the default branch",
