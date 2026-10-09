@@ -16,8 +16,7 @@ Files the branch changes outside that scope:
 $outside
 
 A file outside Scope that the work needs, such as a caller, a type or an existing test the change
-broke, is allowed. Report only the files outside Scope that the work doesn't need. Check the
-worker's handoff names each such file and why.
+broke, is allowed. Report only the files outside Scope that the work doesn't need.
 
 ## Done when
 This part covers the items below. Report every one the branch does not meet as a P1 finding
