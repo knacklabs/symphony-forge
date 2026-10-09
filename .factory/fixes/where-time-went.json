@@ -12,48 +12,27 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f5ab171a2c13338ebccd0c92f2b940cc47b97429c0b9a56fd020eab0ebd90ab7",
-    "changed": "da56831547e185e6763862426cd013dc86a7045611f42b377a4ec79b5df0a423",
-    "commit": "cb0133c72333b5408472e39e086a2a09a65d0a73",
+    "branch_diff": "0160f109605e815892905c3c9fa0292a2a18f7bca3ac2f9ee9c5850e7782e7cd",
+    "changed": "fbfec6bb05868c29960f86d79f2422bdd0fc0ce7a3732a2c001a95b8cb16738f",
+    "commit": "4bf0457798dd860e673dcedb97b1c401ad77d11d",
     "dismissals": [],
     "findings": [
       {
-        "body": "The substitution searches the entire PR body instead of Forge's managed block. If the owner adds a handwritten `## How it went` section before `<!-- forge:begin -->`, this replaces that section and can consume Forge's opening marker and review summary before reaching the generated heading. The subsequent `pr edit` permanently publishes the damaged body and squashes it. Restrict the replacement to the managed block, preserving everything outside its markers.",
-        "file": "src/forge/merge.py",
-        "line": 85,
-        "priority": "P1",
-        "title": "Preserve handwritten sections when refreshing merge history"
-      },
-      {
-        "body": "Every uncovered interval becomes `nothing_running`, although legacy logs do not establish that nothing was running or that the item was not waiting for its owner. New evidence beyond the legacy-history ruling: the earlier-release recorder in `tests/fixtures/forge-v1.2.2/src/forge/repo.py:120` writes timings without round or activity events. With old timings covering seconds 0\u201310 and 20\u201325, followed by new activity at second 60, this calculation invents 45 seconds of idle time. The prefix protection at lines 65\u201367 does not cover gaps between existing legacy records. Preserve those unobserved intervals as unknown until complete activity recording begins.",
+        "body": "New evidence beyond the legacy-history ruling: the raw base version of src/forge/repo.py:297\u2013306 already records `run start` and `run end`, before lane and owner-wait completion recording existed. Consequently, those events cannot establish complete modern activity recording. With an old review spanning seconds 0\u201310 and new work spanning 60\u201365, a snapshot at 70 classifies 55 seconds as idle instead of leaving the earlier 50-second gap unknown. The sibling handling at lines 113\u2013118 also treats historical `worker question` events as open owner waits indefinitely, although the pre-change worker could answer and clear them without recording `owner wait end` (verified in the raw base worker.py and current worker.py:232\u2013234). Establish completeness using records introduced by this change, and keep historical question ends unknown. The supplied legacy tests cover timing-only history, so they miss these existing event producers.",
         "file": "src/forge/time_records.py",
-        "line": 175,
+        "line": 66,
         "priority": "P1",
-        "title": "Not done: keep gaps in legacy timing history unknown"
+        "title": "Not done: preserve unknown history from pre-upgrade run records"
       },
       {
-        "body": "When earlier findings are unknown, one unseen finding makes `comparable` false for the entire report, erasing known repeat counts too. New evidence beyond the repeat-count ruling: after a recorded finding A, a later report containing A and an unseen B produces `repeat_findings: null`, despite A being an observed repeat. The named legacy test repeats only A, so it misses this mixed-report case. Retain the observed repeat count independently while leaving unseen findings' classification unknown, as the ruling and shipped guide require.",
+        "body": "The `if start` guard prevents the saved start timestamp from being used when the item has no event or timing records yet. Real task and fix creation writes that timestamp through src/forge/task.py:119\u2013120 without producing these logs. Thus, immediately after starting an item\u2014and throughout its initial idle period\u2014`forge board --json` reports `total_seconds: null` despite having both a recorded start and the current time. Initialize the elapsed-time start from the saved step independently of activity logs; unobserved breakdown categories can remain unknown.",
         "file": "src/forge/time_records.py",
-        "line": 204,
-        "priority": "P1",
-        "title": "Not done: retain observed repeats in mixed legacy reports"
-      },
-      {
-        "body": "The looping cases execute `--resolve accept` but only assert that owner time is non-null; they never verify that the review-loop wait stops accruing. Removing `src/forge/close.py:102` would leave these assertions green while the resolved wait remains open. The worker-question test exercises a different producer, and the narrow/split command cases in `tests/test_close_holds_after_three_blocked_reviews.py:89\u2013105` do not check time history. Add a command-level assertion that a review-loop resolution closes the corresponding wait and freezes its recorded duration.",
-        "file": "tests/test_item_time_history.py",
-        "line": 140,
-        "priority": "P1",
-        "title": "Not done: test that resolving a review loop ends its owner wait"
-      },
-      {
-        "body": "The review clock starts in `close.py:193`, before admission to the review agent lane in `review.py:541`. The interval calculation correctly separates that queue time, but this special case replaces the calculated reviewing duration with the full timing. A 60-second lane wait followed by a 5-second review therefore shows reviewing 5 seconds in the breakdown, but review 65 seconds plus in-line 60 seconds in the round line and PR. Use the separated reviewing duration so the two presentations agree.",
-        "file": "src/forge/time_records.py",
-        "line": 236,
+        "line": 59,
         "priority": "P2",
-        "title": "Subtract the review lane wait from the round's review duration"
+        "title": "Use the recorded item start before the first logged run"
       }
     ],
-    "id": "12d3c7c4-70cd-44ba-9bf9-c57535dbf3ac",
+    "id": "dd69abdb-c4ed-48ad-8d1a-4d7ba4bba548",
     "status": "blocked"
   },
   "round": 3,
@@ -69,6 +48,10 @@
     },
     {
       "at": "2026-10-09T14:03:00+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T14:50:33+00:00",
       "step": "review"
     }
   ],

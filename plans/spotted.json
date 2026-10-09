@@ -1299,6 +1299,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: preserve unknown history from pre-upgrade run records\twhere-time-went",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 66,
+      "text": "Not done: preserve unknown history from pre-upgrade run records",
+      "from": "blocking",
+      "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/time_records.py\tNot done: retain observed repeats in mixed legacy reports\twhere-time-went",
       "kind": "bug",
       "path": "src/forge/time_records.py",
@@ -2987,6 +2998,17 @@
       "path": "src/forge/time_records.py",
       "line": 236,
       "text": "Subtract the review lane wait from the round's review duration",
+      "from": "review",
+      "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/time_records.py\tUse the recorded item start before the first logged run",
+      "kind": "edge",
+      "path": "src/forge/time_records.py",
+      "line": 59,
+      "text": "Use the recorded item start before the first logged run",
       "from": "review",
       "item": "where-time-went",
       "status": "open",
