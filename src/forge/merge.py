@@ -114,6 +114,25 @@ def merge(args: argparse.Namespace) -> int:
             repo.refuse(repo.REFUSALS["no_github"])
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
         if not merged:
+            if done.returncode:
+                shown = repo.run("gh", "pr", "view", str(pr["number"]), "--json",
+                                 "mergeStateStatus,headRefOid", cwd=top)
+                try:
+                    current = json.loads(shown.stdout) if shown.returncode == 0 else {}
+                except ValueError:
+                    current = {}
+                if (isinstance(current, dict) and current.get("headRefOid") == head
+                        and current.get("mergeStateStatus") in ("BEHIND", "DIRTY")):
+                    repo.git("fetch", "-q", "origin", default, cwd=top)
+                    if repo.run("git", "merge-base", "--is-ancestor", f"origin/{default}",
+                                head, cwd=top).returncode == 1:
+                        print(f"{default} moved; Forge is merging it into this branch, running "
+                              "close again and retrying the merge.", flush=True)
+                        close.close(argparse.Namespace(item=item, dismiss=None, because=None,
+                                    wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    land_rounds=getattr(args, "land_rounds", None),
+                                    pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
+                        return merge(args)
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
         repo.record_event(top, item, "item finished", round=item_state.get("round"))
