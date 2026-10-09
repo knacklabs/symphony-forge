@@ -448,7 +448,12 @@ def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
     if set(files) <= generated:
         repo.git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--",
                  *files, cwd=top)
-        done = repo.run("forge", "sync", cwd=top)
+        release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+        if release != cfg["version"] and repo.VERSION.fullmatch(release):
+            done = subprocess.CompletedProcess(["forge", "sync"],
+                                               repo.run_release(release, ["sync"], top))
+        else:
+            done = repo.run("forge", "sync", cwd=top)
         if done.returncode:
             raise subprocess.CalledProcessError(done.returncode, ["forge", "sync"], done.stdout,
                                                 done.stderr)

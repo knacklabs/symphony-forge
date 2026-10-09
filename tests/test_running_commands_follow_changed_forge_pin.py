@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,12 @@ def _earlier_release(env):
     source = env.tmp / "earlier-source"
     shutil.copytree(ROOT / "src" / "forge", source / "forge",
                     ignore=shutil.ignore_patterns("__pycache__"))
+    packaging = tomllib.loads((ROOT / "pyproject.toml").read_text("utf-8"))
+    bundled = packaging["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
+    for original, packaged in bundled.items():
+        target = source / packaged
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / original, target)
     version = source / "forge" / "__init__.py"
     version.write_text(re.sub(r'__version__ = "[^"]+"', '__version__ = "1.2.2"',
                              version.read_text("utf-8")), "utf-8")
@@ -28,6 +35,10 @@ def _earlier_release(env):
     config.write_text(config.read_text("utf-8").replace(', "fast_test": str', ''), "utf-8")
     _install(env.repo.bin, "forge", FORGE_SHIM.format(python=sys.executable,
                                                      src=source.as_posix()))
+    selected_bin = env.tmp / "current-bin"
+    selected_bin.mkdir()
+    _install(selected_bin, "forge", FORGE_SHIM.format(python=sys.executable,
+                                                     src=(ROOT / "src").as_posix()))
     # Only uv's package acquisition is faked: the selected release runs the real CLI and
     # its actual close, tests, review and GitHub checks decide whether this command succeeds.
     _install(env.repo.bin, "uv", f'''#!{sys.executable}
@@ -38,6 +49,7 @@ with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 assert args[:3] == ["tool", "run", "--from"], args
 assert args[4] == "forge", args
+os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
 from forge.cli import main
 sys.argv = ["forge", *args[5:]]
@@ -68,7 +80,8 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
-@pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge"])
+@pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
+                                   "land-guide-conflict", "close-guide-conflict"])
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land
@@ -88,12 +101,25 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     original = original.replace('model = "gpt-6.1-sol"', 'model = "opus"')
     original = re.sub(r'^subagents = .*\n|^subagent_effort = .*\n', '', original, flags=re.M)
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
+    guide_conflict = stage.endswith("guide-conflict")
+    guide = ".codex/skills/forge/SKILL.md"
+    if guide_conflict:
+        baseline = ((env.repo.path / guide).read_text("utf-8")
+                    if (env.repo.path / guide).exists() else
+                    (ROOT / "src" / "forge" / "templates" / "skill.md").read_text("utf-8"))
+        env.commit(env.repo.path, guide, baseline.replace("# Forge", "# Earlier Forge", 1),
+                   "Keep the earlier generated guide")
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "started" if stage == "land-build" else "working",
                  worked=stage != "land-build")
     upgraded = original.replace('version = "v1.2.2"',
                                 f'version = "{current}"\nfast_test = ""')
-    if stage == "close-merge":
+    if guide_conflict:
+        env.commit(where, guide, baseline.replace("# Forge", "# Worker Forge", 1),
+                   "Refresh the worker's generated guide")
+        env.commit(env.repo.path, guide, baseline.replace("# Forge", "# Default Forge", 1),
+                   "Refresh the default branch's generated guide")
+    if stage in ("close-merge", "land-merge") or guide_conflict:
         _upgrade_default(env, upgraded)
     else:
         if stage == "land-fix":
@@ -101,7 +127,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
-    command = "close" if stage == "close-merge" else "land"
+    command = "close" if stage.startswith("close-") else "land"
     done = env.repo.forge(command, ITEM, cwd=where)
     assert done.returncode == 0, done.stdout + done.stderr
     notice = (f"Forge pin changed from v1.2.2 to {current}; "
@@ -110,13 +136,29 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     assert "Ready:" in done.stdout
     if command == "land":
         assert f"a human merges its pull request: {URL}" in done.stdout
-    assert len(_workers(env)) == (0 if stage == "close-merge" else 1)
+    assert len(_workers(env)) == (1 if stage in ("land-build", "land-fix") else 0)
     assert len(env.review_calls()) == (2 if stage == "land-fix" else 1)
     assert env.gh_calls("pr", "ready")
     assert env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")
     env.repo.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=where)
-    [dispatch] = [json.loads(line) for line in
+    assert env.repo.git("diff", "--name-only", "--diff-filter=U", cwd=where) == ""
+    assert not Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-path",
+                                 "MERGE_HEAD", cwd=where)).exists()
+    dispatches = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
+    if guide_conflict:
+        sync_dispatch, hook_dispatch, dispatch = dispatches
+        assert sync_dispatch["args"] == ["tool", "run", "--from",
+            f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", "sync"]
+        assert Path(sync_dispatch["cwd"]) == where
+        # Sync installs real hooks: finishing the merge must validate with the new schema too.
+        assert hook_dispatch["args"] == ["tool", "run", "--from",
+            f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", "hook", "pre-commit"]
+        assert Path(hook_dispatch["cwd"]) == where
+        assert (where / guide).read_text("utf-8") == (
+            ROOT / "src" / "forge" / "templates" / "skill.md").read_text("utf-8")
+    else:
+        [dispatch] = dispatches
     assert dispatch["args"] == ["tool", "run", "--from",
         f"git+https://github.com/knacklabs/symphony-forge@{current}", "forge", command, ITEM]
     assert Path(dispatch["cwd"]) == where
