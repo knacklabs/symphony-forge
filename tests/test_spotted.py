@@ -323,7 +323,8 @@ def _git_merges_the_list_by_forges_rule(env):
     assert _merge(repo, "adds-a", "adds-b") == [a, b, c, d]
 
     # Both sides change the same entry: one closes it, the other edits it and leaves it open.
-    # Each merge joins two diverged tips, so git runs the driver; done wins either way round.
+    # The old rule discarded the line edit; independent fields now survive in either direction.
+    # Each merge joins two diverged tips, so git runs the driver.
     done = {**a, "status": "done", "closed_by": "fix-totals"}
     edited = {**a, "line": 5}
     for ours, theirs in (("closes", "edits"), ("edits-again", "closes-again")):
@@ -332,7 +333,7 @@ def _git_merges_the_list_by_forges_rule(env):
         _commit_list(repo, [done, c], "Close A")
         repo.git("checkout", "-q", "-b", editing, "base")
         _commit_list(repo, [edited, c], "Edit A")
-        assert _merge(repo, ours, theirs) == [done, c]
+        assert _merge(repo, ours, theirs) == [{**done, "line": 5}, c]
         assert len(repo.git("log", "-1", "--format=%P").split()) == 2  # a real merge commit
 
 

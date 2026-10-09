@@ -310,7 +310,14 @@ def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
             rows.append(json.dumps({**line, "recorded_at": now()}))
         temp = path.with_suffix(".new")
         temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        os.replace(temp, path)
+        for wait in (0.05,) * 40 + (0,):  # Windows readers can briefly hold the events file open.
+            try:
+                return os.replace(temp, path)
+            except PermissionError:
+                if not wait:
+                    temp.unlink(missing_ok=True)
+                    refuse(codex.REFUSALS["record"], record=path)
+                time.sleep(wait)
 
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:
