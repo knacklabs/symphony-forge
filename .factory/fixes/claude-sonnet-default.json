@@ -30,17 +30,27 @@
   "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
   "branch": "fix/claude-sonnet-default",
   "done_when": "For repos whose workers are claude, Forge's defaults are: implementation (build, fix, lite and design, frontend included) claude-sonnet-5-5 at xhigh; plan reads (grill) claude-opus-5-5 at high; the planner and architect roles use the plan-read entry and the debugger, security and performance roles claude-opus-5-5 at high; Autoreview stays the external program and runs every review (normal, light and the prototype sign-off review) on the repo's own tool, Claude for Claude-only repos and Codex for Codex-only repos, with Autoreview's own default model and effort (Forge pins none); forge init writes these and Forge's built-in defaults match; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults; the coordinator guide states them; command tests cover forge init for a new Claude-only repo, the roles' models after sync, reviews running on Claude with no pinned model, and an earlier-adopted repo left unchanged on upgrade",
-  "flagged": [],
+  "flagged": [
+    "tests/test_claude_implementation_defaults.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "604228ec9f13d954de4aafc142d1034bdc02db47a547f77b2f35e18b86044146",
-    "changed": "7164ed7b38be5ec26ee804c471c1f2ba71f29fd6de18868bd51ef18b38b67ceb",
-    "commit": "5b1fcec66087664e340cb03b7d9961c8d4b1285e",
+    "branch_diff": "50acb303437baa05e1f2c962bc067c08ebffd253c5e842ce12d9adc90e36ff5e",
+    "changed": "7ee86d55ac66227824bbfaacf99f23b709785ce5b221d9f9cc4154cf602a09c4",
+    "commit": "b5d9c646d0982e09117e32c01a3680f4a5020aa7",
     "dismissals": [],
-    "findings": [],
-    "id": "c0e833d7-6bd3-42e7-9ad8-38d49f65d2c1",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The supplied proof list is `missing`, and the latest worker commit contains no `Proof list:` paragraph. The review contract explicitly requires this as P1 even when tests pass. Add a proof list mapping every Done-when detail to its named command test or documentation check, including new-client defaults, synced roles, all review modes, and preservation of an earlier-adopted repo's settings.",
+        "file": "tests/test_claude_implementation_defaults.py",
+        "line": 20,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "0b63b2d0-03ca-45a9-959b-0d15423ddc89",
+    "status": "blocked"
   },
   "round": 2,
   "status": "fixing",
@@ -51,6 +61,10 @@
     },
     {
       "at": "2026-10-09T18:41:33+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:11:30+00:00",
       "step": "review"
     }
   ],
