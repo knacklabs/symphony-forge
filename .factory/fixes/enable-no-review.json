@@ -1,0 +1,49 @@
+{
+  "base": "dbd8a58964476cd2046c44f5aeddad2073b8efd0",
+  "branch": "fix/enable-no-review",
+  "done_when": "forge merge enable's close skips the model review and instead records a clean result only after a mechanical check that the fix changes nothing but forge.toml's top-level merge setting, set to agent (every other parsed setting equal to the default branch's); any other change is refused with a plain reason and no review; tests and CI still run and the owner still merges; no other item skips review; a command test covers a new repo and one adopted on an earlier release, including a refused case with an extra change",
+  "flagged": [
+    "src/forge/close.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0a004ad6f9328a05c997d425f2bc52b447547c67f46912a8daf4e541ef6cb016",
+    "changed": "436e77287792e671f74523cb326e50982baebd3f667bbc1eaf7c7f925b384349",
+    "commit": "4236b6180d13be186a0b99cb131357feb3c23e99",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The previously reported P2 remains open. When an interrupted merge switch has an earlier model review citing an unchanged file, `changed` is computed using those old findings: `src/forge/review.py:139\u2013141` includes their paths by default. This mechanical result then replaces the findings with an empty list while retaining that fingerprint. `src/forge/prcheck.py:214` recomputes the fingerprint from the empty findings and rejects the clean result as out of date, requiring another close despite no product change. Compute the mechanical fingerprints with `findings=[]`. The new command tests queue a model response but do not exercise conversion of an existing committed review.",
+        "file": "src/forge/close.py",
+        "line": 188,
+        "priority": "P2",
+        "title": "Compute mechanical fingerprints using the new empty finding set"
+      }
+    ],
+    "id": "67d2b590-9932-44b1-a084-40284e1c729a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T04:50:15+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T05:12:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T05:29:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T05:53:05+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "forge merge enable runs the normal model review on its one-line forge.toml change; if that review blocks (for example on a missing proof list), no one can fix it: agents may never touch the merge setting and the owner would have to repair a change Forge wrote. Owner decision 2026-10-09: skip the model review for this change",
+  "worker": "codex"
+}

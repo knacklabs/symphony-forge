@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +56,9 @@ REFUSALS = {
                      "next worker round gets its output.", "forge work {item}"),
     "question": ("The worker is waiting for an answer:\n{question}",
                  'forge work {item} --note "<answer>"'),
+    "merge_switch": ("The merge switch must change only forge.toml's top-level merge setting to agent; "
+                     "it contains another change.",
+                     "the repo owner removes the extra change, then forge close {item}"),
 }
 BEGIN, END = "<!-- forge:begin -->", "<!-- forge:end -->"
 # forge merge enable's fix is known by these; only the repo owner merges it.
@@ -62,9 +66,13 @@ WHY, DONE = "Let the agent merge this repo's ready pull requests.", 'The default
 
 
 def close(args: argparse.Namespace) -> int:
+    from forge.merge import ENABLE
+
     item = args.item
     top = _worktree(item)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    switch = (item == ENABLE and state.get("kind") == "fix" and
+              (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     if choice or reason is not None:
         if (not choice or not reason or not reason.strip() or
@@ -88,7 +96,8 @@ def close(args: argparse.Namespace) -> int:
             return 0
         print("Recorded the human's choice.")
     had_stop = bool(state.get("stop"))
-    check_stop(item, state)
+    if not switch:
+        check_stop(item, state)
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
@@ -111,6 +120,17 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
+    if switch:
+        files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
+                             "HEAD", cwd=top).splitlines())
+        if (files - {"forge.toml", repo.state_path(item)} or
+                repo.git("diff", "--summary", f"origin/{default}", "HEAD", "--", "forge.toml", cwd=top)):
+            repo.refuse(REFUSALS["merge_switch"], item=item)
+        settings = tomllib.loads(repo.git("show", "HEAD:forge.toml", cwd=top))
+        original = tomllib.loads(repo.git("show", f"origin/{default}:forge.toml", cwd=top))
+        if (settings.pop("merge", None) != "agent" or
+                settings != {key: value for key, value in original.items() if key != "merge"}):
+            repo.refuse(REFUSALS["merge_switch"], item=item)
     for record in repo.git("diff", "--numstat", "-z", "--no-renames", "--diff-filter=A",
                            f"origin/{default}...HEAD", "--", "tests/", cwd=top).split("\0"):
         added, _, rest = record.partition("\t")
@@ -128,6 +148,8 @@ def close(args: argparse.Namespace) -> int:
     branch_diff = review.fingerprint("HEAD", item, top, state, f"origin/{default}",
                                      branch_diff=True)
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
+    if switch:
+        fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
     if choice != "accept" and any(d.get("accepted") for d in result.get("dismissals", [])):
         fresh = fresh and result.get("changed") == changed
     refreshed = fresh and (result.get("changed") != changed or
@@ -137,7 +159,7 @@ def close(args: argparse.Namespace) -> int:
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss"] if result else REFUSALS["bad_dismiss"], item=item)
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if (not fresh and round_number >= 3 and not state.get("stop") and
+    if (not switch and not fresh and round_number >= 3 and not state.get("stop") and
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
@@ -146,7 +168,7 @@ def close(args: argparse.Namespace) -> int:
     if not fresh:
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
-        failed, tested = review.test_run(top, command, f"origin/{default}")
+        failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
         if failed:  # a review would only report the same failure
             state.update(tests=tested, status="fixing")
             _save(top, item, state, f"Tests of {item} failed")
@@ -159,8 +181,14 @@ def close(args: argparse.Namespace) -> int:
         outcome = "failed"
         selected: dict[str, str] = {}
         try:
-            result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                light=light, tested=tested)
+            if switch:
+                head = repo.git("rev-parse", "HEAD", cwd=top)
+                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean")
+                result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
+                          "changed": changed, "branch_diff": branch_diff, "mechanical": True}
+            else:
+                result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
+                                    light=light, tested=tested)
             dismissed = {}
             for dismissal in previous.get("dismissals", []):
                 if dismissal.get("accepted"):
@@ -209,7 +237,8 @@ def close(args: argparse.Namespace) -> int:
                 stopped = {"file": file}
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
-    noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
+    noted = (spotted.PATH,) if not switch and spotted.record(
+        top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
