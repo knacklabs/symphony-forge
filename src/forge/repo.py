@@ -664,7 +664,7 @@ def write_state(item: str, data: dict[str, Any], top: Path | None = None) -> str
 def now() -> str:
     """The current UTC time. FORGE_NOW overrides it, so tests can drive dated steps."""
     # ponytail: an env override is the whole clock seam.
-    return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return os.environ.get("FORGE_NOW") or datetime.now(timezone.utc).isoformat()
 
 
 def add_step(data: dict[str, Any], step: str) -> dict[str, Any]:

@@ -18,7 +18,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task
+from forge import __version__, checks, codex, githooks, init, repo, review, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -99,6 +99,7 @@ def close(args: argparse.Namespace) -> int:
         state["stop"].update(choice=choice, reason=reason.strip())
         state["status"] = "waiting for checks" if choice == "accept" else "fixing"
         _save(top, item, state, f"Record the human's review loop choice: {choice}")
+        repo.record_event(top, item, "owner wait end", wait_id=state["stop"].get("wait_id"))
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
@@ -172,9 +173,12 @@ def close(args: argparse.Namespace) -> int:
             _three_blocked_reviews(top, item)):
         file = review.blocking(previous)[0][1]["file"]
         state.update(stop={"file": file, "round": round_number + 1}, status="hotspot")
+        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
         _save(top, item, state, f"Review of {item} stopped after three blocked rounds")
         check_stop(item, state)
     if not fresh:
+        if pending := time_records.pending_merge_wait(top, item):
+            repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # read after the merge, which may change the command
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
@@ -192,7 +196,8 @@ def close(args: argparse.Namespace) -> int:
         try:
             if switch:
                 head = repo.git("rev-parse", "HEAD", cwd=top)
-                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean")
+                identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
+                                             review_round=review.round_number(top, item, state))
                 result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
                           "changed": changed, "branch_diff": branch_diff, "mechanical": True}
             else:
@@ -214,7 +219,8 @@ def close(args: argparse.Namespace) -> int:
             outcome = "blocked" if review.blocking(result) else "clean"
         finally:
             if outcome == "failed":
-                repo.record_event(top, item, "review result", outcome=outcome)
+                repo.record_event(top, item, "review result", outcome=outcome, findings=None,
+                                  review_round=review.round_number(top, item, state))
             repo.record_timing(top, item, "review", start, clock, outcome, selected)
         repo.add_step(state, "review")
     elif (command := review.close_test(top, f"origin/{default}")) and (
@@ -244,6 +250,7 @@ def close(args: argparse.Namespace) -> int:
             if candidates:
                 file = candidates[0]
                 stopped = {"file": file}
+                stopped["wait_id"] = repo.record_event(top, item, "owner wait start", reason="review loop")
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.PATH,) if not switch and spotted.record(
@@ -260,7 +267,7 @@ def close(args: argparse.Namespace) -> int:
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     _push(top, branch)
-    _publish(top, item, state, branch, default, pr, result)
+    pr = _publish(top, item, state, branch, default, pr, result)
     _attach(top, item, branch)
 
     for number, finding in serious:
@@ -279,21 +286,22 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
-    start, clock = repo.now(), time.monotonic()
-    outcome = "failed"
     try:
-        with repo.record_run(top, item, "ci") as ran:
-            checks.wait(top, item, head, [name for name in cfg["checks"]
-                                          if not (migrating and name == "forge-pr-check")],
-                        progress=getattr(args, "wait_for_progress", False))
-            outcome = ran["outcome"] = "passed"
+        checks.wait(top, item, head, [name for name in cfg["checks"]
+                                     if not (migrating and name == "forge-pr-check")],
+                    progress=getattr(args, "wait_for_progress", False))
     finally:
-        repo.record_timing(top, item, "CI wait", start, clock, outcome)
+        pr = _publish(top, item, state, branch, default, pr, result)
     if pr and pr.get("isDraft"):  # a blocked review left it a draft
         _gh(top, "pr", "ready", str(pr["number"]))
     merge = merger(top, state)
     path = repo.ready_path(item, top)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if merge == "human":
+        pending = time_records.pending_merge_wait(top, item)
+        if not pending:
+            repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
+        _publish(top, item, state, branch, default, pr, result)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
@@ -553,7 +561,8 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     blocked, the pull request is a draft."""
     check = review.functional_check(top, f"origin/{default}")
     proof = review.commit_paragraph(top, f"origin/{default}", "Proof list:")
-    block = _block(result, "\n\n".join(part for part in (check, proof) if part))
+    history = time_records.how_it_went(top, item, state)
+    block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = result["status"] == "blocked" or (pr is None and result["status"] == "reviewing")
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
     # multi-line argument can't pass through a Windows .cmd shim.

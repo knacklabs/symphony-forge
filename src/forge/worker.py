@@ -94,6 +94,11 @@ def work(args: argparse.Namespace) -> None:
     _, chosen, why = repo.worker(config, kind.lower(), design)
     print(f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
           f"because {why}", flush=True)
+    if note is not None and (pending := codex.record(top, item).get("question_id")):
+        repo.record_event(top, item, "owner wait end", wait_id=pending)
+    from forge import time_records
+    if pending_merge := time_records.pending_merge_wait(top, item):
+        repo.record_event(top, item, "owner wait end", wait_id=pending_merge["id"])
     # Every worker takes the item's lock, so one round at a time reads and updates its record. Codex
     # workers also stop a leftover Codex process and read back a turn it left before the status
     # commit, and leave none running when this ends, whether it succeeds, fails or is interrupted.
@@ -145,6 +150,7 @@ def work(args: argparse.Namespace) -> None:
         state["round"] = round_number
         repo.commit_state(f"{item} is {state['status']}", repo.write_state(item, state, top),
                           top=top)
+        repo.record_event(top, item, "work phase", phase="fixing_findings" if findings or failing else "building")
         start, clock = repo.now(), time.monotonic()
         nudge = COMMIT_NUDGE
         outcome = "failed"
