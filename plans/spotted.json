@@ -2135,6 +2135,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 188,
+      "text": "Compute mechanical fingerprints using the new empty finding set",
+      "from": "review",
+      "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",

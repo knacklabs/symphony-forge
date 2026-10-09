@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "27a67cf04ab2bb5f9c3031abaaf42e79e94b5aa793f5e73e2609405fee1053ad",
-    "changed": "d24139536e99b7b3bb1aa4e44def9b26e04e7bbb234702363c70974763bb1516",
-    "commit": "34f76c10318f4cd1bafbe61120a6143fdb2cb636",
+    "branch_diff": "343b4f0619fed39c4bd5c55b4f170e7d21b2b23bad767194271364c5035e8e4e",
+    "changed": "728127c1ebb3a583f51fe39f66425d0b49da93ef29af50c392905947f3fd8f85",
+    "commit": "84b76a6690668a78ab493cba6b8ffb14f0955a3e",
     "dismissals": [],
     "findings": [
       {
-        "body": "If the default branch contains an open spotted entry for `forge.toml` from another item, this check passes, but close subsequently changes an extra file. `src/forge/spotted.py:164` matches that entry against the generated Done-when and marks it done; `src/forge/close.py:240` invokes this logic, and line 248 commits the resulting `plans/spotted.json` change. The PR therefore receives a clean mechanical result without model review despite containing more than the merge setting and permitted fix record. A subsequent close then refuses the extra change Forge itself wrote. This is additional evidence beyond the ruling permitting only the generated fix record. Prevent spotted-list writes on this path and extend the command test to check the final published diff with an existing spotted entry.",
+        "body": "When resuming a merge switch with an earlier model review that cited an unchanged file, the mechanical result copies fingerprints computed from the old findings. `src/forge/review.py:141` adds those finding paths to the fingerprint; ordinary reviews retain even scope-rejected findings (`review.py:639\u2013650`). After this result replaces the findings with an empty list, `src/forge/prcheck.py:214` recomputes a different fingerprint and rejects the clean result as out of date. The owner must close again despite changing nothing. Compute both mechanical fingerprints with `findings=[]`, as the normal review path does with its new findings. The command tests queue a blocking response but never exercise conversion of a previously committed model review.",
         "file": "src/forge/close.py",
-        "line": 126,
-        "priority": "P1",
-        "title": "Not done: merge-enable close must check the final published change"
+        "line": 188,
+        "priority": "P2",
+        "title": "Compute mechanical fingerprints using the new empty finding set"
       }
     ],
-    "id": "cbaa9e90-e126-4ef1-b13a-762b7bd161b3",
-    "status": "blocked"
+    "id": "cf80e14d-87b3-4022-aa36-c3fd51036b60",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T04:50:15+00:00",
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-09T05:12:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T05:29:29+00:00",
       "step": "review"
     }
   ],
