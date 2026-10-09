@@ -22,6 +22,7 @@ def configured(env, previous):
     repo.write("forge.toml", config)
     repo.write("docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "Owner"\n---\n\n# Client sign-off\n')
+    repo.write("tests/test_old.py", "TEST_INPUT = 1\n")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure the signed-off client")
     repo.git("push", "-q", "origin", "main")
@@ -118,6 +119,8 @@ def test_1_stacked_fix_counts_only_own_paths_before_and_after_parent_lands(env, 
     fix, where = started(repo, "Repair its findings", cwd=parent_folder)
     for path in inherited:
         assert (where / path).read_text("utf-8") == f"{path}\n"
+    # Both sides of a test rename are excluded, alongside the five source changes.
+    repo.git("mv", "tests/test_old.py", "tests/test_new.py", cwd=where)
 
     # Editing one inherited path is still this fix's own work, alongside four new paths.
     own = ["src/parent0.py", *(f"src/own{n}.py" for n in range(4))]
@@ -158,6 +161,7 @@ def test_2_ordinary_fix_keeps_using_the_default_branch(env, previous):
     fix, where = started(repo, "Repair an ordinary problem")
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stderr
+    repo.git("mv", "tests/test_old.py", "tests/test_new.py", cwd=where)
     committed = commit(where, *(f"src/own{n}.py" for n in range(5)))
     assert committed.returncode == 0, committed.stderr
     check_limits(repo, fix, where)
