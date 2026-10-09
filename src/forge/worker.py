@@ -38,6 +38,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
 
 REFUSALS = {
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
+    "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
+              "forge work {item}"),
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
@@ -63,6 +65,8 @@ def work(args: argparse.Namespace) -> None:
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
         refuse(REFUSALS["no_checkout"], item=item)
+    if not repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode:
+        refuse(REFUSALS["merge"], item=item, top=top)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     if match["task"]:
