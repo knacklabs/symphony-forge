@@ -159,7 +159,7 @@ def test_3_story_idle_time_tracks_its_parts(
         approved = hook(client, claude_plan(claude_payload, DOC, cwd=tree))
         assert approved.returncode == 0, approved.stderr
     with monkeypatch.context() as started:
-        started.setenv("FORGE_NOW", "2026-10-09T11:50:00Z")
+        started.setenv("FORGE_NOW", OLD)
         task = client.forge("task", "start", "SHOP/SAVE")
         assert task.returncode == 0, task.stderr
     if child_activity == "running":
@@ -170,11 +170,8 @@ def test_3_story_idle_time_tracks_its_parts(
                     "2026-10-09T11:55:00Z", [], ["src/basket.py"])
         gh.respond("pr", "list", stdout=json.dumps([merged]))
         gh.respond("pr", "list", "--state", "open", stdout="[]")
-        events = [
-            {"event": "run start", "id": "save-merge", "item": "SHOP/SAVE",
-             "kind": "merge", "round": 1, "at": "2026-10-09T11:54:00Z"},
-            {"event": "run end", "id": "save-merged", "run_id": "save-merge", "item": "SHOP/SAVE",
-             "kind": "merge", "round": 1, "outcome": "completed", "at": "2026-10-09T11:55:00Z"}]
+        # A human GitHub merge has no local run event or fetched merge commit.
+        events = []
     _records(client, "events.jsonl", events)
     data, text, _ = _board(client, tmp_path)
     parent = _row(data, "SHOP")
@@ -186,6 +183,8 @@ def test_3_story_idle_time_tracks_its_parts(
         child = next(row for row in parent["children"] if row["id"] == "SHOP/SAVE")
         assert child["worker"]["elapsed"] == 600
     else:
+        child = next(row for row in parent["children"] if row["id"] == "SHOP/SAVE")
+        assert child["stage"] == "merged"
         assert parent["idle_seconds"] == 300
         assert parent["waits_on"]
 

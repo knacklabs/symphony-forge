@@ -233,10 +233,11 @@ def machine_board(top: Path, history: Item | None = None,
              nextstep._prs(top, "open", "number,headRefName,url,isDraft"))
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    merged_prs = {p["headRefName"] for p in (prs_snapshot if complete else
-                  nextstep._prs(top, "merged", "headRefName"))
+    merged_details = {p["headRefName"]: p for p in (prs_snapshot if complete else
+                  nextstep._prs(top, "merged", "headRefName,mergedAt"))
                   if (not complete or p.get("state") == "MERGED")
-                  and isinstance(p.get("headRefName"), str)} if trees else set()
+                  and isinstance(p.get("headRefName"), str)} if trees else {}
+    merged_prs = set(merged_details)
     readiness: dict[str, Item] = {}
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
     completed = {key: state for key, state in history["stories"].items() if state.get("status") == "done"}
@@ -271,14 +272,17 @@ def machine_board(top: Path, history: Item | None = None,
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
         checks, events, failures = _checks(pr, cfg["checks"])
+        plan_text = ""
         if state.get("status") == "done" or (state.get("status") == "merged" and not tree):
             lines = [f"{title} is finished."]
         elif not state and kind == "story":
             lines = [f"{title} needs a story doc.", f'Next: forge story new {item} {json.dumps(title)}']
         else:
             try:
+                if kind == "story":
+                    plan_text = _read(top, tree or where, f"plans/{item}.md", history)
                 lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
-                         else nextstep._story(top, item, tree, _read(top, tree or where, f"plans/{item}.md", history),
+                         else nextstep._story(top, item, tree, plan_text,
                                               title, trees, merged_prs, by_branch, {}, history,
                                               readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
@@ -349,6 +353,10 @@ def machine_board(top: Path, history: Item | None = None,
             dates.extend(s.get("at") for rel, (part, _) in best.items() if rel.startswith(prefix)
                          for s in _steps(part))
             dates.extend(at for rel, at in history["dates"].items() if rel.startswith(prefix))
+            part_branches = {f"task/{item}-{tid.strip('` ')}" for tid in task.rows(task.sections(plan_text))}
+            part_branches.update(part.get("branch") or f"task/{item}-{STATE.fullmatch(rel)['task']}"
+                                 for rel, (part, _) in best.items() if rel.startswith(prefix))
+            dates.extend(merged_details.get(branch, {}).get("mergedAt") for branch in part_branches)
         idle_since = (max((at for at in dates if _when(at)), key=_when, default=None)
                       or history["dates"].get(repo.state_path(item))) if not active and not worker and not finished else None
         test_runs = [e for e in active if e.get("kind") == "test"]
@@ -443,7 +451,8 @@ def machine_board(top: Path, history: Item | None = None,
         status = ({"done": "Finished", "merged": "Finished", "planning": "Planning",
                    "waiting for approval": "Waiting for approval", "approved": "Approved",
                    "checks failed": "Checks failed"}.get(stage) or STATUS.get(stage, "Not started yet"))
-        finished_at = state.get("finished") or (history["dates"].get(repo.state_path(item)) if finished else None)
+        finished_at = (merged_details.get(branch, {}).get("mergedAt") or state.get("finished")
+                       or (history["dates"].get(repo.state_path(item)) if finished else None))
         if finished and _when(finished_at):
             status += " on " + _day(_when(finished_at))
         if worker:

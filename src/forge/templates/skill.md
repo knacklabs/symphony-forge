@@ -179,7 +179,8 @@ get it after upgrading Forge and syncing. Cards and JSON use the same `status` a
 derivation; running stages include their elapsed time. Roadmap completion marks the story
 and its parts finished. Finished items never stall; idle items past one day expose
 `stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
-a running part keeps the story active and a finished part resets its idle clock. An older
+a running part keeps the story active and a finished part resets its idle clock, including
+a merge reported by GitHub before its commit is fetched. An older
 worker round or a worker whose recorded lock is demonstrably dead is not a live run.
 Live readers, workers and reviews take precedence
 over a saved status, including in `forge next`. Approval history uses one display name per
