@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cc8ac600026f1c61be8abceaf7a640a067bfebc7429fd396258763c20b1091bf",
-    "changed": "66acb278e86aa4e33451c4b9061b7a1747b168203e9afe980200de1f7048db97",
-    "commit": "735029bb5bf9edc31417983695f2fddbd3293bbb",
+    "branch_diff": "d40bbfccd26e622ebd600d6c1194d1d2fa2e334951afc3e832589c26c30063ae",
+    "changed": "110e3a959479a44dd7dab70ee3a877861d8cb6791720302012a2acd045385b53",
+    "commit": "20b49794af935321a2a352e16254837a1f89bcd0",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The rule says: \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\" Removing this refusal leaves `tests/test_codex_worker.py::test_3_models_per_kind` asserting the obsolete behaviour: lines 344\u2013348 configure Claude with both subagent keys, require the removed refusal message, and require zero Claude calls. The command now starts Claude, so this test fails in the full suite configured by `forge.toml` and CI. The supplied 23-test close run omitted it. Replace those obsolete assertions with the intended successful behaviour while preserving the test's Codex coverage.",
-        "file": "src/forge/worker.py",
-        "line": 250,
-        "priority": "P1",
-        "title": "Standard: Delete before adding"
-      }
-    ],
-    "id": "ba4849ff-0b34-46fc-8f7f-60b555e847ab",
-    "status": "blocked"
+    "findings": [],
+    "id": "7e4c7c83-8176-4f50-9752-bd5f8a99bd7b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:36+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-09T20:02:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:13:00+00:00",
       "step": "review"
     }
   ],
