@@ -80,7 +80,7 @@ def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind)
     prompt = env.prompt()
     assert proof in prompt
     assert REVIEW_RULE in flat(prompt)
-    assert "Report every missing case you find in this first round" in flat(prompt)
+    assert "Report every missing case you find in this round" in flat(prompt)
     assert proof in body(env.gh_calls("pr", "create")[-1])
     # An empty proof-only commit changes the review input even when the code stays identical.
     changed = proof.replace("Empty greeting: missing", "Empty greeting: tests/test_greeting.py::test_empty")

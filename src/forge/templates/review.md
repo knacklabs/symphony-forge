@@ -16,8 +16,7 @@ Files the branch changes outside that scope:
 $outside
 
 A file outside Scope that the work needs, such as a caller, a type or an existing test the change
-broke, is allowed. Report only the files outside Scope that the work doesn't need. Check the
-worker's handoff names each such file and why.
+broke, is allowed. Report only the files outside Scope that the work doesn't need.
 
 ## Done when
 This part covers the items below. Report every one the branch does not meet as a P1 finding
@@ -76,11 +75,12 @@ The worker's latest commit supplies this list, which Forge copies into the pull 
 
 $proof_list
 
-On the first review, check the whole list, not a sample. Check every entry against the code and
-its named proof, including every Done-when detail; compare it with the covered items above so an
-omitted item or detail cannot hide a gap. Report every missing case you find in this first round,
-even when another finding already blocks. A missing list or entry is a P1 `Not done: proof list`;
-judge missing or hollow proof by the test-audit rules below. Repeat this full check on later rounds.
+On every round, check the whole list, not a sample. Check every entry against the code and its
+named proof, including every Done-when detail; compare it with the covered items above so an
+omitted item or detail cannot hide a gap. Report every missing case you find in this round, even
+when another finding already blocks; a case the Done-when doesn't name counts only inside What
+counts below. A missing list or entry is a P1 `Not done: proof list`; judge missing or hollow
+proof by the test-audit rules below.
 
 <!-- rules -->
 ## Tests on the close run
@@ -90,17 +90,50 @@ $test_run
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure
 deletion, a test showing the old input is now refused is enough.
 
-## What blocks the merge
-A finding is P0 or P1 only for a defect that would ship, a security, data-loss or accessibility
-gap, an unmet Done-when item, or a missing test for a Done-when item's own behaviour.
-Extra edge-case tests, platform or hardening suggestions beyond what the item promises are P2:
-they never block the merge or start another round. So an edge case the Done-when doesn't ask for,
-where the item's purpose is already met, is a P2.
+## What counts
+Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
 
-A crash or interrupt window under a second, or a case a simple fail-closed rule in the change
-already covers, is at most P2 unless it loses data or weakens security, which stays P1.
-One command-level test per rule is enough. A request for more test variations is P2 unless it
-names a concrete scenario the current tests would pass while the code is broken.
+Raise, under one of these lines:
+- Functional: a defect on a path people or agents normally hit, such as setup, upgrade, switching
+  a documented setting, re-running or restarting a command, a common repo layout, or a changed
+  screen's keyboard access, labels or readable contrast.
+- Security: a security gap, such as missing validation, authorization or secrets handling.
+- Data loss: data lost, corrupted or exposed.
+- Scale: a scale or performance problem at a realistic size the finding names, a cost repeated on
+  every normal run, or growth with no bound.
+- Not done: an unmet Done-when item, or a doc the change delivers that contradicts itself or a
+  recorded decision.
+- Test: a missing or hollow test for a Done-when item's own behaviour.
+- Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
+  that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
+- Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
+  functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
+  doesn't need, or a weakened test.
+- Plan gap: something that would make the build wrong or stall it: a contradiction, a question a
+  builder must ask, a shared name no earlier task pins, a likely case or refusal no rule or test
+  covers, a one-way step missing from Risks, a task that is too big, a shape bigger than the Done
+  when needs, work no Done-when item needs, or a known trap the change is likely to meet.
+
+Leave out, unless it falls under Security or Data loss or the finding names a realistic scenario
+that makes it likely in normal use:
+- a rare combination that needs an unusual sequence: a crash or interrupt at a precise moment, a
+  window under a second, a hand-edited or corrupted local file, or a platform, shell or tool
+  version the repo doesn't support or the change is unlikely to meet;
+- a case a fail-closed rule in the change already covers;
+- extra test variations (one command-level test per rule is enough), unless the finding names a
+  concrete scenario the current tests would pass while the code is broken;
+- hardening beyond what the item promises;
+- style, wording and preferences;
+- a duplicate of another finding in this round.
+
+An edge case is inside the boundary only when a Done-when item names it, when the finding names a
+realistic scenario that makes it likely in normal use, or when it falls under Security or Data
+loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
+
+## What blocks the merge
+Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only the advice
+forms this page names (`Simpler:`, `Later:`, `Simpler (existing):`), which need no Raise line
+and never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:
 - work that needs another task's code not yet on the default branch is a P2 `Later:` finding
@@ -169,11 +202,13 @@ Motion that follows these rules is not a `Simpler:` finding.
 Report every blocking gap you see in this round, together, even when one finding already blocks.
 When you find a kind of defect, look for every other place in the change with the same defect and
 report them all in one finding that names each place, not one place per round.
-That means checking every sibling case of the same kind, too: the other states, the other
-providers and the other callers of the same code. Report them together in one finding that names
-each place.
-Forge's own records (everything under `.factory/`, `plans/roadmap.json` and the story's read
-notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
+Sweep the sibling cases normal use reaches, too: the other states, providers and callers of the
+same code that people or agents are likely to hit, not every rare combination.
+Write each finding as one line naming the defect and its impact, then brief evidence: the line you
+read and, for an edge case, the realistic scenario. No speculative suggestions: report what breaks,
+not what might be nicer.
+Forge's own records (everything under `.factory/`, `plans/roadmap.json`, the story's doc and its
+read notes) are not part of the change: never report them as files outside Scope or as unrelated changes.
 The previous review's findings and dismissals are below; recheck them against this branch and
 report any still-open gap alongside new ones:
 $previous
@@ -187,7 +222,7 @@ Your working folder is a read-only checkout of the branch head, so the repositor
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
-missing, the changed line nearest the gap). P0 and P1 block the merge; P2 and P3 are advice.
+missing, the changed line nearest the gap).
 <!-- review-rules -->
 ## This repository's review rules
 The repository's own AGENTS.md, on its default branch, sets these rules for every review. Follow
