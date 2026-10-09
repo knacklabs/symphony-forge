@@ -56,6 +56,8 @@ def merge(args: argparse.Namespace) -> int:
     default = repo.default_branch(top)
     shown = repo.run("gh", "pr", "view", branch, "--json",
                      "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
+    if shown.returncode and shown.stderr.strip() == repo.REFUSALS["no_github"][0]:
+        repo.refuse(repo.REFUSALS["no_github"])
     try:
         pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
@@ -96,6 +98,8 @@ def merge(args: argparse.Namespace) -> int:
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)
+        if after.returncode and after.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
         merged = after.returncode == 0 and after.stdout.strip() == "MERGED"
         if not merged:
             if done.returncode:

@@ -540,6 +540,8 @@ def _save(top: Path, item: str, state: dict[str, Any], message: str, *paths: str
 def _gh(top: Path, *args: str) -> str:
     done = repo.run("gh", *args, cwd=top)
     if done.returncode:
+        if done.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
         raise subprocess.CalledProcessError(done.returncode, ["gh", *args], done.stdout,
                                             done.stderr)
     return done.stdout
