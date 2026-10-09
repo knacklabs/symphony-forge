@@ -2,13 +2,38 @@
   "base": "ecc16b99c816cee1e17ae60d53d9311309a6d8bf",
   "branch": "fix/task-start-pin",
   "done_when": "forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the default branch into the story branch (stopping with a plain next step on a conflict) so the new task starts on the current release; it changes nothing when the pins match; a command test covers a repo adopted on an earlier release that upgrades with an open story, then starts a task, plus the conflict case",
+  "flagged": [
+    "src/forge/task.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bb3594fcba0826461866bee965bbd8b48be3db849dc88095918b3ef9c80a38c8",
+    "changed": "92aef0fe0abce370495d002cbaa5004ddf28bdb921c6ec1d468e4c5abf58c2d3",
+    "commit": "55cd7f52684012da03889c0e03cb10a2776ca2e6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The upgrade logic runs too late when task start is invoked from the older story checkout. `src/forge/cli.py:137\u2013138` calls `check_pin` before invoking this handler, and `src/forge/repo.py:538\u2013545` forwards the command to the checkout's older release. That release lacks this fix, so it can still create an old-release task without merging the fetched default. A stale default checkout has the same problem once the pending-upgrade exception no longer applies. The new upgrade tests miss both paths because `_open_story` leaves the invoking checkout on `fix/upgrade`, which already pins the installed release. Handle task-start upgrade routing before forwarding to the older release and cover invocation from an old-pin checkout.",
+        "file": "src/forge/task.py",
+        "line": 141,
+        "priority": "P1",
+        "title": "Not done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task"
+      }
+    ],
+    "id": "a2134512-4cc7-41f5-9765-fd5e91f9035a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T05:59:55+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T06:14:14+00:00",
+      "step": "review"
     }
   ],
   "why": "After a client repo upgrades Forge, new tasks are cut from story branches that still pin the old release, so every new task silently runs the old Forge (old review rules, no fast_test) until someone merges the default branch into each story branch by hand (reported by a client session after upgrading to v1.2.7)",

@@ -408,6 +408,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 590,
+      "text": "Not done: Live previous-release processes can still prune newer lane entries",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 596,
+      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1119,6 +1141,17 @@
       "text": "Not done: forge sync turns the mod on whatever version a repo pins",
       "from": "blocking",
       "item": "FORGE-MOD-1/SHIP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tNot done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task\ttask-start-pin",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 141,
+      "text": "Not done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task",
+      "from": "blocking",
+      "item": "task-start-pin",
       "status": "open",
       "closed_by": null
     },
@@ -2912,28 +2945,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 590,
-      "text": "Not done: Live previous-release processes can still prune newer lane entries",
-      "from": "blocking",
-      "item": "lane-identity-env",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 596,
-      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
-      "from": "blocking",
-      "item": "lane-identity-env",
       "status": "open",
       "closed_by": null
     }
