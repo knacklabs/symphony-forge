@@ -13,7 +13,7 @@ from test_subagent_roles import _settings
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
-SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
+SONNET = {"model": "claude-opus-5-5", "effort": "medium"}  # owner override for now (2026-10-09)
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -73,7 +73,7 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     # A sync that silently drops both nested entries must not make doctor appear healthy.
     for name in ("worker", "coder", "frontend", "tester", "refactorer", "explorer"):
         assert _settings(repo.path, name) == (
-            ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh")), name
+            ("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium")), name
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)

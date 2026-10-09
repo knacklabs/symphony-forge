@@ -13,16 +13,16 @@ model = "gpt-6.1-sol"
 effort = "medium"
 
 [models.build.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.fix.codex]
 model = "gpt-6.1-sol"
 effort = "medium"
 
 [models.fix.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.lite.codex]
 model = "gpt-6.1-sol"
@@ -31,16 +31,16 @@ subagents = "gpt-6-luna"
 subagent_effort = "max"
 
 [models.lite.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.grill.codex]
 model = "gpt-6.1-sol"
 effort = "high"
 
 [models.grill.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.design.claude]
 model = "claude-opus-5-5"
