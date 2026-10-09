@@ -38,6 +38,9 @@ Raise, under one of these lines:
 - Test: a missing or hollow test for a Done-when item's own behaviour.
 - Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
   that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
+- Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
+  functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
+  doesn't need, or a weakened test.
 - Plan gap: something that would make the build wrong or stall it: a contradiction, a question a
   builder must ask, a shared name no earlier task pins, a likely case or refusal no rule or test
   covers, a one-way step missing from Risks, a task that is too big, a shape bigger than the Done

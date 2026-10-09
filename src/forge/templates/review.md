@@ -109,6 +109,10 @@ Raise, under one of these lines:
 - Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
   functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
   doesn't need, or a weakened test.
+- Plan gap: something that would make the build wrong or stall it: a contradiction, a question a
+  builder must ask, a shared name no earlier task pins, a likely case or refusal no rule or test
+  covers, a one-way step missing from Risks, a task that is too big, a shape bigger than the Done
+  when needs, work no Done-when item needs, or a known trap the change is likely to meet.
 
 Leave out, unless it falls under Security or Data loss or the finding names a realistic scenario
 that makes it likely in normal use:

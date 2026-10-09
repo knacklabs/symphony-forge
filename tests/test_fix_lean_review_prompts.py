@@ -55,9 +55,8 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = flat(env.prompt())
 
-    # One boundary, word for word the same in both prompts.
-    boundary = [prompt.split("## What counts", 1)[1].split("- Moving part:", 1)[0]
-                + prompt.split("Leave out, unless", 1)[1].split("at the start of its evidence.")[0]
+    # Compare the whole boundary, including both review gates and cold-read plan gaps.
+    boundary = [prompt.split("## What counts", 1)[1].split("at the start of its evidence.")[0]
                 for prompt in (cold_read, review)]
     assert boundary[0] == boundary[1]
     for rule in ("Report exactly what falls inside this boundary: nothing outside it, and nothing "
@@ -80,9 +79,9 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
                  "the finding names a realistic scenario that makes it likely in normal use",
                  "Every finding you raise names its line as `Raise: <line>`"):
         assert rule in boundary[0], rule
-    assert "- Moving part: a new dependency" in cold_read and "- Moving part: a new dependency" in review
-    assert "- Plan gap: something that would make the build wrong or stall it" in cold_read
-    assert "- Gate: a P1 this page names elsewhere" in review
+    assert "- Moving part: a new dependency" in boundary[0]
+    assert "- Plan gap: something that would make the build wrong or stall it" in boundary[0]
+    assert "- Gate: a P1 this page names elsewhere" in boundary[0]
 
     # Review: only Raise lines block; advice is limited to the named forms; one-line findings.
     assert ("Every finding under a Raise line is P0 or P1 and blocks the merge. P2 and P3 are only "
