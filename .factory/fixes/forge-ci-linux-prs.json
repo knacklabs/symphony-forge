@@ -3,12 +3,14 @@
   "branch": "fix/forge-ci-linux-prs",
   "done_when": "In Forge's own repo only, pull request CI runs just the Linux test groups (sized so each stays under its time limit); pushes to main and release tags run the full Linux, Mac and Windows matrix; close's named checks still pass on pull requests; the release steps in this repo's docs say to confirm main's full-matrix run is green before tagging; the shipped client workflow is unchanged; this repo's CI tests check the pull-request and main job sets",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T12:19:38+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's own CI runs about 17 jobs (3 Linux, 6 Mac, 8 Windows) on every pull request, and the knacklabs organisation shares about 20 runners, so even one Forge pull request leaves client repos' CI queued (2026-10-09). Owner decision: Linux on pull requests, every OS on main and before each release"
+  "why": "Forge's own CI runs about 17 jobs (3 Linux, 6 Mac, 8 Windows) on every pull request, and the knacklabs organisation shares about 20 runners, so even one Forge pull request leaves client repos' CI queued (2026-10-09). Owner decision: Linux on pull requests, every OS on main and before each release",
+  "worker": "codex"
 }
