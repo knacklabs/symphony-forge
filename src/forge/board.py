@@ -181,7 +181,8 @@ def _rollup(pr: Item) -> list[Item]:
         return []
 
 
-def active_runs(top: Path, item: str, activity: list[Item] | None = None) -> list[Item]:
+def active_runs(top: Path, item: str, activity: list[Item] | None = None,
+                round_number: int | None = None) -> list[Item]:
     if activity is None:
         path = repo.forge_dir(top) / "events.jsonl"
         activity = []
@@ -193,7 +194,19 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None) -> lis
             except ValueError:
                 continue
     ended = {e.get("run_id") for e in activity if e.get("event") == "run end"}
-    return [e for e in activity if e.get("event") == "run start" and e.get("id") not in ended]
+    runs = []
+    for event in activity:
+        if (event.get("event") != "run start" or event.get("id") in ended
+                or round_number is not None and event.get("round") is not None
+                and event["round"] != round_number):
+            continue
+        kind = event.get("kind")
+        if kind in ("work", "worker") or kind == "read" and event.get("family") == "codex":
+            lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
+            if lock.is_file() and codex._alive(codex._json(lock)) is False:
+                continue
+        runs.append(event)
+    return runs
 
 
 def machine_board(top: Path, history: Item | None = None,
@@ -308,7 +321,7 @@ def machine_board(top: Path, history: Item | None = None,
             worker = {"kind": "read" if kind == "story" else "build", "model": model,
                       "started_at": None}
         activity = [e for e in recorded if e.get("item") == item]
-        active = active_runs(top, item, activity)
+        active = active_runs(top, item, activity, state.get("round") if kind != "story" else None)
         finished = state.get("status") in ("done", "merged")
         if finished:
             active, worker = [], None
@@ -330,6 +343,12 @@ def machine_board(top: Path, history: Item | None = None,
         if worker:
             worker["elapsed"] = elapsed(worker.get("started_at"))
         dates = [e.get("at") for e in activity] + [s.get("at") for s in _steps(state)]
+        if kind == "story":
+            dates.extend(e.get("at") for e in recorded if str(e.get("item", "")).startswith(item + "/"))
+            prefix = f".factory/stories/{item}/tasks/"
+            dates.extend(s.get("at") for rel, (part, _) in best.items() if rel.startswith(prefix)
+                         for s in _steps(part))
+            dates.extend(at for rel, at in history["dates"].items() if rel.startswith(prefix))
         idle_since = (max((at for at in dates if _when(at)), key=_when, default=None)
                       or history["dates"].get(repo.state_path(item))) if not active and not worker and not finished else None
         test_runs = [e for e in active if e.get("kind") == "test"]
@@ -484,6 +503,11 @@ def machine_board(top: Path, history: Item | None = None,
         if key not in items:
             items[key] = row(key, "story", "A story with missing state", {}, landed)
         items[key]["children"] = parts
+        running = next((part for part in parts if part["activity"]["status"] == "running"
+                        or part["gates"]["ci"]["status"] == "running"), None)
+        if running and items[key]["stage"] != "done":
+            items[key].update(activity={"status": "running", "action": running["activity"].get("action", "ci")},
+                              idle_since=None, idle_seconds=None, waits_on=None, stalled=False)
     for key, state in roadmap.items():
         if key not in items and repo.state_path(key) not in history["expired"]:
             items[key] = row(key, "story", state.get("title") or "A story with no title yet",

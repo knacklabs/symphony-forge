@@ -139,6 +139,90 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     assert not done["stalled"]
 
 
+@pytest.mark.parametrize("child_activity", ["running", "recently merged"])
+def test_3_story_idle_time_tracks_its_parts(
+        client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
+    configured = _fix(client)
+    version = client.forge("--version").stdout.split()[-1]
+    (configured / "forge.toml").write_text(
+        f'version = "{version}"\nrepo = "client"\nworkers = "claude"\n{GRILL}', "utf-8")
+    (configured / "plans").mkdir(exist_ok=True)
+    (configured / "plans/roadmap.json").write_text(json.dumps({"items": [{"key": "SHOP"}]}), "utf-8")
+    client.git("add", "-A", cwd=configured)
+    client.git("commit", "-qm", "Configure basket work", cwd=configured)
+    client.git("merge", "-q", "--ff-only", "fix/correct-state")
+    _land_fixture(client)
+    _install(client.bin, "claude", READER.format(python=sys.executable))
+    with monkeypatch.context() as earlier:
+        earlier.setenv("FORGE_NOW", OLD)
+        tree = ready(client, "SHOP", DOC)
+        approved = hook(client, claude_plan(claude_payload, DOC, cwd=tree))
+        assert approved.returncode == 0, approved.stderr
+    with monkeypatch.context() as started:
+        started.setenv("FORGE_NOW", "2026-10-09T11:50:00Z")
+        task = client.forge("task", "start", "SHOP/SAVE")
+        assert task.returncode == 0, task.stderr
+    if child_activity == "running":
+        events = [{"event": "run start", "id": "save-work", "item": "SHOP/SAVE",
+                   "kind": "work", "round": 1, "at": "2026-10-09T11:50:00Z"}]
+    else:
+        merged = pr("task/SHOP-SAVE", "Save a basket", "Baskets are saved.",
+                    "2026-10-09T11:55:00Z", [], ["src/basket.py"])
+        gh.respond("pr", "list", stdout=json.dumps([merged]))
+        gh.respond("pr", "list", "--state", "open", stdout="[]")
+        events = [
+            {"event": "run start", "id": "save-merge", "item": "SHOP/SAVE",
+             "kind": "merge", "round": 1, "at": "2026-10-09T11:54:00Z"},
+            {"event": "run end", "id": "save-merged", "run_id": "save-merge", "item": "SHOP/SAVE",
+             "kind": "merge", "round": 1, "outcome": "completed", "at": "2026-10-09T11:55:00Z"}]
+    _records(client, "events.jsonl", events)
+    data, text, _ = _board(client, tmp_path)
+    parent = _row(data, "SHOP")
+    assert not parent["stalled"]
+    assert "Stalled" not in text
+    if child_activity == "running":
+        assert parent["idle_since"] is None and parent["idle_seconds"] is None
+        assert parent["waits_on"] is None
+        child = next(row for row in parent["children"] if row["id"] == "SHOP/SAVE")
+        assert child["worker"]["elapsed"] == 600
+    else:
+        assert parent["idle_seconds"] == 300
+        assert parent["waits_on"]
+
+
+@pytest.mark.parametrize("run_round", [1, 2], ids=["older round", "current round"])
+def test_4_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
+        client, tmp_path, monkeypatch, run_round):
+    with monkeypatch.context() as earlier:
+        earlier.setenv("FORGE_NOW", OLD)
+        _fix(client, status="working", round=2)
+    exited = subprocess.Popen([sys.executable, "-c", "pass"])
+    try:
+        exited.wait(timeout=10)
+    finally:
+        if exited.poll() is None:
+            exited.kill()
+            exited.wait(timeout=10)
+    folder = _records(client, "events.jsonl", [{"event": "run start", "id": "abandoned-run",
+        "item": "correct-state", "kind": "work", "round": run_round, "at": OLD}])
+    locks = folder / "threads/fix"
+    locks.mkdir(parents=True, exist_ok=True)
+    (locks / "correct-state.lock").write_text(json.dumps({"pid": exited.pid,
+        "started": "The earlier process", "command": "python"}), "utf-8")
+    data, text, _ = _board(client, tmp_path)
+    row = _row(data, "correct-state")
+    assert row["activity"]["status"] == "idle" and row["worker"] is None
+    assert row["stalled"] and row["idle_seconds"] == 4 * 86400
+    assert not any(stage["status"] == "running" for stage in row["stages"])
+    assert "running" not in row["status"].lower()
+    assert "Worker running" not in text
+    assert "worker has stopped" in row["next"]["line"]
+    assert row["next"]["command"] == "forge close correct-state"
+    next_text = client.forge("next")
+    assert next_text.returncode == 0, next_text.stderr
+    assert "The fix correct-state's worker has stopped." in next_text.stdout
+
+
 @pytest.mark.parametrize("kind", ["work", "review"])
 def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, kind):
     _fix(client, status="fixing", round=2)

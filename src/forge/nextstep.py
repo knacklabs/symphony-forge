@@ -578,7 +578,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
     if status not in ("merged", "done", "hotspot"):
-        live = [run for run in (runs if runs is not None else board.active_runs(top, item))
+        live = [run for run in (runs if runs is not None else board.active_runs(top, item, round_number=state.get("round")))
                 if run.get("kind") in ("work", "worker", "review")
                 and ("round" not in state or run.get("round") == state["round"])]
         if live:
@@ -620,7 +620,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
     if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
-            and not board.active_runs(top, item)):
+            and not board.active_runs(top, item, round_number=state.get("round"))):
         sentence, step = "{label}'s worker has stopped.", "forge close {item}"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

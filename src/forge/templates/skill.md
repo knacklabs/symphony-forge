@@ -178,7 +178,10 @@ marked. Missing times remain unknown. New clients get this at init; earlier adop
 get it after upgrading Forge and syncing. Cards and JSON use the same `status` and `took`
 derivation; running stages include their elapsed time. Roadmap completion marks the story
 and its parts finished. Finished items never stall; idle items past one day expose
-`stalled`, `idle_seconds`, and `waits_on`. Live readers, workers and reviews take precedence
+`stalled`, `idle_seconds`, and `waits_on`. A story's idle clock includes its parts' activity;
+a running part keeps the story active and a finished part resets its idle clock. An older
+worker round or a worker whose recorded lock is demonstrably dead is not a live run.
+Live readers, workers and reviews take precedence
 over a saved status, including in `forge next`. Approval history uses one display name per
 Git email, honoring mailmap, and fix titles shorten at a word boundary.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
