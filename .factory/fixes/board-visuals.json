@@ -9,13 +9,46 @@
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/board-visuals",
   "done_when": "The forge board page draws, with inline SVG and no scripts or outside files: one dependency map across the roadmap showing each story's parts and which part waits for which, including waits on another story's part, with parts that can start now marked (merged, running, waiting, can start now and not started told apart by label and shape, never colour alone); for every active story part and fix a stage timeline across build, tests, review, CI and merge with each finished stage's recorded time and the current stage marked; and one line counting items at each stage (needs a spec, planning, waiting for approval, building, ready to merge, done); all from the same data as forge board --json and forge next's readiness (unrecorded values shown as unknown, never invented), readable in light and dark mode and at phone width; the existing text sections stay and board.py stays under the per-file limit; a command test renders the page for a new repo and one adopted on an earlier release and checks a cross-story wait, a can-start-now part, a timeline's stage times and the counts",
+  "flagged": [
+    "src/forge/board.py",
+    "tests/test_board_dependency_timelines.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "54849d45a266c52d8cf19ab1226975a6dc18871a63f33f523c2ce7df675912b5",
+    "changed": "693ed4f22e0cb52473fe3a4fd402c58e95249cceda12b3e8b5ba50ae8e0503b1",
+    "commit": "3c13c45724596afab0bee11e8c1ff3242ae8d0a9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The implementation still delivers the earlier requirements rather than the amended Done-when. First, `_page` renders a separate dependency map inside each story card (board.py:863\u2013864), duplicating cross-story dependencies instead of drawing one map across the roadmap. Second, this status expression never produces \u201cCan start now\u201d; even an eligible part with no unmet dependency becomes \u201cNot started\u201d. It also omits readiness conditions used by `forge next`, including approval, scope-overlap blockers and required rereads (nextstep.py:409\u2013411, 438\u2013451). Third, neither the JSON return nor the page renders the required line counting needs-a-spec, planning, waiting-for-approval, building, ready-to-merge and done items; the existing factory measures are different counts. Implement the shared roadmap map, derive its five states from the actual readiness rules, and add the six stage counts.",
+        "file": "src/forge/board.py",
+        "line": 438,
+        "priority": "P1",
+        "title": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts"
+      },
+      {
+        "body": "The named proof passes while three amended acceptance requirements are absent. It explicitly expects the supposedly eligible SHOP/EXTRA part to remain \u201cNot started\u201d (lines 153\u2013156), checks only four state shapes (line 177), and requires two separate maps (line 194). Its counts assertions check a story\u2019s completed parts and the three existing factory measures (lines 193\u2013196), rather than the six requested stage totals. Thus the proof list\u2019s readiness and counts claims do not establish those behaviours. Update this command test for both client histories to assert one roadmap-wide map, a visible and distinct can-start-now state consistent with `forge next`, and the actual six stage counts.",
+        "file": "tests/test_board_dependency_timelines.py",
+        "line": 153,
+        "priority": "P1",
+        "title": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data"
+      }
+    ],
+    "id": "3bcfe83b-34cf-4ed3-9a12-dce18eddaeb8",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T07:40:38+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T08:28:18+00:00",
+      "step": "review"
     }
   ],
   "why": "The forge board page lost the old board's visuals in the lean rebuild: there is no picture of what waits for what between stories and their parts, and no view of where each item's time went across its stages; the owner wants both back (2026-10-09)",
