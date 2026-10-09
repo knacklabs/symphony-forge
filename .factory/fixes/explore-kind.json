@@ -46,6 +46,7 @@
     "id": "71677d9c-1b4f-421e-9df5-d2c537c59d87",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -57,5 +58,6 @@
       "step": "review"
     }
   ],
-  "why": "Read-only Claude work (the explorer subagent role and quick forge ask questions) should run on Haiku 4.5 at high effort (owner, 2026-10-09), but both share forge.toml's lite setting with the first build round of every fix, so it can't change without moving fix implementation to Haiku"
+  "why": "Read-only Claude work (the explorer subagent role and quick forge ask questions) should run on Haiku 4.5 at high effort (owner, 2026-10-09), but both share forge.toml's lite setting with the first build round of every fix, so it can't change without moving fix implementation to Haiku",
+  "worker": "codex"
 }
