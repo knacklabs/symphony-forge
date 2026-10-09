@@ -76,7 +76,7 @@ def main():
         saved = threads.setdefault(id, {"cwd": params.get("cwd")}) \
             if method == "thread/start" else threads.get(id)
         if saved is None:
-            send(id=message["id"], error={"code": -32600, "message": "no rollout found for " + id})
+            send(id=message["id"], error={"code": -32600, "message": "no rollout found for thread id " + id})
             continue
         save(threads)
         if method != "turn/start":
@@ -407,7 +407,7 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     session = (json.loads((repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json")
                          .read_text("utf-8")).get("claude") or {}).get("id")
     reader.lose()
-    fresh("Codex couldn't resume its conversation: no rollout found for thr-stub-1" if app == "codex"
+    fresh("Codex couldn't resume its conversation: no rollout found for thread id thr-stub-1" if app == "codex"
           else f"Claude couldn't continue session {session}", "4. Totals need tax.\n")
     reader.dispose("Totals need tax.", "cut")
 

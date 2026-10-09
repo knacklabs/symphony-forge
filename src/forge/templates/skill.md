@@ -780,8 +780,8 @@ on the new worker with the whole brief and the latest review findings.
 Each task and fix keeps the same worker chat for each tool until merge. Later rounds resume it
 after model or effort changes, restarts, missing local records or a fresh worktree. Plan reads
 keep their reader chat across rounds too. Forge starts a new chat only when the tool reports
-the old chat gone or the item changes tools, and says why in one line. Other resume errors stop
-the round and keep its chat.
+the old chat gone or archived or the item changes tools, and says why in one line. Other resume
+errors stop the round and keep its chat.
 
 For a side job inside your own session, hand it to one of Forge's subagent roles, which
 `forge sync` writes for both hosts from `forge.toml`'s models: `explorer` to read and trace code;

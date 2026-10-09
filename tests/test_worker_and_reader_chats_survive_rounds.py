@@ -9,15 +9,16 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import subprocess
 import sys
 
 import pytest
 
-from conftest import ROOT, _install
+from conftest import FORGE_SHIM, ROOT, _install
 from test_codex_resume import RESUMING, _resuming
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_fix_claude_workers_start_a_fresh_session_eve import _session
-from test_readloop_rounds import FIRST, _no_claude, _no_codex, _setup
+from test_readloop_rounds import CODEX, FIRST, _no_claude, _no_codex, _setup
 from test_setup import _fresh_client
 from test_story import worktree
 from test_worker import calls, install_claude
@@ -251,7 +252,7 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Each task and fix keeps the same worker chat for each tool until merge.",
                 "Later rounds resume it after model or effort changes, restarts, missing local records or a fresh worktree.",
                 "Plan reads keep their reader chat across rounds too.",
-                "Forge starts a new chat only when the tool reports the old chat gone or the item changes tools, and says why in one line.",
+                "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
                 "Other resume errors stop the round and keep its chat."):
             assert sentence in " ".join(guide.split()), sentence
 
@@ -450,3 +451,53 @@ def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_ed
         assert len(codex) == 1
         assert "## Tests first" in codex[0]["input"][0]["text"]
         assert calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "medium"]
+
+
+def test_12_archived_previous_release_reader_starts_one_replacement_chat(
+        repo, monkeypatch, tmp_path, sdk_data):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted=True)
+    archiving = CODEX.replace('        save(threads)\n        if method != "turn/start":',
+        '''        if method == "thread/resume" and saved.get("archived"):
+            send(id=message["id"], error={"code": -32600, "message":
+                f"session {id} is archived. Run `codex unarchive {id}` to unarchive it first."})
+            continue
+        if method == "thread/archive":
+            saved["archived"] = True
+            save(threads)
+            send(id=message["id"], result={})
+            continue
+        save(threads)
+        if method != "turn/start":''', 1)
+    _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{archiving}")
+    old = tmp_path / "previous-release"
+    shutil.copytree(ROOT / "tests/fixtures/forge-v1.2.2", old)
+    (old / "src/forge/cli-py.txt").rename(old / "src/forge/cli.py")
+    # The adoption fixture omits transport and reader text; its old story/archive code is unchanged.
+    shutil.copy2(ROOT / "src/forge/codex_turn.py", old / "src/forge/codex_turn.py")
+    shutil.copy2(ROOT / "src/forge/templates/cold-read.md", old / "src/forge/templates/cold-read.md")
+    _install(repo.bin, "old-forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
+    config = reader.shop / "forge.toml"
+    current = config.read_text("utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    config.write_text(current.replace(f'version = "{version}"', 'version = "v1.2.2"'), encoding="utf-8")
+    read = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "read", "SHOP"],
+                          cwd=reader.shop, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert read.returncode == 0, read.stdout + read.stderr
+    first = _reader_chat(reader)
+    assert _sent(reader.log, "thread/archive") == [{"threadId": first}]
+    assert "passed: yes" in reader.text()
+
+    config.write_text(current, encoding="utf-8")
+    said = reader.ok()
+    assert [line for line in said.splitlines() if line.startswith("Starting a new")] == [
+        "Starting a new Codex conversation, because the earlier Codex conversation was archived."]
+    replacement = _reader_chat(reader)
+    assert replacement != first
+    assert _sent(reader.log, "thread/resume")[-1]["threadId"] == first
+    assert len(_sent(reader.log, "thread/start")) == 2
+    assert _sent(reader.log, "thread/unarchive") == []
+    again = reader.ok()
+    assert "Starting a new" not in again
+    assert _reader_chat(reader) == replacement
+    assert _sent(reader.log, "thread/resume")[-1]["threadId"] == replacement
+    assert len(_sent(reader.log, "thread/start")) == 2

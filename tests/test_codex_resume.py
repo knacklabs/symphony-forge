@@ -98,7 +98,7 @@ def main():
         if saved is None:  # as Codex says it: a read and a resume word it differently
             send(id=message["id"], error={"code": -32600, "message": "thread not loaded: " + id
                                           if method == "thread/read" else
-                                          "no rollout found for " + id})
+                                          "no rollout found for thread id " + id})
             continue
         result = {}
         if method in ("thread/start", "thread/resume"):
@@ -319,7 +319,7 @@ def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
         threads = json.loads(store.read_text(encoding="utf-8"))
         del threads[conversation]
         store.write_text(json.dumps(threads), encoding="utf-8")
-        fresh(f"Codex couldn't resume its conversation: no rollout found for {conversation}")
+        fresh(f"Codex couldn't resume its conversation: no rollout found for thread id {conversation}")
     elif reason == "moved":
         moved = folder.with_name("moved-BOARD-PAGE")
         repo.git("worktree", "move", str(folder), str(moved))
