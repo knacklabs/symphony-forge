@@ -2,28 +2,37 @@
   "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
   "branch": "fix/two-test-slots",
   "done_when": "The shared test lane admits one test run per four available cores, at least one (two on an 8-core machine), each test command still getting half the machine's cores as its worker count; forge doctor, the lanes view and the pane show the test lane's size; the coordinator guide says so; command tests cover an 8-core machine admitting two test runs while a third waits, and a 4-core machine keeping one, for a new repo and one adopted on an earlier release",
-  "flagged": [],
+  "flagged": [
+    "tests/test_machine_test_lane_capacity.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cba3b61629f469f30f4d3fd4d4b85ba1de092cc07d35d342899ee64f94590cdf",
-    "changed": "5f8b723524c6fbc6194f9c4b9db3a8b2e8128201db775b2ca2923879e2b1b537",
-    "commit": "ff4856c91c4a47537934615f3f08bffa96a65eb1",
+    "branch_diff": "f26c919611cb478a6da1047d1e807bb51380e88eafa7b719dfdf9ab92428ec1b",
+    "changed": "6b9ea0819e29c4c4b989baeedd3e3d82e3b6af6acb22284ab6a08bef0f578762",
+    "commit": "3ff03c31fce429f163db8479ff2e8c9a58ad61a0",
     "dismissals": [],
     "findings": [
       {
-        "body": "At 60 columns, with two running tests and an active Tests stage and total time of 100 seconds, the new counts occupy 37 columns and `: Tests \u25cf 1m 40s (1m 40s) \u00b7 ` occupies 28. The compact renderer at pane.ts:137\u2013143 reserves both widths with flexShrink: 0, producing 65 columns inside a 60-column row even after the title and tail widths reach zero. This clips timing information in the compact terminal and desktop prompts; the previous counts fit this case. Budget the expanded counts together with timing. The new 60-column proof concatenates text without checking allocated widths, while native width checks cover 79 columns.",
+        "body": "This function and tests/test_machine_test_lane_capacity_pane.py:62 lack criterion numbers. tests/test_rules.py:45\u201350 requires every test function, including fixes, to match `test_<number>_<rule>` and requires distinct numbers within the shared STORY. Consequently, the full-suite CI command at .github/workflows/forge-next.yml:80 will fail. The supplied 42-test close run omitted test_rules.py, so its green result does not catch this. Number both functions distinctly and update their proof-list references.",
+        "file": "tests/test_machine_test_lane_capacity.py",
+        "line": 19,
+        "priority": "P1",
+        "title": "Number both new tests to keep the full suite passing"
+      },
+      {
+        "body": "The previously reported clipping remains. At 60 columns, two running tests produce a 37-column counts string; an active Tests stage and total time of 100 seconds add 28 columns. pane.ts:137\u2013143 reserves both with flexShrink: 0, allocating 65 columns even after title and tail widths reach zero. This clips timing in compact terminal and desktop prompts. Budget counts and timing together. The command-backed 60-column test concatenates text without checking allocated widths; native compact checks cover 79 columns.",
         "file": "src/forge/mod/hooks/pane.ts",
         "line": 84,
         "priority": "P2",
         "title": "Keep expanded compact counts within the prompt width"
       }
     ],
-    "id": "f286030b-d2c9-4e4c-a363-c1d5de7b03c9",
-    "status": "clean"
+    "id": "f4dd44ea-6cf6-44f1-9abc-1329deb92564",
+    "status": "blocked"
   },
   "round": 1,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T17:43:41+00:00",
@@ -31,6 +40,10 @@
     },
     {
       "at": "2026-10-09T19:15:53+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:33:08+00:00",
       "step": "review"
     }
   ],
