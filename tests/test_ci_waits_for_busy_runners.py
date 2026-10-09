@@ -20,7 +20,7 @@ ACTIONS = ["api", "--paginate", "--jq", ".workflow_runs[]"]
 JOBS = ["api", "--paginate", "--jq", ".jobs[]"]
 
 
-def _client(env, history):
+def _client(env, history, runner):
     repo = env.repo
     config = (repo.path / "forge.toml").read_text("utf-8")
     if history == "upgraded":
@@ -47,7 +47,7 @@ def _client(env, history):
         env.commit(repo.path, ".factory/fixes/configure-client.json", json.dumps({
             "kind": "fix", "branch": "fix/configure-client", "why": "Configure Forge",
             "done_when": "The client is configured", "status": "started"}))
-    env.commit(repo.path, "forge.toml", config + 'runner = "ubuntu-latest"\n')
+    env.commit(repo.path, "forge.toml", config + f"runner = {json.dumps(runner)}\n")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     repo.git("add", "-A")
@@ -69,10 +69,12 @@ def _client(env, history):
     (command, activity) for command in ("close", "land", "land-merge", "doctor")
     for activity in ("busy", "missing")
 ] + [("doctor", activity) for activity in (
-    "busy-running", "busy-rerun", "wrong-label", "old-job", "future-job", "unassigned")])
+    "busy-running", "busy-rerun", "busy-case", "missing-case", "wrong-label",
+    "old-job", "future-job", "unassigned")])
 def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
     env = clock
-    _client(env, history)
+    runner = "GPU" if activity in ("busy-case", "missing-case") else "ubuntu-latest"
+    _client(env, history, runner)
     if command == "land-merge":
         _agent(env)
     where = _fix(env, "working", worked=True)
@@ -87,7 +89,7 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
     stub = env.repo.bin / "gh"
     stub.write_text(stub.read_text("utf-8").replace('        answer(out)', '''
         if args[:4] == ["api", "--paginate", "--jq", ".workflow_runs[]"]:
-            out = out.replace("current-head", subprocess.run(
+            out = out.replace("current-head", heads().get("refs/heads/fix/tidy-readme") or subprocess.run(
                 ["git", "rev-parse", "HEAD"], capture_output=True,
                 text=True, check=True).stdout.strip())
         answer(out)'''), "utf-8")
@@ -99,6 +101,8 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
         # A running workflow's update time need not advance for each job start.
     elif activity == "busy-rerun":
         other.update(status="queued", run_attempt=2)
+    elif activity in ("busy-case", "missing-case"):
+        job["labels"] = ["gpu" if activity == "busy-case" else "other"]
     elif activity == "wrong-label":
         job["labels"] = ["self-hosted"]
     elif activity == "old-job":
@@ -123,13 +127,15 @@ def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, comma
         env.open_pr("")
         env.gh.respond("pr", "list", stdout=json.dumps([
             {"number": 7, "state": "OPEN", "headRefOid": env.repo.git("rev-parse", "HEAD", cwd=where)}]))
+    # Windows cannot remove the worktree while the invoking process uses it as cwd.
     done = env.repo.forge("land" if command == "land-merge" else command,
-                          *([] if command == "doctor" else [ITEM]), cwd=where)
+                          *([] if command == "doctor" else [ITEM]),
+                          cwd=env.repo.path if command == "land-merge" else where)
     output = done.stdout + done.stderr
     if not activity.startswith("busy"):
         assert done.returncode != 0, output
         assert "no runner has picked" in output, output
-        assert 'runner = "ubuntu-latest"' in output and "forge.toml" in output, output
+        assert f"runner = {json.dumps(runner)}" in output and "forge.toml" in output, output
     else:
         assert "no runner has picked" not in output, output
         if command != "doctor":

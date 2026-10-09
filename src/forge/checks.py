@@ -112,7 +112,8 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
                 jobs = _ask(top, item, ".jobs",
                             f"repos/{{owner}}/{{repo}}/actions/runs/{candidate['id']}/jobs?filter=all")
                 for job in jobs:
-                    if (runner not in (job.get("labels") or []) or not job.get("runner_id")
+                    if (not any(runner.casefold() == label.casefold()
+                                for label in job.get("labels") or []) or not job.get("runner_id")
                             or job.get("status") not in ("in_progress", "completed")):
                         continue
                     try:
