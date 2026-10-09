@@ -5,6 +5,7 @@
   "done_when": "Forge records, in its existing event and timing logs (no new files), each review result's finding titles, severities and files, why each CI wait ended (passed, failed, or gave up while queued or running), and when an item joins and leaves a lane; one place outside board.py works out, per task and fix, where its time went (building, its own tests, reviewing, fixing findings, waiting for CI, waiting in line, waiting for the owner, nothing running) and one plain line per round (what the round did, how long each step took, and how many findings were new versus repeats of an earlier round's); forge board --json carries both per item, and its total no longer counts a worker's test runs twice or leaves out idle time; the pull request body gains a short 'How it went' section from the same data that survives the squash merge; the coordinator guide says how to read and quote them; unrecorded values show as unknown, never invented; command tests cover a looping item with a CI give-up, a lane wait, an owner wait and a repeat finding, for a new repo and one adopted on an earlier release",
   "flagged": [
     ".factory/fixes/where-time-went.json",
+    "src/forge/machine.py",
     "src/forge/merge.py",
     "src/forge/time_records.py",
     "tests/test_item_time_history.py"
@@ -12,13 +13,35 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1eddd274fcbc9d9218317417902c708df24be8393dc0e773405d9e71841b2077",
-    "changed": "f717ad1ddc64823d81277ef3adf49aa6e2163a015c3c99ab01c7d2991cb71398",
-    "commit": "e0844e721b934c76d7524e0d84cd3d6e47d0589f",
+    "branch_diff": "bc964570ec97efdb217db437e0bd2ffeddb1c7705a7e7f30dc0cf414f6b58153",
+    "changed": "257cec83c21b81b8e09d49bdb8bd4e0726c5020223e88ebdf8f8681ca4b2f366",
+    "commit": "0d1ac7c3a9c70b8dd620a450b3908aa404d09b63",
     "dismissals": [],
-    "findings": [],
-    "id": "9756a906-2871-46aa-97d4-366315ade640",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "An item created before the upgrade can still have status `started` and only its original start step. The older producer writes exactly that state (tests/fixtures/forge-v1.2.2/src/forge/task.py:116). Its first modern work, test or review lane admission therefore records `history_complete=True`. time_records.py:68\u201369 then backdates complete recording to the item's original start, classifying the entire unrecorded pre-upgrade interval as `nothing_running`. This affects both tasks and fixes. New evidence beyond the legacy-history ruling is this real older `started` state; the added legacy tests use `working` states or directly supplied work-phase events and miss this path. Establish completeness from recorded lifecycle evidence rather than the status alone, and cover an outstanding pre-upgrade item through the command.",
+        "file": "src/forge/machine.py",
+        "line": 82,
+        "priority": "P1",
+        "title": "Not done: keep pre-upgrade time unknown for items still marked started"
+      },
+      {
+        "body": "Round construction drops timings without an integer worker round unless a matching unknown-round review-result event exists. The actual earlier producer records review timings without any `round` field (tests/fixtures/forge-v1.2.2/src/forge/repo.py:120 and close.py:102), so its observed reviews disappear from `rounds` and How it went instead of appearing with unknown ordinals and finding details. The legacy proof cases supply integer rounds and do not cover that historical format. The same exclusion loses the lane wait from a first close performed before a worker turn: machine.join records `round=None`, while run/results/timings default to round 0 (src/forge/repo.py:209,225). Preserve unknown-round activity and associate its waits with the corresponding attempt. This evidence concerns omitted recorded activity, rather than the ruled requirement to leave unrecorded activity unknown.",
+        "file": "src/forge/time_records.py",
+        "line": 123,
+        "priority": "P1",
+        "title": "Not done: retain timing history and lane waits with unknown worker rounds"
+      },
+      {
+        "body": "The merge refresh only replaces an existing How it went heading. A ready pull request published by an earlier release has Forge's managed block but lacks that heading; the earlier publisher in tests/fixtures/pr-check-before-branch-diff/close.py:380 produces this format. Its existing readiness receipt remains accepted, so after an upgrade `forge merge` records the final CI wait and computes history, but this substitution changes nothing. Neither the published PR nor the squash body receives the computed section. Insert the section inside the managed block when absent, preserving handwritten text, and test merging an already-ready legacy PR. The current squash proofs first publish through the new close implementation, which always supplies the heading.",
+        "file": "src/forge/merge.py",
+        "line": 88,
+        "priority": "P1",
+        "title": "Not done: add How it went when merging a pre-upgrade pull request"
+      }
+    ],
+    "id": "cf2da46a-373d-4815-8683-193ec884d2bd",
+    "status": "blocked"
   },
   "round": 5,
   "status": "fixing",
@@ -41,6 +64,10 @@
     },
     {
       "at": "2026-10-09T15:44:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:16:24+00:00",
       "step": "review"
     }
   ],
