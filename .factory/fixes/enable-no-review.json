@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "343b4f0619fed39c4bd5c55b4f170e7d21b2b23bad767194271364c5035e8e4e",
-    "changed": "728127c1ebb3a583f51fe39f66425d0b49da93ef29af50c392905947f3fd8f85",
-    "commit": "84b76a6690668a78ab493cba6b8ffb14f0955a3e",
+    "branch_diff": "0a004ad6f9328a05c997d425f2bc52b447547c67f46912a8daf4e541ef6cb016",
+    "changed": "436e77287792e671f74523cb326e50982baebd3f667bbc1eaf7c7f925b384349",
+    "commit": "4236b6180d13be186a0b99cb131357feb3c23e99",
     "dismissals": [],
     "findings": [
       {
-        "body": "When resuming a merge switch with an earlier model review that cited an unchanged file, the mechanical result copies fingerprints computed from the old findings. `src/forge/review.py:141` adds those finding paths to the fingerprint; ordinary reviews retain even scope-rejected findings (`review.py:639\u2013650`). After this result replaces the findings with an empty list, `src/forge/prcheck.py:214` recomputes a different fingerprint and rejects the clean result as out of date. The owner must close again despite changing nothing. Compute both mechanical fingerprints with `findings=[]`, as the normal review path does with its new findings. The command tests queue a blocking response but never exercise conversion of a previously committed model review.",
+        "body": "The previously reported P2 remains open. When an interrupted merge switch has an earlier model review citing an unchanged file, `changed` is computed using those old findings: `src/forge/review.py:139\u2013141` includes their paths by default. This mechanical result then replaces the findings with an empty list while retaining that fingerprint. `src/forge/prcheck.py:214` recomputes the fingerprint from the empty findings and rejects the clean result as out of date, requiring another close despite no product change. Compute the mechanical fingerprints with `findings=[]`. The new command tests queue a model response but do not exercise conversion of an existing committed review.",
         "file": "src/forge/close.py",
         "line": 188,
         "priority": "P2",
         "title": "Compute mechanical fingerprints using the new empty finding set"
       }
     ],
-    "id": "cf80e14d-87b3-4022-aa36-c3fd51036b60",
+    "id": "67d2b590-9932-44b1-a084-40284e1c729a",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T04:50:15+00:00",
@@ -37,6 +37,10 @@
     },
     {
       "at": "2026-10-09T05:29:29+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T05:53:05+00:00",
       "step": "review"
     }
   ],
