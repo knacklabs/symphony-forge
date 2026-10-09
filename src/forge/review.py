@@ -468,6 +468,10 @@ def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
               if event.get("item") == item and event.get("event") == "review result"]
     recorded = [event["review_round"] for event in events
                 if isinstance(event.get("review_round"), int)]
+    timed = sum(timing.get("item") == item and timing.get("step") == "review"
+                for timing in time_records.read(top, "timings"))
+    if timed > len(events):
+        return None  # An earlier timing-only attempt cannot establish an absolute ordinal.
     if not recorded and (finished or events or not isinstance(steps, list) and state.get("round") != 1):
         return None
     return max([finished, *recorded]) + 1

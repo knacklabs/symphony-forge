@@ -167,6 +167,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                              "review_timings": [timing] if timing else []})
             previous = current
 
+    attempts.sort(key=lambda current: (current["start"] is None, current["start"]))
+
     def attempt(number: int | None, at: datetime) -> int | None:
         choices = [(index, r) for index, r in enumerate(attempts) if r["worker_round"] == number]
         return next((index for index, r in reversed(choices) if r["start"] and r["start"] <= at),
