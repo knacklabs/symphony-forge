@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-09T16:41:22+00:00",
+      "because": "Owner (2026-10-09): when Claude implements, use Sonnet at xhigh by default, frontend included",
+      "done_when": "forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-opus-5-5, high) and everything else stays on Codex; nothing else in forge.toml changes"
+    }
+  ],
   "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
   "branch": "fix/workers-split",
-  "done_when": "forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-opus-5-5, high) and everything else stays on Codex; nothing else in forge.toml changes",
+  "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation entry (build, fix, lite and design) uses claude-sonnet-5-5 at xhigh effort; plan reads, reviews and sign-off settings are unchanged; this repo's settings test pins both",
   "kind": "fix",
   "status": "started",
   "steps": [
