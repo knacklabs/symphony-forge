@@ -8,24 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "10990efdcc875d0928a4acc761bbc04cf51c1b66b667d01c5c2a8edd1e7790f3",
-    "changed": "1aacefb42aca7a621cb4c993fb87f8d8e698910e3f7bb70b9719645c7f66086e",
-    "commit": "3cf84c23c80aaad0e564c7e241eb398abd7c4402",
+    "branch_diff": "40070947a40fb0d606a70cc484ebc098b95186120a8ef2df821b6019d84985b7",
+    "changed": "08b95fed47664f8edee9621ff55a6c9b5f814088e2cb656068782fffdab46dff",
+    "commit": "3c3e687697d611b94e63255520b8b3fe3074b7f5",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous `detected` and test-note examples are repaired, but new unambiguous counterexamples remain: `6. There are no findings.`, `6. No bugs found.`, and `6. No findings reported.` Each fails this recognizer because its prefix, noun, or suffix is excluded. Consequently, the record-writing code at `src/forge/story.py:276` writes `passed: no`, recreating the unnecessary disposition and read round. These replies contain no substantive finding and fall within the promised \u201cany common wording\u201d; they do not require accepting arbitrary explanations contrary to the coordinator\u2019s ruling. Extend recognition conservatively and cover these cases in the existing command table for both client histories.",
+        "body": "The previously reported cases remain broken: `6. There are no findings.`, `6. No bugs found.`, and `6. No findings reported.` The recognizer excludes their prefix, noun, or suffix, so each clean reply produces `passed: no` at src/forge/story.py:276 and requires a disposition and another round. This violates the Done-when requirement to accept common no-findings wording. The command table in tests/test_read_accepts_no_findings.py also still omits all three cases for both client histories. Extend recognition conservatively and add these cases to that table.",
         "file": "src/forge/story.py",
         "line": 254,
         "priority": "P1",
         "title": "Not done: forge read still rejects common no-findings wording"
       }
     ],
-    "id": "64525723-66eb-4e16-b202-0ac903cb09e4",
+    "id": "b9d87402-53a2-428c-ad00-080c4e6b4239",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T15:43:09+00:00",
@@ -38,8 +38,15 @@
     {
       "at": "2026-10-09T17:28:14+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:39:12+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/story.py"
+  },
   "why": "A cold read that found nothing is recorded as not passed when the reader writes 'No findings' as a numbered item (for example '6. No findings.' plus a note that tests weren't run), so forge next asks for a disposition on it and the plan pays an extra read round (reported by a client session, 2026-10-09)",
   "worker": "codex"
 }
