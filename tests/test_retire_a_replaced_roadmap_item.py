@@ -121,7 +121,7 @@ def _commit(repo, items: list[dict], message: str) -> None:
     assert _git(repo, "commit", "-q", "-am", message).returncode == 0
 
 
-def test_4_the_roadmap_merge_rule_keeps_the_superseded_status(repo):
+def test_4_the_roadmap_merge_rule_conflicts_on_competing_statuses(repo):
     repo.git("checkout", "-q", "-b", "fix/roadmap")
     repo.write("forge.toml", 'version = "v1.2.6"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
@@ -138,12 +138,15 @@ def test_4_the_roadmap_merge_rule_keeps_the_superseded_status(repo):
     repo.git("branch", "starts-again")
     repo.git("branch", "retires-again", "retires")
 
-    # Whichever side git calls ours, the retired item stays retired.
+    # The old rule picked superseded; competing status edits now require a decision.
     for ours, theirs in (("retires", "starts"), ("starts-again", "retires-again")):
         repo.git("checkout", "-q", ours)
+        before = _roadmap(repo)
         merged = _git(repo, "merge", "-q", "--no-edit", theirs)
-        assert merged.returncode == 0, merged.stdout + merged.stderr
-        assert _roadmap(repo) == [retired], ours
+        assert merged.returncode != 0, merged.stdout + merged.stderr
+        assert "plans/roadmap.json" in repo.git("diff", "--name-only", "--diff-filter=U")
+        assert _roadmap(repo) == before, ours
+        repo.git("merge", "--abort")
 
 
 def test_5_a_retired_story_counts_as_finished_for_its_spec_check_back(repo, monkeypatch):
