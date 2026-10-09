@@ -78,6 +78,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/spec-trends.json\tNot done: proof list\tspec-trends",
+      "kind": "bug",
+      "path": ".factory/fixes/spec-trends.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "spec-trends",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -1398,6 +1409,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/worker.py\tNot done: the item's round number on every timing record\tFORGE-MOD-1/RUNS",
       "kind": "bug",
       "path": "src/forge/worker.py",
@@ -1944,17 +1966,6 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
-      "kind": "bug",
-      "path": "tests/test_machine_test_lane_capacity.py",
-      "line": 19,
-      "text": "Number both new tests to keep the full suite passing",
-      "from": "blocking",
-      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     },
@@ -2872,17 +2883,6 @@
       "closed_by": null
     },
     {
-      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
-      "kind": "edge",
-      "path": "src/forge/mod/hooks/pane.ts",
-      "line": 84,
-      "text": "Keep expanded compact counts within the prompt width",
-      "from": "review",
-      "item": "two-test-slots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -3444,17 +3444,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 109,
-      "text": "Not done: one identical written boundary in review and cold read",
-      "from": "blocking",
-      "item": "lean-review-prompts",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
       "kind": "bug",
       "path": "src/forge/story.py",
@@ -3473,6 +3462,28 @@
       "text": "Standard: Delete before adding",
       "from": "blocking",
       "item": "skipped-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "kind": "bug",
+      "path": "tests/test_machine_test_lane_capacity.py",
+      "line": 19,
+      "text": "Number both new tests to keep the full suite passing",
+      "from": "blocking",
+      "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 84,
+      "text": "Keep expanded compact counts within the prompt width",
+      "from": "review",
+      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     }

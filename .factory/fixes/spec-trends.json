@@ -1,0 +1,37 @@
+{
+  "base": "d7e1517ebe0975bcd836134c108424b09f125921",
+  "branch": "fix/spec-trends",
+  "done_when": "docs/specs/board-for-the-team.md describes team and per-person weekly merged pull requests split into through-Forge and around-Forge, with an acceptance criterion; out of scope says no ranking; the spec passes a read and is re-confirmed",
+  "flagged": [
+    ".factory/fixes/spec-trends.json"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e89fd2663696c4d07df0f409270db9f730418dc2030e34bb3662241fa980a023",
+    "changed": "5d57270f7ed094d85dfad4f12fd58687e62eab2561e3982a8384c027727c247c",
+    "commit": "ca21ffe57706cec6037bb0135652661dc682508b",
+    "dismissals": [],
+    "findings": [],
+    "id": "98b85d8f-2e64-4bb2-a5c4-ab6c12295906",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T20:51:55+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T21:43:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:46:04+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The owner wants the board spec to show team and per-person weekly trends, through Forge and around it, without ranking anyone",
+  "worker": "codex"
+}
