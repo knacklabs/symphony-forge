@@ -136,7 +136,7 @@ def _codex_repo(repo, monkeypatch, sdk_data: Path,
     story(repo)
     started = repo.forge("task", "start", "BOARD/PAGE")
     assert started.returncode == 0, started.stderr
-    return repo.path.parent / "repo-BOARD-PAGE", repo.bin / "codex-app-server.jsonl"
+    return repo.path.parent / f"{repo.path.name}-BOARD-PAGE", repo.bin / "codex-app-server.jsonl"
 
 
 def _stub(log: Path) -> list[dict]:
