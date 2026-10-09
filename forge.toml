@@ -43,8 +43,8 @@ model = "claude-sonnet-5-5"
 effort = "xhigh"
 
 [models.design.claude]
-model = "claude-sonnet-5-5"
-effort = "xhigh"
+model = "claude-opus-5-5"
+effort = "medium"
 
 [models.design.codex]
 model = "gpt-6.1-sol"
