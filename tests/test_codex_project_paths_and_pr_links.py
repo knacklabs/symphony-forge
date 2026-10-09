@@ -20,7 +20,7 @@ STORY = "codex-project-roots"
 
 
 @pytest.mark.parametrize("shape", ["plain", "object", "mixed", "unknown"])
-def test_worker_matches_path_and_object_roots_and_skips_unknown_records(
+def test_1_worker_matches_path_and_object_roots_and_skips_unknown_records(
         repo, monkeypatch, sdk_data, shape):
     folder, calls = _ready(repo, monkeypatch, sdk_data)
     path = str(repo.path / ".." / repo.path.name)
@@ -48,7 +48,7 @@ def test_worker_matches_path_and_object_roots_and_skips_unknown_records(
 
 
 @pytest.mark.parametrize("client", ["new", "earlier-adopted"])
-def test_close_links_the_pr_using_codex_string_identity_after_client_setup(
+def test_2_close_links_the_pr_using_codex_string_identity_after_client_setup(
         repo, gh, monkeypatch, tmp_path, sdk_data, client):
     if client == "new":
         repo.path, initialized = _fresh_client(repo, gh, tmp_path)
