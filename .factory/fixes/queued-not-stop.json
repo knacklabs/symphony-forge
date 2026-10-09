@@ -3,12 +3,14 @@
   "branch": "fix/queued-not-stop",
   "done_when": "forge land and forge close never stop just because checks are queued: land keeps waiting, and close's wait line says plainly that the checks are queued, for how long, and that the shared runners may be busy or no runner may match the runner setting; only forge doctor reports a likely missing runner, and only when no job of this repo needing that runner has run in the last several days; the no-runner advice no longer tells people to run forge sync unless they changed the runner setting; command tests with a faked GitHub cover a long busy queue that then passes and a repo whose runner never picks anything up, for a new repo and one adopted on an earlier release",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T12:16:17+00:00",
       "step": "start"
     }
   ],
-  "why": "v1.2.8's 'checks stayed queued for five minutes; no runner has picked them up' stop still fires when the organisation's shared runner pool is only busy (a client's checks queued behind other repos' runs, 2026-10-09), and its advice to run forge sync can't help; one repo can't tell a busy shared pool from a missing runner within five minutes"
+  "why": "v1.2.8's 'checks stayed queued for five minutes; no runner has picked them up' stop still fires when the organisation's shared runner pool is only busy (a client's checks queued behind other repos' runs, 2026-10-09), and its advice to run forge sync can't help; one repo can't tell a busy shared pool from a missing runner within five minutes",
+  "worker": "codex"
 }
