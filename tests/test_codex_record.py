@@ -331,11 +331,12 @@ def _exec_driver_is_stopped(repo) -> None:
     try:
         def ps(field: str) -> str:
             return subprocess.run(["ps", "-ww", "-o", f"{field}=", "-p", str(proc.pid)],
-                                  capture_output=True, text=True).stdout.strip()
+                                  capture_output=True, text=True,
+                                  env={**os.environ, "TZ": "UTC", "LC_ALL": "C", "LANG": "C"}).stdout.strip()
         # ps pads a single-digit day ("Oct  1"); Forge records the start with one space between words.
         record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "EXEC.json"
         record.parent.mkdir(parents=True, exist_ok=True)
-        record.write_text(json.dumps({"driver": {"pid": proc.pid, "started": " ".join(ps("lstart").split()),
+        record.write_text(json.dumps({"driver": {"pid": proc.pid, "started": "UTC " + " ".join(ps("lstart").split()),
                                                  "command": ps("command")}}), encoding="utf-8")
         flag.touch()
         deadline = time.monotonic() + 60

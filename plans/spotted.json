@@ -2914,6 +2914,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 590,
+      "text": "Not done: Live previous-release processes can still prune newer lane entries",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 596,
+      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
