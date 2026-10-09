@@ -1,21 +1,37 @@
 {
-  "amendments": [
-    {
-      "at": "2026-10-09T09:23:40+00:00",
-      "because": "A client session saw five older branches stop when land's own merge of the default branch changed the pin (2026-10-09), not only worker merges",
-      "done_when": "forge land and forge close notice when the item's forge.toml pins a different release after a worker round and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; a command test covers a land started on an earlier release whose worker merges an upgraded default branch, for a repo adopted on an earlier release"
-    }
-  ],
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/repin-mid-run",
-  "done_when": "forge land and forge close notice whenever the item's forge.toml pins a different release partway through, whether a worker round or land's or close's own merge of the default branch changed it, and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; command tests cover a land started on an earlier release that merges an upgraded default branch itself and one whose worker merges it, for a repo adopted on an earlier release",
+  "done_when": "forge land and forge close notice when the item's forge.toml pins a different release after a worker round and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; a command test covers a land started on an earlier release whose worker merges an upgraded default branch, for a repo adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "30a0fd1ba849246bbc1fed7c3617e2dd494148f7bbbaa3fecc1952e24b37c0a0",
+    "changed": "076271bfa58ce695de1e03331040062cca1e99f7112d7330058365568b54cd25",
+    "commit": "a3934d57676ee9517dc37d80bfe47dd2e8747226",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "When an upgraded default changes forge.toml cleanly but conflicts in a generated guide, `_merge_default` invokes `forge sync` before this handoff (src/forge/close.py:395). For a command running through the old pinned release, that subprocess still selects the old Forge, whose `check_pin` validates the entire new configuration first (src/forge/repo.py:514). An unfamiliar key such as `fast_test` therefore stops both standalone close and land's close path before `resume_pin` runs, leaving the merge unfinished. Run that conflict-resolution sync under the new pin, then complete the merge and hand off. The added close-merge cases change only forge.toml and do not exercise this path.",
+        "file": "src/forge/close.py",
+        "line": 128,
+        "priority": "P2",
+        "title": "[P2] Run generated-conflict sync under the changed pin"
+      }
+    ],
+    "id": "a1427791-910b-426d-be05-c7e34531af3e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T08:00:19+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T09:24:32+00:00",
+      "step": "review"
     }
   ],
   "why": "When a running forge land or close started under one pinned Forge release and the branch's forge.toml changes its pin mid-run (a worker merges the default branch after an upgrade), the old release keeps running and fails on the new forge.toml ('fast_test is not a forge.toml key'), stopping the item (reported by a client session on v1.2.8)",
