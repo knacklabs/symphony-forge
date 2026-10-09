@@ -179,7 +179,8 @@ def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
     assert (done.stdout + done.stderr).splitlines().count(notice) == 1
     assert len(env.review_calls()) == reviewed
     assert reason in body(env.gh_calls("pr", "edit")[-1])
-    assert env.gh_calls("pr", "ready")
+    # The held pull request is already open, so continuing close only needs its checks.
+    assert env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")
     [dispatch] = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
     assert dispatch["args"] == ["tool", "run", "--from",
