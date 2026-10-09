@@ -45,6 +45,7 @@
     "id": "c22fe715-ed92-4a81-8bea-3b02710e55a3",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -56,5 +57,6 @@
       "step": "review"
     }
   ],
-  "why": "The owner wants frontend code built by Claude Opus, not Codex (2026-10-09); this repo's forge.toml sends every task and fix to Codex"
+  "why": "The owner wants frontend code built by Claude Opus, not Codex (2026-10-09); this repo's forge.toml sends every task and fix to Codex",
+  "worker": "codex"
 }
