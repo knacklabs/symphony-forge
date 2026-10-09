@@ -1,12 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-09T15:56:42+00:00
-read_hash: 25df6e89c8508a24cd492888f0574917ba3200ce
-round: 5
+read_at: 2026-10-09T16:01:13+00:00
+read_hash: 1be892b0e988991404e1dfd559c276871d0b6940
+round: 6
 passed: yes
-doc_seen: 25df6e89c8508a24cd492888f0574917ba3200ce
+doc_seen: 1be892b0e988991404e1dfd559c276871d0b6940
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 7e8e69801166df7e682b1f289e75dfc2d4f3fed7
+notes_seen: fd2a891623212c31a8f7a3cfae8aab69b1b9c2b9
 ---
 # Cold read notes
 
@@ -108,5 +108,9 @@ Only a genuine trade-off goes to the human, as a question with options.
     Disposition: keep: criterion 4 now says "when the two pace estimates agree".
 
 ## Round 5
+
+No findings.
+
+## Round 6
 
 No findings.
