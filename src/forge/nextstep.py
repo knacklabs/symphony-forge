@@ -431,11 +431,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return cleanup + [f"Every part of {title} is merged; record its outcome.",
                 f'Next: forge story done {key} "<outcome sentence>"'], list(states.values())
     lines: list[str] = cleanup
+    part_statuses: dict[str, str] = {}
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
             lines += _item(item, item, states[task["id"]], top,
-                           trees.get(f"task/{key}-{task['id']}"), prs, refusals)
+                           trees.get(f"task/{key}-{task['id']}"), prs, refusals,
+                           part_statuses if readiness is not None else None)
     if behind:
         if readiness is not None:
             readiness["stage"] = "planning"
@@ -466,6 +468,9 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if readiness is not None:
         readiness["parts"].update({name: "Waiting" if deps else "Can start now"
                                    for name, deps in waits.items()})
+        remaining = [f"{key}/{name}" for name in states if name not in merged]
+        if remaining and all(part_statuses.get(item) == "ready" for item in remaining):
+            readiness["stage"] = "ready to merge"
     if ready:
         rows = {task["id"]: task for task in doc["tasks"]}
         landed = story.landed_ref(top)
@@ -583,11 +588,13 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
 
 def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
-          refusals: dict[Path, str]) -> list[str]:
+          refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     pr = (prs or {}).get(state.get("branch", "")) or {}
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks)
     status = status or "started"
+    if statuses is not None:
+        statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         return [f"Close stopped {label}: {stop['file']} keeps breaking. Ask the human to "

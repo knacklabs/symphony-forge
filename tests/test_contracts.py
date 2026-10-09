@@ -518,6 +518,7 @@ def test_8_plain_english(env):
                  "Finished on 25 September 2026. The readme opens with a greeting"):
         assert line in text, text
     assert not _not_plain(text), (_not_plain(text), text)
+    # Inline SVG geometry also preserves the page's no-hash contract.
     assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
 
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits

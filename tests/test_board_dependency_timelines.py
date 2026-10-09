@@ -65,7 +65,7 @@ def _titles(svg):
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-def test_dependency_map_and_stage_timelines_use_the_command_data(
+def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         repo, gh, tmp_path, claude_payload, monkeypatch, history):
     # Coverage owns the renderer boundary. Machine-view tests own production of these
     # records; plain-text run fixtures give deterministic visible durations here.
@@ -170,6 +170,7 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     rendered = repo.forge("board", "--out", str(out))
     assert rendered.returncode == 0, rendered.stderr
     page = out.read_text("utf-8")
+    assert not re.search(r"\b[0-9a-f]{7,}\b", page), "SVG coordinates must not look like hashes"
     drawing = _svg(page, "Roadmap dependencies")
     titles = _titles(drawing)
     node_titles = {"Save a basket: Merged", "Show when it was saved: Running",
@@ -256,6 +257,38 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     ready_json = repo.forge("board", "--json")
     assert ready_json.returncode == 0, ready_json.stderr
     assert json.loads(ready_json.stdout)["stage_counts"] == ready_counts
+
+    # A story counts once as ready only when every remaining part is ready.
+    plan_tree = worktree(repo, "story/PLAN")
+    plan_doc = "\n".join(line for line in DOC.splitlines()
+                         if not line.startswith(("3. ", "| SHARE |")))
+    plan_doc = plan_doc.replace("`src/basket.py`", "`src/plan-save.py`").replace(
+        "`src/page.py`", "`src/plan-show.py`").replace("| SAVE | yes |", "| none | yes |")
+    (plan_tree / "plans/PLAN.md").write_text(plan_doc, encoding="utf-8")
+    plan_read = repo.forge("read", "PLAN")
+    assert plan_read.returncode == 0, plan_read.stderr
+    assert hook(repo, claude_plan(claude_payload, plan_doc, cwd=plan_tree)).returncode == 0
+    for tid in ("SAVE", "SHOW"):
+        started = repo.forge("task", "start", f"PLAN/{tid}")
+        assert started.returncode == 0, started.stderr
+    part_counts = {**ready_counts, "planning": 0, "building": 2}
+    for tid in ("SAVE", "SHOW"):
+        (receipts / "PLAN").mkdir(exist_ok=True)
+        (receipts / "PLAN" / f"{tid}.json").write_text(json.dumps({
+            "review": "clean", "commit": repo.git("rev-parse", f"task/PLAN-{tid}")}), "utf-8")
+        plan_json = repo.forge("board", "--json")
+        assert plan_json.returncode == 0, plan_json.stderr
+        if tid == "SHOW":
+            part_counts = {**part_counts, "building": 1, "ready to merge": 2}
+        assert json.loads(plan_json.stdout)["stage_counts"] == part_counts
+    plan_next = repo.forge("next")
+    assert plan_next.returncode == 0, plan_next.stderr
+    assert all(f"PLAN/{tid} is ready and waiting for someone to merge it." in plan_next.stdout
+               for tid in ("SAVE", "SHOW"))
+    assert "Next: merge its pull request, then forge next" in plan_next.stdout
+    plan_page = repo.forge("board", "--out", str(out))
+    assert plan_page.returncode == 0, plan_page.stderr
+    assert "Ready to merge: 2" in seen(out) and "Building: 1" in seen(out)
 
     # Task/fix checkouts retain an equally recent inherited story record, but
     # the owning story's live task table is what next and board must both read.

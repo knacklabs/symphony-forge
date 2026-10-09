@@ -47,7 +47,7 @@ def dependencies(stories: list[dict]) -> str:
         descriptions.append(label)
         gutter = 6 + 24 * index / max(1, len(edges))
         drawing.append(f'<g><title>{escape(label)}</title><path class="dependency-edge" '
-                       f'd="M38 {positions[dep] + 8}H{gutter}V{positions[part["id"]] + 8}H32" '
+                       f'd="M38 {positions[dep] + 8}H{gutter:.2f}V{positions[part["id"]] + 8}H32" '
                        f'marker-end="url(#{escape(arrow, quote=True)})"/></g>')
     for part in parts:
         y = positions[part["id"]]
@@ -110,7 +110,7 @@ def timeline(item: dict) -> str:
             drawing.append('<path class="unknown-time" d="M0 62H260"/>')
         else:
             width = 260 * seconds / largest if largest else 0
-            drawing.append(f'<rect class="recorded-time" x="0" y="58" width="{width}" height="6"/>')
+            drawing.append(f'<rect class="recorded-time" x="0" y="58" width="{width:.2f}" height="6"/>')
         drawing.append('</g>')
     return ('<p class="detail">Recorded stage time in this round; unrecorded time is unknown.</p>'
             + _svg(item["title"] + " stage timeline", ". ".join(descriptions),

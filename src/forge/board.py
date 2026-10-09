@@ -58,7 +58,7 @@ def board(args: Any) -> int:
     stories, fixes, prs = _gather(top)
     out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(_page(stories, fixes, prs, machine_board(top)).encode("utf-8"))  # same bytes on Windows
+    out.write_bytes(_page(stories, fixes, prs, machine_board(top, prs_snapshot=prs)).encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
     if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
         webbrowser.open(out.resolve().as_uri())
@@ -180,7 +180,8 @@ def _rollup(pr: Item) -> list[Item]:
         return []
 
 
-def machine_board(top: Path, history: Item | None = None) -> Item:
+def machine_board(top: Path, history: Item | None = None,
+                  prs_snapshot: list[Item] | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids."""
     from forge import nextstep
 
@@ -197,10 +198,16 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
     prs = _machine_prs(top)
     by_branch = {p.get("headRefName"): p for p in prs}
     # Older open PRs keep their number, but deliberately have unknown checks.
-    older = nextstep._prs(top, "open", "number,headRefName,url,isDraft")
+    # A capped all-state snapshot may omit older open or merged PRs.
+    complete = prs_snapshot is not None and len(prs_snapshot) < 1000
+    older = ([p for p in prs_snapshot if p.get("state") == "OPEN"] if complete else
+             nextstep._prs(top, "open", "number,headRefName,url,isDraft"))
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
-    merged_prs = {p["headRefName"] for p in nextstep._prs(top, "merged", "headRefName")} if trees else set()
+    merged_prs = {p["headRefName"] for p in (prs_snapshot if complete else
+                  nextstep._prs(top, "merged", "headRefName"))
+                  if (not complete or p.get("state") == "MERGED")
+                  and isinstance(p.get("headRefName"), str)} if trees else set()
     readiness: dict[str, Item] = {}
     timings, recorded = [], []
     for name, rows in (("timings", timings), ("events", recorded)):
