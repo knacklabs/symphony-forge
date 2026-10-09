@@ -9,11 +9,16 @@
       "at": "2026-10-09T16:41:30+00:00",
       "because": "Owner (2026-10-09): Claude implementation and cold reads use Sonnet at xhigh by default, frontend included",
       "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation entry (build, fix, lite and design) uses claude-sonnet-5-5 at xhigh effort; plan reads, reviews and sign-off settings are unchanged; this repo's settings test pins both"
+    },
+    {
+      "at": "2026-10-09T16:50:12+00:00",
+      "because": "Owner (2026-10-09): frontend on Opus 5.5 medium; other Claude implementation and cold reads on Sonnet xhigh",
+      "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation and plan-read entry (build, fix, lite, design and grill) uses claude-sonnet-5-5 at xhigh effort; reviews and sign-off settings are unchanged; this repo's settings test pins both"
     }
   ],
   "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
   "branch": "fix/workers-split",
-  "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation and plan-read entry (build, fix, lite, design and grill) uses claude-sonnet-5-5 at xhigh effort; reviews and sign-off settings are unchanged; this repo's settings test pins both",
+  "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex; user-facing Claude work (design) uses claude-opus-5-5 at medium effort, and the other Claude implementation and plan-read entries (build, fix, lite and grill) use claude-sonnet-5-5 at xhigh; reviews and sign-off settings are unchanged; this repo's settings test pins them",
   "kind": "fix",
   "status": "started",
   "steps": [
