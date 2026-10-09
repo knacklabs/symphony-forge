@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f81b1e7dfe53f79b0fd97246eea94890ce2a81e765a998b2e4c64114bde8ab64",
-    "changed": "e39ee0afb4c6768874ad0f8880f5f3e384215803c5078f378d122187c236662d",
-    "commit": "d6ff906c6b5eb24e5c41d989c8a194d8c75e668f",
+    "branch_diff": "e89fd2663696c4d07df0f409270db9f730418dc2030e34bb3662241fa980a023",
+    "changed": "5d57270f7ed094d85dfad4f12fd58687e62eab2561e3982a8384c027727c247c",
+    "commit": "ca21ffe57706cec6037bb0135652661dc682508b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Gate. The supplied proof list is missing, and the branch's latest commit supplies none. The required list therefore does not map the Done-when details\u2014team and per-person weekly splits, acceptance criterion, no ranking, passed read and re-confirmation\u2014to their named evidence. Add the complete proof list to the worker's latest commit so Forge can include it in the pull request.",
-        "file": ".factory/fixes/spec-trends.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "716b5ee4-6282-47b9-881a-275abdfc34cc",
-    "status": "blocked"
+    "findings": [],
+    "id": "98b85d8f-2e64-4bb2-a5c4-ab6c12295906",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T20:51:55+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-09T21:43:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:46:04+00:00",
       "step": "review"
     }
   ],
