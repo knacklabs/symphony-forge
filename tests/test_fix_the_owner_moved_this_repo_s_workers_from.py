@@ -1,4 +1,5 @@
-"""This repo's own workers run on Codex at medium effort; reviews stay on Codex."""
+"""This repo's user-facing story parts build on Claude Opus, everything else on Codex at medium effort;
+reviews stay on Codex (owner, 2026-10-09: frontend code on Opus)."""
 from __future__ import annotations
 
 import json
@@ -32,7 +33,7 @@ def _codex(repo, monkeypatch, sdk_data):
 def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
-    assert config["workers"] == "codex"
+    assert config["workers"] == "split"
     # Codex builds and fixes; each Claude entry preserves the previous Opus settings.
     assert config["models"]["build"] == config["models"]["fix"] == {
         "codex": SOL, "claude": OPUS}
