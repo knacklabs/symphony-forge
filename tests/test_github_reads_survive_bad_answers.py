@@ -1,4 +1,4 @@
-"""Real close commands recover at the gh edge, or stop after a bounded outage.
+"""Real close and merge commands recover at the gh edge, or stop after a bounded outage.
 
 Existing check-wait tests do not cover the PR lookup before that wait. The gh
 fake supplies bad transport answers only; Forge decides retries and completion.
@@ -10,6 +10,7 @@ import pytest
 
 from conftest import ROOT
 from test_close import env  # noqa: F401
+from test_merge_command import _merge_at_github
 
 STORY = "gh-retry"
 
@@ -132,3 +133,56 @@ def test_6_release_reads_retry_before_deciding_whether_to_upgrade(client):
     assert done.returncode == 1, done.stdout + done.stderr
     assert "already pins" in done.stderr
     assert len(client.gh_calls("release", "view")) == 2
+
+
+@pytest.mark.parametrize("confirmation", [False, True], ids=["initial-lookup", "after-write"])
+@pytest.mark.parametrize("answer", [
+    {"stdout": "<html>Bad Gateway</html>", "code": 0},
+    {"stderr": "HTTP 503: Service Unavailable", "code": 1},
+])
+def test_7_merge_preserves_the_outage_refusal_and_resumes_without_replaying_a_write(
+        client, confirmation, answer):
+    client.repo.git("switch", "-q", "fix/setup")
+    client.commit(client.repo.path, "forge.toml",
+                  (client.repo.path / "forge.toml").read_text("utf-8") + 'merge = "agent"\n')
+    client.repo.git("switch", "-q", "main")
+    client.repo.git("merge", "-q", "--ff-only", "fix/setup")
+    client.repo.git("-c", f"core.hooksPath={client.tmp / 'fixture-hooks'}",
+                    "push", "-q", "origin", "main")
+    item, where = client.start_fix()
+    closed = client.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    head = client.repo.git("rev-parse", "HEAD", cwd=where)
+    client.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefOid": head,
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
+    _merge_at_github(client)
+    prefix = ["pr", "view", "7" if confirmation else "fix/tidy-readme"]
+    gh = client.repo.bin / "gh"
+    # Intercept the service's reads before its post-merge answer, keeping its real squash write.
+    source = gh.read_text("utf-8").replace('if sys.argv[1:3] == ["pr", "view"]', f'''
+args = sys.argv[1:]
+prefix = {prefix!r}
+if args[:len(prefix)] == prefix:
+    calls = [json.loads(line) for line in (here / "gh-calls.jsonl").read_text("utf-8").splitlines()]
+    if sum(call[:len(prefix)] == prefix for call in calls) < 4:
+        with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as log:
+            log.write(json.dumps(args) + "\\n")
+        sys.stdout.write({answer.get("stdout", "")!r})
+        sys.stderr.write({answer.get("stderr", "")!r})
+        sys.exit({answer["code"]})
+if sys.argv[1:3] == ["pr", "view"]''', 1)
+    gh.write_text(source, "utf-8")
+
+    stopped = client.repo.forge("merge", item)
+    assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert stopped.stderr == "GitHub did not answer. Rerun the command.\n"
+    assert len(client.gh_calls(*prefix)) == 4
+    assert len(client.gh_calls("pr", "merge")) == int(confirmation)
+    assert where.exists()
+
+    resumed = client.repo.forge("merge", item)
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+    assert len(client.gh_calls("pr", "merge")) == 1
+    assert client.repo.git("show", "origin/main:app.py") == "print('hello')"
+    assert not where.exists()
