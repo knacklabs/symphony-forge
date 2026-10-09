@@ -403,7 +403,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
     ref = story.plan_ref(top, key, history)
-    text = story._plan(top, key, history=history)
+    if ref != story.landed_ref(top):
+        text = story._plan(top, key, history=history)
     notes = story.show(top, ref, f"plans/{key}.read.md") or ""
     required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():

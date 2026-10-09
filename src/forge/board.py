@@ -451,7 +451,9 @@ def machine_board(top: Path, history: Item | None = None,
         if not match["key"] or match["task"]:
             continue
         key = match["key"]
-        specs = task.rows(task.sections(story._plan(top, key, history=history)))
+        text = (_read(top, trees.get(f"story/{key}", where), f"plans/{key}.md", history)
+                if story.plan_ref(top, key, history) == landed else story._plan(top, key, history=history))
+        specs = task.rows(task.sections(text))
         parts = []
         for tid, spec in specs.items():
             tid = tid.strip("` ")
