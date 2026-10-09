@@ -1288,6 +1288,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_commands_load_only_their_owner.py",
+      "line": 90,
+      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_contracts.py\tThe doctor Ctrl-C check times out on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_contracts.py",
@@ -1409,6 +1420,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
+      "line": 24,
+      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_hotspots.py\tNot done: test_4_only_a_fix_closes_its_named_files_entries\tFORGE-SPOTTED-1/HOT",
       "kind": "bug",
       "path": "tests/test_hotspots.py",
@@ -1493,6 +1515,17 @@
       "text": "CI cannot confirm stopping the second Codex worker in the machine split test; the failure remains unresolved.",
       "from": "worker",
       "item": "old-branch-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 187,
+      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
+      "from": "blocking",
+      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     },
@@ -1680,6 +1713,17 @@
       "text": "Not done: a cold read of a story without the section reports it",
       "from": "blocking",
       "item": "features-get-planned-and-reviewed-for-fo",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_onechat_registry.py\tWindows CI's fresh init exited 1 with no output; its local owner passes but the failure's cause remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_onechat_registry.py",
+      "line": 26,
+      "text": "Windows CI's fresh init exited 1 with no output; its local owner passes but the failure's cause remains unresolved.",
+      "from": "worker",
+      "item": "runner-setting",
       "status": "open",
       "closed_by": null
     },
@@ -2780,39 +2824,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
-      "kind": "bug",
-      "path": "tests/test_commands_load_only_their_owner.py",
-      "line": 90,
-      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
-      "from": "worker",
-      "item": "lane-stop-race",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
-      "kind": "bug",
-      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
-      "line": 24,
-      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
-      "from": "worker",
-      "item": "lane-stop-race",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
-      "kind": "bug",
-      "path": "tests/test_lanes_view.py",
-      "line": 187,
-      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
-      "from": "blocking",
-      "item": "lane-stop-race",
       "status": "open",
       "closed_by": null
     }
