@@ -219,7 +219,7 @@ def machine_board(top: Path, history: Item | None = None,
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     landed = history["landed"]
-    starters = task.starters(top)
+    starters = _starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -622,7 +622,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
     requests (None without a working gh)."""
     landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
-    starters = task.starters(top)
+    starters = _starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged: set[str] = set()
     for rel, state, where in _copies(top, landed):
@@ -669,10 +669,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     titles = {item["key"]: item.get("title") for item in roadmap.values()
               if item.get("status") != "superseded"}
     stories = []
-    display_names = {}
-    for author in repo.git("log", "--all", "--date-order", "--format=%aN%x00%aE", cwd=top).splitlines():
-        name, _, email = author.partition("\0")
-        display_names.setdefault(email.casefold(), name)
+    display_names = _display_names(top)
     for key in [*titles, *sorted((set(found) | set(tasks)) - set(titles))]:
         state, where = found.get(key, ({}, landed))
         completed = story.completed(top, key, landed)
@@ -948,15 +945,34 @@ def _green_at(pr: Item | None, names: list[str]) -> datetime | None:
     return max(times, default=None)
 
 
+def _display_names(top: Path) -> dict[str, str]:
+    def read() -> dict[str, str]:
+        names = {}
+        for author in repo.git("log", "--all", "--date-order", "--format=%aN%x00%aE", cwd=top).splitlines():
+            name, _, email = author.partition("\0")
+            names.setdefault(email.casefold(), name)
+        return names
+    return repo.command_fact("display_names", top, read)
+
+
+def _starters(top: Path) -> dict[str, str]:
+    names = _display_names(top)
+    log = repo.command_fact("board starter authors", top, lambda: repo.git(
+        "log", "--all", "--reverse", "--diff-filter=A", "--no-renames", "--grep=^Start ",
+        "--format=%x00%aN%x00%aE%x00", "--name-only", "--", ".factory/stories", ".factory/fixes",
+        cwd=top)).split("\0")[1:]
+    found = {}
+    for name, email, paths in zip(log[::3], log[1::3], log[2::3]):
+        for rel in paths.splitlines():
+            if rel.endswith(".json"):
+                found.setdefault(rel, names.get(email.casefold(), name))
+    return found
+
+
 def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:
     """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
     if display_names is None:
-        display_names = {}
-        authors = repo.command_fact("display_names", top, lambda: repo.git(
-            "log", "--all", "--date-order", "--format=%aN%x00%aE", cwd=top))
-        for author in authors.splitlines():
-            name, _, email = author.partition("\0")
-            display_names.setdefault(email.casefold(), name)
+        display_names = _display_names(top)
     author = repo.command_fact(("approver", key), top, lambda: repo.git(
         "log", "--all", "-1", "--format=%aN%x00%aE", "-F", "--grep=Approve the plan: ", "--",
         repo.state_path(key), cwd=top))

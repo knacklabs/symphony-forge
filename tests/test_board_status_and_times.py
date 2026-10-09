@@ -369,7 +369,11 @@ def test_9_one_person_has_one_display_name_across_approval_history(
             tree = ready(client, key, DOC)
             approved = hook(client, claude_plan(claude_payload, DOC, cwd=tree))
             assert approved.returncode == 0, approved.stderr
-    _, text, _ = _board(client, tmp_path)
+    data, text, _ = _board(client, tmp_path)
+    for key in ("FIRST", "SECOND"):
+        person = _row(data, key)
+        assert person["started_by"] == person["approved_by"] == "Sam Reader"
+    assert _row(data, "correct-state")["started_by"] == "Forge Test"
     assert text.count("Sam Reader approved the plan.") == 2
     assert "Sam Alias" not in text
 
