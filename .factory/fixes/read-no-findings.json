@@ -8,16 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6dfc3d7f2a95deded666a504f293cf6460f474dd46c78488fc3643c09a61b8a0",
-    "changed": "430e475de8529876abd71c09e53627d5f30648337176f5f127b00f034f515fb0",
-    "commit": "cccdf85d5d0b435925b804595f0f5d14a1a887f5",
+    "branch_diff": "69c181a7f14b387e365a4147548c33676ea216200451d473c63241e17fd33bd3",
+    "changed": "676567c11c815084424caa57b0a31939277ca6fc2b4f1efef0ab65509a84aa82",
+    "commit": "121eba37e4b5e1547bb52c493a50af4ed1e0e6ad",
     "dismissals": [],
-    "findings": [],
-    "id": "6fc774e2-f468-43b8-bf54-5bf2c7241bbf",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Raise: Not done. Ordinary clean replies such as `6. There were no findings.` and `6. I have no findings to report.` still fail: the matcher permits only `there are`, `i found`, or `found` before `no`. Consequently, these replies produce `passed: no`, require a disposition, and trigger another read despite containing no findings. These are new counterexamples beyond the three named wording repairs; neither the normalization ruling nor the restriction on arbitrary explanations addresses them. The command-test table omits both forms for both client histories, so its supplied passing result does not establish the promised acceptance of common wording.",
+        "file": "src/forge/story.py",
+        "line": 254,
+        "priority": "P1",
+        "title": "Not done: forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes '"
+      }
+    ],
+    "id": "dc8327df-c199-42cb-9398-775d21ea1844",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T15:43:09+00:00",
@@ -37,6 +45,10 @@
     },
     {
       "at": "2026-10-09T21:45:01+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:42:42+00:00",
       "step": "review"
     }
   ],
