@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-09T09:23:40+00:00",
+      "because": "A client session saw five older branches stop when land's own merge of the default branch changed the pin (2026-10-09), not only worker merges",
+      "done_when": "forge land and forge close notice when the item's forge.toml pins a different release after a worker round and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; a command test covers a land started on an earlier release whose worker merges an upgraded default branch, for a repo adopted on an earlier release"
+    }
+  ],
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/repin-mid-run",
-  "done_when": "forge land and forge close notice when the item's forge.toml pins a different release after a worker round and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; a command test covers a land started on an earlier release whose worker merges an upgraded default branch, for a repo adopted on an earlier release",
+  "done_when": "forge land and forge close notice whenever the item's forge.toml pins a different release partway through, whether a worker round or land's or close's own merge of the default branch changed it, and run the rest of the step under the newly pinned release, saying so in one line, instead of failing on settings the old release doesn't know; command tests cover a land started on an earlier release that merges an upgraded default branch itself and one whose worker merges it, for a repo adopted on an earlier release",
   "kind": "fix",
   "round": 1,
   "status": "working",
