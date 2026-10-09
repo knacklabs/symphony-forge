@@ -11,7 +11,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
-from forge import repo, task
+from forge import __version__, repo, task
 from forge.repo import git, refuse, run
 
 LIMIT = 5  # code files a fix may change before it has to become a story
@@ -141,6 +141,12 @@ def pre_commit(args: argparse.Namespace) -> None:
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
+        # A merge may change the pin before this process can read its new settings.
+        if merging:
+            release = "v" + repo._pin((top / "forge.toml").read_text(encoding="utf-8"))  # pyright: ignore[reportPrivateUsage]
+            if (release != f"v{__version__}" and repo.VERSION.fullmatch(release)
+                    and os.environ.get("FORGE_PINNED_RUN") != release):
+                sys.exit(repo.run_release(release, sys.argv[1:], top))
         _promote(item, state, repo.config(top), _base(state, "HEAD", *merging), "")
 
 
