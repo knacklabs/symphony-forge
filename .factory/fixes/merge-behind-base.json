@@ -1,0 +1,14 @@
+{
+  "base": "53f74ed0767482425ddbc3260fbf9f2b01dda86e",
+  "branch": "fix/merge-behind-base",
+  "done_when": "When GitHub refuses a merge only because the branch is behind the default branch, forge merge and forge land merge the default branch in themselves, run close again (tests, review and checks as close decides) and retry the merge, saying so in one line; a real conflict still stops with the existing plain next step; command tests with a faked GitHub cover a clean behind-base refusal that then merges and a conflicting one that stops, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T15:08:34+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge merge stops with GitHub's raw hint ('gh pr checkout N && git fetch origin main && git merge origin/main') when another merge moved the default branch after close found the item ready, though the branch merges cleanly; the coordinator then merges main, re-closes and re-merges by hand (twice on 2026-10-09, in Forge and a client)"
+}
