@@ -15,12 +15,14 @@
   "branch": "fix/claude-sonnet-default",
   "done_when": "forge init writes claude-sonnet-5-5 at xhigh for every Claude implementation and plan-read entry (build, fix, lite, design and grill), and Forge's built-in Claude defaults match; reviews and sign-off keep their models; existing client repos keep their forge.toml (no automatic model change) and forge doctor or the upgrade notes tell them the new defaults and the one-line changes; the coordinator guide states the defaults; command tests cover forge init's settings for a new repo and an earlier-adopted repo left unchanged on upgrade",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
       "step": "start"
     }
   ],
-  "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)"
+  "why": "When Claude implements or plan-reads, Forge's defaults use Opus, but the owner wants Claude implementation (build, fix, lite and design, frontend included) and plan reads on Sonnet at xhigh effort by default (2026-10-09)",
+  "worker": "codex"
 }
