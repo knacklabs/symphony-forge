@@ -51,7 +51,7 @@
     "status": "blocked"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T07:48:02+00:00",
@@ -70,6 +70,10 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/close.py",
+    "round": 4
+  },
   "why": "On a team, started work stays on the laptop where it began until its first close, so teammates can't see who is working on what and two developers can start the same part; no person is shown on any item. Owner decision 2026-10-09: starting is the claim, with git as the one record",
   "worker": "codex"
 }
