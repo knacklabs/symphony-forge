@@ -22,10 +22,47 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
-Prefer one blunt fail-closed rule with one test over listing every case. Do not raise crash or
-interrupt windows under a second unless they lose data or weaken security. A case the rule
-already covers needs no separate test; ask for more test variations only when you name a
-concrete scenario the current tests would pass while the code is broken.
+## What counts
+Report exactly what falls inside this boundary: nothing outside it, and nothing inside it left out.
+
+Raise, under one of these lines:
+- Functional: a defect on a path people or agents normally hit, such as setup, upgrade, switching
+  a documented setting, re-running or restarting a command, a common repo layout, or a changed
+  screen's keyboard access, labels or readable contrast.
+- Security: a security gap, such as missing validation, authorization or secrets handling.
+- Data loss: data lost, corrupted or exposed.
+- Scale: a scale or performance problem at a realistic size the finding names, a cost repeated on
+  every normal run, or growth with no bound.
+- Not done: an unmet Done-when item, or a doc the change delivers that contradicts itself or a
+  recorded decision.
+- Test: a missing or hollow test for a Done-when item's own behaviour.
+- Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
+  that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
+- Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
+  functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
+  doesn't need, or a weakened test.
+- Plan gap: something that would make the build wrong or stall it: a contradiction, a question a
+  builder must ask, a shared name no earlier task pins, a likely case or refusal no rule or test
+  covers, a one-way step missing from Risks, a task that is too big, a shape bigger than the Done
+  when needs, work no Done-when item needs, or a known trap the change is likely to meet.
+
+Leave out, unless it falls under Security or Data loss or the finding names a realistic scenario
+that makes it likely in normal use:
+- a rare combination that needs an unusual sequence: a crash or interrupt at a precise moment, a
+  window under a second, a hand-edited or corrupted local file, or a platform, shell or tool
+  version the repo doesn't support or the change is unlikely to meet;
+- a case a fail-closed rule in the change already covers;
+- extra test variations (one command-level test per rule is enough), unless the finding names a
+  concrete scenario the current tests would pass while the code is broken;
+- hardening beyond what the item promises;
+- style, wording and preferences;
+- a duplicate of another finding in this round.
+
+An edge case is inside the boundary only when a Done-when item names it, when the finding names a
+realistic scenario that makes it likely in normal use, or when it falls under Security or Data
+loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
+
+Prefer one blunt fail-closed rule with one test over listing every case.
 
 Check:
 
@@ -50,15 +87,19 @@ Check:
    - Flag any one-way step (deleting data, a destructive migration, a new vendor) that isn't
      listed under Risks.
    - Never propose dropping validation, security, data-loss protection or accessibility.
-3. Are the rules that meet each "Done when" item pinned down and proven? Ask:
+3. Are the rules that meet each "Done when" item pinned down and proven? Ask, for the cases
+   normal use is likely to hit:
    - which inputs and states it must handle: empty, missing, malformed, already done, half done;
-   - which platforms and shells it meets: Windows PowerShell and cmd, WSL, macOS, Linux CI;
+   - which platforms and shells it meets, only those the change is likely to run on: Windows
+     PowerShell and cmd, WSL, macOS, Linux CI;
    - which failure and refusal paths it has, and what the user sees on each;
    - which test, in which task's Tests cell, proves each rule.
-   A case the doc says doesn't apply, with a reason, needs no test. Report a case no rule or test
-   covers as `Unproven: item <n>: <case>`, naming a scenario the current tests would pass while the
-   code is broken.
-4. Does any item hit a known trap? Report each as `Trap: <trap>: item <n>`. Forge's general traps:
+   A case the doc says doesn't apply, with a reason, needs no test. Report a likely case no rule or
+   test covers as `Unproven: item <n>: <case>`, naming the realistic scenario that hits it, which
+   the current tests would pass while the code is broken. A rare case is not a finding.
+4. Does any item hit a known trap it is likely to meet? Report each as `Trap: <trap>: item <n>`.
+   Raise a platform or shell trap only when that platform is likely for the change. Forge's
+   general traps:
    - Windows line endings and shells: CRLF text, PowerShell and cmd quoting, `\` paths;
    - no network in CI;
    - a new settings key the installed Forge rejects;
@@ -75,9 +116,10 @@ Instead, check that the Why or the success measure needs every behaviour line, v
 setting and integration, and write `Cut or defer: <item>` for any that nothing needs.
 
 Write only your findings, as a numbered list: each finding starts a line with its number (`1. `,
-`2. `, ...), states the finding in one line, then explains it briefly on indented lines. Use no
-other numbered lines. If there is nothing to report, write exactly `No findings.` and nothing else.
-Do not number it or add a note about tests you did not run.
+`2. `, ...), states the finding in one line, then gives brief evidence on indented lines, starting
+with `Raise: <line>`, and no speculative suggestions. Use no other numbered lines. If there is
+nothing to report, write exactly `No findings.` and nothing else. Do not number it or add a note
+about tests you did not run.
 
 <!-- forge:round -->
 Round $round of your cold read of `$path`: you are continuing your own earlier read.
@@ -108,9 +150,10 @@ Check:
    - Raise a kept finding again only when you disagree with its stated reason, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
-2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks:
-   each "Done when" item's rules and the test that proves each, shared names no earlier task
-   pins, task size, and Forge's general traps and this repository's own known traps:
+2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
+   and What counts: each "Done when" item's rules and the test that proves each, shared
+   names no earlier task pins, task size, and Forge's general traps and this repository's own
+   known traps:
 
 $traps
 
@@ -132,8 +175,8 @@ For a story, the confirmed spec's diff since your last round, empty when it is u
 $spec_diff
 
 Check only this diff and the sections it touches, not the rest of the doc, which passed: apply
-your first round's checks to them, including Forge's general traps and this repository's own
-known traps:
+your first round's checks and What counts to them, including Forge's general traps and
+this repository's own known traps:
 
 $traps
 
@@ -149,5 +192,9 @@ Written by `forge read`. Under every finding, write one disposition line, amend 
 - `Disposition: cut` when the doc was edited to remove it;
 - `Disposition: defer` when the item moved to the spec's Out of scope;
 - `Disposition: keep <one-line reason>` otherwise.
+
+A finding inside What counts is cut or deferred. Keep one only when it falls outside that boundary
+or is factually wrong, and give as the reason the Leave out line, the missing Raise line, the
+cited fact that disproves it, or the human's `Decided:` line.
 
 Only a genuine trade-off goes to the human, as a question with options.

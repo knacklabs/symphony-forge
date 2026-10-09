@@ -162,6 +162,8 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
+task IDs in the plan are ignored by both boards.
 The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
 external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
 parts, plain titles, labelled states and `waits_for` item references, including old merged
@@ -698,6 +700,10 @@ story's work, using the same overlap rule as `forge task start`.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
+  kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
+  the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
+  disproves it, or the human's `Decided:` line.
 - `Disputed keep <n>: <why>`: the reader still disagrees with a finding you kept. Put it to the
   human as one question with options, record the answer in the doc's Notes as
   `Decided: <finding>: <answer> (owner, <date>)`, and give both the kept finding and the disputed
@@ -768,6 +774,9 @@ model and effort it starts with, and why; `forge next` names the worker beside e
 - `claude`: everything on Claude; user-facing work uses `[models.design.claude]`.
 - `split` (what `forge init` writes): user-facing story tasks on Claude, everything else on Codex.
 
+Split routing also applies in Forge's source repo: a task row's `User-facing: yes` selects
+Claude and its design entry. New repos get this at init; existing repos get it on upgrade.
+
 When the worker changes between rounds of one item, the next `forge work` starts a fresh session
 on the new worker with the whole brief and the latest review findings.
 
@@ -783,6 +792,7 @@ from the other tool is omitted so the role uses the session's model.
 ## Build simple
 
 Git merges the roadmap and spotted list with `forge hook merge-roadmap` from PATH.
+Edits to different fields of an item merge; competing edits to the same field need a manual resolution.
 New repos get this rule at init; existing repos get it with `forge sync` or
 `forge doctor --fix`. The shared rule keeps working after a worktree is removed.
 Doctor repairs both paths in Git's shared local attributes, including when an older
@@ -887,9 +897,11 @@ and `FORGE_TEST_CPUS` to half this machine's cores for every test command. `pyte
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
-before anything else. If the code proves the finding wrong, dismiss it with
-`forge close <item> --dismiss <n> --because "<file:line> <why>"`; otherwise run
-`forge work <item>`. Reviewers are sometimes wrong, and every fix round costs another full review.
+before anything else. The review's "What counts" list is the boundary: every P0 or P1 finding
+inside it gets a fix round with `forge work <item>`, never a dismissal for being unnecessary, rare
+or low value. Dismiss only a finding outside the boundary or factually wrong, with
+`forge close <item> --dismiss <n> --because "<file:line> <why>"`, where the why names the Leave
+out line it falls under or the Raise line it lacks, or the file:line is the code that disproves it.
 When close merges the latest default branch, an unchanged branch diff keeps the last review and
 its dismissals, including `--dismiss` given in that close command. A changed diff needs a new review.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
@@ -994,9 +1006,12 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A clean review clears an unanswered review-loop stop.
 
-When `forge merge` fails because the pull request no longer merges cleanly, run
-`forge close <item>` again, which merges the default branch with Forge's own rule for the spotted
-list and the roadmap.
+When GitHub refuses because the branch is behind the default branch, `forge merge` and
+`forge land` say so in one line, run close again to merge the default branch and run the tests,
+review and checks as close decides, then retry the merge. If that merge selects a different
+Forge release, close finishes under that release before the original command continues.
+A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their
+next action.
 
 ## Check-back
 

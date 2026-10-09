@@ -59,7 +59,7 @@ def rows(doc: dict[str, str]) -> dict[str, dict[str, str]]:
         return {}
     header = [cell.strip() for cell in lines[0].split("|")]
     table = (dict(zip(header, (cell.strip() for cell in line.split("|")))) for line in lines[2:])
-    return {row.get("ID", ""): row for row in table}
+    return {row.get("ID", "").strip("` "): row for row in table}
 
 
 def cell_list(cell: str) -> list[str]:
