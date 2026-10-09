@@ -628,6 +628,10 @@ fix's folder:
 
 ## Planning a story
 
+Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
+accepts numbered no-findings statements with separate notes that tests were not run; a real
+finding still needs a disposition and another round.
+
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
 

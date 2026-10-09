@@ -248,7 +248,19 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    clean = said == "No findings."
+    lines = [re.sub(r"^(?:\d+[.)]|[-*])\s+", "", line.strip()).strip(" *`_.!")
+             for line in said.splitlines() if line.strip()]
+    empty = re.compile(r"(?:no (?:(?:new|remaining|additional|actionable) )?"
+                       r"(?:findings|issues|gaps|problems|blockers)"
+                       r"(?: (?:(?:were )?(?:found|identified|raised)|remain|to report))?"
+                       r"|nothing to report)", re.I)
+    note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
+                      r"(?:\s*\(read[- ]only(?: review)?\))?", re.I)
+    clean = any(empty.fullmatch(line) for line in lines) and all(
+        empty.fullmatch(line) or note.fullmatch(line) for line in lines)
+    if clean:
+        # Keep one canonical passing reply so every downstream gate sees the same result.
+        said = "No findings."
     if not clean:
         # ponytail: unstructured output is one finding, so it still needs a disposition. Findings
         # number on from earlier rounds', whatever numbers the reader used.
