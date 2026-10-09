@@ -18,7 +18,7 @@ STORY = "FIX-QUEUED-NOT-STOP"
 
 @pytest.mark.parametrize("history", ["new", "upgraded"])
 @pytest.mark.parametrize("command", ["close", "land", "land-merge"])
-def test_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command):
+def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command):
     env = clock
     _client(env, history, "self-hosted")
     if command == "land-merge":
@@ -47,7 +47,7 @@ def test_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, comman
                                           (8 * 24 * 60, "recent"),
                                           (8 * 24 * 60, "old-running"),
                                           (8 * 24 * 60, "old-completed")])
-def test_only_doctor_reports_likely_missing_runner_after_days(clock, history, age, activity):
+def test_2_only_doctor_reports_likely_missing_runner_after_days(clock, history, age, activity):
     env = clock
     _client(env, history, "self-hosted")
     where = _fix(env, "working", worked=True)
