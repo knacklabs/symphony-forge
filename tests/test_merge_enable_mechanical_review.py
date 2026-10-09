@@ -60,7 +60,7 @@ def client(owner, request):
     return owner
 
 
-def test_merge_enable_checks_the_final_published_change_runs_tests_and_waits_for_ci_without_model_review(client):
+def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_for_ci_without_model_review(client):
     before = raw(client, "origin/main")
     spotted = client.repo.git("show", "origin/main:plans/spotted.json")
 
@@ -95,7 +95,7 @@ def test_merge_enable_checks_the_final_published_change_runs_tests_and_waits_for
 
 
 @pytest.mark.parametrize("extra", ["file", "setting", "merge value", "mode"])
-def test_merge_enable_close_refuses_extra_changes_without_a_review(client, extra):
+def test_2_merge_enable_close_refuses_extra_changes_without_a_review(client, extra):
     # Interrupt before review at the real GitHub edge, leaving the generated commit.
     client.gh.respond("pr", "create", stderr="GitHub unavailable", exit=1)
     assert enable(client).returncode != 0
@@ -118,7 +118,7 @@ def test_merge_enable_close_refuses_extra_changes_without_a_review(client, extra
     assert not client.gh_calls("pr", "merge")
 
 
-def test_other_fix_with_the_same_purpose_still_runs_model_review(owner):
+def test_3_other_fix_with_the_same_purpose_still_runs_model_review(owner):
     item, _ = owner.start_fix({"app.py": "print('hello')\n"},
                               why="Let the agent merge this repo's ready pull requests.",
                               done_when='The default branch\'s forge.toml sets merge = "agent".')
