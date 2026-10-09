@@ -14,20 +14,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4f3fb5e3979cc712586ab76577277403b73d35f829a62ee63f6929a3dd7c5932",
-    "changed": "89afdf2355feb4a10650d0e192efd7b08fe5f4f48a18df61fc04cd2138ff5f8e",
-    "commit": "637bb670320144b3015ae5c235dd0a0c1ef45674",
+    "branch_diff": "04fa6914f503cf02311a442d2574e7a8f1a9992131869e2fd9aff3697fb0172e",
+    "changed": "af43121b8328e38be5de7951c35c1c2b04772e12d803430f4fa7e82a165aa1d8",
+    "commit": "446eb44703622ada4c99adc3fac4f7f084b24691",
     "dismissals": [],
     "findings": [
       {
-        "body": "A failed review on an earlier release leaves timing evidence without a review step or result event. This is a normal failure path: tests/fixtures/forge-v1.2.2/src/forge/review.py:459 raises when review fails, while close.py:102 records its timing and consequently never reaches the review-step update at line 103. After upgrading and retrying, this helper ignores that timing, sees zero steps/events, and assigns review_round=1 despite the observed earlier attempt. Both ordinary and mechanical closes use this helper. For v1.2.2 history, time_records.py:126\u2013129 also appends the earlier unknown-worker attempt after modern attempts; its first-review completeness check therefore classifies the modern findings as known new findings instead of unknown. Board JSON and How it went publish the invented ordinal and counts. This is new evidence beyond the previous mixed-history ruling: an ordinary failed legacy review, rather than a successful timing-only review. Tests 20 and 23 retain timings but do not assert these classifications after that failure path. Account for timing-only reviews when establishing ordinal certainty, and process attempts chronologically before classifying findings.",
-        "file": "src/forge/review.py",
-        "line": 471,
+        "body": "Without a recorded work phase, round 1 is unconditionally classified as building. A first worker turn can instead fix findings: the raw base worker.py:125\u2013145 reads existing findings and sets status to fixing while assigning worker round 1, without recording a work phase. The unchanged _fix_round implementation at src/forge/worker.py:316\u2013328 confirms this path after manual edits and a blocked close. After upgrade, this helper labels that observed fixing time as building in both the breakdown and round line, which also reaches How it went. This is new evidence beyond the rulings about unknown legacy gaps: a recorded worker ordinal does not establish its activity category. Keep the category unknown unless the phase is recorded or independently established; apply this to worker run events, worker timings and round labels.",
+        "file": "src/forge/time_records.py",
+        "line": 76,
         "priority": "P1",
-        "title": "Not done: keep timing-only legacy review ordinals and finding counts unknown"
+        "title": "Not done: keep unrecorded legacy worker phases unknown"
       }
     ],
-    "id": "4f431423-4dc3-41c8-aa54-0dee6e7c918e",
+    "id": "06f9c229-0048-4ad0-b666-be17be793488",
     "status": "blocked"
   },
   "round": 8,
@@ -67,6 +67,10 @@
     },
     {
       "at": "2026-10-09T22:23:17+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:12:32+00:00",
       "step": "review"
     }
   ],
