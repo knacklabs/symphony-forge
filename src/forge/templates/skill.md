@@ -72,9 +72,11 @@ it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
 it after upgrading Forge and syncing. The jobs set up uv and Python, and install
 Node for Node tests, respecting version files or engines with Node 22 as the fallback.
-If the current branch's pull request checks stay queued for at least five minutes without
-starting, `forge doctor` and close's check wait name the runner setting. Make a matching runner
-available or correct the setting and sync; keep the required checks enabled.
+If the current branch's pull request checks stay queued for at least five minutes and no job
+in this repo using the configured runner has started during that queue, `forge doctor`, close
+and land name the runner setting. Make a matching runner available or correct the setting and
+sync; keep the required checks enabled. If a matching job has started, the pool is busy: close
+and land keep their normal check waits, and doctor gives no missing-runner warning.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`

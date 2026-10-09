@@ -2102,6 +2102,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/checks.py\tInclude earlier workflow attempts when checking runner activity",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 113,
+      "text": "Include earlier workflow attempts when checking runner activity",
+      "from": "review",
+      "item": "busy-not-missing",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tMatch runner labels without case sensitivity",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 115,
+      "text": "Match runner labels without case sensitivity",
+      "from": "review",
+      "item": "busy-not-missing",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/checks.py\tPreserve progress retries when the queued-run lookup fails",
       "kind": "edge",
       "path": "src/forge/checks.py",

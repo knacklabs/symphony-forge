@@ -84,9 +84,9 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Diagnose an old queued workflow for this PR head, including target-event runs."""
+    """Diagnose an old queue only when this repo shows no matching runner activity."""
     runs = _ask(top, item, ".workflow_runs",
-                "repos/{owner}/{repo}/actions/runs?status=queued")
+                "repos/{owner}/{repo}/actions/runs?per_page=100")
     now = datetime.fromisoformat(repo.now())
     for run in runs:
         heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
@@ -100,10 +100,32 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
         except (ValueError, TypeError):
             continue
         if old:
-            runner = json.dumps(repo.config(top)["runner"])
+            runner = repo.config(top)["runner"]
+            for candidate in runs:
+                try:
+                    # A running workflow need not update its timestamp for each job start.
+                    if (candidate.get("status") == "completed"
+                            and datetime.fromisoformat(candidate["updated_at"]) < queued):
+                        continue
+                except (KeyError, ValueError, TypeError):
+                    pass
+                jobs = _ask(top, item, ".jobs",
+                            f"repos/{{owner}}/{{repo}}/actions/runs/{candidate['id']}/jobs?filter=all")
+                for job in jobs:
+                    if (not any(runner.casefold() == label.casefold()
+                                for label in job.get("labels") or []) or not job.get("runner_id")
+                            or job.get("status") not in ("in_progress", "completed")):
+                        continue
+                    try:
+                        started = datetime.fromisoformat(job["started_at"])
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                    if queued <= started <= now:
+                        return ""
             return ("Pull request checks have stayed queued for at least five minutes; "
-                    "no runner has picked them up. Check that a runner matching "
-                    f"runner = {runner} in forge.toml is available, then run forge sync")
+                    "no runner has picked up a job for this repo using "
+                    f"runner = {json.dumps(runner)} in forge.toml during that time. "
+                    "Check that a matching runner is available, then run forge sync")
     return ""
 
 

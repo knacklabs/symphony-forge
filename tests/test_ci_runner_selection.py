@@ -123,7 +123,7 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, status)]
                if state == "optional-queued" else [run("tests", None, status), run("forge-pr-check")])
     workflow_run = {
-        "name": "forge", "status": status, "created_at": created.isoformat(),
+        "id": 101, "name": "forge", "status": status, "created_at": created.isoformat(),
         "updated_at": (now - timedelta(minutes=1) if state == "recent-rerun" else created).isoformat(),
         "run_started_at": None if status == "queued" else created.isoformat()}
     if command == "doctor":
@@ -134,6 +134,8 @@ def test_3_queued_checks_without_runner_name_setting_after_several_minutes(env, 
             "sha": head if state == "target-event" else "0" * 40}}]
     env.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]",
                    stdout=json.dumps(workflow_run) + "\n")
+    # Age alone no longer diagnoses a missing runner; no assigned jobs is evidence.
+    env.gh.respond("api", "--paginate", "--jq", ".jobs[]", stdout="")
     if command == "close":
         # Closing commits its review before waiting. GitHub returns that current head,
         # rather than the fixture's earlier head, when queried after the push.
