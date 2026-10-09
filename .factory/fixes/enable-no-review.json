@@ -2,13 +2,38 @@
   "base": "dbd8a58964476cd2046c44f5aeddad2073b8efd0",
   "branch": "fix/enable-no-review",
   "done_when": "forge merge enable's close skips the model review and instead records a clean result only after a mechanical check that the fix changes nothing but forge.toml's top-level merge setting, set to agent (every other parsed setting equal to the default branch's); any other change is refused with a plain reason and no review; tests and CI still run and the owner still merges; no other item skips review; a command test covers a new repo and one adopted on an earlier release, including a refused case with an extra change",
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "27a67cf04ab2bb5f9c3031abaaf42e79e94b5aa793f5e73e2609405fee1053ad",
+    "changed": "d24139536e99b7b3bb1aa4e44def9b26e04e7bbb234702363c70974763bb1516",
+    "commit": "34f76c10318f4cd1bafbe61120a6143fdb2cb636",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If the default branch contains an open spotted entry for `forge.toml` from another item, this check passes, but close subsequently changes an extra file. `src/forge/spotted.py:164` matches that entry against the generated Done-when and marks it done; `src/forge/close.py:240` invokes this logic, and line 248 commits the resulting `plans/spotted.json` change. The PR therefore receives a clean mechanical result without model review despite containing more than the merge setting and permitted fix record. A subsequent close then refuses the extra change Forge itself wrote. This is additional evidence beyond the ruling permitting only the generated fix record. Prevent spotted-list writes on this path and extend the command test to check the final published diff with an existing spotted entry.",
+        "file": "src/forge/close.py",
+        "line": 126,
+        "priority": "P1",
+        "title": "Not done: merge-enable close must check the final published change"
+      }
+    ],
+    "id": "cbaa9e90-e126-4ef1-b13a-762b7bd161b3",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T04:50:15+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T05:12:55+00:00",
+      "step": "review"
     }
   ],
   "why": "forge merge enable runs the normal model review on its one-line forge.toml change; if that review blocks (for example on a missing proof list), no one can fix it: agents may never touch the merge setting and the owner would have to repair a change Forge wrote. Owner decision 2026-10-09: skip the model review for this change",
