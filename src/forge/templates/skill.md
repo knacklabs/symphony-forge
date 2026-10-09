@@ -211,12 +211,14 @@ plain `line`, its finding titles, priorities and files, and its new and repeated
 Round lines number review attempts; the row's current `round` still identifies its worker turn.
 Repeated means the same title and file appeared in an earlier recorded review. A missing
 earlier review makes unseen findings' new-versus-repeat counts unknown. Repeats observed in the
-retained history remain known. CI lines distinguish passed, failed and gave up while queued or
+retained history remain known even beside unseen findings whose classification is unknown.
+CI lines distinguish passed, failed and gave up while queued or
 running; losing contact with GitHub without a known result stays unknown.
 An earlier release's failed CI timing without an explicit result also stays unknown.
 Old records are not filled in with guessed findings, durations or zeroes. A known original start
 can give an elapsed total even when some earlier activity is unknown; that unknown time is not
-called idle and the known breakdown need not add up to the elapsed total.
+called idle and the known breakdown need not add up to the elapsed total. Gaps between legacy
+timings stay unknown until complete activity recording begins.
 
 Quote the item's round lines when explaining a long run, then quote the relevant breakdown
 categories rather than adding overlapping stage timers. The pane and `/forge` show these same

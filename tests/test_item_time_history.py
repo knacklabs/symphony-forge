@@ -65,7 +65,7 @@ def queued_first_close(env, item, where):
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 def test_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_history(
-        env, tmp_path, previous):
+        env, tmp_path, previous, monkeypatch):
     # Review reports are third-party inputs; Forge itself must retain and classify the history.
     item, where = client_item(env, tmp_path, previous)
     if not previous:
@@ -131,13 +131,24 @@ def test_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_hi
         "Basket disappears", "Basket disappears", "Basket loses quantities"]
     assert all(event["findings"][0]["priority"] == "P1"
                and event["findings"][0]["file"] == "app.py" for event in reviews)
+    loop_wait = next(event for event in reversed(records(env.repo, "events.jsonl"))
+                     if event["event"] == "owner wait start" and event.get("reason") == "review loop")
+    wait_started = datetime.fromisoformat(loop_wait["at"])
+    monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=30)).isoformat())
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")
     assert accepted.returncode == 1, accepted.stdout + accepted.stderr
     assert "queued" in accepted.stderr
+    [ended_wait] = [event for event in records(env.repo, "events.jsonl")
+                    if event["event"] == "owner wait end" and event.get("wait_id") == loop_wait["id"]]
+    assert datetime.fromisoformat(ended_wait["at"]) - wait_started == timedelta(seconds=30)
+    monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=90)).isoformat())
     waited = row(env.repo, item)
     assert waited["time_breakdown"]["waiting_for_ci"] is not None
-    assert waited["time_breakdown"]["waiting_for_owner"] is not None
+    assert waited["time_breakdown"]["waiting_for_owner"] == 30
+    monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=120)).isoformat())
+    assert row(env.repo, item)["time_breakdown"]["waiting_for_owner"] == 30
+    assert "waiting for the owner (ongoing)" not in waited["rounds"][-1]["line"]
     assert "gave up" in waited["rounds"][-1]["line"].lower()
     assert "queued" in waited["rounds"][-1]["line"].lower()
     env.checks(GREEN)

@@ -82,8 +82,11 @@ def merge(args: argparse.Namespace) -> int:
         body = pr.get("body") or ""
         item_state = story.json_of(story.show(worktree, head, repo.state_path(item)))
         history = time_records.how_it_went(top, item, item_state)
-        body = re.sub(r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)",
-                      lambda _: history + "\n", body, count=1, flags=re.S)
+        history_section = re.compile(
+            r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)", re.S)
+        body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
+                      lambda block: history_section.sub(lambda _: history + "\n", block[0], count=1),
+                      body, count=1, flags=re.S)
         if body != (pr.get("body") or ""):
             body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
             body_file.write_bytes(body.encode("utf-8"))

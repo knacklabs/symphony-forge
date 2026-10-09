@@ -56,15 +56,17 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     end = when(ended_at or finished) if merged else now
     starts = [at for r in [*events, *timings] if (at := when(r.get("at") or r.get("start")))]
     start = min(starts) if starts else None
-    first = start
     if start and (began := next((when(s.get("at")) for s in state.get("steps", [])
                                 if s.get("step") == "start"), None)):
         start = min(start, began)
     # Intervals overlap: tests, lane and CI waits take precedence over their enclosing worker.
     spans: list[tuple[datetime, datetime, str, int | None]] = []
-    if start and first and start < first and not any(
-            e.get("event") == "lane joined" and e.get("history_complete") for e in events):
-        spans.append((start, first, "unknown", None))
+    # Old timing-only logs establish work intervals, never what happened between them.
+    complete_since = min((at for e in events if e.get("event") in (
+        "work phase", "lane joined", "run start", "owner wait start", "worker question")
+        and (at := when(e.get("at")))), default=None)
+    if any(e.get("event") == "lane joined" and e.get("history_complete") for e in events):
+        complete_since = start
     phases = {e.get("round"): e.get("phase") for e in events if e.get("event") == "work phase"}
 
     def work_category(number: int | None) -> str:
@@ -167,13 +169,14 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     bound = end or recorded_end
     if start and bound:
         points = sorted({start, bound, *[max(start, min(bound, p)) for a, b, _, _ in spans for p in (a, b)],
+                         *([max(start, min(bound, complete_since))] if complete_since else []),
                          *[max(start, min(bound, r["start"])) for r in attempts if r["start"]]})
         priority = ("own_tests", "waiting_in_line", "waiting_for_ci", "reviewing",
                     "fixing_findings", "building", "waiting_for_owner", "unknown")
         for a, b in zip(points, points[1:]):
             covering = [(category, number) for x, y, category, number in spans if x <= a and y >= b]
             category, number = min(covering, key=lambda c: priority.index(c[0])) if covering else (
-                "nothing_running" if end else "unknown", None)
+                "nothing_running" if end and complete_since and a >= complete_since else "unknown", None)
             if category == "unknown":
                 continue
             seconds = (b - a).total_seconds()
@@ -201,7 +204,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         comparable = findings is not None and (known_history or all(
             (f.get("file"), f.get("title")) in seen for f in findings))
         fresh = sum((f.get("file"), f.get("title")) not in seen for f in findings) if comparable else None
-        repeats = len(findings) - fresh if fresh is not None else None
+        observed_repeats = sum((f.get("file"), f.get("title")) in seen for f in findings or [])
+        repeats = observed_repeats if comparable or observed_repeats else None
         seen.update((f.get("file"), f.get("title")) for f in findings or [])
         if result and findings is None:
             known_history = False
@@ -232,9 +236,6 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                               "review": ("reviewing",), "CI wait": ("waiting_for_ci",)}[step]
                 times = [per_attempt.get(index, {}).get(c) for c in categories]
                 seconds = sum(t for t in times if t is not None) if any(t is not None for t in times) else None
-                if step == "review":
-                    values = [t["seconds"] for t in rows if isinstance(t.get("seconds"), (int, float))]
-                    seconds = sum(values) if values else None
                 steps.append(f"{label} {outcomes} ({duration(round(seconds, 3) if seconds is not None else None)})")
         for category, label in (("waiting_in_line", "in line"), ("waiting_for_owner", "waiting for the owner")):
             seconds = (owner_done.get(index) if category == "waiting_for_owner"
