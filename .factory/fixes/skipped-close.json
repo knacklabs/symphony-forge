@@ -2,13 +2,38 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-close",
   "done_when": "An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line after an amend; a commit changing only close's test-state record counts as bookkeeping for CI reuse; story titles are read as UTF-8; an error during close's conflicted-merge handling aborts the merge and says so; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/close.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2df28f7d9cfc06665e2d401138aa763ceb350fd03ec08ff2311ea1a11240913f",
+    "changed": "bcf434357d1c5ade7e5e5ce2c58edd70bb64b9607b4b79d6bdddb68e28010d7b",
+    "commit": "cf22ff7e113635ae3430e68bfda61ee6664bfd12",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Hook preservation is fixed in `_synced`, but upgrade close still invokes full sync when resolving conflicts confined to generated files. Both the pinned-release call here and the `repo.run(\"forge\", \"sync\")` sibling call reach `sync.install_shims` (`src/forge/sync.py:505`), which renames custom hooks to `.pre-forge` and writes replacement hooks (`src/forge/sync.py:466\u2013472`). Thus an upgrade whose generated adapters conflict with changes landed on main still rewrites the real repository's local hooks before verification. The new preservation test never advances main to create such a conflict, so it passes despite this remaining path. Use file-only regeneration in both conflict-resolution calls and cover this scenario through close.",
+        "file": "src/forge/close.py",
+        "line": 459,
+        "priority": "P1",
+        "title": "Not done: An upgrade close syncs Forge's files without rewriting the repo's git hooks; close replaces the pull request's Done when line"
+      }
+    ],
+    "id": "f710be74-345c-4e61-aa10-1ad3d5f311ae",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:27+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:35:03+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues the coordinator skipped, still in close (audit, 2026-10-09): an upgrade close's full sync rewrites the real repo's git hooks, an amended Done-when never reaches an existing pull request body, a test-state change forces a full CI rerun instead of reusing the parent's, the story title is read in the platform encoding, and a SyntaxError during a conflicted merge leaves the merge active",
