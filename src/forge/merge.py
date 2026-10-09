@@ -86,9 +86,11 @@ def merge(args: argparse.Namespace) -> int:
         history = time_records.how_it_went(top, item, item_state)
         history_section = re.compile(
             r"## How it went\n.*?(?=\n(?:## |Proof list:|Functional check:|<!-- forge:end -->)|\Z)", re.S)
+        def refresh_history(block: re.Match[str]) -> str:
+            text, count = history_section.subn(lambda _: history + "\n", block[0], count=1)
+            return text if count else text.replace(close.END, "\n" + history + "\n" + close.END, 1)
         body = re.sub(re.escape(close.BEGIN) + ".*?" + re.escape(close.END),
-                      lambda block: history_section.sub(lambda _: history + "\n", block[0], count=1),
-                      body, count=1, flags=re.S)
+                      refresh_history, body, count=1, flags=re.S)
         if body != (pr.get("body") or ""):
             body_file = repo.forge_dir(top) / f"pr-body-{item.replace('/', '-')}.md"
             body_file.write_bytes(body.encode("utf-8"))

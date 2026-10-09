@@ -76,12 +76,9 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
     root = main_checkout(repo)
     title = None
     round_number = None
-    history_complete = False
     if item and (match := repository.ITEM.fullmatch(item)):
         state = repository.read_state(item, repo) or {}
-        history_complete = state.get("status") == "started" and all(
-            step.get("step") == "start" for step in state.get("steps", []))
-        round_number = state.get("round")
+        round_number = state.get("round", 0 if kind in ("test", "review") else None)
         if kind == "work":
             round_number = (round_number + 1 if isinstance(round_number, int)
                             else 1 if state.get("status") == "started" else None)
@@ -104,7 +101,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
     size = 1 if kind == "test" else half_cores()
     with _queue() as runs:
         runs.append(entry)
-    _lane_event(entry, "lane joined", at=entry["joined_at"], history_complete=history_complete)
+    _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
         said = 0
         while True:

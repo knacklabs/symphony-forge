@@ -65,8 +65,6 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     complete_since = min((at for e in events if e.get("event") in (
         "work phase", "lane joined", "owner wait start")
         and (at := when(e.get("at")))), default=None)
-    if any(e.get("event") == "lane joined" and e.get("history_complete") for e in events):
-        complete_since = start
     phases = {e.get("round"): e.get("phase") for e in events if e.get("event") == "work phase"}
 
     def work_category(number: int | None) -> str:
@@ -121,7 +119,8 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 spans.append((a, b, "waiting_for_owner", e.get("round")))
     # A worker turn can contain several closes. Each review result keeps its own line.
     numbers = sorted({r["round"] for r in [*events, *timings] if isinstance(r.get("round"), int)})
-    if any(e.get("event") == "review result" and e.get("round") is None for e in events):
+    if (any(e.get("event") == "review result" and e.get("round") is None for e in events)
+            or any(t.get("round") is None and when(t.get("start")) for t in timings)):
         numbers.append(None)
     attempts = []
     for worker_round in numbers:
@@ -130,19 +129,19 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         reviewed = [t for t in timings if t.get("round") == worker_round and t.get("step") == "review"]
         records = [r for r in [*events, *timings] if r.get("round") == worker_round]
         began = min((at for r in records if (at := when(r.get("at") or r.get("start")))), default=start)
-        for position, (index, result) in enumerate(reviews or [(None, {})]):
+        for position, (index, result) in enumerate(reviews or [(None, {})] * max(1, len(reviewed))):
             if position:
-                previous = reviews[position - 1][0]
+                previous = reviews[position - 1][0] if reviews else None
                 trigger = next((e for e in events[previous + 1:index]
                                 if e.get("round") == worker_round and e.get("kind") in ("test", "review")
-                                and e.get("event") in ("lane joined", "run start")), {})
+                                and e.get("event") in ("lane joined", "run start")), {}) if reviews else {}
                 began = when(trigger.get("at"))
                 if began is None and position < len(reviewed):
                     began = when(reviewed[position].get("start"))
                 began = began or when(result.get("at"))
             attempts.append({"worker_round": worker_round, "number": result.get("review_round"),
                              "result": result, "start": began,
-                             "review_timings": reviewed[position:position + 1] if reviews else reviewed})
+                             "review_timings": reviewed[position:position + 1]})
 
     def attempt(number: int | None, at: datetime) -> int | None:
         choices = [(index, r) for index, r in enumerate(attempts) if r["worker_round"] == number]
