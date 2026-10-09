@@ -13,34 +13,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bc964570ec97efdb217db437e0bd2ffeddb1c7705a7e7f30dc0cf414f6b58153",
-    "changed": "257cec83c21b81b8e09d49bdb8bd4e0726c5020223e88ebdf8f8681ca4b2f366",
-    "commit": "0d1ac7c3a9c70b8dd620a450b3908aa404d09b63",
+    "branch_diff": "3090f1bd5e6098b5cd5dcb2c6c5f625752080c6d60d049f24554325e8514efa1",
+    "changed": "a9407fc97f13b2b88d103968d9d28fe98d7f9237a2585ff5827378e3bb896449",
+    "commit": "a375d648d39a45db7f8bfd34529c40c4ef206a57",
     "dismissals": [],
     "findings": [
       {
-        "body": "An item created before the upgrade can still have status `started` and only its original start step. The older producer writes exactly that state (tests/fixtures/forge-v1.2.2/src/forge/task.py:116). Its first modern work, test or review lane admission therefore records `history_complete=True`. time_records.py:68\u201369 then backdates complete recording to the item's original start, classifying the entire unrecorded pre-upgrade interval as `nothing_running`. This affects both tasks and fixes. New evidence beyond the legacy-history ruling is this real older `started` state; the added legacy tests use `working` states or directly supplied work-phase events and miss this path. Establish completeness from recorded lifecycle evidence rather than the status alone, and cover an outstanding pre-upgrade item through the command.",
+        "body": "This previously reported gap remains. The older producer creates tasks and fixes with status `started` and only a start step (tests/fixtures/forge-v1.2.2/src/forge/task.py:116). Their first modern lane admission therefore sets `history_complete=True`, and time_records.py:68\u201369 backdates complete recording to their original start. Unrecorded pre-upgrade time is consequently reported as `nothing_running`. This concrete older-producer state is the evidence beyond the legacy-history ruling; the existing proofs do not exercise it. Establish completeness from recorded lifecycle evidence and cover an outstanding older item through the command.",
         "file": "src/forge/machine.py",
         "line": 82,
         "priority": "P1",
         "title": "Not done: keep pre-upgrade time unknown for items still marked started"
       },
       {
-        "body": "Round construction drops timings without an integer worker round unless a matching unknown-round review-result event exists. The actual earlier producer records review timings without any `round` field (tests/fixtures/forge-v1.2.2/src/forge/repo.py:120 and close.py:102), so its observed reviews disappear from `rounds` and How it went instead of appearing with unknown ordinals and finding details. The legacy proof cases supply integer rounds and do not cover that historical format. The same exclusion loses the lane wait from a first close performed before a worker turn: machine.join records `round=None`, while run/results/timings default to round 0 (src/forge/repo.py:209,225). Preserve unknown-round activity and associate its waits with the corresponding attempt. This evidence concerns omitted recorded activity, rather than the ruled requirement to leave unrecorded activity unknown.",
+        "body": "This previously reported exclusion remains: unknown-round activity enters `attempts` only when an unknown-round review-result event exists. The older producer writes review timings without a round field (tests/fixtures/forge-v1.2.2/src/forge/repo.py:120 and close.py:102), so observed reviews disappear from `rounds` and How it went. A first modern close before any worker turn also loses its round-line lane wait: machine.py:84 records round=None, while repo.py:264 and 282 default timings and results to round 0. These are recorded intervals, distinct from the ruled requirement to leave unrecorded history unknown. Retain unknown-round timings and associate admission waits with their attempts; the supplied proofs omit these producer formats.",
         "file": "src/forge/time_records.py",
         "line": 123,
         "priority": "P1",
         "title": "Not done: retain timing history and lane waits with unknown worker rounds"
       },
       {
-        "body": "The merge refresh only replaces an existing How it went heading. A ready pull request published by an earlier release has Forge's managed block but lacks that heading; the earlier publisher in tests/fixtures/pr-check-before-branch-diff/close.py:380 produces this format. Its existing readiness receipt remains accepted, so after an upgrade `forge merge` records the final CI wait and computes history, but this substitution changes nothing. Neither the published PR nor the squash body receives the computed section. Insert the section inside the managed block when absent, preserving handwritten text, and test merging an already-ready legacy PR. The current squash proofs first publish through the new close implementation, which always supplies the heading.",
+        "body": "This previously reported gap remains. The inner substitution replaces an existing How it went heading but never inserts one. Earlier ready pull requests have Forge's managed block without that section (tests/fixtures/pr-check-before-branch-diff/close.py:399\u2013403), and their ready receipts use the still-accepted format (line 205). After upgrading, `forge merge` therefore computes history and records final CI but publishes and squashes the unchanged body, losing the requested section. Insert it inside the managed block when absent, preserving handwritten text. Both current squash proofs first publish through modern close, so neither covers an already-ready legacy PR.",
         "file": "src/forge/merge.py",
-        "line": 88,
+        "line": 90,
         "priority": "P1",
         "title": "Not done: add How it went when merging a pre-upgrade pull request"
       }
     ],
-    "id": "cf2da46a-373d-4815-8683-193ec884d2bd",
+    "id": "6c098745-39cb-4de8-8460-cef4204c34c4",
     "status": "blocked"
   },
   "round": 5,
@@ -68,6 +68,10 @@
     },
     {
       "at": "2026-10-09T17:16:24+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:38:16+00:00",
       "step": "review"
     }
   ],
