@@ -3,12 +3,14 @@
   "branch": "fix/task-start-pin",
   "done_when": "forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the default branch into the story branch (stopping with a plain next step on a conflict) so the new task starts on the current release; it changes nothing when the pins match; a command test covers a repo adopted on an earlier release that upgrades with an open story, then starts a task, plus the conflict case",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T05:59:55+00:00",
       "step": "start"
     }
   ],
-  "why": "After a client repo upgrades Forge, new tasks are cut from story branches that still pin the old release, so every new task silently runs the old Forge (old review rules, no fast_test) until someone merges the default branch into each story branch by hand (reported by a client session after upgrading to v1.2.7)"
+  "why": "After a client repo upgrades Forge, new tasks are cut from story branches that still pin the old release, so every new task silently runs the old Forge (old review rules, no fast_test) until someone merges the default branch into each story branch by hand (reported by a client session after upgrading to v1.2.7)",
+  "worker": "codex"
 }
