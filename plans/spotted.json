@@ -3101,6 +3101,39 @@
       "item": "board-visuals",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 72,
+      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "forge-ci-linux-prs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
