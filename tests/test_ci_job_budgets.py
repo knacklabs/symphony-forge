@@ -22,7 +22,7 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
     ("macos-latest", 6, 10),
     ("windows-latest", 8, 20),
 ])
-def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes):
+def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
     # The budget contract still covers every OS on main; PRs now select Linux.
@@ -62,15 +62,19 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
     timings = json.loads(timing_file.read_text(encoding="utf-8"))
     assert timings and all(value >= 0 for value in timings.values())
 
+    # Parallel collectors must not race pytest-current cleanup in the global temp root.
     collected = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests", "-q", "--collect-only"],
-        cwd=root, capture_output=True, text=True, timeout=60, check=True)
+        [sys.executable, "-m", "pytest", "tests", "-q", "--collect-only",
+         "--basetemp", str(tmp_path / "all")],
+        cwd=root, capture_output=True, text=True, timeout=60)
+    assert collected.returncode == 0, collected.stdout + collected.stderr
     nodeids = {line for line in collected.stdout.splitlines()
                if line.startswith("tests/") and "::" in line}
     recorded = {node: timings[node] for node in nodeids if node in timings}
     average = sum(recorded.values()) / len(recorded)
     grouped = subprocess.run(
-        [sys.executable, "-m", "pytest", *options, "--collect-only"],
+        [sys.executable, "-m", "pytest", *options, "--collect-only",
+         "--basetemp", str(tmp_path / "group")],
         cwd=root, capture_output=True, text=True, timeout=60)
     assert grouped.returncode == 0, grouped.stdout + grouped.stderr
     assert "No test durations found" not in grouped.stdout
