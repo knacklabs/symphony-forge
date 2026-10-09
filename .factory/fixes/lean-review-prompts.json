@@ -15,24 +15,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e56b354e000d29d657536f5424ce2d054588c3d477a559e925f61d2ea1486831",
-    "changed": "19b8d191032dcedb68a6a62b72682dd3be461ad0ca875a73ce2e9da12865a5ec",
-    "commit": "9e4e368bdf8370301606fcb5e0031fb77614ad9a",
+    "branch_diff": "d99b7e5fce8aad77fd06b08a1e9e8133723e278a6b6572b97229d6e127a4753d",
+    "changed": "9f6135460a41fbef5a79d42182edc264be060a528fc17a207a5cc41d882951dd",
+    "commit": "6a9c0bbeddec92b4daeed526061ce422af5b7c6f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done. The required word-for-word boundary differs between the delivered prompts: review.md includes the Gate line here, while cold-read.md:41 includes a different Plan gap line. The named proof in tests/test_fix_lean_review_prompts.py:59\u201362 removes everything between Moving part and Leave out before comparing, so both client cases pass despite this unmet requirement. Ship the same complete boundary, including both context-specific Raise lines, and compare that entire boundary in the test.",
-        "file": "src/forge/templates/review.md",
-        "line": 109,
-        "priority": "P1",
-        "title": "Not done: one identical written boundary in review and cold read"
-      }
-    ],
-    "id": "f040b8e2-6e62-42f0-9287-797ec4e38e89",
-    "status": "blocked"
+    "findings": [],
+    "id": "25d12cd8-63c1-486f-9835-ae0484644bad",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T17:49:26+00:00",
@@ -40,6 +32,10 @@
     },
     {
       "at": "2026-10-09T19:12:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:31:31+00:00",
       "step": "review"
     }
   ],
