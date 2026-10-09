@@ -3,13 +3,28 @@
   "base": "dbd8a58964476cd2046c44f5aeddad2073b8efd0",
   "branch": "fix/release-128",
   "done_when": "Forge's version is 1.2.8 everywhere it is recorded: the package version, this repo's forge.toml pin, the Claude Code mod's plugin.json version, the marketplace entry's version and its source ref (v1.2.8), the install scripts and README install steps, the hooks launcher and workflow pins, sync output and the tests that pin the current release; historical fixture versions stay unchanged",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "108b240b9b5a69261e38a9ae4e78449dfd72985bcd1c4ada7e0986882d716ea1",
+    "changed": "9492bb0910e5281324b7acee9a41aa54425770ce64fcd0444a8ae2fa94746306",
+    "commit": "2764277d8c5f7ac3237766c631a9f00f03cfaa30",
+    "dismissals": [],
+    "findings": [],
+    "id": "ade1e06d-5d48-466b-973b-9523e2504857",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T04:48:40+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T04:54:18+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients need v1.2.8 for the dropped-run fix, the runner setting for self-hosted CI, husky-safe git hooks, merge-enable rebuilds, the any-file review stop, land waiting for long CI, cancelled superseded CI runs and the other fixes merged since v1.2.7",
