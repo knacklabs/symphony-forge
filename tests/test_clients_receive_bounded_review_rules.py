@@ -54,13 +54,14 @@ def test_1_sync_delivers_bounded_review_cold_read_and_worker_rules(env, adopted)
     assert read.returncode == 0, read.stdout + read.stderr
     cold_read = " ".join(calls(log)[-1]["prompt"].split())
     assert "Prefer one blunt fail-closed rule with one test over listing every case." in cold_read
-    assert "Do not raise crash or interrupt windows under a second" in cold_read
-    assert "unless they lose data or weaken security" in cold_read
+    assert "Leave out, unless it falls under Security or Data loss" in cold_read
+    assert "a window under a second" in cold_read
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = " ".join(env.prompt().split())
-    assert ("A crash or interrupt window under a second, or a case a simple fail-closed rule "
-            "in the change already covers, is at most P2 unless it loses data or weakens "
-            "security") in review
-    assert ("A request for more test variations is P2 unless it names a concrete scenario "
-            "the current tests would pass while the code is broken.") in review
+    assert ("- a rare combination that needs an unusual sequence: a crash or interrupt at a "
+            "precise moment, a window under a second") in review
+    assert "- a case a fail-closed rule in the change already covers;" in review
+    assert ("extra test variations (one command-level test per rule is enough), unless the "
+            "finding names a concrete scenario the current tests would pass while the code is "
+            "broken") in review
