@@ -144,6 +144,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -3191,6 +3224,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 183,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 187,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: Developer assignments in task start, forge next, the board and story guidance\tstart-is-claim",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -3356,24 +3411,13 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
+      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
       "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 183,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
+      "path": ".factory/fixes/board-spec.json",
+      "line": 4,
+      "text": "Not done: proof list",
       "from": "blocking",
-      "item": "gh-retry",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 187,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
-      "from": "blocking",
-      "item": "gh-retry",
+      "item": "board-spec",
       "status": "open",
       "closed_by": null
     },
