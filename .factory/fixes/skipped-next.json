@@ -2,13 +2,28 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-next",
   "done_when": "forge next lets a failed check decide the next step only when the pull request head equals the local head; upgrade advice names origin/<default>; next fetches before recommending story done or says to fetch; blank answers count as unanswered; the approval hook prints its pin notice only after recording succeeds and names the pinned release when it is newer; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f0995fe35bb460c5041bb83e4890e031c5a2a27589d6ef95e9ef814aaef0931",
+    "changed": "e685799a775125a4ae45dd1e91384f223870c90814f4665de1850ad74931507c",
+    "commit": "d93bb80ad6461a95c3e6c78428d21b7d8fe6ab90",
+    "dismissals": [],
+    "findings": [],
+    "id": "896b3233-3f18-4d6e-a4e7-efb8732f760d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:38:13+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues the coordinator skipped, still in forge next and its advice (audit, 2026-10-09): a failed pull request check overrides the next step even after a local repair, upgrade advice says to merge the local default branch instead of origin's, next recommends story done before the fetch it needs, an answer with only whitespace counts as settled, and the approval hook says recorded anyway before sign-off can still refuse and gives wrong advice when the repo pins a newer release",
