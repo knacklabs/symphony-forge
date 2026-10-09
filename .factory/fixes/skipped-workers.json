@@ -1,0 +1,37 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-workers",
+  "done_when": "Lost-session recovery searches all of Claude's output; record_progress retries a busy events file on Windows like codex does; Claude workers ignore Codex-only subagent keys; a fix name used by an abandoned start tag is treated as taken with a plain message; migration filters stage records by story; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/worker.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d40bbfccd26e622ebd600d6c1194d1d2fa2e334951afc3e832589c26c30063ae",
+    "changed": "110e3a959479a44dd7dab70ee3a877861d8cb6791720302012a2acd045385b53",
+    "commit": "20b49794af935321a2a352e16254837a1f89bcd0",
+    "dismissals": [],
+    "findings": [],
+    "id": "7e4c7c83-8176-4f50-9752-bd5f8a99bd7b",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:36+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T20:02:57+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:13:00+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Real issues the coordinator skipped, still in workers, tasks and migration (audit, 2026-10-09): lost-session recovery misses errors Claude reports as structured output, on Windows a reader holding the events file open makes record_progress abort the run, a workers = claude repo with an edited lite model is refused on its first fix, restarting an abandoned fix with the same name fails partway, and migration stage records cross stories so a done task can be un-marked",
+  "worker": "codex"
+}
