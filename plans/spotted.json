@@ -3233,6 +3233,39 @@
       "item": "forge-ci-linux-prs",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 135,
+      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
+      "kind": "bug",
+      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "line": 71,
+      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\t[P2] Run generated-conflict sync under the changed pin",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 128,
+      "text": "[P2] Run generated-conflict sync under the changed pin",
+      "from": "review",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
