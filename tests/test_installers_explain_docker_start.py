@@ -14,7 +14,7 @@ STORY = "FIX-SKIPPED-TEMPLATES"
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_windows_installer_is_a_required_pull_request_check():
+def test_6_windows_installer_is_a_required_pull_request_check():
     # CI routing is a config contract; local execution cannot prove the Windows branch.
     workflow = (ROOT / ".github/workflows/forge-next.yml").read_text(encoding="utf-8")
     assert re.search(r"^  pull_request:\s*$", workflow, re.M)
@@ -35,7 +35,7 @@ def test_windows_installer_is_a_required_pull_request_check():
     (True, False, False), (True, True, False),
     (False, False, False), (False, True, False), (False, False, True),
 ])
-def test_installers_check_docker_engine_and_explain_starting_desktop(
+def test_5_installers_check_docker_engine_and_explain_starting_desktop(
         tmp_path, check, running, new_install):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
