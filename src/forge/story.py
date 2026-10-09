@@ -252,10 +252,10 @@ def read(args: Any) -> int:
              for line in said.splitlines() if line.strip()]
     empty = re.compile(r"(?:no (?:(?:new|remaining|additional|actionable) )?"
                        r"(?:findings|issues|gaps|problems|blockers)"
-                       r"(?: (?:(?:were )?(?:found|identified|raised)|remain|to report))?"
+                       r"(?: (?:(?:were )?(?:found|identified|raised|detected)|remain|to report))?"
                        r"|nothing to report)", re.I)
     note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
-                      r"(?:\s*\(read[- ]only(?: review)?\))?", re.I)
+                      r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
     clean = any(empty.fullmatch(line) for line in lines) and all(
         empty.fullmatch(line) or note.fullmatch(line) for line in lines)
     if clean:

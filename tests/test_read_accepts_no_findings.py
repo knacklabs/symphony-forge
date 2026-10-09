@@ -18,6 +18,9 @@ STORY = "FIX-READ-NO-FINDINGS"
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("reply, clean", [
     ("6. No findings.\n\nTests were not run (read-only review).", True),
+    ("6. No issues detected.", True),
+    ("6. No findings.\n\nTests were not run (not requested).", True),
+    ("6. No findings.\nTests weren't run (not required).", True),
     ("No findings.", True),
     ("no findings", True),
     ("1. No actionable findings.\n2. No issues found.\n3. No findings to report.\nTests not run.", True),
@@ -25,6 +28,7 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("**No findings.**\nNote: tests weren't run.", True),
     ("No findings.\n6. The saved time has no time zone.", False),
     ("6. No findings.\n7. Tests were not run, so the required proof is missing.", False),
+    ("6. No findings.\nTests were not run (required proof is missing).", False),
 ])
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         repo, gh, tmp_path, previous, reply, clean):
@@ -67,6 +71,7 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         assert "found nothing" in read.stdout
         assert "disposition" not in next_step.stdout
         assert "round 1 of its cold read had findings" not in next_step.stdout
+        assert "forge read SHOP" not in next_step.stdout
         assert repo.git("status", "--porcelain", cwd=shop) == ""
     else:
         assert "passed: no\n" in notes
