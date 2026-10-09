@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-09T13:59:07+00:00",
+      "because": "A client worker repeatedly edited forge.toml temporarily mid-run to make forge test run an extra suite (2026-10-09)",
+      "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml and should report a needed settings change in their last message instead; command tests cover a refused worker commit, an allowed settings fix, and a coordinator commit outside a worker run, for a new repo and one adopted on an earlier release"
+    }
+  ],
   "base": "58fd944d4d383807318db51b727e00fc15c810fa",
   "branch": "fix/worker-no-settings",
-  "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml and should report a needed settings change in their last message instead; command tests cover a refused worker commit, an allowed settings fix, and a coordinator commit outside a worker run, for a new repo and one adopted on an earlier release",
+  "done_when": "The commit hook refuses a commit inside a worker run that changes forge.toml unless the item's Done-when names forge.toml (settings fixes and release bumps keep working), saying plainly that settings change in their own fix; the worker brief says workers never edit forge.toml, not even temporarily, and that to run an extra suite they run its command directly alongside forge test; when a worker round ends with forge.toml changed but uncommitted, Forge restores it from the branch and says so in the round's hand-back, unless the Done-when names forge.toml; command tests cover a refused worker commit, an allowed settings fix, a coordinator commit outside a worker run, and a round that leaves forge.toml edited, for a new repo and one adopted on an earlier release",
   "kind": "fix",
   "round": 1,
   "status": "working",
