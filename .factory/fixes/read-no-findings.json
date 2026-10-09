@@ -8,20 +8,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cd78628b4a4c52bb6c402a88e3439bd4f80c64e9b6a7e59f9bb132ecb4144587",
-    "changed": "6506b513557f77c90753d76a285a224416ee0f1f7a04bf25af3c6058d69dae4e",
-    "commit": "cfd07608f9eccbbd68ed16f02f2dd9f3550cce8c",
+    "branch_diff": "10990efdcc875d0928a4acc761bbc04cf51c1b66b667d01c5c2a8edd1e7790f3",
+    "changed": "1aacefb42aca7a621cb4c993fb87f8d8e698910e3f7bb70b9719645c7f66086e",
+    "commit": "3cf84c23c80aaad0e564c7e241eb398abd7c4402",
     "dismissals": [],
     "findings": [
       {
-        "body": "The recognizers still reject ordinary clean replies. For example, `6. No issues detected.` fails the no-findings pattern because `detected` is excluded. Separately, `6. No findings.\\n\\nTests were not run (not requested).` fails the note pattern because only a read-only explanation is allowed. Both replies contain no finding, yet they reach the failed-round path, record `passed: no`, and require a disposition and another read. This leaves the Done-when requirement unmet. Extend recognition conservatively and add these cases to the existing command-test table for both client setups; its current cases pass without detecting these failures.",
+        "body": "The previous `detected` and test-note examples are repaired, but new unambiguous counterexamples remain: `6. There are no findings.`, `6. No bugs found.`, and `6. No findings reported.` Each fails this recognizer because its prefix, noun, or suffix is excluded. Consequently, the record-writing code at `src/forge/story.py:276` writes `passed: no`, recreating the unnecessary disposition and read round. These replies contain no substantive finding and fall within the promised \u201cany common wording\u201d; they do not require accepting arbitrary explanations contrary to the coordinator\u2019s ruling. Extend recognition conservatively and cover these cases in the existing command table for both client histories.",
         "file": "src/forge/story.py",
-        "line": 255,
+        "line": 254,
         "priority": "P1",
-        "title": "Not done: forge read accepts only some common no-findings wording and test-not-run notes"
+        "title": "Not done: forge read still rejects common no-findings wording"
       }
     ],
-    "id": "865e3557-9612-4d04-a9ab-4f1596c73116",
+    "id": "64525723-66eb-4e16-b202-0ac903cb09e4",
     "status": "blocked"
   },
   "round": 2,
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-09T16:03:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:28:14+00:00",
       "step": "review"
     }
   ],
