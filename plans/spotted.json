@@ -144,6 +144,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.html",
+      "line": 76,
+      "text": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -1046,6 +1057,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: include merge-ready stories in the stage totals\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 418,
+      "text": "Not done: include merge-ready stories in the stage totals",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -1273,6 +1295,17 @@
       "text": "Not done: Hook-trust command tests model Codex's worktree hook source",
       "from": "blocking",
       "item": "codex-hook-trust",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
+      "kind": "bug",
+      "path": "tests/test_board_dependency_timelines.py",
+      "line": 217,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },

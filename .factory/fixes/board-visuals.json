@@ -15,40 +15,49 @@
   "branch": "fix/board-visuals",
   "done_when": "Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening, what is pending and where it is stuck: the top of the page answers those three in plain words (what is moving now, what waits and on whom or what, and the bottlenecks: stalled items with how long, the part that blocks the most others, and the stage where most time goes); then, with inline SVG and no scripts or outside files, one dependency map across the roadmap showing each story's parts and which waits for which, including cross-story waits, with parts that can start now marked (states told apart by label and shape, never colour alone), a stage timeline for every active part and fix across build, tests, review, CI and merge with recorded times and the current stage marked, and one line counting items at each stage; all from the same data as forge board --json and forge next's readiness (unknown shown as unknown, never invented); built with the impeccable and emil-design-eng skills as the worker brief requires; readable in light and dark mode and at phone width; the existing text sections stay below and board.py stays under the per-file limit; a command test renders the page for a new repo and one adopted on an earlier release and checks the top summary's bottleneck lines, a cross-story wait, a can-start-now part, a timeline's stage times and the counts",
   "flagged": [
+    "src/forge/board.html",
     "src/forge/board.py",
+    "src/forge/nextstep.py",
     "tests/test_board_dependency_timelines.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "10b4732448f7a90d35eb864322b4e07f763bb062490658b7719fd58ebe82cc81",
-    "changed": "8b079823a86f43db2bd1dc20719509a9712fe6f2e114ac58fb302f98e52e09f7",
-    "commit": "bb0a98dbb4b4c0ee0ff36ff389f01e7d4cfdd724",
+    "branch_diff": "6ada80356d36d1c8d4c6ac064d3fab0134ee317f3ae2c58d19e124be8a4049a1",
+    "changed": "8da74e8675374ed23776fe1cb155ec22d7003475965f751b2522f85bc5d6fb15",
+    "commit": "387d05dc12f3da3c27ddb542885bee4b29327c03",
     "dismissals": [],
     "findings": [
       {
-        "body": "When a task or fix checkout containing an inherited story record wins the equal-step tie in `best` (board.py:192\u2013196), readiness receives that checkout's old plan even though `tree` points to the story's current checkout. `nextstep._story` reads notes and the document hash from `tree`, but parses the supplied text (nextstep.py:403\u2013408). A Tasks-table-only edit leaves approval unchanged; the reread comparison can then compare the old plan against itself (story.py:477\u2013484), incorrectly preserving \u201cCan start now\u201d while `forge next` requires another read. The map also reads the inherited plan at board.py:432, so changed parts and dependencies disappear. Read the owning story's current plan for both paths. The existing reread test changes an approval-bound section, which catches a different gate and misses this scenario.",
-        "file": "src/forge/board.py",
-        "line": 234,
+        "body": "The page begins with stage counts followed by the dependency map. It has no plain-English summary naming what is moving, what is waiting and its blockers, stalled items and their idle durations, the part blocking the most others, or the stage consuming the most recorded time. The renderer in board.py:907\u2013915 supplies only counts, map and existing sections; none computes these required bottleneck lines. Add the requested summary above the map, deriving it from the shared command data and preserving unknown values.",
+        "file": "src/forge/board.html",
+        "line": 76,
         "priority": "P1",
-        "title": "Not done: dependency maps and readiness must use the current story plan"
+        "title": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening"
       },
       {
-        "body": "Valid task IDs can be enclosed in backticks: story.py:361 strips them before validation, and the existing board text does likewise at board.py:536. Here `tid` comes directly from `task.rows`, which preserves the backticks (task.py:62). Consequently, a row named `SAVE` in Markdown becomes an ID containing literal backticks, fails state and readiness lookups, and appears \u201cNot started\u201d even when merged or startable. Dependencies referencing SAVE also acquire a separate \u201cUnknown part\u201d node. Apply the same ID normalization before all map lookups and node construction.",
-        "file": "src/forge/board.py",
-        "line": 435,
-        "priority": "P2",
-        "title": "Normalize Markdown-formatted task IDs before constructing map nodes"
+        "body": "An approved story is assigned \"building\" here, and no subsequent path assigns it \"ready to merge\", even when its only remaining part has a valid close receipt and forge next reports that part ready to merge. board.py:449\u2013460 consumes this value directly, so the summary incorrectly reports Building: 1 and Ready to merge: 0 for that story. The positive readiness test at tests/test_board_dependency_timelines.py:242\u2013257 exercises only a fix. This finding preserves the ruling to count each story once; the new evidence is that the story-stage producer never emits the ready-to-merge stage. Derive that stage from the remaining parts' readiness and cover the story case through the command.",
+        "file": "src/forge/nextstep.py",
+        "line": 418,
+        "priority": "P1",
+        "title": "Not done: include merge-ready stories in the stage totals"
       },
       {
-        "body": "The unchanged full-suite test `test_1_machine_views_omit_old_finished_items_without_more_git_calls` compares entire responses before and after adding twelve completed stories and fixes (tests/test_machine_views_recent_finished_items.py:165\u2013195). The new `dependency_maps` and `stage_counts` intentionally change for those additions, so its whole-response equality now fails in all four parametrized cases. The supplied three-test close run does not include this test. Preserve its active-item expiry assertions while separately checking the expected changes to the new history-bearing fields.",
-        "file": "src/forge/board.py",
-        "line": 475,
-        "priority": "P2",
-        "title": "Update the history-invariance test for the expanded JSON payload"
+        "body": "Neither parametrized client case checks the required top summary or its bottleneck lines. The page assertions check maps, timelines, existing sections and counts, but never assert a stalled item's duration, the largest blocking part, or the stage where most time goes. Consequently, the supplied nine-test run passes with the entire required summary absent. Extend the real board-command test for both new and earlier-adopted clients with deterministic summary data and assertions above the roadmap.",
+        "file": "tests/test_board_dependency_timelines.py",
+        "line": 203,
+        "priority": "P1",
+        "title": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data"
+      },
+      {
+        "body": "The complete latest proof list omits an entry covering the required impeccable shaping, audit and polish pass with emil-design-eng's checklist. Its visual-proof entry names SVG metadata, palette tokens and responsive CSS checks, which do not document that required design pass. The coordinator's ruling permits command-rendered SVG/CSS proof and defers live browser checking; this finding does not request browser tooling. Add a verifiable entry for the required skill work and checking pass.",
+        "file": "tests/test_board_dependency_timelines.py",
+        "line": 217,
+        "priority": "P1",
+        "title": "Not done: proof list"
       }
     ],
-    "id": "7d17d183-23ca-4c2c-b9ea-a8eda2c7d95e",
+    "id": "e3a3ec1f-8438-4495-820b-c88e7dc5e3df",
     "status": "blocked"
   },
   "round": 4,
@@ -64,6 +73,10 @@
     },
     {
       "at": "2026-10-09T09:18:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T10:09:39+00:00",
       "step": "review"
     }
   ],
