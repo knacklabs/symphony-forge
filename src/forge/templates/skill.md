@@ -620,7 +620,7 @@ lists a refresh fix with its `forge fix start` command; start it like any ready 
 fix's folder:
 
 1. Update dependencies within the ranges the manifests allow (`npm update`, `pnpm update`,
-   `yarn upgrade`, `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
+   `yarn upgrade` (Yarn 1), `yarn up -R '*'` (Yarn 2+), `bun update`, `uv lock --upgrade`, `poetry update`, `cargo update`,
    `go get -u=patch ./... && go mod tidy`); never raise a range.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.

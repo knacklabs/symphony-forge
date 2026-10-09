@@ -69,10 +69,22 @@ if (-not $wslReady) {
         if ($LASTEXITCODE -ne 0) { throw 'WSL2 did not switch on. Check the message above, then run this script again as administrator.' }
     }
 }
-Install-Package 'Docker' docker 'Docker.DockerDesktop'
+if (-not (Has-Tool docker)) { Install-Package 'Docker' docker 'Docker.DockerDesktop' }
 if (-not $Check) {
     $env:PATH += ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                  [Environment]::GetEnvironmentVariable('Path', 'User')
+}
+if (Has-Tool docker) {
+    $dockerReady = $false
+    $ErrorActionPreference = 'Continue'
+    try {
+        & docker info >$null 2>$null
+        $dockerReady = $LASTEXITCODE -eq 0
+    } catch { $dockerReady = $false }
+    finally { $ErrorActionPreference = 'Stop' }
+    if (-not $dockerReady) {
+        Write-Output 'Start Docker Desktop, wait until it is running, then run this script again.'
+    } elseif (-not $Check) { Write-Output 'Docker is ready.' }
 }
 
 $forgeReady = (Has-Tool forge) -and ((& forge --version 2>$null) -eq "forge v$ForgeVersion")

@@ -65,6 +65,7 @@ waiting for real app state, never by adding a fixed sleep. A minimal config is:
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  testDir: './e2e',
   fullyParallel: true,
   retries: 0,
   use: { baseURL: 'http://localhost:5173' },

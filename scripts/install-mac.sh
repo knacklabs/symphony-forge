@@ -63,7 +63,12 @@ if ! has docker; then
     step Docker
     brew install --cask docker
   fi
-elif [[ $check != --check ]]; then echo 'Docker is ready.'; fi
+fi
+if has docker; then
+  if ! docker info >/dev/null 2>&1; then
+    echo 'Start Docker Desktop, wait until it is running, then run this script again.'
+  elif [[ $check != --check ]]; then echo 'Docker is ready.'; fi
+fi
 brew_tool uv uv uv
 
 if ! has forge || [[ $(forge --version 2>/dev/null) != "forge v$FORGE_VERSION" ]]; then
