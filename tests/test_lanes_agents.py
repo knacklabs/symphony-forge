@@ -190,7 +190,8 @@ def test_1_half_the_cores_admit_work_read_and_review_in_fifo_order(env, tmp_path
             # real OS snapshot once at the gap, then let ps report that it is gone.
             real_ps = shutil.which("ps")
             ps_args = ["-ww", "-o", "lstart=,command=", "-p", str(admitted["process"]["pid"])]
-            snapshot = subprocess.run([real_ps, *ps_args], capture_output=True, text=True, check=True).stdout
+            snapshot = subprocess.run([real_ps, *ps_args], capture_output=True, text=True, check=True,
+                                      env={**os.environ, "TZ": "UTC", "LC_ALL": "C", "LANG": "C"}).stdout
         waiting = lambda rows: {e["item"]: (e["id"], e["started_at"]) for e in rows
                                 if e["item"] in {q[0] for q in queued}}
         waiters = waiting(rows)

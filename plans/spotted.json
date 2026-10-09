@@ -408,6 +408,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 590,
+      "text": "Not done: Live previous-release processes can still prune newer lane entries",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 596,
+      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -800,6 +822,28 @@
       "text": "Not done: Machine tests detect the behaviors claimed by the proof list",
       "from": "blocking",
       "item": "FORGE-MOD-1/MACHINE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
       "status": "open",
       "closed_by": null
     },
@@ -1277,6 +1321,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 559,
+      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_turns_trust_forge_hooks.py\tNot done: Hook trust in new and upgraded client repos\tcodex-hook-trust",
       "kind": "bug",
       "path": "tests/test_codex_turns_trust_forge_hooks.py",
@@ -1680,6 +1735,17 @@
       "text": "Not done: tests/test_machine_views.py stays within its time limit on Windows CI",
       "from": "blocking",
       "item": "fast-views",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tWindows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 184,
+      "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
       "status": "open",
       "closed_by": null
     },
@@ -2824,50 +2890,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026\tmachine-test-speed",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/machine.test.ts",
-      "line": 231,
-      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026",
-      "from": "blocking",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
-      "kind": "bug",
-      "path": "src/forge/mod/hooks/machine.test.ts",
-      "line": 231,
-      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
-      "from": "blocking",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_codex_resume.py",
-      "line": 559,
-      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
-      "from": "worker",
-      "item": "machine-test-speed",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tWindows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_machine_views_recent_finished_items.py",
-      "line": 184,
-      "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
-      "from": "worker",
-      "item": "machine-test-speed",
       "status": "open",
       "closed_by": null
     }
