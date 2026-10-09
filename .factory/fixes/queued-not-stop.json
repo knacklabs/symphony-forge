@@ -9,12 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "71c0fba22959b9d725cef4e6a7ede2aa144228f91379a1131ea7c85a0eb016ba",
-    "changed": "311df307bb2c1835e8e2af05b68e6c39da776104b5df38d4cf558a77b24ad8a9",
-    "commit": "1b3e1d870f37c5edf501ae98d174380dc2c10c57",
+    "branch_diff": "05d787c20fa0231a21f319c7b2f63c9d8aea1adcf315971b7d15740d963a538f",
+    "changed": "8a7884d5f47db284f2038834db48684d6a876424d8ce8504b399c7046b8742c6",
+    "commit": "7d7eb392b217bb2f08f2e40114935f2e8a9db0ad",
     "dismissals": [],
-    "findings": [],
-    "id": "d90ebd22-e041-494b-b1a8-3b47e4ee26f2",
+    "findings": [
+      {
+        "body": "An open PR can have an unassigned attempt that expired ten days ago, followed by a successful retry eight days ago, with all current checks green. Because `filter=all` retains the expired attempt, it sets both demand flags here; the successful retry falls outside the seven-day activity window and cannot suppress the warning. Doctor therefore reports a likely missing runner despite there being no remaining unmet demand. The caller at src/forge/doctor.py:380\u2013387 checks every open PR without checking whether its checks are pending. Determine current demand from unsatisfied jobs, excluding attempts superseded by successful retries. This is additional evidence beyond the ruling about preserving expired demand across a still-unmet fresh retry: the retry in this case has already succeeded.",
+        "file": "src/forge/checks.py",
+        "line": 141,
+        "priority": "P2",
+        "title": "Ignore resolved attempts when detecting current runner demand"
+      }
+    ],
+    "id": "21b4543d-0db0-499e-9bd4-f715f6cf492c",
     "status": "clean"
   },
   "round": 4,
@@ -38,6 +46,10 @@
     },
     {
       "at": "2026-10-09T17:30:42+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T18:41:09+00:00",
       "step": "review"
     }
   ],

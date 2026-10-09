@@ -166,6 +166,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Developer assignments in task start, forge next, the board and story guidance\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 381,
+      "text": "Not done: Developer assignments in task start, forge next, the board and story guidance",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -408,6 +419,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 135,
+      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -415,6 +437,17 @@
       "text": "Not done: merge-enable close must check the final published change",
       "from": "blocking",
       "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tPreserve ownership references across copied plans and follow-up replay\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 506,
+      "text": "Preserve ownership references across copied plans and follow-up replay",
+      "from": "blocking",
+      "item": "start-is-claim",
       "status": "open",
       "closed_by": null
     },
@@ -760,6 +793,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/machine.py\tRepeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 106,
+      "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
+      "from": "worker",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/merge.py\tProtect remote work before force-publishing the rebuilt fix\tmerge-enable-stale",
       "kind": "bug",
       "path": "src/forge/merge.py",
@@ -1057,6 +1101,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 448,
+      "text": "Not done: Developer assignments must be discoverable and current in teammate checkouts",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/nextstep.py\tNot done: Git command counts still grow with old finished stories linked to specs\tfast-views",
       "kind": "bug",
       "path": "src/forge/nextstep.py",
@@ -1108,6 +1163,28 @@
       "text": "Not done: mixed repos get one part per kind",
       "from": "blocking",
       "item": "repos-without-a-quick-test-setting-don-t",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 183,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
+      "from": "blocking",
+      "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
+      "kind": "bug",
+      "path": "src/forge/repo.py",
+      "line": 187,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
+      "from": "blocking",
+      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     },
@@ -1218,6 +1295,28 @@
       "text": "Not done: forge task start, when the story branch pins an older Forge release than the default branch as last fetched, first merges the task",
       "from": "blocking",
       "item": "task-start-pin",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tPreserve starter attribution through normal squash merges and branch cleanup\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 140,
+      "text": "Preserve starter attribution through normal squash merges and branch cleanup",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tPublish the retained start reference when a failed start is later recovered\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 137,
+      "text": "Publish the retained start reference when a failed start is later recovered",
+      "from": "blocking",
+      "item": "start-is-claim",
       "status": "open",
       "closed_by": null
     },
@@ -1354,6 +1453,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 72,
+      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "forge-ci-linux-prs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_runs_only_related_tests.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_close_runs_only_related_tests.py",
@@ -1416,6 +1526,17 @@
       "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "from": "worker",
       "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
+      "kind": "bug",
+      "path": "tests/test_codex_project_paths_and_pr_links.py",
+      "line": 23,
+      "text": "Not done: full-suite test compatibility",
+      "from": "blocking",
+      "item": "codex-project-roots",
       "status": "open",
       "closed_by": null
     },
@@ -2047,6 +2168,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
+      "kind": "bug",
+      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "line": 71,
+      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: proof list\tstart-is-claim",
+      "kind": "bug",
+      "path": "tests/test_started_branches_claim_the_work.py",
+      "line": 119,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: required tests check\tstart-is-claim",
+      "kind": "bug",
+      "path": "tests/test_started_branches_claim_the_work.py",
+      "line": 86,
+      "text": "Not done: required tests check",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_steer_question.py",
@@ -2146,6 +2300,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board.py\tDo not recreate expired merged assignments as unstarted parts",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 444,
+      "text": "Do not recreate expired merged assignments as unstarted parts",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tKeep skipped required checks from appearing green",
       "kind": "edge",
       "path": "src/forge/board.py",
@@ -2164,6 +2329,17 @@
       "text": "Normalize Markdown-formatted task IDs before constructing map nodes",
       "from": "review",
       "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tNormalize task IDs before adding assigned board rows",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 443,
+      "text": "Normalize task IDs before adding assigned board rows",
+      "from": "review",
+      "item": "start-is-claim",
       "status": "open",
       "closed_by": null
     },
@@ -2230,6 +2406,17 @@
       "text": "Diagnose queued checks outside the configured check names",
       "from": "review",
       "item": "runner-setting",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/checks.py\tIgnore resolved attempts when detecting current runner demand",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 141,
+      "text": "Ignore resolved attempts when detecting current runner demand",
+      "from": "review",
+      "item": "queued-not-stop",
       "status": "open",
       "closed_by": null
     },
@@ -2318,6 +2505,17 @@
       "text": "Include sync-managed deletions absent from the default tree",
       "from": "review",
       "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\t[P2] Run generated-conflict sync under the changed pin",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 128,
+      "text": "[P2] Run generated-conflict sync under the changed pin",
+      "from": "review",
+      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -2652,6 +2850,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/nextstep.py\tCheck approval before offering starts from a published draft",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 413,
+      "text": "Check approval before offering starts from a published draft",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/nextstep.py\tIgnore previous-head failures when deriving the local next step",
       "kind": "edge",
       "path": "src/forge/nextstep.py",
@@ -2916,6 +3125,39 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/task.py\tAccount for retained start tags before reusing an abandoned branch name",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 133,
+      "text": "Account for retained start tags before reusing an abandoned branch name",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tAccount for retained tags before reusing an abandoned branch name",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 135,
+      "text": "Account for retained tags before reusing an abandoned branch name",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/task.py\tPreserve starter attribution when promoting a fix into a story part",
+      "kind": "edge",
+      "path": "src/forge/task.py",
+      "line": 146,
+      "text": "Preserve starter attribution when promoting a fix into a story part",
+      "from": "review",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/review-tests.py\tAllow review commits to remove stale test-failure output",
       "kind": "edge",
       "path": "src/forge/templates/review-tests.py",
@@ -3092,6 +3334,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tChecked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Checked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
+      "from": "worker",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -3132,248 +3385,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
-      "kind": "bug",
-      "path": "tests/test_codex_project_paths_and_pr_links.py",
-      "line": 23,
-      "text": "Not done: full-suite test compatibility",
-      "from": "blocking",
-      "item": "codex-project-roots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_ci_job_budgets.py",
-      "line": 72,
-      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "forge-ci-linux-prs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 135,
-      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
-      "from": "blocking",
-      "item": "repin-mid-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
-      "kind": "bug",
-      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
-      "line": 71,
-      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
-      "from": "blocking",
-      "item": "repin-mid-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\t[P2] Run generated-conflict sync under the changed pin",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 128,
-      "text": "[P2] Run generated-conflict sync under the changed pin",
-      "from": "review",
-      "item": "repin-mid-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: Developer assignments in task start, forge next, the board and story guidance\tstart-is-claim",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 381,
-      "text": "Not done: Developer assignments in task start, forge next, the board and story guidance",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tPreserve ownership references across copied plans and follow-up replay\tstart-is-claim",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 506,
-      "text": "Preserve ownership references across copied plans and follow-up replay",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/machine.py\tRepeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
-      "kind": "bug",
-      "path": "src/forge/machine.py",
-      "line": 106,
-      "text": "Repeated test runs lost their waiting queue entry and exited before starting, preventing reliable local verification.",
-      "from": "worker",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: Developer assignments must be discoverable and current in teammate checkouts\tstart-is-claim",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 448,
-      "text": "Not done: Developer assignments must be discoverable and current in teammate checkouts",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/task.py\tPreserve starter attribution through normal squash merges and branch cleanup\tstart-is-claim",
-      "kind": "bug",
-      "path": "src/forge/task.py",
-      "line": 140,
-      "text": "Preserve starter attribution through normal squash merges and branch cleanup",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/task.py\tPublish the retained start reference when a failed start is later recovered\tstart-is-claim",
-      "kind": "bug",
-      "path": "src/forge/task.py",
-      "line": 137,
-      "text": "Publish the retained start reference when a failed start is later recovered",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: proof list\tstart-is-claim",
-      "kind": "bug",
-      "path": "tests/test_started_branches_claim_the_work.py",
-      "line": 119,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: required tests check\tstart-is-claim",
-      "kind": "bug",
-      "path": "tests/test_started_branches_claim_the_work.py",
-      "line": 86,
-      "text": "Not done: required tests check",
-      "from": "blocking",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tDo not recreate expired merged assignments as unstarted parts",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 444,
-      "text": "Do not recreate expired merged assignments as unstarted parts",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tNormalize task IDs before adding assigned board rows",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 443,
-      "text": "Normalize task IDs before adding assigned board rows",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/nextstep.py\tCheck approval before offering starts from a published draft",
-      "kind": "edge",
-      "path": "src/forge/nextstep.py",
-      "line": 413,
-      "text": "Check approval before offering starts from a published draft",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/task.py\tAccount for retained start tags before reusing an abandoned branch name",
-      "kind": "edge",
-      "path": "src/forge/task.py",
-      "line": 133,
-      "text": "Account for retained start tags before reusing an abandoned branch name",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/task.py\tAccount for retained tags before reusing an abandoned branch name",
-      "kind": "edge",
-      "path": "src/forge/task.py",
-      "line": 135,
-      "text": "Account for retained tags before reusing an abandoned branch name",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/task.py\tPreserve starter attribution when promoting a fix into a story part",
-      "kind": "edge",
-      "path": "src/forge/task.py",
-      "line": 146,
-      "text": "Preserve starter attribution when promoting a fix into a story part",
-      "from": "review",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "improve\t.codex/skills/forge/SKILL.md\tChecked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
-      "kind": "improve",
-      "path": ".codex/skills/forge/SKILL.md",
-      "line": 75,
-      "text": "Checked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
-      "from": "worker",
-      "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 183,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
-      "from": "blocking",
-      "item": "gh-retry",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 187,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
-      "from": "blocking",
-      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     }
