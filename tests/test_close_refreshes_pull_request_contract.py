@@ -5,6 +5,7 @@ Existing title coverage never amends a published contract or changes the platfor
 """
 import pytest
 
+from conftest import patient
 from test_close import STORY_DOC, body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -41,9 +42,21 @@ def test_2_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, mon
                STORY_DOC.replace("Shoppers can save a basket", title, 1))
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_task()
-    monkeypatch.setenv("LC_ALL", "C")
+    # Initialize UTF-8 argv encoding, then switch only text decoding to the C locale.
+    # Starting Linux in an uncoerced C locale also makes publishing Unicode argv fail.
+    monkeypatch.delenv("LC_ALL", raising=False)
+    monkeypatch.setenv("LC_CTYPE", "C")
     monkeypatch.setenv("PYTHONUTF8", "0")
-    monkeypatch.setenv("PYTHONCOERCECLOCALE", "0")
+    monkeypatch.setenv("PYTHONCOERCECLOCALE", "1")
+    shim = env.repo.bin / "forge"
+    source = shim.read_text("utf-8")
+    patient(lambda: shim.write_text(source.replace("from forge.cli import main",
+        "import locale\n"
+        "assert sys.getfilesystemencoding() == 'utf-8'\n"
+        "assert not sys.flags.utf8_mode\n"
+        "locale.setlocale(locale.LC_CTYPE, 'C')\n"
+        "assert locale.getpreferredencoding(False).lower() not in ('utf-8', 'utf8')\n"
+        "from forge.cli import main"), encoding="utf-8"))
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [created] = env.gh_calls("pr", "create")
