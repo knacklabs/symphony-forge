@@ -280,7 +280,8 @@ def stop(args: Any) -> int:
         for run in selected:
             if (run.get("agent") or run["started_at"]) and codex._alive(run["process"]) is True:
                 ended = codex._stop(run["process"], run["process"] != run.get("forge"))
-                if not ended or codex._alive(run["process"]) is not False:
+                # The tree is confirmed ended even if its leader still awaits reaping.
+                if not ended:
                     raise repo.Refused("Forge could not confirm the run stopped; its place is still held.", "")
             runs.remove(run)
     print("Stopped the run." if selected else "There is nothing to stop.")
