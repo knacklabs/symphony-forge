@@ -339,18 +339,15 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
                                                           "model": "gpt-6-sol",
                                                           "model_reasoning_effort": "low"}
 
-    # Claude workers take the kind's model and effort, and refuse subagents.
+    # Claude workers take the kind's model and effort; Codex-only subagent settings are ignored.
     claude = install_claude(repo)
-    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus"}}), encoding="utf-8")
-    refused = repo.forge("work", "BOARD/PAGE")
-    assert refused.stderr == MODELS_REFUSAL.format(
-        "Claude workers take model and effort, so [models.build] can't set subagents")
-    assert claude_calls(claude) == []
-    toml.write_text(_toml(version, "claude", {"build": {"model": "opus", "effort": "high"}}),
-                    encoding="utf-8")
+    toml.write_text(_toml(version, "claude", {"build": {**SOL, "model": "opus", "effort": "high"}}),
+                   encoding="utf-8")
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
-    assert claude_calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
+    [sent] = claude_calls(claude)
+    assert sent["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
+    assert not any("subagent" in arg or SOL["subagents"] in arg for arg in sent["args"])
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data):
