@@ -29,6 +29,8 @@ REVIEW_LOOP = (
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
+SETTINGS = ("Workers never edit `forge.toml`. It belongs to the coordinator, through a settings "
+            "fix the owner asked for. Report a needed settings change in your last message instead.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
                 "Commit your work on this branch first. Run "
@@ -344,6 +346,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
     values: dict[str, str] = {
+        "settings": SETTINGS,
         "review_loop": REVIEW_LOOP,
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -392,6 +395,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     if continued:
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += "\n" + values["delegation"] + "\n"
+        brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
