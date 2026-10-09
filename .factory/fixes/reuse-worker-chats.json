@@ -3,6 +3,7 @@
   "branch": "fix/reuse-worker-chats",
   "done_when": "Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or effort change, a Forge or machine restart, or a fresh worktree of the same item; a fresh chat starts only when the recorded chat truly can't be resumed (the tool reports it gone, or the item moved to the other tool), and then the round says why in one line; plan reads keep their reader chat across rounds the same way; the coordinator guide says so; command tests with stubbed Codex and Claude cover each resume case and each fresh-chat reason, for a new repo and one adopted on an earlier release",
   "flagged": [
+    "src/forge/codex_turn.py",
     "src/forge/story.py",
     "src/forge/worker.py",
     "tests/test_worker_and_reader_chats_survive_rounds.py"
@@ -10,16 +11,31 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d34ba01d3c6e76fbd42b6fbaf9ce614237c70814a7dc2115e4df2fc967c4415f",
-    "changed": "acbce563fc76ea3c8f92328f834ef49416392bfbe67fcbd0d5e3e7b78f391a53",
-    "commit": "fee29c49a15aee402687329be1bb453afacefe10",
+    "branch_diff": "4f2cb850f7fcd5429b7c165e8cb0d4440c105b170988016d3e80c1927602a171",
+    "changed": "6c3141e74672fde241ebb6dd68734ba07d188304fef8056f2d04540233efc6a8",
+    "commit": "5e218431926b4fadcfc559f4895aa7689fbf63c8",
     "dismissals": [],
-    "findings": [],
-    "id": "fa50d955-b040-49cf-888d-fc7d94d6a97a",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "When a recorded Codex rollout is gone, the pinned runtime returns `no rollout found for thread id <id>`, as verified in [Codex 0.159.2's resume error mapping](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/app-server/src/request_processors/thread_processor.rs). This whitelist instead expects `no rollout found for <id>`, so it raises and stops rather than starting a replacement chat with a reason. This affects task workers, fix workers and plan readers. Proof tests 3 and 6 pass because their inherited stubs emit the incorrect wording at tests/test_codex_resume.py:101 and tests/test_readloop_rounds.py:79. Recognize the pinned runtime's actual missing-rollout response and use that response in both command proofs.",
+        "file": "src/forge/codex_turn.py",
+        "line": 209,
+        "priority": "P1",
+        "title": "Not done: Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or Eff"
+      },
+      {
+        "body": "An existing client can upgrade with a passing Codex reader whose chat was already archived: tests/fixtures/forge-v1.2.2/src/forge/story.py:255 explicitly archives passing reads. This path now resumes its recorded ID without restoring it. [Codex 0.159.2 rejects archived sessions during resume](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/app-server/src/request_processors/thread_processor.rs), so later amendments repeatedly fail instead of continuing that chat. Removing future archival does not repair these existing sessions. The adopted-client proof creates its first read using the current implementation (tests/test_worker_and_reader_chats_survive_rounds.py:148), leaving this upgrade case uncovered. Restore the archived reader chat and add a command test beginning with an earlier-release passing read.",
+        "file": "src/forge/story.py",
+        "line": 251,
+        "priority": "P1",
+        "title": "Not done: Resume reader chats archived by an earlier release"
+      }
+    ],
+    "id": "7688a040-6f69-4261-a444-2aa2979d5649",
+    "status": "blocked"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -32,8 +48,15 @@
     {
       "at": "2026-10-09T20:54:02+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:51:53+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "file": "src/forge/story.py"
+  },
   "why": "Worker chats should be reused: each task or fix should keep the same worker conversation from its first round until it merges, but today some rounds start a fresh chat (for example when the model or effort changes, after Forge restarts, or when a record is missing), losing context and costing tokens (owner, 2026-10-09)",
   "worker": "codex"
 }
