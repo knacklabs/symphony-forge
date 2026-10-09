@@ -20,38 +20,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f04b819713e9e11328cc5a87adaae32325cb03f1013a11f8c169aab4f775b2ef",
-    "changed": "b0d127114857efb267d6e20178588d5352bbc5f5110791c4b278fbbfd738f3ad",
-    "commit": "7c9a3feb9be078f35da2562e80162171ae57d0e1",
+    "branch_diff": "d6d9e1aff4b6521585f9ba735672e30f284f1fafe1801d5035fcab7bb2f2b455",
+    "changed": "8b6e4576fbdc966c119e6f533f85f9c0035a83fdb0b6af7551d5973bb120660b",
+    "commit": "e7e178afee7f90bf8bc4e22650c76e1c553fe032",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The setting changes, but the promised routing does not work in this repository. forge.toml retains repo = \"forge-source\". src/forge/repo.py:424 recognizes user-facing tasks only when repo == \"client\"; src/forge/worker.py:73 uses that result, so even a User-facing: yes story task still selects Codex. tests/test_design_route.py:57\u201364 explicitly exercises this source-repository exception. The Claude design entry is correctly configured, but this change never selects it for this repository's user-facing story tasks. Address that routing gap while leaving the remaining forge.toml settings unchanged.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op "
-      },
-      {
-        "body": "tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:35 reads this checkout's forge.toml and unconditionally asserts config[\"workers\"] == \"codex\". Changing the setting to \"split\" makes that assertion fail. The test remains included in the pytest tests command configured here and in .github/workflows/forge.yml. Update the obsolete expectation while preserving its checks that ordinary work and reviews remain on Codex.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "title": "Update the repository test that still requires Codex workers"
-      },
-      {
-        "body": "The supplied proof list is missing, and the latest worker commit contains only its subject. The review contract requires a list covering every Done-when detail with named proof: split workers, user-facing work selecting Claude Opus at high effort, remaining work staying on Codex, and no other forge.toml changes. Provide that complete list and the checks supporting its claims; the current routing exception must be addressed before claiming the user-facing requirement is proven.",
-        "file": "forge.toml",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "c22fe715-ed92-4a81-8bea-3b02710e55a3",
-    "status": "blocked"
+    "findings": [],
+    "id": "ad36efc3-72c4-412b-bf22-d34b657595cf",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:18:16+00:00",
@@ -59,6 +37,10 @@
     },
     {
       "at": "2026-10-09T16:54:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:44:49+00:00",
       "step": "review"
     }
   ],
