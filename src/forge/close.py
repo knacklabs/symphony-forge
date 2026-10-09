@@ -134,7 +134,8 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     _merge_default(top, item, branch, default)
-    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept")
+    repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
+                    before=getattr(args, "pin_before", None))
     if switch:
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}",
                              "HEAD", cwd=top).splitlines())

@@ -10,6 +10,7 @@ import pytest
 from conftest import GH_STUB, _install, patient
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
+from test_running_commands_follow_changed_forge_pin import _earlier_release
 
 STORY = "merge-behind-base"
 
@@ -54,7 +55,7 @@ def _client(env, tmp_path, previous):
     return log
 
 
-def _github_moves_default(env, conflict, merge_state):
+def _github_moves_default(env, conflict, merge_state, upgraded=None, failing_test=False):
     """GitHub advances main at the first merge attempt, then enforces head matching."""
     remote = env.repo.git("remote", "get-url", "origin")
     code = '''import json, pathlib, subprocess, sys
@@ -63,6 +64,8 @@ args = sys.argv[1:]
 remote = REMOTE
 conflict = CONFLICT
 merge_state = MERGE_STATE
+upgraded = UPGRADED
+failing_test = FAILING_TEST
 marker = here / "default-moved"
 merged = here / "github-merged"
 def git(*words, cwd=None):
@@ -88,6 +91,12 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
         text = text.replace("Original greeting", "Other greeting") if conflict else text.replace("Old closing", "Other closing")
         (checkout / "README.md").write_text(text, encoding="utf-8")
         git("add", "README.md", cwd=checkout)
+        if upgraded is not None:
+            (checkout / "forge.toml").write_text(upgraded, encoding="utf-8")
+            git("add", "forge.toml", cwd=checkout)
+        if failing_test:
+            (checkout / "verify.py").write_text("raise AssertionError('The upgraded client test fails')\\n", encoding="utf-8")
+            git("add", "verify.py", cwd=checkout)
         git("commit", "-qm", "Another pull request merged", cwd=checkout)
         git("push", "-q", "origin", "main", cwd=checkout)
         marker.write_text(git("rev-parse", "HEAD", cwd=checkout), encoding="utf-8")
@@ -106,7 +115,8 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
     merged.write_text("merged", encoding="utf-8")
     sys.exit(0)
 '''.replace("REMOTE", json.dumps(remote)).replace("CONFLICT", repr(conflict)).replace(
-    "MERGE_STATE", json.dumps(merge_state))
+    "MERGE_STATE", json.dumps(merge_state)).replace("UPGRADED", repr(upgraded)).replace(
+    "FAILING_TEST", repr(failing_test))
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
@@ -164,3 +174,69 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         assert not where.exists()
         assert any("main" in line and "close" in line.lower() and "again" in line.lower()
                    for line in result.stdout.splitlines()), result.stdout
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
+@pytest.mark.parametrize("command,failing_test", [("merge", False), ("land", False),
+                                                ("merge", True)],
+                         ids=["merge-green-close", "land-green-close", "merge-red-close"])
+def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying_merge(
+        env, tmp_path, monkeypatch, previous, command, failing_test):
+    test_log = _client(env, tmp_path, previous)
+    current = env.repo.forge("--version").stdout.split()[-1]
+    _earlier_release(env)
+    monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
+    _, prepared = env.start("repin-client", "fix/repin-client",
+                            ".factory/fixes/repin-client.json",
+                            {"kind": "fix", "why": "Run the earlier release",
+                             "done_when": "The client uses its earlier Forge pin"}, {})
+    config = (prepared / "forge.toml").read_text("utf-8")
+    config = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', config)
+    env.commit(prepared, "forge.toml", config)
+    env.repo.git("merge", "-q", "--ff-only", "fix/repin-client")
+    remote = Path(env.repo.git("remote", "get-url", "origin"))
+    env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
+    item, where = env.start_fix({"app.py": "print('hello')\n",
+                                 "README.md": "Branch greeting\n\nKeep this paragraph.\n\nOld closing\n"})
+    env.open_pr("")
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    first_head = env.repo.git("rev-parse", "HEAD", cwd=where)
+    before_reviews = len(env.review_calls())
+    upgraded = config.replace('version = "v1.2.2"', f'version = "{current}"\nfast_test = ""')
+    _github_moves_default(env, False, "BEHIND", upgraded, failing_test)
+
+    done = env.repo.forge(command, item, cwd=where)
+
+    attempts = env.gh_calls("pr", "merge")
+    resumed = [entry["args"][5:] for line in
+               (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()
+               if (entry := json.loads(line))["args"][5] in {"close", "merge", "land"}]
+    # Merge must finish the selected release's close first; land resumes its existing close loop.
+    expected = [["land", item]] if command == "land" else (
+        [["close", item]] if failing_test else [["close", item], ["merge", item]])
+    assert resumed == expected
+    if failing_test:
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "The upgraded client test fails" in done.stdout + done.stderr
+        assert len(attempts) == 1
+        assert len(env.review_calls()) == before_reviews
+        assert where.is_dir()
+        assert not (env.repo.bin / "github-merged").exists()
+        return
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert len(attempts) == 2
+    heads = [call[call.index("--match-head-commit") + 1] for call in attempts]
+    assert heads[0] == first_head and heads[1] != first_head
+    advanced = (env.repo.bin / "default-moved").read_text("utf-8")
+    env.repo.git("merge-base", "--is-ancestor", advanced, heads[1])
+    assert len(env.review_calls()) == before_reviews + 1
+    env.repo.git("merge-base", "--is-ancestor", advanced, env.review_calls()[-1]["head"])
+    tested = [json.loads(line) for line in test_log.read_text("utf-8").splitlines()]
+    assert len(tested) == 2
+    env.repo.git("merge-base", "--is-ancestor", advanced, tested[-1])
+    assert any(f"/commits/{heads[1]}/" in call[-1] for call in env.gh_calls("api"))
+    assert env.repo.git("show", "origin/main:forge.toml") == upgraded.strip()
+    assert env.repo.git("show", "origin/main:README.md") == (
+        "Branch greeting\n\nKeep this paragraph.\n\nOther closing")
+    assert not where.exists()

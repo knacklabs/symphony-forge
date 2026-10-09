@@ -964,8 +964,10 @@ A clean review clears an unanswered review-loop stop.
 
 When GitHub refuses because the branch is behind the default branch, `forge merge` and
 `forge land` say so in one line, run close again to merge the default branch and run the tests,
-review and checks as close decides, then retry the merge. A real conflict stops with close's
-existing resolution steps. Other GitHub refusals keep their next action.
+review and checks as close decides, then retry the merge. If that merge selects a different
+Forge release, close finishes under that release before the original command continues.
+A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their
+next action.
 
 ## Check-back
 

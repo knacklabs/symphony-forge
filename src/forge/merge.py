@@ -113,7 +113,9 @@ def merge(args: argparse.Namespace) -> int:
                         print(f"{default} moved; Forge is merging it into this branch, running "
                               "close again and retrying the merge.", flush=True)
                         close.close(argparse.Namespace(item=item, dismiss=None, because=None,
-                                    wait_for_progress=getattr(args, "wait_for_progress", False)))
+                                    wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    land_rounds=getattr(args, "land_rounds", None),
+                                    pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
                         return merge(args)
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
