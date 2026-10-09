@@ -142,7 +142,11 @@ def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
     assert ("GitHub did not answer" if answer == "unreadable" else
             "has not reported" if answer == "old-head" else "is still running") in done.stderr
     assert not env.gh_calls("pr", "merge")
-    assert 4 <= len(env.gh_calls(*RUNS)) <= 6
+    if answer == "unreadable":
+        # Each failed progress lookup now exhausts four read attempts and seven seconds.
+        assert len(env.gh_calls(*RUNS)) == 16
+    else:
+        assert 4 <= len(env.gh_calls(*RUNS)) <= 6
 
 
 def test_4_close_keeps_its_fixed_wait(clock):

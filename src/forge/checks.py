@@ -183,6 +183,7 @@ def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]
         found = None
     if not isinstance(found, list) or not all(isinstance(entry, dict) for entry in found):
         said = (done.stderr.strip() or done.stdout.strip() or "no readable answer").splitlines()[-1]
-        repo.refuse(REFUSALS["not_green"], reason=f"GitHub did not answer: {said.rstrip('.')}",
+        reason = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said.rstrip('.')}"
+        repo.refuse(REFUSALS["not_green"], reason=reason.rstrip("."),
                     item=item)
     return found

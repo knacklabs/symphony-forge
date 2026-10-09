@@ -918,6 +918,9 @@ being replaced while none are queued, and says which checks are still running, m
 unreadable. Close on its own still waits at most ten minutes while none are queued. When it
 stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
+GitHub reads also retry unreadable answers and server errors three times, pausing for one,
+two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
+permission refusals stop immediately; writes are never replayed by these read retries.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
