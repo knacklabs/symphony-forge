@@ -334,7 +334,8 @@ def fix_start(args: argparse.Namespace) -> None:
     main = main_ref()
     slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
     taken = {ref.split("/fix/", 1)[1] for ref in git(
-        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/").splitlines()}
+        "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
+        "refs/tags/forge-start/fix/").splitlines()}
     name, n = slug, 1
     while name in taken or _merged(main, name):
         n += 1
@@ -349,6 +350,8 @@ def fix_start(args: argparse.Namespace) -> None:
         state["allow_large"] = "Prototype before sign-off"
     path = _new_checkout(name, f"fix/{name}", f"fix-{name}", base, state, f"Start the fix: {why}")
     print(f"Started fix {name} on fix/{name} in {path}")
+    if name != slug:
+        print(f"Fix name {slug} is already taken; using {name}.")
     print(f"Next: forge work {name}")
 
 
