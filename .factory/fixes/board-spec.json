@@ -8,24 +8,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "55ebd214adba4de774d9c3f6c7a31230559e28a6f144eb61d0ae03925b865f96",
-    "changed": "97cc7854417ecc64ec6e392cb237e471a6ebf3c466c09128250700ad460c7cf6",
-    "commit": "809b9b51aa89520baee452cddbd335c8586028e9",
+    "branch_diff": "6b498f5bc61de3ed74e10aedacf9d2a5dc203fae9b74bb5807cbb4982e0e72e0",
+    "changed": "22030072a79c3bde30fc322be4e9005580388440151eb2d41b986e866164cbc0",
+    "commit": "5f5cdb43c2bbc6933222b430bca053a9c46e3b55",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The supplied proof list is explicitly missing, and the latest commit contains no `Proof list:` paragraph. Add entries covering every Done-when detail: the saved spec, the final cold-read round with no findings, owner confirmation, and the roadmap entry, each naming its evidence. The committed artifacts support these steps but do not replace the required proof list copied into the pull request.",
-        "file": ".factory/fixes/board-spec.json",
-        "line": 4,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "fa1ca41b-cc47-428e-bf01-120d21da99f5",
-    "status": "blocked"
+    "findings": [],
+    "id": "3e76bcea-7bc9-4ab5-b22c-386c4bfcb358",
+    "status": "clean"
   },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T15:43:43+00:00",
@@ -33,6 +25,10 @@
     },
     {
       "at": "2026-10-09T16:24:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:42:24+00:00",
       "step": "review"
     }
   ],
