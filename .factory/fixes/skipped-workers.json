@@ -1,0 +1,14 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-workers",
+  "done_when": "Lost-session recovery searches all of Claude's output; record_progress retries a busy events file on Windows like codex does; Claude workers ignore Codex-only subagent keys; a fix name used by an abandoned start tag is treated as taken with a plain message; migration filters stage records by story; command tests cover each, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:36+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Real issues the coordinator skipped, still in workers, tasks and migration (audit, 2026-10-09): lost-session recovery misses errors Claude reports as structured output, on Windows a reader holding the events file open makes record_progress abort the run, a workers = claude repo with an edited lite model is refused on its first fix, restarting an abandoned fix with the same name fails partway, and migration stage records cross stories so a done task can be un-marked"
+}
