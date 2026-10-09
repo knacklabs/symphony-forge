@@ -1,30 +1,52 @@
 {
-  "amendments": [
-    {
-      "at": "2026-10-09T16:41:22+00:00",
-      "because": "Owner (2026-10-09): when Claude implements, use Sonnet at xhigh by default, frontend included",
-      "done_when": "forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-opus-5-5, high) and everything else stays on Codex; nothing else in forge.toml changes"
-    },
-    {
-      "at": "2026-10-09T16:41:30+00:00",
-      "because": "Owner (2026-10-09): Claude implementation and cold reads use Sonnet at xhigh by default, frontend included",
-      "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation entry (build, fix, lite and design) uses claude-sonnet-5-5 at xhigh effort; plan reads, reviews and sign-off settings are unchanged; this repo's settings test pins both"
-    },
-    {
-      "at": "2026-10-09T16:50:12+00:00",
-      "because": "Owner (2026-10-09): frontend on Opus 5.5 medium; other Claude implementation and cold reads on Sonnet xhigh",
-      "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex, and every Claude implementation and plan-read entry (build, fix, lite, design and grill) uses claude-sonnet-5-5 at xhigh effort; reviews and sign-off settings are unchanged; this repo's settings test pins both"
-    }
-  ],
   "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
   "branch": "fix/workers-split",
-  "done_when": "forge.toml sets workers = \"split\" so user-facing story parts are built by Claude and everything else stays on Codex; user-facing Claude work (design) uses claude-opus-5-5 at medium effort, and the other Claude implementation and plan-read entries (build, fix, lite and grill) use claude-sonnet-5-5 at xhigh; reviews and sign-off settings are unchanged; this repo's settings test pins them",
+  "done_when": "forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-opus-5-5, high) and everything else stays on Codex; nothing else in forge.toml changes",
+  "flagged": [
+    "forge.toml"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f04b819713e9e11328cc5a87adaae32325cb03f1013a11f8c169aab4f775b2ef",
+    "changed": "b0d127114857efb267d6e20178588d5352bbc5f5110791c4b278fbbfd738f3ad",
+    "commit": "7c9a3feb9be078f35da2562e80162171ae57d0e1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The setting changes, but the promised routing does not work in this repository. forge.toml retains repo = \"forge-source\". src/forge/repo.py:424 recognizes user-facing tasks only when repo == \"client\"; src/forge/worker.py:73 uses that result, so even a User-facing: yes story task still selects Codex. tests/test_design_route.py:57\u201364 explicitly exercises this source-repository exception. The Claude design entry is correctly configured, but this change never selects it for this repository's user-facing story tasks. Address that routing gap while leaving the remaining forge.toml settings unchanged.",
+        "file": "forge.toml",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op "
+      },
+      {
+        "body": "tests/test_fix_the_owner_moved_this_repo_s_workers_from.py:35 reads this checkout's forge.toml and unconditionally asserts config[\"workers\"] == \"codex\". Changing the setting to \"split\" makes that assertion fail. The test remains included in the pytest tests command configured here and in .github/workflows/forge.yml. Update the obsolete expectation while preserving its checks that ordinary work and reviews remain on Codex.",
+        "file": "forge.toml",
+        "line": 4,
+        "priority": "P1",
+        "title": "Update the repository test that still requires Codex workers"
+      },
+      {
+        "body": "The supplied proof list is missing, and the latest worker commit contains only its subject. The review contract requires a list covering every Done-when detail with named proof: split workers, user-facing work selecting Claude Opus at high effort, remaining work staying on Codex, and no other forge.toml changes. Provide that complete list and the checks supporting its claims; the current routing exception must be addressed before claiming the user-facing requirement is proven.",
+        "file": "forge.toml",
+        "line": 4,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "c22fe715-ed92-4a81-8bea-3b02710e55a3",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:18:16+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T16:54:58+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner wants frontend code built by Claude Opus, not Codex (2026-10-09); this repo's forge.toml sends every task and fix to Codex"

@@ -144,6 +144,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -1343,6 +1376,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 72,
+      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "forge-ci-linux-prs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_close_runs_only_related_tests.py\tStandard: Touch only what the task needs\tFORGE-LANES-1/AGENTS",
       "kind": "bug",
       "path": "tests/test_close_runs_only_related_tests.py",
@@ -1405,6 +1449,17 @@
       "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "from": "worker",
       "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
+      "kind": "bug",
+      "path": "tests/test_codex_project_paths_and_pr_links.py",
+      "line": 23,
+      "text": "Not done: full-suite test compatibility",
+      "from": "blocking",
+      "item": "codex-project-roots",
       "status": "open",
       "closed_by": null
     },
@@ -2597,6 +2652,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
       "kind": "edge",
       "path": "src/forge/mod/hooks/events.ts",
@@ -3121,50 +3198,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 132,
-      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
-      "from": "review",
-      "item": "merge-guard-base",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 132,
-      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
-      "from": "review",
-      "item": "merge-guard-base",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
-      "kind": "bug",
-      "path": "tests/test_codex_project_paths_and_pr_links.py",
-      "line": 23,
-      "text": "Not done: full-suite test compatibility",
-      "from": "blocking",
-      "item": "codex-project-roots",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_ci_job_budgets.py",
-      "line": 72,
-      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "forge-ci-linux-prs",
       "status": "open",
       "closed_by": null
     }
