@@ -2826,6 +2826,50 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners, by removing the real cause of \u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/machine.test.ts\tNot done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026\tmachine-test-speed",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/machine.test.ts",
+      "line": 231,
+      "text": "Not done: The terminal Machine native test checks the same facts in well under its time limit on CI runners\u2026",
+      "from": "blocking",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_resume.py\tThe Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_codex_resume.py",
+      "line": 559,
+      "text": "The Linux full-suite missing-turn recovery refusal passed in the focused local run and remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_views_recent_finished_items.py\tWindows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_machine_views_recent_finished_items.py",
+      "line": 184,
+      "text": "Windows shard worker gw1 crashed in the next-new recent-finished-items case while git waited in its landed fixture; the failure remains unresolved.",
+      "from": "worker",
+      "item": "machine-test-speed",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
