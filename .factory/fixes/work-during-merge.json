@@ -6,24 +6,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1c26987828d9748b70f470db011e3f40bdb01b0457da6a465d3657a1d77010c5",
-    "changed": "1ca7c5bd0519f082fa6a97e5bd019879da9df686348fc3ddb24c76782ab7142b",
-    "commit": "c689848b9a9d3256b050d9e19e272f56e8d3d0b8",
+    "branch_diff": "8330076f90d6a2efc10c3d4345677fc9e91c8b37b15c31c2f63f0ced568d77c4",
+    "changed": "2c27dbcc021e1d1b9a8967f3853949627e22abec66b47756dc50ada37eb03f0c",
+    "commit": "2d181e5b1f804d129637870449bba91a1feeacf7",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previously reported gap remains for both task and fix checkouts: when the merge conflicts in `forge.toml` and `forge work` runs inside that checkout, `src/forge/cli.py:138` calls `check_pin` before this guard. `src/forge/repo.py:569` parses the caller's configuration; conflict markers trigger the configuration refusal with `Next: forge doctor` rather than the resolve-and-commit guidance. Detect the pending merge before that parse. The four added cases conflict only in `merge.txt`, so they pass while this path remains broken.",
+        "body": "The previously reported gap remains for both task and fix checkouts. When a merge conflicts in `forge.toml` and `forge work` runs inside that checkout, `src/forge/cli.py:138` calls `check_pin` before reaching this guard. `src/forge/repo.py:569` parses the configuration, and conflict markers trigger the configuration refusal with `Next: forge doctor` instead of the resolve-and-commit guidance. Detect the pending merge before that parse. The four added cases conflict only in `merge.txt`, so they pass while this path remains broken.",
         "file": "src/forge/worker.py",
         "line": 68,
         "priority": "P2",
         "title": "Check for a pending merge before parsing a conflicted forge.toml"
       }
     ],
-    "id": "569a27ce-07c8-4ce3-ba06-ed4dbe09b392",
+    "id": "df86e436-fd2d-472d-8bff-f85516d56651",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T13:06:47+00:00",
@@ -39,6 +39,10 @@
     },
     {
       "at": "2026-10-09T20:47:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:22:51+00:00",
       "step": "review"
     }
   ],
