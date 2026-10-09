@@ -80,12 +80,27 @@ def upgrade(args: argparse.Namespace) -> int:
     if _numbers(release) <= _numbers(pinned):
         repo.refuse(REFUSALS["not_newer"], default=default, pinned=pinned, release=release)
     name, ref = PREFIX + release.replace(".", "-"), f"origin/{default}"
+    repo.set_version(story.show(top, ref, "forge.toml") or "", release)  # refuses before anything
     trees = story.worktrees(top)
     for other, path in trees.items():
         if other.startswith(f"fix/{PREFIX}") and other != f"fix/{name}":
+            shown = repo.run("gh", "pr", "view", other, "--json",
+                             "state,headRefOid,headRefName,baseRefName", cwd=top) if shutil.which("gh") else None
+            try:
+                pr = json.loads(shown.stdout) if shown and shown.returncode == 0 else {}
+            except ValueError:
+                pr = {}
+            # Squash merges do not make the fix's commits ancestors of the default branch.
+            if (isinstance(pr, dict) and pr.get("state") == "MERGED"
+                    and pr.get("headRefName") == other and pr.get("baseRefName") == default
+                    and pr.get("headRefOid") == repo.git("rev-parse", other, cwd=top)
+                    and not repo.git("status", "--porcelain", "--untracked-files=all", cwd=path)):
+                repo.git("worktree", "remove", str(path), cwd=top)
+                repo.git("branch", "-D", other, cwd=top)
+                print("Removed the finished upgrade's worktree and local branch.", flush=True)
+                continue
             repo.refuse(REFUSALS["other_open"], fix=other[4:], path=path,
                         other=other[4 + len(PREFIX):].replace("-", "."))
-    repo.set_version(story.show(top, ref, "forge.toml") or "", release)  # refuses before anything
     why, done = f"Upgrade Forge to {release}.", f"This repo pins and runs Forge {release}."
 
     # 1. The fix, started like forge fix start's, or the one an earlier run left.
