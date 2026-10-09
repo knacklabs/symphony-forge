@@ -10,13 +10,54 @@
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/start-is-claim",
   "done_when": "forge task start, forge fix start and forge story new push the new branch to GitHub as soon as it is made, so the branch is the claim and the author of its start commit is its owner; when the push fails the command says so plainly and the work stays local; task start's existing already-started refusal names the person who started the part on GitHub. A story's parts table may carry an optional Developer column (a GitHub username) that the lead fills or changes below For the builders without a new approval; forge next shows a developer the parts assigned to them that can start, matched by their GitHub login; when someone other than the assigned developer starts a part, task start goes ahead and says who it was assigned to; the board page and forge board --json show for each story, part and fix its approver, its assigned developer when set, and who started it; story docs without the column work as today; no other assignee field or roster is added; the story template and coordinator guide describe the column; command tests cover a new repo and one adopted on an earlier release, including a second checkout refused with the first starter's name, an assigned part shown in that developer's forge next, and a warned start by someone else",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/task.py",
+    "tests/test_started_branches_claim_the_work.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e06f11488ac6c547293b624cc953a8012b32b8d3cc09cd67223dd7fc6a0e58e9",
+    "changed": "6d9443281aa987e8b3728ae532c901b8438f941b863951334aeea12f776102a3",
+    "commit": "0862fb995073ded0bf349b7df4e7b028d144120a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The amended Done-when's Developer feature is absent. Adding a Developer column is tolerated by the existing table parser, but task start never reads it or warns when another developer starts the part; nextstep.py:447\u2013470 offers every ready part without matching the caller's GitHub login; and both board outputs contain only starter and approver fields, with no assigned developer. The unchanged story template at src/forge/templates/story.md:42\u201353 and all three changed coordinator guides also omit the column and its editing rules. Implement these behaviours and document the optional column below For the builders while preserving existing documents without it.",
+        "file": "src/forge/board.py",
+        "line": 381,
+        "priority": "P1",
+        "title": "Not done: Developer assignments in task start, forge next, the board and story guidance"
+      },
+      {
+        "body": "The proof list omits the assignment behaviours added by the owner amendment, and the command suite provides no corresponding evidence. Its story fixture has no Developer column, no new test invokes forge next, and the board test asserts only started_by and approved_by. Missing cases are: an assigned ready part shown to its developer using their GitHub login; a different developer successfully starting it with an assignment warning; assigned developers displayed on the board page and JSON; and assignments added or changed below For the builders without another approval. Cover these through real commands for both client histories and add their proof entries. The supplied 18 passing tests do not exercise any of these behaviours.",
+        "file": "tests/test_started_branches_claim_the_work.py",
+        "line": 119,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      },
+      {
+        "body": "starters() can read only start commits reachable from current refs. The normal merge flow squash-merges using the PR title (src/forge/merge.py:92\u201393), deletes the remote branch (lines 118\u2013123), and removes the local branch (lines 134\u2013138). The board's new fetch then prunes the remaining remote-tracking ref. For a completed fix or part whose start commit has no remaining ref, the squash commit does not retain the original commit's author identity, so started_by becomes null and the page drops its starter despite still displaying the item. Story attribution similarly disappears after all branches retaining its original history are removed. The new board test keeps every branch alive and therefore misses this normal lifecycle. Retain or retrieve the original git start-commit identity through the merge and cleanup flow, and exercise that flow in the command proof.",
+        "file": "src/forge/task.py",
+        "line": 140,
+        "priority": "P1",
+        "title": "Preserve starter attribution through normal squash merges and branch cleanup"
+      }
+    ],
+    "id": "d358cde5-e584-4ecc-979f-50a6bda035ea",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T07:48:02+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T08:23:35+00:00",
+      "step": "review"
     }
   ],
   "why": "On a team, started work stays on the laptop where it began until its first close, so teammates can't see who is working on what and two developers can start the same part; no person is shown on any item. Owner decision 2026-10-09: starting is the claim, with git as the one record",

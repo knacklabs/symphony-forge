@@ -155,6 +155,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: Developer assignments in task start, forge next, the board and story guidance\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 381,
+      "text": "Not done: Developer assignments in task start, forge next, the board and story guidance",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tNot done: Git command counts still grow with old finished items\tfast-views",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -360,6 +371,17 @@
       "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
       "from": "blocking",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 126,
+      "text": "Not done: merge-enable close must check the final published change",
+      "from": "blocking",
+      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     },
@@ -1156,6 +1178,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\tPreserve starter attribution through normal squash merges and branch cleanup\tstart-is-claim",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 140,
+      "text": "Preserve starter attribution through normal squash merges and branch cleanup",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
       "kind": "bug",
       "path": "src/forge/templates/brief.md",
@@ -1948,6 +1981,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: proof list\tstart-is-claim",
+      "kind": "bug",
+      "path": "tests/test_started_branches_claim_the_work.py",
+      "line": 119,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_steer_question.py",
@@ -2153,6 +2197,17 @@
       "text": "Abort source-code conflicts before scanning live Forge modules",
       "from": "review",
       "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 188,
+      "text": "Compute mechanical fingerprints using the new empty finding set",
+      "from": "review",
+      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     },
@@ -2927,6 +2982,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tChecked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Checked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
+      "from": "worker",
+      "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -2967,28 +3033,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 126,
-      "text": "Not done: merge-enable close must check the final published change",
-      "from": "blocking",
-      "item": "enable-no-review",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 188,
-      "text": "Compute mechanical fingerprints using the new empty finding set",
-      "from": "review",
-      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     }
