@@ -910,6 +910,16 @@ If close refuses a conflicted merge, it has aborted the merge. In the item's wor
    and commit once every conflict is resolved. Then rerun `forge close <item>` or
    `forge land <item>`.
 
+Starting is the claim: `forge story new`, `forge task start` and `forge fix start` push the
+new branch to GitHub after committing its start. The author of that start commit is the person
+who started the work; the board page and `forge board --json` show them next to the plan's
+approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
+record; there is no assignee field or roster. A second checkout's
+task start names the person who already started that part on GitHub. A failed push says so
+and leaves the work local: teammates cannot see that claim until its branch is pushed.
+New repos get this at init; existing repos get it when upgraded and synced, including repos
+adopted on an earlier release.
+
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to
 start what was unblocked. Retry a start only after its dependency or overlap clears; follow

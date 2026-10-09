@@ -37,7 +37,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, repo, worker
+from forge import codex, machine, repo, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -140,6 +140,7 @@ def new(args: Any) -> int:
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))
     repo.commit_state(f"Start the story: {title}", *changed, top=path)
+    task.publish_start(path, f"story/{key}")
     print(f"Started the story {key} in {path}.")
     if fix_top:
         print(_promote(fix_top, fix, key, fix_state))

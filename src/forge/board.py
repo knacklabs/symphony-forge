@@ -52,6 +52,8 @@ Item = dict[str, Any]
 
 def board(args: Any) -> int:
     top = repo.root()
+    if repo.run("git", "fetch", "-q", "--prune", "origin", cwd=top).returncode:
+        print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
     if args.json:
         print(json.dumps(machine_board(top)))
         return 0
@@ -187,6 +189,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     landed = history["landed"]
+    starters = task.starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
@@ -375,6 +378,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
         elif checks == "unknown" and any(e.get("kind") == "ci" for e in active):
             ci = {"status": "running", "elapsed": elapsed(next(e["at"] for e in active if e.get("kind") == "ci"))}
         return {"id": item, "kind": kind, "title": title, "stage": stage,
+                "started_by": starters.get(repo.state_path(item)),
+                "approved_by": _approver(top, read_key) if read_key else None,
                 "activity": {"status": "running", "action": active[-1].get("kind")} if active else {"status": "idle"},
                 "idle_since": idle_since, "stalled": bool(idle_since and (elapsed(idle_since) or 0) > 86400),
                 "gates": {"plan_read": {"status": plan_read},
@@ -440,6 +445,7 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
     """Each story (roadmap order first) with its parts and timeline, each fix, and gh's pull
     requests (None without a working gh)."""
     landed, now = story.landed_ref(top), _when(repo.now()) or datetime.now(timezone.utc)
+    starters = task.starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged: set[str] = set()
     for rel, state, where in _copies(top, landed):
@@ -457,7 +463,10 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
 
     def part(rel: str, state: Item, branch: str, noun: str) -> Item:
         pr = by_branch.get(state.get("branch") or branch)
-        return _part(top, landed, rel, state, rel in merged, pr, checks, now, noun)
+        match = STATE.fullmatch(rel)
+        return {**_part(top, landed, rel, state, rel in merged, pr, checks, now, noun),
+                "started_by": starters.get(rel),
+                "approved_by": _approver(top, match["key"]) if match["key"] else None}
 
     found: dict[str, tuple[Item, Path | str]] = {}
     tasks: dict[str, dict[str, Item]] = {}
@@ -488,7 +497,9 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
         mine = tasks.get(key, {})
         parts = [(names.get(tid) or "A part with no name yet", mine.get(tid))
                  for tid in [*names, *sorted(set(mine) - set(names))]]
-        stories.append(_story(top, key, state, state.get("title") or titles.get(key), parts))
+        stories.append({**_story(top, key, state, state.get("title") or titles.get(key), parts),
+                        "started_by": starters.get(repo.state_path(key)),
+                        "approved_by": _approver(top, key)})
     stories.sort(key=lambda item: item["finished"])
     fixes.sort(key=lambda fix: fix["start"] or now, reverse=True)
     return stories, fixes, prs
@@ -664,7 +675,9 @@ def _story(top: Path, key: str, state: Item, title: str | None,
     if state:
         meta.append(f"A person stepped in {_times(touches)}, plus accepting "
                     f"{_n(len(finished), 'finished part')}.")
-    timeline = [(approved, _approver(top, key), "")] if approved else []
+    approver = _approver(top, key)
+    headline = f"{approver} approved the plan." if approver else "The plan was approved."
+    timeline = [(approved, headline, "")] if approved else []
     timeline += sorted((part["finished"], part["pr"].get("title") or name, _summary(part["pr"]))
                        for name, part in parts if part and part["pr"] and part["pr"].get("mergedAt")
                        and part["finished"])
@@ -741,11 +754,11 @@ def _green_at(pr: Item | None, names: list[str]) -> datetime | None:
     return max(times, default=None)
 
 
-def _approver(top: Path, key: str) -> str:
+def _approver(top: Path, key: str) -> str | None:
     """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
-    name = repo.git("log", "--all", "-1", "--format=%an", "-F", "--grep=Approve the plan: ", "--",
-                    repo.state_path(key), cwd=top)
-    return f"{name} approved the plan." if name else "The plan was approved."
+    return repo.command_fact(("approver", key), top, lambda: repo.git(
+        "log", "--all", "-1", "--format=%an", "-F", "--grep=Approve the plan: ", "--",
+        repo.state_path(key), cwd=top) or None)
 
 
 # --- plain English ---------------------------------------------------------------------------
@@ -812,10 +825,15 @@ def _cap(text: str) -> str:
 def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str:
     esc = html.escape
 
+    def people(item: Item) -> str:
+        return " ".join(f"{label} by {item[field]}." for field, label in
+                        (("started_by", "Started"), ("approved_by", "Approved")) if item.get(field))
+
     def part(name: str, item: Item | None, summary: str = "") -> str:
         if item is None:
             return f'<li><b>{esc(name)}</b>: <span class="status">Not started yet.</span></li>'
         lines = [f'<span class="detail">{esc(summary)}</span>'] if summary else []
+        lines += [f'<p class="meta">{esc(people(item))}</p>'] if people(item) else []
         lines += [f'<p class="took">{esc(_cap("; ".join(item["took"])))}.</p>'] if item["took"] else []
         lines += [f'<p class="slow">{esc(line)}</p>' for line in item["slow"]]
         url = (item.get("pr") or {}).get("url")
@@ -824,6 +842,7 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None) -> str
 
     def card(s: Item) -> str:
         body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(s["sentence"])}</p>']
+        body += [f'<p class="meta">{esc(people(s))}</p>'] if people(s) else []
         body += [f'<p class="meta">{esc(" ".join(s["meta"]))}</p>'] if s["meta"] else []
         if s["parts"]:
             body.append("<h4>Parts</h4><ul>" + "".join(part(n, p) for n, p in s["parts"]) + "</ul>")

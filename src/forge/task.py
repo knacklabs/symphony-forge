@@ -22,7 +22,7 @@ REFUSALS = {
     "not_approved": ("Story {key} is not approved yet.", "forge next"),
     "changed": ('"What changes for you" or "Done when" of story {key} changed after its approval, '
                 "so it needs a new approval.", "forge next"),
-    "started": ("{item} is already started on {branch}.", "forge work {item}"),
+    "started": ("{item} is already started on {branch}{person}.", "forge work {item}"),
     "waiting": ("{item} waits for {deps} to merge first.", "forge next"),
     "overlap": ("{item} would change {paths}, which {other} is changing and hasn't merged yet.",
                 "forge close {other}"),
@@ -122,7 +122,30 @@ def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[st
         git("checkout", carry[0], "--", *carry[1], cwd=path)
         repo.commit_state(f"Bring in the approved plan from {carry[0]}", *carry[1], top=path)
     repo.commit_state(message, rel, top=path)
+    publish_start(path, branch)
     return path
+
+
+def publish_start(top: Path, branch: str) -> None:
+    """Create the remote claim only if nobody else has made it."""
+    pushed = run("git", "push", "-q", "--set-upstream",
+                 f"--force-with-lease=refs/heads/{branch}:", "origin", branch, cwd=top)
+    if pushed.returncode:
+        print(f"Could not push {branch} to GitHub; the work stays local.\n{pushed.stderr.strip()}",
+              file=sys.stderr)
+
+
+def starters(top: Path, ref: str = "--all") -> dict[str, str]:
+    """Names from the commits that started items, never from their later contributors."""
+    log = git("log", ref, "--reverse", "--diff-filter=A", "--no-renames", "--grep=^Start ",
+              "--format=%x00%an%x00", "--name-only", "--", ".factory/stories", ".factory/fixes",
+              cwd=top).split("\0")[1:]
+    found: dict[str, str] = {}
+    for name, paths in zip(log[::2], log[1::2]):
+        for rel in paths.splitlines():
+            if rel.endswith(".json"):
+                found.setdefault(rel, name)
+    return found
 
 
 # --- forge task start ------------------------------------------------------------------
@@ -137,6 +160,9 @@ def start(args: argparse.Namespace) -> None:
     from forge import story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
+    if (not git("branch", "--list", story_branch)
+            and show(f"origin/{story_branch}", doc_rel) is not None):
+        git("branch", "--track", story_branch, f"origin/{story_branch}")
     behind = story.plan_behind(top, key, main)
     old_pin = repo._older(repo._pin(show(story_branch, "forge.toml") or ""),
                           repo._pin(show(main, "forge.toml") or ""))
@@ -203,7 +229,9 @@ def start(args: argparse.Namespace) -> None:
     branch = f"task/{key}-{task}"
     started = _started(main)
     if item in started or _merged(main, item):
-        refuse(REFUSALS["started"], item=item, branch=branch)
+        ref = f"origin/{branch}" if show(f"origin/{branch}", repo.state_path(item)) else "--all"
+        name = starters(top, ref).get(repo.state_path(item))
+        refuse(REFUSALS["started"], item=item, branch=branch, person=f" by {name}" if name else "")
     waiting = [dep if "/" in dep else f"{key}/{dep}" for dep in cell_list(tasks[task].get("After", ""))]
     waiting = [dep for dep in waiting if not _merged(main, dep)]
     if waiting:
