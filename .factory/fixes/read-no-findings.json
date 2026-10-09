@@ -1,0 +1,14 @@
+{
+  "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
+  "branch": "fix/read-no-findings",
+  "done_when": "forge read records a round as passed when its only numbered items say there are no findings (in any common wording), and notes like 'tests were not run' don't count as findings; the reader's instructions ask for the plain no-findings form; a real finding still fails the round; a command test with a faked reader covers the numbered 'No findings' form, the plain form and a real finding, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T15:43:09+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A cold read that found nothing is recorded as not passed when the reader writes 'No findings' as a numbered item (for example '6. No findings.' plus a note that tests weren't run), so forge next asks for a disposition on it and the plan pays an extra read round (reported by a client session, 2026-10-09)"
+}
