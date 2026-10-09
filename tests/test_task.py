@@ -117,7 +117,8 @@ def test_16_task_start(repo):
     assert repo.git("rev-parse", "task/BOARD-PAGE~1") == repo.git("rev-parse", "story/BOARD")
     assert repo.git("status", "--porcelain", cwd=folder) == ""
 
-    refused("BOARD/PAGE", "BOARD/PAGE is already started on task/BOARD-PAGE.\n"
+    # Starting now publishes the claim, so the refusal identifies its starter.
+    refused("BOARD/PAGE", "BOARD/PAGE is already started on task/BOARD-PAGE by Forge Test.\n"
                           "Next: forge work BOARD/PAGE\n")
     refused("BOARD/WORDS", "BOARD/WORDS waits for BOARD/PAGE to merge first.\nNext: forge next\n")
     refused("BOARD/STYLE", "BOARD/STYLE would change web/templates/board.html, which BOARD/PAGE is "

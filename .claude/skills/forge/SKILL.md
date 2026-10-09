@@ -913,6 +913,9 @@ failed checks, or after 30 minutes without a check starting, finishing or being 
 says which checks are still running, missing, or unreadable. Close on its own still waits at
 most ten minutes. When it stops, follow its refusal and the
 Closing section above, then run it again. Run it in the background and keep watching it.
+GitHub reads also retry unreadable answers and server errors three times, pausing for one,
+two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
+permission refusals stop immediately; writes are never replayed by these read retries.
 If the branch already has commits after the item's start, land goes straight to close. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
@@ -936,6 +939,31 @@ If close refuses a conflicted merge, it has aborted the merge. In the item's wor
 4. Check the diff and remaining conflicts, stage only resolved paths with `git add <paths>`,
    and commit once every conflict is resolved. Then rerun `forge close <item>` or
    `forge land <item>`.
+
+Starting is the claim: `forge story new`, `forge task start` and `forge fix start` push the
+new branch to GitHub after committing its start. The author of that start commit is the person
+who started the work; the board page and `forge board --json` show them next to the plan's
+approver, refreshing GitHub's branches so existing checkouts see new claims. Git is the one
+record. Git keeps a start tag pointing at the original commit, so its author survives squash
+merges and work-branch cleanup. Close also publishes retained start commits when an earlier
+start push failed. A second checkout's
+task start names the person who already started that part on GitHub. A failed push says so
+and leaves the work local: teammates cannot see that claim until its branch is pushed.
+New repos get this at init; existing repos get it when upgraded and synced, including repos
+adopted on an earlier release.
+
+A story's Tasks table may have an optional Developer column containing a GitHub username.
+The lead adds or changes assignments below For the builders without another approval.
+`forge next` offers ready parts assigned to the caller's GitHub login, plus unassigned parts.
+Someone else may start an assigned part: task start goes ahead and names its assigned
+developer in a warning. Both boards show assignments alongside the starter and approver,
+including assigned parts not started yet. Documents without Developer work as before.
+After fetching, teammates can discover the published story before its first part merges.
+If publishing its approval failed, the approved plan on the default branch after its first
+part merges takes precedence over the story's initial published draft.
+Next, start and both boards reconcile published assignments with local builder edits;
+a locally changed assignment takes precedence, and conflicting other edits need reconciliation.
+This column is the only assignment record; there is no other assignee field or roster.
 
 Serialize start commands. When task start refuses for overlapping work or an unmet dependency,
 keep other ready work moving while that work finishes. Run `forge next` after each merge to
