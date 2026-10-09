@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tomllib
 
 import pytest
 
@@ -43,6 +44,12 @@ def client(owner, request):
     version = repo.forge("--version").stdout.split()[-1]
     text = re.sub(r'^version = .*$', lambda _: "version = " + json.dumps(version), text, flags=re.M)
     repo.write("forge.toml", text)
+    repo.write("plans/spotted.json", json.dumps({"items": [{
+        "key": "bug\tforge.toml\tThe merge setting needs attention",
+        "kind": "bug", "path": "forge.toml", "line": 1,
+        "text": "The merge setting needs attention", "from": "worker",
+        "item": "another-fix", "status": "open", "closed_by": None,
+    }]}))
     repo.git("add", "-A")
     # Fixture setup represents the owner's settings PR already landed on main.
     hooks = f"core.hooksPath={owner.tmp / 'no-hooks'}"
@@ -53,8 +60,19 @@ def client(owner, request):
     return owner
 
 
-def test_merge_enable_checks_the_setting_runs_tests_and_waits_for_ci_without_model_review(client):
+def test_merge_enable_checks_the_final_published_change_runs_tests_and_waits_for_ci_without_model_review(client):
     before = raw(client, "origin/main")
+    spotted = client.repo.git("show", "origin/main:plans/spotted.json")
+
+    def check_published_change():
+        ref = f"origin/fix/{FIX}"
+        assert set(client.repo.git("diff", "--name-only", "origin/main", ref).splitlines()) == {
+            "forge.toml", f".factory/fixes/{FIX}.json"}
+        assert client.repo.git("show", f"{ref}:plans/spotted.json") == spotted
+        assert (worktree(client) / "plans/spotted.json").read_text("utf-8").strip() == spotted
+        assert tomllib.loads(raw(client, ref).decode("utf-8")) == {
+            **tomllib.loads(before.decode("utf-8")), "merge": "agent"}
+
     client.checks([run("tests", "failure"), run("forge-pr-check")])
     stopped = enable(client)
     assert stopped.returncode != 0, stopped.stdout + stopped.stderr
@@ -62,10 +80,12 @@ def test_merge_enable_checks_the_setting_runs_tests_and_waits_for_ci_without_mod
     assert (client.tmp / "tested.txt").read_text("utf-8") == "passed"
     published = [call for call in client.gh_calls("pr") if "--body-file" in call]
     assert "Review: clean, 0 dismissed, 0 advice." in body(published[-1])
+    check_published_change()
     client.checks(GREEN)
     client.open_pr("")
     ready = client.close(FIX)
     assert ready.returncode == 0, ready.stdout + ready.stderr
+    check_published_change()
     assert "A human merges its pull request" in ready.stdout
     assert not client.review_calls()
     assert not client.gh_calls("pr", "merge")

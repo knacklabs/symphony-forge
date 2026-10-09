@@ -237,7 +237,8 @@ def close(args: argparse.Namespace) -> int:
                 stopped = {"file": file}
                 state["stop"] = stopped
         state["flagged"] = sorted(flagged | files)
-    noted = (spotted.PATH,) if spotted.record(top, item, state, f"origin/{default}", result) else ()
+    noted = (spotted.PATH,) if not switch and spotted.record(
+        top, item, state, f"origin/{default}", result) else ()
     if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
