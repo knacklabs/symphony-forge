@@ -345,9 +345,13 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data):
                    encoding="utf-8")
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
-    [sent] = claude_calls(claude)
-    assert sent["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
-    assert not any("subagent" in arg or SOL["subagents"] in arg for arg in sent["args"])
+    sent = claude_calls(claude)
+    assert sent
+    # This test leaves forge.toml uncommitted, so the commit nudge uses the same settings too.
+    for call in sent:
+        assert call["args"][:5] == ["-p", "--model", "opus", "--effort", "high"]
+        assert SOL["subagents"] not in call["args"]
+        assert SOL["subagent_effort"] not in call["args"]
 
 
 def test_4_turn_log(repo, monkeypatch, sdk_data):
