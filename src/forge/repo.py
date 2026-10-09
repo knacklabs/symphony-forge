@@ -179,6 +179,7 @@ def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[
         transient = unreadable or (structured and (done.stdout.lstrip().startswith("<")
                                                    or done.stderr.lstrip().startswith("<"))) or (done.returncode and (
             re.search(r"\bHTTP\s+5\d\d\b", said, re.I)
+            or re.search(r"\bunexpected EOF\b|\binvalid character\b", said, re.I)
             or "looking for beginning of value" in said
             or "unexpected end of JSON input" in said))
         if not transient:

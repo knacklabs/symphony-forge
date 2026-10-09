@@ -58,6 +58,8 @@ responses = here / "gh-responses.json"
 
 @pytest.mark.parametrize("answer", [
     {"stderr": "invalid character '<' looking for beginning of value"},
+    {"stderr": "unexpected EOF"},
+    {"stderr": "invalid character '<' after object key:value pair"},
     {"stderr": "HTTP 502: Bad Gateway"},
     {"stdout": "<html>Bad Gateway</html>", "code": 0},
     {"stdout": "<html>Bad Gateway</html>", "code": 1},
@@ -74,6 +76,8 @@ def test_1_close_carries_on_after_one_bad_github_answer(client, answer):
 
 @pytest.mark.parametrize("answer", [
     {"stderr": "invalid character '<' looking for beginning of value"},
+    {"stderr": "unexpected EOF"},
+    {"stderr": "invalid character '<' after object key:value pair"},
     {"stderr": "HTTP 503: Service Unavailable"},
     {"stdout": "<html>Bad Gateway</html>", "code": 0},
     {"stdout": "<html>Bad Gateway</html>", "code": 1},
