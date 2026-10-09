@@ -24,6 +24,7 @@
     "id": "716b5ee4-6282-47b9-881a-275abdfc34cc",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -35,5 +36,6 @@
       "step": "review"
     }
   ],
-  "why": "The owner wants the board spec to show team and per-person weekly trends, through Forge and around it, without ranking anyone"
+  "why": "The owner wants the board spec to show team and per-person weekly trends, through Forge and around it, without ranking anyone",
+  "worker": "codex"
 }
