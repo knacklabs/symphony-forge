@@ -3,26 +3,27 @@
   "branch": "fix/skipped-templates",
   "done_when": "The logger template's fatal() writes a fatal-level line; the Playwright template sets testDir to its e2e folder; forge init copies the Node Dockerfile and .dockerignore only into Node repos; the Mac and Windows installers check docker info and print the step to start Docker Desktop when it isn't running; the guide names the Yarn 1 and Yarn 2+ update commands; command tests cover init on Node, Python and Go repos and the templates' contents for a new repo and one adopted on an earlier release",
   "flagged": [
+    ".codex/skills/forge/SKILL.md",
     "tests/test_installers_explain_docker_start.py"
   ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6b41462d7228c9903c990f66e5296ecad5ceef625a57ebecaa7e3aa200620d44",
-    "changed": "4ca3d2ecc8f5a23f85995aefa95498f49a5787611bf6df81bf13fd80307bd898",
-    "commit": "de5246b6eae8d97cfe8b7d76c47d5dc872b888ed",
+    "branch_diff": "697a323d7db443c5fe4b805b4d9bd29884d0f320d4c1ee67de3fd5ab958971ed",
+    "changed": "7ed44b6953f84fad616f53b10878747050fde2c01f85574ec6a22cac258565b0",
+    "commit": "bcef2ae6c196413f1faa527085da45d65343e00a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The new command silently leaves scoped dependencies such as `@nestjs/core` and `@playwright/test` at their existing resolutions. New evidence beyond the coordinator's ruling: [Yarn's recursive implementation](https://github.com/yarnpkg/berry/blob/master/packages/plugin-essentials/sources/commands/up.ts#L111-L128) passes identifiers directly to micromatch; its special handling of `'*'` as all packages exists only in the nonrecursive implementation. [Micromatch's default matching](https://github.com/micromatch/micromatch#optionsbasename) excludes identifiers containing `/` from this pattern. Keep `-R` to preserve manifest ranges, but use patterns covering both scoped and unscoped packages, such as `yarn up -R '*' '@*/*'`. Apply the correction to this template and both changed host guides; the current guide test merely asserts the incomplete command.",
-        "file": "src/forge/templates/skill.md",
+        "body": "The command labelled \u201cYarn 2+\u201d does not work on Yarn 2: `yarn up -R '*'` requires Yarn 3 or later. New evidence beyond the coordinator\u2019s ruling based on current documentation: [Yarn\u2019s official changelog](https://github.com/yarnpkg/berry/blob/master/CHANGELOG.md#300) explicitly records `-R,--recursive` as a new option in 3.0.0. A client pinned to Yarn 2 therefore encounters an unsupported option instead of refreshing dependencies. This affects `src/forge/templates/skill.md` and both `.codex/skills/forge/SKILL.md` and `.claude/skills/forge/SKILL.md`. Distinguish Yarn 2 from Yarn 3+ and provide range-preserving instructions that work for each. The guide test at `tests/test_client_setup_matches_stack.py:63` currently requires the incompatible command, so it must be corrected alongside all three guides.",
+        "file": ".codex/skills/forge/SKILL.md",
         "line": 623,
-        "priority": "P2",
-        "title": "Include scoped packages in the recursive Yarn refresh"
+        "priority": "P1",
+        "title": "Not done: The guide names the Yarn 1 and Yarn 2+ update commands"
       }
     ],
-    "id": "a63b648a-5939-4e84-8cbe-60caca699fc6",
-    "status": "clean"
+    "id": "2fef2495-9222-486e-a1ee-c5cd86bad522",
+    "status": "blocked"
   },
   "round": 4,
   "status": "fixing",
@@ -41,6 +42,10 @@
     },
     {
       "at": "2026-10-09T21:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:58:20+00:00",
       "step": "review"
     }
   ],
