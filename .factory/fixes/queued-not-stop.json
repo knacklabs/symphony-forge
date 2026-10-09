@@ -9,20 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "05d787c20fa0231a21f319c7b2f63c9d8aea1adcf315971b7d15740d963a538f",
-    "changed": "8a7884d5f47db284f2038834db48684d6a876424d8ce8504b399c7046b8742c6",
-    "commit": "7d7eb392b217bb2f08f2e40114935f2e8a9db0ad",
+    "branch_diff": "7aa9bab8395b109065ff571ff73930a3e745097c1549ad177f3eba683250fd1e",
+    "changed": "b285edb80fcc3a70301a46396160c647850ee6295f84d254f5082f655df61b04",
+    "commit": "4fbcd4fff947b3999dac2b5ba777f1e6b95f4ef3",
     "dismissals": [],
     "findings": [
       {
-        "body": "An open PR can have an unassigned attempt that expired ten days ago, followed by a successful retry eight days ago, with all current checks green. Because `filter=all` retains the expired attempt, it sets both demand flags here; the successful retry falls outside the seven-day activity window and cannot suppress the warning. Doctor therefore reports a likely missing runner despite there being no remaining unmet demand. The caller at src/forge/doctor.py:380\u2013387 checks every open PR without checking whether its checks are pending. Determine current demand from unsatisfied jobs, excluding attempts superseded by successful retries. This is additional evidence beyond the ruling about preserving expired demand across a still-unmet fresh retry: the retry in this case has already succeeded.",
+        "body": "The previous P2 remains open. If an unassigned attempt expired ten days ago and its retry succeeded eight days ago, the expired attempt still sets both demand flags. The successful retry falls outside the activity window, so doctor reports a likely missing runner even though every current check is green. The caller at src/forge/doctor.py:380\u2013387 examines open PRs without checking for pending checks. Exclude attempts superseded by successful retries when determining current unmet demand, while retaining expired demand across still-unmet retries.",
         "file": "src/forge/checks.py",
         "line": 141,
         "priority": "P2",
         "title": "Ignore resolved attempts when detecting current runner demand"
       }
     ],
-    "id": "21b4543d-0db0-499e-9bd4-f715f6cf492c",
+    "id": "b69bf513-48fc-4ee7-9ce3-75972de89730",
     "status": "clean"
   },
   "round": 4,
@@ -50,6 +50,10 @@
     },
     {
       "at": "2026-10-09T18:41:09+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T19:54:39+00:00",
       "step": "review"
     }
   ],
