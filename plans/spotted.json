@@ -155,6 +155,39 @@
       "closed_by": null
     },
     {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
       "kind": "bug",
       "path": "src/forge/board.html",
@@ -1277,17 +1310,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
-      "kind": "bug",
-      "path": "src/forge/story.py",
-      "line": 813,
-      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
-      "from": "worker",
-      "item": "skipped-workers",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\tsrc/forge/sync.py\tNot done: forge sync turns the mod on whatever version a repo pins\tFORGE-MOD-1/SHIP",
       "kind": "bug",
       "path": "src/forge/sync.py",
@@ -1394,17 +1416,6 @@
       "text": "Not done: worker questions on both worker paths",
       "from": "blocking",
       "item": "FORGE-MOD-1/RUNS",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
-      "kind": "bug",
-      "path": "src/forge/worker.py",
-      "line": 250,
-      "text": "Standard: Delete before adding",
-      "from": "blocking",
-      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
@@ -1933,6 +1944,17 @@
       "text": "The review-fallback Claude case timed out in Ubuntu CI and passed alone locally; that flaky failure remains unresolved.",
       "from": "worker",
       "item": "FORGE-MOD-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_test_lane_capacity.py\tNumber both new tests to keep the full suite passing\ttwo-test-slots",
+      "kind": "bug",
+      "path": "tests/test_machine_test_lane_capacity.py",
+      "line": 19,
+      "text": "Number both new tests to keep the full suite passing",
+      "from": "blocking",
+      "item": "two-test-slots",
       "status": "open",
       "closed_by": null
     },
@@ -2850,6 +2872,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep expanded compact counts within the prompt width",
+      "kind": "edge",
+      "path": "src/forge/mod/hooks/pane.ts",
+      "line": 84,
+      "text": "Keep expanded compact counts within the prompt width",
+      "from": "review",
+      "item": "two-test-slots",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/pane.ts\tKeep timer redraws active after clearing or resuming a session",
       "kind": "edge",
       "path": "src/forge/mod/hooks/pane.ts",
@@ -3422,35 +3455,24 @@
       "closed_by": null
     },
     {
-      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "key": "bug\tsrc/forge/story.py\tPlan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
       "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
-      "from": "blocking",
-      "item": "workers-split",
+      "path": "src/forge/story.py",
+      "line": 813,
+      "text": "Plan-reader lost-session recovery only checks the start of stderr and can miss a structured Claude error.",
+      "from": "worker",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "key": "bug\tsrc/forge/worker.py\tStandard: Delete before adding\tskipped-workers",
       "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Not done: proof list",
+      "path": "src/forge/worker.py",
+      "line": 250,
+      "text": "Standard: Delete before adding",
       "from": "blocking",
-      "item": "workers-split",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
-      "kind": "bug",
-      "path": "forge.toml",
-      "line": 4,
-      "text": "Update the repository test that still requires Codex workers",
-      "from": "blocking",
-      "item": "workers-split",
+      "item": "skipped-workers",
       "status": "open",
       "closed_by": null
     }
