@@ -85,7 +85,7 @@ if args[:2] == ["pr", "merge"]:
 
 
 @pytest.mark.parametrize("rejected", [False, True], ids=["published-start", "recovered-start"])
-def test_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
+def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
         client, gh, tmp_path, monkeypatch, claude_payload, rejected):
     # Enable merges as historical client configuration, before the claims begin.
     client.git("config", "core.hooksPath", (tmp_path / "historical-merge-hooks").as_posix())

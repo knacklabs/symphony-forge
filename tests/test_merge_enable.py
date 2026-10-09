@@ -120,8 +120,11 @@ def _rerun(env, stage):
     assert stopped.returncode != 0
     edited = b'merge = "agent"' in (worktree(env) / "forge.toml").read_bytes()
     assert edited == (stage != "before the edit")
-    pushed = env.repo.git("ls-remote", "origin", BRANCH)
-    assert bool(pushed) == (stage in ("after the push", "after the pull request"))
+    # Start publishes its claim before the settings edit; later publication still waits for commit.
+    pushed = env.repo.git("ls-remote", "origin", f"refs/heads/{BRANCH}")
+    assert bool(pushed) == (stage in ("before the commit", "after the push", "after the pull request"))
+    if stage == "before the commit":
+        assert raw(env, f"origin/{BRANCH}") == raw(env, "origin/main")
     if stage in ("before the edit", "before the commit", "after the commit"):
         hook(env, "pre-push" if stage == "after the commit" else "pre-commit", None)
     elif stage == "after the push":

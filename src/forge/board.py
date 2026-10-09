@@ -355,7 +355,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                and approval.waiting_digest(item, tree) else None)
         review = state.get("review") or {}
         read_key = item.split("/")[0] if kind != "fix" else None
-        read_where = story.plan_ref(top, read_key) if read_key else where
+        read_where = story.plan_ref(top, read_key, history) if read_key else where
         if read_key and read_where == f"story/{read_key}":
             read_where = trees.get(f"story/{read_key}") or read_where
         notes = _read(top, read_where, f"plans/{read_key}.read.md") if read_key else ""

@@ -385,18 +385,26 @@ def parse(text: str, top: Path | None = None, ref: str | None = None,
     return {"done": done, "details": notes, "tasks": list(tasks.values())}
 
 
-def plan_ref(top: Path, key: str) -> str:
+def plan_ref(top: Path, key: str, history: dict[str, Any] | None = None) -> str:
     """The published story unless the local story already includes it."""
     local, remote = f"story/{key}", f"origin/story/{key}"
     landed = landed_ref(top)
-    source = local if show(top, local, f"plans/{key}.md") is not None else landed
-    if show(top, remote, f"plans/{key}.md") is not None:
-        if repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
+    rel = f"plans/{key}.md"
+    local_doc = history["docs"].get(f"{local}:{rel}") if history is not None else show(top, local, rel)
+    remote_doc = history["docs"].get(f"{remote}:{rel}") if history is not None else show(top, remote, rel)
+    source = local if local_doc is not None else landed
+    if remote_doc is not None:
+        if local_doc is None or repo.run("git", "merge-base", "--is-ancestor", remote, local, cwd=top).returncode:
             source = remote
-    state = json_of(show(top, source, repo.state_path(key)))
+    def state_at(ref: str) -> dict[str, Any]:
+        if history is None:
+            return json_of(show(top, ref, repo.state_path(key)))
+        full = f"refs/heads/{ref}" if ref.startswith("story/") else f"refs/remotes/{ref}" if ref.startswith("origin/story/") else ref
+        return history["ref_states"].get(full, {}).get(repo.state_path(key), {})
+    state = state_at(source)
     # A failed approval push leaves the initial claim behind the first merged part.
     if (not state.get("approval") and all(step.get("step") == "start" for step in state.get("steps", []))
-            and json_of(show(top, landed, repo.state_path(key))).get("approval")):
+            and state_at(landed).get("approval")):
         return landed
     return source
 
@@ -425,17 +433,19 @@ def _with_developers(text: str, assignments: dict[str, str | None], include: boo
 def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] | None = None) -> str:
     """Read the published plan with local edits, without changing either checkout."""
     rel = f"plans/{key}.md"
-    if ref:
-        return show(top, ref, rel) or ""
-    if plan_ref(top, key) == landed_ref(top):
-        return show(top, landed_ref(top), rel) or ""
+    def read(one: str) -> str | None:
+        return history["docs"].get(f"{one}:{rel}") if history is not None else show(top, one, rel)
+    if ref and (text := read(ref)) is not None:
+        return text
+    if plan_ref(top, key, history) == landed_ref(top):
+        return read(landed_ref(top)) or ""
     tree = ((history["worktrees"].get(f"story/{key}") if KEY.fullmatch(key) else None)
             if history is not None else stories_here(top).get(key))
     local_ref, remote = f"story/{key}", f"origin/story/{key}"
-    local = _text(tree / rel) if tree and (tree / rel).is_file() else show(top, local_ref, rel)
-    published = show(top, remote, rel)
+    local = _text(tree / rel) if tree and (tree / rel).is_file() else read(local_ref)
+    published = read(remote)
     if local is None or published is None or local == published:
-        return local if local is not None else published or show(top, landed_ref(top), rel) or ""
+        return local if local is not None else published or read(landed_ref(top)) or ""
     base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
     base = show(top, base_ref, rel) or ""
     tables = [task.rows(task.sections(text)) for text in (base, local, published)]

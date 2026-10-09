@@ -83,7 +83,7 @@ def _start(repo, kind):
 
 
 @pytest.mark.parametrize("kind", ["story", "task", "fix"])
-def test_start_publishes_the_start_commit_as_the_claim(client, claude_payload, kind):
+def test_1_start_publishes_the_start_commit_as_the_claim(client, claude_payload, kind):
     if kind == "task":
         _approve(client, claude_payload)
     client.git("config", "user.name", "First Starter")
@@ -96,7 +96,7 @@ def test_start_publishes_the_start_commit_as_the_claim(client, claude_payload, k
 
 
 @pytest.mark.parametrize("kind", ["story", "task", "fix"])
-def test_push_failure_says_the_work_stays_local(client, claude_payload, kind):
+def test_2_push_failure_says_the_work_stays_local(client, claude_payload, kind):
     if kind == "task":
         _approve(client, claude_payload)
     remote = client.path.parent / ("remote.git" if client.path.name == "repo" else "client.git")
@@ -112,7 +112,7 @@ def test_push_failure_says_the_work_stays_local(client, claude_payload, kind):
     assert client.git("ls-remote", "origin", f"refs/heads/{branch}") == ""
 
 
-def test_second_checkout_is_refused_with_the_first_starters_name(client, claude_payload, tmp_path):
+def test_3_second_checkout_is_refused_with_the_first_starters_name(client, claude_payload, tmp_path):
     plan = _approve(client, claude_payload)
     client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
     teammate = tmp_path / "teammate"
@@ -130,7 +130,7 @@ def test_second_checkout_is_refused_with_the_first_starters_name(client, claude_
 
 
 @pytest.mark.parametrize("assigned", [True, False], ids=["developer-column", "no-column"])
-def test_next_shows_ready_parts_assigned_to_the_callers_github_login(client, claude_payload, gh,
+def test_4_next_shows_ready_parts_assigned_to_the_callers_github_login(client, claude_payload, gh,
                                                                   assigned):
     _approve(client, claude_payload, _developer_doc() if assigned else _developer_doc(None))
     # GitHub login, not git author name, selects the developer's work; login case is ignored.
@@ -148,7 +148,7 @@ def test_next_shows_ready_parts_assigned_to_the_callers_github_login(client, cla
         assert "Next: forge task start SHOP/SAVE" not in listing.stdout
 
 
-def test_other_developer_can_start_an_assigned_part_with_a_warning(client, claude_payload, gh):
+def test_5_other_developer_can_start_an_assigned_part_with_a_warning(client, claude_payload, gh):
     _approve(client, claude_payload, _developer_doc())
     gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
     started, branch = _start(client, "task")
@@ -157,7 +157,7 @@ def test_other_developer_can_start_an_assigned_part_with_a_warning(client, claud
     assert client.git("ls-remote", "origin", f"refs/heads/{branch}")
 
 
-def test_developer_assignments_can_be_added_and_changed_below_builders_without_approval(
+def test_6_developer_assignments_can_be_added_and_changed_below_builders_without_approval(
         client, claude_payload, gh):
     plan = _approve(client, claude_payload, _developer_doc(None))
     for developer in ("basket-dev", "replacement-dev"):
@@ -174,7 +174,7 @@ def test_developer_assignments_can_be_added_and_changed_below_builders_without_a
     assert "starting it anyway" not in started.stderr
 
 
-def test_board_shows_assigned_developers_beside_starters_and_approvers(client, claude_payload, gh):
+def test_7_board_shows_assigned_developers_beside_starters_and_approvers(client, claude_payload, gh):
     _approve(client, claude_payload, _developer_doc())
     gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
     client.git("config", "user.name", "Part Starter")
@@ -205,7 +205,7 @@ def _teammate(client, tmp_path):
     return teammate
 
 
-def test_teammate_discovers_assigned_ready_parts_before_any_part_merges(
+def test_8_teammate_discovers_assigned_ready_parts_before_any_part_merges(
         client, claude_payload, gh, tmp_path):
     teammate = _teammate(client, tmp_path)
     plan = _approve(client, claude_payload, _developer_doc())
@@ -225,7 +225,7 @@ def test_teammate_discovers_assigned_ready_parts_before_any_part_merges(
     assert parts["SHOP/SHOW"]["developer"] == "page-dev"
 
 
-def test_published_reassignment_reaches_teammate_commands_without_losing_local_builder_edits(
+def test_9_published_reassignment_reaches_teammate_commands_without_losing_local_builder_edits(
         client, claude_payload, gh, tmp_path):
     plan = _approve(client, claude_payload, _developer_doc())
     client.git("push", "-q", "origin", "story/SHOP", cwd=plan)
@@ -272,7 +272,7 @@ def test_published_reassignment_reaches_teammate_commands_without_losing_local_b
     assert teammate.git("status", "--porcelain", cwd=local_plan)
 
 
-def test_conflicting_local_and_published_builder_edits_refuse_without_changing_the_local_plan(
+def test_10_conflicting_local_and_published_builder_edits_refuse_without_changing_the_local_plan(
         client, claude_payload, tmp_path):
     base_doc = _developer_doc() + "\nBuild the basket storage first.\n"
     plan = _approve(client, claude_payload, base_doc)
@@ -296,7 +296,7 @@ def test_conflicting_local_and_published_builder_edits_refuse_without_changing_t
     assert local_doc.read_text("utf-8") == local_text
 
 
-def test_first_merged_part_supplies_assignments_when_the_published_story_is_still_its_initial_plan(
+def test_11_first_merged_part_supplies_assignments_when_the_published_story_is_still_its_initial_plan(
         client, claude_payload, gh, tmp_path):
     doc = _developer_doc().replace("| none | yes |", "| SAVE | yes |")
     # GitHub accepts initial creation, then refuses approval publication for this story only.
@@ -346,7 +346,7 @@ def test_first_merged_part_supplies_assignments_when_the_published_story_is_stil
     assert "starting it anyway" not in started.stderr
 
 
-def test_board_shows_start_commit_authors_beside_the_plan_approver(client, claude_payload, tmp_path):
+def test_14_board_shows_start_commit_authors_beside_the_plan_approver(client, claude_payload, tmp_path):
     # A teammate already has this checkout when the others claim their work.
     observer = tmp_path / "observer"
     client.git("clone", "-q", client.git("remote", "get-url", "origin"), str(observer))

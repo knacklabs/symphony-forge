@@ -383,9 +383,11 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
     for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
                            "refs/remotes/origin/story/", cwd=top).splitlines():
         key = branch.removeprefix("story/")
+        if history is not None and repo.state_path(key) in history["expired"]:
+            continue
         if found.get(key, (None, {}, ""))[1].get("status") == "done":
             continue
-        ref = story.plan_ref(top, key)
+        ref = story.plan_ref(top, key, history)
         state = story.json_of(story.show(top, ref, repo.state_path(key)))
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
@@ -397,7 +399,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            refusals: dict[Path, str], history: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
-    ref = story.plan_ref(top, key)
+    ref = story.plan_ref(top, key, history)
     text = story._plan(top, key, history=history)
     notes = story.show(top, ref, f"plans/{key}.read.md") or ""
     required = story.rounds(notes, story.show(top, ref, repo.state_path(key)))
