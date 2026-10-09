@@ -36,24 +36,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "50acb303437baa05e1f2c962bc067c08ebffd253c5e842ce12d9adc90e36ff5e",
-    "changed": "7ee86d55ac66227824bbfaacf99f23b709785ce5b221d9f9cc4154cf602a09c4",
-    "commit": "b5d9c646d0982e09117e32c01a3680f4a5020aa7",
+    "branch_diff": "4cff8cfbf90082b17c2802e77db40601c5009540bbf4439a92b886f82f8480be",
+    "changed": "b3f3fc3cb6646ce436321dab82dfa3bef07e3833a9f8fc91f948910363bd0ea0",
+    "commit": "93f7f8d1cb7d363a40d4465ccfaa2fbc4ce56852",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The supplied proof list is `missing`, and the latest worker commit contains no `Proof list:` paragraph. The review contract explicitly requires this as P1 even when tests pass. Add a proof list mapping every Done-when detail to its named command test or documentation check, including new-client defaults, synced roles, all review modes, and preservation of an earlier-adopted repo's settings.",
-        "file": "tests/test_claude_implementation_defaults.py",
-        "line": 20,
-        "priority": "P1",
-        "title": "Not done: proof list"
-      }
-    ],
-    "id": "0b63b2d0-03ca-45a9-959b-0d15423ddc89",
-    "status": "blocked"
+    "findings": [],
+    "id": "e37b1b3c-5c72-444d-8d0b-678aa48b6450",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:37+00:00",
@@ -65,6 +57,10 @@
     },
     {
       "at": "2026-10-09T21:11:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:39:22+00:00",
       "step": "review"
     }
   ],
