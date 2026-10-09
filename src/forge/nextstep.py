@@ -391,6 +391,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     """A story's lines, and its tasks' states."""
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
+    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
+        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], []
     notes, doc_hash, required = "", "", False
     if path is None:  # like forge task start: the story branch's copy while it exists
         for ref in (f"story/{key}", story.landed_ref(top)):
@@ -565,7 +567,8 @@ def _task(top: Path, key: str, task: str, trees: dict[str, Path],
 
 
 def _item_readiness(item: str, state: dict[str, Any], top: Path,
-                    checks: str = "unknown") -> tuple[str | None, dict[str, Any]]:
+                    checks: str = "unknown", runs: list[dict[str, Any]] | None = None
+                    ) -> tuple[str | None, dict[str, Any]]:
     """A matching close receipt grants readiness unless the current checks failed."""
     try:
         receipt = json.loads(repo.ready_path(item, top).read_text(encoding="utf-8"))
@@ -575,7 +578,12 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
         receipt = {}
     status, branch = state.get("status"), state.get("branch")
     if status not in ("merged", "done", "hotspot"):
-        if checks == "fail":
+        live = [run for run in (runs if runs is not None else board.active_runs(top, item))
+                if run.get("kind") in ("work", "worker", "review")
+                and ("round" not in state or run.get("round") == state["round"])]
+        if live:
+            status = "reviewing" if live[-1]["kind"] == "review" else "working"
+        elif checks == "fail":
             status = "checks failed"
         elif (branch and receipt.get("review") == "clean"
               and repo.run("git", "rev-parse", "--verify", branch, cwd=top).stdout.strip()
@@ -611,7 +619,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     sentence, step = STATUS.get(status, ("{label} is {status}.", "forge close {item}"))
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
-    if status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False):
+    if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
+            and not board.active_runs(top, item)):
         sentence, step = "{label}'s worker has stopped.", "forge close {item}"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

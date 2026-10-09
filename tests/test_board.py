@@ -171,22 +171,21 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     page = repo.path / ".git" / "forge" / "board.html"
     assert made.stdout == f"Wrote the board to {page}\n"
     text = seen(page)
+    # Current rows use recorded round times, not inferred time between saved transitions;
+    # this earlier-release history has no stage records. Archived rows keep their saved history.
     for line in (
             "Shoppers can save a basket Finished on 18 September 2026.",
             "Planning took 1 hour. A person stepped in 3 times, plus accepting 3 finished parts.",
             "Save a basket : Finished on 14 September 2026. Built in 1 hour 10 minutes; reviewed and "
             "checked in 20 minutes; waited 30 minutes to be accepted.",
-            "Show when it was saved : Finished on 15 September 2026. Built in 1 hour; reviewed and checked "
-            "in 50 minutes; waited 10 minutes to be accepted. Reviewing and checking this part took 50 "
-            "minutes, which is slow.",
-            "Share a basket : Finished on 18 September 2026. Built in 3 days; reviewed and checked in 20 "
-            "minutes; waited 40 minutes to be accepted. This part was open for 3 working days, which is "
+            "Show when it was saved : Finished on 15 September 2026.",
+            "Share a basket : Finished on 18 September 2026. This part was open for 3 working days, which is "
             "slow.",
             "Shoppers can keep a wish list Not started yet.",
             "Readme greets new readers : In progress. This fix has been open for 3 working days, which "
             "is slow.",
             "Upgrade Forge to the newest version : Finished on 16 September 2026. Forge now runs its "
-            "newest version here. Built in 20 minutes;",
+            "newest version here.",
             "A part usually takes 1 hour 50 minutes from its start to ready (target: under 2 hours).",
             "A story usually needs a person 3 times (target: 3 times or fewer).",
             "1 of the last 5 finished changes fixed Forge itself (target: under 10%)."):
@@ -214,7 +213,7 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     offline = seen(out)
     assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
     for line in ("Shoppers can save a basket Finished on 18 September 2026.",
-                 "Share a basket : Finished on 18 September 2026. Built in 3 days. This part was open "
+                 "Share a basket : Finished on 18 September 2026. This part was open "
                  "for 3 working days, which is slow.",
                  "14 September 2026 Forge Test approved the plan. 18 September 2026 The story was "
                  "finished. Shoppers keep their basket between visits."):
