@@ -2,13 +2,38 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-templates",
   "done_when": "The logger template's fatal() writes a fatal-level line; the Playwright template sets testDir to its e2e folder; forge init copies the Node Dockerfile and .dockerignore only into Node repos; the Mac and Windows installers check docker info and print the step to start Docker Desktop when it isn't running; the guide names the Yarn 1 and Yarn 2+ update commands; command tests cover init on Node, Python and Go repos and the templates' contents for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "tests/test_installers_explain_docker_start.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d270759ac30dbd727fd549021c9c9d352fa6df56b6f11f01adba12d60c47760d",
+    "changed": "9df9e90d26476e00992f977746e9716fd09c0ef27579f8c1c8f49d7f945d4e59",
+    "commit": "5ba06a43c2af318c2f2d60a1bf1db34e8ec30035",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The proof list defers native Windows execution to close CI, but this test selects the Windows installer only when `os.name == \"nt\"`. The supplied macOS run therefore proves only the Mac installer. `.github/workflows/forge-next.yml:41` selects exclusively Ubuntu runners for pull requests; Windows runners are limited to post-merge pushes, and `.github/workflows/forge.yml:22` also uses Ubuntu. Consequently, reverting the Windows Docker-engine check and start instruction would still pass every pre-merge check. Configure a Windows pull-request check for these cases or supply completed native Windows proof; the promised pending proof currently has no pre-merge check behind it.",
+        "file": "tests/test_installers_explain_docker_start.py",
+        "line": 26,
+        "priority": "P1",
+        "title": "Not done: test_installers_check_docker_engine_and_explain_starting_desktop on Windows"
+      }
+    ],
+    "id": "f3e7d5b1-a7b7-47a1-8ae0-cd6b23ea2e08",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:24+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:32:20+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues reviews raised and the coordinator skipped, still in Forge's client templates and setup (audit of dismissed findings, 2026-10-09): the backend logger template has no fatal(), the Playwright config has no testDir and collects Vitest files, forge init copies the Node Dockerfile and .dockerignore into Python and Go repos, the installers never say to start Docker Desktop, and the guide's dependency refresh names yarn upgrade, which Yarn 2+ lacks",
