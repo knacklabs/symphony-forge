@@ -94,7 +94,7 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
 
 def main_ref() -> str:
     """The default branch as the remote has it, freshly fetched: merged work lives there."""
-    git("fetch", "-q", "--prune", "origin")
+    git("fetch", "-q", "--prune", "--tags", "origin")
     return f"origin/{repo.default_branch()}"
 
 
@@ -128,8 +128,12 @@ def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[st
 
 def publish_start(top: Path, branch: str) -> None:
     """Create the remote claim only if nobody else has made it."""
-    pushed = run("git", "push", "-q", "--set-upstream",
-                 f"--force-with-lease=refs/heads/{branch}:", "origin", branch, cwd=top)
+    # Keep the original commit reachable after squash merges and branch cleanup.
+    tag = f"refs/tags/forge-start/{branch}"
+    git("update-ref", tag, "HEAD", "", cwd=top)
+    pushed = run("git", "push", "-q", "--atomic", "--set-upstream",
+                 f"--force-with-lease=refs/heads/{branch}:", f"--force-with-lease={tag}:",
+                 "origin", branch, tag, cwd=top)
     if pushed.returncode:
         print(f"Could not push {branch} to GitHub; the work stays local.\n{pushed.stderr.strip()}",
               file=sys.stderr)
@@ -146,6 +150,20 @@ def starters(top: Path, ref: str = "--all") -> dict[str, str]:
             if rel.endswith(".json"):
                 found.setdefault(rel, name)
     return found
+
+
+def github_login(top: Path) -> str | None:
+    def read() -> str | None:
+        result = run("gh", "api", "user", "--jq", ".login", cwd=top)
+        if not result.returncode and result.stdout.strip():
+            return result.stdout.strip()
+        print("Could not read your GitHub login; assignment matching is unavailable.", file=sys.stderr)
+        return None
+    return repo.command_fact("GitHub login", top, read)
+
+
+def developer(row: dict[str, Any]) -> str | None:
+    return (row.get("Developer") or "").strip("` ") or None
 
 
 # --- forge task start ------------------------------------------------------------------
@@ -242,6 +260,9 @@ def start(args: argparse.Namespace) -> None:
         if shared:
             refuse(REFUSALS["overlap"], item=item, paths=", ".join(shared), other=other)
 
+    assigned = developer(tasks[task])
+    if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
+        print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = start_base(main, key, tasks[task])
     carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
              ) if source != base else None

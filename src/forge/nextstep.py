@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import __version__, approval, board, close, codex, records, repo, review, spotted, story, upgrade
-from forge.task import _overlap, _started, start_base
+from forge.task import _overlap, _started, developer, github_login, start_base
 
 COMMANDS = [
     {
@@ -445,6 +445,11 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                 overlapping.add(task["id"])
             waits[task["id"]] += [item for item in blockers if item not in waits[task["id"]]]
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == []]
+    if any(developer(task) for task in doc["tasks"] if task["id"] in ready):
+        login = github_login(top)
+        if login:
+            ready = [task["id"] for task in doc["tasks"] if task["id"] in ready
+                     and (not (assigned := developer(task)) or assigned.casefold() == login.casefold())]
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)

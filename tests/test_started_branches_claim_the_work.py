@@ -52,12 +52,24 @@ def client(repo, gh, tmp_path, request):
     return repo
 
 
-def _approve(repo, claude_payload):
-    path = ready(repo, "SHOP")
+def _approve(repo, claude_payload, doc=DOC):
+    path = ready(repo, "SHOP", doc)
     repo.git("config", "user.name", "Plan Approver")
-    approved = hook(repo, claude_plan(claude_payload, DOC, cwd=path))
+    approved = hook(repo, claude_plan(claude_payload, doc, cwd=path))
     assert approved.returncode == 0, approved.stdout + approved.stderr
     return path
+
+
+def _developer_doc(save="basket-dev", show="page-dev"):
+    # Assignments are builder details; the approved user outcome stays unchanged.
+    doc = DOC.replace("## Tasks", "## For the builders\n\n## Tasks")
+    doc = doc.replace("| SAVE | yes |", "| none | yes |")
+    if save is None:
+        return doc
+    doc = doc.replace("| After | User-facing |", "| After | User-facing | Developer |")
+    doc = doc.replace("|---|---|---|---|---|---|---|---|", "|---|---|---|---|---|---|---|---|---|")
+    doc = doc.replace("| none | no |", f"| none | no | {save} |")
+    return doc.replace("| none | yes |", f"| none | yes | {show} |")
 
 
 def _start(repo, kind):
@@ -116,6 +128,73 @@ def test_second_checkout_is_refused_with_the_first_starters_name(client, claude_
     assert second.git("branch", "--list", branch) == ""
 
 
+@pytest.mark.parametrize("assigned", [True, False], ids=["developer-column", "no-column"])
+def test_next_shows_ready_parts_assigned_to_the_callers_github_login(client, claude_payload, gh,
+                                                                  assigned):
+    _approve(client, claude_payload, _developer_doc() if assigned else _developer_doc(None))
+    # GitHub login, not git author name, selects the developer's work; login case is ignored.
+    client.git("config", "user.name", "Page Developer")
+    gh.respond("api", "user", "--jq", ".login", stdout="BASKET-DEV\n")
+    listing = client.forge("next")
+    assert listing.returncode == 0, listing.stdout + listing.stderr
+    assert "Next: forge task start SHOP/SAVE" in listing.stdout
+    assert ("Next: forge task start SHOP/SHOW" in listing.stdout) == (not assigned)
+    if assigned:
+        gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
+        listing = client.forge("next")
+        assert listing.returncode == 0, listing.stdout + listing.stderr
+        assert "Next: forge task start SHOP/SHOW" in listing.stdout
+        assert "Next: forge task start SHOP/SAVE" not in listing.stdout
+
+
+def test_other_developer_can_start_an_assigned_part_with_a_warning(client, claude_payload, gh):
+    _approve(client, claude_payload, _developer_doc())
+    gh.respond("api", "user", "--jq", ".login", stdout="page-dev\n")
+    started, branch = _start(client, "task")
+    assert started.returncode == 0, started.stdout + started.stderr
+    assert "This part was assigned to basket-dev; starting it anyway." in started.stderr
+    assert client.git("ls-remote", "origin", f"refs/heads/{branch}")
+
+
+def test_developer_assignments_can_be_added_and_changed_below_builders_without_approval(
+        client, claude_payload, gh):
+    plan = _approve(client, claude_payload, _developer_doc(None))
+    for developer in ("basket-dev", "replacement-dev"):
+        (plan / "plans/SHOP.md").write_text(_developer_doc(developer), "utf-8")
+        client.git("add", "plans/SHOP.md", cwd=plan)
+        client.git("commit", "-qm", "Choose the basket developer", cwd=plan)
+        gh.respond("api", "user", "--jq", ".login", stdout=developer + "\n")
+        listing = client.forge("next")
+        assert listing.returncode == 0, listing.stdout + listing.stderr
+        assert "Next: forge task start SHOP/SAVE" in listing.stdout
+        assert "Next: forge task start SHOP/SHOW" not in listing.stdout
+    started, _ = _start(client, "task")
+    assert started.returncode == 0, started.stdout + started.stderr
+    assert "starting it anyway" not in started.stderr
+
+
+def test_board_shows_assigned_developers_beside_starters_and_approvers(client, claude_payload, gh):
+    _approve(client, claude_payload, _developer_doc())
+    gh.respond("api", "user", "--jq", ".login", stdout="basket-dev\n")
+    client.git("config", "user.name", "Part Starter")
+    started, _ = _start(client, "task")
+    assert started.returncode == 0, started.stdout + started.stderr
+    listing = client.forge("board", "--json")
+    assert listing.returncode == 0, listing.stdout + listing.stderr
+    story = next(row for row in json.loads(listing.stdout)["items"] if row["id"] == "SHOP")
+    parts = {row["id"]: row for row in story["children"]}
+    assert parts["SHOP/SAVE"]["developer"] == "basket-dev"
+    assert parts["SHOP/SAVE"]["started_by"] == "Part Starter"
+    assert parts["SHOP/SAVE"]["approved_by"] == "Plan Approver"
+    assert parts["SHOP/SHOW"]["developer"] == "page-dev"
+    assert story["developer"] is None
+    page = client.forge("board")
+    assert page.returncode == 0, page.stdout + page.stderr
+    words = seen(client.path / ".git" / "forge" / "board.html")
+    assert "Assigned to basket-dev." in words, words
+    assert "Assigned to page-dev." in words, words
+
+
 def test_board_shows_start_commit_authors_beside_the_plan_approver(client, claude_payload, tmp_path):
     # A teammate already has this checkout when the others claim their work.
     observer = tmp_path / "observer"
@@ -149,10 +228,13 @@ def test_board_shows_start_commit_authors_beside_the_plan_approver(client, claud
     fix = next(row for row in items if row["id"] == "greeting")
     assert story["started_by"] == "Story Starter"
     assert story["approved_by"] == "Plan Approver"
+    assert story["developer"] is None
     assert part["started_by"] == "Part Starter"
     assert part["approved_by"] == "Plan Approver"
+    assert part["developer"] is None
     assert fix["started_by"] == "Fix Starter"
     assert fix["approved_by"] is None
+    assert fix["developer"] is None
     page = viewer.forge("board")
     assert page.returncode == 0, page.stdout + page.stderr
     words = seen(observer / ".git" / "forge" / "board.html")
