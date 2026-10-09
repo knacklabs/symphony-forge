@@ -291,7 +291,7 @@ def close(args: argparse.Namespace) -> int:
         with repo.record_run(top, item, "ci") as ran:
             checks.wait(top, item, head, [name for name in cfg["checks"]
                                           if not (migrating and name == "forge-pr-check")],
-                        progress=getattr(args, "wait_for_progress", False))
+                        branch=branch, progress=getattr(args, "wait_for_progress", False))
             outcome = ran["outcome"] = "passed"
     finally:
         repo.record_timing(top, item, "CI wait", start, clock, outcome)

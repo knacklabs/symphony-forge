@@ -53,6 +53,12 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
+the item's merge base with its head, so an older branch can merge after the owner enables agent
+merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
+generated git hook shims and Husky's ignored rebuilt hooks; uncommitted work and later local
+commits keep the worktree in place.
+
 When `forge merge` merges a story's last task, the same squash merge records the story as done.
 Give `forge merge <KEY>/<TASK> --outcome "<outcome>"` to name what it achieved; without it Forge
 uses the story's title. The board and `forge next` read that record from git, so no outcome fix,
@@ -832,7 +838,11 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
-any other file stops close for the worker to resolve. When the
+any other file stops close for the worker to resolve. While waiting for checks, close stops at once
+if GitHub reports a conflicting pull request: GitHub runs no checks on it. Rerun close to bring
+in the default branch. Land retries close once itself, including a conflict during its merge check
+wait; if the merge needs a person, it stops with close's existing conflict next step.
+When the
 test command fails, close stops before the review and keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, recommend a fast close command: set
