@@ -9,20 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "93c426710cc8e108c634b143887bb0499d74d55302839ee31543061d2861897f",
-    "changed": "1e0550d1a7392209eb9fbc3ebe86ef7493a53b08a719332e5bf1caee6f6eea4a",
-    "commit": "db6f384c04c243b3253264feaf79ac9ed7216914",
+    "branch_diff": "62f196e719591ffd8b51715b0bc83b5378489258204b4a158e396134138a33fc",
+    "changed": "53eeafb93ce83509e0f08cd1b1083d6fb6832038dac0c1bb328ff43583984426",
+    "commit": "9c0f4afd496e89a223146e0f63853ddc8d4fabe7",
     "dismissals": [],
     "findings": [
       {
-        "body": "When the roadmap marks a previously approved story done but its saved state has no `finished` timestamp, this fallback displays \u201cFinished on\u201d the date its story record first landed. `history[\"dates\"]` comes from `git log --diff-filter=A` in `src/forge/board.py:694\u2013701`, so that date can precede completion by weeks. This introduces an incorrect date in both JSON and the page. Restrict this fallback to tasks/fixes, whose first landed state represents their merge; leave a story's completion date unknown unless completion evidence supplies it. The roadmap-only proof has no historical story record, so it cannot detect this case.",
+        "body": "The previous finding remains open: when the roadmap marks an existing story done but its saved state has no `finished` timestamp, this fallback reports its creation date as \u201cFinished on\u201d. `history[\"dates\"]` is populated from the file's first addition by `git log --diff-filter=A` at src/forge/board.py:694\u2013701, which can precede completion by weeks. Both JSON and the page therefore display an invented completion date. Restrict this fallback to tasks and fixes; leave a story's completion date unknown without completion evidence. The named roadmap-only test creates no historical story record and does not exercise this case.",
         "file": "src/forge/board.py",
         "line": 455,
         "priority": "P2",
         "title": "Do not use a story's creation date as its completion date"
       }
     ],
-    "id": "3cac112a-2f79-468d-8ae2-81b22664c529",
+    "id": "1e55dc53-eee3-4055-aca7-96883bb845af",
     "status": "clean"
   },
   "round": 3,
@@ -42,6 +42,10 @@
     },
     {
       "at": "2026-10-09T15:33:46+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T16:59:53+00:00",
       "step": "review"
     }
   ],
