@@ -9,20 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "257df92c69ccbbadd504e65ee8b59866364f72f878193fdec105ae38b8e13bd4",
-    "changed": "fd999a27850f94f27bdef6f74dda949424a3892bf1dd6c6e7466a5f6b3b9a865",
-    "commit": "ac180d2adec71beb571d6ed3496814613e9ab7b0",
+    "branch_diff": "91d62fcf26da2bc2075dff46fd6dc97d229360a2defd499fb30654469137b52e",
+    "changed": "b05a853c017e347330d56f2fb7d6a713da5568f97f60d84e4adda8f55477cdd2",
+    "commit": "7b14f0eef97140df67fcc59a6bd962ae8b88828a",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open. An unassigned attempt that expired ten days ago sets both demand flags even if its retry succeeded eight days ago. That success falls outside the seven-day activity window, so doctor reports a likely missing runner despite all current checks being green. The caller in src/forge/doctor.py:380\u2013387 examines open pull requests without checking for pending checks. Exclude attempts superseded by successful retries when deriving unmet demand, while retaining expired demand across retries that remain unmet.",
+        "body": "The previous P2 remains open: an unassigned attempt that expired ten days ago sets both demand flags even when its retry succeeded eight days ago. That success falls outside the seven-day activity window, so doctor reports a likely missing runner despite all current checks being green. The caller in src/forge/doctor.py:380\u2013387 examines open pull requests without checking for pending checks. Exclude attempts superseded by successful retries when deriving unmet demand, while retaining expired demand across retries that remain unmet.",
         "file": "src/forge/checks.py",
         "line": 141,
         "priority": "P2",
         "title": "Ignore resolved attempts when detecting current runner demand"
       }
     ],
-    "id": "145ea710-c024-4480-921e-9a6c04a68be5",
+    "id": "ac8e708e-b188-4882-8299-915ba7228099",
     "status": "clean"
   },
   "round": 4,
@@ -58,6 +58,10 @@
     },
     {
       "at": "2026-10-09T20:55:44+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T22:24:56+00:00",
       "step": "review"
     }
   ],
