@@ -166,7 +166,8 @@ def test_3_clean_pull_request_keeps_normal_waiting(client, command):
         'if args[:2] == ["pr", "view"]:',
         'if args[:2] == ["pr", "view"] and "--json" in args and '
         '"mergeable" in args[args.index("--json") + 1]:\n'
-        '    answer(json.dumps({"mergeable": "MERGEABLE"}))\n'
+        '    answer(json.dumps({"mergeable": "MERGEABLE", '
+        '"headRefOid": heads()["refs/heads/" + args[2]]}))\n'
         'if args[:2] == ["pr", "view"]:'), encoding="utf-8")
     _queue(env, RUNS, *_runs([], GREEN))
     done = env.repo.forge(command, ITEM)
