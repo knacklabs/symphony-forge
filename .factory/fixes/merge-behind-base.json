@@ -2,13 +2,36 @@
   "base": "53f74ed0767482425ddbc3260fbf9f2b01dda86e",
   "branch": "fix/merge-behind-base",
   "done_when": "When GitHub refuses a merge only because the branch is behind the default branch, forge merge and forge land merge the default branch in themselves, run close again (tests, review and checks as close decides) and retry the merge, saying so in one line; a real conflict still stops with the existing plain next step; command tests with a faked GitHub cover a clean behind-base refusal that then merges and a conflicting one that stops, for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3f5fa257411ad2b4ae3f00083a181bc9b60eb138c36c2710ad74c1c55c6cd38d",
+    "changed": "bcc2217f895a37e2cbc55bab04e6852a6570794c6659e35d9102639d7088a545",
+    "commit": "c1edf1825c3d4a920d4c3c043c174434a327b074",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If the default-branch commit also changes the Forge version pin, this recovery can stop before completing close. `src/forge/close.py:137` calls `resume_pin` after merging the default branch, and `src/forge/repo.py:564` restarts the original command from `sys.argv`. For `forge merge`, that restarts merge before close has published the replacement head or updated the ready receipt; `src/forge/merge.py:77` then refuses because the local branch no longer matches the old ready head. The user must manually close and merge again. Complete the recovery close under the selected release before retrying merge. The new tests keep the pin unchanged during recovery, so they do not exercise this interaction.",
+        "file": "src/forge/merge.py",
+        "line": 115,
+        "priority": "P2",
+        "title": "Preserve the close continuation when recovery changes the Forge pin"
+      }
+    ],
+    "id": "223e646f-b042-43a5-bc04-11d4b872792a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T15:08:34+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T15:50:30+00:00",
+      "step": "review"
     }
   ],
   "why": "forge merge stops with GitHub's raw hint ('gh pr checkout N && git fetch origin main && git merge origin/main') when another merge moved the default branch after close found the item ready, though the branch merges cleanly; the coordinator then merges main, re-closes and re-merges by hand (twice on 2026-10-09, in Forge and a client)",
