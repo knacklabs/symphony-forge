@@ -1,0 +1,44 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-09T18:33:58+00:00",
+      "because": "Owner (2026-10-09): clear boundaries so cold read and Autoreview give exactly what counts and the orchestrator has no discretion",
+      "done_when": "The shipped review instructions block (P0/P1) only for a functional defect on a path people or agents normally hit, a security gap, data loss, a scale or performance problem at a realistic size the finding names, an unmet Done-when item, or a missing test for an item's own behaviour; an edge case blocks only when the finding names a realistic scenario that makes it likely in normal use, or it touches security or data loss; rare combinations are at most P2 or left out; findings are one line plus brief evidence, with no speculative suggestions, and the sibling sweep covers likely cases only. The shipped cold-read instructions apply the same likelihood rule to Unproven cases and traps (a platform or shell trap only when that platform is likely for the change). Both keep the existing gates, the proof-list check and the previous-findings carry-over; prompt-content tests cover both texts for a new repo and one adopted on an earlier release after sync"
+    }
+  ],
+  "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
+  "branch": "fix/lean-review-prompts",
+  "done_when": "One written boundary of what counts, word for word the same in the shipped review and cold-read instructions: Raise (a functional defect on a normally used path, security, data loss, scale at a named realistic size or unbounded or per-run cost, an unmet Done-when item or a doc contradicting itself or a recorded decision, a missing or hollow test for an item's own behaviour, an unnamed new moving part, plus the review's existing gates and the cold read's plan gaps) and Leave out (rare combinations, cases a fail-closed rule covers, test variations with no concrete broken scenario, hardening beyond the promise, style, duplicates), with a realistic named scenario, security or data loss always winning; every raised finding names its Raise line; review findings inside the boundary are P0/P1 and only named Simpler and Later advice remains; the shipped coordinator guide says every P0/P1 inside the boundary gets a fix round and a dismissal or cold-read keep is allowed only outside the boundary or when factually wrong, citing the line; existing gates, the proof-list check and the previous-findings carry-over stay; a rules evaluation over the recorded findings since 2026-09-18 in Forge and a client repo shows every real issue still raised; prompt-content tests cover a new repo and one adopted on an earlier release after sync",
+  "flagged": [
+    "src/forge/templates/review.md"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d99b7e5fce8aad77fd06b08a1e9e8133723e278a6b6572b97229d6e127a4753d",
+    "changed": "9f6135460a41fbef5a79d42182edc264be060a528fc17a207a5cc41d882951dd",
+    "commit": "6a9c0bbeddec92b4daeed526061ce422af5b7c6f",
+    "dismissals": [],
+    "findings": [],
+    "id": "25d12cd8-63c1-486f-9835-ae0484644bad",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T17:49:26+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:12:45+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:31:31+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Cold reads and Autoreview reviews keep finding one more rare edge case per round (items ran 4 to 9 rounds on 2026-10-08/09), which slows shipping without improving what users get; the owner wants both prompts to ask for only what's needed, ignore very rare cases by likelihood, and never compromise on scale, security or functional correctness (2026-10-09)",
+  "worker": "codex"
+}
