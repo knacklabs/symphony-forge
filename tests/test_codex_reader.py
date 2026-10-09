@@ -71,7 +71,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     toml.write_text(_toml(version, "claude", GRILL), encoding="utf-8")
     assert unchanged() and not stub.exists()
 
-    # A failed turn, and a file changed during the read, leave the notes and the state unchanged.
+    # Started reads keep a durable chat binding; failed and discarded findings stay unaccepted.
+    def unaccepted() -> bool:
+        return (state.read_text("utf-8") == planned and "read_hash:\n" in notes.read_text("utf-8")
+                and "## Round " not in notes.read_text("utf-8"))
+
     monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     failed = repo.forge("read", "SHOP")
     assert failed.stderr == ("The cold read of plans/SHOP.md failed: Codex reported the turn "
@@ -83,7 +87,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
                                 "was discarded.\nNext: git status, then forge read SHOP\n")
     monkeypatch.delenv("STUB_CODEX_TOUCH")
     (shop / "scratch.txt").unlink()
-    assert unchanged()
+    assert unaccepted()
 
     if os.name != "nt":  # the crash is made with POSIX signals
         # A crashed read leaves its Codex processes behind, and doctor stops them though the
@@ -93,7 +97,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
         _crash(crashed, saved)
         assert ("- Stopped the Codex processes that a crashed forge read SHOP left.\n"
                 in repo.forge("doctor", cwd=shop).stdout)
-        assert _down(server) and _down(saved["driver"]["pid"]) and unchanged()
+        assert _down(server) and _down(saved["driver"]["pid"]) and unaccepted()
 
     # The read: a "Grill" conversation in the story's checkout, read-only with approvals "never"
     # at its start and on its turn, on the grill kind's models. Codex's text becomes the notes.

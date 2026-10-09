@@ -226,7 +226,9 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
     assert discarded.returncode == 1
     assert discarded.stderr == ("A file changed during the cold read of plans/SHOP.md, so the read "
                                 "was discarded.\nNext: git status, then forge read SHOP\n")
-    assert not notes.exists()
+    # Discarded findings remain unaccepted, while the chat binding survives the retry.
+    assert "read_hash:\n" in notes.read_text("utf-8")
+    assert "## Round " not in notes.read_text("utf-8")
     (repo.bin / "claude-touch").unlink()
     (shop / "scratch.txt").unlink()
 

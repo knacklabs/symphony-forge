@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -151,11 +152,17 @@ def work(args: argparse.Namespace) -> None:
         try:
             if not on_codex:
                 before = story._snapshot(top) if design else None  # pyright: ignore[reportPrivateUsage]
+
+                def before_turn() -> None:
+                    nonlocal before
+                    before = story._snapshot(top)  # pyright: ignore[reportPrivateUsage]
+
                 if design:
                     claude = ["--model", chosen["model"], "--effort", chosen["effort"]]
                 try:
                     final = _claude(item, top, brief, fresh_brief, claude,
-                            session, thread, None if fresh == "first turn" else fresh)
+                            session, thread, None if fresh == "first turn" else fresh,
+                            before_turn if design else None)
                 except (repo.Refused, OSError) as error:
                     # Only split falls back: workers = claude means Claude, even when it fails.
                     if (not design or config["workers"] != "split" or
@@ -433,7 +440,8 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
-            session: dict[str, Any] | None, resume: str | None, why: str | None) -> str:
+            session: dict[str, Any] | None, resume: str | None, why: str | None,
+            before_turn: Callable[[], None] | None = None) -> str:
     """A Claude worker's round: continue session `resume` with the short brief, else start a new
     session with the whole brief and say why when there was one to continue. When Claude says it
     has no such session, the same round starts fresh; any other failure fails the round and keeps
@@ -445,6 +453,8 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
     try:
         if resume:
             codex.remember(top, item)
+            if before_turn is not None:
+                before_turn()
             size = log.stat().st_size if log.exists() else 0
             try:
                 return _run(item, top, brief, models, ["--resume", resume])
@@ -464,6 +474,8 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                    "start": git("rev-parse", "HEAD", cwd=top), "rounds": rounds}
         codex._record(path, claude=session)
         codex.remember(top, item)
+        if before_turn is not None:
+            before_turn()
         return _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
     finally:
         if session:

@@ -38,14 +38,18 @@ def _adopted(repo):
 def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
     if adopted:
         _adopted(repo)
-    folder, codex, turns = _resuming(repo, monkeypatch, sdk_data)
+    folder, codex, turns = _resuming(repo, monkeypatch, sdk_data, client=True)
     claude = install_claude(repo)
+    config = folder / "forge.toml"
+    with config.open("a", encoding="utf-8") as settings:
+        settings.write('\n[models.design.codex]\nmodel = "gpt-6-sol"\neffort = "high"\n'
+                       '\n[models.design.claude]\nmodel = "opus"\neffort = "medium"\n')
     if app == "claude":
-        config = folder / "forge.toml"
         config.write_text(config.read_text("utf-8").replace('workers = "codex"',
                           'workers = "claude"'), encoding="utf-8")
-        repo.git("commit", "-qam", "Choose Claude", cwd=folder)
-        # Fix start copies the default settings.
+    repo.git("commit", "-qam", "Choose client worker models", cwd=folder)
+    if app == "claude":
+        # Fix start copies the default client settings.
         repo.write("forge.toml", config.read_text("utf-8"))
         repo.git("commit", "-qam", "Choose Claude")
         repo.git("push", "-q", "origin", "main")
@@ -58,6 +62,19 @@ def _worker(repo, monkeypatch, sdk_data, app, kind, adopted=False):
     else:
         item = "BOARD/PAGE"
     return folder, item, codex if app == "codex" else claude, turns.with_suffix(".json")
+
+
+def _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted):
+    if adopted:
+        _adopted(repo)
+    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    for folder in (repo.path, reader.shop):
+        config = folder / "forge.toml"
+        config.write_text(config.read_text("utf-8").replace('repo = "forge-source"',
+                          'repo = "client"'), encoding="utf-8")
+        repo.git("commit", "-qam", "Keep client reader settings", cwd=folder)
+    repo.git("push", "-q", "origin", "main")
+    return reader
 
 
 def _chat(log, app, resumed=False):
@@ -84,6 +101,7 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
     if change == "model-and-effort":
         config = folder / "forge.toml"
         config.write_text(config.read_text("utf-8").replace("gpt-6-sol", "gpt-6-nova")
+                          .replace('model = "opus"', 'model = "sonnet"')
                           .replace('effort = "high"', 'effort = "low"')
                           .replace('effort = "medium"', 'effort = "low"'), encoding="utf-8")
         if app == "claude":
@@ -126,9 +144,7 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
                                    "machine-restart", "fresh-worktree"])
 def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path, sdk_data,
                                                 adopted, app, change):
-    if adopted:
-        _adopted(repo)
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     first = (_sent(reader.log, "turn/start")[-1]["threadId"] if app == "codex" else
              _session(calls(reader.log)[-1], "--session-id"))
@@ -245,14 +261,24 @@ def _reader_chat(reader, resumed=False):
             _session(calls(reader.log)[-1], "--resume" if resumed else "--session-id"))
 
 
+def _accepted_read(text):
+    if not text.startswith("---\n"):
+        return {}, text
+    header, _, findings = text[4:].partition("\n---\n")
+    fields = {}
+    for line in header.splitlines():
+        name, _, value = line.partition(":")
+        if name not in ("conversation", "session"):
+            fields[name] = value
+    return fields, findings
+
+
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
 @pytest.mark.parametrize("app", ["codex", "claude"])
 @pytest.mark.parametrize("reason", ["tool-gone", "tool-switch"])
 def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch, tmp_path,
                                                           sdk_data, adopted, app, reason):
-    if adopted:
-        _adopted(repo)
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     first = _reader_chat(reader)
     reader.dispose(FIRST, "cut")
@@ -294,15 +320,17 @@ def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch,
 @pytest.mark.parametrize("app", ["codex", "claude"])
 def test_7_first_failed_reader_keeps_chat_when_local_record_is_missing(repo, monkeypatch,
                                                                     tmp_path, sdk_data, adopted, app):
-    if adopted:
-        _adopted(repo)
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.fail(True)
     failed = reader.read()
     assert failed.returncode != 0, failed.stdout + failed.stderr
     first = _reader_chat(reader)
-    assert not reader.notes.exists()
-    (repo.path / ".git/forge/threads/read/SHOP.json").unlink()
+    # A failed attempt may bind a durable chat, but cannot accept a read or findings.
+    fields, findings = _accepted_read(reader.text()) if reader.notes.exists() else ({}, "")
+    assert not fields.get("read_hash", "").strip()
+    assert not fields.get("round", "").strip()
+    assert findings.strip() == ""
+    shutil.rmtree(repo.path / ".git/forge")
     reader.fail(False)
     said = reader.ok()
     assert reader.continued()
@@ -335,9 +363,7 @@ def test_8_worker_keeps_chat_with_routing_record_missing(repo, monkeypatch, sdk_
 @pytest.mark.parametrize("app", ["codex", "claude"])
 def test_9_reader_keeps_chat_with_routing_record_missing(repo, monkeypatch, tmp_path,
                                                        sdk_data, adopted, app):
-    if adopted:
-        _adopted(repo)
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     first = _reader_chat(reader)
     reader.dispose(FIRST, "cut")
@@ -359,9 +385,7 @@ def test_9_reader_keeps_chat_with_routing_record_missing(repo, monkeypatch, tmp_
 @pytest.mark.parametrize("app", ["codex", "claude"])
 def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path,
                                                    sdk_data, adopted, app):
-    if adopted:
-        _adopted(repo)
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     reader.dispose(FIRST, "cut")
     if app == "codex":
@@ -372,10 +396,13 @@ def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path
     reader.log = repo.bin / ("claude-calls.jsonl" if reader.app == "claude" else
                             "codex-app-server.jsonl")
     reader.fail(True)
+    accepted = _accepted_read(reader.text())
     failed = reader.read()
     assert failed.returncode != 0, failed.stdout + failed.stderr
+    # Durable replacement-chat bindings may change; the accepted read and findings may not.
+    assert _accepted_read(reader.text()) == accepted
     first = _reader_chat(reader)
-    (repo.path / ".git/forge/threads/read/SHOP.json").unlink()
+    shutil.rmtree(repo.path / ".git/forge")
     reader.fail(False)
 
     said = reader.ok()
@@ -383,3 +410,43 @@ def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path
     assert "Starting a new" not in said
     assert _reader_chat(reader, resumed=True) == first
     assert reader.doc.read_text("utf-8") in reader.prompt()
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("case", ["new", "resumed-unpersisted", "replacement", "editing-worker"])
+def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_edits(
+        repo, monkeypatch, sdk_data, adopted, case):
+    folder, item, claude, _ = _worker(repo, monkeypatch, sdk_data, "claude", "task", adopted)
+    config = folder / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('workers = "claude"',
+                      'workers = "split"'), encoding="utf-8")
+    repo.git("commit", "-qam", "Use split client workers", cwd=folder)
+    if case in ("resumed-unpersisted", "replacement"):
+        _work(repo, item)
+        if case == "resumed-unpersisted":
+            state = folder / ".factory/stories/BOARD/tasks/PAGE.json"
+            data = json.loads(state.read_text("utf-8"))
+            data.pop("chat")
+            state.write_text(json.dumps(data), encoding="utf-8")
+            repo.git("commit", "-qam", "Keep the earlier chat record", cwd=folder)
+        else:
+            (repo.bin / "claude-sessions.json").unlink()
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    if case == "editing-worker":
+        monkeypatch.setenv("STUB_CLAUDE_LEAVE", "worker-change.txt")
+
+    done = repo.forge("work", item)
+
+    codex = _sent(repo.bin / "codex-app-server.jsonl", "turn/start")
+    if case == "editing-worker":
+        assert done.returncode != 0, done.stdout + done.stderr
+        assert "exit code 3" in done.stderr
+        assert "fell back to Codex" not in done.stdout
+        assert (folder / "worker-change.txt").read_text("utf-8") == "half done\n"
+        assert codex == []
+    else:
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert "fell back to Codex" in done.stdout and "exit code 3" in done.stdout
+        assert len(codex) == 1
+        assert "## Tests first" in codex[0]["input"][0]["text"]
+        assert calls(claude)[-1]["args"][:5] == ["-p", "--model", "opus", "--effort", "medium"]

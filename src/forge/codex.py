@@ -290,7 +290,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
         archive_thread: bool = False, model: str | None = None,
         effort: str | None = None, fresh_prompt: str | None = None,
         design: bool = False, attach_request: dict[str, Any] | None = None,
-        round_number: int | None = None) -> dict[str, Any]:
+        round_number: int | None = None,
+        on_thread: Callable[[str], None] | None = None) -> dict[str, Any]:
     """Run the prompt as one turn in the checkout: on the conversation `thread` when Codex can
     resume it, else on a new one, and name the conversation `name`. A new one gets `fresh_prompt`
     when supplied. `fresh` says why it starts, and the conversation is recorded with the story's
@@ -431,6 +432,8 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                             **({"start": begun} if not said["continued"] else {}))
                     if kind in ("Build", "Fix", "Lite"):
                         remember(checkout, item)
+                    if on_thread is not None:
+                        on_thread(said["thread"])
                     recorded()
                     text = f'Codex conversation "{name}": {said["thread"]}'
                     if not said["continued"] and fresh != "first turn":

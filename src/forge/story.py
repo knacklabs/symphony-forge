@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import tempfile
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from string import Template
@@ -170,9 +171,10 @@ def read(args: Any) -> int:
     # The other app reads when it is installed, else a separate conversation of this one. A later
     # round stays with the recorded reader while its app is installed.
     saved = codex.record(top, target, "Grill")
-    recorded = record.get("reader", "").split(" ")[0] or (
-        "codex" if record.get("conversation") else "claude" if record.get("session") else
-        "codex" if saved.get("conversation") else "claude" if saved.get("claude") else "")
+    recorded = ("codex" if record.get("conversation") else "claude" if record.get("session") else
+                record.get("reader", "").split(" ")[0])
+    if not recorded:
+        recorded = "codex" if saved.get("conversation") else "claude" if saved.get("claude") else ""
     gone = recorded in NAMES and not installed[recorded]
     if recorded == here and installed[other] and not gone:
         repo.refuse(REFUSALS["wrong_app"], doc=rel, reader=NAMES[here], app=NAMES[other],
@@ -186,6 +188,19 @@ def read(args: Any) -> int:
     first, again, edit, head = re.split(r"<!-- forge:(?:round|edit|notes) -->\n",
                                         (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
+
+    def remember_reader(chat: str) -> None:
+        nonlocal before
+        if _snapshot(top) != before:
+            repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
+        fields, body = _record(_text(notes))
+        identity = {"conversation": chat if reader == "codex" else "",
+                    "session": chat if reader == "claude" else ""}
+        if any(fields.get(key, "") != value for key, value in identity.items()):
+            _write(notes, _notes({**fields, **identity}, body))
+            repo.commit_state("Keep the reader conversation", _rel(top, notes), top=top)
+            before = _snapshot(top)
+
     text = doc.read_bytes()  # one read: the reader gets exactly the bytes that are hashed
     read_hash = _store(top, text, rel)
     spec = _find_spec(top, target) if is_story else None
@@ -220,6 +235,8 @@ def read(args: Any) -> int:
         if any(done.returncode for done in seen.values()):
             prompt = fresh_prompt
     session = saved.get("claude")
+    if record.get("reader") and record["reader"].split(" ")[0] != reader:
+        prompt = fresh_prompt
     if gone and (session if reader == "claude" else saved.get("conversation")):
         prompt, why = fresh_prompt, ""
     if reader == "claude":
@@ -227,7 +244,7 @@ def read(args: Any) -> int:
             why = "Forge has no record of its Claude session on this machine"
         with machine.agent_slot(top, "read", target, **repo.models(config, "grill", reader)):
             done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
-                                why, round_number)
+                                why, round_number, remember_reader)
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
     else:
@@ -244,13 +261,14 @@ def read(args: Any) -> int:
                         prefix.rsplit("-", 1)[0] if "-" in prefix else
                         prefix.rsplit(" ", 1)[0]) + "…"
             ran = codex.run(top, target, "Grill", name, prompt, "read-only", thread,
-                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number)
+                            fresh=why or "first turn", fresh_prompt=fresh_prompt, round_number=round_number,
+                            on_thread=remember_reader)
         said, failed = (ran["text"] or "").strip(), ran["status"] != "completed"
         problem = (f"Codex reported the turn {ran['status']}." if failed and ran["status"] else
                    "Codex never reported the turn's end." if failed else "it wrote nothing.")
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
-        # Keep the chat for the retry; only accepted findings change the notes.
+        # Chat bindings survive failed reads; accepted findings stay unchanged.
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
@@ -767,7 +785,8 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
 
 
 def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
-                 resume: str | None, why: str, round_number: int) -> subprocess.CompletedProcess[str]:
+                 resume: str | None, why: str, round_number: int,
+                 on_thread: Callable[[str], None]) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
     exe = shutil.which("claude")
     if exe is None:
@@ -808,6 +827,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
         return subprocess.CompletedProcess(reader.args, reader.returncode, out, err)
 
     if resume:
+        on_thread(resume)
         done = run("--resume", resume, text=prompt)
         if not done.returncode or not done.stderr.startswith("No conversation found"):
             return done
@@ -819,6 +839,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                   claude={"id": session, "checkout": str(top)})
     codex._append(codex._item_file(top, target, ".log", "Grill"),
                   {"claude": {"id": session}, "status": None})
+    on_thread(session)
     return run("--session-id", session, text=fresh_prompt)
 
 
