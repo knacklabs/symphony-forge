@@ -323,7 +323,8 @@ def _missing_required_check(env):
 def _github_api_error(env):
     env.gh.respond("api", stdout="HTTP 502: Bad Gateway", exit=1)
     return {"draft": True, "item": env.start_fix()[0],
-            "problem": "The checks are not green yet: GitHub did not answer: HTTP 502: Bad Gateway.",
+            # A lasting server outage now has a bounded retry and a plain rerun instruction.
+            "problem": "The checks are not green yet: GitHub did not answer. Rerun the command.",
             "next": "forge close tidy-readme"}
 
 
