@@ -6,24 +6,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9c9727974ea26ce6b0cd62dda643445526becb123b761be7f3302dd8adcf7e67",
-    "changed": "4e2bada8e0c7a1142c7042388c42411e2f62c3f34ef50a39ec0a030171cdd8ca",
-    "commit": "192737e301d196ccd38f86dacc82ce80a05d093f",
+    "branch_diff": "9fd448a3d077df76fd316948a8ac18bf8eb3bb2b34972e69c330e0cc605a479b",
+    "changed": "d5790bab99cbc7b1d119c71132184ee30248b890fd5a740eef5161d04789c4f1",
+    "commit": "7f04983eb3b38d59f8107123b285cc62903e0779",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The previous finding remains open: with `runner = \"GPU\"`, an assigned job requesting `gpu` and starting inside the queue window is discarded by this comparison. [GitHub runner labels are case-insensitive](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/apply-labels), and `src/forge/repo.py:495` accepts either spelling without normalization. Consequently, close, both land wait phases, and doctor still report missing runners for this busy-pool case. Normalize the configured label and job labels for comparison, retaining the configured spelling in the message.",
-        "file": "src/forge/checks.py",
-        "line": 115,
-        "priority": "P2",
-        "title": "Match runner labels without case sensitivity"
-      }
-    ],
-    "id": "979a0362-7ed6-42a3-90a6-24fd4047440d",
+    "findings": [],
+    "id": "7ce9221d-c272-4523-9a01-9eca19193567",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T05:14:44+00:00",
@@ -39,6 +31,10 @@
     },
     {
       "at": "2026-10-09T06:25:41+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T06:59:22+00:00",
       "step": "review"
     }
   ],
