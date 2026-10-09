@@ -6,24 +6,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3f5fa257411ad2b4ae3f00083a181bc9b60eb138c36c2710ad74c1c55c6cd38d",
-    "changed": "bcc2217f895a37e2cbc55bab04e6852a6570794c6659e35d9102639d7088a545",
-    "commit": "c1edf1825c3d4a920d4c3c043c174434a327b074",
+    "branch_diff": "be5e1cb0779cb2c9044139633b3109a577ace8c5b127c3ce43de35fced9ba47b",
+    "changed": "a0f7271c6823dd5d000ad2cf0db5c5bb229238083c41a54b72c71cefce703a08",
+    "commit": "468b7a2271ee8c9c44d3ab889a2e118b5c257612",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "If the default-branch commit also changes the Forge version pin, this recovery can stop before completing close. `src/forge/close.py:137` calls `resume_pin` after merging the default branch, and `src/forge/repo.py:564` restarts the original command from `sys.argv`. For `forge merge`, that restarts merge before close has published the replacement head or updated the ready receipt; `src/forge/merge.py:77` then refuses because the local branch no longer matches the old ready head. The user must manually close and merge again. Complete the recovery close under the selected release before retrying merge. The new tests keep the pin unchanged during recovery, so they do not exercise this interaction.",
-        "file": "src/forge/merge.py",
-        "line": 115,
-        "priority": "P2",
-        "title": "Preserve the close continuation when recovery changes the Forge pin"
-      }
-    ],
-    "id": "223e646f-b042-43a5-bc04-11d4b872792a",
+    "findings": [],
+    "id": "39c308b6-9fca-4d5a-9ae7-741a7a0d5d78",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T15:08:34+00:00",
@@ -31,6 +23,10 @@
     },
     {
       "at": "2026-10-09T15:50:30+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:25:18+00:00",
       "step": "review"
     }
   ],
