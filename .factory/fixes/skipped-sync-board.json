@@ -2,13 +2,28 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-sync-board",
   "done_when": "The Claude hook finds the repo from CLAUDE_PROJECT_DIR before the current folder; the roadmap merge driver merges each item's fields and reports a conflict when both sides change the same field instead of dropping one; a merged part never shows as unstarted on the board; backticks around task ids are ignored; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ae6eba4b4d5226aadad2541abb76bb41cb7fc7976d6eaf3e27e9613dcb2e5482",
+    "changed": "7ffe9b98d60a0254c9de3323486cdcca8fb4653e461a3fe6b9c8ea2e6a75c888",
+    "commit": "d87e2f3c38b9455ad3dbc9b313bc3ab1caa9a904",
+    "dismissals": [],
+    "findings": [],
+    "id": "112d0124-5167-4403-a4e2-8d3138e48b64",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T18:34:34+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T19:39:47+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues the coordinator skipped, still in sync and the board (audit, 2026-10-09): the Claude hook runs git rev-parse in the current folder so a cd outside the repo blocks every Bash call, the roadmap merge driver drops one side's title and spec edits, an assigned part merged more than seven days ago shows as unstarted, and backticked task ids crash the boards",
