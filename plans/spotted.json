@@ -3123,6 +3123,28 @@
       "item": "runner-setting",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

@@ -1,4 +1,4 @@
-"""A ready pull request merges through Forge, and Codex reads leave no active chat."""
+"""src/forge/merge.py merges ready pull requests, preserves local work and archives chats."""
 from __future__ import annotations
 
 import json
