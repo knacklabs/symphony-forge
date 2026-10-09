@@ -586,9 +586,9 @@ def _pin(text: str) -> str:
     return version.removeprefix("v") if isinstance(version, str) else ""
 
 
-def _older(version: str) -> bool:
-    """The version is a release older than the installed Forge."""
-    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, __version__))
+def _older(version: str, target: str = __version__) -> bool:
+    """The version is a release older than the target (the installed Forge by default)."""
+    release, installed = (re.match(r"(\d+)\.(\d+)\.(\d+)", v) for v in (version, target))
     return bool(release and installed and
                 tuple(map(int, release.groups())) < tuple(map(int, installed.groups())))
 
