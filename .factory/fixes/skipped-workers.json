@@ -2,13 +2,38 @@
   "base": "180774000df7984107d51cb798b1337760a63019",
   "branch": "fix/skipped-workers",
   "done_when": "Lost-session recovery searches all of Claude's output; record_progress retries a busy events file on Windows like codex does; Claude workers ignore Codex-only subagent keys; a fix name used by an abandoned start tag is treated as taken with a plain message; migration filters stage records by story; command tests cover each, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    "src/forge/worker.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc8ac600026f1c61be8abceaf7a640a067bfebc7429fd396258763c20b1091bf",
+    "changed": "66acb278e86aa4e33451c4b9061b7a1747b168203e9afe980200de1f7048db97",
+    "commit": "735029bb5bf9edc31417983695f2fddbd3293bbb",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The rule says: \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\" Removing this refusal leaves `tests/test_codex_worker.py::test_3_models_per_kind` asserting the obsolete behaviour: lines 344\u2013348 configure Claude with both subagent keys, require the removed refusal message, and require zero Claude calls. The command now starts Claude, so this test fails in the full suite configured by `forge.toml` and CI. The supplied 23-test close run omitted it. Replace those obsolete assertions with the intended successful behaviour while preserving the test's Codex coverage.",
+        "file": "src/forge/worker.py",
+        "line": 250,
+        "priority": "P1",
+        "title": "Standard: Delete before adding"
+      }
+    ],
+    "id": "ba4849ff-0b34-46fc-8f7f-60b555e847ab",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T18:34:36+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T20:02:57+00:00",
+      "step": "review"
     }
   ],
   "why": "Real issues the coordinator skipped, still in workers, tasks and migration (audit, 2026-10-09): lost-session recovery misses errors Claude reports as structured output, on Windows a reader holding the events file open makes record_progress abort the run, a workers = claude repo with an edited lite model is refused on its first fix, restarting an abandoned fix with the same name fails partway, and migration stage records cross stories so a done task can be un-marked",
