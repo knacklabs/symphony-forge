@@ -2738,6 +2738,39 @@
       "item": "brief-close-pushes",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_commands_load_only_their_owner.py\tA Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_commands_load_only_their_owner.py",
+      "line": 90,
+      "text": "A Windows CI worker timed out in the earlier-client upgrade call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py\tA Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_fix_tests_test_codex_worker_py_test_4_turn_l_2.py",
+      "line": 24,
+      "text": "A Windows CI worker timed out in the failed Codex work call; its cause remains unknown.",
+      "from": "worker",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tNot done: Both lane-stop regression tests pass on every CI platform\tlane-stop-race",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 187,
+      "text": "Not done: Both lane-stop regression tests pass on every CI platform",
+      "from": "blocking",
+      "item": "lane-stop-race",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
