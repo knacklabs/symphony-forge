@@ -10,38 +10,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d8ee98565545574c8e01ecf56b3aa8fc90336da03da4ca058d360a6a3a087427",
-    "changed": "7107e66d067b55553d527ed070b8494b19aefc92df15b73bfc90bbc84147c6c5",
-    "commit": "de9724d00c7da88ee8ec6d0ba750052e80498190",
+    "branch_diff": "d34ba01d3c6e76fbd42b6fbaf9ce614237c70814a7dc2115e4df2fc967c4415f",
+    "changed": "acbce563fc76ea3c8f92328f834ef49416392bfbe67fcbd0d5e3e7b78f391a53",
+    "commit": "fee29c49a15aee402687329be1bb453afacefe10",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "For client design work with `workers = \"split\"`, `work()` takes its snapshot before calling `_claude()` and refuses fallback if that snapshot changes (worker.py:153\u2013163). This new `remember()` call commits the chat identity before Claude runs. Since `_snapshot()` includes both the checkout tree and HEAD (story.py:879\u2013890), even a missing Claude executable or a failure that edits nothing now appears to have changed the checkout, preventing the existing Codex fallback. The same problem affects replacement sessions and earlier sessions whose identity has not yet been committed. Account for Forge's own bookkeeping before taking the worker-change snapshot.",
-        "file": "src/forge/worker.py",
-        "line": 466,
-        "priority": "P1",
-        "title": "Preserve clean-failure fallback when remembering Claude chats"
-      },
-      {
-        "body": "Reader identities reach the notes only after this failure check, while failed reads retain them solely in `.git/forge` JSON and logs. After a first failed read, removing machine metadata\u2014as the restart tests do\u2014loses the identity even though the tool still has the chat. The retry starts another chat without attempting resume or explaining why. A failed replacement read likewise loses its replacement identity and falls back to the unavailable tool recorded in the accepted notes. Persist the reader identity before running the read, independently of accepting findings. Tests 7 and 10 delete only the JSON, leaving the recovery log available, so they miss both cases.",
-        "file": "src/forge/story.py",
-        "line": 253,
-        "priority": "P1",
-        "title": "Not done: Persist reader chats before accepting a read"
-      },
-      {
-        "body": "The runtime proof cases do not retain client configuration. `_worker()` calls `_resuming()` without `client=True`; that helper writes `repo = \"forge-source\"` (test_codex_resume.py:161\u2013165 and test_codex_worker.py:131\u2013132). Reader cases similarly call `_setup()`, which replaces the adopted configuration with Forge-source settings (test_readloop_rounds.py:226\u2013228). Thus tests 1\u20134 and 6\u201310 exercise Forge's own route even under the adopted-client parameter. Test 5 verifies client guide delivery, and the existing client continuity test covers an ordinary successful continuation, but neither proves the required resume and fresh-chat cases in new and earlier-adopted clients. The clean-failure fallback regression is a concrete client scenario these proof tests currently miss.",
-        "file": "tests/test_worker_and_reader_chats_survive_rounds.py",
-        "line": 41,
-        "priority": "P1",
-        "title": "Not done: Client-repo command tests for chat continuity"
-      }
-    ],
-    "id": "9e1cead9-5726-4744-9973-78598ada8565",
-    "status": "blocked"
+    "findings": [],
+    "id": "fa50d955-b040-49cf-888d-fc7d94d6a97a",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -49,6 +27,10 @@
     },
     {
       "at": "2026-10-09T19:25:47+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T20:54:02+00:00",
       "step": "review"
     }
   ],
