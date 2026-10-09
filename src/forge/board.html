@@ -58,7 +58,7 @@
   .board-picture text { fill: currentColor; }
   .board-picture .picture-detail { fill: var(--muted); font-size: 14px; }
   .dependency-node circle, .dependency-node rect, .dependency-node polygon,
-  .dependency-node ellipse { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5;
+  .dependency-node ellipse, .dependency-node path { fill: var(--surface-2); stroke: currentColor; stroke-width: 1.5;
                              vector-effect: non-scaling-stroke; }
   .dependency-edge { fill: none; stroke: var(--muted); stroke-width: 1.5;
                      vector-effect: non-scaling-stroke; }
@@ -73,6 +73,9 @@
     <h1>Forge board</h1>
     <p>Updated $updated</p>
   </header>
+  <p class="meta">$counts</p>
+  <h2>Roadmap</h2>
+  $map
   <h2>How the factory is doing</h2>
   <section class="card"><ul class="numbers">$numbers</ul></section>
   $note

@@ -385,9 +385,12 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
 
 def _story(top: Path, key: str, path: Path | None, text: str,
            title: str, trees: dict[str, Path], merged_prs: set[str], prs: dict[str, dict[str, Any]],
-           refusals: dict[Path, str], history: dict[str, Any] | None = None
+           refusals: dict[Path, str], history: dict[str, Any] | None = None,
+           readiness: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
+    if readiness is not None:
+        readiness.update(stage="planning", parts={}, waits={})
     notes, doc_hash, required = "", "", False
     if path is None:  # like forge task start: the story branch's copy while it exists
         for ref in (f"story/{key}", story.landed_ref(top)):
@@ -407,8 +410,12 @@ def _story(top: Path, key: str, path: Path | None, text: str,
         return [f"The story doc of {title} is malformed: {exc}.",
                 f"Next: edit plans/{key}.md, then run forge next"], []
     digest = approval.waiting_digest(key, path) if path else None
+    if readiness is not None:
+        readiness["parts"] = {task["id"]: "Not started" for task in doc["tasks"]}
     if digest:
-        return _approval(top, key, path, title, digest, refusals, text), []
+        return _approval(top, key, path, title, digest, refusals, text, readiness), []
+    if readiness is not None:
+        readiness.update(stage="building", parts={task["id"]: "Waiting" for task in doc["tasks"]})
     states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history)
               for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
@@ -430,6 +437,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             lines += _item(item, item, states[task["id"]], top,
                            trees.get(f"task/{key}-{task['id']}"), prs, refusals)
     if behind:
+        if readiness is not None:
+            readiness["stage"] = "planning"
         return lines + [behind], list(states.values())
     merged |= {after for task in doc["tasks"] for after in task["after"] if "/" in after
                and _task(top, *after.split("/"), trees, merged_prs, history).get("status") == "merged"}
@@ -448,8 +457,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     waiting = [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)]
     reread = _next_round(key, notes, doc_hash, title, required, text)
+    if readiness is not None:
+        readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
+        if readiness is not None:
+            readiness["stage"] = "planning"
         return lines + reread, list(states.values())
+    if readiness is not None:
+        readiness["parts"].update({name: "Can start now" for name in ready})
     if ready:
         rows = {task["id"]: task for task in doc["tasks"]}
         landed = story.landed_ref(top)
@@ -475,7 +490,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
 
 
 def _approval(top: Path, key: str, path: Path, title: str, digest: str,
-              refusals: dict[Path, str], text: str) -> list[str]:
+              refusals: dict[Path, str], text: str, readiness: dict[str, Any] | None = None) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
     reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
@@ -493,6 +508,8 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
     why = story._text(approval.last_refusal(top)).strip().rstrip(".")  # pyright: ignore[reportPrivateUsage]
     shown = f"plans/{key}.md" + (" from its title down to ## For the builders"
                                  if story.BUILDERS.search(text) else "")
+    if readiness is not None:
+        readiness["stage"] = "waiting for approval"
     return [f"{title} is waiting for approval" + (f" (the last answer was not recorded: {why})." if why
                                                   else "."),
             f"Next: in Claude Code, show {shown} in Plan Mode and exit Plan Mode with it as the plan",

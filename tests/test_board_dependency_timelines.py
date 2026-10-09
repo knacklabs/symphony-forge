@@ -77,7 +77,8 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     repo.path = worktree(repo, "fix/configure-client")
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{GRILL}')
-    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}, {"key": "PACK"}]}))
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}, {"key": "PACK"},
+                                                        {"key": "PLAN"}, {"key": "IDEA"}]}))
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure the client")
     _install(repo.bin, "claude", READER.format(python=sys.executable))
@@ -87,13 +88,15 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T10:00:00+00:00")
     packing = DOC.replace("Shoppers can save a basket", "Baskets can be packed").replace(
         "Save a basket |", "Prepare packaging |")
-    packing_tree = new_story(repo, "PACK", "Baskets can be packed")
-    (packing_tree / "plans/PACK.md").write_text(packing, encoding="utf-8")
+    ready(repo, "PACK", packing)
+    new_story(repo, "PLAN", "Plan the next improvement")
     doc = DOC.replace("`tests/test_share.py` | SAVE | yes |",
                       "`tests/test_share.py` | SHOW, PACK/SAVE | yes |")
     doc = doc.replace("\nNew moving parts:",
                       "\n| EXTRA | Print a basket | Paper copy | 1 | `print.py` | "
-                      "`tests/test_print.py` | none | no |\n\nNew moving parts:")
+                      "`tests/test_print.py` | none | no |\n"
+                      "| BUSY | Change the basket page | Page improvement | 2 | `src/page.py` | "
+                      "`tests/test_busy.py` | none | no |\n\nNew moving parts:")
     story_tree = ready(repo, "SHOP", doc)
     assert hook(repo, claude_plan(claude_payload, doc, cwd=story_tree)).returncode == 0
 
@@ -147,34 +150,43 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     assert set(children) == {"SHOP/SHOW"}, "Old merged parts stay outside active item rows"
     maps = {r["id"]: r for r in data["dependency_maps"]}
     parts = {r["id"]: r for r in maps["SHOP"]["parts"]}
-    assert set(parts) == {"SHOP/SAVE", "SHOP/SHOW", "SHOP/SHARE", "SHOP/EXTRA"}
+    assert set(parts) == {"SHOP/SAVE", "SHOP/SHOW", "SHOP/SHARE", "SHOP/EXTRA", "SHOP/BUSY"}
     assert parts["SHOP/SHOW"]["waits_for"] == ["SHOP/SAVE"]
     assert parts["SHOP/SHARE"]["waits_for"] == ["SHOP/SHOW", "PACK/SAVE"]
     assert parts["SHOP/EXTRA"]["waits_for"] == [], "This unstarted part can start now"
     assert {key: part["status"] for key, part in parts.items()} == {
         "SHOP/SAVE": "Merged", "SHOP/SHOW": "Running",
-        "SHOP/SHARE": "Waiting", "SHOP/EXTRA": "Not started"}
+        "SHOP/SHARE": "Waiting", "SHOP/EXTRA": "Can start now", "SHOP/BUSY": "Waiting"}
+    assert parts["SHOP/BUSY"]["waits_for"] == ["SHOP/SHOW"], "Active scopes block starting"
+    assert maps["PACK"]["parts"][0]["status"] == "Not started", "Unapproved stories cannot start"
+    next_steps = repo.forge("next")
+    assert next_steps.returncode == 0, next_steps.stderr
+    assert "Next: forge task start SHOP/EXTRA" in next_steps.stdout
+    assert "Next: forge task start PACK/SAVE" not in next_steps.stdout
+    assert "Next: forge task start SHOP/BUSY" not in next_steps.stdout
+    assert "SHOP/BUSY waits for SHOP/SHOW to merge first" in next_steps.stdout
 
     out = tmp_path / "board.html"
     rendered = repo.forge("board", "--out", str(out))
     assert rendered.returncode == 0, rendered.stderr
     page = out.read_text("utf-8")
-    drawing = _svg(page, "Shoppers can save a basket dependencies")
+    drawing = _svg(page, "Roadmap dependencies")
     titles = _titles(drawing)
     node_titles = {"Save a basket: Merged", "Show when it was saved: Running",
-                   "Share a basket: Waiting", "Print a basket: Not started"}
+                   "Share a basket: Waiting", "Print a basket: Can start now",
+                   "Prepare packaging: Not started"}
     assert node_titles <= titles
     assert {"Show when it was saved waits for Save a basket",
             "Share a basket waits for Show when it was saved",
-            "Share a basket waits for Prepare packaging (other story)",
-            "Prepare packaging (other story): Not started"} <= titles
+            "Share a basket waits for Prepare packaging",
+            "Change the basket page waits for Show when it was saved"} <= titles
     shapes = []
     for group in drawing.iter():
         if any(n.tag.rsplit("}", 1)[-1] == "title" and n.text in node_titles for n in group):
             shape = next(n for n in group if n.tag.rsplit("}", 1)[-1] in
                          ("rect", "circle", "ellipse", "polygon", "path"))
             shapes.append((shape.tag, shape.get("rx"), shape.get("stroke-dasharray")))
-    assert len(set(shapes)) == 4, "Each state needs its own shape, beyond its colour and label"
+    assert len(set(shapes)) == 5, "Each state needs its own shape, beyond its colour and label"
 
     for row in (children["SHOP/SHOW"], rows["readme-greets"]):
         stages = {s["name"]: s for s in row["stages"]}
@@ -190,8 +202,16 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
                                                  "2 minutes", "30 seconds", "1 minute", "unknown", "current"))
     text = seen(out)
     assert all(section in text for section in ("Parts", "Small fixes", "How the factory is doing"))
-    assert "In progress: 1 of 4 parts finished." in text
-    assert len(re.findall(r"<svg\b", page)) == 4, "Two maps and two active-item timelines"
+    assert "In progress: 1 of 5 parts finished." in text
+    assert len(re.findall(r"<svg\b", page)) == 3, "One roadmap map and two active-item timelines"
+    assert sum(n.tag.rsplit("}", 1)[-1] == "title" and n.text ==
+               "Prepare packaging: Not started" for n in drawing.iter()) == 1
+    assert all("(other story)" not in title for title in titles)
+    expected_counts = {"needs a spec": 1, "planning": 1, "waiting for approval": 1,
+                       "building": 2, "ready to merge": 0,
+                       "done": 3 if history == "adopted-v1.2.2" else 2}
+    assert data["stage_counts"] == expected_counts
+    assert all(f"{name.capitalize()}: {count}" in text for name, count in expected_counts.items())
     numbers = re.search(r'<ul class="numbers">(.*?)</ul>', page, re.S).group(1)
     assert len(re.findall(r"<li>", numbers)) == 3, "The three factory measures stay"
     # These are the shipped, script-free theme and responsive-page contracts.
@@ -218,3 +238,34 @@ def test_dependency_map_and_stage_timelines_use_the_command_data(
     nested = _titles(_svg(out.read_text("utf-8"), "Show when it was saved stage timeline"))
     assert "Tests: 30 seconds; current" in nested
     assert "Build: 2 minutes; current" not in nested
+
+    # The count consumes the close producer's recorded reviewed-head receipt;
+    # machine-view tests own close/check production on both client histories.
+    receipts = forge / "ready"
+    receipts.mkdir(exist_ok=True)
+    (receipts / "readme-greets.json").write_text(json.dumps({
+        "review": "clean", "commit": repo.git("rev-parse", "fix/readme-greets")}), "utf-8")
+    with (forge / "events.jsonl").open("a", encoding="utf-8") as events:
+        events.write(json.dumps({"event": "run end", "id": "readme-greets:ci:end",
+                                 "run_id": "readme-greets:ci", "item": "readme-greets",
+                                 "kind": "ci", "at": "2026-10-09T10:00:00Z"}) + "\n")
+    ready_counts = {**expected_counts, "building": 1, "ready to merge": 1}
+    ready_page = repo.forge("board", "--out", str(out))
+    assert ready_page.returncode == 0, ready_page.stderr
+    assert "Ready to merge: 1" in seen(out)
+    ready_json = repo.forge("board", "--json")
+    assert ready_json.returncode == 0, ready_json.stderr
+    assert json.loads(ready_json.stdout)["stage_counts"] == ready_counts
+
+    # An edited approved plan requires another read before an idle part starts.
+    changed = doc.replace("Shoppers can save a basket and come back to it later.",
+                          "Shoppers can save a basket and return tomorrow.")
+    (story_tree / "plans/SHOP.md").write_text(changed, encoding="utf-8")
+    reread = repo.forge("next")
+    assert reread.returncode == 0, reread.stderr
+    assert "Next: forge read SHOP" in reread.stdout
+    assert "Next: forge task start SHOP/EXTRA" not in reread.stdout
+    after_change = repo.forge("board", "--json")
+    assert after_change.returncode == 0, after_change.stderr
+    shop_map = next(m for m in json.loads(after_change.stdout)["dependency_maps"] if m["id"] == "SHOP")
+    assert next(p for p in shop_map["parts"] if p["id"] == "SHOP/EXTRA")["status"] == "Not started"

@@ -200,6 +200,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
     older = nextstep._prs(top, "open", "number,headRefName,url,isDraft")
     for pr in older:
         by_branch.setdefault(pr["headRefName"], pr)
+    merged_prs = {p["headRefName"] for p in nextstep._prs(top, "merged", "headRefName")} if trees else set()
+    readiness: dict[str, Item] = {}
     timings, recorded = [], []
     for name, rows in (("timings", timings), ("events", recorded)):
         path = repo.forge_dir(top) / f"{name}.jsonl"
@@ -216,6 +218,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             state = {**state, "status": "merged"}
         branch = state.get("branch") or (f"task/{item.replace('/', '-')}" if kind == "task"
                                          else f"{kind}/{item}")
+        if kind != "story" and branch in merged_prs:
+            state = {**state, "status": "merged"}
         tree = trees.get(branch)
         cfg = nextstep._report_config(tree or top, {})
         pr = by_branch.get(branch)
@@ -226,7 +230,8 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             try:
                 lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
                          else nextstep._story(top, item, tree, _read(top, where, f"plans/{item}.md"),
-                                              title, trees, set(), by_branch, {}, history)[0])
+                                              title, trees, merged_prs, by_branch, {}, history,
+                                              readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
                 lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         dismissed = {d.get("finding") for d in (state.get("review") or {}).get("dismissals", [])
@@ -431,19 +436,34 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
             waits = [dep if "/" in dep else f"{key}/{dep}"
                      for dep in task.cell_list(spec.get("After", ""))]
             current = active_parts.get(item, {})
-            status = ("Merged" if repo.state_path(item) in merged else
+            task_state = nextstep._task(top, key, tid, trees, merged_prs, history)
+            waits = list(dict.fromkeys(waits + readiness.get(key, {}).get("waits", {}).get(tid, [])))
+            status = ("Merged" if task_state.get("status") == "merged" else
                       "Running" if current.get("activity", {}).get("status") == "running"
                       or current.get("worker") or current.get("tests")
                       or current.get("gates", {}).get("ci", {}).get("status") == "running" else
-                      "Waiting" if current or any(repo.state_path(dep) not in merged for dep in waits) else
-                      "Not started")
+                      "Waiting" if current else readiness.get(key, {}).get("parts", {}).get(tid, "Not started"))
             parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
                           "status": status, "waits_for": waits})
+        phase = ("done" if state.get("status") == "done" or
+                 history["stories"].get(key, {}).get("status") == "done" else
+                 readiness.get(key, {}).get("stage", "planning"))
         maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
-                     or "A story with no title yet", "parts": parts})
+                     or "A story with no title yet", "parts": parts, "stage": phase})
     mapped = {m["id"] for m in maps}
-    maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet", "parts": []}
+    maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
+                 "parts": [], "stage": "needs a spec"}
                 for s in repo.roadmap(top) if s["key"] not in mapped and s.get("status") != "superseded")
+    counts = dict.fromkeys(("needs a spec", "planning", "waiting for approval", "building", "ready to merge", "done"), 0)
+    for entry in maps:
+        counts[entry["stage"]] += 1
+    for rel, (state, _) in best.items():
+        name = STATE.fullmatch(rel)["fix"]
+        if name and state.get("kind") != "story-done":
+            phase = ("done" if rel in merged or state.get("status") in ("merged", "done")
+                     or (state.get("branch") or f"fix/{name}") in merged_prs else
+                     "ready to merge" if items.get(name, {}).get("stage") == "ready" else "building")
+            counts[phase] += 1
     event_lines = {"run start": "started", "run end": "finished", "review result": "Review "}
     recent = [{"time": e.get("at"), "item": e.get("item"), "line":
                " ".join((e.get("question") or "Worker asked a question").split()) if e.get("event") == "worker question" else
@@ -452,7 +472,7 @@ def machine_board(top: Path, history: Item | None = None) -> Item:
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
-            "dependency_maps": maps, "events": recent,
+            "dependency_maps": maps, "stage_counts": counts, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
 
 
@@ -840,9 +860,7 @@ def _cap(text: str) -> str:
 
 def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: Item) -> str:
     esc = html.escape
-    maps = {m["id"]: m for m in view["dependency_maps"]}
     rows = {r["id"]: r for r in view["items"]}
-    all_parts = {p["id"]: p for m in maps.values() for p in m["parts"]}
 
     def part(name: str, item: Item | None, summary: str = "") -> str:
         if item is None:
@@ -860,8 +878,6 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
     def card(s: Item) -> str:
         body = [f"<h3>{esc(s['title'])}</h3>", f'<p class="sentence">{esc(s["sentence"])}</p>']
         body += [f'<p class="meta">{esc(" ".join(s["meta"]))}</p>'] if s["meta"] else []
-        if s["id"] in maps:
-            body.append(board_visuals.dependencies(maps[s["id"]], all_parts))
         if s["parts"]:
             body.append("<h4>Parts</h4><ul>" + "".join(part(n, p) for n, p in s["parts"]) + "</ul>")
         for current in rows.get(s["id"], {}).get("children", []):
@@ -889,6 +905,8 @@ def _page(stories: list[Item], fixes: list[Item], prs: list[Item] | None, view: 
         updated=f"{_day(now)} at {now:%H:%M} UTC",
         numbers="".join(f"<li>{esc(_cap(number))}.</li>" for number in _numbers(stories, prs)),
         note=note,
+        map=board_visuals.dependencies(view["dependency_maps"]),
+        counts=" · ".join(f"{name.capitalize()}: {count}" for name, count in view["stage_counts"].items()),
         stories="".join(card(s) for s in stories) or '<p class="card">No story is on the roadmap yet.</p>',
         fixes=f'<section class="card"><ul>{fixed}</ul></section>' if fixed
         else '<p class="card">No small fixes yet.</p>')
