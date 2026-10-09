@@ -16,27 +16,34 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "54849d45a266c52d8cf19ab1226975a6dc18871a63f33f523c2ce7df675912b5",
-    "changed": "693ed4f22e0cb52473fe3a4fd402c58e95249cceda12b3e8b5ba50ae8e0503b1",
-    "commit": "3c13c45724596afab0bee11e8c1ff3242ae8d0a9",
+    "branch_diff": "10b4732448f7a90d35eb864322b4e07f763bb062490658b7719fd58ebe82cc81",
+    "changed": "8b079823a86f43db2bd1dc20719509a9712fe6f2e114ac58fb302f98e52e09f7",
+    "commit": "bb0a98dbb4b4c0ee0ff36ff389f01e7d4cfdd724",
     "dismissals": [],
     "findings": [
       {
-        "body": "The implementation still delivers the earlier requirements rather than the amended Done-when. First, `_page` renders a separate dependency map inside each story card (board.py:863\u2013864), duplicating cross-story dependencies instead of drawing one map across the roadmap. Second, this status expression never produces \u201cCan start now\u201d; even an eligible part with no unmet dependency becomes \u201cNot started\u201d. It also omits readiness conditions used by `forge next`, including approval, scope-overlap blockers and required rereads (nextstep.py:409\u2013411, 438\u2013451). Third, neither the JSON return nor the page renders the required line counting needs-a-spec, planning, waiting-for-approval, building, ready-to-merge and done items; the existing factory measures are different counts. Implement the shared roadmap map, derive its five states from the actual readiness rules, and add the six stage counts.",
+        "body": "When a task or fix checkout containing an inherited story record wins the equal-step tie in `best` (board.py:192\u2013196), readiness receives that checkout's old plan even though `tree` points to the story's current checkout. `nextstep._story` reads notes and the document hash from `tree`, but parses the supplied text (nextstep.py:403\u2013408). A Tasks-table-only edit leaves approval unchanged; the reread comparison can then compare the old plan against itself (story.py:477\u2013484), incorrectly preserving \u201cCan start now\u201d while `forge next` requires another read. The map also reads the inherited plan at board.py:432, so changed parts and dependencies disappear. Read the owning story's current plan for both paths. The existing reread test changes an approval-bound section, which catches a different gate and misses this scenario.",
         "file": "src/forge/board.py",
-        "line": 438,
+        "line": 234,
         "priority": "P1",
-        "title": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts"
+        "title": "Not done: dependency maps and readiness must use the current story plan"
       },
       {
-        "body": "The named proof passes while three amended acceptance requirements are absent. It explicitly expects the supposedly eligible SHOP/EXTRA part to remain \u201cNot started\u201d (lines 153\u2013156), checks only four state shapes (line 177), and requires two separate maps (line 194). Its counts assertions check a story\u2019s completed parts and the three existing factory measures (lines 193\u2013196), rather than the six requested stage totals. Thus the proof list\u2019s readiness and counts claims do not establish those behaviours. Update this command test for both client histories to assert one roadmap-wide map, a visible and distinct can-start-now state consistent with `forge next`, and the actual six stage counts.",
-        "file": "tests/test_board_dependency_timelines.py",
-        "line": 153,
-        "priority": "P1",
-        "title": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data"
+        "body": "Valid task IDs can be enclosed in backticks: story.py:361 strips them before validation, and the existing board text does likewise at board.py:536. Here `tid` comes directly from `task.rows`, which preserves the backticks (task.py:62). Consequently, a row named `SAVE` in Markdown becomes an ID containing literal backticks, fails state and readiness lookups, and appears \u201cNot started\u201d even when merged or startable. Dependencies referencing SAVE also acquire a separate \u201cUnknown part\u201d node. Apply the same ID normalization before all map lookups and node construction.",
+        "file": "src/forge/board.py",
+        "line": 435,
+        "priority": "P2",
+        "title": "Normalize Markdown-formatted task IDs before constructing map nodes"
+      },
+      {
+        "body": "The unchanged full-suite test `test_1_machine_views_omit_old_finished_items_without_more_git_calls` compares entire responses before and after adding twelve completed stories and fixes (tests/test_machine_views_recent_finished_items.py:165\u2013195). The new `dependency_maps` and `stage_counts` intentionally change for those additions, so its whole-response equality now fails in all four parametrized cases. The supplied three-test close run does not include this test. Preserve its active-item expiry assertions while separately checking the expected changes to the new history-bearing fields.",
+        "file": "src/forge/board.py",
+        "line": 475,
+        "priority": "P2",
+        "title": "Update the history-invariance test for the expanded JSON payload"
       }
     ],
-    "id": "3bcfe83b-34cf-4ed3-9a12-dce18eddaeb8",
+    "id": "7d17d183-23ca-4c2c-b9ea-a8eda2c7d95e",
     "status": "blocked"
   },
   "round": 3,
@@ -48,6 +55,10 @@
     },
     {
       "at": "2026-10-09T08:28:18+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T09:18:45+00:00",
       "step": "review"
     }
   ],
