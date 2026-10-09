@@ -9,31 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "55881ba586843ac3a0f84ddece8a7999dee84a0f25ed027157d62052ef0cb54b",
-    "changed": "883880b6419b814753caafd343890b4679a3f9a61cb21b2c802f97aa5b55d0fe",
-    "commit": "39709d315e49365bccd7e64790ccb937f373b14f",
+    "branch_diff": "29f844e5aceb05868098646fb775fff76613c6754176e8382944a4e1375a92e7",
+    "changed": "c4c6226f95ce7f79f3705fae4f473d51fd627c6575cc296b7409ccd39cd12bc3",
+    "commit": "6628067e976baf7f644be237f3d66f54a0195e7e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The revised Done-when explicitly includes commands' own default-branch merges, broadening the earlier worker-only requirement. This handoff still occurs after `_merge_default` returns. When an upgrade merges forge.toml cleanly but conflicts in generated guidance, `_merge_default` runs `forge sync` at src/forge/close.py:451 before returning. That subprocess uses the old release, whose `check_pin` validates the entire configuration at src/forge/repo.py:514 before selecting another release. A newly introduced key therefore stops both standalone close and land's close path, leaving the merge unfinished without reaching this handoff. Run conflict-resolution sync under the newly pinned release, finish the merge, then resume the original command.",
-        "file": "src/forge/close.py",
-        "line": 135,
-        "priority": "P1",
-        "title": "Not done: land and close switch releases before resolving generated merge conflicts"
-      },
-      {
-        "body": "The revised Done-when explicitly requires a land command test where land itself merges the upgraded default branch in an earlier-adopted repo. The matrix covers only land-build, land-fix and close-merge: both land cases make the worker merge the upgrade, while the own-merge case invokes standalone close (lines 96\u2013105). Tests 2 and 3 likewise cover a worker merge and standalone close. Consequently, a regression that resumes close's merge as `forge close` instead of the original `forge land` could pass every added case while dropping land's remaining workflow. Extend the command matrix with the promised land-owned merge, including earlier adoption, and assert the release notice, continuation and completion.",
-        "file": "tests/test_running_commands_follow_changed_forge_pin.py",
-        "line": 71,
-        "priority": "P1",
-        "title": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo"
-      }
-    ],
-    "id": "217f26ad-7df0-47cf-aeea-661f624ee683",
-    "status": "blocked"
+    "findings": [],
+    "id": "bf61de04-9c9e-457e-9428-cafe4460348c",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T08:00:19+00:00",
@@ -45,6 +30,10 @@
     },
     {
       "at": "2026-10-09T12:54:28+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T13:50:39+00:00",
       "step": "review"
     }
   ],
