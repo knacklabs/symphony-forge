@@ -48,8 +48,8 @@ READ_SERVER = (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"
 ''', 1)
 
 
-def _ready(repo, monkeypatch, sdk_data):
-    folder, calls, _ = _resuming(repo, monkeypatch, sdk_data)
+def _ready(repo, monkeypatch, sdk_data, client=False):
+    folder, calls, _ = _resuming(repo, monkeypatch, sdk_data, client=client)
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{SERVER}")
     return folder, calls
 

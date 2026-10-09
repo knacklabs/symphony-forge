@@ -189,6 +189,10 @@ def _prototype_run(env, _):
     assert f"Next: forge merge {FIX}" not in shown
 
     # forge merge refuses it, though a prototype otherwise merges by agent.
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefOid": env.repo.git("rev-parse", BRANCH), "headRefName": BRANCH,
+        "title": "Let the agent merge", "isDraft": False}))
     refused = env.repo.forge("merge", FIX)
     assert refused.returncode != 0
     assert refused.stderr == OWNER_MERGES
@@ -218,6 +222,10 @@ def _other_fix_changes_merge(env, _):
     item, where = env.start_fix({"forge.toml": text + 'merge = "agent"\n'})
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main",
+        "headRefOid": env.repo.git("rev-parse", "HEAD", cwd=where),
+        "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
     refused = env.repo.forge("merge", item)
     assert refused.stderr == OWNER_MERGES.replace(FIX, item, 1)
     assert not env.gh_calls("pr", "merge")
