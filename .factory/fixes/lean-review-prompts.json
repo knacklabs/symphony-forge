@@ -1,0 +1,14 @@
+{
+  "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
+  "branch": "fix/lean-review-prompts",
+  "done_when": "The shipped review instructions block (P0/P1) only for a functional defect on a path people or agents normally hit, a security gap, data loss, a scale or performance problem at a realistic size the finding names, an unmet Done-when item, or a missing test for an item's own behaviour; an edge case blocks only when the finding names a realistic scenario that makes it likely in normal use, or it touches security or data loss; rare combinations are at most P2 or left out; findings are one line plus brief evidence, with no speculative suggestions, and the sibling sweep covers likely cases only. The shipped cold-read instructions apply the same likelihood rule to Unproven cases and traps (a platform or shell trap only when that platform is likely for the change). Both keep the existing gates, the proof-list check and the previous-findings carry-over; prompt-content tests cover both texts for a new repo and one adopted on an earlier release after sync",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T17:49:26+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Cold reads and Autoreview reviews keep finding one more rare edge case per round (items ran 4 to 9 rounds on 2026-10-08/09), which slows shipping without improving what users get; the owner wants both prompts to ask for only what's needed, ignore very rare cases by likelihood, and never compromise on scale, security or functional correctness (2026-10-09)"
+}
