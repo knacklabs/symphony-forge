@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from test_ci_limits_pull_requests_to_linux import matrix_rows
+
 STORY = "SIMPLIFY-CI-WORKFLOW"
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.yml"
 
@@ -23,10 +25,9 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count, minutes):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    rows = re.findall(
-        rf"\{{os: {runner}, group: (\d+), groups: (\d+)(?:, timeout: (\d+))?\}}",
-        tests_job,
-    )
+    # The budget contract still covers every OS on main; PRs now select Linux.
+    rows = [(row["group"], row["groups"], row.get("timeout"))
+            for row in matrix_rows("push") if row["os"] == runner]
     assert sorted((int(group), int(groups)) for group, groups, _ in rows) == [
         (group, count) for group in range(1, count + 1)]
     # Accept the previous per-row limits and the shared platform dispatch: the
@@ -70,7 +71,8 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(runner, count
     average = sum(recorded.values()) / len(recorded)
     grouped = subprocess.run(
         [sys.executable, "-m", "pytest", *options, "--collect-only"],
-        cwd=root, capture_output=True, text=True, timeout=60, check=True)
+        cwd=root, capture_output=True, text=True, timeout=60)
+    assert grouped.returncode == 0, grouped.stdout + grouped.stderr
     assert "No test durations found" not in grouped.stdout
     selected = {line for line in grouped.stdout.splitlines()
                 if line.startswith("tests/") and "::" in line}
