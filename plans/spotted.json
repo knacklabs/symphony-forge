@@ -67,6 +67,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\t.factory/fixes/where-time-went.json\tNot done: proof list\twhere-time-went",
+      "kind": "bug",
+      "path": ".factory/fixes/where-time-went.json",
+      "line": 7,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/where-time-went.json\tNot done: record review history and expose per-item time breakdowns\twhere-time-went",
+      "kind": "bug",
+      "path": ".factory/fixes/where-time-went.json",
+      "line": 5,
+      "text": "Not done: record review history and expose per-item time breakdowns",
+      "from": "blocking",
+      "item": "where-time-went",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tNot done: Forge's CI runs Windows in 8 groups (20-minute limit each) and the workflow tests that check the matrix pass.\twindows-eight",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
@@ -360,6 +382,17 @@
       "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
       "from": "blocking",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 126,
+      "text": "Not done: merge-enable close must check the final published change",
+      "from": "blocking",
+      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     },
@@ -2157,6 +2190,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 188,
+      "text": "Compute mechanical fingerprints using the new empty finding set",
+      "from": "review",
+      "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -2967,28 +3011,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 126,
-      "text": "Not done: merge-enable close must check the final published change",
-      "from": "blocking",
-      "item": "enable-no-review",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 188,
-      "text": "Compute mechanical fingerprints using the new empty finding set",
-      "from": "review",
-      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     }

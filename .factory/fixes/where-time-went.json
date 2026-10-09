@@ -3,12 +3,44 @@
   "base": "174309504707d88f8a475eed5ec52dc38b24158a",
   "branch": "fix/where-time-went",
   "done_when": "Forge records, in its existing event and timing logs (no new files), each review result's finding titles, severities and files, why each CI wait ended (passed, failed, or gave up while queued or running), and when an item joins and leaves a lane; one place outside board.py works out, per task and fix, where its time went (building, its own tests, reviewing, fixing findings, waiting for CI, waiting in line, waiting for the owner, nothing running) and one plain line per round (what the round did, how long each step took, and how many findings were new versus repeats of an earlier round's); forge board --json carries both per item, and its total no longer counts a worker's test runs twice or leaves out idle time; the pull request body gains a short 'How it went' section from the same data that survives the squash merge; the coordinator guide says how to read and quote them; unrecorded values show as unknown, never invented; command tests cover a looping item with a CI give-up, a lane wait, an owner wait and a repeat finding, for a new repo and one adopted on an earlier release",
+  "flagged": [
+    ".factory/fixes/where-time-went.json"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "95c4865d4e1c177bf4fc9d92212cdac400b339bb53cdf2ab628ac6bcfdbdfea5",
+    "changed": "db0567567b25a7aba35176ad363804709df4b7a7595ea575ea03038ebf74b001",
+    "commit": "05c4aacd2af590edf263c18592d1fc5903f62776",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The supplied patch only adds a fix record with status `started`; it does not implement the Done-when requirements. Missing are review finding history; CI completion reasons; lane entry and exit records; shared per-task and per-fix timing calculations covering all eight requested categories; round summaries with new versus repeated findings; board JSON output and corrected totals; the PR's surviving 'How it went' section; coordinator guidance; and unknown handling for unrecorded values. No command tests are added for the requested looping scenario, either in a new repository or one adopted on an earlier release. Implement these changes and their command-level coverage before closing this fix.",
+        "file": ".factory/fixes/where-time-went.json",
+        "line": 5,
+        "priority": "P1",
+        "title": "Not done: record review history and expose per-item time breakdowns"
+      },
+      {
+        "body": "The supplied evidence explicitly marks the worker's proof list as missing. Provide the required list mapping every Done-when detail to its implementation and named proof, including command coverage for both new repositories and repositories adopted on an earlier release. A started fix record does not supply that evidence.",
+        "file": ".factory/fixes/where-time-went.json",
+        "line": 7,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "d672d63f-ccc5-4920-8ee5-38115d68d94a",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T11:28:56+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T11:30:04+00:00",
+      "step": "review"
     }
   ],
   "why": "When a task or fix loops through review rounds, CI waits and queues, nobody can see where its time went: the board and pane show only the current round, the latest findings and a total that double-counts a worker's tests and leaves out idle time; earlier rounds' findings are overwritten, CI giving up is recorded the same as red tests, lane waits and waits for the owner are invisible, and after the squash merge only bare 'Review of X: blocked' lines remain (owner request 2026-10-09, after a review of real long-running items)"
