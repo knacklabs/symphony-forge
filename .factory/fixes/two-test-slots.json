@@ -8,31 +8,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f26c919611cb478a6da1047d1e807bb51380e88eafa7b719dfdf9ab92428ec1b",
-    "changed": "6b9ea0819e29c4c4b989baeedd3e3d82e3b6af6acb22284ab6a08bef0f578762",
-    "commit": "3ff03c31fce429f163db8479ff2e8c9a58ad61a0",
+    "branch_diff": "37eaa11f33597613d2ba57e46815e7ed722fdc8a447d2f2f72e086b283749ca2",
+    "changed": "09e4aaf9e1242c29d39f9cac628054e8c2e8be986448b52fd8b16d58e7af485d",
+    "commit": "bb6f4911daca9f6399dac8a4912ad35bf1194871",
     "dismissals": [],
     "findings": [
       {
-        "body": "This function and tests/test_machine_test_lane_capacity_pane.py:62 lack criterion numbers. tests/test_rules.py:45\u201350 requires every test function, including fixes, to match `test_<number>_<rule>` and requires distinct numbers within the shared STORY. Consequently, the full-suite CI command at .github/workflows/forge-next.yml:80 will fail. The supplied 42-test close run omitted test_rules.py, so its green result does not catch this. Number both functions distinctly and update their proof-list references.",
-        "file": "tests/test_machine_test_lane_capacity.py",
-        "line": 19,
-        "priority": "P1",
-        "title": "Number both new tests to keep the full suite passing"
-      },
-      {
-        "body": "The previously reported clipping remains. At 60 columns, two running tests produce a 37-column counts string; an active Tests stage and total time of 100 seconds add 28 columns. pane.ts:137\u2013143 reserves both with flexShrink: 0, allocating 65 columns even after title and tail widths reach zero. This clips timing in compact terminal and desktop prompts. Budget counts and timing together. The command-backed 60-column test concatenates text without checking allocated widths; native compact checks cover 79 columns.",
+        "body": "The previous P2 remains open. With two running tests, the expanded counts occupy 37 columns. After 100 seconds, an active Tests stage and total time add 28 columns. In the compact renderer, pane.ts:137\u2013143 reserves both boxes with flexShrink: 0, requiring 65 columns in a 60-column prompt and clipping timing on terminal and desktop surfaces. The command-backed test concatenates node text without checking allocated widths; native compact checks cover 79 columns. Budget counts and timing together so their reserved widths fit the prompt.",
         "file": "src/forge/mod/hooks/pane.ts",
         "line": 84,
         "priority": "P2",
         "title": "Keep expanded compact counts within the prompt width"
       }
     ],
-    "id": "f4dd44ea-6cf6-44f1-9abc-1329deb92564",
-    "status": "blocked"
+    "id": "53e673f2-c6b0-440a-b33b-2c2818bcbd8e",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T17:43:41+00:00",
@@ -44,6 +37,10 @@
     },
     {
       "at": "2026-10-09T20:33:08+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:21:22+00:00",
       "step": "review"
     }
   ],
