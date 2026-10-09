@@ -1,0 +1,14 @@
+{
+  "base": "180774000df7984107d51cb798b1337760a63019",
+  "branch": "fix/skipped-sync-board",
+  "done_when": "The Claude hook finds the repo from CLAUDE_PROJECT_DIR before the current folder; the roadmap merge driver merges each item's fields and reports a conflict when both sides change the same field instead of dropping one; a merged part never shows as unstarted on the board; backticks around task ids are ignored; command tests cover each, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T18:34:34+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Real issues the coordinator skipped, still in sync and the board (audit, 2026-10-09): the Claude hook runs git rev-parse in the current folder so a cd outside the repo blocks every Bash call, the roadmap merge driver drops one side's title and spec edits, an assigned part merged more than seven days ago shows as unstarted, and backticked task ids crash the boards"
+}
