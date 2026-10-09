@@ -12,17 +12,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
-      "kind": "bug",
-      "path": ".factory/fixes/board-spec.json",
-      "line": 4,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "board-spec",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\t.factory/fixes/release-127.json\tNot done: Forge's version is 1.2.7 everywhere it is recorded\trelease-127",
       "kind": "bug",
       "path": ".factory/fixes/release-127.json",
@@ -2652,6 +2641,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 115,
+      "text": "Preserve the close continuation when recovery changes the Forge pin",
+      "from": "review",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/mod/hooks/events.ts\tBound persisted seen history before Claude's store limit",
       "kind": "edge",
       "path": "src/forge/mod/hooks/events.ts",
@@ -3136,6 +3136,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "from": "worker",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -3363,6 +3374,17 @@
       "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
       "from": "blocking",
       "item": "gh-retry",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
+      "kind": "bug",
+      "path": ".factory/fixes/board-spec.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-spec",
       "status": "open",
       "closed_by": null
     }

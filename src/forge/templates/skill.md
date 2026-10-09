@@ -990,9 +990,12 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A clean review clears an unanswered review-loop stop.
 
-When `forge merge` fails because the pull request no longer merges cleanly, run
-`forge close <item>` again, which merges the default branch with Forge's own rule for the spotted
-list and the roadmap.
+When GitHub refuses because the branch is behind the default branch, `forge merge` and
+`forge land` say so in one line, run close again to merge the default branch and run the tests,
+review and checks as close decides, then retry the merge. If that merge selects a different
+Forge release, close finishes under that release before the original command continues.
+A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their
+next action.
 
 ## Check-back
 
