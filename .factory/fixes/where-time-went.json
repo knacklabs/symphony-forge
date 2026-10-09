@@ -36,7 +36,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T11:28:56+00:00",
@@ -56,7 +56,9 @@
     }
   ],
   "stop": {
+    "choice": "narrow",
     "file": "src/forge/time_records.py",
+    "reason": "Owner chose narrow: review only the committed change that keeps time from before the upgrade unknown instead of counting it as nothing running; older items' data is filled later by the upgrade backfill fix.",
     "round": 4
   },
   "why": "When a task or fix loops through review rounds, CI waits and queues, nobody can see where its time went: the board and pane show only the current round, the latest findings and a total that double-counts a worker's tests and leaves out idle time; earlier rounds' findings are overwritten, CI giving up is recorded the same as red tests, lane waits and waits for the owner are invisible, and after the squash merge only bare 'Review of X: blocked' lines remain (owner request 2026-10-09, after a review of real long-running items)",
