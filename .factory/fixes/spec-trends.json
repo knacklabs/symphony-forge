@@ -1,0 +1,14 @@
+{
+  "base": "d7e1517ebe0975bcd836134c108424b09f125921",
+  "branch": "fix/spec-trends",
+  "done_when": "docs/specs/board-for-the-team.md describes team and per-person weekly merged pull requests split into through-Forge and around-Forge, with an acceptance criterion; out of scope says no ranking; the spec passes a read and is re-confirmed",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T20:51:55+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants the board spec to show team and per-person weekly trends, through Forge and around it, without ranking anyone"
+}
