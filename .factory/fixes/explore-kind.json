@@ -10,12 +10,51 @@
   "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
   "branch": "fix/explore-kind",
   "done_when": "forge.toml has an explore kind for read-only work, used by the explorer role on both hosts and by forge ask, separate from lite (which keeps a fix's first build round); forge init writes its Claude entry as claude-haiku-5-5 at high effort and its Codex entry as the current lite Codex entry, and this repo sets the same; a repo without an explore entry keeps using lite for these as today; sync writes the explorer role from it; the coordinator guide describes it; command tests cover a new repo, an earlier-adopted repo without the entry (unchanged behaviour), and the explorer role and forge ask picking the explore entry",
+  "flagged": [
+    ".factory/fixes/explore-kind.json"
+  ],
   "kind": "fix",
-  "status": "started",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "64e78f536ad2522df7ac62ff8977f7fa55cb810c8dabac8c1e212d2e1cda2e58",
+    "changed": "2313491ac12d4a6ebd25403d1de2cff9d91b62ffec3a2cd3bb4650d7c36f10ce",
+    "commit": "27529ac277de0a9b790d354bb657fa70648db14a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The selected diff adds only this fix record; the required implementation is absent. `src/forge/repo.py:383` excludes explore from valid kinds, `src/forge/roles.py:44` still assigns explorer to lite, and `src/forge/codex.py:155` still selects lite for forge ask. Neither `src/forge/init.py:64\u201398` nor forge.toml defines explore entries, so new clients and this repo do not receive claude-haiku-5-5/high or the matching lite Codex settings. `src/forge/templates/skill.md:748\u2013777` still documents lite for ask and does not describe explore. Implement the separate kind, both hosts' explorer selection through sync, ask selection, initialization defaults, existing-client lite fallback, and coordinator documentation while preserving lite for the first fix round.",
+        "file": ".factory/fixes/explore-kind.json",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: explore kind for read-only work"
+      },
+      {
+        "body": "No tests are added, and the existing command tests do not prove the promised explore behavior. `tests/test_subagent_roles.py:11,18\u201320,93\u201398` tests explorer against lite, while `tests/test_models_per_family.py:84\u201397` tests forge ask against lite. Add command-level coverage for a new repo receiving both explore defaults, sync writing explorer from explore on both hosts, forge ask selecting explore, and an earlier-adopted repo without explore retaining lite behavior after upgrade. These are explicit Done-when cases, and the current tests would pass with the requested feature entirely absent.",
+        "file": ".factory/fixes/explore-kind.json",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: command tests for explore defaults, selection and earlier-adopted clients"
+      },
+      {
+        "body": "The supplied proof list is explicitly missing. Provide the required list mapping every Done-when detail to its implementation and named proof, including initialization defaults, this repo's settings, both explorer hosts, ask selection, earlier-adopted compatibility, sync, coordinator guidance, and preservation of the first fix round's lite settings.",
+        "file": ".factory/fixes/explore-kind.json",
+        "line": 12,
+        "priority": "P1",
+        "title": "Not done: proof list"
+      }
+    ],
+    "id": "71677d9c-1b4f-421e-9df5-d2c537c59d87",
+    "status": "blocked"
+  },
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T17:26:01+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T17:58:18+00:00",
+      "step": "review"
     }
   ],
   "why": "Read-only Claude work (the explorer subagent role and quick forge ask questions) should run on Haiku 4.5 at high effort (owner, 2026-10-09), but both share forge.toml's lite setting with the first build round of every fix, so it can't change without moving fix implementation to Haiku"
