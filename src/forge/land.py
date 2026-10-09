@@ -29,10 +29,11 @@ def land(args: argparse.Namespace) -> int:
     if item == merge.ENABLE:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
+    pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     close.check_stop(item, state)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
-    rounds = 0
+    rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0"))
     try:
         merged = _merged(top, branch)
         status = state.get("status", "started")
@@ -45,6 +46,8 @@ def land(args: argparse.Namespace) -> int:
             say(f"Building {item}.")
             worker.work(step)
         while True:
+            repo.resume_pin(top, pin, rounds)
+            step.land_rounds = rounds
             say(f"Closing {item}.")
             try:
                 close.close(step)
