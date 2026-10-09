@@ -253,10 +253,14 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
+2. Confirm the merge commit's `forge-next` run on main is green for the full Linux, Mac and
+   Windows matrix before tagging. Pull request CI runs only Linux test groups; it does not
+   prove the other platforms ready for release.
+3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-3. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
+   Release tags run the same full matrix; confirm that run is green too.
+4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in
 `docs/archive.md`.

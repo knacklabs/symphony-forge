@@ -1,0 +1,37 @@
+{
+  "base": "174309504707d88f8a475eed5ec52dc38b24158a",
+  "branch": "fix/codex-project-roots",
+  "done_when": "Forge reads Codex's project list whether each root is a plain path or an object carrying its path, so a worker's chat lands in the matching Codex project again, and close links the pull request in the item's Codex chat without the warning; unknown shapes are skipped with the existing one-line note rather than an exception; the Codex boundary contract test covers both shapes; new and earlier-adopted client repos get it from this release on",
+  "flagged": [
+    "tests/test_codex_project_paths_and_pr_links.py"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "316155f00de2d75aad11ed72d9bcd7e328efe79e5aeebcb6ef3cd8dafe08f021",
+    "changed": "ffd95e43a301392c3703a38044ee6b2ff7a45c0310f927d166acc0a2e74d1772",
+    "commit": "e72ce532cba2b6cf5facf7d3aafd0f2895e6276e",
+    "dismissals": [],
+    "findings": [],
+    "id": "03a36842-e7d8-4a7a-a8f9-3eca028c2b09",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T11:29:58+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T11:56:58+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T12:05:40+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Every Codex worker run logs 'Codex could not update the chat project: expected str, bytes or os.PathLike object, not dict' and every close prints 'Could not link the pull request in its Codex chat', because the current Codex app server returns project roots (and related records) as objects rather than plain paths, and Forge reads them as paths",
+  "worker": "codex"
+}

@@ -137,7 +137,7 @@ def main() -> int:
             try:
                 client._request_raw("thread/attachment/add", {
                     "threadId": request["thread"], "attachmentType": "pull_request",
-                    "identityKey": request["identity"],
+                    "identityKey": json.dumps(request["identity"]),
                     "payload": request["payload"]})
                 emit(attached=True)
             except Exception as error:
@@ -220,8 +220,14 @@ def main() -> int:
                 while True:
                     page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
                     for project in page["data"]:
-                        if any(Path(path).resolve() == root for path in project.get("roots", [])):
-                            matches.add(project["id"])
+                        if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
+                                or not project["id"] or not isinstance(project.get("roots"), list)):
+                            continue
+                        for path in project["roots"]:
+                            path = path.get("path") if isinstance(path, dict) else path
+                            if isinstance(path, str) and path and Path(path).resolve() == root:
+                                matches.add(project["id"])
+                                break
                     cursor = page.get("nextCursor")
                     if not cursor:
                         break
