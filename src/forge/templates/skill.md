@@ -127,7 +127,9 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds,
 plan reads and close reviews share a first-come line and say their place while waiting. The test
-lane has one place; tests use the same half-core budget. `forge doctor` shows the split.
+lane has one place per four available cores, at least one: two test runs at once on eight cores,
+one on four. Each test run uses half the machine's cores. `forge doctor` shows both lane sizes
+and the per-test budget.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
@@ -319,7 +321,7 @@ and Remote Control from a phone or claude.ai), that text is the status reply.
 It uses the last completed snapshot, including any refresh error.
 
 The strip above the prompt uses at most three lines. Its first line shows
-`Agents N/M (W waiting) · Tests: <running item or idle> (K waiting) · 1: <next command>`.
+`Agents N/M (W waiting) · Tests N/M (K waiting) · <running item or idle> · 1: <next command>`.
 It also shows a recorded current worker step. The other lines show up to two active items
 from this repo, each with Build → Tests → Review → CI → Merge, its round and total
 time. A third active item replaces the last line with `+N more · /forge for all`.
@@ -946,7 +948,8 @@ Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
 `forge work`, `forge read` and close reviews already queue agent runs across the machine;
-close serializes test runs separately, so no private slot loop is needed.
+close and worker tests share the separate test lane, with one place per four available cores
+(at least one), so no private slot loop is needed.
 
 If close refuses a conflicted merge, it has aborted the merge. In the item's worktree:
 
