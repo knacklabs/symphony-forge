@@ -3,7 +3,7 @@
   "branch": "fix/forge-ci-linux-prs",
   "done_when": "In Forge's own repo only, pull request CI runs just the Linux test groups (sized so each stays under its time limit); pushes to main and release tags run the full Linux, Mac and Windows matrix; close's named checks still pass on pull requests; the release steps in this repo's docs say to confirm main's full-matrix run is green before tagging; the shipped client workflow is unchanged; this repo's CI tests check the pull-request and main job sets",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
