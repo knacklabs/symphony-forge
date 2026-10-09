@@ -26,14 +26,17 @@ def test_1_approving_a_story_pushes_its_branch_and_says_when_it_cannot(repo, cla
     approve("SHOP")
     assert on_origin("SHOP") == [repo.git("rev-parse", "refs/heads/story/SHOP")]
 
-    # A push the remote refuses is said in one line, and the approval stands.
+    # Start now publishes the claim; a refused approval push leaves that earlier head alone.
+    before_approval = on_origin("WISH")
+    assert before_approval
     rejecting = tmp_path / "remote.git" / "hooks" / "pre-receive"
     rejecting.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
     rejecting.chmod(0o755)
     said = approve("WISH")
     assert ("Forge couldn't push story/WISH; run git push origin story/WISH so tasks see this "
             "approval.") in said
-    assert on_origin("WISH") == []
+    assert on_origin("WISH") == before_approval
+    assert on_origin("WISH") != [repo.git("rev-parse", "refs/heads/story/WISH")]
 
     # Without a remote there is nothing to push, and nothing is said about it.
     repo.git("remote", "remove", "origin")
