@@ -3,12 +3,14 @@
   "branch": "fix/upgrade-stale-fix",
   "done_when": "forge upgrade treats an earlier upgrade fix whose pull request has merged as finished: it removes that fix's leftover worktree and local branch (only when they hold nothing unpushed) and carries on; an earlier upgrade fix that is still open, or has unpushed work, still refuses as today; a command test covers a repo adopted on an earlier release upgrading twice with the first fix's worktree left behind, plus the unpushed-work refusal",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-09T08:00:11+00:00",
       "step": "start"
     }
   ],
-  "why": "forge upgrade refuses with 'The upgrade to vX is still open in fix upgrade-forge-to-vX' when that earlier upgrade fix's pull request has merged and only its worktree was left behind (reported by a client session upgrading to v1.2.8)"
+  "why": "forge upgrade refuses with 'The upgrade to vX is still open in fix upgrade-forge-to-vX' when that earlier upgrade fix's pull request has merged and only its worktree was left behind (reported by a client session upgrading to v1.2.8)",
+  "worker": "codex"
 }
