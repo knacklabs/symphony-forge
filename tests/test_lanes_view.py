@@ -52,7 +52,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     env.commit(repo.path, "forge.toml", config, "Use the current release")
     repo.git("push", "-q", "origin", "main")
     doctor = repo.forge("doctor")
-    assert f"This machine: {cores or 2} cores, so {agents} agents at once and test runs on {agents} cores." in doctor.stdout
+    assert f"This machine: {cores or 2} cores, so {agents} agents at once and 1 test runs at once, each on {agents} cores." in doctor.stdout
     # Native OS inputs, not Forge's derived dictionary: changing measurements must
     # reach both commands, so null or constant placeholders cannot satisfy this proof.
     shim = repo.bin / "forge"

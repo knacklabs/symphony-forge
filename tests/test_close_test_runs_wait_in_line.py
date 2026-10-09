@@ -32,8 +32,9 @@ print("1 passed")
 
 
 def _with_test_command(env) -> Path:
-    # Four closes can review together after their tests; only the test lane should queue here.
-    machine_cores(env.repo, 8)
+    # Queue ordering needs a one-place lane: four cores keep that contract while
+    # eight cores now deliberately admit two test runs (covered by the capacity tests).
+    machine_cores(env.repo, 4)
     script = env.tmp / "suite.py"
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
@@ -83,7 +84,9 @@ class Close:
                         pytrace=False)
 
     def places(self) -> list[str]:
-        return [line for line in self.said.splitlines() if "waits its turn" in line]
+        # With four cores the review lane can also queue. This case owns the
+        # test lane's FIFO messages, not admission to the separate agent lane.
+        return [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
 
 
 # Workers now share close's queue; the message counts places in the shared lane.
