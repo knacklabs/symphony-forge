@@ -364,6 +364,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 126,
+      "text": "Not done: merge-enable close must check the final published change",
+      "from": "blocking",
+      "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/close.py\tThe manual conflict retry command leaves the worktree path unquoted, so paths with spaces break the instruction.",
       "kind": "bug",
       "path": "src/forge/close.py",
@@ -1196,6 +1207,17 @@
       "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/upgrade.py\tStandard: data is protected against loss\tupgrade-stale-fix",
+      "kind": "bug",
+      "path": "src/forge/upgrade.py",
+      "line": 97,
+      "text": "Standard: data is protected against loss",
+      "from": "blocking",
+      "item": "upgrade-stale-fix",
       "status": "open",
       "closed_by": null
     },
@@ -2157,6 +2179,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 188,
+      "text": "Compute mechanical fingerprints using the new empty finding set",
+      "from": "review",
+      "item": "enable-no-review",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/close.py\tExclude staged new hook shims on an upgrade rerun",
       "kind": "edge",
       "path": "src/forge/close.py",
@@ -2967,28 +3000,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: merge-enable close must check the final published change\tenable-no-review",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 126,
-      "text": "Not done: merge-enable close must check the final published change",
-      "from": "blocking",
-      "item": "enable-no-review",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\tCompute mechanical fingerprints using the new empty finding set",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 188,
-      "text": "Compute mechanical fingerprints using the new empty finding set",
-      "from": "review",
-      "item": "enable-no-review",
       "status": "open",
       "closed_by": null
     }

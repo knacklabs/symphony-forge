@@ -2,13 +2,38 @@
   "base": "0c4846bcf7708270c28e49e5d539c7dff8e57763",
   "branch": "fix/upgrade-stale-fix",
   "done_when": "forge upgrade treats an earlier upgrade fix whose pull request has merged as finished: it removes that fix's leftover worktree and local branch (only when they hold nothing unpushed) and carries on; an earlier upgrade fix that is still open, or has unpushed work, still refuses as today; a command test covers a repo adopted on an earlier release upgrading twice with the first fix's worktree left behind, plus the unpushed-work refusal",
+  "flagged": [
+    "src/forge/upgrade.py"
+  ],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8c73f5ce913c7744f6b046f21368c630e9afe07401f128496739176014dae11c",
+    "changed": "d0e5abd0651fdbe716061554de114333aa5178fef0a2e19ab178425871f47741",
+    "commit": "76027a31b5a9d1cfd6f2bcb9d27f892f6527e685",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "The cleanliness check omits ignored files. If a merged upgrade checkout contains an ignored `.env` or `data/rows.csv`, it passes this guard and is deleted, losing local data that was never pushed. Omitting `--force` does not protect it: [Git's implementation](https://github.com/git/git/blob/v2.48.0/builtin/worktree.c#L1182-L1281) checks ordinary status and then recursively deletes the directory. This violates \u201cdata is protected against loss.\u201d Existing cleanup in `src/forge/doctor.py:74\u201377` includes ignored files and permits only recognised caches. Apply equivalent protection here and extend the command refusal test to preserve ignored configuration and data files; the current untracked-file case cannot detect this loss.",
+        "file": "src/forge/upgrade.py",
+        "line": 97,
+        "priority": "P1",
+        "title": "Standard: data is protected against loss"
+      }
+    ],
+    "id": "87037889-5c76-4952-8d0b-790e6dd4feca",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T08:00:11+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T08:33:31+00:00",
+      "step": "review"
     }
   ],
   "why": "forge upgrade refuses with 'The upgrade to vX is still open in fix upgrade-forge-to-vX' when that earlier upgrade fix's pull request has merged and only its worktree was left behind (reported by a client session upgrading to v1.2.8)",
