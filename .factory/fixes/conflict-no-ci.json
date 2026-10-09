@@ -2,13 +2,28 @@
   "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
   "branch": "fix/conflict-no-ci",
   "done_when": "While waiting for checks, close and land notice that the pull request is not mergeable because of conflicts and stop waiting at once: land merges the default branch through close (or stops with close's existing conflict next step when the merge needs a person), and close says plainly that GitHub runs no checks on a conflicting pull request; command tests with a faked GitHub cover a conflicting pull request with missing checks (no long wait) and a clean one (normal wait), for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ceb55e417357db9106ce158ea5f6c31ec0f7307a523bf126d82f50e1bba5e10f",
+    "changed": "c6988d8e950d016bc89abfa727827ef03ec626b29f145b839773612ffbb4e207",
+    "commit": "e73b8606ed9ebd4de217aed6da821d16d8d9e371",
+    "dismissals": [],
+    "findings": [],
+    "id": "1a4e5b91-6c8c-484f-bb53-a2511bebf9d1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T17:50:29+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T20:33:20+00:00",
+      "step": "review"
     }
   ],
   "why": "When a pull request conflicts with the default branch, GitHub starts no pull_request workflows for its head, so close and land wait up to 30 minutes for checks that can never run and then report 'tests has not reported' (seen on two Forge fixes and a client item on 2026-10-09)",
