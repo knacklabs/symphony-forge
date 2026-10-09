@@ -144,6 +144,50 @@
       "closed_by": null
     },
     {
+      "key": "bug\tforge.toml\tNot done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: forge.toml sets workers = \"split\", so user-facing story parts are built by Claude with the design model's Claude entry (claude-op",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tNot done: proof list\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tforge.toml\tUpdate the repository test that still requires Codex workers\tworkers-split",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 4,
+      "text": "Update the repository test that still requires Codex workers",
+      "from": "blocking",
+      "item": "workers-split",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.html",
+      "line": 76,
+      "text": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tInclude the waiting story's approval document in board JSON\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -184,6 +228,17 @@
       "text": "Not done: a running plan reader's actual round",
       "from": "blocking",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: dependency maps and readiness must use the current story plan\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 234,
+      "text": "Not done: dependency maps and readiness must use the current story plan",
+      "from": "blocking",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },
@@ -309,6 +364,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/board.py\tNot done: roadmap-wide dependency map, can-start-now states and six stage counts\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 438,
+      "text": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board.py\tPreserve commit-status timestamps when adapting the GraphQL rollup\tFORGE-MOD-1/VIEWS",
       "kind": "bug",
       "path": "src/forge/board.py",
@@ -360,6 +426,17 @@
       "text": "Not done: forge close --resolve accept applies the owner's choice when only the default branch moved or only Forge's own records changed",
       "from": "blocking",
       "item": "the-owner-s-review-loop-choice-often-can",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 135,
+      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
+      "from": "blocking",
+      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -1024,6 +1101,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/nextstep.py\tNot done: include merge-ready stories in the stage totals\tboard-visuals",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 418,
+      "text": "Not done: include merge-ready stories in the stage totals",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tPreserve merge-result testing when running the full suite\tforge-close-reviews-first-and-only-then",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
@@ -1053,28 +1141,6 @@
       "text": "Not done: mixed repos get one part per kind",
       "from": "blocking",
       "item": "repos-without-a-quick-test-setting-don-t",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 183,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
-      "from": "blocking",
-      "item": "gh-retry",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
-      "kind": "bug",
-      "path": "src/forge/repo.py",
-      "line": 187,
-      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
-      "from": "blocking",
-      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     },
@@ -1277,6 +1343,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
+      "kind": "bug",
+      "path": "tests/test_board_dependency_timelines.py",
+      "line": 217,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: test_dependency_map_and_stage_timelines_use_the_command_data\tboard-visuals",
+      "kind": "bug",
+      "path": "tests/test_board_dependency_timelines.py",
+      "line": 153,
+      "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
+      "from": "blocking",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_ci_job_budgets.py\tNot done: A suite test proves CI consumes the committed test durations\tforge-s-ci-splits-tests-into-groups-by-c",
       "kind": "bug",
       "path": "tests/test_ci_job_budgets.py",
@@ -1284,6 +1372,17 @@
       "text": "Not done: A suite test proves CI consumes the committed test durations",
       "from": "blocking",
       "item": "forge-s-ci-splits-tests-into-groups-by-c",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_ci_job_budgets.py",
+      "line": 72,
+      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
+      "from": "worker",
+      "item": "forge-ci-linux-prs",
       "status": "open",
       "closed_by": null
     },
@@ -1350,6 +1449,17 @@
       "text": "The Windows queue ordering check failed when a close could not read Git configuration because access was denied.",
       "from": "worker",
       "item": "discovery-due-check-test",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
+      "kind": "bug",
+      "path": "tests/test_codex_project_paths_and_pr_links.py",
+      "line": 23,
+      "text": "Not done: full-suite test compatibility",
+      "from": "blocking",
+      "item": "codex-project-roots",
       "status": "open",
       "closed_by": null
     },
@@ -1981,6 +2091,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
+      "kind": "bug",
+      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "line": 71,
+      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
+      "from": "blocking",
+      "item": "repin-mid-run",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_steer_question.py\tThe interrupted answer times out and leaves processes on both this branch and origin/main.",
       "kind": "bug",
       "path": "tests/test_steer_question.py",
@@ -2091,6 +2212,28 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board.py\tNormalize Markdown-formatted task IDs before constructing map nodes",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 435,
+      "text": "Normalize Markdown-formatted task IDs before constructing map nodes",
+      "from": "review",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tPreserve part names in timelines for backtick task IDs",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 895,
+      "text": "Preserve part names in timelines for backtick task IDs",
+      "from": "review",
+      "item": "board-visuals",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tPreserve the live stage's start across attempts in one round",
       "kind": "edge",
       "path": "src/forge/board.py",
@@ -2120,6 +2263,17 @@
       "text": "Respect terminal check states when projecting the CI gate",
       "from": "review",
       "item": "FORGE-MOD-1/LIVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tUpdate the history-invariance test for the expanded JSON payload",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 475,
+      "text": "Update the history-invariance test for the expanded JSON payload",
+      "from": "review",
+      "item": "board-visuals",
       "status": "open",
       "closed_by": null
     },
@@ -2219,6 +2373,17 @@
       "text": "Include sync-managed deletions absent from the default tree",
       "from": "review",
       "item": "when-forge-close-merges-the-default-bran",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\t[P2] Run generated-conflict sync under the changed pin",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 128,
+      "text": "[P2] Run generated-conflict sync under the changed pin",
+      "from": "review",
+      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -2483,6 +2648,39 @@
       "text": "Preserve completion when sibling tasks merge concurrently",
       "from": "review",
       "item": "recording-that-a-story-is-done-opens-a-s",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 132,
+      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
+      "from": "review",
+      "item": "merge-guard-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tPreserve the close continuation when recovery changes the Forge pin",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 115,
+      "text": "Preserve the close continuation when recovery changes the Forge pin",
+      "from": "review",
+      "item": "merge-behind-base",
       "status": "open",
       "closed_by": null
     },
@@ -2971,6 +3169,17 @@
       "closed_by": null
     },
     {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tBoth generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 75,
+      "text": "Both generated host skills lag existing runner and merge guidance in the shipped template; refresh that unrelated drift separately.",
+      "from": "worker",
+      "item": "merge-behind-base",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/codex.py\tGive forge ask a retry instruction that preserves the question",
       "kind": "improve",
       "path": "src/forge/codex.py",
@@ -3015,145 +3224,24 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_codex_project_paths_and_pr_links.py\tNot done: full-suite test compatibility\tcodex-project-roots",
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up\tgh-retry",
       "kind": "bug",
-      "path": "tests/test_codex_project_paths_and_pr_links.py",
-      "line": 23,
-      "text": "Not done: full-suite test compatibility",
+      "path": "src/forge/repo.py",
+      "line": 183,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up",
       "from": "blocking",
-      "item": "codex-project-roots",
+      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     },
     {
-      "key": "bug\tsrc/forge/board.html\tNot done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening\tboard-visuals",
+      "key": "bug\tsrc/forge/repo.py\tNot done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git\tgh-retry",
       "kind": "bug",
-      "path": "src/forge/board.html",
-      "line": 76,
-      "text": "Not done: Designed for a project manager who opens the page cold, solo or with a team, and must see within seconds what is happening",
+      "path": "src/forge/repo.py",
+      "line": 187,
+      "text": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git",
       "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: dependency maps and readiness must use the current story plan\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 234,
-      "text": "Not done: dependency maps and readiness must use the current story plan",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/board.py\tNot done: roadmap-wide dependency map, can-start-now states and six stage counts\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/board.py",
-      "line": 438,
-      "text": "Not done: roadmap-wide dependency map, can-start-now states and six stage counts",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/nextstep.py\tNot done: include merge-ready stories in the stage totals\tboard-visuals",
-      "kind": "bug",
-      "path": "src/forge/nextstep.py",
-      "line": 418,
-      "text": "Not done: include merge-ready stories in the stage totals",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: proof list\tboard-visuals",
-      "kind": "bug",
-      "path": "tests/test_board_dependency_timelines.py",
-      "line": 217,
-      "text": "Not done: proof list",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_board_dependency_timelines.py\tNot done: test_dependency_map_and_stage_timelines_use_the_command_data\tboard-visuals",
-      "kind": "bug",
-      "path": "tests/test_board_dependency_timelines.py",
-      "line": 153,
-      "text": "Not done: test_dependency_map_and_stage_timelines_use_the_command_data",
-      "from": "blocking",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tNormalize Markdown-formatted task IDs before constructing map nodes",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 435,
-      "text": "Normalize Markdown-formatted task IDs before constructing map nodes",
-      "from": "review",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tPreserve part names in timelines for backtick task IDs",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 895,
-      "text": "Preserve part names in timelines for backtick task IDs",
-      "from": "review",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/board.py\tUpdate the history-invariance test for the expanded JSON payload",
-      "kind": "edge",
-      "path": "src/forge/board.py",
-      "line": 475,
-      "text": "Update the history-invariance test for the expanded JSON payload",
-      "from": "review",
-      "item": "board-visuals",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\ttests/test_ci_job_budgets.py\tThe first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "kind": "bug",
-      "path": "tests/test_ci_job_budgets.py",
-      "line": 72,
-      "text": "The first combined run failed two split collection subprocesses and the same six-test rerun passed, so the flaky failure remains unresolved.",
-      "from": "worker",
-      "item": "forge-ci-linux-prs",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without parsing mutable cleanup inputs",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 132,
-      "text": "Preserve dirty worktrees without parsing mutable cleanup inputs",
-      "from": "review",
-      "item": "merge-guard-base",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/merge.py\tPreserve dirty worktrees without requiring their mutable config to parse",
-      "kind": "edge",
-      "path": "src/forge/merge.py",
-      "line": 132,
-      "text": "Preserve dirty worktrees without requiring their mutable config to parse",
-      "from": "review",
-      "item": "merge-guard-base",
+      "item": "gh-retry",
       "status": "open",
       "closed_by": null
     },
@@ -3165,17 +3253,6 @@
       "text": "Not done: Developer assignments in task start, forge next, the board and story guidance",
       "from": "blocking",
       "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/close.py\tNot done: land and close switch releases before resolving generated merge conflicts\trepin-mid-run",
-      "kind": "bug",
-      "path": "src/forge/close.py",
-      "line": 135,
-      "text": "Not done: land and close switch releases before resolving generated merge conflicts",
-      "from": "blocking",
-      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -3235,17 +3312,6 @@
       "closed_by": null
     },
     {
-      "key": "bug\ttests/test_running_commands_follow_changed_forge_pin.py\tNot done: command proof for land's own upgrade merge in an earlier-adopted repo\trepin-mid-run",
-      "kind": "bug",
-      "path": "tests/test_running_commands_follow_changed_forge_pin.py",
-      "line": 71,
-      "text": "Not done: command proof for land's own upgrade merge in an earlier-adopted repo",
-      "from": "blocking",
-      "item": "repin-mid-run",
-      "status": "open",
-      "closed_by": null
-    },
-    {
       "key": "bug\ttests/test_started_branches_claim_the_work.py\tNot done: proof list\tstart-is-claim",
       "kind": "bug",
       "path": "tests/test_started_branches_claim_the_work.py",
@@ -3286,17 +3352,6 @@
       "text": "Normalize task IDs before adding assigned board rows",
       "from": "review",
       "item": "start-is-claim",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "edge\tsrc/forge/close.py\t[P2] Run generated-conflict sync under the changed pin",
-      "kind": "edge",
-      "path": "src/forge/close.py",
-      "line": 128,
-      "text": "[P2] Run generated-conflict sync under the changed pin",
-      "from": "review",
-      "item": "repin-mid-run",
       "status": "open",
       "closed_by": null
     },
@@ -3352,6 +3407,28 @@
       "text": "Checked-in coordinator guides omit unrelated updates already present in the source template; this fix preserves that existing drift.",
       "from": "worker",
       "item": "start-is-claim",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
+      "kind": "bug",
+      "path": ".factory/fixes/board-spec.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-spec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.factory/fixes/board-spec.json\tNot done: proof list\tboard-spec",
+      "kind": "bug",
+      "path": ".factory/fixes/board-spec.json",
+      "line": 4,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "board-spec",
       "status": "open",
       "closed_by": null
     }

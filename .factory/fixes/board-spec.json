@@ -1,0 +1,37 @@
+{
+  "base": "6de7c4a7c297c9b38febdb6fa5e3cc1f823f7344",
+  "branch": "fix/board-spec",
+  "done_when": "docs/specs/board-for-the-team.md is saved, cold-read until a round finds nothing, confirmed by the owner, and added to the roadmap as the story that will rebuild the board",
+  "flagged": [
+    ".factory/fixes/board-spec.json"
+  ],
+  "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6b498f5bc61de3ed74e10aedacf9d2a5dc203fae9b74bb5807cbb4982e0e72e0",
+    "changed": "22030072a79c3bde30fc322be4e9005580388440151eb2d41b986e866164cbc0",
+    "commit": "5f5cdb43c2bbc6933222b430bca053a9c46e3b55",
+    "dismissals": [],
+    "findings": [],
+    "id": "3e76bcea-7bc9-4ab5-b22c-386c4bfcb358",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-09T15:43:43+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-09T16:24:02+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T17:42:24+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "A project manager or team lead opening the forge board for the first time cannot tell what is happening, what needs them, what is blocked, how the team is doing or when the project can go live (first-time-user and PM reviews of a real client board, 2026-10-09); the owner chose one board story, and its spec and roadmap entry come first",
+  "worker": "codex"
+}

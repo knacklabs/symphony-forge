@@ -1,4 +1,5 @@
-"""This repo's own workers run on Codex at medium effort; reviews stay on Codex."""
+"""This repo's user-facing story parts build on Claude Opus, everything else on Codex at medium effort;
+reviews stay on Codex (owner, 2026-10-09: frontend code on Opus)."""
 from __future__ import annotations
 
 import json
@@ -32,14 +33,19 @@ def _codex(repo, monkeypatch, sdk_data):
 def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
-    assert config["workers"] == "codex"
-    # Codex builds and fixes; each Claude entry preserves the previous Opus settings.
+    assert config["workers"] == "split"
+    # Ordinary work stays on Codex; all Claude work overrides the shipped defaults for now.
     assert config["models"]["build"] == config["models"]["fix"] == {
         "codex": SOL, "claude": OPUS}
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
         "claude": OPUS}
+    for kind, effort in (("design", "medium"), ("grill", "high")):
+        assert config["models"][kind] == {
+            "codex": {"model": "gpt-6.1-sol", "effort": "high"},
+            "claude": {**OPUS, "effort": effort}}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
+    assert "stage" not in config and "signoff" not in config
 
     log = _codex(repo, monkeypatch, sdk_data)
     repo.write("forge.toml", text)
