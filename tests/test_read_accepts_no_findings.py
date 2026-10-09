@@ -24,6 +24,8 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("6. No findings reported.", True),
     ("6. There were no findings.", True),
     ("6. I have no findings to report.", True),
+    ("6. I have no findings\nto report.", True),
+    ("I have no findings\nto report.", True),
     ("6. No findings.\n\nTests were not run (not requested).", True),
     ("6. No findings.\nTests weren't run (not required).", True),
     ("No findings.", True),
@@ -38,6 +40,8 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("6. No findings however the required proof is missing.", False),
     ("6. No findings except the required proof is missing.", False),
     ("6. No findings. The required proof is missing.", False),
+    ("6. No test covers this bug.", False),
+    ("6. No findings.\nThe required proof is missing.", False),
 ])
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
         repo, gh, tmp_path, previous, reply, clean):

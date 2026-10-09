@@ -249,10 +249,12 @@ def read(args: Any) -> int:
         if _snapshot(top) != before:
             repo.refuse(REFUSALS["discarded"], doc=rel, target=target)
         repo.refuse(REFUSALS["reader_failed"], doc=rel, target=target, problem=problem)
-    lines = [re.sub(r"^(?:\d+[.)]|[-*])\s+", "", line.strip()).strip(" *`_.!?,:;").lower()
-             for line in said.splitlines() if line.strip()]
+    parts = re.split(r"^[ \t]*(?:\d+[.)]|[-*])\s+|\n(?=\s*(?:note:\s*)?tests\b)",
+                     said, flags=re.M | re.I)
+    lines = [" ".join(part.split()).strip(" *`_.!?,:;").lower()
+             for part in parts if part.strip()]
     empty = re.compile(r"(?!.*[.!?])(?!.*\b(?:but|however|except)\b)"
-                       r".*\bno\b.*\b(?:finding|issue|problem|bug|defect)s?\b.*")
+                       r".*\bno(?:\s+\w+)?\s+(?:finding|issue|problem|bug|defect)s?\b.*")
     note = re.compile(r"(?:note:\s*)?tests(?:\s+were(?:n['’]t| not)|\s+not|: not)\s+run"
                       r"(?:\s*\((?:read[- ]only(?: review)?|not (?:requested|required))\))?", re.I)
     clean = any(empty.fullmatch(line) for line in lines) and all(
