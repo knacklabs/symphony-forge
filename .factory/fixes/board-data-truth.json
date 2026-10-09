@@ -1,0 +1,14 @@
+{
+  "base": "49e6b9ab810cebe9b5537cde92238e2535e7d187",
+  "branch": "fix/board-data-truth",
+  "done_when": "Every status, count and time on the board page and in forge board --json comes from one shared derivation, so they agree: stories the roadmap marks done count and show as done; items idle past the stalled threshold show as stalled with their idle time and what they wait on, and finished items never do; a running worker or review shows as running with its elapsed time; ready-to-merge, plan-read and waiting-for-approval stages match forge next; a finished story's parts show finished; prose and timeline times agree; header counts are labelled separately for stories and fixes; a person shows under one display name; titles are shortened at a word boundary; command tests reproduce each of these on a board with real-shaped data for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T12:16:18+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The forge board page shows wrong or contradicting data (Opus review of a real client board, 2026-10-09): stories the roadmap marks done show as 'Not started yet' and count as needing a spec; items idle for days aren't shown as stalled while finished stories are flagged stalled; running workers and reviews show as 'Needs fixes'; a card says Ready to merge while the header counts none; a story in a plan-read round shows as 'Waiting for approval'; a finished story's part says 'In progress'; prose times disagree with the timeline; header counts mix stories and fixes unlabelled; one person appears under two names; fix titles are cut mid-word"
+}
