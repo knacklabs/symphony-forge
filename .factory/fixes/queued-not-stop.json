@@ -9,20 +9,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "91d62fcf26da2bc2075dff46fd6dc97d229360a2defd499fb30654469137b52e",
-    "changed": "b05a853c017e347330d56f2fb7d6a713da5568f97f60d84e4adda8f55477cdd2",
-    "commit": "7b14f0eef97140df67fcc59a6bd962ae8b88828a",
+    "branch_diff": "a86104e4f5cacaf5f9202a0d4b5aad55dbed8df3a0d358d9650df2f5790facab",
+    "changed": "f6f8e932f9182b36525ddb79cb85c8894314d40cc7bb8d4fb184bf7c5ca4648e",
+    "commit": "db3042ec9e96c5eb50c2ebf27f0bb971c46ea674",
     "dismissals": [],
     "findings": [
       {
-        "body": "The previous P2 remains open: an unassigned attempt that expired ten days ago sets both demand flags even when its retry succeeded eight days ago. That success falls outside the seven-day activity window, so doctor reports a likely missing runner despite all current checks being green. The caller in src/forge/doctor.py:380\u2013387 examines open pull requests without checking for pending checks. Exclude attempts superseded by successful retries when deriving unmet demand, while retaining expired demand across retries that remain unmet.",
+        "body": "The previous P2 remains open. An unassigned attempt that expired ten days ago sets both demand flags even if its retry succeeded eight days ago. That success falls outside the seven-day activity window, so doctor reports a likely missing runner despite all current checks being green. The caller in src/forge/doctor.py:380\u2013387 examines open pull requests without checking for pending checks. Resolved historical failures can also supply old_demand for a fresh queue. Exclude demand resolved by successful retries, while preserving earlier expired demand when retries remain unmet.",
         "file": "src/forge/checks.py",
         "line": 141,
         "priority": "P2",
         "title": "Ignore resolved attempts when detecting current runner demand"
       }
     ],
-    "id": "ac8e708e-b188-4882-8299-915ba7228099",
+    "id": "bfc2933f-28f4-4c78-b971-2bce6fb8ed4b",
     "status": "clean"
   },
   "round": 4,
@@ -62,6 +62,10 @@
     },
     {
       "at": "2026-10-09T22:24:56+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T23:27:45+00:00",
       "step": "review"
     }
   ],
