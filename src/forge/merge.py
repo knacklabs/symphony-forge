@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, repo, story, task
+from forge import checks, close, codex, githooks, repo, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -51,9 +51,6 @@ def merge(args: argparse.Namespace) -> int:
     if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
             or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
         repo.refuse(REFUSALS["not_ready"], item=item)
-    shown = repo.run("git", "show", f"{head}:forge.toml", cwd=top)  # a change to the agent's own gate
-    if shown.returncode == 0 and repo._config_text(shown.stdout)["merge"] != config["merge"]:
-        repo.refuse(REFUSALS["owner_merges"], item=item)
     worktree = close._worktree(item)
     branch = repo.current_branch(worktree)
     default = repo.default_branch(top)
@@ -70,6 +67,13 @@ def merge(args: argparse.Namespace) -> int:
     if pr.get("headRefOid") != head:
         repo.refuse(REFUSALS["changed"], item=item)
     if pr["state"] == "OPEN":
+        base = repo.git("merge-base", head, f"origin/{default}", cwd=top)
+        before = story.show(top, base, "forge.toml")
+        after = story.show(top, head, "forge.toml")
+        before_merge = repo._config_text(before)["merge"] if before is not None else "human"
+        after_merge = repo._config_text(after)["merge"] if after is not None else "human"
+        if before_merge != after_merge:
+            repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         checks.wait(top, item, head, config["checks"],
@@ -122,7 +126,12 @@ def merge(args: argparse.Namespace) -> int:
             "git", "push", f"--force-with-lease={remote_ref}:{head}", "origin", "--delete", branch, cwd=top).returncode):
         repo.refuse(REFUSALS["remote_branch"], item=item)
     repo.git("fetch", "-q", "origin", default, cwd=top)
-    dirty = bool(repo.git("status", "--porcelain", cwd=worktree))
+    status = repo.git("status", "--porcelain", "-z", "--no-renames", "--untracked-files=all",
+                      cwd=worktree).split("\0")
+    untracked = {worktree / entry[3:] for entry in status if entry.startswith("?? ")}
+    generated = {path for path, text in githooks.shims(worktree, repo.config(worktree)).items()
+                 if path in untracked and not path.is_symlink() and path.read_text(encoding="utf-8") == text}
+    dirty = any(entry and worktree / entry[3:] not in generated for entry in status)
     advanced = repo.git("rev-parse", branch, cwd=worktree) != head
     if advanced:
         print(f"Merged {item}. Its worktree at {worktree} has local commits outside the merged pull request, so Forge left it and its local branch in place.")
@@ -131,6 +140,8 @@ def merge(args: argparse.Namespace) -> int:
     else:
         if top == worktree:
             os.chdir(main_checkout)
+        for shim in generated:
+            shim.unlink()
         removed = repo.run("git", "worktree", "remove", str(worktree), cwd=main_checkout)
         if removed.returncode:
             repo.refuse(REFUSALS["worktree"], item=item)
