@@ -35,7 +35,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-09T16:42:38+00:00",
@@ -55,7 +55,9 @@
     }
   ],
   "stop": {
-    "file": "src/forge/story.py"
+    "choice": "narrow",
+    "file": "src/forge/story.py",
+    "reason": "Owner wants every in-flight fix finished; narrowed to the two remaining findings: Codex's real missing-rollout wording, and reader chats archived by an earlier release"
   },
   "why": "Worker chats should be reused: each task or fix should keep the same worker conversation from its first round until it merges, but today some rounds start a fresh chat (for example when the model or effort changes, after Forge restarts, or when a record is missing), losing context and costing tokens (owner, 2026-10-09)",
   "worker": "codex"
