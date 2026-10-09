@@ -6,24 +6,24 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0a6ef89fcd85ecf1448d968c3e382feb84cc6ddef41fea1605ff6b2a7a2c9675",
-    "changed": "e36165bd518bddf38a5a152a82214d07cfda788c0b51c032a47f1ef115759b4e",
-    "commit": "25472a662a7f4132712c8d72c9e67f485c333554",
+    "branch_diff": "94d6c1626bfb984c8fd51849fa0184b871ab7f1e3530fac6de3293da4bfc9263",
+    "changed": "b64053a365703feee7f5d73dafe9e5cab0dcf0ca0fc6ec74e181d3f93c580b24",
+    "commit": "fb11f9312ac7644ff221e59aeb0549e2443e3b8f",
     "dismissals": [],
     "findings": [
       {
-        "body": "If another branch's workflow starts a matching job during this queue window and is subsequently rerun, the earlier job disappears from this lookup: GitHub's jobs endpoint defaults to `filter=latest`, which returns only the latest execution ([GitHub contract](https://docs.github.com/en/rest/actions/workflow-jobs#list-jobs-for-a-workflow-run)). When the new attempt remains queued, this code incorrectly reports missing runners despite qualifying activity in the previous attempt. This affects close and land's close phase (`src/forge/close.py:248`), land's merge phase (`src/forge/merge.py:75`), and doctor (`src/forge/doctor.py:385`). Request jobs from all attempts, retaining the timestamp and label checks. The supplied busy-pool cases contain only one attempt, so they do not detect this edge case.",
+        "body": "With `runner = \"GPU\"`, a job in another workflow requesting `gpu` can start during the queue window on the matching pool, but this comparison discards it. [GitHub runner labels are case-insensitive](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/apply-labels); Forge accepts either casing without normalization (`src/forge/repo.py:495`). Consequently, close and both land wait phases still stop with a false missing-runner message, and doctor emits the same warning. Compare normalized label values while retaining the configured spelling in the message.",
         "file": "src/forge/checks.py",
-        "line": 113,
+        "line": 115,
         "priority": "P2",
-        "title": "Include earlier workflow attempts when checking runner activity"
+        "title": "Match runner labels without case sensitivity"
       }
     ],
-    "id": "4b08c8bb-4591-4762-802f-6964bb1f7e2c",
+    "id": "7c8194e2-871a-48f2-a59f-0efe172f77ce",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T05:14:44+00:00",
@@ -31,6 +31,10 @@
     },
     {
       "at": "2026-10-09T05:37:27+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T05:58:17+00:00",
       "step": "review"
     }
   ],
