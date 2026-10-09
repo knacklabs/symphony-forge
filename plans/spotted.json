@@ -518,6 +518,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tCI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 628,
+      "text": "CI refused the worker restart after an SDK-exec crash in test_6_nothing_left_running; group termination excludes zombies but the following identity check can still count them as alive, and the failure remains unresolved.",
+      "from": "worker",
+      "item": "worker-no-settings",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: At most 2 Forge agent runs (forge work rounds, plan reads and close reviews) run at once on one machine across all repos\tforge-runs-on-several-repos-at-once-can",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -1405,6 +1416,17 @@
       "text": "Not done: forge close pushes the branch and starts CI before the review, then runs the review while CI runs, and reports Ready only when the",
       "from": "blocking",
       "item": "forge-close-reviews-first-and-only-then",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 109,
+      "text": "Not done: one identical written boundary in review and cold read",
+      "from": "blocking",
+      "item": "lean-review-prompts",
       "status": "open",
       "closed_by": null
     },
@@ -3462,17 +3484,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/templates/review.md\tNot done: one identical written boundary in review and cold read\tlean-review-prompts",
-      "kind": "bug",
-      "path": "src/forge/templates/review.md",
-      "line": 109,
-      "text": "Not done: one identical written boundary in review and cold read",
-      "from": "blocking",
-      "item": "lean-review-prompts",
       "status": "open",
       "closed_by": null
     }
