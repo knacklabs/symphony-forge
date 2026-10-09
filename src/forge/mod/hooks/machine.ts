@@ -11,6 +11,7 @@ type Entry = {
 }
 type Lanes = { agents: { size: number; entries: Entry[] }; tests: { size: number; entries: Entry[] }; machine: { load: number[] | null; cores: number | null } }
 const entries = (lanes: Lanes) => [...lanes.agents.entries, ...lanes.tests.entries]
+const testLane = (lanes: Lanes) => `Tests ${lanes.tests.entries.filter(run => run.started_at !== null).length}/${lanes.tests.size} (${lanes.tests.entries.filter(run => run.place > 0).length} waiting)`
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]!)
 
 function valid(value: unknown): value is Lanes {
@@ -96,6 +97,7 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
     const selectedRun = runs.find(run => run.id === selected)
     const descriptions = runs.map(run => label(data, run, now))
     const children: RenderNode[] = []
+    if (snapshot) children.push(t.Text({ children: testLane(snapshot) }))
     const tree: RenderNode[] = []
     if (e.surface === 'desktop' && 'Svg' in t) {
       let y = 50
@@ -200,5 +202,5 @@ export function registerMachine(on: On, data: Data, add: typeof addTab) {
     const run = snapshot && entries(snapshot).find(entry => entry.place > 0 && path(entry.checkout_root) === cwd)
     return run ? next({ ...e, props: { ...e.props, suffix: `${e.props.suffix} · in line #${run.place} (${run.kind === 'test' ? 'tests' : 'agents'})` } }) : next(e)
   })
-  data.machineText = (now: number) => snapshot ? ['Machine · this session plans + decides', ...(entries(snapshot).length ? entries(snapshot).map(e => label(data, e, now)) : ['Nothing running']), ...gates(data, now), ...(snapshot.machine.load ? [`Load ${snapshot.machine.load[0]} · ${snapshot.machine.cores ?? 'unknown'} cores`] : []), ...(error ? [`Couldn't refresh: ${error}`] : [])].join('\n') : ''
+  data.machineText = (now: number) => snapshot ? ['Machine · this session plans + decides', testLane(snapshot), ...(entries(snapshot).length ? entries(snapshot).map(e => label(data, e, now)) : ['Nothing running']), ...gates(data, now), ...(snapshot.machine.load ? [`Load ${snapshot.machine.load[0]} · ${snapshot.machine.cores ?? 'unknown'} cores`] : []), ...(error ? [`Couldn't refresh: ${error}`] : [])].join('\n') : ''
 }

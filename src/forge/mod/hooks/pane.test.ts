@@ -158,7 +158,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const itemRows = await ui.findAll({ type: 'Box' })
     expect(itemRows.some(b => b.text.includes('Another fix: Build ✓ 4s'))).toBe(true)
     expect(itemRows.some(b => b.text.includes('Polish the guide: Build ✓ 4s'))).toBe(true)
-    expect(drawn).toContain('Tests: 1 running (1 waiting)')
+    expect(drawn).toContain('Tests 1/1 (1 waiting)')
     expect(drawn).toContain('Polish the guide · ')
     expect(drawn).toContain('editing the guide')
     expect(drawn).toContain('round 2 · total 9s')
@@ -242,7 +242,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       for (const bodyColumns of [80, 120]) {
         await ui.redraw({ ...band, bodyColumns, isWorking: state === 'busy' })
         const boxes = await ui.findAll({ type: 'Box' })
-        const counts = boxes.find(b => b.props.flexShrink === 0 && b.text.includes('Agents 1/4 (1 waiting)') && b.text.includes('Tests: 1 running (1 waiting)'))!
+        const counts = boxes.find(b => b.props.flexShrink === 0 && b.text.includes('Agents 1/4 (1 waiting)') && b.text.includes('Tests 1/1 (1 waiting)'))!
         expect(counts).toBeDefined()
         expect(counts.props.width).toBe(counts.text.length)
         const tree = await ui.drawn()
@@ -257,7 +257,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await clock.advance(10000)
     await ui.redraw({ ...band, bodyColumns: 79 })
     const boxes = await ui.findAll({ type: 'Box' })
-    const counts = boxes.find(b => b.props.flexShrink === 0 && b.text === '2 running, 1+1 waiting · ')!
+    const counts = boxes.find(b => b.props.flexShrink === 0 && b.text === '2 running, 1+1 waiting · Tests 1/1 · ')!
     expect(counts).toBeDefined()
     expect(counts.props.width).toBe(counts.text.length)
     expect(boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== 79).reduce((sum, b) => sum + Number(b.props.width), 0)).toBe(79)
