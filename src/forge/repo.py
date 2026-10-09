@@ -604,6 +604,20 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     refuse(REFUSALS["pin"], installed=f"v{__version__}", pinned=f"v{pinned}")
 
 
+def resume_pin(top: Path, previous: str, rounds: int | None = None, *, accepted: bool = False) -> None:
+    """Hand a running land or close to a changed pin before reading its new settings."""
+    release = "v" + _pin((top / "forge.toml").read_text(encoding="utf-8"))
+    if release == previous or release == f"v{__version__}" or not VERSION.fullmatch(release):
+        return
+    print(f"Forge pin changed from {previous} to {release}; "
+          f"continuing forge {sys.argv[1]} with {release}.", flush=True)
+    if rounds is not None:
+        os.environ["FORGE_LAND_ROUNDS"] = str(rounds)
+    if accepted:
+        os.environ["FORGE_CLOSE_ACCEPTED"] = "1"
+    sys.exit(run_release(release, sys.argv[1:], top))
+
+
 def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | None) -> int:
     """Run a Forge release's `forge <args>` through uv in cwd, its output streamed; its exit code."""
     return subprocess.run(
