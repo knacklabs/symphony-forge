@@ -9,31 +9,16 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4100b4fd2f862a66dca0c412abfc9ce20bbb5c808a912822a37de1c1b4db0d72",
-    "changed": "50785e29cd3f664299d1a41e667ff61f5ea693acf58ad9f4b9a221d6673b29fd",
-    "commit": "811c98f979aa8f8ed4829e726b199be6f5582572",
+    "branch_diff": "05c589eca21bf83fd8ca200d89bcdca6abd758a1d20105fb75696db93a9da762",
+    "changed": "ba617e2319879eaf562ae05afa0b648c821103cf0d7220e6e32900543fb5b9dd",
+    "commit": "d778aa8127b4bd0bad4bd1e6f0ea55b621a6c818",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "New evidence not considered by the seven-day-queue ruling: [GitHub's runner contract](https://docs.github.com/en/actions/reference/runners/self-hosted-runners#routing-precedence-for-self-hosted-runners) says unmatched self-hosted jobs fail after 24 hours. Requiring a currently queued workflow whose latest update is seven days old therefore prevents doctor from diagnosing the ordinary missing-runner scenario: its jobs have already failed, and rerunning them resets the timestamp. The positive cases in test_queued_checks_keep_waiting.py::test_2_only_doctor_reports_likely_missing_runner_after_days and the sibling doctor tests fabricate eight-day live queues, masking this failure for both client histories. Base the diagnosis on several days of unmet runner demand and absent matching activity, including expired attempts, and cover GitHub's actual cancellation lifecycle.",
-        "file": "src/forge/checks.py",
-        "line": 113,
-        "priority": "P1",
-        "title": "Not done: doctor detects a runner that never picks up jobs"
-      },
-      {
-        "body": "The standard requires: \"Replacing behaviour deletes the old path, its tests and its docs in the same change.\" Although the shipped skill is corrected here, docs/guide.md:34\u201336 still says doctor and close diagnose queues after five minutes and advises making a runner available, \"then sync\" unconditionally. This leaves the user-facing guide recommending the ineffective recovery action this fix promises to remove. Update that paragraph with doctor-only diagnosis after the observation window and sync only after changing the runner setting.",
-        "file": "src/forge/templates/skill.md",
-        "line": 86,
-        "priority": "P1",
-        "title": "Standard: Delete before adding"
-      }
-    ],
-    "id": "ddcef889-f483-4613-932e-7297b4944f15",
-    "status": "blocked"
+    "findings": [],
+    "id": "408230cc-83e3-490c-8c38-dbf84ea99e1d",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T12:16:17+00:00",
@@ -45,6 +30,10 @@
     },
     {
       "at": "2026-10-09T14:15:55+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T15:29:27+00:00",
       "step": "review"
     }
   ],
