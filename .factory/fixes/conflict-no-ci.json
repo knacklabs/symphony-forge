@@ -2,17 +2,27 @@
   "base": "8cb079e24be0bb0d118012d6956dd49068862cc4",
   "branch": "fix/conflict-no-ci",
   "done_when": "While waiting for checks, close and land notice that the pull request is not mergeable because of conflicts and stop waiting at once: land merges the default branch through close (or stops with close's existing conflict next step when the merge needs a person), and close says plainly that GitHub runs no checks on a conflicting pull request; command tests with a faked GitHub cover a conflicting pull request with missing checks (no long wait) and a clean one (normal wait), for a new repo and one adopted on an earlier release",
-  "flagged": [],
+  "flagged": [
+    "tests/test_conflicting_pull_requests_stop_check_waits.py"
+  ],
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ceb55e417357db9106ce158ea5f6c31ec0f7307a523bf126d82f50e1bba5e10f",
-    "changed": "c6988d8e950d016bc89abfa727827ef03ec626b29f145b839773612ffbb4e207",
-    "commit": "e73b8606ed9ebd4de217aed6da821d16d8d9e371",
+    "branch_diff": "ea96a236d0118f05d4d2303f49ef30398b4824bc3fdfe2bb0139708c125a5eed",
+    "changed": "4efed5de355b80d8e1176f4665f1631e9fbd18290a77efd1a9066db0a3267ac1",
+    "commit": "3446c7f677863fa155d0e7124044d470f694e19c",
     "dismissals": [],
-    "findings": [],
-    "id": "1a4e5b91-6c8c-484f-bb53-a2511bebf9d1",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "The clean-response fake omits `headRefOid`, although production requests both fields through [gh pr view](https://cli.github.com/manual/gh_pr_view). In `src/forge/checks.py:48\u201349`, head equality is evaluated before mergeability, so all four clean controls bypass the conflict discriminator. Changing that discriminator to accept both `CONFLICTING` and `MERGEABLE` would still pass these tests while incorrectly refusing real clean pull requests with missing checks. Return the actual remote head alongside `MERGEABLE` so the existing close/land tests, for both client types, protect the promised normal waiting behavior.",
+        "file": "tests/test_conflicting_pull_requests_stop_check_waits.py",
+        "line": 169,
+        "priority": "P1",
+        "title": "Not done: test_3_clean_pull_request_keeps_normal_waiting"
+      }
+    ],
+    "id": "675e4c0c-cd80-49e8-bd3a-ba8b31f03e8c",
+    "status": "blocked"
   },
   "round": 2,
   "status": "fixing",
@@ -23,6 +33,10 @@
     },
     {
       "at": "2026-10-09T20:33:20+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T21:31:07+00:00",
       "step": "review"
     }
   ],
