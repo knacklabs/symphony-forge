@@ -2,7 +2,7 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: planner
 description: "Turns an approved story into bounded tasks with their tests."
-model: "claude-opus-5-5"
+model: "opus"
 effort: "high"
 ---
 

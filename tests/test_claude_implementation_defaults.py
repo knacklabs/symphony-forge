@@ -4,23 +4,20 @@ Real Forge commands own the assertions; Claude, uv and GitHub are faked at their
 """
 import tomllib
 
-import pytest
-
-from conftest import ROOT
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_setup import _fresh_client
 from test_story import DOC, GRILL, new_story, setup
 from test_worker import calls, install_claude
 from test_upgrade_command import (_repo_adopted_on_the_previous_release,
                                  unsynced_up)  # noqa: F401
-from test_close import GREEN, env  # noqa: F401
+from test_close import env  # noqa: F401
 
 STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
 OPUS = {"model": "claude-opus-5-5", "effort": "high"}
 
 
-def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_read_and_review(repo, gh, tmp_path):
+def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     settings = client / "forge.toml"
@@ -35,9 +32,7 @@ def test_init_claude_only_repo_uses_sonnet_implementation_and_opus_read_and_revi
     for kind in ("build", "fix", "lite", "design"):
         assert models[kind]["claude"] == SONNET
     assert models["grill"]["claude"] == OPUS
-    assert models["review"] == {
-        "codex": {"model": "gpt-6.1-sol", "effort": "high"},
-        "claude": OPUS}
+    assert "review" not in models  # Autoreview owns its model and effort defaults.
     frontend = (client / ".claude/agents/frontend.md").read_text("utf-8")
     assert 'model: "claude-sonnet-5-5"' in frontend and 'effort: "xhigh"' in frontend
     guide = (client / ".codex/skills/forge/SKILL.md").read_text("utf-8")
@@ -88,29 +83,3 @@ def test_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
         result = repo.forge("work", "correct-greeting")
         assert result.returncode == 0, result.stdout + result.stderr
         assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
-
-
-@pytest.mark.parametrize("new_settings", [False, True], ids=["omitted", "init"])
-def test_claude_reviews_use_opus_high_with_init_or_omitted_settings(
-        env, gh, tmp_path, monkeypatch, new_settings):
-    if new_settings:
-        client, result = _fresh_client(env.repo, gh, tmp_path)
-        assert result.returncode == 0, result.stdout + result.stderr
-        tables = (client / "forge.toml").read_text("utf-8").split("[models.", 1)[1]
-        toml = env.repo.path / "forge.toml"
-        # Replace the fixture model entries; a flat build entry cannot coexist with per-host tables.
-        head = toml.read_text("utf-8").split("models.", 1)[0]
-        env.commit(env.repo.path, "forge.toml", head + "\n[models." + tables)
-        env.repo.git("push", "-q", "origin", "main")
-        env.checks(GREEN)  # init uses a broad API response; restore the close fixture checks.
-    _claude_only(tmp_path, monkeypatch, env.repo.bin,
-                 (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
-    item, _ = env.start_fix()
-    env.open_pr("Readme greets new readers")
-    result = env.close(item)
-    assert result.returncode == 0, result.stdout + result.stderr
-    [call] = env.review_calls()
-    options = dict(zip(call["args"][::2], call["args"][1::2]))
-    assert options["--engine"] == "claude"
-    assert options["--model"] == "claude=claude-opus-5-5"
-    assert options["--thinking"] == "claude=high"
