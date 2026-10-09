@@ -8,20 +8,20 @@
   "kind": "fix",
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f6f223ec006a2a1ebc9237ad257fcf18e00bfed07bafa05720470b589a7cce30",
-    "changed": "558fae9a6aca8a7d0418403d42dcbd6ebd49f1e07fa747103bf27c313dcc9040",
-    "commit": "7b46643bd7de63e066ca9565a89df06b04a08d10",
+    "branch_diff": "1fab840928d0c075a60eccabc37b94eacecc13cf98562e0952b68c07b035d232",
+    "changed": "bd84dea628de275b38641efabb4e21ae74e856c62c1801ccdc8701e7de77cb1b",
+    "commit": "4d3f8c3e3eb59fe778786a973b98def9f3e637af",
     "dismissals": [],
     "findings": [
       {
-        "body": "The exhausted-retry message is lost by mandatory reads in `forge merge`. In `src/forge/merge.py:60\u201369`, a lasting outage during the initial PR lookup turns this failed result into `{}` and tells the user to open or correct the pull request, without mentioning the outage or rerunning. The post-write confirmation at `src/forge/merge.py:94\u201398` also ignores the read's error and reports that merging is pending. Preserve the plain GitHub-outage refusal in both paths and cover it through the merge command. The supplied close tests pass while these paths remain broken. These required reads are distinct from the optional views whose existing fallbacks the coordinator ruling preserves.",
+        "body": "An interrupted response body still stops after one attempt. Go's [HTTP body reader](https://raw.githubusercontent.com/golang/go/master/src/net/http/transfer.go) returns `unexpected EOF` when a response ends before its declared length, and gh's [GraphQL reader](https://raw.githubusercontent.com/cli/go-gh/trunk/pkg/api/graphql_client.go) propagates that error. With nonzero exit, empty stdout and that stderr, neither unreadable detection nor either decoder-error substring matches, so this helper returns immediately without retrying or producing the plain outage/rerun message. Other JSON syntax errors, such as `invalid character '<' after object key:value pair`, also escape these two substring checks. This affects PR reads, check/protection reads and release lookups through the shared helper; `src/forge/close.py:521\u2013528` consequently raises the original command error. Extend unreadable-response recognition while preserving intentional refusals, and cover recovery and exhaustion through the faked-gh command tests. The supplied decoder cases use only the already-matched phrase and pass with this gap present.",
         "file": "src/forge/repo.py",
-        "line": 187,
+        "line": 183,
         "priority": "P1",
-        "title": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up, and then say Git"
+        "title": "Not done: Forge's GitHub reads retry an unreadable or server-error answer a few times with a short pause before giving up"
       }
     ],
-    "id": "28285236-6704-4872-97d9-f703d3f1a417",
+    "id": "03bf7875-c11f-4172-b4c5-970d48176136",
     "status": "blocked"
   },
   "round": 2,
@@ -33,6 +33,10 @@
     },
     {
       "at": "2026-10-09T09:48:16+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-09T10:39:11+00:00",
       "step": "review"
     }
   ],
