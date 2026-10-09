@@ -72,9 +72,11 @@ it defaults to `"ubuntu-latest"`. For self-hosted Linux runners, initialise with
 existing repo's fix, then run `forge sync`. New repos get it at init; earlier adopted repos get
 it after upgrading Forge and syncing. The jobs set up uv and Python, and install
 Node for Node tests, respecting version files or engines with Node 22 as the fallback.
-If the current branch's pull request checks stay queued for at least five minutes without
-starting, `forge doctor` and close's check wait name the runner setting. Make a matching runner
-available or correct the setting and sync; keep the required checks enabled.
+If the current branch's pull request checks stay queued for at least five minutes and no job
+in this repo using the configured runner has started during that queue, `forge doctor`, close
+and land name the runner setting. Make a matching runner available or correct the setting and
+sync; keep the required checks enabled. If a matching job has started, the pool is busy: close
+and land keep their normal check waits, and doctor gives no missing-runner warning.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
@@ -82,7 +84,10 @@ in their own terminal; it opens the change for them to merge. If an interrupted 
 contains only that setting and the default branch has moved, it rebuilds the same fix on the
 current default branch, preserving its other settings. It leaves remote work outside that fix
 alone and refuses to replace a remote branch that changes after its check. The owner still
-merges the pull request.
+merges the pull request. Close checks this generated fix mechanically instead of asking a model:
+only `forge.toml`'s top-level `merge = "agent"` may change, with all other parsed settings equal
+to the current default branch. Extra changes are refused without review. Tests and CI still run;
+every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
@@ -151,6 +156,19 @@ worktree path, shared by the repo's worktrees).
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
 Finished stories, tasks and fixes older than seven days are left out of JSON;
 the HTML board keeps their history. Each call reads current state without a history cache.
+The HTML page also draws one inline dependency map across the roadmap and stage timelines, without scripts or
+external assets. `forge board --json` supplies `dependency_maps`: each story's full planned
+parts, plain titles, labelled states and `waits_for` item references, including old merged
+dependencies omitted from active rows. Arrows point to the waiting part; labels and shapes
+distinguish merged, running, waiting, can start now and not started. Startability and scope
+blockers come from the same rules as `forge next`, including approval and required rereads.
+`stage_counts` counts each roadmap story and fix once, including recorded completed items;
+parts belong to their parent story's count. The page shows those six totals in one line:
+needs a spec, planning, waiting for approval, building, ready to merge and done.
+Active parts and fixes show recorded
+Build, Tests, Review, CI and Merge times for their current round, with the current stage
+marked. Missing times remain unknown. New clients get this at init; earlier adopted clients
+get it after upgrading Forge and syncing.
 Each row has `id`, `kind`, plain `title`, `stage`, `worker` (kind, model and
 `started_at`, or null), `pr` (number and checks: pass, fail, running or unknown),
 `findings` (count and titles), `round`, `stages`, `total_seconds`, `occurrences`,
@@ -778,8 +796,12 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands and the default branch is merged in. Otherwise it starts from
-the default branch. Merging default-branch updates before the underlying item lands needs Git
+after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+onto the current default branch and publishes with a lease. It preserves earlier merge edits,
+leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
+conflict. Follow the printed replay and leased publication commands before closing again.
+Otherwise it starts from the default branch and close keeps merging default updates.
+Follow-up replay and merging default-branch updates before the underlying item lands need Git
 2.38 or newer.
 
 Mark generated files such as migration snapshots `linguist-generated` in `.gitattributes`, so
@@ -804,7 +826,11 @@ an upgrade test in the test from a text fixture folder. Close refuses added bina
 When every file a change touches is forge.toml, under `docs/` or `plans/`, a Markdown file or under
 `.factory/`, close skips forge.toml's test command and says so; the review and every named check
 still run.
-Close merges the default branch before it tests or reviews. If only files `forge sync` writes
+When a worker round or close's merge changes the item's Forge pin, land and close say so in one
+line and continue through uv under that release before reading its new settings.
+Generated-conflict sync and the merge commit check use the new pin too, so the merge finishes
+before the original land or close command continues.
+Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. When the
 test command fails, close stops before the review and keeps the output for the worker: run
