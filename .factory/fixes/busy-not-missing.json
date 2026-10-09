@@ -2,13 +2,36 @@
   "base": "ecc16b99c816cee1e17ae60d53d9311309a6d8bf",
   "branch": "fix/busy-not-missing",
   "done_when": "Close and land report the no-runner problem, naming the runner setting, only when no job for this repo needing that runner has started during the wait window (runners missing), and otherwise keep waiting as they do for running checks (runners busy); forge doctor's warning follows the same rule; a command test with a faked GitHub covers a busy pool (keeps waiting, then passes) and a missing runner (stops with the message), for a new repo and one adopted on an earlier release",
+  "flagged": [],
   "kind": "fix",
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0a6ef89fcd85ecf1448d968c3e382feb84cc6ddef41fea1605ff6b2a7a2c9675",
+    "changed": "e36165bd518bddf38a5a152a82214d07cfda788c0b51c032a47f1ef115759b4e",
+    "commit": "25472a662a7f4132712c8d72c9e67f485c333554",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "If another branch's workflow starts a matching job during this queue window and is subsequently rerun, the earlier job disappears from this lookup: GitHub's jobs endpoint defaults to `filter=latest`, which returns only the latest execution ([GitHub contract](https://docs.github.com/en/rest/actions/workflow-jobs#list-jobs-for-a-workflow-run)). When the new attempt remains queued, this code incorrectly reports missing runners despite qualifying activity in the previous attempt. This affects close and land's close phase (`src/forge/close.py:248`), land's merge phase (`src/forge/merge.py:75`), and doctor (`src/forge/doctor.py:385`). Request jobs from all attempts, retaining the timestamp and label checks. The supplied busy-pool cases contain only one attempt, so they do not detect this edge case.",
+        "file": "src/forge/checks.py",
+        "line": 113,
+        "priority": "P2",
+        "title": "Include earlier workflow attempts when checking runner activity"
+      }
+    ],
+    "id": "4b08c8bb-4591-4762-802f-6964bb1f7e2c",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-09T05:14:44+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-09T05:37:27+00:00",
+      "step": "review"
     }
   ],
   "why": "Close's new 'checks stayed queued for five minutes; no runner has picked them up' stop fires whenever the organisation's shared runner pool is merely busy (it fired on Forge's own repo during the v1.2.8 bump, where ubuntu-latest runners exist), so busy periods stop close and land with a misleading runner message, undoing land's wait for long CI",

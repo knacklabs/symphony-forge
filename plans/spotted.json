@@ -408,6 +408,28 @@
       "closed_by": "dismissed"
     },
     {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 590,
+      "text": "Not done: Live previous-release processes can still prune newer lane entries",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 596,
+      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
+      "from": "blocking",
+      "item": "lane-identity-env",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tNot done: the latest step through every worker path\tFORGE-MOD-1/LIVE",
       "kind": "bug",
       "path": "src/forge/codex.py",
@@ -2069,6 +2091,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/checks.py\tInclude earlier workflow attempts when checking runner activity",
+      "kind": "edge",
+      "path": "src/forge/checks.py",
+      "line": 113,
+      "text": "Include earlier workflow attempts when checking runner activity",
+      "from": "review",
+      "item": "busy-not-missing",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/checks.py\tPreserve progress retries when the queued-run lookup fails",
       "kind": "edge",
       "path": "src/forge/checks.py",
@@ -2912,28 +2945,6 @@
       "text": "The generated host coordinator skills already lag behind unrelated template guidance, which this fix leaves unchanged.",
       "from": "worker",
       "item": "runner-setting",
-      "status": "open",
-      "closed_by": null
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Live previous-release processes can still prune newer lane entries\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 590,
-      "text": "Not done: Live previous-release processes can still prune newer lane entries",
-      "from": "blocking",
-      "item": "lane-identity-env",
-      "status": "done",
-      "closed_by": "dismissed"
-    },
-    {
-      "key": "bug\tsrc/forge/codex.py\tNot done: Preserve previous-release start text from locales without colon-separated times\tlane-identity-env",
-      "kind": "bug",
-      "path": "src/forge/codex.py",
-      "line": 596,
-      "text": "Not done: Preserve previous-release start text from locales without colon-separated times",
-      "from": "blocking",
-      "item": "lane-identity-env",
       "status": "open",
       "closed_by": null
     }
