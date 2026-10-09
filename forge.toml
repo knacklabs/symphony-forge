@@ -5,7 +5,7 @@ workers = "codex"
 merge = "agent"
 test = "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread"
 fast_test = "uv run --frozen --python 3.11 forge test --pytest {base}"
-checks = ["tests", "forge-pr-check"]
+checks = ["tests", "forge-pr-check", "windows-installers"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
 [models.build.codex]
