@@ -1,0 +1,14 @@
+{
+  "base": "fcb18720ba0103dfac9bac04ee3f5d410861c2b5",
+  "branch": "fix/reuse-worker-chats",
+  "done_when": "Each task and fix keeps one worker chat per tool from its first round to merge: a later round resumes it even after a model or effort change, a Forge or machine restart, or a fresh worktree of the same item; a fresh chat starts only when the recorded chat truly can't be resumed (the tool reports it gone, or the item moved to the other tool), and then the round says why in one line; plan reads keep their reader chat across rounds the same way; the coordinator guide says so; command tests with stubbed Codex and Claude cover each resume case and each fresh-chat reason, for a new repo and one adopted on an earlier release",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-09T16:42:38+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Worker chats should be reused: each task or fix should keep the same worker conversation from its first round until it merges, but today some rounds start a fresh chat (for example when the model or effort changes, after Forge restarts, or when a record is missing), losing context and costing tokens (owner, 2026-10-09)"
+}
