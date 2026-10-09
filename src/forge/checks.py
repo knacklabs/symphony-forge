@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ REFUSALS = {
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
 }
-PASS, PENDING, RED, SKIPPED = "pass", "pending", "red", "skipped"
+PASS, PENDING, RED, SKIPPED, QUEUED = "pass", "pending", "red", "skipped", "queued"
 
 
 def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = False) -> None:
@@ -31,17 +32,24 @@ def wait(top: Path, item: str, sha: str, names: list[str], *, progress: bool = F
     while True:
         try:
             seen, snapshot = _seen(top, item, sha)
+            if progress and snapshot != previous:
+                previous = snapshot
+                deadline = time.monotonic() + timeout
+            reason = _pending(item, names, seen)
+            queued = ""
+            if (any(state == QUEUED for _, state in seen)
+                    or any(not any(name == want or name.startswith(want + " (")
+                                   for name, _ in seen) for want in names)):
+                queued = queued_reason(top, sha, item)
         except repo.Refused as error:
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
             reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
         else:
-            if progress and snapshot != previous:
-                previous = snapshot
-                deadline = time.monotonic() + timeout
-            reason = _pending(item, names, seen)
             if not reason:
                 return
+            if queued:
+                repo.refuse(REFUSALS["not_green"], reason=queued, item=item)
         left = deadline - time.monotonic()
         if left <= 0:
             if progress:
@@ -66,12 +74,37 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
             missing.append(want)
         elif RED in states:  # failed, cancelled or timed out (a named one skipped too): red
             red.append(want)
-        elif PENDING in states:
+        elif PENDING in states or QUEUED in states:
             pending.append(want)
     if red:
         repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
     return "; ".join([f"{name} has not reported" for name in missing]
-                     + [f"{name} is still running" for name in pending])
+                     + [f"{name} is still {'running' if PENDING in groups[name] else 'queued'}"
+                        for name in pending])
+
+
+def queued_reason(top: Path, sha: str, item: str = "") -> str:
+    """Diagnose an old queued workflow for this PR head, including target-event runs."""
+    runs = _ask(top, item, ".workflow_runs",
+                "repos/{owner}/{repo}/actions/runs?status=queued")
+    now = datetime.fromisoformat(repo.now())
+    for run in runs:
+        heads = [pr.get("head", {}).get("sha") for pr in run.get("pull_requests") or []]
+        if run.get("status") != "queued" or sha not in [run.get("head_sha"), *heads]:
+            continue
+        try:
+            # A rerun can queue an old workflow; age its latest update, not the original run.
+            queued = max(datetime.fromisoformat(run[key]) for key in ("created_at", "updated_at")
+                         if run.get(key))
+            old = (now - queued).total_seconds() >= 300
+        except (ValueError, TypeError):
+            continue
+        if old:
+            runner = json.dumps(repo.config(top)["runner"])
+            return ("Pull request checks have stayed queued for at least five minutes; "
+                    "no runner has picked them up. Check that a runner matching "
+                    f"runner = {runner} in forge.toml is available, then run forge sync")
+    return ""
 
 
 def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
@@ -87,7 +120,8 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
                           (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),
                           (statuses, ("id", "context", "state", "created_at")))
                       for entry in entries)
-    seen = ([(str(run.get("name")), PENDING if run.get("status") != "completed"
+    seen = ([(str(run.get("name")), QUEUED if run.get("status") == "queued"
+              else PENDING if run.get("status") != "completed"
               else PASS if run.get("conclusion") == "success"
               else SKIPPED if run.get("conclusion") in ("skipped", "neutral") else RED)
              for run in runs]

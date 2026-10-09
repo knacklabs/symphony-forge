@@ -152,6 +152,8 @@ class Forge:
         lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
         self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
         self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
+        # No old queued workflow unless the case supplies one explicitly.
+        self.gh.respond("api", "--paginate", "--jq", ".workflow_runs[]", stdout="")
 
     def open_pr(self, body: str, state: str = "OPEN", draft: bool = False) -> None:
         self.gh.respond("pr", "list", "--head", stdout=json.dumps(
@@ -297,9 +299,10 @@ def _skipped_named_check(env):
 
 
 def _pending_check_not_named(env):
+    # A queued check has not started running; close now preserves that distinction.
     env.checks([run("tests"), run("forge-pr-check"), run("lint", None, "queued")])
     return {"draft": True, "item": env.start_fix()[0],
-            "problem": "The checks are not green yet: lint is still running.",
+            "problem": "The checks are not green yet: lint is still queued.",
             "next": "forge close tidy-readme"}
 
 
